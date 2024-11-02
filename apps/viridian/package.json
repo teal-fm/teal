@@ -1,0 +1,11 @@
+{
+  "name": "@teal/viridian",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "install": "go mod download",
+    "build": "go build main.go",
+    "dev": "go run main.go",
+    "start": "go run main.go"
+  }
+}

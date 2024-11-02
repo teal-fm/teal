@@ -1,0 +1,60 @@
+{
+  "name": "@teal/aqua",
+  "type": "module",
+  "version": "1.0.50",
+  "main": "index.ts",
+  "packageManager": "bun@1.0.0+",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
+    "bun:dev": "bun run src/index.ts | pino-pretty",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "lexgen": "lex gen-server ./src/lexicon ./lexicons/*",
+    "clean": "rimraf dist coverage",
+    "check-types": "tsc --noEmit",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "drizzle-kit seed",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.13.14",
+    "@atproto/common": "^0.4.4",
+    "@atproto/identity": "^0.4.2",
+    "@atproto/lexicon": "^0.4.2",
+    "@atproto/oauth-client-node": "^0.1.4",
+    "@atproto/sync": "^0.1.4",
+    "@atproto/syntax": "^0.3.0",
+    "@atproto/xrpc-server": "^0.6.4",
+    "@hono/node-server": "^1.13.4",
+    "@libsql/client": "^0.14.0",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.35.3",
+    "envalid": "^8.0.0",
+    "hono": "^4.6.8",
+    "jose": "^5.9.6",
+    "pino": "^9.5.0",
+    "turbo": "^2.2.3",
+    "uhtml": "^4.5.11"
+  },
+  "devDependencies": {
+    "@teal/tsconfig": "*",
+    "@atproto/lex-cli": "^0.4.1",
+    "@types/node": "^20.17.5",
+    "drizzle-kit": "^0.26.2",
+    "pino-pretty": "^11.3.0",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "tsup": {
+    "entry": [
+      "src",
+      "!src/**/__tests__/**",
+      "!src/**/*.test.*"
+    ],
+    "splitting": false,
+    "sourcemap": true,
+    "clean": true
+  }
+}

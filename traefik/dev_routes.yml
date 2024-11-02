@@ -1,0 +1,22 @@
+http:
+  routers:
+    frontend:
+      rule: "PathPrefix(`/`)"
+      service: frontend
+      priority: 1
+
+    backend:
+      rule: "PathPrefix(`/api`)"
+      service: backend
+      priority: 2
+
+  services:
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3000"
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3031"

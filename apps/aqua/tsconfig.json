@@ -1,0 +1,8 @@
+{
+  "extends": "@teal/tsconfig/base.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

@@ -1,15 +1,22 @@
 {
   "name": "teal",
-  "version": "1.0.50",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "bun@1.0.0+",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
-  },
-  "dependencies": {
-    "elysia": "latest"
+    "install": "turbo run install",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "turbo": "latest"
   },
-  "module": "src/index.js"
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }
