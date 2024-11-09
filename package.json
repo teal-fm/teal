@@ -7,7 +7,13 @@
     "install": "turbo run install",
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "lex:gen-server": "lex gen-server ./packages/lexicons/generated/server ./packages/lexicons/src/*",
+    "lex:gen-api": "lex gen-api ./packages/lexicons/generated/api ./packages/lexicons/src/*",
+    "lex:gen-md": "lex gen-md ./packages/lexicons/generated/md ./packages/lexicons/src/*",
+    "db:studio": "drizzle-kit studio",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "drizzle-kit seed"
   },
   "devDependencies": {
     "turbo": "latest"

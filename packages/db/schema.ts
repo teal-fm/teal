@@ -1,10 +1,4 @@
-import { defineConfig } from "drizzle-kit";
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
-
-export default defineConfig({
-  dialect: "sqlite", // 'mysql' | 'postgresql' | 'sqlite' | 'turso'
-  schema: "./src/db/schema.ts",
-});
 
 export type DatabaseSchema = {
   status: Status;
@@ -44,7 +38,8 @@ export const status = sqliteTable("status", {
   indexedAt: text().notNull(),
 });
 
-export const authSession = sqliteTable("auth_session", {
+// ATP Auth Tables (oAuth)
+export const atProtoSession = sqliteTable("atp_session", {
   key: text().primaryKey(),
   session: text().notNull(),
 });
@@ -52,4 +47,26 @@ export const authSession = sqliteTable("auth_session", {
 export const authState = sqliteTable("auth_state", {
   key: text().primaryKey(),
   state: text().notNull(),
+});
+
+export const tealSession = sqliteTable("teal_session", {
+  key: text().primaryKey(),
+  session: text().notNull(),
+  provider: text().notNull(),
+});
+
+// Regular Auth Tables
+export const tealUser = sqliteTable("teal_user", {
+  did: text().primaryKey(),
+  handle: text().notNull(),
+  avatar: text().notNull(),
+  bio: text(),
+  createdAt: text().notNull(),
+});
+
+// follow relationship
+export const follow = sqliteTable("follow", {
+  follower: text().primaryKey(),
+  followed: text().primaryKey(),
+  createdAt: text().notNull(),
 });
