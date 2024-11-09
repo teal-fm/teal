@@ -13,7 +13,7 @@ export type EnvWithCtx = {
 
 export type Ctx = {
   auth: NodeOAuthClient;
-  db: LibSQLDatabase<typeof import("/Users/natalie/Code/teal/db/schema")> & {
+  db: LibSQLDatabase<typeof import("@teal/db/schema")> & {
     $client: Client;
   };
   logger: Logger<never, boolean>;
@@ -21,7 +21,7 @@ export type Ctx = {
 
 export const setupContext = async (
   c: TealContext,
-  db: LibSQLDatabase<typeof import("/Users/natalie/Code/teal/db/schema")> & {
+  db: LibSQLDatabase<typeof import("@teal/db/schema")> & {
     $client: Client;
   },
   logger: Logger<never, boolean>,

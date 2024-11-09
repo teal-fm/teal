@@ -1,0 +1,4 @@
+{
+  "extends": "@teal/tsconfig/base.json",
+  "include": ["**/*.*", "./schema.ts"]
+}

@@ -5,7 +5,7 @@ import type {
   NodeSavedStateStore,
 } from "@atproto/oauth-client-node";
 import type { Database } from "@/db";
-import { authSession, authState } from "../../db/schema";
+import { atProtoSession, authState } from "@teal/db/schema";
 import { eq } from "drizzle-orm";
 
 export class StateStore implements NodeSavedStateStore {
@@ -52,34 +52,30 @@ export class SessionStore implements NodeSavedSessionStore {
   async get(key: string): Promise<NodeSavedSession | undefined> {
     const result = await this.db
       .select()
-      .from(authSession)
-      .where(eq(authSession.key, key))
+      .from(atProtoSession)
+      .where(eq(atProtoSession.key, key))
       .limit(1)
       .all();
-    // .selectFrom("auth_session")
-    // .selectAll()
-    // .where("key", "=", key)
-    // .executeTakeFirst();
     if (!result[0]) return;
     return JSON.parse(result[0].session) as NodeSavedSession;
   }
   async set(key: string, val: NodeSavedSession) {
     const session = JSON.stringify(val);
+    console.log("inserting session", key, session);
     await this.db
-      .insert(authSession)
+      .insert(atProtoSession)
       .values({ key, session })
       .onConflictDoUpdate({
         set: { session: session },
-        target: authSession.key,
+        target: atProtoSession.key,
       })
       .execute();
-    // .insertInto("auth_session")
-    // .values({ key, session })
-    // .onConflict((oc) => oc.doUpdateSet({ session }))
-    // .execute();
   }
   async del(key: string) {
-    await this.db.delete(authSession).where(eq(authSession.key, key)).execute();
+    await this.db
+      .delete(atProtoSession)
+      .where(eq(atProtoSession.key, key))
+      .execute();
     //.deleteFrom("auth_session").where("key", "=", key).execute();
   }
 }

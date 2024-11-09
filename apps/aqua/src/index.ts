@@ -22,21 +22,21 @@ app.get("/info", async (c) => {
 
 app.route("/oauth", getAuthRouter());
 
- const run = async () => {
-   serve(
-     {
-       fetch: app.fetch,
-       port: env.PORT,
-       hostname: env.HOST,
-     },
-     (info) => {
-       console.log(
-         `Listening on ${info.address == "::1" ? "http://localhost" : info.address}:${info.port} (${info.family})`,
-       );
-     },
-   );
- };
+const run = async () => {
+  serveNode(
+    {
+      fetch: app.fetch,
+      port: env.PORT,
+      hostname: env.HOST,
+    },
+    (info) => {
+      console.log(
+        `Listening on ${info.address == "::1" ? "http://localhost" : info.address}:${info.port} (${info.family})`,
+      );
+    },
+  );
+};
 
- run();
+run();
 
 export default app;
