@@ -1,8 +1,11 @@
 import { createClient } from "./client";
 import { db } from "@/db";
 import { EnvWithCtx, TealContext } from "@/ctx";
-import { authSession } from "../../db/schema";
 import { Hono } from "hono";
+import { tealSession } from "@teal/db/schema";
+
+import { setCookie } from "hono/cookie";
+import { env } from "@/lib/env";
 
 interface LoginBody {
   handle?: string;
@@ -51,18 +54,30 @@ export async function callback(c: TealContext) {
     const params = new URLSearchParams(honoParams);
     const cb = await auth.callback(params);
 
-    // generate a session key (random)
+    let did = cb.session.did;
+    // gen opaque tealSessionKey
+    const sess = crypto.randomUUID();
+    await db
+      .insert(tealSession)
+      .values({
+        key: sess,
+        // ATP session key (DID)
+        session: JSON.stringify(cb.session.did),
+        provider: "atproto",
+      })
+      .execute();
 
-    const sessionKey = crypto.randomUUID();
-
-    // insert in session table, return data from cb
-
-    c.var.db.insert(authSession).values({
-      key: sessionKey,
-      session: JSON.stringify(cb.session),
+    // cookie time
+    console.log("Setting cookie", sess);
+    setCookie(c, "tealSession", "teal:" + sess, {
+      httpOnly: true,
+      secure: env.HOST.startsWith("https"),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
     });
 
-    return Response.json(cb);
+    return Response.json({ did, sessionId: sess });
   } catch (e) {
     console.error(e);
     return Response.json({ error: "Could not authorize user" });
@@ -71,6 +86,7 @@ export async function callback(c: TealContext) {
 
 const app = new Hono<EnvWithCtx>();
 
+// For test only
 app.get("/login", async (c) => loginGet("natalie.sh"));
 
 app.post("/login", async (c) => login(c));

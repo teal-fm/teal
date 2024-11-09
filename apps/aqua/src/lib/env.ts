@@ -3,6 +3,8 @@ import { cleanEnv, host, port, str, testOnly } from "envalid";
 import process from "node:process";
 
 dotenv.config();
+// in case our .env file is in the root folder
+dotenv.config({ path: "./../../.env" });
 
 export const env = cleanEnv(process.env, {
   NODE_ENV: str({
