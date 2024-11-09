@@ -1,4 +1,4 @@
-import { serve as serveNode } from "@hono/node-server";
+import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { db } from "@/db";
 import { getAuthRouter, loginGet } from "./auth/router";
@@ -22,21 +22,21 @@ app.get("/info", async (c) => {
 
 app.route("/oauth", getAuthRouter());
 
-// const run = async () => {
-//   serve(
-//     {
-//       fetch: app.fetch,
-//       port: env.PORT,
-//       hostname: env.HOST,
-//     },
-//     (info) => {
-//       console.log(
-//         `Listening on ${info.address == "::1" ? "http://localhost" : info.address}:${info.port} (${info.family})`,
-//       );
-//     },
-//   );
-// };
+ const run = async () => {
+   serve(
+     {
+       fetch: app.fetch,
+       port: env.PORT,
+       hostname: env.HOST,
+     },
+     (info) => {
+       console.log(
+         `Listening on ${info.address == "::1" ? "http://localhost" : info.address}:${info.port} (${info.family})`,
+       );
+     },
+   );
+ };
 
-// run();
+ run();
 
 export default app;

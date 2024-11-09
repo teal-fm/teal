@@ -28,11 +28,12 @@ export const login = async (c: TealContext) => {
   }
 };
 
-export async function loginGet(handle: string) {
+export async function loginGet(c: TealContext) {
+  const handle = c.req.param('handle');
   // Initiate the OAuth flow
   const auth = await createClient(db);
   try {
-    const url = await auth.authorize("natalie.sh", {
+    const url = await auth.authorize(handle, {
       scope: "atproto transition:generic",
     });
     return Response.redirect(url);
@@ -71,7 +72,7 @@ export async function callback(c: TealContext) {
 
 const app = new Hono<EnvWithCtx>();
 
-app.get("/login", async (c) => loginGet("natalie.sh"));
+app.get("/login/:handle", async (c) => loginGet(c));
 
 app.post("/login", async (c) => login(c));
 
