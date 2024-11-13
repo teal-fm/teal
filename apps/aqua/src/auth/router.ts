@@ -1,5 +1,5 @@
-import { createClient } from "./client";
-import { db } from "@/db";
+import { atclient } from "./client";
+import { db } from "@teal/db/connect";
 import { EnvWithCtx, TealContext } from "@/ctx";
 import { Hono } from "hono";
 import { tealSession } from "@teal/db/schema";
@@ -14,13 +14,12 @@ interface LoginBody {
 export const login = async (c: TealContext) => {
   let body: LoginBody = await c.req.json();
   // Initiate the OAuth flow
-  const auth = await createClient(db);
   if (!body) return Response.json({ error: "Could not parse body" });
   // handle is the handle of the user
   if (!body.handle && body.handle === undefined)
     return Response.json({ error: "Handle is required" });
   try {
-    const url = await auth.authorize(body.handle, {
+    const url = await atclient.authorize(body.handle, {
       scope: "atproto transition:generic",
       state: crypto.randomUUID(),
     });
@@ -32,13 +31,15 @@ export const login = async (c: TealContext) => {
 };
 
 export async function loginGet(c: TealContext) {
-  const handle = c.req.param('handle');
+  const handle = c.req.param("handle");
+  console.log("handle", handle);
   // Initiate the OAuth flow
-  const auth = await createClient(db);
   try {
-    const url = await auth.authorize(handle, {
+    console.log("Calling authorize");
+    const url = await atclient.authorize(handle, {
       scope: "atproto transition:generic",
     });
+    console.log("Redirecting to oauth login page");
     return Response.redirect(url);
   } catch (e) {
     console.error(e);
@@ -48,12 +49,11 @@ export async function loginGet(c: TealContext) {
 
 export async function callback(c: TealContext) {
   // Initiate the OAuth flow
-  const auth = await createClient(db);
   try {
     const honoParams = c.req.query();
     console.log("params", honoParams);
     const params = new URLSearchParams(honoParams);
-    const cb = await auth.callback(params);
+    const cb = await atclient.callback(params);
 
     let did = cb.session.did;
     // gen opaque tealSessionKey
@@ -86,7 +86,6 @@ export async function callback(c: TealContext) {
 }
 
 const app = new Hono<EnvWithCtx>();
-
 
 app.get("/login/:handle", async (c) => loginGet(c));
 

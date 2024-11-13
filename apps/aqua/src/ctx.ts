@@ -2,8 +2,8 @@ import { NodeOAuthClient } from "@atproto/oauth-client-node";
 import { Client } from "@libsql/client/.";
 import { LibSQLDatabase } from "drizzle-orm/libsql";
 import { Context, Next } from "hono";
-import { createClient } from "./auth/client";
 import { Logger } from "pino";
+import { atclient } from "./auth/client";
 
 export type TealContext = Context<EnvWithCtx, any, any>;
 
@@ -27,10 +27,10 @@ export const setupContext = async (
   logger: Logger<never, boolean>,
   next: Next,
 ) => {
-  const auth = await createClient(db);
+  //const auth = await createClient(db);
 
   c.set("db", db);
-  c.set("auth", auth);
+  c.set("auth", atclient);
   c.set("logger", logger);
   await next();
 };
