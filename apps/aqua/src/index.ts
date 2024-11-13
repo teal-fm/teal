@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { db } from "@/db";
+import { db } from "@teal/db/connect";
 import { getAuthRouter, loginGet } from "./auth/router";
 import pino from "pino";
 import { EnvWithCtx, setupContext } from "./ctx";
@@ -23,18 +23,21 @@ app.get("/info", async (c) => {
 app.route("/oauth", getAuthRouter());
 
 const run = async () => {
-  serveNode(
-    {
-      fetch: app.fetch,
-      port: env.PORT,
-      hostname: env.HOST,
-    },
-    (info) => {
-      console.log(
-        `Listening on ${info.address == "::1" ? "http://localhost" : info.address}:${info.port} (${info.family})`,
-      );
-    },
-  );
+  logger.info("Running in " + navigator.userAgent);
+  if (navigator.userAgent.includes("Node")) {
+    serve(
+      {
+        fetch: app.fetch,
+        port: env.PORT,
+        hostname: env.HOST,
+      },
+      (info) => {
+        logger.info(
+          `Listening on ${info.address == "::1" ? "http://localhost" : info.address}:${info.port} (${info.family})`,
+        );
+      },
+    );
+  }
 };
 
 run();

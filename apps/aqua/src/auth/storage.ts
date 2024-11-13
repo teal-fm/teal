@@ -4,7 +4,7 @@ import type {
   NodeSavedState,
   NodeSavedStateStore,
 } from "@atproto/oauth-client-node";
-import type { Database } from "@/db";
+import type { Database } from "@teal/db/connect";
 import { atProtoSession, authState } from "@teal/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -17,10 +17,6 @@ export class StateStore implements NodeSavedStateStore {
       .where(eq(authState.key, key))
       .limit(1)
       .execute();
-    // .selectFrom("auth_state")
-    // .selectAll()
-    // .where("key", "=", key)
-    // .executeTakeFirst();
     console.log("getting state", key, result);
     if (!result[0]) return;
     return JSON.parse(result[0].state) as NodeSavedState;
@@ -36,10 +32,6 @@ export class StateStore implements NodeSavedStateStore {
         target: authState.key,
       })
       .execute();
-    // .insertInto("auth_state")
-    // .values({ key, state })
-    // .onConflict((oc) => oc.doUpdateSet({ state }))
-    // .execute();
   }
   async del(key: string) {
     await this.db.delete(authState).where(eq(authState.key, key)).execute();
@@ -76,6 +68,5 @@ export class SessionStore implements NodeSavedSessionStore {
       .delete(atProtoSession)
       .where(eq(atProtoSession.key, key))
       .execute();
-    //.deleteFrom("auth_session").where("key", "=", key).execute();
   }
 }

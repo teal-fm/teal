@@ -1,0 +1,16 @@
+{
+  "name": "@teal/jetstring",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts | pino-pretty"
+  },
+  "dependencies": {
+    "@skyware/jetstream": "^0.2.0",
+    "@teal/db": "*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

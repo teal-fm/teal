@@ -1,5 +1,5 @@
 import { Ctx, EnvWithCtx } from "@/ctx";
-import { db } from "@/db";
+import { db } from "@teal/db/connect";
 import { Agent, lexicons } from "@atproto/api";
 import { NodeOAuthClient, Session } from "@atproto/oauth-client-node";
 import { tealSession } from "@teal/db/schema";
@@ -112,7 +112,7 @@ export async function getATPAuthSession(
   did: string,
 ): Promise<Session> {
   let auth: NodeOAuthClient = c.get("auth");
-  const jwt = await auth.sessionGetter.get(did);
+  const jwt = await auth.restore(did);
   if (jwt) {
     return jwt;
   }
