@@ -1,0 +1,5 @@
+NODE_ENV=development
+PORT=3000
+HOST=localhost
+PUBLIC_URL=
+DB_PATH=:memory
