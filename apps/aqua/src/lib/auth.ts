@@ -84,7 +84,8 @@ export async function getAuthSession(c: Context<EnvWithCtx>): Promise<Session> {
 }
 
 export async function getSession(c: Context<EnvWithCtx>): Promise<Session> {
-  let authSession = getCookie(c, "authSession");
+  let authSession = getCookie(c, "tealSession")?.split("teal:")[1];
+  console.log(`tealSession cookie: ${authSession}`);
   if (!authSession) {
     authSession = c.req.header("Authorization");
   }
@@ -102,7 +103,7 @@ export async function getSession(c: Context<EnvWithCtx>): Promise<Session> {
     if (!did) {
       throw new Error("No DID found in session");
     }
-    return getATPAuthSession(c, did);
+    return getATPAuthSession(c, did.replace(/['"]/g, ""));
   }
 }
 

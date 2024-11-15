@@ -16,8 +16,9 @@ export const login = async (c: TealContext) => {
   // Initiate the OAuth flow
   if (!body) return Response.json({ error: "Could not parse body" });
   // handle is the handle of the user
-  if (!body.handle && body.handle === undefined)
+  if (!body.handle && body.handle === undefined) {
     return Response.json({ error: "Handle is required" });
+  }
   try {
     const url = await atclient.authorize(body.handle, {
       scope: "atproto transition:generic",
@@ -40,6 +41,7 @@ export async function loginGet(c: TealContext) {
       scope: "atproto transition:generic",
     });
     console.log("Redirecting to oauth login page");
+    console.log(url);
     return Response.redirect(url);
   } catch (e) {
     console.error(e);
@@ -53,9 +55,13 @@ export async function callback(c: TealContext) {
     const honoParams = c.req.query();
     console.log("params", honoParams);
     const params = new URLSearchParams(honoParams);
-    const cb = await atclient.callback(params);
+    const { session } = await atclient.callback(params);
 
-    let did = cb.session.did;
+    const did = session.did;
+
+    // Process successful authentication here
+    console.log("User authenticated as:", did);
+
     // gen opaque tealSessionKey
     const sess = crypto.randomUUID();
     await db
@@ -63,7 +69,7 @@ export async function callback(c: TealContext) {
       .values({
         key: sess,
         // ATP session key (DID)
-        session: JSON.stringify(cb.session.did),
+        session: JSON.stringify(did),
         provider: "atproto",
       })
       .execute();
@@ -78,7 +84,7 @@ export async function callback(c: TealContext) {
       maxAge: 60 * 60 * 24 * 365,
     });
 
-    return Response.json({ did, sessionId: sess });
+    return c.redirect("/");
   } catch (e) {
     console.error(e);
     return Response.json({ error: "Could not authorize user" });
