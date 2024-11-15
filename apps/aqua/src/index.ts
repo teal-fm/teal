@@ -9,6 +9,7 @@ import { EnvWithCtx, setupContext } from "./ctx";
 import { env } from "./lib/env";
 import { Agent } from "@atproto/api";
 import { getCookie } from "hono/cookie";
+import { atclient } from "./auth/client";
 
 const logger = pino({ name: "server start" });
 
@@ -22,15 +23,25 @@ app.get("/", async (c) => {
   console.log(`sess-id: ${sessCookie}`);
 
   if (sessCookie != undefined) {
-    const session = await db.query.tealSession.findMany({
+    const session = await db.query.tealSession.findFirst({
       where: eq(tealSession.key, sessCookie),
-    });
-    console.log(`sessions: ${session.session}`);
+    }).execute();
+
+    if (session != undefined) {
+      const sessionString = JSON.stringify(session, null, 2);
+      console.log(
+        `sessions: ${sessionString} | session did: ${session.session}`,
+      );
+    }
     const agent = new Agent(session.session);
-    console.log(agent.did);
-    return agent.getProfile({ actor: agent.did });
+    console.log(agent);
+    return agent.getFollowers();
   }
   return c.text("Hono meets Node.js");
+});
+
+app.get("/client-metadata.json", (c) => {
+  return c.json(atclient.clientMetadata);
 });
 
 app.get("/info", async (c) => {

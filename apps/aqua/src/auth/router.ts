@@ -57,7 +57,7 @@ export async function callback(c: TealContext) {
     const params = new URLSearchParams(honoParams);
     const { session } = await atclient.callback(params);
 
-    let did = session.did;
+    const did = session.did;
 
     // Process successful authentication here
     console.log("User authenticated as:", did);
@@ -69,7 +69,7 @@ export async function callback(c: TealContext) {
       .values({
         key: sess,
         // ATP session key (DID)
-        session: JSON.stringify(session.did),
+        session: JSON.stringify(did),
         provider: "atproto",
       })
       .execute();
@@ -92,12 +92,6 @@ export async function callback(c: TealContext) {
 }
 
 const app = new Hono<EnvWithCtx>();
-
-app.get(
-  "client-metatdata.json",
-  (req, res) => res.json(atclient.clientMetadata),
-);
-app.get("jwks.json", (req, res) => res.join(atclient.jwks));
 
 app.get("/login/:handle", async (c) => loginGet(c));
 
