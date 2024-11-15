@@ -9,7 +9,7 @@ import { EnvWithCtx, setupContext } from "./ctx";
 import { env } from "./lib/env";
 import { Agent } from "@atproto/api";
 import { getCookie } from "hono/cookie";
-import { atclient } from "./auth/client";
+import { getSession } from "./lib/auth";
 
 const logger = pino({ name: "server start" });
 
@@ -23,19 +23,17 @@ app.get("/", async (c) => {
   console.log(`sess-id: ${sessCookie}`);
 
   if (sessCookie != undefined) {
-    const session = await db.query.tealSession.findFirst({
-      where: eq(tealSession.key, sessCookie),
-    }).execute();
-
+    const session = await getSession(c);
+    console.log(session);
     if (session != undefined) {
       const sessionString = JSON.stringify(session, null, 2);
       console.log(
         `sessions: ${sessionString} | session did: ${session.session}`,
       );
     }
-    const agent = new Agent(session.session);
-    console.log(agent);
-    return agent.getFollowers();
+    const agent = new Agent(session);
+    // console.log(agent);
+    return agent.getFollowers({ actor: agent.did });
   }
   return c.text("Hono meets Node.js");
 });
