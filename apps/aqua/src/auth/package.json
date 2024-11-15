@@ -1,8 +1,0 @@
-{
-  "name": "@teal/db",
-  "type": "module",
-  "dependencies": {
-    "drizzle-kit": "^0.27.1",
-    "drizzle-orm": "^0.36.0"
-  }
-}
