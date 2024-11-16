@@ -1,70 +1,42 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
 import { db } from "@teal/db/connect";
-import { getAuthRouter, loginGet } from "./auth/router";
+import { getAuthRouter } from "./auth/router";
 import pino from "pino";
-import { EnvWithCtx, setupContext, TealContext } from "./ctx";
+import { EnvWithCtx, setupContext,  } from "./ctx";
 import { env } from "./lib/env";
-import { Agent } from "@atproto/api";
 import { getCookie } from "hono/cookie";
 import { atclient } from "./auth/client";
-import { tealSession } from "@teal/db/schema";
+import { getContextDID, getUserInfo } from "./lib/auth";
 
 const logger = pino({ name: "server start" });
 
 const app = new Hono<EnvWithCtx>();
 
-export async function getSession(c: TealContext): Promise<string> {
-  let authSession = getCookie(c, "tealSession")?.split("teal:")[1];
-  console.log(`tealSession cookie: ${authSession}`);
-  if (!authSession) {
-    authSession = c.req.header("Authorization");
-  }
-  if (!authSession) {
-    throw new Error("No auth session found");
-  } else {
-    // get the DID from the session
-    const session = await db.query.tealSession.findFirst({
-      where: eq(tealSession.key, authSession),
-    }).execute();
-
-    if (!session) {
-      throw new Error("No DID found in session");
-    }
-    return session.session.replace(/['"]/g, "");
-  }
-}
-
 app.use((c, next) => setupContext(c, db, logger, next));
 
-app.get("/", async (c) => {
-  const cookies = getCookie(c, "tealSession");
-  const sessCookie = cookies?.split("teal:")[1];
-  console.log(`sess-id: ${sessCookie}`);
-
-  if (sessCookie != undefined) {
-    const session = await getSession(c);
-
-    if (session != undefined) {
-      const oauthsession = await atclient.restore(session);
-      console.log(oauthsession);
-      const agent = new Agent(oauthsession);
-      console.log(`agent: ${agent}`);
-      if (agent.did) {
-        return c.json(await agent.getProfile({ actor: agent.did }));
-      }
-    }
-  }
-  return c.text("teal-fm");
-});
+app.route("/oauth", getAuthRouter());
 
 app.get("/client-metadata.json", (c) => {
   return c.json(atclient.clientMetadata);
 });
 
-app.route("/oauth", getAuthRouter());
+app.get("/", async (c) => {
+  const cookies = getCookie(c, "tealSession");
+  const sessCookie = cookies?.split("teal:")[1];
 
+  if (sessCookie != undefined) {
+    const session = await getContextDID(c);
+
+    if (session != undefined) {
+      return c.json(await getUserInfo(c));
+    }
+  }
+
+  // Serve non-logged in content
+  return c.text("teal-fm");
+});
+ 
 const run = async () => {
   logger.info("Running in " + navigator.userAgent);
   if (navigator.userAgent.includes("Node")) {
@@ -79,6 +51,8 @@ const run = async () => {
           `Listening on ${
             info.address == "::1"
               ? "http://localhost"
+              // TODO: below should probably be https://
+              // but i just want to ctrl click in the terminal
               : "http://" + info.address
           }:${info.port} (${info.family})`,
         );
