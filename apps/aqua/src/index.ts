@@ -5,7 +5,7 @@ import { getAuthRouter } from "./auth/router";
 import pino from "pino";
 import { EnvWithCtx, setupContext, TealContext } from "./ctx";
 import { env } from "./lib/env";
-import { getCookie } from "hono/cookie";
+import { getCookie, deleteCookie } from "hono/cookie";
 import { atclient } from "./auth/client";
 import { getContextDID, getSessionAgent, getUserInfo } from "./lib/auth";
 
@@ -30,7 +30,8 @@ app.get("/", async (c) => {
     const session = await getContextDID(c);
 
     if (session != undefined) {
-      const profile = await getUserInfo(c);
+      const agent = await getSessionAgent(c);
+      const post = await agent?.getPost({repo: "teal.fm", rkey: "3lb2c74v73c2a"});
       // const agent = await getSessionAgent(c);
       // const followers = await agent?.getFollowers();
       return c.html(
@@ -40,8 +41,11 @@ app.get("/", async (c) => {
             <p>Your music, beautifully tracked. (soon.)</p>
           </div>
           <div class="container">
-            <h1>${profile?.handle}</h1>
+            <h1>${post?.value.text}</h1>
           </div>
+          <form action="/logout" method="post" class="session-form">
+            <button type="submit">Log out</button>
+          </form>
         </div>`
       );
     }
@@ -111,7 +115,12 @@ app.post("/login", async (c: TealContext) => {
     return Response.json({ error: "Could not authorize user" });
   }
 });
- 
+
+app.post("/logout", (c) => {
+  deleteCookie(c, "tealSession");
+  return c.redirect("/");
+});
+
 const run = async () => {
   logger.info("Running in " + navigator.userAgent);
   if (navigator.userAgent.includes("Node")) {
