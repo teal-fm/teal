@@ -15,7 +15,7 @@ const logger = pino({ name: "server start" });
 
 const app = new Hono<EnvWithCtx>();
 
-export async function getSession(c: TealContext ): Promise<string> {
+export async function getSession(c: TealContext): Promise<string> {
   let authSession = getCookie(c, "tealSession")?.split("teal:")[1];
   console.log(`tealSession cookie: ${authSession}`);
   if (!authSession) {
@@ -25,10 +25,10 @@ export async function getSession(c: TealContext ): Promise<string> {
     throw new Error("No auth session found");
   } else {
     // get the DID from the session
-    const session = await db.query.tealSession.findFirst({ 
-      where: eq(tealSession.key, authSession)
+    const session = await db.query.tealSession.findFirst({
+      where: eq(tealSession.key, authSession),
     }).execute();
-      
+
     if (!session) {
       throw new Error("No DID found in session");
     }
@@ -45,14 +45,15 @@ app.get("/", async (c) => {
 
   if (sessCookie != undefined) {
     const session = await getSession(c);
-    
-    
+
     if (session != undefined) {
-      const  oauthsession = await atclient.restore(session);
+      const oauthsession = await atclient.restore(session);
       console.log(oauthsession);
       const agent = new Agent(oauthsession);
-      console.log(`agent: ${agent}`)
-      if (agent.did) return c.json( await agent.getProfile({ actor: agent.did }));
+      console.log(`agent: ${agent}`);
+      if (agent.did) {
+        return c.json(await agent.getProfile({ actor: agent.did }));
+      }
     }
   }
   return c.text("teal-fm");
