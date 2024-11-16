@@ -118,6 +118,7 @@ app.post("/login", async (c: TealContext) => {
 
 app.post("/logout", (c) => {
   deleteCookie(c, "tealSession");
+  // TODO: delete session record from db??
   return c.redirect("/");
 });
 
