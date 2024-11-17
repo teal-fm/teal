@@ -7,7 +7,8 @@ import { EnvWithCtx, setupContext, TealContext } from "./ctx";
 import { env } from "./lib/env";
 import { getCookie, deleteCookie } from "hono/cookie";
 import { atclient } from "./auth/client";
-import { getContextDID, getSessionAgent, getUserInfo } from "./lib/auth";
+import { getSessionAgent} from "./lib/auth";
+import { RichText, } from "@atproto/api";
 
 const logger = pino({ name: "server start" });
 
@@ -141,6 +142,11 @@ app.get("/stamp", (c) => {
           placeholder="track title (eg what's my age again?)"
           required
         />
+        <input 
+          type="text"
+          name="link"
+          placeholder="https://www.youtube.com/watch?v=K7l5ZeVVoCA&pp=ygUdYmxpbmsgMTgyIHdoYXQncyBteSBhZ2UgYWdhaW4%3D"
+        />
         <button type="submit">Stamp!</button>
       </form>
       <div class="signup-cta">
@@ -155,34 +161,33 @@ app.get("/stamp", (c) => {
 
 app.post("/stamp", async (c: TealContext) => {
   const body = await c.req.parseBody();
-  const { artist, track } = body;
+  const { artist, track, link } = body;
   const agent = await getSessionAgent(c);
 
-  const handleOffset = "@teal.fm".length;
-  const text = `now playing: 
-  artist: ${artist}
-  track: ${track}
-
-  powered by @teal.fm`;
-
   if (agent) {
-    const post = await agent.post({
-      text: text,
-      facets: [
-        {
-          index: {
-            byteStart: text.length - handleOffset - 1,
-            byteEnd: text.length,
-          },
-          features: [
-            {
-              $type: "app.bsky.richtext.facet#mention",
-              did: "did:plc:iwhuynr6mm6xxuh25o4do2tx"
-            }
-          ]
+    const rt = new RichText({text: `now playing: 
+    artist: ${artist}
+    track: ${track}
+
+    powered by @teal.fm`});
+    await rt.detectFacets(agent);
+      
+    let embed = undefined;
+    if (link) {
+      embed = {
+        $type: "app.bsky.embed.external",
+        external: {
+          uri: link,
+          title: track,
+          description: `${artist} - ${track}`
         }
-      ]
-    })
+      }; 
+    }
+    const post = await agent.post({
+      text: rt.text, 
+      facets: rt.facets, 
+      embed: embed
+    });
 
     console.log(`post: ${post}`)
 
