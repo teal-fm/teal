@@ -15,5 +15,4 @@ To start the development server run:
 turbo dev --filter=@teal/aqua
 ```
 
-Open http://localhost:3000/oauth/login/:handle with your browser to see the
-result.
+Open http://localhost:3000/ with your browser to see the home page.
