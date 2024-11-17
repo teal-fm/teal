@@ -27,8 +27,6 @@ export const setupContext = async (
   logger: Logger<never, boolean>,
   next: Next,
 ) => {
-  //const auth = await createClient(db);
-
   c.set("db", db);
   c.set("auth", atclient);
   c.set("logger", logger);
