@@ -22,34 +22,31 @@ app.get("/client-metadata.json", (c) => {
 });
 
 app.get("/", async (c) => {
-  const cookies = getCookie(c, "tealSession");
-  const sessCookie = cookies?.split("teal:")[1];
+  const tealSession = getCookie(c, "tealSession");
 
   // Serve logged in content
-  if (sessCookie != undefined) {
-    const session = await getContextDID(c);
-
-    if (session != undefined) {
-      const agent = await getSessionAgent(c);
-      const post = await agent?.getPost({repo: "teal.fm", rkey: "3lb2c74v73c2a"});
-      // const agent = await getSessionAgent(c);
-      // const followers = await agent?.getFollowers();
-      return c.html(
-        `<div id="root">
-          <div id="header">
-            <h1>teal.fm</h1>
-            <p>Your music, beautifully tracked. (soon.)</p>
-          </div>
-          <div class="container">
-            <h1>${post?.value.text}</h1>
-          </div>
-          <form action="/logout" method="post" class="session-form">
-            <button type="submit">Log out</button>
-          </form>
-        </div>`
-      );
-    }
+  if (tealSession) {
+    const agent = await getSessionAgent(c);
+      
+    const post = await agent?.getPost({repo: "teal.fm", rkey: "3lb2c74v73c2a"});
+    // const followers = await agent?.getFollowers();
+    return c.html(
+      `<div id="root">
+        <div id="header">
+          <h1>teal.fm</h1>
+          <p>Your music, beautifully tracked. (soon.)</p>
+        </div>
+        <div class="container">
+          <h1>${post?.value.text}</h1>
+          <button><a href="/stamp">stamp</a></button>
+        </div>
+        <form action="/logout" method="post" class="session-form">
+          <button type="submit">Log out</button>
+        </form>
+      </div>`
+    );
   }
+  
 
   // Serve non-logged in content
   return c.html(
@@ -120,6 +117,78 @@ app.post("/logout", (c) => {
   deleteCookie(c, "tealSession");
   // TODO: delete session record from db??
   return c.redirect("/");
+});
+
+app.get("/stamp", (c) => {
+  return c.html(
+    `<div id="root">
+    <div id="header">
+      <h1>teal.fm</h1>
+      <p>Your music, beautifully tracked. (soon.)</p>
+    </div>
+    <div class="container">
+      <p>want to share what you're listening to in the meantime??</p>
+      <form action="/stamp" method="post" class="login-form">
+        <input
+          type="text"
+          name="artist"
+          placeholder="artist name (eg blink-182)"
+          required
+        />
+        <input
+          type="text"
+          name="track"
+          placeholder="track title (eg what's my age again?)"
+          required
+        />
+        <button type="submit">Stamp!</button>
+      </form>
+      <div class="signup-cta">
+        Don't have an account on the Atmosphere?
+        <a href="https://bsky.app">Sign up for Bluesky</a> to create one now!
+      </div>
+    </div>
+  </div>`
+  );
+});
+
+
+app.post("/stamp", async (c: TealContext) => {
+  const body = await c.req.parseBody();
+  const { artist, track } = body;
+  const agent = await getSessionAgent(c);
+
+  const handleOffset = "@teal.fm".length;
+  const text = `now playing: 
+  artist: ${artist}
+  track: ${track}
+
+  powered by @teal.fm`;
+
+  if (agent) {
+    const post = await agent.post({
+      text: text,
+      facets: [
+        {
+          index: {
+            byteStart: text.length - handleOffset - 1,
+            byteEnd: text.length,
+          },
+          features: [
+            {
+              $type: "app.bsky.richtext.facet#mention",
+              did: "did:plc:iwhuynr6mm6xxuh25o4do2tx"
+            }
+          ]
+        }
+      ]
+    })
+
+    console.log(`post: ${post}`)
+
+    return c.json(post);
+  }
+  return c.html(`<h1>well this is awkward... </h1>`)
 });
 
 const run = async () => {
