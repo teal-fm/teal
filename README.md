@@ -3,7 +3,7 @@
 To get started with this template, simply paste this command into your terminal:
 
 ```bash
-bun install && bun install -g turbo && mv apps/aqua/.dev_env apps/aqua/.env &&
+bun install && bun install -g turbo && cp apps/aqua/.example_env apps/aqua/.env &&
 bun run db:migrate
 ```
 
