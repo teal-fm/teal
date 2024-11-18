@@ -7,8 +7,8 @@ import { EnvWithCtx, setupContext, TealContext } from "./ctx";
 import { env } from "./lib/env";
 import { getCookie, deleteCookie } from "hono/cookie";
 import { atclient } from "./auth/client";
-import { getSessionAgent} from "./lib/auth";
-import { RichText, } from "@atproto/api";
+import { getSessionAgent } from "./lib/auth";
+import { RichText } from "@atproto/api";
 
 const logger = pino({ name: "server start" });
 
@@ -28,33 +28,55 @@ app.get("/", async (c) => {
   // Serve logged in content
   if (tealSession) {
     const agent = await getSessionAgent(c);
-      
-    const post = await agent?.getPost({repo: "teal.fm", rkey: "3lb2c74v73c2a"});
+
+    const post = await agent?.getPost({
+      repo: "teal.fm",
+      rkey: "3lb2c74v73c2a",
+    });
     // const followers = await agent?.getFollowers();
     return c.html(
-      `<div id="root">
-        <div id="header">
-          <h1>teal.fm</h1>
-          <p>Your music, beautifully tracked. (soon.)</p>
+      `
+      <head>
+      <link rel="stylesheet" href="https://latex.vercel.app/style.css">
+      </head>
+      <div id="root">
+        <div id="header" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+          <div>
+            <h1>teal.fm</h1>
+            <p>Your music, beautifully tracked. (soon.)</p>
+          </div>
+          <div style=" width: 100%; display: flex; flex-direction: row; justify-content: space-between; gap: 0.5rem;">
+            <div>
+              <a href="/">home</a>
+              <a href="/stamp">stamp</a>
+            </div>
+            <a href="/logout" style="color: red;">logout</a>
+          </div>
         </div>
         <div class="container">
-          <h1>${post?.value.text}</h1>
-          <button><a href="/stamp">stamp</a></button>
+          <h2>${post?.value.text}</h2>
         </div>
-        <form action="/logout" method="post" class="session-form">
-          <button type="submit">Log out</button>
-        </form>
-      </div>`
+      </div>`,
     );
   }
-  
 
   // Serve non-logged in content
   return c.html(
-    `<div id="root">
+    `
+    <head>
+    <link rel="stylesheet" href="https://latex.vercel.app/style.css">
+    </head>
+    <div id="root">
     <div id="header">
       <h1>teal.fm</h1>
       <p>Your music, beautifully tracked. (soon.)</p>
+      <div style=" width: 100%; display: flex; flex-direction: row; justify-content: space-between; gap: 0.5rem;">
+        <div>
+          <a href="/">home</a>
+          <a href="/stamp">stamp</a>
+        </div>
+        <div/>
+      </div>
     </div>
     <div class="container">
       <button><a href="/login">Login</a></button>
@@ -63,16 +85,31 @@ app.get("/", async (c) => {
         <a href="https://bsky.app">Sign up for Bluesky</a> to create one now!
       </div>
     </div>
-  </div>`
+  </div>`,
   );
 });
 
 app.get("/login", (c) => {
+  const tealSession = getCookie(c, "tealSession");
+  if (!tealSession) {
+    return c.redirect("/");
+  }
   return c.html(
-    `<div id="root">
+    `
+    <head>
+    <link rel="stylesheet" href="https://latex.vercel.app/style.css">
+    </head>
+    <div id="root">
     <div id="header">
       <h1>teal.fm</h1>
       <p>Your music, beautifully tracked. (soon.)</p>
+      <div style=" width: 100%; display: flex; flex-direction: row; justify-content: space-between; gap: 0.5rem;">
+        <div>
+          <a href="/">home</a>
+          <a href="/stamp">stamp</a>
+        </div>
+        <div />
+      </div>
     </div>
     <div class="container">
       <form action="/login" method="post" class="login-form">
@@ -89,13 +126,13 @@ app.get("/login", (c) => {
         <a href="https://bsky.app">Sign up for Bluesky</a> to create one now!
       </div>
     </div>
-  </div>`
+  </div>`,
   );
 });
 
 app.post("/login", async (c: TealContext) => {
   const body = await c.req.parseBody();
-  const { handle } = body;  
+  const { handle } = body;
   console.log("handle", handle);
   // Initiate the OAuth flow
   try {
@@ -121,15 +158,33 @@ app.post("/logout", (c) => {
 });
 
 app.get("/stamp", (c) => {
+  // check logged in
+  const tealSession = getCookie(c, "tealSession");
+  if (!tealSession) {
+    return c.redirect("/login");
+  }
   return c.html(
-    `<div id="root">
+    `
+    <head>
+    <link rel="stylesheet" href="https://latex.vercel.app/style.css">
+    </head>
+    <div id="root">
     <div id="header">
       <h1>teal.fm</h1>
       <p>Your music, beautifully tracked. (soon.)</p>
+      <div style=" width: 100%; display: flex; flex-direction: row; justify-content: space-between; gap: 0.5rem;">
+        <div>
+          <a href="/">home</a>
+          <a href="/stamp">stamp</a>
+        </div>
+        <form action="/logout" method="post" class="session-form">
+          <button type="submit" style="background-color: #cc0000; color: white; border: none; padding: 0rem 0.5rem; border-radius: 0.5rem;">logout</button>
+        </form>
+      </div>
     </div>
     <div class="container">
       <p>want to share what you're listening to in the meantime??</p>
-      <form action="/stamp" method="post" class="login-form">
+      <form action="/stamp" method="post" class="login-form" style="display: flex; flex-direction: column; gap: 0.5rem;">
         <input
           type="text"
           name="artist"
@@ -142,22 +197,21 @@ app.get("/stamp", (c) => {
           placeholder="track title (eg what's my age again?)"
           required
         />
-        <input 
+        <input
           type="text"
           name="link"
           placeholder="https://www.youtube.com/watch?v=K7l5ZeVVoCA&pp=ygUdYmxpbmsgMTgyIHdoYXQncyBteSBhZ2UgYWdhaW4%3D"
         />
-        <button type="submit">Stamp!</button>
+        <button type="submit" style="width: 15%">Stamp!</button>
       </form>
       <div class="signup-cta">
         Don't have an account on the Atmosphere?
         <a href="https://bsky.app">Sign up for Bluesky</a> to create one now!
       </div>
     </div>
-  </div>`
+  </div>`,
   );
 });
-
 
 app.post("/stamp", async (c: TealContext) => {
   const body = await c.req.parseBody();
@@ -165,13 +219,15 @@ app.post("/stamp", async (c: TealContext) => {
   const agent = await getSessionAgent(c);
 
   if (agent) {
-    const rt = new RichText({text: `now playing: 
+    const rt = new RichText({
+      text: `now playing:
     artist: ${artist}
     track: ${track}
 
-    powered by @teal.fm`});
+    powered by @teal.fm`,
+    });
     await rt.detectFacets(agent);
-      
+
     let embed = undefined;
     if (link) {
       embed = {
@@ -179,21 +235,46 @@ app.post("/stamp", async (c: TealContext) => {
         external: {
           uri: link,
           title: track,
-          description: `${artist} - ${track}`
-        }
-      }; 
+          description: `${artist} - ${track}`,
+        },
+      };
     }
     const post = await agent.post({
-      text: rt.text, 
-      facets: rt.facets, 
-      embed: embed
+      text: rt.text,
+      facets: rt.facets,
+      embed: embed,
     });
 
-    console.log(`post: ${post}`)
+    console.log(`post: ${post}`);
 
-    return c.json(post);
+    return c.html(
+      `
+      <head>
+      <link rel="stylesheet" href="https://latex.vercel.app/style.css">
+      </head>
+      <div id="root">
+      <div id="header">
+        <h1>teal.fm</h1>
+        <p>Your music, beautifully tracked. (soon.)</p>
+        <div style=" width: 100%; display: flex; flex-direction: row; justify-content: space-between; gap: 0.5rem;">
+          <div>
+            <a href="/">home</a>
+            <a href="/stamp">stamp</a>
+          </div>
+          <form action="/logout" method="post" class="session-form">
+            <button type="submit" style="background-color: #cc0000; color: white; border: none; padding: 0rem 0.5rem; border-radius: 0.5rem;">logout</button>
+          </form>
+        </div>
+      </div>
+      <div class="container">
+        <h2 class="stamp-success">Success! 🎉</h2>
+        <p>Your post is being tracked by the Atmosphere.</p>
+        <p>You can view it <a href="https://bsky.app/profile/${agent.did}/post/${post.uri.split("/").pop()}">here</a>.</p>
+      </div>
+    </div>`,
+    );
   }
-  return c.html(`<h1>well this is awkward... </h1>`)
+  return c.html(`<h1>doesn't look like you're logged in... try <a href="/login">logging in?</a></h1>`);
 });
 
 const run = async () => {
@@ -210,9 +291,9 @@ const run = async () => {
           `Listening on ${
             info.address == "::1"
               ? "http://localhost"
-              // TODO: below should probably be https://
-              // but i just want to ctrl click in the terminal
-              : "http://" + info.address
+              : // TODO: below should probably be https://
+                // but i just want to ctrl click in the terminal
+                "http://" + info.address
           }:${info.port} (${info.family})`,
         );
       },
