@@ -91,9 +91,7 @@ app.get("/", async (c) => {
 
 app.get("/login", (c) => {
   const tealSession = getCookie(c, "tealSession");
-  if (!tealSession) {
-    return c.redirect("/");
-  }
+
   return c.html(
     `
     <head>
