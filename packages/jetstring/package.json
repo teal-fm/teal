@@ -6,7 +6,10 @@
   },
   "dependencies": {
     "@skyware/jetstream": "^0.2.0",
-    "@teal/db": "*"
+    "@teal/db": "*",
+    "@teal/lexicons": "*",
+    "pino": "^9.5.0",
+    "pino-pretty": "^13.0.0"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

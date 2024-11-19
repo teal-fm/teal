@@ -1,9 +1,11 @@
-import type { Database } from "@teal/db/connect";
 import { db } from "@teal/db/connect";
 import { status } from "@teal/db/schema";
 import { CommitCreateEvent, Jetstream } from "@skyware/jetstream";
-import { server } from "@teal/lexicons/generated/server/types";
-import ws from "ws";
+
+import {Record as Status, isRecord as isStatus, validateRecord as validateStatus} from "@teal/lexicons/generated/server/types/xyz/statusphere/status";
+
+import pino from "pino";
+const logger = pino({ name: "jetstream" });
 
 class Handler {
   private static instance: Handler;
@@ -15,15 +17,19 @@ class Handler {
     return Handler.instance;
   }
 
-  handle(msg_type: string, msg: any) {
+  handle(msg_type: string, message: CommitCreateEvent<string & {}>) {
     // Handle message logic here
-    console.log("Handling" + msg_type + "message:", msg);
-    if (msg_type === "xyz.statusphere.status") {
+    logger.info("Handling " + msg_type + " message:", message);
+    // check and verify message is what it says it is
+    if (message.commit.collection === "xyz.statusphere.status" && isStatus(message.commit.record) && validateStatus(message.commit.record) ) {
       // serialize message as xyz.statusphere.status
+      let msg = message.commit.record as Status;
       const st = db.insert(status).values({
+        createdAt: new Date(message.time_us).toISOString(),
+        indexedAt: new Date().toISOString(),
         status: msg.status,
-        uri: msg.uri,
-        authorDid: msg.authorDid,
+        uri: message.commit.cid,
+        authorDid: message.did,
       });
     }
   }
@@ -38,7 +44,7 @@ class Streamer {
 
   private constructor(wantedCollections: string[]) {
     this.handler = Handler.getInstance();
-    console.log("Creating new jetstream with collections", wantedCollections);
+    logger.info("Creating new jetstream with collections", wantedCollections);
     this.jetstream = new Jetstream({
       wantedCollections,
     });
@@ -65,13 +71,13 @@ class Streamer {
   async setOnCreate(collection: string) {
     try {
       this.jetstream.onCreate(collection, (event) => {
-        console.log("Received message:", event.commit.record);
+        logger.info("Received message:", event);
         this.handleCreate(collection, event);
       });
     } catch (error) {
-      console.error("Error setting onCreate:", error);
+      logger.error("Error setting onCreate:", error);
     }
-    console.log("Started onCreate stream for", collection);
+    logger.info("Started onCreate stream for", collection);
   }
 
   async handleCreate(
@@ -86,9 +92,9 @@ class Streamer {
     try {
       await this.setOnCreates();
       this.jetstream.start();
-      console.log("Streamer started successfully");
+      logger.info("Streamer started successfully");
     } catch (error) {
-      console.error("Error starting streamer:", error);
+      logger.error("Error starting streamer:", error);
     }
   }
 }
@@ -101,12 +107,12 @@ async function main() {
 
     // Keep the process running
     process.on("SIGINT", () => {
-      console.log("Received SIGINT. Graceful shutdown...");
+      logger.info("Received SIGINT. Graceful shutdown...");
       process.exit(0);
     });
 
     process.on("SIGTERM", () => {
-      console.log("Received SIGTERM. Graceful shutdown...");
+      logger.info("Received SIGTERM. Graceful shutdown...");
       process.exit(0);
     });
 
@@ -115,15 +121,15 @@ async function main() {
       // This empty interval keeps the process running
     }, 1000);
 
-    console.log("Application is running. Press Ctrl+C to exit.");
+    logger.info("Application is running. Press Ctrl+C to exit.");
   } catch (error) {
-    console.error("Error in main:", error);
+    logger.error("Error in main:", error);
     process.exit(1);
   }
 }
 
 // Run the application
 main().catch((error) => {
-  console.error("Unhandled error:", error);
+  logger.error("Unhandled error:", error);
   process.exit(1);
 });

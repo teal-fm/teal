@@ -3,6 +3,6 @@
   "type": "module",
   "dependencies": {
     "@atproto/lexicon": "^0.4.2",
-    "@atproto/xrpc-server": "^0.6.4"
+    "@atproto/xrpc-server": "^0.7.3"
   }
 }
