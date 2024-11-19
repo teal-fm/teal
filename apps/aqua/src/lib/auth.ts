@@ -3,7 +3,7 @@ import { db } from "@teal/db/connect";
 import { Session } from "@atproto/oauth-client-node";
 import { tealSession } from "@teal/db/schema";
 import { eq } from "drizzle-orm";
-import { getCookie } from "hono/cookie";
+import { deleteCookie, getCookie } from "hono/cookie";
 import { atclient } from "@/auth/client";
 import { Agent } from "@atproto/api";
 
@@ -20,7 +20,7 @@ interface UserInfo {
 
 export async function getUserInfo(
   c: TealContext
-): Promise<UserInfo> | undefined {
+): Promise<UserInfo | undefined> {
   // init session agent
   const agent = await getSessionAgent(c);
   if (agent && agent.did) {
@@ -54,6 +54,9 @@ export async function getContextDID(c: TealContext): Promise<string> {
     }).execute();
 
     if (!session) {
+      // we should log them out here and redirect to home to double check
+      deleteCookie(c, "tealSession");
+      c.redirect("/");
       throw new Error("No DID found in session");
     }
     return session.session.replace(/['"]/g, "");
