@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from "hono";
 import { db } from "@teal/db/connect";
 import { getAuthRouter } from "./auth/router";
@@ -10,6 +11,10 @@ import { atclient } from "./auth/client";
 import { getSessionAgent } from "./lib/auth";
 import { RichText } from "@atproto/api";
 import { sanitizeUrl } from "@braintree/sanitize-url";
+
+const HEAD = `<head>
+    <link rel="stylesheet" href="/latex.css">
+    </head>`
 
 const logger = pino({ name: "server start" });
 
@@ -28,18 +33,10 @@ app.get("/", async (c) => {
 
   // Serve logged in content
   if (tealSession) {
-    const agent = await getSessionAgent(c);
-
-    const post = await agent?.getPost({
-      repo: "teal.fm",
-      rkey: "3lb2c74v73c2a",
-    });
     // const followers = await agent?.getFollowers();
     return c.html(
       `
-      <head>
-      <link rel="stylesheet" href="https://latex.vercel.app/style.css">
-      </head>
+    ${HEAD}
       <div id="root">
         <div id="header" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
           <div>
@@ -51,11 +48,11 @@ app.get("/", async (c) => {
               <a href="/">home</a>
               <a href="/stamp">stamp</a>
             </div>
-            <a href="/logout" style="color: red;">logout</a>
+            <a href="/logout" style="background-color: #cc0000; color: white; border: none; padding: 0rem 0.5rem; border-radius: 0.5rem;">logout</a>
           </div>
         </div>
         <div class="container">
-          <h2>${post?.value.text}</h2>
+          
         </div>
       </div>`,
     );
@@ -64,9 +61,7 @@ app.get("/", async (c) => {
   // Serve non-logged in content
   return c.html(
     `
-    <head>
-    <link rel="stylesheet" href="https://latex.vercel.app/style.css">
-    </head>
+    ${HEAD}
     <div id="root">
     <div id="header">
       <h1>teal.fm</h1>
@@ -76,11 +71,10 @@ app.get("/", async (c) => {
           <a href="/">home</a>
           <a href="/stamp">stamp</a>
         </div>
-        <div/>
+        <button style="background-color: #acf; color: white; border: none; padding: 0rem 0.5rem; border-radius: 0.5rem;"><a href="/login">Login</a></button>
       </div>
     </div>
     <div class="container">
-      <button><a href="/login">Login</a></button>
       <div class="signup-cta">
         Don't have an account on the Atmosphere?
         <a href="https://bsky.app">Sign up for Bluesky</a> to create one now!
@@ -95,9 +89,7 @@ app.get("/login", (c) => {
 
   return c.html(
     `
-    <head>
-    <link rel="stylesheet" href="https://latex.vercel.app/style.css">
-    </head>
+    ${HEAD}
     <div id="root">
     <div id="header">
       <h1>teal.fm</h1>
@@ -167,9 +159,7 @@ app.get("/stamp", (c) => {
   }
   return c.html(
     `
-    <head>
-    <link rel="stylesheet" href="https://latex.vercel.app/style.css">
-    </head>
+    ${HEAD}
     <div id="root">
     <div id="header">
       <h1>teal.fm</h1>
@@ -185,7 +175,8 @@ app.get("/stamp", (c) => {
       </div>
     </div>
     <div class="container">
-      <p>want to share what you're listening to in the meantime??</p>
+      <p>🛠️ while we're building our music tracker, share what you're listening to here!<br/>
+      <a href="https://emojipedia.org/white-flower">💮</a> we'll create a post on Bluesky for you to share with the world!<br/>​</p>
       <form action="/stamp" method="post" class="login-form" style="display: flex; flex-direction: column; gap: 0.5rem;">
         <input
           type="text"
@@ -229,11 +220,11 @@ app.post("/stamp", async (c: TealContext) => {
 
   if (agent) {
     const rt = new RichText({
-      text: `now playing:
-    artist: ${artist}
-    track: ${track}
+      text: `💮 now playing:
+  artist: ${artist}
+  track: ${track}
 
-    powered by @teal.fm`,
+  powered by @teal.fm`,
     });
     await rt.detectFacets(agent);
 
@@ -258,9 +249,7 @@ app.post("/stamp", async (c: TealContext) => {
 
     return c.html(
       `
-      <head>
-      <link rel="stylesheet" href="https://latex.vercel.app/style.css">
-      </head>
+      ${HEAD}
       <div id="root">
       <div id="header">
         <h1>teal.fm</h1>
@@ -285,6 +274,8 @@ app.post("/stamp", async (c: TealContext) => {
   }
   return c.html(`<h1>doesn't look like you're logged in... try <a href="/login">logging in?</a></h1>`);
 });
+
+app.use('/*', serveStatic({ root: '/src/public' }));
 
 const run = async () => {
   logger.info("Running in " + navigator.userAgent);
