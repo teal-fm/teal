@@ -121,6 +121,7 @@ export async function refresh(c: TealContext) {
 const app = new Hono<EnvWithCtx>();
 
 app.get("/callback", async (c) => callback(c));
+app.get("/refresh", async (c) => refresh(c));
 
 export const getAuthRouter = () => {
   return app;
