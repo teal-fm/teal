@@ -16,7 +16,7 @@
     "db:seed": "drizzle-kit seed"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "turbo": "^2.3.0"
   },
   "engines": {
     "node": ">=20.0.0"

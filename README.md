@@ -3,7 +3,7 @@
 To get started with this template, simply paste this command into your terminal:
 
 ```bash
-bun install && bun install -g turbo && mv apps/aqua/.dev_env apps/aqua/.env &&
+bun install && bun install -g turbo && cp apps/aqua/.env.example apps/aqua/.env &&
 bun run db:migrate
 ```
 
@@ -15,5 +15,4 @@ To start the development server run:
 turbo dev --filter=@teal/aqua
 ```
 
-Open http://localhost:3000/oauth/login/:handle with your browser to see the
-result.
+Open http://localhost:3000/ with your browser to see the home page.
