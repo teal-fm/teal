@@ -9,6 +9,7 @@ import { getCookie, deleteCookie } from "hono/cookie";
 import { atclient } from "./auth/client";
 import { getSessionAgent } from "./lib/auth";
 import { RichText } from "@atproto/api";
+import { sanitizeUrl } from "@braintree/sanitize-url";
 
 const logger = pino({ name: "server start" });
 
@@ -130,7 +131,10 @@ app.get("/login", (c) => {
 
 app.post("/login", async (c: TealContext) => {
   const body = await c.req.parseBody();
-  const { handle } = body;
+  let { handle } = body;
+  // shouldn't be a file, escape now
+  if (handle instanceof File) return c.redirect("/login");
+  handle = sanitizeUrl(handle);
   console.log("handle", handle);
   // Initiate the OAuth flow
   try {
@@ -213,7 +217,14 @@ app.get("/stamp", (c) => {
 
 app.post("/stamp", async (c: TealContext) => {
   const body = await c.req.parseBody();
-  const { artist, track, link } = body;
+  let { artist, track, link } = body;
+  // shouldn't get a File, escape now
+  if (artist instanceof File || track instanceof File || link instanceof File) return c.redirect("/stamp");
+  
+  artist = sanitizeUrl(artist);
+  track = sanitizeUrl(track);
+  link = sanitizeUrl(link);
+  
   const agent = await getSessionAgent(c);
 
   if (agent) {
