@@ -193,7 +193,7 @@ app.get("/stamp", (c) => {
         <input
           type="text"
           name="link"
-          placeholder="https://www.youtube.com/watch?v=K7l5ZeVVoCA&pp=ygUdYmxpbmsgMTgyIHdoYXQncyBteSBhZ2UgYWdhaW4%3D"
+          placeholder="https://www.youtube.com/watch?v=K7l5ZeVVoCA"
         />
         <button type="submit" style="width: 15%">Stamp!</button>
       </form>
