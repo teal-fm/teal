@@ -1,8 +1,6 @@
 services:
   aqua-api:
-    build:
-      context: .
-      dockerfile: apps/aqua/Dockerfile
+    image: ghcr.io/teal-fm/aqua:latest
     container_name: aqua-api
     # pass through db.sqlite
     volumes:
@@ -11,7 +9,3 @@ services:
       - "3000:3000"
     env_file:
       - .env
-
-volumes:
-  postgres_data:
-  redis_data:
