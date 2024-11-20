@@ -6,8 +6,6 @@
   "packageManager": "bun@1.0.0+",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
-    "bun:dev": "bun run --hot src/index.ts | pino-pretty",
-    "deno:dev": "deno run --allow-net --allow-read --allow-env --allow-run --unstable --watch src/index.ts | pino-pretty",
     "build": "tsup && cp -r public dist/",
     "start": "node dist/index.cjs | pino-pretty",
     "lexgen": "lex gen-server ./src/lexicon ./lexicons/*",
