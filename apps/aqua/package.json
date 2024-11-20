@@ -33,6 +33,7 @@
     "envalid": "^8.0.0",
     "hono": "^4.6.9",
     "jose": "^5.9.6",
+    "react-native-image-crop-picker": "^0.41.5",
     "pino": "^9.5.0",
     "turbo": "^2.2.3",
     "uhtml": "^4.5.11",

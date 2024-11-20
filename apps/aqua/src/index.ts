@@ -10,6 +10,7 @@ import { atclient } from "./auth/client";
 import { getSessionAgent } from "./lib/auth";
 import { RichText } from "@atproto/api";
 import { sanitizeUrl } from "@braintree/sanitize-url";
+import { resolveLink } from "./lib/api/resolve"
 
 const logger = pino({ name: "server start" });
 
@@ -224,7 +225,7 @@ app.post("/stamp", async (c: TealContext) => {
   artist = sanitizeUrl(artist);
   track = sanitizeUrl(track);
   link = sanitizeUrl(link);
-  
+
   const agent = await getSessionAgent(c);
 
   if (agent) {
@@ -239,22 +240,36 @@ app.post("/stamp", async (c: TealContext) => {
 
     let embed = undefined;
     if (link) {
-      embed = {
-        $type: "app.bsky.embed.external",
-        external: {
-          uri: link,
-          title: track,
-          description: `${artist} - ${track}`,
-        },
-      };
+      const temp = await resolveLink(link);
+      if (temp) {
+        embed = {
+          $type: "app.bsky.embed.external",
+          external: {
+            uri: temp.uri,
+            title: temp.title,
+            description: temp.description,
+            thumb: temp.thumb,
+          },
+        }; 
+      } else {
+        embed = {
+          $type: "app.bsky.embed.external",
+          external: {
+            uri: link,
+            title: track,
+            description: `${artist} - ${track}`,
+          },
+        };
+      }
     }
-    const post = await agent.post({
-      text: rt.text,
-      facets: rt.facets,
-      embed: embed,
-    });
+    // uncomment below to post to bsky
+    // const post = await agent.post({
+    //   text: rt.text,
+    //   facets: rt.facets,
+    //   embed: embed,
+    // });
 
-    console.log(`post: ${post}`);
+    console.log(`post: ${JSON.stringify(embed, null, 2)}`);
 
     return c.html(
       `
@@ -278,10 +293,12 @@ app.post("/stamp", async (c: TealContext) => {
       <div class="container">
         <h2 class="stamp-success">Success! 🎉</h2>
         <p>Your post is being tracked by the Atmosphere.</p>
-        <p>You can view it <a href="https://bsky.app/profile/${agent.did}/post/${post.uri.split("/").pop()}">here</a>.</p>
+        
       </div>
     </div>`,
     );
+
+    // <p>You can view it <a href="https://bsky.app/profile/${agent.did}/post/${post.uri.split("/").pop()}">here</a>.</p>
   }
   return c.html(`<h1>doesn't look like you're logged in... try <a href="/login">logging in?</a></h1>`);
 });
