@@ -1,0 +1,17 @@
+services:
+  aqua-api:
+    build:
+      context: .
+      dockerfile: apps/aqua/Dockerfile
+    container_name: aqua-api
+    # pass through db.sqlite
+    volumes:
+      - ./db.sqlite:/app/db.sqlite
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  redis_data:

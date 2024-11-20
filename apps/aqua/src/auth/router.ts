@@ -1,7 +1,7 @@
 import { atclient } from "./client";
 import { db } from "@teal/db/connect";
-import {atProtoSession} from "@teal/db/schema"
-import { eq } from "drizzle-orm"
+import { atProtoSession } from "@teal/db/schema";
+import { eq } from "drizzle-orm";
 import { EnvWithCtx, TealContext } from "@/ctx";
 import { Hono } from "hono";
 import { tealSession } from "@teal/db/schema";
@@ -42,12 +42,12 @@ export async function callback(c: TealContext) {
       maxAge: 60 * 60 * 24 * 365,
     });
 
-    if(params.get("spa")) {
+    if (params.get("spa")) {
       return c.json({
         provider: "atproto",
         jwt: did,
         accessToken: did,
-      })
+      });
     }
 
     return c.redirect("/");
@@ -56,7 +56,6 @@ export async function callback(c: TealContext) {
     return Response.json({ error: "Could not authorize user" });
   }
 }
-
 
 // Refresh an access token from a refresh token. Should be only used in SPAs.
 // Pass in 'key' and 'refresh_token' query params.
@@ -67,16 +66,19 @@ export async function refresh(c: TealContext) {
     const params = new URLSearchParams(honoParams);
     let key = params.get("key");
     let refresh_token = params.get("refresh_token");
-    if(!key || !refresh_token) {
-      return Response.json({error: "Missing key or refresh_token"});
+    if (!key || !refresh_token) {
+      return Response.json({ error: "Missing key or refresh_token" });
     }
     // check if refresh token is valid
-    let r_tk_check = await db.select().from(atProtoSession).where(eq(atProtoSession.key, key)).execute() as any;
+    let r_tk_check = (await db
+      .select()
+      .from(atProtoSession)
+      .where(eq(atProtoSession.key, key))
+      .execute()) as any;
 
-    if(r_tk_check.tokenSet.refresh_token !== refresh_token) {
-      return Response.json({error: "Invalid refresh token"});
+    if (r_tk_check.tokenSet.refresh_token !== refresh_token) {
+      return Response.json({ error: "Invalid refresh token" });
     }
-
 
     const session = await atclient.restore(key);
 
@@ -108,10 +110,10 @@ export async function refresh(c: TealContext) {
     });
 
     return c.json({
-      provider:"atproto",
+      provider: "atproto",
       jwt: did,
       accessToken: did,
-    })
+    });
   } catch (e) {
     console.error(e);
     return Response.json({ error: "Could not authorize user" });

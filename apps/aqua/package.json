@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
     "bun:dev": "bun run --hot src/index.ts | pino-pretty",
-    "build": "tsup",
-    "start": "node dist/index.js",
+    "deno:dev": "deno run --allow-net --allow-read --allow-env --allow-run --unstable --watch src/index.ts | pino-pretty",
+    "build": "tsup && cp -r public dist/",
+    "start": "node dist/index.cjs | pino-pretty",
     "lexgen": "lex gen-server ./src/lexicon ./lexicons/*",
     "clean": "rimraf dist coverage",
     "check-types": "tsc --noEmit",
@@ -21,7 +22,7 @@
     "@atproto/common": "^0.4.4",
     "@atproto/identity": "^0.4.3",
     "@atproto/lexicon": "^0.4.2",
-    "@atproto/oauth-client-node": "^0.2.0",
+    "@atproto/oauth-client-node": "^0.2.1",
     "@atproto/sync": "^0.1.5",
     "@atproto/syntax": "^0.3.0",
     "@atproto/xrpc-server": "^0.6.4",
@@ -49,15 +50,5 @@
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
-  },
-  "tsup": {
-    "entry": [
-      "src",
-      "!src/**/__tests__/**",
-      "!src/**/*.test.*"
-    ],
-    "splitting": false,
-    "sourcemap": true,
-    "clean": true
   }
 }

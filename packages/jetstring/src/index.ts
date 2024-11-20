@@ -2,8 +2,6 @@ import type { Database } from "@teal/db/connect";
 import { db } from "@teal/db/connect";
 import { status } from "@teal/db/schema";
 import { CommitCreateEvent, Jetstream } from "@skyware/jetstream";
-import { server } from "@teal/lexicons/generated/server/types";
-import ws from "ws";
 
 class Handler {
   private static instance: Handler;

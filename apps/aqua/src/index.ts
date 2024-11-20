@@ -1,5 +1,5 @@
 import { serve } from "@hono/node-server";
-import { serveStatic } from '@hono/node-server/serve-static'
+import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { db } from "@teal/db/connect";
 import { getAuthRouter } from "./auth/router";
@@ -14,7 +14,7 @@ import { sanitizeUrl } from "@braintree/sanitize-url";
 
 const HEAD = `<head>
     <link rel="stylesheet" href="/latex.css">
-    </head>`
+    </head>`;
 
 const logger = pino({ name: "server start" });
 
@@ -48,11 +48,13 @@ app.get("/", async (c) => {
               <a href="/">home</a>
               <a href="/stamp">stamp</a>
             </div>
-            <a href="/logout" style="background-color: #cc0000; color: white; border: none; padding: 0rem 0.5rem; border-radius: 0.5rem;">logout</a>
+            <form action="/logout" method="post" class="session-form">
+              <button type="submit" style="background-color: #cc0000; color: white; border: none; padding: 0rem 0.5rem; border-radius: 0.5rem;">logout</button>
+            </form>
           </div>
         </div>
         <div class="container">
-          
+
         </div>
       </div>`,
     );
@@ -210,12 +212,13 @@ app.post("/stamp", async (c: TealContext) => {
   const body = await c.req.parseBody();
   let { artist, track, link } = body;
   // shouldn't get a File, escape now
-  if (artist instanceof File || track instanceof File || link instanceof File) return c.redirect("/stamp");
-  
+  if (artist instanceof File || track instanceof File || link instanceof File)
+    return c.redirect("/stamp");
+
   artist = sanitizeUrl(artist);
   track = sanitizeUrl(track);
   link = sanitizeUrl(link);
-  
+
   const agent = await getSessionAgent(c);
 
   if (agent) {
@@ -245,8 +248,6 @@ app.post("/stamp", async (c: TealContext) => {
       embed: embed,
     });
 
-    console.log(`post: ${post}`);
-
     return c.html(
       `
       ${HEAD}
@@ -272,10 +273,12 @@ app.post("/stamp", async (c: TealContext) => {
     </div>`,
     );
   }
-  return c.html(`<h1>doesn't look like you're logged in... try <a href="/login">logging in?</a></h1>`);
+  return c.html(
+    `<h1>doesn't look like you're logged in... try <a href="/login">logging in?</a></h1>`,
+  );
 });
 
-app.use('/*', serveStatic({ root: '/src/public' }));
+app.use("/*", serveStatic({ root: "/public" }));
 
 const run = async () => {
   logger.info("Running in " + navigator.userAgent);
