@@ -281,8 +281,8 @@ app.post("/stamp", async (c: TealContext) => {
 app.use("/*", serveStatic({ root: "/public" }));
 
 const run = async () => {
-  logger.info("Running in " + navigator.userAgent);
-  if (navigator.userAgent.includes("Node")) {
+  // logger.info("Running in " + navigator.userAgent);
+  //if (navigator.userAgent.includes("Node")) {
     serve(
       {
         fetch: app.fetch,
@@ -301,7 +301,7 @@ const run = async () => {
         );
       },
     );
-  }
+  //}
 };
 
 run();
