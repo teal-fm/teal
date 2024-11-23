@@ -27,7 +27,6 @@
     "@braintree/sanitize-url": "^7.1.0",
     "@hono/node-server": "^1.13.7",
     "@libsql/client": "^0.14.0",
-    "@libsql/darwin-x64": "^0.5.0-pre.2",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.1",
     "envalid": "^8.0.0",
