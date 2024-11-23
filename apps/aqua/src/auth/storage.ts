@@ -17,7 +17,6 @@ export class StateStore implements NodeSavedStateStore {
       .where(eq(authState.key, key))
       .limit(1)
       .execute();
-    console.log("getting state", key, result);
     if (!result[0]) return;
     return JSON.parse(result[0].state) as NodeSavedState;
   }

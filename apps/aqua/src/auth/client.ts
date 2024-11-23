@@ -15,7 +15,7 @@ export const atclient = new NodeOAuthClient({
       ? `${url}/client-metadata.json`
       : `http://localhost?redirect_uri=${enc(`${url}/oauth/callback`)}&scope=${enc("atproto transition:generic")}`,
     client_uri: url,
-    redirect_uris: [`${url}/oauth/callback`],
+    redirect_uris: [`${url}/oauth/callback`, `${url}/oauth/callback/app`],
     scope: "atproto transition:generic",
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
