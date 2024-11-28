@@ -1,6 +1,6 @@
 import { atclient } from "./client";
 import { db } from "@teal/db/connect";
-import { atProtoSession } from "@teal/db/schema";
+import { atProtoSession, authVerification } from "@teal/db/schema";
 import { eq } from "drizzle-orm";
 import { EnvWithCtx, TealContext } from "@/ctx";
 import { Hono } from "hono";
@@ -11,9 +11,11 @@ import { env } from "@/lib/env";
 const publicUrl = env.PUBLIC_URL;
 const redirectBase = publicUrl || `http://127.0.0.1:${env.PORT}`;
 
+/// Generate a state string that is unique to the current request
+/// In the format of `prefix:state+timestamp`. prefix: is optional.
 export function generateState(prefix?: string) {
   const state = crypto.randomUUID();
-  return `${prefix}${prefix ? ":" : ""}${state}`;
+  return `${prefix}${prefix ? ":" : ""}${state}+${Date.now()}`;
 }
 
 const SPA_PREFIX = "a37d";
@@ -24,12 +26,13 @@ export async function login(c: TealContext) {
   if (!handle) {
     return Response.json({ error: "Missing handle" });
   }
+  const state = generateState(spa ? SPA_PREFIX : undefined);
   const url = await atclient.authorize(handle, {
     scope: "atproto transition:generic",
     // state.appState in callback
-    state: generateState(spa ? SPA_PREFIX : undefined),
+    state,
   });
-  return c.json({ url });
+  return c.json({ url, state });
 }
 
 // Redirect to the app's callback URL.
@@ -39,6 +42,7 @@ async function callbackToApp(c: TealContext) {
   return c.redirect(`${env.APP_URI}/oauth/callback?${params.toString()}`);
 }
 
+/// Handle the callback from ATProto
 export async function callback(c: TealContext, isSpa: boolean = false) {
   try {
     const honoParams = c.req.query();
@@ -76,11 +80,16 @@ export async function callback(c: TealContext, isSpa: boolean = false) {
       maxAge: 60 * 60 * 24 * 365,
     });
 
-    if (isSpa) {
+    if (isSpa && state) {
+      // insert the code and the tokens to be exchanged by the app
+      await db.insert(authVerification).values({
+        authSession: JSON.stringify(session),
+        expiry: state.split("+")[1],
+        state: state,
+      });
       return c.json({
         provider: "atproto",
-        jwt: did,
-        accessToken: did,
+        success: true,
       });
     }
 
@@ -91,8 +100,40 @@ export async function callback(c: TealContext, isSpa: boolean = false) {
   }
 }
 
-// Refresh an access token from a refresh token. Should be only used in SPAs.
-// Pass in 'key' and 'refresh_token' query params.
+/// Exchange the code for the tokens
+export async function exchange(c: TealContext) {
+  let state = c.req.query("state");
+  if (!state) {
+    return Response.json({ error: "Missing state" });
+  }
+  const authSession = await db
+    .select()
+    .from(authVerification)
+    .where(eq(authVerification.state, state))
+    .execute();
+  if (
+    !authSession ||
+    (authSession && authSession[0].expiry < Date.now().toString())
+  ) {
+    return Response.json({ error: "Invalid state" });
+  }
+
+  // delete the tokens
+  await db
+    .delete(authVerification)
+    .where(eq(authVerification.state, state))
+    .execute();
+
+  // return the associated tokens
+  return c.json({
+    provider: "atproto",
+    success: true,
+    accessToken: authSession[0].authSession,
+  });
+}
+
+/// Refresh an access token from a refresh token. Should be only used in SPAs.
+/// Pass in 'key' and 'refresh_token' query params.
 export async function refresh(c: TealContext) {
   try {
     const honoParams = c.req.query();

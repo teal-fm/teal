@@ -14,6 +14,12 @@ export type Status = {
   indexedAt: string;
 };
 
+export type AuthVerification = {
+  state: string;
+  expiry: string;
+  authSession: string;
+};
+
 export type AuthSession = {
   key: string;
   session: AuthSessionJson;
@@ -42,6 +48,13 @@ export const status = sqliteTable("status", {
 export const atProtoSession = sqliteTable("atp_session", {
   key: text().primaryKey(),
   session: text().notNull(),
+});
+
+/// Auth verification table - used for device auth flow
+export const authVerification = sqliteTable("auth_verification", {
+  state: text().primaryKey(),
+  expiry: text().notNull(),
+  authSession: text().notNull(),
 });
 
 export const authState = sqliteTable("auth_state", {
