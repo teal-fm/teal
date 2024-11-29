@@ -7,15 +7,17 @@ import { Hono } from "hono";
 import { tealSession } from "@teal/db/schema";
 import { setCookie } from "hono/cookie";
 import { env } from "@/lib/env";
+import { NodeSavedSession } from "@atproto/oauth-client-node";
 
 const publicUrl = env.PUBLIC_URL;
 const redirectBase = publicUrl || `http://127.0.0.1:${env.PORT}`;
 
 /// Generate a state string that is unique to the current request
-/// In the format of `prefix:state+timestamp`. prefix: is optional.
-export function generateState(prefix?: string) {
+/// in the format of `prefix:state+timestamp`. prefix: is optional.
+/// Timestamp is in ms, default is 15 minutes
+export function generateState(prefix?: string, expiry: number = 900000): string{
   const state = crypto.randomUUID();
-  return `${prefix}${prefix ? ":" : ""}${state}+${Date.now()}`;
+  return `${prefix}${prefix ? ":" : ""}${state}+${Date.now() + expiry}`;
 }
 
 const SPA_PREFIX = "a37d";
@@ -36,14 +38,42 @@ export async function login(c: TealContext) {
 }
 
 // Redirect to the app's callback URL.
-async function callbackToApp(c: TealContext) {
-  const queries = c.req.query();
-  const params = new URLSearchParams(queries);
-  return c.redirect(`${env.APP_URI}/oauth/callback?${params.toString()}`);
+async function callbackApp(c: TealContext) {
+  const state = c.req.query("state");
+  if (state && state.startsWith(SPA_PREFIX)) {
+    // provide the state to the app
+    let auth = await db.select().from(authVerification).where(eq(authVerification.state, state)).execute();
+    // delete the tokens
+    await db
+      .delete(authVerification)
+      .where(eq(authVerification.state, state))
+      .execute();
+    
+    // if expiry is in the past, return an error
+    if (auth[0].expiry < Date.now().toString()) {
+      return c.json({ error: "Expired state"})
+    }
+
+    console.log("Looking up session associated with key", auth[0]);
+
+    // look up the associated session
+    const session = await db
+      .select()
+      .from(atProtoSession)
+      .where(eq(atProtoSession.key, auth[0].authSession))
+      .execute();
+    
+    if(!session[0]){
+      return c.json({ error: "Invalid state - Could not find session"})
+    }
+    return c.json(session[0].session);
+  } else {
+    return c.json({ error: "Invalid state"})
+  }
 }
 
 /// Handle the callback from ATProto
-export async function callback(c: TealContext, isSpa: boolean = false) {
+export async function callback(c: TealContext) {
   try {
     const honoParams = c.req.query();
     console.log("params", honoParams);
@@ -70,66 +100,32 @@ export async function callback(c: TealContext, isSpa: boolean = false) {
       })
       .execute();
 
-    // cookie time
-    console.log("Setting cookie", sess);
-    setCookie(c, "tealSession", "teal:" + sess, {
-      httpOnly: true,
-      secure: env.HOST.startsWith("https"),
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-    });
-
-    if (isSpa && state) {
+    if (state && state.startsWith(SPA_PREFIX)) {
       // insert the code and the tokens to be exchanged by the app
+      console.log("Inserting verification code:", state);
       await db.insert(authVerification).values({
-        authSession: JSON.stringify(session),
+        authSession: session.sub,
         expiry: state.split("+")[1],
         state: state,
       });
-      return c.json({
-        provider: "atproto",
-        success: true,
+      // redirect back to app
+      return c.redirect("exp://127.0.0.1:8081/--/auth/callback?success=true");
+    } else {
+      console.log("Setting cookie", sess);
+      setCookie(c, "tealSession", "teal:" + sess, {
+        httpOnly: true,
+        secure: env.HOST.startsWith("https"),
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
       });
     }
 
     return c.redirect("/");
   } catch (e) {
     console.error(e);
-    return Response.json({ error: "Could not authorize user" });
+    return Response.json({ error: "Could not authorize user: " + (e as Error).message });
   }
-}
-
-/// Exchange the code for the tokens
-export async function exchange(c: TealContext) {
-  let state = c.req.query("state");
-  if (!state) {
-    return Response.json({ error: "Missing state" });
-  }
-  const authSession = await db
-    .select()
-    .from(authVerification)
-    .where(eq(authVerification.state, state))
-    .execute();
-  if (
-    !authSession ||
-    (authSession && authSession[0].expiry < Date.now().toString())
-  ) {
-    return Response.json({ error: "Invalid state" });
-  }
-
-  // delete the tokens
-  await db
-    .delete(authVerification)
-    .where(eq(authVerification.state, state))
-    .execute();
-
-  // return the associated tokens
-  return c.json({
-    provider: "atproto",
-    success: true,
-    accessToken: authSession[0].authSession,
-  });
 }
 
 /// Refresh an access token from a refresh token. Should be only used in SPAs.
@@ -145,13 +141,15 @@ export async function refresh(c: TealContext) {
       return Response.json({ error: "Missing key or refresh_token" });
     }
     // check if refresh token is valid
-    let r_tk_check = (await db
+    let r_tk_check = await db
       .select()
       .from(atProtoSession)
       .where(eq(atProtoSession.key, key))
-      .execute()) as any;
+      .execute()
+    
+    const tk: NodeSavedSession = JSON.parse(r_tk_check[0].session);
 
-    if (r_tk_check.tokenSet.refresh_token !== refresh_token) {
+    if (tk.tokenSet.refresh_token !== refresh_token) {
       return Response.json({ error: "Invalid refresh token" });
     }
 
@@ -199,7 +197,7 @@ const app = new Hono<EnvWithCtx>();
 
 app.get("/login", async (c) => login(c));
 app.get("/callback", async (c) => callback(c));
-app.get("/callback/app", async (c) => callback(c, true));
+app.get("/callback/app", async (c) => callbackApp(c));
 app.get("/refresh", async (c) => refresh(c));
 
 export const getAuthRouter = () => {

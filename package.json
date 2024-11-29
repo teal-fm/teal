@@ -13,6 +13,7 @@
     "lex:gen-md": "lex gen-md ./packages/lexicons/generated/md ./packages/lexicons/src/*",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
+    "db:update": "drizzle-kit generate",
     "db:seed": "drizzle-kit seed"
   },
   "devDependencies": {
