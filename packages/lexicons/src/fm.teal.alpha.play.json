@@ -1,29 +1,29 @@
 {
   "lexicon": 1,
   "id": "fm.teal.alpha.play",
-  "description": "This lexicon is in a not officially released state. It is subject to change. | A declaration of a teal.fm play. Plays are submitted as a result of a user listening to a track. Plays should be submitted when a user has listened to a track for at least 30 seconds, or half of the track's duration up to 4 minutes, whichever is longest.",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | A declaration of a teal.fm play. Plays are submitted as a result of a user listening to a track. Plays should be marked as tracked when a user has listened to the entire track if it's under 2 minutes long, or half of the track's duration up to 4 minutes, whichever is longest.",
   "defs": {
     "main": {
       "type": "record",
       "key": "tid",
       "record": {
         "type": "object",
-        "required": ["trackName", "artistName", "isTracked"],
+        "required": ["trackName", "artistName"],
         "properties": {
           "trackName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 256,
+            "maxGraphemes": 2560,
             "description": "The name of the track"
           },
-          "trackMbid": {
+          "trackMbId": {
             "type": "string",
 
             "description": "The Musicbrainz ID of the track"
           },
-          "recordingMbid": {
+          "recordingMbId": {
             "type": "string",
-
             "description": "The Musicbrainz recording ID of the track"
           },
           "duration": {
@@ -34,9 +34,10 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 256,
+            "maxGraphemes": 2560,
             "description": "The name of the artist"
           },
-          "artistMbids": {
+          "artistMbIds": {
             "type": "array",
             "items": {
               "type": "string"
@@ -46,9 +47,10 @@
           "releaseName": {
             "type": "string",
             "maxLength": 256,
+            "maxGraphemes": 2560,
             "description": "The name of the release/album"
           },
-          "releaseMbid": {
+          "releaseMbId": {
             "type": "string",
             "description": "The Musicbrainz release ID"
           },
@@ -67,11 +69,8 @@
           "submissionClientAgent": {
             "type": "string",
             "maxLength": 256,
+            "maxGraphemes": 2560,
             "description": "A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b"
-          },
-          "isTracked": {
-            "type": "boolean",
-            "description": "Whether or not this play is being tracked. If false, the play will not be shown past the length of the track, or 10 minutes, whichever is shorter. It is expected the App View or the user delete the play after this time."
           },
           "playedTime": {
             "type": "string",
