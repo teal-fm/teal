@@ -35,7 +35,7 @@ export function validateRecord(v: unknown): ValidationResult {
   return lexicons.validate('fm.teal.alpha.actor.profile#main', v)
 }
 
-export interface FeaturedPlay {
+export interface FeaturedItem {
   /** The Musicbrainz ID of the item */
   mbid: string
   /** The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc. */
@@ -43,14 +43,14 @@ export interface FeaturedPlay {
   [k: string]: unknown
 }
 
-export function isFeaturedPlay(v: unknown): v is FeaturedPlay {
+export function isFeaturedItem(v: unknown): v is FeaturedItem {
   return (
     isObj(v) &&
     hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.actor.profile#featuredPlay'
+    v.$type === 'fm.teal.alpha.actor.profile#featuredItem'
   )
 }
 
-export function validateFeaturedPlay(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.actor.profile#featuredPlay', v)
+export function validateFeaturedItem(v: unknown): ValidationResult {
+  return lexicons.validate('fm.teal.alpha.actor.profile#featuredItem', v)
 }

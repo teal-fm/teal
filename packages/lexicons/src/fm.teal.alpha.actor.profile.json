@@ -46,7 +46,7 @@
         }
       }
     },
-    "featuredPlay": {
+    "featuredItem": {
       "type": "object",
       "required": ["mbid", "type"],
       "properties": {
