@@ -10,7 +10,7 @@ import * as FmTealAlphaPlay from '../play'
 export interface Record {
   /** The unix timestamp of when the item was recorded */
   time: string
-  item: FmTealAlphaPlay.Main | { $type: string; [k: string]: unknown }
+  item: FmTealAlphaPlay.Record | { $type: string; [k: string]: unknown }
   [k: string]: unknown
 }
 

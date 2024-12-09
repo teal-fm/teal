@@ -140,33 +140,6 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaActorStatus: {
-    lexicon: 1,
-    id: 'fm.teal.alpha.actor.status',
-    defs: {
-      main: {
-        type: 'record',
-        description:
-          'This lexicon is in a not officially released state. It is subject to change. | A declaration of the status of the actor. Only one can be shown at a time. If there are multiple, pick the latest record.',
-        key: 'literal:self',
-        record: {
-          type: 'object',
-          required: ['time', 'item'],
-          properties: {
-            time: {
-              type: 'string',
-              format: 'datetime',
-              description: 'The unix timestamp of when the item was recorded',
-            },
-            item: {
-              type: 'union',
-              refs: ['lex:fm.teal.alpha.play#main'],
-            },
-          },
-        },
-      },
-    },
-  },
   FmTealAlphaActorProfile: {
     lexicon: 1,
     id: 'fm.teal.alpha.actor.profile',
@@ -226,7 +199,7 @@ export const schemaDict = {
           },
         },
       },
-      featuredPlay: {
+      featuredItem: {
         type: 'object',
         required: ['mbid', 'type'],
         properties: {
@@ -238,6 +211,33 @@ export const schemaDict = {
             type: 'string',
             description:
               'The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc.',
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaActorStatus: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.actor.status',
+    defs: {
+      main: {
+        type: 'record',
+        description:
+          'This lexicon is in a not officially released state. It is subject to change. | A declaration of the status of the actor. Only one can be shown at a time. If there are multiple, the latest record should be picked and earlier records should be deleted or tombstoned.',
+        key: 'literal:self',
+        record: {
+          type: 'object',
+          required: ['time', 'item'],
+          properties: {
+            time: {
+              type: 'string',
+              format: 'datetime',
+              description: 'The unix timestamp of when the item was recorded',
+            },
+            item: {
+              type: 'union',
+              refs: ['lex:fm.teal.alpha.play#record'],
+            },
           },
         },
       },
@@ -361,8 +361,8 @@ export const lexicons: Lexicons = new Lexicons(schemas)
 export const ids = {
   AppBskyActorProfile: 'app.bsky.actor.profile',
   AppBskyRichtextFacet: 'app.bsky.richtext.facet',
-  FmTealAlphaActorStatus: 'fm.teal.alpha.actor.status',
   FmTealAlphaActorProfile: 'fm.teal.alpha.actor.profile',
+  FmTealAlphaActorStatus: 'fm.teal.alpha.actor.status',
   FmTealAlphaPlay: 'fm.teal.alpha.play',
   XyzStatusphereStatus: 'xyz.statusphere.status',
 }
