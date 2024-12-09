@@ -47,20 +47,16 @@
       }
     },
     "featuredPlay": {
-      "type": "record",
-      "key": "tid",
-      "record": {
-        "type": "object",
-        "required": ["mbid", "type"],
-        "properties": {
-          "mbid": {
-            "type": "string",
-            "description": "The Musicbrainz ID of the item"
-          },
-          "type": {
-            "type": "string",
-            "description": "The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc."
-          }
+      "type": "object",
+      "required": ["mbid", "type"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "description": "The Musicbrainz ID of the item"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc."
         }
       }
     }

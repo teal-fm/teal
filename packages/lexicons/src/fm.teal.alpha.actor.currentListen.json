@@ -4,11 +4,11 @@
   "defs": {
     "main": {
       "type": "record",
-      "description": "This lexicon is in a not officially released state. It is subject to change. | A declaration of the status of the actor. Only one can be shown at a time. If there are multiple, pick the latest record.",
+      "description": "This lexicon is in a not officially released state. It is subject to change. | A declaration of the status of the actor. Only one can be shown at a time. If there are multiple, the latest record should be picked and earlier records should be deleted or tombstoned.",
       "key": "literal:self",
       "record": {
         "type": "object",
-        "required": ["listeningTo"],
+        "required": ["time", "item"],
         "properties": {
           "time": {
             "type": "string",
