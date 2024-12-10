@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@skyware/jetstream": "^0.2.0",
-    "@teal/db": "*"
+    "@teal/db": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.5",
