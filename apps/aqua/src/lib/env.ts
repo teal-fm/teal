@@ -14,6 +14,7 @@ export const env = cleanEnv(process.env, {
   HOST: host({ devDefault: testOnly("0.0.0.0") }),
   PORT: port({ devDefault: testOnly(3000) }),
   PUBLIC_URL: str({}),
+  APP_URI: str({ devDefault: "fm.teal.amethyst://" }),
   DB_PATH: str({ devDefault: "file:./db.sqlite" }),
   COOKIE_SECRET: str({ devDefault: "secret_cookie! very secret!" }),
 });
