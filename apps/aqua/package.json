@@ -3,7 +3,6 @@
   "type": "module",
   "version": "1.0.50",
   "main": "index.ts",
-  "packageManager": "bun@1.0.0+",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
     "build": "tsup && cp -r public dist/",
