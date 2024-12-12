@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "packageManager": "pnpm@9.15.0+sha256.09a8fe31a34fda706354680619f4002f4ccef6dadff93240d24ef6c831f0fd28",
   "scripts": {
-    "dev": "pnpm -r --parallel",
-    "build": "pnpm turbo run build --filter='./packages/*'",
+    "dev": "turbo dev",
+    "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
     "typecheck": "pnpm -r exec tsc --noEmit",
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
     "lex:gen-server": "lex gen-server ./packages/lexicons/generated/server ./packages/lexicons/src/*",
@@ -16,11 +16,8 @@
     "db:seed": "drizzle-kit seed"
   },
   "devDependencies": {
-    "turbo": "^2.3.0",
+    "turbo": "^2.3.3",
     "biome": "^0.3.3"
-  },
-  "engines": {
-    "node": ">=21.0.0"
   },
   "workspaces": [
     "apps/*",
