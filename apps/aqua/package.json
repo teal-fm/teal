@@ -3,7 +3,6 @@
   "type": "module",
   "version": "1.0.50",
   "main": "index.ts",
-  "packageManager": "bun@1.0.0+",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
     "build": "tsup && cp -r public dist/",
@@ -35,11 +34,11 @@
     "pino": "^9.5.0",
     "turbo": "^2.2.3",
     "uhtml": "^4.5.11",
-    "@teal/db": "*",
-    "@teal/lexicons": "*"
+    "@teal/db": "workspace:*",
+    "@teal/lexicons": "workspace:*"
   },
   "devDependencies": {
-    "@teal/tsconfig": "*",
+    "@teal/tsconfig": "workspace:*",
     "@atproto/lex-cli": "^0.4.1",
     "@types/node": "^20.17.6",
     "drizzle-kit": "^0.27.2",
