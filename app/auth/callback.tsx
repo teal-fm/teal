@@ -7,46 +7,36 @@ import { PencilLine } from "lucide-react-native";
 import { useLocalSearchParams } from "expo-router/build/hooks";
 import { useStore } from "@/stores/mainStore";
 
+interface CallbackSearchParams {
+  iss: string;
+  state: string;
+  code: string;
+}
+
 export default function AuthOptions() {
-  const authCode = useStore((state) => state.authCode);
-  const setJwt = useStore((state) => state.setJwt);
+  const { oauthCallback, status } = useStore((state) => state);
+
+  const params = useLocalSearchParams<'iss' | 'state' | 'code'>();
+  const {state} = params;
+  useEffect(() => {
+      // exchange the tokens for jwt
+      const searchParams = new URLSearchParams(params);
+      oauthCallback(searchParams);
+  }, []);
 
   useEffect(() => {
-    if (authCode) {
-      // exchange the code for tokens
-      fetch(
-        (process.env.EXPO_PUBLIC_API_BASE_URL ?? "0.0.0.0:3000") +
-          "/oauth/callback/app?state=" +
-          encodeURIComponent(authCode),
-      )
-        .then((res) => res.json())
-        .then((res) => {
-          console.log("res:", res);
-
-          setJwt(JSON.parse(res));
-
-          // wait half a second
-          setTimeout(() => {
-            router.replace("/");
-          }, 500);
-        })
-        .catch((err) => {
-          console.error("Error:", err);
-        });
+    if (status === "loggedIn") {
+      router.replace("/");
     }
-  }, []);
+  }, [state])
   // if no state then redirect to error page
-  if (!authCode) {
+  if (!params) {
     return (
       <View>
         <Link href="/error" />
       </View>
     );
   }
-  const state = decodeURIComponent(authCode);
-  console.log("state:", state);
-  const firstTwoParts = state.split("+")[0].split(":");
-  const uuid = firstTwoParts.pop();
   return (
     <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
       <Stack.Screen
@@ -57,12 +47,12 @@ export default function AuthOptions() {
       />
       <Icon icon={PencilLine} size={64} />
       <Text className="text-3xl font-semibold text-center text-foreground">
-        Fetching your data...
+        {status === "loggedIn" ? "Success!" : "Fetching your data..."}
       </Text>
       <Text className="text-sm text-muted-foreground">
-        This may take a few seconds
+        This may take a few seconds {status} 
       </Text>
-      <Text className="text-sm text-muted-foreground">{uuid}</Text>
+      <Text className="text-sm text-muted-foreground font-mono bg-muted-foreground/30 py-1 px-2 rounded-full">{state}</Text>
     </View>
   );
 }

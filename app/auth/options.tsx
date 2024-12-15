@@ -33,7 +33,7 @@ export default function AuthOptions() {
             router.push("/login");
           }}
         >
-          <FontAwesome6 name="bluesky" size={20} />
+          
           <Text>Sign in with Bluesky</Text>
         </Button>
       </Link>
