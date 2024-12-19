@@ -30,11 +30,12 @@ export interface AuthenticationSlice {
 }
 
 export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
-  set, get
+  set,
+  get
 ) => {
   const initialAuth = createOAuthClient("http://localhost:8081");
 
-  console.log("Auth client created!")
+  console.log("Auth client created!");
 
   return {
     auth: initialAuth,
@@ -70,23 +71,28 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         if (!(state.has("code") && state.has("state") && state.has("iss"))) {
           throw new Error("Missing params, got: " + state);
         }
-        const { auth } = get();
-        const { session, state: oauthState } = await auth.callback(state);
+      // are we already logged in?
+        if (get().status === "loggedIn") {
+          return;
+        }
+        const { session, state: oauthState } = await initialAuth.callback(state);
         const agent = new Agent(session);
         set({
           oauthSession: session,
           oauthState,
           status: "loggedIn",
-          pdsAgent: agent,
+          pdsAgent: addDocs(agent),
           isAgentReady: true,
         });
-      } catch (error:any) {
+      } catch (error: any) {
         console.error("OAuth callback failed:", error);
         set({
           status: "loggedOut",
           login: {
             loading: false,
-            error: (error?.message as string) || "Unknown error during OAuth callback",
+            error:
+              (error?.message as string) ||
+              "Unknown error during OAuth callback",
           },
         });
       }
@@ -94,20 +100,30 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     restorePdsAgent: async () => {
       let did = get().oauthSession?.sub;
       if (!did) {
-        throw new Error("No session");
+        //
+        // throw new Error("No session");
+        return;
       }
-      // restore session
-      let sess = await initialAuth.restore(did);
+      try {
+        // restore session
+        let sess = await initialAuth.restore(did);
 
-      if (!sess) {
-        throw new Error("Failed to restore session");
+        if (!sess) {
+          throw new Error("Failed to restore session");
+        }
+
+        const agent = new Agent(sess);
+
+        set({
+          pdsAgent: addDocs(agent),
+          isAgentReady: true,
+          status: "loggedIn",
+        });
+        console.log("Restored agent");
+      } catch (error) {
+        console.error("Failed to restore agent:", error);
+        get().logOut();
       }
-
-      set({
-        pdsAgent: new Agent(sess),
-        isAgentReady: true,
-      });
-      console.log("Restored agent");
     },
     logOut: () => {
       set({
@@ -121,3 +137,16 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     },
   };
 };
+
+import * as Lexicons from "../lexicons/server/lexicons";
+
+function addDocs(agent: Agent) {
+  Lexicons.schemas.map((schema) => {
+    try {
+      agent.lex.add(schema);
+    } catch (e) {
+      console.error("Failed to add schema:", e);
+    }
+  });
+  return agent;
+}
