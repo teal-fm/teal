@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { Check, ChevronRight, AtSign } from "lucide-react-native";
+import { Check, ChevronRight, AtSign, AlertCircle } from "lucide-react-native";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Link, Stack, router } from "expo-router";
@@ -23,6 +23,7 @@ import { openAuthSessionAsync } from "expo-web-browser";
 
 const LoginScreen = () => {
   const [handle, setHandle] = useState("");
+  const [err, setErr] = useState<string | undefined>();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,32 +31,39 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     if (!handle) {
-      Alert.alert("Error", "Please enter your handle");
+      setErr("Please enter a handle");
       return;
     }
 
     setIsLoading(true);
 
-    let redirUrl = await getLoginUrl(handle.replace("@", ""));
-    if (!redirUrl) {
-      // TODO: better error handling lulw
-      Alert.alert("Error", "Failed to get login URL");
-      return;
-    }
-    if (Platform.OS === "web") {
-      // redirect to redir url page without authsession
-      // shyould! redirect to /auth/callback
-      router.navigate(redirUrl.toString());
-
-    } else {
-      const res = await openAuthSessionAsync(
-        redirUrl.toString(),
-        "http://127.0.0.1:8081/login"
-      );
-      if (res.type === "success") {
-        const params = new URLSearchParams(res.url.split("?")[1]);
-        await oauthCallback(params);
+    try {
+      let redirUrl = await getLoginUrl(handle.replace("@", ""));
+      if (!redirUrl) {
+        // TODO: better error handling lulw
+        throw new Error("Does not resolve to a DID");
       }
+      setIsRedirecting(true);
+      if (Platform.OS === "web") {
+        // redirect to redir url page without authsession
+        // shyould! redirect to /auth/callback
+        router.navigate(redirUrl.toString());
+      } else {
+        const res = await openAuthSessionAsync(
+          redirUrl.toString(),
+          "http://127.0.0.1:8081/login"
+        );
+        if (res.type === "success") {
+          const params = new URLSearchParams(res.url.split("?")[1]);
+          await oauthCallback(params);
+        }
+      }
+    } catch (e: any) {
+      console.error(e);
+      setErr(e.message);
+      setIsLoading(false);
+      setIsRedirecting(false);
+      return;
     }
 
     // try {
@@ -107,7 +115,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 flex items-center justify-center w-full">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -115,25 +123,35 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="flex-1 justify-center align-center p-8 gap-4 pb-32 max-w-screen-sm">
+      <View className="flex-1 justify-center align-center p-8 gap-4 pb-32 max-w-screen-sm min-w-full">
         <View className="flex items-center">
           <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
         </View>
         <Text className="text-3xl font-semibold text-center text-foreground">
           Sign in with your PDS
         </Text>
-        <Text className="text-sm font-serif-old text-muted-foreground">
-          Status: {status}
-        </Text>
         <View>
           <Text className="text-sm text-muted-foreground">Handle</Text>
           <Input
+            className={err && `border-red-500 border-2`}
             placeholder="alice.bsky.social"
             value={handle}
             onChangeText={setHandle}
             autoCapitalize="none"
             autoCorrect={false}
           />
+          {err ? (
+            <Text className="text-red-500 justify-baseline mt-1 text-xs">
+              <Icon
+                icon={AlertCircle}
+                className="mr-1 inline -mt-0.5 text-xs"
+                size={20}
+              />
+              {err}
+            </Text>
+          ) : (
+            <View className="h-6" />
+          )}
         </View>
         <View className="flex flex-row justify-between items-center">
           <Link href="https://bsky.app/signup">

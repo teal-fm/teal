@@ -34,7 +34,7 @@ export default function AuthOptions() {
           }}
         >
           
-          <Text>Sign in with Bluesky</Text>
+          <Text>Sign in with ATProto</Text>
         </Button>
       </Link>
       <Link href="/signup" className="text-secondary">
