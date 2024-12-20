@@ -1,32 +1,21 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  numeric,
+  sqliteTable,
+  text,
+  customType,
+  integer,
+} from "drizzle-orm/sqlite-core";
 
-export type DatabaseSchema = {
-  status: Status;
-  auth_session: AuthSession;
-  auth_state: AuthState;
-};
-
-export type Status = {
-  uri: string;
-  authorDid: string;
-  status: string;
-  createdAt: string;
-  indexedAt: string;
-};
-
-export type AuthSession = {
-  key: string;
-  session: AuthSessionJson;
-};
-
-export type AuthState = {
-  key: string;
-  state: AuthStateJson;
-};
-
-type AuthStateJson = string;
-
-type AuthSessionJson = string;
+// string array custom type
+const json = <TData>() =>
+  customType<{ data: TData; driverData: string }>({
+    dataType() {
+      return "text";
+    },
+    toDriver(value: TData): string {
+      return JSON.stringify(value);
+    },
+  })();
 
 // Tables
 
@@ -69,4 +58,40 @@ export const follow = sqliteTable("follow", {
   follower: text().primaryKey(),
   followed: text().primaryKey(),
   createdAt: text().notNull(),
+});
+
+// play
+export const play = sqliteTable("play", {
+  uri: text().primaryKey(),
+  authorDid: text().notNull(),
+  createdAt: text().notNull(),
+  indexedAt: text().notNull(),
+
+  /** The name of the track */
+  trackName: text().notNull(),
+  /** The Musicbrainz ID of the track */
+  trackMbId: text(),
+  /** The Musicbrainz recording ID of the track */
+  recordingMbId: text(),
+  /** The length of the track in seconds */
+  duration: integer(),
+  /** The name of the artist */
+  artistName: text().notNull(),
+  /** Array of Musicbrainz artist IDs */
+  // type of string[]
+  artistMbIds: json<string[]>(),
+  /** The name of the release/album */
+  releaseName: text(),
+  /** The Musicbrainz release ID */
+  releaseMbId: text(),
+  /** The ISRC code associated with the recording */
+  isrc: text(),
+  /** The URL associated with this track */
+  originUrl: text(),
+  /** The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. */
+  musicServiceBaseDomain: text(),
+  /** A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b */
+  submissionClientAgent: text(),
+  /** The unix timestamp of when the track was played */
+  playedTime: text(),
 });
