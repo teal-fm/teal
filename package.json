@@ -11,6 +11,7 @@
     "lex:gen-server": "lex gen-server ./packages/lexicons/generated/server ./packages/lexicons/src/*",
     "lex:gen-api": "lex gen-api ./packages/lexicons/generated/api ./packages/lexicons/src/*",
     "lex:gen-md": "lex gen-md ./packages/lexicons/generated/md ./packages/lexicons/src/*",
+    "db": "drizzle-kit",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "drizzle-kit seed"
