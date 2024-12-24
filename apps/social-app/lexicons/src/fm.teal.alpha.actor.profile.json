@@ -1,0 +1,64 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.actor.profile",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "This lexicon is in a not officially released state. It is subject to change. | A declaration of a teal.fm account profile.",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "maxGraphemes": 64,
+            "maxLength": 640
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-form profile description text.",
+            "maxGraphemes": 256,
+            "maxLength": 2560
+          },
+          "descriptionFacets": {
+            "type": "array",
+            "description": "Annotations of text in the profile description (mentions, URLs, hashtags, etc).",
+            "items": { "type": "ref", "ref": "app.bsky.richtext.facet" }
+          },
+          "featuredItem": {
+            "type": "ref",
+            "description": "The user's most recent item featured on their profile.",
+            "ref": "#featuredItem"
+          },
+          "avatar": {
+            "type": "blob",
+            "description": "Small image to be displayed next to posts from account. AKA, 'profile picture'",
+            "accept": ["image/png", "image/jpeg"],
+            "maxSize": 1000000
+          },
+          "banner": {
+            "type": "blob",
+            "description": "Larger horizontal image to display behind profile view.",
+            "accept": ["image/png", "image/jpeg"],
+            "maxSize": 1000000
+          },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "featuredItem": {
+      "type": "object",
+      "required": ["mbid", "type"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "description": "The Musicbrainz ID of the item"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc."
+        }
+      }
+    }
+  }
+}
