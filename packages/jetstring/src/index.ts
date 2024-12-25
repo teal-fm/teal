@@ -1,17 +1,17 @@
 import type { Database } from "@teal/db/connect";
 import { db } from "@teal/db/connect";
-import { status } from "@teal/db/schema";
+import { status, play } from "@teal/db/schema";
 import { CommitCreateEvent, Jetstream } from "@skyware/jetstream";
 
 import {
   Record as XyzStatusphereStatus,
   isRecord as isStatusphereStatus,
-} from "@teal/lexicons/generated/server/types/xyz/statusphere/status";
+} from "@teal/lexicons/src/types/xyz/statusphere/status";
 
 import {
   Record as FmTealAlphaPlay,
   isRecord as isTealAlphaPlay,
-} from "@teal/lexicons/generated/server/types/fm/teal/alpha/play";
+} from "@teal/lexicons/src/types/fm/teal/alpha/play";
 
 class Handler {
   private static instance: Handler;

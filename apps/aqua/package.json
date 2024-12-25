@@ -27,7 +27,6 @@
     "@hono/node-server": "^1.13.7",
     "@libsql/client": "^0.14.0",
     "dotenv": "^16.4.5",
-    "drizzle-orm": "^0.36.1",
     "envalid": "^8.0.0",
     "hono": "^4.6.9",
     "jose": "^5.9.6",

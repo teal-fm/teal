@@ -1,8 +1,21 @@
 {
   "name": "@teal/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
   "type": "module",
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
   "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "@teal/tsconfig": "workspace:*",
     "drizzle-kit": "^0.27.1",
     "drizzle-orm": "^0.36.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6"
   }
 }

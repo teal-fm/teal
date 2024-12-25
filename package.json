@@ -7,20 +7,17 @@
     "dev": "turbo dev",
     "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
     "typecheck": "pnpm -r exec tsc --noEmit",
-    "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
-    "lex:gen-server": "lex gen-server ./packages/lexicons/generated/server ./packages/lexicons/src/*",
-    "lex:gen-api": "lex gen-api ./packages/lexicons/generated/api ./packages/lexicons/src/*",
-    "lex:gen-md": "lex gen-md ./packages/lexicons/generated/md ./packages/lexicons/src/*",
-    "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate",
-    "db:seed": "drizzle-kit seed"
+    "fix": "biome lint --apply . && biome format --write . && biome check . --apply"
   },
   "devDependencies": {
-    "turbo": "^2.3.3",
-    "biome": "^0.3.3"
+    "biome": "^0.3.3",
+    "turbo": "^2.3.3"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "drizzle-kit": "^0.30.1"
+  }
 }

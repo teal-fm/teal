@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/libsql";
-import * as schema from "@teal/db/schema";
+import * as schema from "./schema";
 import process from "node:process";
 import path from "node:path";
 
