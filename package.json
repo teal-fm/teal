@@ -10,14 +10,12 @@
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply"
   },
   "devDependencies": {
+    "@types/node": "^20.17.10",
     "biome": "^0.3.3",
     "turbo": "^2.3.3"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "dependencies": {
-    "drizzle-kit": "^0.30.1"
-  }
+  ]
 }

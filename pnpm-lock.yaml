@@ -7,11 +7,10 @@ settings:
 importers:
 
   .:
-    dependencies:
-      drizzle-kit:
-        specifier: ^0.30.1
-        version: 0.30.1
     devDependencies:
+      '@types/node':
+        specifier: ^20.17.10
+        version: 20.17.10
       biome:
         specifier: ^0.3.3
         version: 0.3.3
@@ -1102,6 +1101,9 @@ packages:
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
 
+  '@types/node@20.17.10':
+    resolution: {integrity: sha512-/jrvh5h6NXhEauFFexRin69nA0uHJ5gwk4iDivp/DeoEua3uwCUto6PC86IpRITBOs4+6i2I56K5x5b6WYGXHA==}
+
   '@types/node@20.17.9':
     resolution: {integrity: sha512-0JOXkRyLanfGPE2QRCwgxhzlBAvaRdCNMcvbd7jFfpmD4eEXll7LRwy5ymJmyeZqk7Nh7eD2LeUyQ68BbndmXw==}
 
@@ -1418,10 +1420,6 @@ packages:
 
   drizzle-kit@0.27.2:
     resolution: {integrity: sha512-F6cFZ1wxa9XzFyeeQsp/0/lIzUbDuQjS8/njpYBDWa+wdWmXuY+Z/X2hHFK/9PGHZkv3c9mER+mVWfKlp/B6Vw==}
-    hasBin: true
-
-  drizzle-kit@0.30.1:
-    resolution: {integrity: sha512-HmA/NeewvHywhJ2ENXD3KvOuM/+K2dGLJfxVfIHsGwaqKICJnS+Ke2L6UcSrSrtMJLJaT0Im1Qv4TFXfaZShyw==}
     hasBin: true
 
   drizzle-orm@0.36.4:
@@ -3403,6 +3401,10 @@ snapshots:
 
   '@types/estree@1.0.6': {}
 
+  '@types/node@20.17.10':
+    dependencies:
+      undici-types: 6.19.8
+
   '@types/node@20.17.9':
     dependencies:
       undici-types: 6.19.8
@@ -3704,15 +3706,6 @@ snapshots:
   dotenv@16.4.7: {}
 
   drizzle-kit@0.27.2:
-    dependencies:
-      '@drizzle-team/brocli': 0.10.2
-      '@esbuild-kit/esm-loader': 2.6.5
-      esbuild: 0.19.12
-      esbuild-register: 3.6.0(esbuild@0.19.12)
-    transitivePeerDependencies:
-      - supports-color
-
-  drizzle-kit@0.30.1:
     dependencies:
       '@drizzle-team/brocli': 0.10.2
       '@esbuild-kit/esm-loader': 2.6.5
