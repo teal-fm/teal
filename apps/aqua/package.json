@@ -24,7 +24,7 @@
     "@atproto/syntax": "^0.3.0",
     "@atproto/xrpc-server": "^0.6.4",
     "@braintree/sanitize-url": "^7.1.0",
-    "drizzle-orm": "^0.28.0",
+    "drizzle-orm": "^0.36.0",
     "@hono/node-server": "^1.13.7",
     "@libsql/client": "^0.14.0",
     "dotenv": "^16.4.5",
