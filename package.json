@@ -7,11 +7,13 @@
     "dev": "turbo dev",
     "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
     "typecheck": "pnpm -r exec tsc --noEmit",
-    "fix": "biome lint --apply . && biome format --write . && biome check . --apply"
+    "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
+    "nuke": "rimraf node_modules */*/node_modules"
   },
   "devDependencies": {
     "@types/node": "^20.17.10",
     "biome": "^0.3.3",
+    "rimraf": "^6.0.1",
     "turbo": "^2.3.3"
   },
   "workspaces": [
