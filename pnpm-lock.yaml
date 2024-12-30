@@ -8,9 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: ^20.17.10
+        version: 20.17.10
       biome:
         specifier: ^0.3.3
         version: 0.3.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
       turbo:
         specifier: ^2.3.3
         version: 2.3.3
@@ -39,8 +45,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.1
       '@atproto/xrpc-server':
-        specifier: ^0.6.4
-        version: 0.6.4
+        specifier: ^0.7.4
+        version: 0.7.4
       '@braintree/sanitize-url':
         specifier: ^7.1.0
         version: 7.1.0
@@ -82,8 +88,8 @@ importers:
         version: 4.7.0
     devDependencies:
       '@atproto/lex-cli':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.5.4
+        version: 0.5.4
       '@teal/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
@@ -91,11 +97,11 @@ importers:
         specifier: ^20.17.6
         version: 20.17.9
       drizzle-kit:
-        specifier: ^0.27.2
-        version: 0.27.2
+        specifier: ^0.30.1
+        version: 0.30.1
       pino-pretty:
-        specifier: ^11.3.0
-        version: 11.3.0
+        specifier: ^13.0.0
+        version: 13.0.0
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -280,21 +286,39 @@ importers:
 
   packages/db:
     dependencies:
+      '@libsql/client':
+        specifier: ^0.14.0
+        version: 0.14.0
+      '@teal/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       drizzle-kit:
-        specifier: ^0.27.1
-        version: 0.27.2
+        specifier: ^0.30.1
+        version: 0.30.1
       drizzle-orm:
         specifier: ^0.36.0
         version: 0.36.4(@libsql/client@0.14.0)(@types/react@18.3.12)(expo-sqlite@15.0.3(expo@52.0.21(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@expo/metro-runtime@4.0.0(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.12)(react@18.3.1)))(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.12)(react@18.3.1))(react@18.3.1))(react-native@0.76.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.12)(react@18.3.1))(react@18.3.1))(react@18.3.1)
 
   packages/jetstring:
     dependencies:
+      '@libsql/client':
+        specifier: ^0.14.0
+        version: 0.14.0
       '@skyware/jetstream':
         specifier: ^0.2.0
         version: 0.2.1(@atcute/client@2.0.6)
       '@teal/db':
         specifier: workspace:*
         version: link:../db
+      '@teal/lexicons':
+        specifier: workspace:*
+        version: link:../lexicons
+      '@teal/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      pino-pretty:
+        specifier: ^13.0.0
+        version: 13.0.0
     devDependencies:
       tsup:
         specifier: ^8.3.5
@@ -308,12 +332,18 @@ importers:
 
   packages/lexicons:
     dependencies:
+      '@atproto/lex-cli':
+        specifier: ^0.5.4
+        version: 0.5.4
       '@atproto/lexicon':
         specifier: ^0.4.2
         version: 0.4.3
       '@atproto/xrpc-server':
-        specifier: ^0.6.4
-        version: 0.6.4
+        specifier: ^0.7.4
+        version: 0.7.4
+      '@teal/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
 
   packages/matcher: {}
 
@@ -399,6 +429,9 @@ packages:
   '@atproto/common@0.4.4':
     resolution: {integrity: sha512-58tMbn6A1Zu296s/l3uIj8z9d7IRHpZvLOfsFRikaQaYrzhJpL2aPY4uFQ8GJcxnsxeUnxBCrQz9we5jVVJI5Q==}
 
+  '@atproto/common@0.4.5':
+    resolution: {integrity: sha512-LFAGqHcxCI5+b31Xgk+VQQtZU258iGPpHJzNeHVcdh6teIKZi4C2l6YV+m+3CEz+yYcfP7jjUmgqesx7l9Arsg==}
+
   '@atproto/crypto@0.4.2':
     resolution: {integrity: sha512-aeOfPQYCDbhn2hV06oBF2KXrWjf/BK4yL8lfANJKSmKl3tKWCkiW/moi643rUXXxSE72KtWtQeqvNFYnnFJ0ig==}
 
@@ -417,8 +450,8 @@ packages:
   '@atproto/jwk@0.1.1':
     resolution: {integrity: sha512-6h/bj1APUk7QcV9t/oA6+9DB5NZx9SZru9x+/pV5oHFI9Xz4ZuM5+dq1PfsJV54pZyqdnZ6W6M717cxoC7q7og==}
 
-  '@atproto/lex-cli@0.4.1':
-    resolution: {integrity: sha512-QP9mE8MYzXR2ydhCBb/mtGqKZjqpffqcpZCr7JM4mFOZPvXV8k7OqVP1h+T94JB/tGcGPhB750S6tqUH9VRLVg==}
+  '@atproto/lex-cli@0.5.4':
+    resolution: {integrity: sha512-mNEPeQLXl3iCXPO/FSo0BTfP00lx+9xEQpf9LEpDuKA6WCWjIB7WHzU2VLk26NSftzH3sf6zf+A2yZ+WWRbYpw==}
     hasBin: true
 
   '@atproto/lex-cli@0.5.4':
@@ -455,11 +488,8 @@ packages:
   '@atproto/syntax@0.3.1':
     resolution: {integrity: sha512-fzW0Mg1QUOVCWUD3RgEsDt6d1OZ6DdFmbKcDdbzUfh0t4rhtRAC05KbZYmxuMPWDAiJ4BbbQ5dkAc/mNypMXkw==}
 
-  '@atproto/xrpc-server@0.6.4':
-    resolution: {integrity: sha512-AL9okOTpJpxh3wJjT27RiPkp2IWIxDPCyyvuO1SJu0E9URGfWZL26SlT7/IR/tadZTJezr5+ZNuxhV0uhI+s1A==}
-
-  '@atproto/xrpc-server@0.7.3':
-    resolution: {integrity: sha512-x0qegkN6snrbXJO3v9h2kuh9e90g6ZZkDXv3COiraGS3yRTzIm6i4bMvDSfCI50+0xCNtPKOkpn8taRoRgkyiw==}
+  '@atproto/xrpc-server@0.7.4':
+    resolution: {integrity: sha512-MrAwxfJBQm/kCol3D8qc+vpQzBMzLqvtUbauSSfVVJ10PlGtxg4LlXqcjkAuhrjyrqp3dQH9LHuhDpgVQK+G3w==}
 
   '@atproto/xrpc@0.6.4':
     resolution: {integrity: sha512-9ZAJ8nsXTqC4XFyS0E1Wlg7bAvonhXQNQ3Ocs1L1LIwFLXvsw/4fNpIHXxvXvqTCVeyHLbImOnE9UiO1c/qIYA==}
@@ -14276,7 +14306,7 @@ snapshots:
     dependencies:
       split2: 4.2.0
 
-  pino-pretty@11.3.0:
+  pino-pretty@13.0.0:
     dependencies:
       colorette: 2.0.20
       dateformat: 4.6.3
@@ -14288,7 +14318,6 @@ snapshots:
       on-exit-leak-free: 2.1.2
       pino-abstract-transport: 2.0.0
       pump: 3.0.2
-      readable-stream: 4.5.2
       secure-json-parse: 2.7.0
       sonic-boom: 4.2.0
       strip-json-comments: 3.1.1

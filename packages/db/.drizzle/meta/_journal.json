@@ -29,6 +29,20 @@
       "when": 1731093709171,
       "tag": "0003_sharp_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1735101894454,
+      "tag": "0004_exotic_ironclad",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1735497040757,
+      "tag": "0005_conscious_johnny_blaze",
+      "breakpoints": true
     }
   ]
 }

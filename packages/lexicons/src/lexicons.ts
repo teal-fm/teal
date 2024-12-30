@@ -310,14 +310,14 @@ export const schemaDict = {
             musicServiceBaseDomain: {
               type: 'string',
               description:
-                'The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com.',
+                "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if not provided.",
             },
             submissionClientAgent: {
               type: 'string',
               maxLength: 256,
               maxGraphemes: 2560,
               description:
-                'A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b',
+                "A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b (Linux; Android 13; SM-A715F). Defaults to 'manual/unknown' if not provided.",
             },
             playedTime: {
               type: 'string',
