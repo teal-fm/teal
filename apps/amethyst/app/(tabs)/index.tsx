@@ -1,17 +1,19 @@
 import * as React from "react";
 import { View } from "react-native";
-import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../components/ui/avatar";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
 import { Text } from "../../components/ui/text";
-import AuthOptions from "../auth/options";
 import { useStore } from "../../stores/mainStore";
+import AuthOptions from "../auth/options";
 
 import { Response } from "@atproto/api/src/client/types/app/bsky/actor/getProfile";
 
@@ -27,14 +29,17 @@ export default function Screen() {
   const isReady = useStore((state) => state.isAgentReady);
   React.useEffect(() => {
     if (agent) {
-      agent.getProfile({actor: "natalie.sh"}).then((profile) => {
-        console.log(profile)
-        return setProfile(profile);
-      }).catch((e)=>{
-        console.log(e)
-      })
+      agent
+        .getProfile({ actor: agent.did ?? "teal.fm" })
+        .then((profile) => {
+          console.log(profile);
+          return setProfile(profile);
+        })
+        .catch((e) => {
+          console.log(e);
+        });
     } else {
-      console.log("No agent")
+      console.log("No agent");
     }
   }, [isReady]);
 
@@ -51,15 +56,27 @@ export default function Screen() {
       <Card className="w-full max-w-full p-6 rounded-2xl">
         <CardHeader className="items-center">
           <Avatar alt="Rick Sanchez's Avatar" className="w-24 h-24">
-            <AvatarImage source={{ uri: profile?.data.avatar ?? GITHUB_AVATAR_URI }} />
+            <AvatarImage
+              source={{ uri: profile?.data.avatar ?? GITHUB_AVATAR_URI }}
+            />
             <AvatarFallback>
-              <Text>{profile?.data.displayName?.substring(0,1) ?? " Richard"}</Text>
+              <Text>
+                {profile?.data.displayName?.substring(0, 1) ?? " Richard"}
+              </Text>
             </AvatarFallback>
           </Avatar>
           <View className="p-3" />
-          <CardTitle className="text-center">{profile?.data.displayName ?? " Richard"}</CardTitle>
+          <CardTitle className="text-center">
+            {profile?.data.displayName ?? " Richard"}
+          </CardTitle>
           <CardContent className="text-center w-full">
-            {profile ? (profile.data?.description?.split('\n').map((str,i) => <Text className="text-center" key={i}>{str}</Text>) || "A very mysterious person") : "Loading..."}
+            {profile
+              ? profile.data?.description?.split("\n").map((str, i) => (
+                  <Text className="text-center" key={i}>
+                    {str}
+                  </Text>
+                )) || "A very mysterious person"
+              : "Loading..."}
           </CardContent>
         </CardHeader>
       </Card>
