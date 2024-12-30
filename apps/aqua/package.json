@@ -7,12 +7,8 @@
     "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
     "build": "tsup && cp -r public dist/",
     "start": "node dist/index.cjs | pino-pretty",
-    "lexgen": "lex gen-server ./src/lexicon ./lexicons/*",
     "clean": "rimraf dist coverage",
-    "check-types": "tsc --noEmit",
-    "db:migrate": "drizzle-kit migrate",
-    "db:seed": "drizzle-kit seed",
-    "db:studio": "drizzle-kit studio"
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@atproto/api": "^0.13.15",

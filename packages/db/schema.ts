@@ -55,8 +55,9 @@ export const tealUser = sqliteTable("teal_user", {
 
 // follow relationship
 export const follow = sqliteTable("follow", {
-  follower: text().primaryKey(),
-  followed: text().primaryKey(),
+  relId: text().primaryKey(),
+  follower: text().notNull(),
+  followed: text().notNull(),
   createdAt: text().notNull(),
 });
 

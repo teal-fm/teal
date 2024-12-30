@@ -45,8 +45,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.1
       '@atproto/xrpc-server':
-        specifier: ^0.6.4
-        version: 0.6.4
+        specifier: ^0.7.4
+        version: 0.7.4
       '@braintree/sanitize-url':
         specifier: ^7.1.0
         version: 7.1.0
@@ -88,8 +88,8 @@ importers:
         version: 4.7.0
     devDependencies:
       '@atproto/lex-cli':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.5.4
+        version: 0.5.4
       '@teal/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
@@ -97,11 +97,11 @@ importers:
         specifier: ^20.17.6
         version: 20.17.9
       drizzle-kit:
-        specifier: ^0.27.2
-        version: 0.27.2
+        specifier: ^0.30.1
+        version: 0.30.1
       pino-pretty:
-        specifier: ^11.3.0
-        version: 11.3.0
+        specifier: ^13.0.0
+        version: 13.0.0
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -152,8 +152,8 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
       pino-pretty:
-        specifier: ^11.3.0
-        version: 11.3.0
+        specifier: ^13.0.0
+        version: 13.0.0
     devDependencies:
       tsup:
         specifier: ^8.3.5
@@ -168,14 +168,14 @@ importers:
   packages/lexicons:
     dependencies:
       '@atproto/lex-cli':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.5.4
+        version: 0.5.4
       '@atproto/lexicon':
         specifier: ^0.4.2
         version: 0.4.3
       '@atproto/xrpc-server':
-        specifier: ^0.6.4
-        version: 0.6.4
+        specifier: ^0.7.4
+        version: 0.7.4
       '@teal/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -230,6 +230,9 @@ packages:
   '@atproto/common@0.4.4':
     resolution: {integrity: sha512-58tMbn6A1Zu296s/l3uIj8z9d7IRHpZvLOfsFRikaQaYrzhJpL2aPY4uFQ8GJcxnsxeUnxBCrQz9we5jVVJI5Q==}
 
+  '@atproto/common@0.4.5':
+    resolution: {integrity: sha512-LFAGqHcxCI5+b31Xgk+VQQtZU258iGPpHJzNeHVcdh6teIKZi4C2l6YV+m+3CEz+yYcfP7jjUmgqesx7l9Arsg==}
+
   '@atproto/crypto@0.4.2':
     resolution: {integrity: sha512-aeOfPQYCDbhn2hV06oBF2KXrWjf/BK4yL8lfANJKSmKl3tKWCkiW/moi643rUXXxSE72KtWtQeqvNFYnnFJ0ig==}
 
@@ -248,12 +251,15 @@ packages:
   '@atproto/jwk@0.1.1':
     resolution: {integrity: sha512-6h/bj1APUk7QcV9t/oA6+9DB5NZx9SZru9x+/pV5oHFI9Xz4ZuM5+dq1PfsJV54pZyqdnZ6W6M717cxoC7q7og==}
 
-  '@atproto/lex-cli@0.4.1':
-    resolution: {integrity: sha512-QP9mE8MYzXR2ydhCBb/mtGqKZjqpffqcpZCr7JM4mFOZPvXV8k7OqVP1h+T94JB/tGcGPhB750S6tqUH9VRLVg==}
+  '@atproto/lex-cli@0.5.4':
+    resolution: {integrity: sha512-mNEPeQLXl3iCXPO/FSo0BTfP00lx+9xEQpf9LEpDuKA6WCWjIB7WHzU2VLk26NSftzH3sf6zf+A2yZ+WWRbYpw==}
     hasBin: true
 
   '@atproto/lexicon@0.4.3':
     resolution: {integrity: sha512-lFVZXe1S1pJP0dcxvJuHP3r/a+EAIBwwU7jUK+r8iLhIja+ml6NmYv8KeFHmIJATh03spEQ9s02duDmFVdCoXg==}
+
+  '@atproto/lexicon@0.4.4':
+    resolution: {integrity: sha512-QFEmr3rpj/RoAmfX9ALU/asBG/rsVtQZnw+9nOB1/AuIwoxXd+ZyndR6lVUc2+DL4GEjl6W2yvBru5xbQIZWyA==}
 
   '@atproto/oauth-client-node@0.2.3':
     resolution: {integrity: sha512-crHxZaP9T/i7O9fOhALcFtW1EP/tVblDnWoaIiZ3vL/hvVLwSUad/wvG2WPcVURzLSbigDInhn7rZZSzLxJacg==}
@@ -273,14 +279,14 @@ packages:
   '@atproto/syntax@0.3.1':
     resolution: {integrity: sha512-fzW0Mg1QUOVCWUD3RgEsDt6d1OZ6DdFmbKcDdbzUfh0t4rhtRAC05KbZYmxuMPWDAiJ4BbbQ5dkAc/mNypMXkw==}
 
-  '@atproto/xrpc-server@0.6.4':
-    resolution: {integrity: sha512-AL9okOTpJpxh3wJjT27RiPkp2IWIxDPCyyvuO1SJu0E9URGfWZL26SlT7/IR/tadZTJezr5+ZNuxhV0uhI+s1A==}
-
-  '@atproto/xrpc-server@0.7.3':
-    resolution: {integrity: sha512-x0qegkN6snrbXJO3v9h2kuh9e90g6ZZkDXv3COiraGS3yRTzIm6i4bMvDSfCI50+0xCNtPKOkpn8taRoRgkyiw==}
+  '@atproto/xrpc-server@0.7.4':
+    resolution: {integrity: sha512-MrAwxfJBQm/kCol3D8qc+vpQzBMzLqvtUbauSSfVVJ10PlGtxg4LlXqcjkAuhrjyrqp3dQH9LHuhDpgVQK+G3w==}
 
   '@atproto/xrpc@0.6.4':
     resolution: {integrity: sha512-9ZAJ8nsXTqC4XFyS0E1Wlg7bAvonhXQNQ3Ocs1L1LIwFLXvsw/4fNpIHXxvXvqTCVeyHLbImOnE9UiO1c/qIYA==}
+
+  '@atproto/xrpc@0.6.5':
+    resolution: {integrity: sha512-t6u8iPEVbWge5RhzKZDahSzNDYIAxUtop6Q/X/apAZY1rgreVU0/1sSvvRoRFH19d3UIKjYdLuwFqMi9w8nY3Q==}
 
   '@braintree/sanitize-url@7.1.0':
     resolution: {integrity: sha512-o+UlMLt49RvtCASlOMW0AkHnabN9wR9rwCCherxO0yG4Npy34GkvrAqdXQvrhNs+jh+gkK8gB8Lf05qL/O7KWg==}
@@ -1424,10 +1430,6 @@ packages:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
-  drizzle-kit@0.27.2:
-    resolution: {integrity: sha512-F6cFZ1wxa9XzFyeeQsp/0/lIzUbDuQjS8/njpYBDWa+wdWmXuY+Z/X2hHFK/9PGHZkv3c9mER+mVWfKlp/B6Vw==}
-    hasBin: true
-
   drizzle-kit@0.30.1:
     resolution: {integrity: sha512-HmA/NeewvHywhJ2ENXD3KvOuM/+K2dGLJfxVfIHsGwaqKICJnS+Ke2L6UcSrSrtMJLJaT0Im1Qv4TFXfaZShyw==}
     hasBin: true
@@ -1936,7 +1938,6 @@ packages:
 
   libsql@0.4.7:
     resolution: {integrity: sha512-T9eIRCs6b0J1SHKYIvD8+KCJMcWZ900iZyxdnSCdqxN12Z1ijzT+jY5nrk72Jw4B0HGzms2NgpryArlJqvc3Lw==}
-    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lilconfig@3.1.3:
@@ -2154,8 +2155,8 @@ packages:
   pino-abstract-transport@2.0.0:
     resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
 
-  pino-pretty@11.3.0:
-    resolution: {integrity: sha512-oXwn7ICywaZPHmu3epHGU2oJX4nPmKvHvB/bwrJHlGcbEWaVcotkpyVHMKLKmiVryWYByNp0jpgAcXpFJDXJzA==}
+  pino-pretty@13.0.0:
+    resolution: {integrity: sha512-cQBBIVG3YajgoUjo1FdKVRX6t9XPxwB9lcNJVD5GCnNM4Y6T12YYx8c6zEejxQsU0wrg9TwmDulcE9LR7qcJqA==}
     hasBin: true
 
   pino-std-serializers@6.2.2:
@@ -2745,6 +2746,15 @@ snapshots:
       multiformats: 9.9.0
       pino: 8.21.0
 
+  '@atproto/common@0.4.5':
+    dependencies:
+      '@atproto/common-web': 0.3.1
+      '@ipld/dag-cbor': 7.0.3
+      cbor-x: 1.6.0
+      iso-datestring-validator: 2.2.2
+      multiformats: 9.9.0
+      pino: 8.21.0
+
   '@atproto/crypto@0.4.2':
     dependencies:
       '@noble/curves': 1.7.0
@@ -2778,9 +2788,9 @@ snapshots:
       multiformats: 9.9.0
       zod: 3.23.8
 
-  '@atproto/lex-cli@0.4.1':
+  '@atproto/lex-cli@0.5.4':
     dependencies:
-      '@atproto/lexicon': 0.4.3
+      '@atproto/lexicon': 0.4.4
       '@atproto/syntax': 0.3.1
       chalk: 4.1.2
       commander: 9.5.0
@@ -2790,6 +2800,14 @@ snapshots:
       zod: 3.23.8
 
   '@atproto/lexicon@0.4.3':
+    dependencies:
+      '@atproto/common-web': 0.3.1
+      '@atproto/syntax': 0.3.1
+      iso-datestring-validator: 2.2.2
+      multiformats: 9.9.0
+      zod: 3.23.8
+
+  '@atproto/lexicon@0.4.4':
     dependencies:
       '@atproto/common-web': 0.3.1
       '@atproto/syntax': 0.3.1
@@ -2848,7 +2866,7 @@ snapshots:
       '@atproto/lexicon': 0.4.3
       '@atproto/repo': 0.5.5
       '@atproto/syntax': 0.3.1
-      '@atproto/xrpc-server': 0.7.3
+      '@atproto/xrpc-server': 0.7.4
       multiformats: 9.9.0
       p-queue: 6.6.2
     transitivePeerDependencies:
@@ -2859,31 +2877,12 @@ snapshots:
 
   '@atproto/syntax@0.3.1': {}
 
-  '@atproto/xrpc-server@0.6.4':
+  '@atproto/xrpc-server@0.7.4':
     dependencies:
-      '@atproto/common': 0.4.4
+      '@atproto/common': 0.4.5
       '@atproto/crypto': 0.4.2
-      '@atproto/lexicon': 0.4.3
-      '@atproto/xrpc': 0.6.4
-      cbor-x: 1.6.0
-      express: 4.21.2
-      http-errors: 2.0.0
-      mime-types: 2.1.35
-      rate-limiter-flexible: 2.4.2
-      uint8arrays: 3.0.0
-      ws: 8.18.0
-      zod: 3.23.8
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  '@atproto/xrpc-server@0.7.3':
-    dependencies:
-      '@atproto/common': 0.4.4
-      '@atproto/crypto': 0.4.2
-      '@atproto/lexicon': 0.4.3
-      '@atproto/xrpc': 0.6.4
+      '@atproto/lexicon': 0.4.4
+      '@atproto/xrpc': 0.6.5
       cbor-x: 1.6.0
       express: 4.21.2
       http-errors: 2.0.0
@@ -2900,6 +2899,11 @@ snapshots:
   '@atproto/xrpc@0.6.4':
     dependencies:
       '@atproto/lexicon': 0.4.3
+      zod: 3.23.8
+
+  '@atproto/xrpc@0.6.5':
+    dependencies:
+      '@atproto/lexicon': 0.4.4
       zod: 3.23.8
 
   '@braintree/sanitize-url@7.1.0': {}
@@ -3715,15 +3719,6 @@ snapshots:
 
   dotenv@16.4.7: {}
 
-  drizzle-kit@0.27.2:
-    dependencies:
-      '@drizzle-team/brocli': 0.10.2
-      '@esbuild-kit/esm-loader': 2.6.5
-      esbuild: 0.19.12
-      esbuild-register: 3.6.0(esbuild@0.19.12)
-    transitivePeerDependencies:
-      - supports-color
-
   drizzle-kit@0.30.1:
     dependencies:
       '@drizzle-team/brocli': 0.10.2
@@ -4442,7 +4437,7 @@ snapshots:
     dependencies:
       split2: 4.2.0
 
-  pino-pretty@11.3.0:
+  pino-pretty@13.0.0:
     dependencies:
       colorette: 2.0.20
       dateformat: 4.6.3
@@ -4454,7 +4449,6 @@ snapshots:
       on-exit-leak-free: 2.1.2
       pino-abstract-transport: 2.0.0
       pump: 3.0.2
-      readable-stream: 4.5.2
       secure-json-parse: 2.7.0
       sonic-boom: 4.2.0
       strip-json-comments: 3.1.1

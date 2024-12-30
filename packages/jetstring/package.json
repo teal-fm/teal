@@ -9,7 +9,7 @@
     "@teal/db": "workspace:*",
     "@teal/lexicons": "workspace:*",
     "@teal/tsconfig": "workspace:*",
-    "pino-pretty": "^13.3.0"
+    "pino-pretty": "^13.0.0"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

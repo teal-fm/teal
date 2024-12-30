@@ -1,6 +1,6 @@
 CREATE TABLE `follow` (
 	`follower` text PRIMARY KEY NOT NULL,
-	`followed` text PRIMARY KEY NOT NULL,
+	`followed` text NOT NULL,
 	`created_at` text NOT NULL
 );
 --> statement-breakpoint
