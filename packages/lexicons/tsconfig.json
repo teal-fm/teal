@@ -1,4 +1,4 @@
 {
   "extends": "@teal/tsconfig/base.json",
-  "include": ["./generated/**/*.ts"]
+  "include": ["./src/**/*.ts"]
 }

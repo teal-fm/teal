@@ -1,12 +1,17 @@
 import type { Database } from "@teal/db/connect";
 import { db } from "@teal/db/connect";
-import { status } from "@teal/db/schema";
+import { status, play } from "@teal/db/schema";
 import { CommitCreateEvent, Jetstream } from "@skyware/jetstream";
 
 import {
   Record as XyzStatusphereStatus,
   isRecord as isStatusphereStatus,
-} from "@teal/lexicons/generated/server/types/xyz/statusphere/status";
+} from "@teal/lexicons/src/types/xyz/statusphere/status";
+
+import {
+  Record as FmTealAlphaPlay,
+  isRecord as isTealAlphaPlay,
+} from "@teal/lexicons/src/types/fm/teal/alpha/play";
 
 class Handler {
   private static instance: Handler;
@@ -25,16 +30,56 @@ class Handler {
     if (isStatusphereStatus(msg) && msg.$type === "xyz.statusphere.status") {
       if (record.commit.operation === "create") {
         // serialize message as xyz.statusphere.status
-        db.insert(status).values({
-          createdAt: new Date().getSeconds().toString(),
-          indexedAt: new Date(record.time_us).getSeconds().toString(),
-          status: msg.status,
-          // the AT path
-          uri: record.commit.rkey,
-          authorDid: record.did,
-        });
+        db.insert(status)
+          .values({
+            createdAt: new Date().getTime().toString(),
+            indexedAt: new Date(record.time_us).getTime().toString(),
+            status: msg.status,
+            // the AT path
+            uri: record.commit.rkey,
+            authorDid: record.did,
+          })
+          .execute();
       } else {
-        console.log("unsupported operation:", record.commit.operation);
+        // TODO: sentry
+        console.log(
+          "unsupported operation for xyz.statusphere.status",
+          record.commit.operation,
+        );
+      }
+    } else if (isTealAlphaPlay(msg) && msg.$type === "fm.teal.alpha.play") {
+      if (record.commit.operation === "create") {
+        // serialize message as fm.teal.alpha.play
+        db.insert(play)
+          .values({
+            createdAt: new Date().getTime().toString(),
+            indexedAt: new Date(record.time_us).getTime().toString(),
+            // the AT path
+            uri: record.commit.rkey,
+            authorDid: record.did,
+
+            artistName: msg.artistName,
+            trackName: msg.trackName,
+            artistMbIds: msg.artistMbIds || [],
+            trackMbId: msg.trackMbId || "",
+            duration: msg.duration || null,
+            isrc: msg.isrc || null,
+            musicServiceBaseDomain: msg.musicServiceBaseDomain || "local",
+            originUrl: msg.originUrl || null,
+            playedTime: msg.playedTime ? msg.playedTime.toString() : undefined,
+            recordingMbId: msg.recordingMbId || null,
+            releaseMbId: msg.releaseMbId || null,
+            releaseName: msg.releaseName || null,
+            submissionClientAgent:
+              msg.submissionClientAgent || "manual/unknown",
+          })
+          .execute();
+      } else {
+        // TODO: sentry
+        console.log(
+          "unsupported operation for fm.teal.alpha.play",
+          record.commit.operation,
+        );
       }
     } else {
       console.log("Unknown message type:", msg_type);
@@ -110,7 +155,10 @@ class Streamer {
 // Main function to run the application
 async function main() {
   try {
-    const streamer = Streamer.getInstance(["xyz.statusphere.status"]);
+    const streamer = Streamer.getInstance([
+      "xyz.statusphere.status",
+      "fm.teal.alpha.play",
+    ]);
     await streamer.start();
 
     // Keep the process running
