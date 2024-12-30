@@ -7,13 +7,13 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Text } from "../components/ui/text";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Icon } from "../lib/icons/iconWithClassName";
 import { ArrowRight, Check, ChevronRight, Disc } from "lucide-react-native";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Input } from "../components/ui/input";
+import { cn } from "../lib/utils";
 import { Link, Stack, router } from "expo-router";
 import { FontAwesome6 } from "@expo/vector-icons";
 

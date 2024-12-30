@@ -1,6 +1,6 @@
 import create from "zustand";
 import { StateCreator } from "./mainStore";
-import createOAuthClient, { AquareumOAuthClient } from "@/lib/atp/oauth";
+import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { OAuthSession } from "@atproto/oauth-client";
 import { ProfileViewDetailed } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { Agent } from "@atproto/api";

@@ -3,10 +3,10 @@ import { CodeXml, Home, Info, type LucideIcon } from "lucide-react-native";
 import { Link, Stack, Tabs } from "expo-router";
 import { Pressable } from "react-native";
 
-import Colors from "@/constants/Colors";
-import { useColorScheme } from "@/components/useColorScheme";
-import { useClientOnlyValue } from "@/components/useClientOnlyValue";
-import { iconWithClassName } from "@/lib/icons/iconWithClassName";
+import Colors from "../../constants/Colors";
+import { useColorScheme } from "../../components/useColorScheme";
+import { useClientOnlyValue } from "../../components/useClientOnlyValue";
+import { iconWithClassName } from "../../lib/icons/iconWithClassName";
 
 function TabBarIcon(props: { name: LucideIcon; color: string }) {
   const Name = props.name;

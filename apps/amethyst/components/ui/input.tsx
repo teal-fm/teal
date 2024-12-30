@@ -1,6 +1,6 @@
 import * as React from "react";
 import { TextInput, type TextInputProps } from "react-native";
-import { cn } from "~/lib/utils";
+import { cn } from "../../lib/utils";
 import { TextClassContext, GlobalTextClassContext } from "./text";
 
 const Input = React.forwardRef<

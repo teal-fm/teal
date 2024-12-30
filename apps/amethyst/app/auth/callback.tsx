@@ -1,11 +1,11 @@
 import { Link, Stack, router } from "expo-router";
 import { View } from "react-native";
-import { Text } from "@/components/ui/text";
+import { Text } from "../../components/ui/text";
 import React, { useEffect } from "react";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Icon } from "../../lib/icons/iconWithClassName";
 import { PencilLine } from "lucide-react-native";
 import { useLocalSearchParams } from "expo-router/build/hooks";
-import { useStore } from "@/stores/mainStore";
+import { useStore } from "../../stores/mainStore";
 
 interface CallbackSearchParams {
   iss: string;

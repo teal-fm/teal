@@ -8,17 +8,17 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Text } from "../components/ui/text";
+import { Button } from "../components/ui/button";
+import { Icon } from "../lib/icons/iconWithClassName";
 import { Check, ChevronRight, AtSign, AlertCircle } from "lucide-react-native";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Input } from "../components/ui/input";
+import { cn } from "../lib/utils";
 import { Link, Stack, router } from "expo-router";
 
-import { useStore } from "@/stores/mainStore";
-import createOAuthClient from "@/lib/atp/oauth";
-import { resolveFromIdentity } from "@/lib/atp/pid";
+import { useStore } from "../stores/mainStore";
+import createOAuthClient from "../lib/atp/oauth";
+import { resolveFromIdentity } from "../lib/atp/pid";
 import { openAuthSessionAsync } from "expo-web-browser";
 
 const LoginScreen = () => {

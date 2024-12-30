@@ -1,6 +1,6 @@
 import * as React from "react";
 import { View } from "react-native";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -8,10 +8,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
-import { Text } from "~/components/ui/text";
+} from "../../components/ui/card";
+import { Text } from "../../components/ui/text";
 import AuthOptions from "../auth/options";
-import { useStore } from "@/stores/mainStore";
+import { useStore } from "../../stores/mainStore";
 
 import { Response } from "@atproto/api/src/client/types/app/bsky/actor/getProfile";
 

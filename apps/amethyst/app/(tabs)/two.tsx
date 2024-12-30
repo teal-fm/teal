@@ -1,13 +1,13 @@
 import { View } from "react-native";
 
-import { useStore } from "@/stores/mainStore";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { useStore } from "../../stores/mainStore";
+import { Button } from "../../components/ui/button";
+import { Text } from "../../components/ui/text";
 
 import {
   Record as Play,
   validateRecord,
-} from "@/lexicons/server/types/fm/teal/alpha/play";
+} from "../../lexicons/server/types/fm/teal/alpha/play";
 
 async function searchMusicbrainz(query: string) {
   try {

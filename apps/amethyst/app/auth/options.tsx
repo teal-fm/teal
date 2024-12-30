@@ -1,7 +1,7 @@
 import { Link, Stack, router } from "expo-router";
 import { View } from "react-native";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
+import { Text } from "../../components/ui/text";
+import { Button } from "../../components/ui/button";
 import React from "react";
 import { FontAwesome6 } from "@expo/vector-icons";
 

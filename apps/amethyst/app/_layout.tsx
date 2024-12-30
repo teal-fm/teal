@@ -5,20 +5,18 @@ import {
   Theme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { PortalHost } from "@rn-primitives/portal";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
-import { PortalHost } from "@rn-primitives/portal";
-
-import { GlobalTextClassContext } from "~/components/ui/text";
 
 import { verifyInstallation } from "nativewind";
 
-import "~/global.css";
-
-import { useColorScheme } from "@/components/useColorScheme";
+import { GlobalTextClassContext } from "../components/ui/text";
+import { useColorScheme } from "../components/useColorScheme";
+import "../global.css";
 
 let defaultFamily = (weight: string) => {
   return {

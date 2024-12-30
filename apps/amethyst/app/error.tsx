@@ -1,9 +1,9 @@
 import React from "react";
 import { View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Text } from "../components/ui/text";
+import { Button } from "../components/ui/button";
+import { Icon } from "../lib/icons/iconWithClassName";
 import { Home, AlertCircle } from "lucide-react-native";
 import { Stack, router } from "expo-router";
 
