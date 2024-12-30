@@ -4,6 +4,7 @@ import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { OAuthSession } from "@atproto/oauth-client";
 import { ProfileViewDetailed } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { Agent } from "@atproto/api";
+import * as Lexicons from "@teal/lexicons/src/lexicons";
 
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
@@ -138,10 +139,8 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   };
 };
 
-import * as Lexicons from "../lexicons/server/lexicons";
-
 function addDocs(agent: Agent) {
-  Lexicons.schemas.map((schema) => {
+  Lexicons.schemas.filter((schema) => !schema.id.startsWith("app.bsky.")).map((schema) => {
     try {
       agent.lex.add(schema);
     } catch (e) {
