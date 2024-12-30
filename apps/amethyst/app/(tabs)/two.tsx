@@ -7,7 +7,7 @@ import { Text } from "../../components/ui/text";
 import {
   Record as Play,
   validateRecord,
-} from "../../lexicons/server/types/fm/teal/alpha/play";
+} from "@teal/lexicons/src/types/fm/teal/alpha/play";
 
 async function searchMusicbrainz(query: string) {
   try {
