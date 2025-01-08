@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.getActorFeed",
+  "id": "fm.teal.alpha.feed.getActorFeed",
   "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves multiple plays from the index or via an author's DID.",
   "defs": {
     "main": {

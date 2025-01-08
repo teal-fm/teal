@@ -3,11 +3,11 @@
  */
 import express from 'express'
 import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../lexicons'
-import { isObj, hasProp } from '../../../../util'
+import { lexicons } from '../../../../../lexicons'
+import { isObj, hasProp } from '../../../../../util'
 import { CID } from 'multiformats/cid'
 import { HandlerAuth, HandlerPipeThrough } from '@atproto/xrpc-server'
-import * as FmTealAlphaFeedDefs from './feed/defs'
+import * as FmTealAlphaFeedDefs from './defs'
 
 export interface QueryParams {
   /** The author's DID for the play */

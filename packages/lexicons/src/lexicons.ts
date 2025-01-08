@@ -325,9 +325,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaGetActorFeed: {
+  FmTealAlphaFeedGetActorFeed: {
     lexicon: 1,
-    id: 'fm.teal.alpha.getActorFeed',
+    id: 'fm.teal.alpha.feed.getActorFeed',
     description:
       "This lexicon is in a not officially released state. It is subject to change. | Retrieves multiple plays from the index or via an author's DID.",
     defs: {
@@ -528,7 +528,7 @@ export const ids = {
   FmTealAlphaActorProfile: 'fm.teal.alpha.actor.profile',
   FmTealAlphaActorStatus: 'fm.teal.alpha.actor.status',
   FmTealAlphaFeedDefs: 'fm.teal.alpha.feed.defs',
-  FmTealAlphaGetActorFeed: 'fm.teal.alpha.getActorFeed',
+  FmTealAlphaFeedGetActorFeed: 'fm.teal.alpha.feed.getActorFeed',
   FmTealAlphaFeedGetPlay: 'fm.teal.alpha.feed.getPlay',
   FmTealAlphaFeedPlay: 'fm.teal.alpha.feed.play',
   XyzStatusphereStatus: 'xyz.statusphere.status',

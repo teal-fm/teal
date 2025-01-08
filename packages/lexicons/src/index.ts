@@ -9,7 +9,7 @@ import {
   StreamAuthVerifier,
 } from '@atproto/xrpc-server'
 import { schemas } from './lexicons'
-import * as FmTealAlphaGetActorFeed from './types/fm/teal/alpha/getActorFeed'
+import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed'
 import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay'
 
 export function createServer(options?: XrpcOptions): Server {
@@ -98,17 +98,6 @@ export class FmTealAlphaNS {
     this.actor = new FmTealAlphaActorNS(server)
     this.feed = new FmTealAlphaFeedNS(server)
   }
-
-  getActorFeed<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaGetActorFeed.Handler<ExtractAuth<AV>>,
-      FmTealAlphaGetActorFeed.HandlerReqCtx<ExtractAuth<AV>>
-    >,
-  ) {
-    const nsid = 'fm.teal.alpha.getActorFeed' // @ts-ignore
-    return this._server.xrpc.method(nsid, cfg)
-  }
 }
 
 export class FmTealAlphaActorNS {
@@ -124,6 +113,17 @@ export class FmTealAlphaFeedNS {
 
   constructor(server: Server) {
     this._server = server
+  }
+
+  getActorFeed<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaFeedGetActorFeed.Handler<ExtractAuth<AV>>,
+      FmTealAlphaFeedGetActorFeed.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.feed.getActorFeed' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
   }
 
   getPlay<AV extends AuthVerifier>(
