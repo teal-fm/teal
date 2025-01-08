@@ -16,8 +16,8 @@
             "description": "The unix timestamp of when the item was recorded"
           },
           "item": {
-            "type": "union",
-            "refs": ["fm.teal.alpha.feed.play#record"]
+            "type": "ref",
+            "ref": "fm.teal.alpha.feed.defs#playView"
           }
         }
       }
