@@ -5,12 +5,12 @@ import { ValidationResult, BlobRef } from '@atproto/lexicon'
 import { lexicons } from '../../../../../lexicons'
 import { isObj, hasProp } from '../../../../../util'
 import { CID } from 'multiformats/cid'
-import * as FmTealAlphaPlay from '../play'
+import * as FmTealAlphaFeedPlay from '../feed/play'
 
 export interface Record {
   /** The unix timestamp of when the item was recorded */
   time: string
-  item: FmTealAlphaPlay.Record | { $type: string; [k: string]: unknown }
+  item: FmTealAlphaFeedPlay.Record | { $type: string; [k: string]: unknown }
   [k: string]: unknown
 }
 

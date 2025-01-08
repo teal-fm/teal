@@ -236,7 +236,7 @@ export const schemaDict = {
             },
             item: {
               type: 'union',
-              refs: ['lex:fm.teal.alpha.play#record'],
+              refs: ['lex:fm.teal.alpha.feed.play#record'],
             },
           },
         },

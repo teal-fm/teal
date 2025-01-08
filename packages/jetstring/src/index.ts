@@ -11,7 +11,7 @@ import {
 import {
   Record as FmTealAlphaPlay,
   isRecord as isTealAlphaPlay,
-} from "@teal/lexicons/src/types/fm/teal/alpha/play";
+} from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 
 class Handler {
   private static instance: Handler;
