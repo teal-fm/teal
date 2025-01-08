@@ -235,8 +235,8 @@ export const schemaDict = {
               description: 'The unix timestamp of when the item was recorded',
             },
             item: {
-              type: 'union',
-              refs: ['lex:fm.teal.alpha.feed.play#record'],
+              type: 'ref',
+              ref: 'lex:fm.teal.alpha.feed.defs#playView',
             },
           },
         },
@@ -251,7 +251,7 @@ export const schemaDict = {
     defs: {
       playView: {
         type: 'object',
-        required: ['trackName', 'artistName'],
+        required: ['trackName', 'artistNames'],
         properties: {
           trackName: {
             type: 'string',
@@ -272,12 +272,16 @@ export const schemaDict = {
             type: 'integer',
             description: 'The length of the track in seconds',
           },
-          artistName: {
-            type: 'string',
-            minLength: 1,
-            maxLength: 256,
-            maxGraphemes: 2560,
-            description: 'The name of the artist',
+          artistNames: {
+            type: 'array',
+            items: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 256,
+              maxGraphemes: 2560,
+            },
+            description:
+              'Array of artist names in order of original appearance.',
           },
           artistMbIds: {
             type: 'array',
@@ -417,7 +421,7 @@ export const schemaDict = {
         key: 'tid',
         record: {
           type: 'object',
-          required: ['trackName', 'artistName'],
+          required: ['trackName', 'artistNames'],
           properties: {
             trackName: {
               type: 'string',
@@ -438,12 +442,16 @@ export const schemaDict = {
               type: 'integer',
               description: 'The length of the track in seconds',
             },
-            artistName: {
-              type: 'string',
-              minLength: 1,
-              maxLength: 256,
-              maxGraphemes: 2560,
-              description: 'The name of the artist',
+            artistNames: {
+              type: 'array',
+              items: {
+                type: 'string',
+                minLength: 1,
+                maxLength: 256,
+                maxGraphemes: 2560,
+              },
+              description:
+                'Array of artist names in order of original appearance.',
             },
             artistMbIds: {
               type: 'array',

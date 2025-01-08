@@ -15,8 +15,8 @@ export interface Record {
   recordingMbId?: string
   /** The length of the track in seconds */
   duration?: number
-  /** The name of the artist */
-  artistName: string
+  /** Array of artist names in order of original appearance. */
+  artistNames: string[]
   /** Array of Musicbrainz artist IDs */
   artistMbIds?: string[]
   /** The name of the release/album */

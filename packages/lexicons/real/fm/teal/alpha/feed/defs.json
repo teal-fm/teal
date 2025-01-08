@@ -5,7 +5,7 @@
   "defs": {
     "playView": {
       "type": "object",
-      "required": ["trackName", "artistName"],
+      "required": ["trackName", "artistNames"],
       "properties": {
         "trackName": {
           "type": "string",
