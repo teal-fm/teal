@@ -2,8 +2,8 @@
  * GENERATED CODE - DO NOT MODIFY
  */
 import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../lexicons'
-import { isObj, hasProp } from '../../../../util'
+import { lexicons } from '../../../../../lexicons'
+import { isObj, hasProp } from '../../../../../util'
 import { CID } from 'multiformats/cid'
 
 export interface Record {
@@ -40,10 +40,11 @@ export function isRecord(v: unknown): v is Record {
   return (
     isObj(v) &&
     hasProp(v, '$type') &&
-    (v.$type === 'fm.teal.alpha.play#main' || v.$type === 'fm.teal.alpha.play')
+    (v.$type === 'fm.teal.alpha.feed.play#main' ||
+      v.$type === 'fm.teal.alpha.feed.play')
   )
 }
 
 export function validateRecord(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.play#main', v)
+  return lexicons.validate('fm.teal.alpha.feed.play#main', v)
 }

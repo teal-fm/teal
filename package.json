@@ -8,7 +8,8 @@
     "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
     "typecheck": "pnpm -r exec tsc --noEmit",
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
-    "nuke": "rimraf node_modules */*/node_modules"
+    "nuke": "rimraf node_modules */*/node_modules",
+    "lex:gen-server": "turbo lex:gen-server"
   },
   "devDependencies": {
     "@types/node": "^20.17.10",

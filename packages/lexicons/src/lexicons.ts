@@ -243,9 +243,172 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaPlay: {
+  FmTealAlphaFeedDefs: {
     lexicon: 1,
-    id: 'fm.teal.alpha.play',
+    id: 'fm.teal.alpha.feed.defs',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Misc. items related to feeds.',
+    defs: {
+      playView: {
+        type: 'object',
+        required: ['trackName', 'artistName'],
+        properties: {
+          trackName: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 256,
+            maxGraphemes: 2560,
+            description: 'The name of the track',
+          },
+          trackMbId: {
+            type: 'string',
+            description: 'The Musicbrainz ID of the track',
+          },
+          recordingMbId: {
+            type: 'string',
+            description: 'The Musicbrainz recording ID of the track',
+          },
+          duration: {
+            type: 'integer',
+            description: 'The length of the track in seconds',
+          },
+          artistName: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 256,
+            maxGraphemes: 2560,
+            description: 'The name of the artist',
+          },
+          artistMbIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+            description: 'Array of Musicbrainz artist IDs',
+          },
+          releaseName: {
+            type: 'string',
+            maxLength: 256,
+            maxGraphemes: 2560,
+            description: 'The name of the release/album',
+          },
+          releaseMbId: {
+            type: 'string',
+            description: 'The Musicbrainz release ID',
+          },
+          isrc: {
+            type: 'string',
+            description: 'The ISRC code associated with the recording',
+          },
+          originUrl: {
+            type: 'string',
+            description: 'The URL associated with this track',
+          },
+          musicServiceBaseDomain: {
+            type: 'string',
+            description:
+              "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if not provided.",
+          },
+          submissionClientAgent: {
+            type: 'string',
+            maxLength: 256,
+            maxGraphemes: 2560,
+            description:
+              "A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b (Linux; Android 13; SM-A715F). Defaults to 'manual/unknown' if not provided.",
+          },
+          playedTime: {
+            type: 'string',
+            format: 'datetime',
+            description: 'The unix timestamp of when the track was played',
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaGetActorFeed: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.getActorFeed',
+    description:
+      "This lexicon is in a not officially released state. It is subject to change. | Retrieves multiple plays from the index or via an author's DID.",
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['cursor'],
+          properties: {
+            authorDID: {
+              type: 'string',
+              format: 'at-identifier',
+              description: "The author's DID for the play",
+            },
+            cursor: {
+              type: 'string',
+              description: 'The cursor to start the query from',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['plays'],
+            properties: {
+              plays: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.feed.defs#playView',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaFeedGetPlay: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.feed.getPlay',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['authorDID', 'rkey'],
+          properties: {
+            authorDID: {
+              type: 'string',
+              format: 'at-identifier',
+              description: "The author's DID for the play",
+            },
+            rkey: {
+              type: 'string',
+              description: 'The record key of the play',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['play'],
+            properties: {
+              play: {
+                type: 'ref',
+                ref: 'lex:fm.teal.alpha.feed.defs#playView',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaFeedPlay: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.feed.play',
     description:
       "This lexicon is in a not officially released state. It is subject to change. | A declaration of a teal.fm play. Plays are submitted as a result of a user listening to a track. Plays should be marked as tracked when a user has listened to the entire track if it's under 2 minutes long, or half of the track's duration up to 4 minutes, whichever is longest.",
     defs: {
@@ -355,14 +518,18 @@ export const schemaDict = {
       },
     },
   },
-}
-export const schemas: LexiconDoc[] = Object.values(schemaDict) as LexiconDoc[]
+} as const satisfies Record<string, LexiconDoc>
+
+export const schemas = Object.values(schemaDict)
 export const lexicons: Lexicons = new Lexicons(schemas)
 export const ids = {
   AppBskyActorProfile: 'app.bsky.actor.profile',
   AppBskyRichtextFacet: 'app.bsky.richtext.facet',
   FmTealAlphaActorProfile: 'fm.teal.alpha.actor.profile',
   FmTealAlphaActorStatus: 'fm.teal.alpha.actor.status',
-  FmTealAlphaPlay: 'fm.teal.alpha.play',
+  FmTealAlphaFeedDefs: 'fm.teal.alpha.feed.defs',
+  FmTealAlphaGetActorFeed: 'fm.teal.alpha.getActorFeed',
+  FmTealAlphaFeedGetPlay: 'fm.teal.alpha.feed.getPlay',
+  FmTealAlphaFeedPlay: 'fm.teal.alpha.feed.play',
   XyzStatusphereStatus: 'xyz.statusphere.status',
 }

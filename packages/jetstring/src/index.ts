@@ -50,6 +50,7 @@ class Handler {
     } else if (isTealAlphaPlay(msg) && msg.$type === "fm.teal.alpha.play") {
       if (record.commit.operation === "create") {
         // serialize message as fm.teal.alpha.play
+        console.log(record.did);
         db.insert(play)
           .values({
             createdAt: new Date().getTime().toString(),

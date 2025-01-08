@@ -9,6 +9,6 @@
     "@teal/tsconfig": "workspace:*"
   },
   "scripts": {
-    "lex:gen-server": "lex gen-server ./src ./real/*"
+    "lex:gen-server": "zsh ./lex-gen.sh"
   }
 }
