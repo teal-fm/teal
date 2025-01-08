@@ -58,8 +58,7 @@ class Handler {
             // the AT path
             uri: record.commit.rkey,
             authorDid: record.did,
-
-            artistName: msg.artistName,
+            artistNames: msg.artistNames,
             trackName: msg.trackName,
             artistMbIds: msg.artistMbIds || [],
             trackMbId: msg.trackMbId || "",
