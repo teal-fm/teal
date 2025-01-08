@@ -26,12 +26,15 @@
           "type": "integer",
           "description": "The length of the track in seconds"
         },
-        "artistName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256,
-          "maxGraphemes": 2560,
-          "description": "The name of the artist"
+        "artistNames": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "maxGraphemes": 2560
+          },
+          "description": "Array of artist names in order of original appearance."
         },
         "artistMbIds": {
           "type": "array",
