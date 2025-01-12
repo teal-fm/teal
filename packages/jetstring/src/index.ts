@@ -56,7 +56,7 @@ class Handler {
             createdAt: new Date().getTime().toString(),
             indexedAt: new Date(record.time_us).getTime().toString(),
             // the AT path
-            uri: record.commit.rkey,
+            rkey: record.commit.rkey,
             authorDid: record.did,
             artistNames: msg.artistNames,
             trackName: msg.trackName,

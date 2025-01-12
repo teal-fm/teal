@@ -63,7 +63,7 @@ export const follow = sqliteTable("follow", {
 
 // play
 export const play = sqliteTable("play", {
-  uri: text().primaryKey(),
+  rkey: text().primaryKey(),
   authorDid: text().notNull(),
   createdAt: text().notNull(),
   indexedAt: text().notNull(),
