@@ -1,0 +1,82 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.defs",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Misc. items related to feeds.",
+  "defs": {
+    "playView": {
+      "type": "object",
+      "required": ["trackName", "artistNames"],
+      "properties": {
+        "trackName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "maxGraphemes": 2560,
+          "description": "The name of the track"
+        },
+        "trackMbId": {
+          "type": "string",
+          "description": "The Musicbrainz ID of the track"
+        },
+        "recordingMbId": {
+          "type": "string",
+          "description": "The Musicbrainz recording ID of the track"
+        },
+        "duration": {
+          "type": "integer",
+          "description": "The length of the track in seconds"
+        },
+        "artistNames": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "maxGraphemes": 2560
+          },
+          "description": "Array of artist names in order of original appearance."
+        },
+        "artistMbIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of Musicbrainz artist IDs"
+        },
+        "releaseName": {
+          "type": "string",
+          "maxLength": 256,
+          "maxGraphemes": 2560,
+          "description": "The name of the release/album"
+        },
+        "releaseMbId": {
+          "type": "string",
+          "description": "The Musicbrainz release ID"
+        },
+        "isrc": {
+          "type": "string",
+          "description": "The ISRC code associated with the recording"
+        },
+        "originUrl": {
+          "type": "string",
+          "description": "The URL associated with this track"
+        },
+        "musicServiceBaseDomain": {
+          "type": "string",
+          "description": "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if not provided."
+        },
+        "submissionClientAgent": {
+          "type": "string",
+          "maxLength": 256,
+          "maxGraphemes": 2560,
+          "description": "A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b (Linux; Android 13; SM-A715F). Defaults to 'manual/unknown' if not provided."
+        },
+        "playedTime": {
+          "type": "string",
+          "format": "datetime",
+          "description": "The unix timestamp of when the track was played"
+        }
+      }
+    }
+  }
+}

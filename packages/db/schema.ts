@@ -63,7 +63,7 @@ export const follow = sqliteTable("follow", {
 
 // play
 export const play = sqliteTable("play", {
-  uri: text().primaryKey(),
+  rkey: text().primaryKey(),
   authorDid: text().notNull(),
   createdAt: text().notNull(),
   indexedAt: text().notNull(),
@@ -76,8 +76,8 @@ export const play = sqliteTable("play", {
   recordingMbId: text(),
   /** The length of the track in seconds */
   duration: integer(),
-  /** The name of the artist */
-  artistName: text().notNull(),
+  /** The names of the artists in order of original appearance */
+  artistNames: json<string[]>(),
   /** Array of Musicbrainz artist IDs */
   // type of string[]
   artistMbIds: json<string[]>(),

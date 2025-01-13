@@ -4,7 +4,10 @@ import * as schema from "./schema";
 import process from "node:process";
 import path from "node:path";
 
-console.log("Loading SQLite file at", path.join(process.cwd(), "./../../db.sqlite"));
+console.log(
+  "Loading SQLite file at",
+  path.join(process.cwd(), "./../../db.sqlite"),
+);
 
 const client = createClient({
   url:
@@ -14,6 +17,7 @@ const client = createClient({
 
 export const db = drizzle(client, {
   schema: schema,
+  casing: "snake_case",
 });
 
 // If you need to export the type:

@@ -7,12 +7,12 @@ import { Text } from "../../components/ui/text";
 import {
   Record as Play,
   validateRecord,
-} from "@teal/lexicons/src/types/fm/teal/alpha/play";
+} from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 
 async function searchMusicbrainz(query: string) {
   try {
     const res = await fetch(
-      `https://musicbrainz.org/ws/2/recording?query=${encodeURIComponent(query)}&fmt=json`
+      `https://musicbrainz.org/ws/2/recording?query=${encodeURIComponent(query)}&fmt=json`,
     );
     const data = await res.json();
     return data.recordings?.[0]; // Get the first recording result

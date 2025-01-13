@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.play",
+  "id": "fm.teal.alpha.feed.play",
   "description": "This lexicon is in a not officially released state. It is subject to change. | A declaration of a teal.fm play. Plays are submitted as a result of a user listening to a track. Plays should be marked as tracked when a user has listened to the entire track if it's under 2 minutes long, or half of the track's duration up to 4 minutes, whichever is longest.",
   "defs": {
     "main": {
@@ -8,7 +8,7 @@
       "key": "tid",
       "record": {
         "type": "object",
-        "required": ["trackName", "artistName"],
+        "required": ["trackName", "artistNames"],
         "properties": {
           "trackName": {
             "type": "string",
@@ -30,12 +30,15 @@
             "type": "integer",
             "description": "The length of the track in seconds"
           },
-          "artistName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256,
-            "maxGraphemes": 2560,
-            "description": "The name of the artist"
+          "artistNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "maxGraphemes": 2560
+            },
+            "description": "Array of artist names in order of original appearance."
           },
           "artistMbIds": {
             "type": "array",

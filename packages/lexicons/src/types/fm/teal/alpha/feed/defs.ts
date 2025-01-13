@@ -2,11 +2,11 @@
  * GENERATED CODE - DO NOT MODIFY
  */
 import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../lexicons'
-import { isObj, hasProp } from '../../../../util'
+import { lexicons } from '../../../../../lexicons'
+import { isObj, hasProp } from '../../../../../util'
 import { CID } from 'multiformats/cid'
 
-export interface Record {
+export interface PlayView {
   /** The name of the track */
   trackName: string
   /** The Musicbrainz ID of the track */
@@ -15,8 +15,8 @@ export interface Record {
   recordingMbId?: string
   /** The length of the track in seconds */
   duration?: number
-  /** The name of the artist */
-  artistName: string
+  /** Array of artist names in order of original appearance. */
+  artistNames: string[]
   /** Array of Musicbrainz artist IDs */
   artistMbIds?: string[]
   /** The name of the release/album */
@@ -36,14 +36,14 @@ export interface Record {
   [k: string]: unknown
 }
 
-export function isRecord(v: unknown): v is Record {
+export function isPlayView(v: unknown): v is PlayView {
   return (
     isObj(v) &&
     hasProp(v, '$type') &&
-    (v.$type === 'fm.teal.alpha.play#main' || v.$type === 'fm.teal.alpha.play')
+    v.$type === 'fm.teal.alpha.feed.defs#playView'
   )
 }
 
-export function validateRecord(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.play#main', v)
+export function validatePlayView(v: unknown): ValidationResult {
+  return lexicons.validate('fm.teal.alpha.feed.defs#playView', v)
 }

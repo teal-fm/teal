@@ -11,7 +11,7 @@ import {
 import {
   Record as FmTealAlphaPlay,
   isRecord as isTealAlphaPlay,
-} from "@teal/lexicons/src/types/fm/teal/alpha/play";
+} from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 
 class Handler {
   private static instance: Handler;
@@ -50,15 +50,15 @@ class Handler {
     } else if (isTealAlphaPlay(msg) && msg.$type === "fm.teal.alpha.play") {
       if (record.commit.operation === "create") {
         // serialize message as fm.teal.alpha.play
+        console.log(record.did);
         db.insert(play)
           .values({
             createdAt: new Date().getTime().toString(),
             indexedAt: new Date(record.time_us).getTime().toString(),
             // the AT path
-            uri: record.commit.rkey,
+            rkey: record.commit.rkey,
             authorDid: record.did,
-
-            artistName: msg.artistName,
+            artistNames: msg.artistNames,
             trackName: msg.trackName,
             artistMbIds: msg.artistMbIds || [],
             trackMbId: msg.trackMbId || "",

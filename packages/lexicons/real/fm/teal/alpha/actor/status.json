@@ -15,7 +15,10 @@
             "format": "datetime",
             "description": "The unix timestamp of when the item was recorded"
           },
-          "item": { "type": "union", "refs": ["fm.teal.alpha.play#record"] }
+          "item": {
+            "type": "ref",
+            "ref": "fm.teal.alpha.feed.defs#playView"
+          }
         }
       }
     }

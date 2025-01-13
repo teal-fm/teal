@@ -9,6 +9,8 @@ import {
   StreamAuthVerifier,
 } from '@atproto/xrpc-server'
 import { schemas } from './lexicons'
+import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed'
+import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay'
 
 export function createServer(options?: XrpcOptions): Server {
   return new Server(options)
@@ -89,10 +91,12 @@ export class FmTealNS {
 export class FmTealAlphaNS {
   _server: Server
   actor: FmTealAlphaActorNS
+  feed: FmTealAlphaFeedNS
 
   constructor(server: Server) {
     this._server = server
     this.actor = new FmTealAlphaActorNS(server)
+    this.feed = new FmTealAlphaFeedNS(server)
   }
 }
 
@@ -101,6 +105,36 @@ export class FmTealAlphaActorNS {
 
   constructor(server: Server) {
     this._server = server
+  }
+}
+
+export class FmTealAlphaFeedNS {
+  _server: Server
+
+  constructor(server: Server) {
+    this._server = server
+  }
+
+  getActorFeed<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaFeedGetActorFeed.Handler<ExtractAuth<AV>>,
+      FmTealAlphaFeedGetActorFeed.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.feed.getActorFeed' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getPlay<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaFeedGetPlay.Handler<ExtractAuth<AV>>,
+      FmTealAlphaFeedGetPlay.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.feed.getPlay' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
   }
 }
 
@@ -124,13 +158,13 @@ export class XyzStatusphereNS {
 
 type SharedRateLimitOpts<T> = {
   name: string
-  calcKey?: (ctx: T) => string
+  calcKey?: (ctx: T) => string | null
   calcPoints?: (ctx: T) => number
 }
 type RouteRateLimitOpts<T> = {
   durationMs: number
   points: number
-  calcKey?: (ctx: T) => string
+  calcKey?: (ctx: T) => string | null
   calcPoints?: (ctx: T) => number
 }
 type HandlerOpts = { blobLimit?: number }
