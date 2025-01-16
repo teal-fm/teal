@@ -24,7 +24,7 @@ pnpm install && pnpm install -g turbo && cp apps/aqua/.env.example apps/aqua/.en
 pnpm run db:migrate
 ```
 
-Development
+## Development
 
 To start the development server run:
 
