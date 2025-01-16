@@ -26,10 +26,16 @@ pnpm run db:migrate
 
 ## Development
 
-To start the development server run:
+To start the monorepo run:
 
 ```bash
-turbo dev --filter=@teal/aqua
+turbo dev
+```
+
+If you only want to start one service run:
+
+```
+turbo dev --filter=<service_path>
 ```
 
 Open http://localhost:3000/ with your browser to see the home page. You will need 
