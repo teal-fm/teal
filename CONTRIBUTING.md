@@ -34,7 +34,7 @@ turbo dev
 
 If you only want to start one service run:
 
-```
+```bash
 turbo dev --filter=<service_path>
 ```
 
