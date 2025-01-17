@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  Alert,
   Modal,
 } from "react-native";
 import { useState } from "react";
@@ -18,12 +17,75 @@ import { Brain, Check } from "lucide-react-native";
 import { Link, Stack } from "expo-router";
 import React from "react";
 
-async function searchMusicbrainz(searchParams: {
+// MusicBrainz API Types
+interface MusicBrainzArtistCredit {
+  artist: {
+    id: string;
+    name: string;
+    "sort-name"?: string;
+  };
+  joinphrase?: string;
+  name: string;
+}
+
+interface MusicBrainzRelease {
+  id: string;
+  title: string;
+  status?: string;
+  date?: string;
+  country?: string;
+  disambiguation?: string;
+  "track-count"?: number;
+}
+
+interface MusicBrainzRecording {
+  id: string;
+  title: string;
+  length?: number;
+  isrcs?: string[];
+  "artist-credit"?: MusicBrainzArtistCredit[];
+  releases?: MusicBrainzRelease[];
+  selectedRelease?: MusicBrainzRelease; // Added for UI state
+}
+
+interface SearchParams {
   track?: string;
   artist?: string;
-}) {
+  release?: string;
+}
+
+interface SearchResultProps {
+  result: MusicBrainzRecording;
+  onSelectTrack: (track: MusicBrainzRecording | null) => void;
+  isSelected: boolean;
+  selectedRelease: MusicBrainzRelease | null;
+  onReleaseSelect: (trackId: string, release: MusicBrainzRelease) => void;
+}
+
+interface PlayRecord {
+  trackName: string;
+  recordingMbId?: string;
+  duration?: number;
+  artistName: string;
+  artistMbIds?: string[];
+  releaseName?: string;
+  releaseMbId?: string;
+  isrc?: string;
+  originUrl: string;
+  musicServiceBaseDomain: string;
+  submissionClientAgent: string;
+  playedTime: string;
+}
+
+interface ReleaseSelections {
+  [key: string]: MusicBrainzRelease;
+}
+
+async function searchMusicbrainz(
+  searchParams: SearchParams,
+): Promise<MusicBrainzRecording[]> {
   try {
-    const queryParts = [];
+    const queryParts: string[] = [];
     if (searchParams.track)
       queryParts.push(`release title:"${searchParams.track}"`);
     if (searchParams.artist)
@@ -44,14 +106,14 @@ async function searchMusicbrainz(searchParams: {
   }
 }
 
-const SearchResult = ({
+const SearchResult: React.FC<SearchResultProps> = ({
   result,
   onSelectTrack,
   isSelected,
   selectedRelease,
   onReleaseSelect,
 }) => {
-  const [showReleaseModal, setShowReleaseModal] = useState(false);
+  const [showReleaseModal, setShowReleaseModal] = useState<boolean>(false);
 
   const currentRelease = selectedRelease || result.releases?.[0];
 
@@ -85,7 +147,7 @@ const SearchResult = ({
           </Text>
 
           {/* Release Selector Button */}
-          {result.releases?.length > 0 && (
+          {result.releases && result.releases?.length > 0 && (
             <TouchableOpacity
               onPress={() => setShowReleaseModal(true)}
               className="p-1 bg-secondary/10 rounded-lg flex md:flex-row items-start md:gap-1"
@@ -182,28 +244,27 @@ const SearchResult = ({
 
 export default function TabTwoScreen() {
   const agent = useStore((state) => state.pdsAgent);
-  const [searchFields, setSearchFields] = useState({
+  const [searchFields, setSearchFields] = useState<SearchParams>({
     track: "",
     artist: "",
     release: "",
   });
-  const [searchResults, setSearchResults] = useState([]);
-  const [selectedTrack, setSelectedTrack] = useState(null);
-  const [selectedRelease, setSelectedRelease] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>(
+    [],
+  );
+  const [selectedTrack, setSelectedTrack] =
+    useState<MusicBrainzRecording | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [releaseSelections, setReleaseSelections] = useState<ReleaseSelections>(
+    {},
+  );
 
-  const [releaseSelections, setReleaseSelections] = useState({});
-
-  const handleTrackSelect = (track) => {
+  const handleTrackSelect = (track: MusicBrainzRecording | null): void => {
     setSelectedTrack(track);
-    // Reset selected release when track is deselected
-    if (!track) {
-      setSelectedRelease(null);
-    }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (): Promise<void> => {
     if (!searchFields.track && !searchFields.artist && !searchFields.release) {
       return;
     }
@@ -215,7 +276,7 @@ export default function TabTwoScreen() {
     setIsLoading(false);
   };
 
-  const createPlayRecord = (result) => {
+  const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
     return {
       trackName: result.title ?? "Unknown Title",
       recordingMbId: result.id ?? undefined,
@@ -235,7 +296,7 @@ export default function TabTwoScreen() {
     };
   };
 
-  const submitPlay = async () => {
+  const submitPlay = async (): Promise<void> => {
     if (!selectedTrack) return;
 
     setIsSubmitting(true);
