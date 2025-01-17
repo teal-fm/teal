@@ -11,6 +11,7 @@ import { atclient } from "./auth/client";
 import { getSessionAgent } from "./lib/auth";
 import { RichText } from "@atproto/api";
 import { sanitizeUrl } from "@braintree/sanitize-url";
+import { getXrpcRouter } from "./xrpc/route";
 
 const HEAD = `<head>
     <link rel="stylesheet" href="/latex.css">
@@ -23,6 +24,8 @@ const app = new Hono<EnvWithCtx>();
 app.use((c, next) => setupContext(c, db, logger, next));
 
 app.route("/oauth", getAuthRouter());
+
+app.route("/xrpc", getXrpcRouter());
 
 app.get("/client-metadata.json", (c) => {
   return c.json(atclient.clientMetadata);

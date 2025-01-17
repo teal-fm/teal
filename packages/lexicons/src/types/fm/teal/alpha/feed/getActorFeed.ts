@@ -11,9 +11,9 @@ import * as FmTealAlphaFeedDefs from './defs'
 
 export interface QueryParams {
   /** The author's DID for the play */
-  authorDID?: string
+  authorDID: string
   /** The cursor to start the query from */
-  cursor: string
+  cursor?: string
 }
 
 export type InputSchema = undefined
