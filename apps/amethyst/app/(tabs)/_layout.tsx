@@ -1,10 +1,17 @@
 import React from "react";
-import { FilePen, Home, LogOut, type LucideIcon } from "lucide-react-native";
+import {
+  FilePen,
+  Home,
+  Info,
+  LogOut,
+  type LucideIcon,
+} from "lucide-react-native";
 import { Link, Tabs } from "expo-router";
 import { Pressable } from "react-native";
 
 import Colors from "../../constants/Colors";
 import { useColorScheme } from "../../components/useColorScheme";
+import { useClientOnlyValue } from "../../components/useClientOnlyValue";
 import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
 import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
@@ -31,7 +38,7 @@ export default function TabLayout() {
         headerShown: false, // useClientOnlyValue(false, true),
         tabBarShowLabel: true,
         tabBarStyle: {
-          //height: 75,
+          height: 75,
           display: hideTabBar ? "none" : "flex",
         },
       }}
@@ -57,7 +64,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="(stamp)"
+        name="button"
         options={{
           title: "Stamp",
           tabBarIcon: ({ color }) => (
