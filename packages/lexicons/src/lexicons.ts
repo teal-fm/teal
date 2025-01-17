@@ -339,7 +339,7 @@ export const schemaDict = {
         type: 'query',
         parameters: {
           type: 'params',
-          required: ['cursor'],
+          required: ['authorDID'],
           properties: {
             authorDID: {
               type: 'string',

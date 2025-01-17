@@ -15,6 +15,13 @@ const json = <TData>() =>
     toDriver(value: TData): string {
       return JSON.stringify(value);
     },
+    // handle single value (no json array) as well
+    fromDriver(value: string): TData {
+      if (value[0] === "[") {
+        return JSON.parse(value);
+      }
+      return [value] as TData;
+    },
   })();
 
 // Tables
