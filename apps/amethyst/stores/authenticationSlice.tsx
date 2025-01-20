@@ -35,8 +35,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   get,
 ) => {
   // check if we have CF_PAGES_URL set. if not, use localhost
-  const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
-  console.log("Using base URL:", baseUrl);
+  const baseUrl = process.env.CF_PAGES_URL || "http://localhost:8081";
   const initialAuth = createOAuthClient(baseUrl);
 
   console.log("Auth client created!");

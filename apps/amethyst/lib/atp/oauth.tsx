@@ -22,7 +22,7 @@ export default function createOAuthClient(
   const isWeb = Platform.OS === "web";
   const u = new URL(baseUrl);
   let hostname = u.hostname;
-  if (hostname === "localhost") {
+  if (hostname == "localhost") {
     hostname = "127.0.0.1";
   }
   let redirect = `${u.protocol}//${hostname}`;
