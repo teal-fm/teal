@@ -1,4 +1,18 @@
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/lib/icons/iconWithClassName";
+import { Stack, useRouter } from "expo-router";
+import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
 import React, { useState } from "react";
+import {
+  FlatList,
+  Image,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import {
   MusicBrainzRecording,
   ReleaseSelections,
@@ -6,20 +20,6 @@ import {
   SearchParams,
   SearchResultProps,
 } from "../../../../lib/oldStamp";
-import {
-  ScrollView,
-  TextInput,
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  Modal,
-} from "react-native";
-import { Stack, useRouter } from "expo-router";
-import { Button } from "@/components/ui/button";
-import { FlatList } from "react-native";
-import { Check, ChevronRight } from "lucide-react-native";
-import { Icon } from "@/lib/icons/iconWithClassName";
 
 export default function StepOne() {
   const router = useRouter();
@@ -32,11 +32,11 @@ export default function StepOne() {
     release: "",
   });
   const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>(
-    [],
+    []
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [releaseSelections, setReleaseSelections] = useState<ReleaseSelections>(
-    {},
+    {}
   );
 
   const handleSearch = async (): Promise<void> => {
@@ -173,7 +173,7 @@ export function SearchResult({
             : {
                 ...result,
                 selectedRelease: currentRelease, // Pass the selected release with the track
-              },
+              }
         );
       }}
       className={`p-4 mb-2 rounded-lg ${
@@ -197,14 +197,20 @@ export function SearchResult({
           {result.releases && result.releases?.length > 0 && (
             <TouchableOpacity
               onPress={() => setShowReleaseModal(true)}
-              className="p-1 bg-secondary/10 rounded-lg flex md:flex-row items-start md:gap-1"
+              className="p-1 bg-secondary/10 rounded-lg flex md:flex-row items-start md:items-center justify-between md:gap-1"
             >
-              <Text className="text-sm text-gray-500">Release:</Text>
-              <Text className="text-sm" numberOfLines={1}>
-                {currentRelease?.title}
-                {currentRelease?.date ? ` (${currentRelease.date})` : ""}
-                {currentRelease?.country ? ` - ${currentRelease.country}` : ""}
-              </Text>
+              <View className="flex md:flex-row items-start gap-1">
+                <Text className="text-sm text-gray-500">Release:</Text>
+                <Text className="text-sm" numberOfLines={1}>
+                  {currentRelease?.title}
+                  {currentRelease?.date ? ` (${currentRelease.date})` : ""}
+                  {currentRelease?.country
+                    ? ` - ${currentRelease.country}`
+                    : ""}
+                </Text>
+              </View>
+              {/* the chevron looks odd in the other layout so I'm just hiding it for now. -mm */}
+              <ChevronDown className="md:ml-1 md:block hidden w-6 h-6" />
             </TouchableOpacity>
           )}
         </View>
