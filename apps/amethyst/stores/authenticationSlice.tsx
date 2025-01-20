@@ -34,7 +34,9 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   set,
   get,
 ) => {
-  const initialAuth = createOAuthClient("http://localhost:8081");
+  // check if we have CF_PAGES_URL set. if not, use localhost
+  const baseUrl = process.env.CF_PAGES_URL || "http://localhost:8081";
+  const initialAuth = createOAuthClient(baseUrl);
 
   console.log("Auth client created!");
 
