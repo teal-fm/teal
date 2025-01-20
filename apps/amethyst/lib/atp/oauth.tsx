@@ -12,7 +12,7 @@ export type AquareumOAuthClient = Omit<
 >;
 
 export default function createOAuthClient(
-  baseUrl: string,
+  baseUrl: string
 ): AquareumOAuthClient {
   if (!baseUrl) {
     throw new Error("baseUrl is required");
@@ -44,7 +44,7 @@ export default function createOAuthClient(
   console.log("Our client base uri is ", hostname);
   meta = {
     client_id:
-      hostname === "localhost"
+      hostname === "127.0.0.1"
         ? `http://localhost?${queryParams.toString()}`
         : `https://${hostname}/client-metadata.json`,
     redirect_uris: [redirect as any],
