@@ -1,0 +1,12 @@
+{
+  "redirect_uris": ["https://alpha.teal.fm/oauth/callback"],
+  "response_types": ["code"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "scope": "atproto transition:generic",
+  "token_endpoint_auth_method": "none",
+  "application_type": "web",
+  "client_id": "https://alpha.teal.fm/client-metadata.json",
+  "client_name": "teal",
+  "client_uri": "https://alpha.teal.fm",
+  "dpop_bound_access_tokens": true
+}
