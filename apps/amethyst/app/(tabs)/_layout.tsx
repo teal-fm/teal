@@ -1,21 +1,25 @@
 import React from "react";
-import { CodeXml, Home, Info, type LucideIcon } from "lucide-react-native";
-import { Link, Stack, Tabs } from "expo-router";
+import { FilePen, Home, LogOut, type LucideIcon } from "lucide-react-native";
+import { Link, Tabs } from "expo-router";
 import { Pressable } from "react-native";
 
 import Colors from "../../constants/Colors";
 import { useColorScheme } from "../../components/useColorScheme";
-import { useClientOnlyValue } from "../../components/useClientOnlyValue";
-import { iconWithClassName } from "../../lib/icons/iconWithClassName";
+import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useStore } from "@/stores/mainStore";
 
 function TabBarIcon(props: { name: LucideIcon; color: string }) {
   const Name = props.name;
   iconWithClassName(Name);
-  return <Name size={28} className="mt-4" {...props} />;
+  return <Name size={28} className="" {...props} />;
 }
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const authStatus = useStore((state) => state.status);
+  // if we are on web but not native and web width is greater than 1024px
+  const hideTabBar = useIsMobile() || authStatus !== "loggedIn";
 
   return (
     <Tabs
@@ -24,10 +28,11 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-        tabBarShowLabel: false,
+        headerShown: false, // useClientOnlyValue(false, true),
+        tabBarShowLabel: true,
         tabBarStyle: {
-          height: 75,
+          //height: 75,
+          display: hideTabBar ? "none" : "flex",
         },
       }}
     >
@@ -37,13 +42,13 @@ export default function TabLayout() {
           title: "Tab One",
           tabBarIcon: ({ color }) => <TabBarIcon name={Home} color={color} />,
           headerRight: () => (
-            <Link href="/modal" asChild>
+            <Link href="/auth/logoutModal" asChild>
               <Pressable>
                 {({ pressed }) => (
-                  <Info
-                    size={25}
-                    color={Colors[colorScheme ?? "light"].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                  <Icon
+                    icon={LogOut}
+                    className="text-2xl mr-4"
+                    name="log-out"
                   />
                 )}
               </Pressable>
@@ -52,11 +57,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="(stamp)"
         options={{
-          title: "Tab Two",
+          title: "Stamp",
           tabBarIcon: ({ color }) => (
-            <TabBarIcon name={CodeXml} color={color} />
+            <TabBarIcon name={FilePen} color={color} />
           ),
         }}
       />

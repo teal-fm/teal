@@ -3,7 +3,6 @@ import { View } from "react-native";
 import { Text } from "../../components/ui/text";
 import { Button } from "../../components/ui/button";
 import React from "react";
-import { FontAwesome6 } from "@expo/vector-icons";
 
 export default function AuthOptions() {
   return (
@@ -25,15 +24,14 @@ export default function AuthOptions() {
           <Text className="text-5xl font-serif-old-italic">.fm</Text>
         </Text>
       </View>
-      <Link href="/login" className="text-secondary">
+      <Link href="/auth/login" className="text-secondary">
         <Button
           className="flex flex-row justify-center items-center rounded-full dark-blue-800 dark:bg-blue-400 gap-2"
           size="lg"
           onTouchStart={() => {
-            router.push("/login");
+            router.push("/auth/login");
           }}
         >
-          
           <Text>Sign in with ATProto</Text>
         </Button>
       </Link>
@@ -42,7 +40,7 @@ export default function AuthOptions() {
           className="flex flex-row justify-center items-center rounded-full"
           size="lg"
           onTouchStart={() => {
-            router.push("/signup");
+            router.push("/auth/signup");
           }}
         >
           <Text>Sign up</Text>
