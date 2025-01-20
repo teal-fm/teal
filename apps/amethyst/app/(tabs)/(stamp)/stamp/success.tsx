@@ -1,14 +1,19 @@
 import { ExternalLink } from "@/components/ExternalLink";
 import { PlaySubmittedData } from "@/lib/oldStamp";
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
-import { View, Text } from "react-native";
+import { Text, View } from "react-native";
 
 export default function StepThree() {
   const { submittedData } = useLocalSearchParams();
   const responseData: PlaySubmittedData = JSON.parse(submittedData as string);
   return (
     <View className="flex-1 p-4 bg-background items-center h-screen-safe">
+      <Stack.Screen
+        options={{
+          title: "Play Successfully Submitted",
+        }}
+      />
       <View className="flex justify-center items-center gap-2 max-w-screen-md w-screen min-h-full px-4">
         <Check size={48} className="text-green-600 dark:text-green-400" />
         <Text className="text-xl">Play Submitted!</Text>
