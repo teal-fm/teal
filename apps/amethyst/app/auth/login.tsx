@@ -32,7 +32,7 @@ const LoginScreen = () => {
       let redirUrl = await getLoginUrl(handle.replace("@", ""));
       if (!redirUrl) {
         // TODO: better error handling lulw
-        throw new Error("Does not resolve to a DID");
+        throw new Error("Could not get login url. ");
       }
       setIsRedirecting(true);
       if (Platform.OS === "web") {
