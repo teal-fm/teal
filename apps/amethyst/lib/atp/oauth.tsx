@@ -41,6 +41,7 @@ export default function createOAuthClient(
   const queryParams = new URLSearchParams();
   queryParams.set("scope", "atproto transition:generic");
   queryParams.set("redirect_uri", redirect);
+  console.log("Our client base uri is ", hostname);
   meta = {
     client_id:
       hostname === "localhost"
