@@ -1,18 +1,19 @@
-import VerticalPlayView from "@/components/play/verticalPlayView";
-import { Button } from "@/components/ui/button";
-import { useStore } from "@/stores/mainStore";
-import { ComAtprotoRepoCreateRecord } from "@atproto/api";
-import {
-  Record as PlayRecord,
-  validateRecord,
-} from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Switch, Text, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { View, Text } from "react-native";
 import {
   MusicBrainzRecording,
   PlaySubmittedData,
 } from "../../../../lib/oldStamp";
+import {
+  validateRecord,
+  Record as PlayRecord,
+} from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import VerticalPlayView from "@/components/play/verticalPlayView";
+import { Switch } from "react-native";
+import { useStore } from "@/stores/mainStore";
+import { ComAtprotoRepoCreateRecord } from "@atproto/api";
 
 const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
   let artistNames: string[] = [];
@@ -47,7 +48,7 @@ export default function Submit() {
   const { track } = useLocalSearchParams();
 
   const selectedTrack: MusicBrainzRecording | null = JSON.parse(
-    track as string
+    track as string,
   );
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -74,7 +75,7 @@ export default function Submit() {
           collection: "fm.teal.alpha.feed.play",
           rkey: undefined,
           record,
-        }
+        },
       );
       if (!res || res.success === false) {
         throw new Error("Failed to submit play!");
@@ -98,11 +99,6 @@ export default function Submit() {
 
   return (
     <View className="flex-1 p-4 bg-background items-center h-screen-safe">
-      <Stack.Screen
-        options={{
-          title: "Submit Stamp",
-        }}
-      />
       <View className="flex justify-between align-middle gap-4 max-w-screen-md w-screen min-h-full px-4">
         <Text className="font-bold text-lg">Submit Play</Text>
         <VerticalPlayView
