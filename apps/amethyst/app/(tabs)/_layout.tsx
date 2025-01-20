@@ -1,17 +1,10 @@
 import React from "react";
-import {
-  FilePen,
-  Home,
-  Info,
-  LogOut,
-  type LucideIcon,
-} from "lucide-react-native";
+import { FilePen, Home, LogOut, type LucideIcon } from "lucide-react-native";
 import { Link, Tabs } from "expo-router";
 import { Pressable } from "react-native";
 
 import Colors from "../../constants/Colors";
 import { useColorScheme } from "../../components/useColorScheme";
-import { useClientOnlyValue } from "../../components/useClientOnlyValue";
 import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
 import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
@@ -35,10 +28,10 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-        tabBarShowLabel: false,
+        headerShown: false, // useClientOnlyValue(false, true),
+        tabBarShowLabel: true,
         tabBarStyle: {
-          height: 75,
+          //height: 75,
           display: hideTabBar ? "none" : "flex",
         },
       }}
@@ -64,9 +57,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="button"
+        name="(stamp)"
         options={{
-          title: "Tab Two",
+          title: "Stamp",
           tabBarIcon: ({ color }) => (
             <TabBarIcon name={FilePen} color={color} />
           ),
