@@ -4,6 +4,11 @@ const { FileStore } = require("metro-cache");
 const path = require("path");
 const { withNativeWind } = require("nativewind/metro");
 
+const {
+  wrapWithReanimatedMetroConfig,
+} = require('react-native-reanimated/metro-config');
+
+
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
@@ -13,4 +18,4 @@ config.cacheStores = [
   }),
 ];
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+module.exports = wrapWithReanimatedMetroConfig(withNativeWind(config, { input: "./global.css" }));

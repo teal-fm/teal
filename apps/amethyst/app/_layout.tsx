@@ -12,6 +12,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
+import { GestureHandlerRootView } from "react-native-gesture-handler"
+
 import { verifyInstallation } from "nativewind";
 
 import { GlobalTextClassContext } from "../components/ui/text";
@@ -87,6 +89,7 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
+    <GestureHandlerRootView>
     <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
       <GlobalTextClassContext.Provider value="font-sans">
         <Stack>
@@ -103,5 +106,6 @@ function RootLayoutNav() {
         <PortalHost />
       </GlobalTextClassContext.Provider>
     </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
