@@ -1,9 +1,9 @@
 import React from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "../../components/ui/text";
-import { Button } from "../../components/ui/button";
-import { Icon } from "../../lib/icons/iconWithClassName";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import { ArrowRight } from "lucide-react-native";
 
 import { Link, Stack, router } from "expo-router";

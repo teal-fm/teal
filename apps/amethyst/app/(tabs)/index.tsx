@@ -1,18 +1,14 @@
 import * as React from "react";
 import { View } from "react-native";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "../../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
-import { Text } from "../../components/ui/text";
-import { useStore } from "../../stores/mainStore";
+import { Text } from "@/components/ui/text";
+import { useStore } from "@/stores/mainStore";
 import AuthOptions from "../auth/options";
 
 import { Response } from "@atproto/api/src/client/types/app/bsky/actor/getProfile";

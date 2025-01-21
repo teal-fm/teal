@@ -3,14 +3,14 @@ import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 import React, { useState } from "react";
 import { Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Text } from "../components/ui/text";
-import { Icon } from "../lib/icons/iconWithClassName";
-import { cn } from "../lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
+import { cn } from "@/lib/utils";
 
 import { openAuthSessionAsync } from "expo-web-browser";
-import { useStore } from "../stores/mainStore";
+import { useStore } from "@/stores/mainStore";
 
 const LoginScreen = () => {
   const [handle, setHandle] = useState("");
