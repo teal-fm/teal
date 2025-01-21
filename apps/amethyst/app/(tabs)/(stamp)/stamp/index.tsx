@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { Stack, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
+
 import React, { useRef, useState } from "react";
 import {
   FlatList,
@@ -21,6 +22,7 @@ import {
 } from "@/lib/oldStamp";
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import SheetBackdrop from "@/components/ui/sheetBackdrop";
+
 
 export default function StepOne() {
   const router = useRouter();
@@ -192,7 +194,8 @@ export function SearchResult({
             : {
                 ...result,
                 selectedRelease: currentRelease, // Pass the selected release with the track
-              },
+              }
+
         );
       }}
       className={`p-4 mb-2 rounded-lg ${

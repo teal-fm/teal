@@ -60,7 +60,6 @@ export async function searchMusicbrainz(
 ): Promise<MusicBrainzRecording[]> {
   try {
     const queryParts: string[] = [];
-
     if (searchParams.track) {
       queryParts.push(`title:"${searchParams.track}"`);
     }
@@ -72,6 +71,7 @@ export async function searchMusicbrainz(
     if (searchParams.release) {
       queryParts.push(`release:"${searchParams.release}"`);
     }
+
 
     const query = queryParts.join(" AND ");
 

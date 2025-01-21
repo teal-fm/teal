@@ -18,7 +18,7 @@ def update_metadata():
         # trim pages url if we are building for prod
         # TODO: remove this once we have a non-pages-dev url
         cf_pages_url.split('.')[1:]
-
+        
     # Path to metadata file
     metadata_path_pre = 'assets/client-metadata.json'
     metadata_path = 'dist/client-metadata.json'

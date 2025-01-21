@@ -19,3 +19,4 @@ config.cacheStores = [
 ];
 
 module.exports = wrapWithReanimatedMetroConfig(withNativeWind(config, { input: "./global.css" }));
+
