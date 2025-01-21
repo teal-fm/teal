@@ -1,16 +1,15 @@
-import { Link, Stack, router } from "expo-router";
-import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 import React, { useState } from "react";
-import { Platform, View } from "react-native";
+import { View, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Text } from "../components/ui/text";
-import { Icon } from "../lib/icons/iconWithClassName";
-import { cn } from "../lib/utils";
-
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/lib/icons/iconWithClassName";
+import { Check, ChevronRight, AtSign, AlertCircle } from "lucide-react-native";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Link, Stack, router } from "expo-router";
+import { useStore } from "@/stores/mainStore";
 import { openAuthSessionAsync } from "expo-web-browser";
-import { useStore } from "../stores/mainStore";
 
 const LoginScreen = () => {
   const [handle, setHandle] = useState("");
@@ -18,7 +17,7 @@ const LoginScreen = () => {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { getLoginUrl, oauthCallback, status } = useStore((state) => state);
+  const { getLoginUrl, oauthCallback } = useStore((state) => state);
 
   const handleLogin = async () => {
     if (!handle) {
@@ -32,7 +31,7 @@ const LoginScreen = () => {
       let redirUrl = await getLoginUrl(handle.replace("@", ""));
       if (!redirUrl) {
         // TODO: better error handling lulw
-        throw new Error("Does not resolve to a DID");
+        throw new Error("Could not get login url. ");
       }
       setIsRedirecting(true);
       if (Platform.OS === "web") {
@@ -42,7 +41,7 @@ const LoginScreen = () => {
       } else {
         const res = await openAuthSessionAsync(
           redirUrl.toString(),
-          "http://127.0.0.1:8081/login"
+          "http://127.0.0.1:8081/login",
         );
         if (res.type === "success") {
           const params = new URLSearchParams(res.url.split("?")[1]);
@@ -56,53 +55,6 @@ const LoginScreen = () => {
       setIsRedirecting(false);
       return;
     }
-
-    // try {
-    //   const response = await fetch(
-    //     "https://natshare.z.teal.fm/oauth/login?spa="+ "web" + "&handle="+
-    //       handle.replace("@", ""),
-    //     {
-    //       method: "GET",
-    //     },
-    //   );
-
-    //   if (response.ok) {
-    //     // Handle redirect URL (json url param)
-    //     const j = await response.json();
-    //     const redirectUrl = j.url;
-    //     setIsRedirecting(true);
-    //     if (!j.state) {
-    //       console.log("No state in response, redirecting to error page");
-    //       router.replace("/error");
-    //       return;
-    //     }
-    //     setAuthCode(j.state);
-    //     // Open the OAuth URL in the device's browser
-    //     await Linking.openURL(redirectUrl);
-
-    //     // Handle the callback URL when the user is redirected back
-    //     console.log("Setting up deep link subscription");
-    //     const subscription = Linking.addEventListener("url", async (event) => {
-    //       console.log("Got a deep link event:", event);
-    //       if (event.url.includes("/oauth/callback") && j.state) {
-    //         console.log("Balls! state:", j.state);
-    //         // redirect to callback page, add state to url
-    //         router.navigate(
-    //           `/auth/callback?state=${encodeURIComponent(j.state)}`,
-    //         );
-    //         subscription.remove();
-    //       }
-    //     });
-    //   } else {
-    //     const error = await response.json();
-    //     Alert.alert("Error", error.error || "Failed to login");
-    //   }
-    // } catch (error: any) {
-    //   console.error("Network error!", error);
-    //   Alert.alert("Error", "Network error occurred:", error.message);
-    // } finally {
-    //   setIsLoading(false);
-    // }
   };
 
   return (
@@ -114,7 +66,7 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="flex-1 justify-center align-center p-8 gap-4 pb-32 max-w-screen-sm min-w-full">
+      <View className="justify-center align-center p-8 gap-4 pb-32 max-w-screen-sm w-screen">
         <View className="flex items-center">
           <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
         </View>
@@ -158,7 +110,7 @@ const LoginScreen = () => {
           <Button
             className={cn(
               "flex flex-row justify-end duration-500",
-              isRedirecting ? "bg-green-500" : "bg-bsky"
+              isRedirecting ? "bg-green-500" : "bg-bsky",
             )}
             onPress={handleLogin}
             disabled={isLoading}
