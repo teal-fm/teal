@@ -20,6 +20,7 @@ import { GlobalTextClassContext } from "../components/ui/text";
 import { useColorScheme } from "../components/useColorScheme";
 import "../global.css";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { SafeAreaView, View } from "react-native";
 
 let defaultFamily = (weight: string) => {
   return {
@@ -82,7 +83,13 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <SafeAreaView className="flex-1 flex flex-row min-h-screen justify-center">
+      <View className="max-w-screen-lg flex flex-1 border-x border-muted-foreground/20">
+        {<RootLayoutNav />}
+      </View>
+    </SafeAreaView>
+  );
 }
 
 function RootLayoutNav() {

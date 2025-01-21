@@ -27,6 +27,8 @@ export default function SheetBackdrop({
       style,
       {
         backgroundColor: "#000000",
+        width: "100vw",
+        position: "fixed",
       },
       containerAnimatedStyle,
     ],
