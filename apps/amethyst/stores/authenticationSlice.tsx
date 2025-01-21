@@ -32,9 +32,12 @@ export interface AuthenticationSlice {
 
 export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   set,
-  get
+  get,
 ) => {
-  const initialAuth = createOAuthClient("http://localhost:8081");
+  // check if we have CF_PAGES_URL set. if not, use localhost
+  const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
+  console.log("Using base URL:", baseUrl);
+  const initialAuth = createOAuthClient(baseUrl);
 
   console.log("Auth client created!");
 
@@ -72,11 +75,12 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         if (!(state.has("code") && state.has("state") && state.has("iss"))) {
           throw new Error("Missing params, got: " + state);
         }
-      // are we already logged in?
+        // are we already logged in?
         if (get().status === "loggedIn") {
           return;
         }
-        const { session, state: oauthState } = await initialAuth.callback(state);
+        const { session, state: oauthState } =
+          await initialAuth.callback(state);
         const agent = new Agent(session);
         set({
           oauthSession: session,
@@ -127,6 +131,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       }
     },
     logOut: () => {
+      console.log("Logging out");
       set({
         status: "loggedOut",
         oauthSession: null,
@@ -140,12 +145,14 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
 };
 
 function addDocs(agent: Agent) {
-  Lexicons.schemas.filter((schema) => !schema.id.startsWith("app.bsky.")).map((schema) => {
-    try {
-      agent.lex.add(schema);
-    } catch (e) {
-      console.error("Failed to add schema:", e);
-    }
-  });
+  Lexicons.schemas
+    .filter((schema) => !schema.id.startsWith("app.bsky."))
+    .map((schema) => {
+      try {
+        agent.lex.add(schema);
+      } catch (e) {
+        console.error("Failed to add schema:", e);
+      }
+    });
   return agent;
 }

@@ -16,19 +16,25 @@ interface CallbackSearchParams {
 export default function AuthOptions() {
   const { oauthCallback, status } = useStore((state) => state);
 
-  const params = useLocalSearchParams<'iss' | 'state' | 'code'>();
-  const {state} = params;
+  const params = useLocalSearchParams<"iss" | "state" | "code">();
+  const { state } = params;
   useEffect(() => {
-      // exchange the tokens for jwt
+    // Only proceed if params exist
+    if (params) {
       const searchParams = new URLSearchParams(params);
       oauthCallback(searchParams);
-  }, []);
+    }
+  }, [params, oauthCallback]);
 
   useEffect(() => {
+    // Wrap navigation in requestAnimationFrame to ensure root layout is mounted
     if (status === "loggedIn") {
-      router.replace("/");
+      requestAnimationFrame(() => {
+        router.replace("/");
+      });
     }
-  }, [state])
+  }, [status]);
+
   // if no state then redirect to error page
   if (!params) {
     return (
@@ -50,9 +56,11 @@ export default function AuthOptions() {
         {status === "loggedIn" ? "Success!" : "Fetching your data..."}
       </Text>
       <Text className="text-sm text-muted-foreground">
-        This may take a few seconds {status} 
+        This may take a few seconds {status}
       </Text>
-      <Text className="text-sm text-muted-foreground font-mono bg-muted-foreground/30 py-1 px-2 rounded-full">{state}</Text>
+      <Text className="text-sm text-muted-foreground font-mono bg-muted-foreground/30 py-1 px-2 rounded-full">
+        {state}
+      </Text>
     </View>
   );
 }

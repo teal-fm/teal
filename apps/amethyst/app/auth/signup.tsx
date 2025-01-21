@@ -1,19 +1,11 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Linking,
-} from "react-native";
+import React from "react";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "../components/ui/text";
-import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
-import { Icon } from "../lib/icons/iconWithClassName";
-import { ArrowRight, Check, ChevronRight, Disc } from "lucide-react-native";
-import { Input } from "../components/ui/input";
-import { cn } from "../lib/utils";
+import { Text } from "../../components/ui/text";
+import { Button } from "../../components/ui/button";
+import { Icon } from "../../lib/icons/iconWithClassName";
+import { ArrowRight } from "lucide-react-native";
+
 import { Link, Stack, router } from "expo-router";
 import { FontAwesome6 } from "@expo/vector-icons";
 
@@ -27,7 +19,7 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="flex-1 justify-center p-8 gap-4 pb-32 max-w-screen-sm">
+      <View className="flex-1 justify-center p-8 gap-4 pb-32 w-screen max-w-screen-md">
         <Text className="text-4xl font-semibold text-center text-foreground">
           Sign up with{" "}
           <Icon
