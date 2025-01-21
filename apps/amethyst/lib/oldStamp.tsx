@@ -60,10 +60,18 @@ export async function searchMusicbrainz(
 ): Promise<MusicBrainzRecording[]> {
   try {
     const queryParts: string[] = [];
-    if (searchParams.track)
-      queryParts.push(`release title:"${searchParams.track}"`);
-    if (searchParams.artist)
-      queryParts.push(`AND artist:"${searchParams.artist}"`);
+
+    if (searchParams.track) {
+      queryParts.push(`title:"${searchParams.track}"`);
+    }
+
+    if (searchParams.artist) {
+      queryParts.push(`artist:"${searchParams.artist}"`);
+    }
+
+    if (searchParams.release) {
+      queryParts.push(`release:"${searchParams.release}"`);
+    }
 
     const query = queryParts.join(" AND ");
 
@@ -71,7 +79,17 @@ export async function searchMusicbrainz(
       `https://musicbrainz.org/ws/2/recording?query=${encodeURIComponent(
         query,
       )}&fmt=json`,
+      {
+        headers: {
+          "User-Agent": "tealtracker/0.0.1",
+        },
+      },
     );
+
+    if (!res.ok) {
+      throw new Error(`MusicBrainz API returned ${res.status}`);
+    }
+
     const data = await res.json();
     return data.recordings || [];
   } catch (error) {
