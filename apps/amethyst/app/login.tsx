@@ -1,25 +1,16 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Linking,
-  Platform,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "../components/ui/text";
-import { Button } from "../components/ui/button";
-import { Icon } from "../lib/icons/iconWithClassName";
-import { Check, ChevronRight, AtSign, AlertCircle } from "lucide-react-native";
-import { Input } from "../components/ui/input";
-import { cn } from "../lib/utils";
 import { Link, Stack, router } from "expo-router";
+import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
+import React, { useState } from "react";
+import { Platform, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Text } from "../components/ui/text";
+import { Icon } from "../lib/icons/iconWithClassName";
+import { cn } from "../lib/utils";
 
-import { useStore } from "../stores/mainStore";
-import createOAuthClient from "../lib/atp/oauth";
-import { resolveFromIdentity } from "../lib/atp/pid";
 import { openAuthSessionAsync } from "expo-web-browser";
+import { useStore } from "../stores/mainStore";
 
 const LoginScreen = () => {
   const [handle, setHandle] = useState("");
@@ -139,6 +130,11 @@ const LoginScreen = () => {
             onChangeText={setHandle}
             autoCapitalize="none"
             autoCorrect={false}
+            onKeyPress={(e) => {
+              if (e.nativeEvent.key === "Enter") {
+                handleLogin();
+              }
+            }}
           />
           {err ? (
             <Text className="text-red-500 justify-baseline mt-1 text-xs">
