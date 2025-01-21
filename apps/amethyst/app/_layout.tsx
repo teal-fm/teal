@@ -12,13 +12,14 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
-import { GestureHandlerRootView } from "react-native-gesture-handler"
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { verifyInstallation } from "nativewind";
 
 import { GlobalTextClassContext } from "../components/ui/text";
 import { useColorScheme } from "../components/useColorScheme";
 import "../global.css";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 let defaultFamily = (weight: string) => {
   return {
@@ -90,22 +91,24 @@ function RootLayoutNav() {
 
   return (
     <GestureHandlerRootView>
-    <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
-      <GlobalTextClassContext.Provider value="font-sans">
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="auth/logoutModal"
-            options={{
-              presentation: "transparentModal",
-              animation: "fade",
-              headerShown: false,
-            }}
-          />
-        </Stack>
-        <PortalHost />
-      </GlobalTextClassContext.Provider>
-    </ThemeProvider>
+      <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
+        <GlobalTextClassContext.Provider value="font-sans">
+          <BottomSheetModalProvider>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="auth/logoutModal"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "fade",
+                  headerShown: false,
+                }}
+              />
+            </Stack>
+            <PortalHost />
+          </BottomSheetModalProvider>
+        </GlobalTextClassContext.Provider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
