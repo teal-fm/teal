@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { ArrowRight } from "lucide-react-native";
 
-import { Link, Stack, router } from "expo-router";
+import { Stack, router } from "expo-router";
 import { FontAwesome6 } from "@expo/vector-icons";
 
 const LoginScreen = () => {
@@ -38,20 +38,23 @@ const LoginScreen = () => {
             Sign up for Bluesky, then return here to sign in.
           </Text>
           {/* on click, open tab, then in the background navigate to /login */}
-          <Link href="https://bsky.app/signup">
-            <Button
-              onPress={() => {
+          <Button
+            onPress={() => {
+              // on web, open new tab
+              if (typeof window !== "undefined") {
+                window.open("https://bsky.app/signup", "_blank");
+              } else {
                 router.navigate("https://bsky.app");
-                setTimeout(() => {
-                  router.replace("/login");
-                }, 1000);
-              }}
-              className="flex flex-row justify-center items-center gap-2"
-            >
-              <Text className="text-sm ml-2 text-secondary">Go</Text>
-              <Icon icon={ArrowRight} />
-            </Button>
-          </Link>
+              }
+              setTimeout(() => {
+                router.replace("/auth/login");
+              }, 1000);
+            }}
+            className="flex flex-row justify-center items-center gap-2"
+          >
+            <Text className="text-sm ml-2 text-secondary">Go</Text>
+            <Icon icon={ArrowRight} />
+          </Button>
         </View>
       </View>
     </SafeAreaView>
