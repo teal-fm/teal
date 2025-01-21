@@ -8,11 +8,9 @@ import {
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Switch, Text, View } from "react-native";
-import {
-  MusicBrainzRecording,
-  PlaySubmittedData,
-} from "../../../../lib/oldStamp";
+import { Switch, View } from "react-native";
+import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
+import { Text } from "@/components/ui/text";
 
 const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
   let artistNames: string[] = [];
@@ -47,7 +45,7 @@ export default function Submit() {
   const { track } = useLocalSearchParams();
 
   const selectedTrack: MusicBrainzRecording | null = JSON.parse(
-    track as string
+    track as string,
   );
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -74,7 +72,7 @@ export default function Submit() {
           collection: "fm.teal.alpha.feed.play",
           rkey: undefined,
           record,
-        }
+        },
       );
       if (!res || res.success === false) {
         throw new Error("Failed to submit play!");

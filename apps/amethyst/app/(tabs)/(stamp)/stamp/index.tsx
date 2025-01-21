@@ -8,11 +8,12 @@ import {
   FlatList,
   Image,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+
+import { Text } from "@/components/ui/text";
 import {
   MusicBrainzRecording,
   ReleaseSelections,
@@ -22,7 +23,6 @@ import {
 } from "@/lib/oldStamp";
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import SheetBackdrop from "@/components/ui/sheetBackdrop";
-
 
 export default function StepOne() {
   const router = useRouter();
@@ -194,8 +194,7 @@ export function SearchResult({
             : {
                 ...result,
                 selectedRelease: currentRelease, // Pass the selected release with the track
-              }
-
+              },
         );
       }}
       className={`p-4 mb-2 rounded-lg ${

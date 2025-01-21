@@ -2,7 +2,7 @@ import { StatusBar } from "expo-status-bar";
 import { Platform, TouchableOpacity } from "react-native";
 
 import { View } from "react-native";
-import { Text } from "../../components/ui/text";
+import { Text } from "@/components/ui/text";
 import { useStore } from "@/stores/mainStore";
 import { Button } from "@/components/ui/button";
 import { router } from "expo-router";
