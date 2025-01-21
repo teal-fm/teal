@@ -7,11 +7,12 @@ import {
   FlatList,
   Image,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+
+import { Text } from "@/components/ui/text";
 import {
   MusicBrainzRecording,
   ReleaseSelections,

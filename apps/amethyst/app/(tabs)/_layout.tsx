@@ -4,10 +4,10 @@ import { Link, Tabs } from "expo-router";
 import { Pressable } from "react-native";
 
 import Colors from "../../constants/Colors";
-import { useColorScheme } from "../../components/useColorScheme";
 import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
 import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
+import { useColorScheme } from "nativewind";
 
 function TabBarIcon(props: { name: LucideIcon; color: string }) {
   const Name = props.name;
@@ -16,7 +16,7 @@ function TabBarIcon(props: { name: LucideIcon; color: string }) {
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useColorScheme();
   const authStatus = useStore((state) => state.status);
   // if we are on web but not native and web width is greater than 1024px
   const hideTabBar = useIsMobile() || authStatus !== "loggedIn";
@@ -27,7 +27,8 @@ export default function TabLayout() {
         title: "Tab One",
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
+        // to prevent a hydration error in
+        // React Navigation v6.
         headerShown: false, // useClientOnlyValue(false, true),
         tabBarShowLabel: true,
         tabBarStyle: {

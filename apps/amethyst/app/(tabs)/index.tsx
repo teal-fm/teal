@@ -1,5 +1,5 @@
 import * as React from "react";
-import { View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
@@ -42,6 +42,15 @@ export default function Screen() {
 
   if (j !== "loggedIn") {
     return <AuthOptions />;
+  }
+
+  // TODO: replace with skeleton
+  if (!profile) {
+    return (
+      <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (

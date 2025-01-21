@@ -14,10 +14,9 @@ import "react-native-reanimated";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { verifyInstallation } from "nativewind";
+import { verifyInstallation, useColorScheme } from "nativewind";
 
 import { GlobalTextClassContext } from "../components/ui/text";
-import { useColorScheme } from "../components/useColorScheme";
 import "../global.css";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { SafeAreaView, View } from "react-native";
@@ -94,7 +93,10 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   verifyInstallation();
-  const colorScheme = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
+
+  // what??? how does this not break something
+  setColorScheme(colorScheme ?? "system");
 
   return (
     <GestureHandlerRootView>
