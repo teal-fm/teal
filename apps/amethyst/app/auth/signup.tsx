@@ -11,7 +11,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 
 const LoginScreen = () => {
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 flex justify-center items-center">
       <Stack.Screen
         options={{
           title: "Sign in",
