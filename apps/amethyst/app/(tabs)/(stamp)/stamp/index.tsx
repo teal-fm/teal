@@ -75,6 +75,11 @@ export default function StepOne() {
           onChangeText={(text) =>
             setSearchFields((prev) => ({ ...prev, track: text }))
           }
+          onKeyPress={(e) => {
+            if (e.nativeEvent.key === "Enter") {
+              handleSearch();
+            }
+          }}
         />
         <TextInput
           className="p-2 border rounded-lg border-gray-300 bg-white"
@@ -83,6 +88,11 @@ export default function StepOne() {
           onChangeText={(text) =>
             setSearchFields((prev) => ({ ...prev, artist: text }))
           }
+          onKeyPress={(e) => {
+            if (e.nativeEvent.key === "Enter") {
+              handleSearch();
+            }
+          }}
         />
         <View className="flex-row gap-2">
           <Button

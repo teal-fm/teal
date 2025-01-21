@@ -8,7 +8,6 @@ import { Check, ChevronRight, AtSign, AlertCircle } from "lucide-react-native";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Link, Stack, router } from "expo-router";
-
 import { useStore } from "@/stores/mainStore";
 import { openAuthSessionAsync } from "expo-web-browser";
 
@@ -83,6 +82,11 @@ const LoginScreen = () => {
             onChangeText={setHandle}
             autoCapitalize="none"
             autoCorrect={false}
+            onKeyPress={(e) => {
+              if (e.nativeEvent.key === "Enter") {
+                handleLogin();
+              }
+            }}
           />
           {err ? (
             <Text className="text-red-500 justify-baseline mt-1 text-xs">
