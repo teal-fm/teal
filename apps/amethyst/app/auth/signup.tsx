@@ -1,5 +1,5 @@
 import React from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ const LoginScreen = () => {
           <Button
             onPress={() => {
               // on web, open new tab
-              if (typeof window !== "undefined") {
+              if (Platform.OS === "web") {
                 window.open("https://bsky.app/signup", "_blank");
               } else {
                 router.navigate("https://bsky.app");

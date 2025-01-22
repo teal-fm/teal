@@ -23,7 +23,7 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     if (!handle) {
       setErr("Please enter a handle");
-      return;
+      return
     }
 
     setIsLoading(true);

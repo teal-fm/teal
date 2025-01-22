@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Switch, View } from "react-native";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
 import { Text } from "@/components/ui/text";
+import { ExternalLink } from "@/components/ExternalLink";
 
 const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
   let artistNames: string[] = [];
@@ -84,7 +85,7 @@ export default function Submit() {
         playRecord: record,
         blueskyPostUrl: null,
       };
-      router.push({
+      router.replace({
         pathname: "/stamp/success",
         params: { submittedData: JSON.stringify(submittedData) },
       });
@@ -103,17 +104,28 @@ export default function Submit() {
       />
       <View className="flex justify-between align-middle gap-4 max-w-screen-md w-screen min-h-full px-4">
         <Text className="font-bold text-lg">Submit Play</Text>
-        <VerticalPlayView
-          releaseMbid={selectedTrack?.selectedRelease?.id || ""}
-          trackTitle={
-            selectedTrack?.title ||
-            "No track selected! This should never happen!"
-          }
-          artistName={selectedTrack?.["artist-credit"]?.[0]?.artist?.name}
-          releaseTitle={selectedTrack?.selectedRelease?.title}
-        />
+        <View>
+          <VerticalPlayView
+            releaseMbid={selectedTrack?.selectedRelease?.id || ""}
+            trackTitle={
+              selectedTrack?.title ||
+              "No track selected! This should never happen!"
+            }
+            artistName={selectedTrack?.["artist-credit"]?.[0]?.artist?.name}
+            releaseTitle={selectedTrack?.selectedRelease?.title}
+          />
+          <Text className="text-sm text-gray-500 text-center mt-4">
+            Any missing info?{" "}
+            <ExternalLink
+              className="text-blue-600 dark:text-blue-400"
+              href={`https://musicbrainz.org/recording/${selectedTrack.id}`}
+            >
+              Contribute on MusicBrainz
+            </ExternalLink>
+          </Text>
+        </View>
 
-        <View className="flex-col gap-2 items-center">
+        <View className="flex-col gap-4 items-center">
           <View className="flex-row gap-2 items-center">
             <Switch
               value={shareWithBluesky}
