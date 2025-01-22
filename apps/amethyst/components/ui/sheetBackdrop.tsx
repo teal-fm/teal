@@ -1,10 +1,12 @@
 import React, { useMemo } from "react";
 import { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import Animated, {
+  AnimatedStyle,
   Extrapolation,
   interpolate,
   useAnimatedStyle,
 } from "react-native-reanimated";
+import { StyleProp, ViewStyle } from "react-native";
 
 export default function SheetBackdrop({
   animatedIndex,
@@ -35,5 +37,9 @@ export default function SheetBackdrop({
     [style, containerAnimatedStyle],
   );
 
-  return <Animated.View style={containerStyle} />;
+  return (
+    <Animated.View
+      style={containerStyle as StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>}
+    />
+  );
 }
