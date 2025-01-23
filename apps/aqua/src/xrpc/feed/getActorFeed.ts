@@ -2,12 +2,18 @@ import { TealContext } from "@/ctx";
 import { db, tealSession, play } from "@teal/db";
 import { eq, and, lt } from "drizzle-orm";
 import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
-import { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 export default async function getActorFeed(c: TealContext) {
   const params = c.req.query();
   if (!params.authorDid) {
     throw new Error("authorDid is required");
+  }
+
+  let limit = 20
+
+  if(params.limit) {
+    limit = Number(params.limit)
+    if(limit > 50) throw new Error("Limit is over max allowed.")
   }
 
   // 'and' is here for typing reasons
