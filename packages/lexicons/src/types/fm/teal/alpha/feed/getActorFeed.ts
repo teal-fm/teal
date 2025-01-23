@@ -14,6 +14,8 @@ export interface QueryParams {
   authorDID: string
   /** The cursor to start the query from */
   cursor?: string
+  /** The upper limit of tracks to get per request. Default is 20, max is 50. */
+  limit?: number
 }
 
 export type InputSchema = undefined
