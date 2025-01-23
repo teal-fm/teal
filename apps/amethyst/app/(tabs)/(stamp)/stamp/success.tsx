@@ -2,7 +2,8 @@ import { ExternalLink } from "@/components/ExternalLink";
 import { PlaySubmittedData } from "@/lib/oldStamp";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/ui/text";
 
 export default function StepThree() {
   const { submittedData } = useLocalSearchParams();

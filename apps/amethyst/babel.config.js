@@ -23,6 +23,8 @@ module.exports = function (api) {
           importSource: "nativewind",
         },
       ],
+      '@babel/plugin-transform-export-namespace-from',
+      'react-native-reanimated/plugin'
     ]
   };
 };
