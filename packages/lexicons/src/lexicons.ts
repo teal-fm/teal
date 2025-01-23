@@ -339,7 +339,7 @@ export const schemaDict = {
         type: 'query',
         parameters: {
           type: 'params',
-          required: ['cursor'],
+          required: ['authorDID'],
           properties: {
             authorDID: {
               type: 'string',
@@ -349,6 +349,11 @@ export const schemaDict = {
             cursor: {
               type: 'string',
               description: 'The cursor to start the query from',
+            },
+            limit: {
+              type: 'integer',
+              description:
+                'The upper limit of tracks to get per request. Default is 20, max is 50.',
             },
           },
         },
@@ -481,14 +486,14 @@ export const schemaDict = {
             musicServiceBaseDomain: {
               type: 'string',
               description:
-                "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if not provided.",
+                "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if unavailable or not provided.",
             },
             submissionClientAgent: {
               type: 'string',
               maxLength: 256,
               maxGraphemes: 2560,
               description:
-                "A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b (Linux; Android 13; SM-A715F). Defaults to 'manual/unknown' if not provided.",
+                "A metadata string specifying the user agent. e.g. com.example.frontend/0.0.1b (Linux; Android 13; SM-A715F). Defaults to 'manual/unknown' if unavailable or not provided.",
             },
             playedTime: {
               type: 'string',

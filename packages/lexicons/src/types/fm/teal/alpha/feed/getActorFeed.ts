@@ -11,9 +11,11 @@ import * as FmTealAlphaFeedDefs from './defs'
 
 export interface QueryParams {
   /** The author's DID for the play */
-  authorDID?: string
+  authorDID: string
   /** The cursor to start the query from */
-  cursor: string
+  cursor?: string
+  /** The upper limit of tracks to get per request. Default is 20, max is 50. */
+  limit?: number
 }
 
 export type InputSchema = undefined
@@ -43,6 +45,7 @@ export type HandlerReqCtx<HA extends HandlerAuth = never> = {
   input: HandlerInput
   req: express.Request
   res: express.Response
+  resetRouteRateLimits: () => Promise<void>
 }
 export type Handler<HA extends HandlerAuth = never> = (
   ctx: HandlerReqCtx<HA>,

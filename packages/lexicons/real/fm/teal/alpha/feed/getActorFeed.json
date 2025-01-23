@@ -7,7 +7,7 @@
       "type": "query",
       "parameters": {
         "type": "params",
-        "required": ["cursor"],
+        "required": ["authorDID"],
         "properties": {
           "authorDID": {
             "type": "string",
@@ -17,6 +17,10 @@
           "cursor": {
             "type": "string",
             "description": "The cursor to start the query from"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The upper limit of tracks to get per request. Default is 20, max is 50."
           }
         }
       },

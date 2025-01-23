@@ -15,6 +15,13 @@ const json = <TData>() =>
     toDriver(value: TData): string {
       return JSON.stringify(value);
     },
+    // handle single value (no json array) as well
+    fromDriver(value: string): TData {
+      if (value[0] === "[") {
+        return JSON.parse(value);
+      }
+      return [value] as TData;
+    },
   })();
 
 // Tables
@@ -91,7 +98,7 @@ export const play = sqliteTable("play", {
   originUrl: text(),
   /** The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. */
   musicServiceBaseDomain: text(),
-  /** A user-agent style string specifying the user agent. e.g. tealtracker/0.0.1b */
+  /** A user-agent style string specifying the user agent. e.g. fm.teal.frontend/0.0.1b */
   submissionClientAgent: text(),
   /** The unix timestamp of when the track was played */
   playedTime: text(),
