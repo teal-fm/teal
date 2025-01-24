@@ -58,6 +58,7 @@ export default function HeroBadge({
 
   return (
     <BadgeWrapper
+      href={wrapperProps.href ?? "#"}
       {...wrapperProps}
       className={cn("group", href && "cursor-pointer")}
     >

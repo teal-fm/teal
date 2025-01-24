@@ -296,8 +296,11 @@ importers:
         specifier: ^5.6.3
         version: 5.7.2
 
-  apps/aquamarine:
+  apps/marine:
     dependencies:
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -2082,7 +2085,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {'0': node >=0.10.0}
+    engines: {node: '>=0.10.0'}
 
   '@expo/cli@0.22.7':
     resolution: {integrity: sha512-aNrUPVFPdIX42Q6UM6qygrN4DUqnXMDS1CnkTfNFVIZWRiJ1TUA05Zk6aF35M674CKd/c/dWHFjmbgjsyN/hEA==}
@@ -6186,6 +6189,7 @@ packages:
 
   libsql@0.4.7:
     resolution: {integrity: sha512-T9eIRCs6b0J1SHKYIvD8+KCJMcWZ900iZyxdnSCdqxN12Z1ijzT+jY5nrk72Jw4B0HGzms2NgpryArlJqvc3Lw==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lighthouse-logger@1.4.2:
@@ -8978,7 +8982,7 @@ snapshots:
       '@atproto-labs/simple-store': 0.1.1
       '@atproto-labs/simple-store-memory': 0.1.1
       '@atproto/did': 0.1.3
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto-labs/did-resolver@0.1.6':
     dependencies:
@@ -8987,7 +8991,7 @@ snapshots:
       '@atproto-labs/simple-store': 0.1.1
       '@atproto-labs/simple-store-memory': 0.1.1
       '@atproto/did': 0.1.3
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto-labs/fetch-node@0.1.3':
     dependencies:
@@ -9009,13 +9013,13 @@ snapshots:
     dependencies:
       '@atproto-labs/pipe': 0.1.0
     optionalDependencies:
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto-labs/fetch@0.1.2':
     dependencies:
       '@atproto-labs/pipe': 0.1.0
     optionalDependencies:
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto-labs/handle-resolver-node@0.1.7':
     dependencies:
@@ -9034,14 +9038,14 @@ snapshots:
       '@atproto-labs/simple-store': 0.1.1
       '@atproto-labs/simple-store-memory': 0.1.1
       '@atproto/did': 0.1.3
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto-labs/handle-resolver@0.1.5':
     dependencies:
       '@atproto-labs/simple-store': 0.1.1
       '@atproto-labs/simple-store-memory': 0.1.1
       '@atproto/did': 0.1.3
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto-labs/identity-resolver@0.1.6':
     dependencies:
@@ -9086,7 +9090,7 @@ snapshots:
       graphemer: 1.4.0
       multiformats: 9.9.0
       uint8arrays: 3.0.0
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/common@0.4.4':
     dependencies:
@@ -9114,7 +9118,7 @@ snapshots:
 
   '@atproto/did@0.1.3':
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/identity@0.4.3':
     dependencies:
@@ -9137,7 +9141,7 @@ snapshots:
   '@atproto/jwk@0.1.1':
     dependencies:
       multiformats: 9.9.0
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/lex-cli@0.5.4':
     dependencies:
@@ -9164,7 +9168,7 @@ snapshots:
       '@atproto/syntax': 0.3.1
       iso-datestring-validator: 2.2.2
       multiformats: 9.9.0
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/oauth-client-browser@0.3.2':
     dependencies:
@@ -9202,7 +9206,7 @@ snapshots:
       '@atproto/oauth-types': 0.2.1
       '@atproto/xrpc': 0.6.4
       multiformats: 9.9.0
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/oauth-client@0.3.3':
     dependencies:
@@ -9217,7 +9221,7 @@ snapshots:
       '@atproto/oauth-types': 0.2.1
       '@atproto/xrpc': 0.6.4
       multiformats: 9.9.0
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/oauth-client@0.3.5':
     dependencies:
@@ -9237,7 +9241,7 @@ snapshots:
   '@atproto/oauth-types@0.2.1':
     dependencies:
       '@atproto/jwk': 0.1.1
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/repo@0.5.5':
     dependencies:
@@ -9249,7 +9253,7 @@ snapshots:
       '@ipld/dag-cbor': 7.0.3
       multiformats: 9.9.0
       uint8arrays: 3.0.0
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/sync@0.1.6':
     dependencies:
@@ -9291,12 +9295,12 @@ snapshots:
   '@atproto/xrpc@0.6.4':
     dependencies:
       '@atproto/lexicon': 0.4.3
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@atproto/xrpc@0.6.5':
     dependencies:
       '@atproto/lexicon': 0.4.4
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@babel/code-frame@7.10.4':
     dependencies:
@@ -10664,7 +10668,7 @@ snapshots:
       connect: 3.7.0
       debug: 4.4.0
       env-editor: 0.4.2
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
       form-data: 3.0.2
       freeport-async: 2.0.0
       fs-extra: 8.1.0
@@ -12430,7 +12434,7 @@ snapshots:
 
   '@ts-morph/common@0.17.0':
     dependencies:
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
       minimatch: 5.1.6
       mkdirp: 1.0.4
       path-browserify: 1.0.1
@@ -12667,7 +12671,7 @@ snapshots:
       '@typescript-eslint/types': 8.19.0
       '@typescript-eslint/visitor-keys': 8.19.0
       debug: 4.4.0
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
       semver: 7.6.3
@@ -12681,7 +12685,7 @@ snapshots:
       '@typescript-eslint/types': 8.19.0
       '@typescript-eslint/visitor-keys': 8.19.0
       debug: 4.4.0
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
       semver: 7.6.3
@@ -12950,7 +12954,7 @@ snapshots:
       define-properties: 1.2.1
       es-abstract: 1.23.8
       es-object-atoms: 1.0.0
-      get-intrinsic: 1.2.5
+      get-intrinsic: 1.2.6
       is-string: 1.1.1
 
   array-timsort@1.0.3: {}
@@ -13343,7 +13347,7 @@ snapshots:
     dependencies:
       call-bind-apply-helpers: 1.0.1
       es-define-property: 1.0.1
-      get-intrinsic: 1.2.5
+      get-intrinsic: 1.2.6
       set-function-length: 1.2.2
 
   call-bound@1.0.3:
@@ -14238,7 +14242,7 @@ snapshots:
       debug: 4.4.0
       enhanced-resolve: 5.18.0
       eslint: 8.57.1
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
       get-tsconfig: 4.8.1
       is-bun-module: 1.3.0
       is-glob: 4.0.3
@@ -14646,7 +14650,7 @@ snapshots:
       '@expo/spawn-async': 1.7.2
       chalk: 4.1.2
       commander: 7.2.0
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
       find-up: 5.0.0
       fs-extra: 9.1.0
       require-from-string: 2.0.2
@@ -15204,7 +15208,7 @@ snapshots:
   get-intrinsic@1.2.6:
     dependencies:
       call-bind-apply-helpers: 1.0.1
-      dunder-proto: 1.0.0
+      dunder-proto: 1.0.1
       es-define-property: 1.0.1
       es-errors: 1.3.0
       es-object-atoms: 1.0.0
@@ -15303,7 +15307,7 @@ snapshots:
     dependencies:
       array-union: 2.1.0
       dir-glob: 3.0.1
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
       ignore: 5.3.2
       merge2: 1.4.1
       slash: 3.0.0
@@ -15346,7 +15350,7 @@ snapshots:
 
   has-proto@1.2.0:
     dependencies:
-      dunder-proto: 1.0.0
+      dunder-proto: 1.0.1
 
   has-symbols@1.1.0: {}
 
@@ -18271,7 +18275,7 @@ snapshots:
       define-data-property: 1.1.4
       es-errors: 1.3.0
       function-bind: 1.1.2
-      get-intrinsic: 1.2.5
+      get-intrinsic: 1.2.6
       gopd: 1.2.0
       has-property-descriptors: 1.0.2
 

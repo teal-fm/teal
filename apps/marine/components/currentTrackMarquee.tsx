@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Music, Disc, Radio, Mic2, PlayCircle, Loader2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MarqueeItem {
@@ -8,29 +8,12 @@ interface MarqueeItem {
   track: string;
   album: string;
   image: string;
-  icon: "music" | "disc" | "radio" | "mic" | "play";
 }
 
-interface MarqueeProps {
-  speed?: number; // pixels per second
-}
 
-export function Marquee({ speed = 30 }: MarqueeProps) {
+export function Marquee() {
   const [items, setItems] = useState<MarqueeItem[]>([]);
-  const [trackPool, setTrackPool] = useState<MarqueeItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  function getRandomIcon() {
-    const icons: ("music" | "disc" | "radio" | "mic" | "play")[] = [
-      "music",
-      "disc",
-      "radio",
-      "mic",
-      "play",
-    ];
-    return icons[Math.floor(Math.random() * icons.length)];
-  }
 
   async function fetchLastFmTracks(): Promise<MarqueeItem[]> {
     try {
@@ -38,7 +21,7 @@ export function Marquee({ speed = 30 }: MarqueeProps) {
         "https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=kanb&api_key=6f5ff9d828991a85bd78449a85548586&limit=50&format=json",
       );
       const data = await response.json();
-      return data.recenttracks.track.map((track: any) => ({
+      return data.recenttracks.track.map((track: { artist: { [x: string]: string; }; name: string; album: { [x: string]: string; }; image: { [x: string]: string; }[]; }) => ({
         id: Math.random().toString(36).substring(2, 9),
         artist: track.artist["#text"],
         track: track.name,
@@ -46,7 +29,6 @@ export function Marquee({ speed = 30 }: MarqueeProps) {
         image:
           track.image[2]["#text"] ||
           "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop",
-        icon: getRandomIcon(),
       }));
     } catch (error) {
       console.error("Error fetching Last.fm data:", error);
@@ -59,14 +41,14 @@ export function Marquee({ speed = 30 }: MarqueeProps) {
     const tracks = await fetchLastFmTracks();
     if (tracks.length > 0) {
       setItems(tracks.slice(0, 30));
-      setTrackPool(tracks.slice(30));
+      //setTrackPool(tracks.slice(30));
     }
     setIsLoading(false);
   }
 
   useEffect(() => {
     generateInitialItems();
-  }, []);
+  }, [generateInitialItems]);
   useEffect(() => {
     if (isLoading) return;
 
@@ -74,10 +56,10 @@ export function Marquee({ speed = 30 }: MarqueeProps) {
     let timeoutId: NodeJS.Timeout;
 
     const fetchData = async () => {
-      const tracks = await fetchLastFmTracks();
-      if (tracks.length > 0) {
-        setTrackPool(tracks);
-      }
+      //const tracks = await fetchLastFmTracks();
+      // if (tracks.length > 0) {
+      //   setTrackPool(tracks);
+      // }
       timeoutId = setTimeout(fetchData, FETCH_INTERVAL);
     };
 
@@ -96,10 +78,10 @@ export function Marquee({ speed = 30 }: MarqueeProps) {
     let timeoutId: NodeJS.Timeout;
 
     const fetchData = async () => {
-      const tracks = await fetchLastFmTracks();
-      if (tracks.length > 0) {
-        setTrackPool(tracks);
-      }
+      //const tracks = await fetchLastFmTracks();
+      // if (tracks.length > 0) {
+      //   setTrackPool(tracks);
+      // }
       timeoutId = setTimeout(fetchData, FETCH_INTERVAL);
     };
 

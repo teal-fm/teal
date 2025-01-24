@@ -7,8 +7,15 @@ const crimson = Crimson_Pro({ subsets: ['latin'], weight: '400', variable: '--fo
 const fraunces = Fraunces({ subsets: ['latin'], weight: '400', variable: '--font-fraunces' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-dm-sans' });
 
-export const fonts = { crimson, fraunces, dmSans };
-
+export const metadata = {
+  metadataBase: new URL('https://docs.teal.fm'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    images: '/og-image.png',
+  },
+}
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (

@@ -1,17 +1,16 @@
 "use client";
 
-import { Marquee } from "@/components/currentTrackMarquee";
+
 import NavBar from "@/components/navbar";
 import { AnimatedText } from "@/components/ui/animatedUnderline";
 import HeroBadge from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GlowEffect } from "@/components/ui/glowEffect";
-import { Meteors } from "@/components/ui/meteors";
 import { SpaceButton } from "@/components/ui/spaceButton";
 import { Spotlight } from "@/components/ui/spotlights";
 import { StarsBackground } from "@/components/ui/stars";
 import { motion } from "framer-motion";
-import { ArrowRight, Github, Info, Music2 } from "lucide-react";
+import { ArrowRight, Info, Music2 } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -104,7 +103,7 @@ export default function HomePage() {
                   <SpaceButton>Join the Discord</SpaceButton>
                 </Link>
                 <Link href="/docs">
-                  <Button variant="secondary" className="rounded-full">
+                  <Button variant={"secondary"} className="rounded-full">
                     Docs
                   </Button>
                 </Link>
