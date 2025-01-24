@@ -10,17 +10,17 @@ const PlayView = ({ play }: { play: Play }) => {
           uri: `https://coverartarchive.org/release/${play.releaseMbId}/front-250`,
         }}
       />
-      <View className="shrink">
-        <Text className="text-lg text-foreground line-clamp-1 overflow-ellipsis">
+      <View className="flex justify-center">
+        <Text className="text-lg text-foreground line-clamp-1 overflow-ellipsis leading-6">
           {play.trackName}
         </Text>
         {play.artistNames && (
-          <Text className="text-lg text-left text-muted-foreground">
+          <Text className="text-lg text-left text-muted-foreground line-clamp-1 overflow-ellipsis leading-6">
             {play.artistNames.join(", ")}
           </Text>
         )}
         {play.releaseName && (
-          <Text className="text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
+          <Text className="text-left text-muted-foreground line-clamp-1 overflow-ellipsis leading-6">
             {play.releaseName}
           </Text>
         )}

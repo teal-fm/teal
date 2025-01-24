@@ -46,6 +46,7 @@ export default () => {
       ],
       experiments: {
         reactCompiler: true,
+        reactCanary: true,
       },
     },
   };

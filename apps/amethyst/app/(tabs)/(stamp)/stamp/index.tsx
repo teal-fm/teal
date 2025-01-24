@@ -85,7 +85,7 @@ export default function StepOne() {
       <View className="flex gap-4 max-w-screen-md w-screen px-4">
         <Text className="font-bold text-lg">Search for a track</Text>
         <TextInput
-          className="p-2 border rounded-lg border-gray-300 bg-white"
+          className="p-2 border rounded-lg border-gray-300 text-card-foreground bg-card"
           placeholder="Track name..."
           value={searchFields.track}
           onChangeText={(text) =>
@@ -98,11 +98,24 @@ export default function StepOne() {
           }}
         />
         <TextInput
-          className="p-2 border rounded-lg border-gray-300 bg-white"
+          className="p-2 border rounded-lg border-gray-300 text-card-foreground bg-card"
           placeholder="Artist name..."
           value={searchFields.artist}
           onChangeText={(text) =>
             setSearchFields((prev) => ({ ...prev, artist: text }))
+          }
+          onKeyPress={(e) => {
+            if (e.nativeEvent.key === "Enter") {
+              handleSearch();
+            }
+          }}
+        />
+        <TextInput
+          className="p-2 border rounded-lg border-gray-300 text-card-foreground bg-card"
+          placeholder="Album name..."
+          value={searchFields.release}
+          onChangeText={(text) =>
+            setSearchFields((prev) => ({ ...prev, release: text }))
           }
           onKeyPress={(e) => {
             if (e.nativeEvent.key === "Enter") {
