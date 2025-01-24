@@ -18,8 +18,8 @@ export default function HomePage() {
     <main className="flex flex-1 flex-col text-center items-center px-2 md:px-8 ">
       <NavBar />
       <motion.div
-        initial={{ opacity: 0.1, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0.1 }}
+        whileInView={{ opacity: 1 }}
         transition={{
           duration: 0.8,
           ease: "easeOut",
