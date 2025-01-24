@@ -1,6 +1,6 @@
 "use client";
 
-import { Marquee } from "@/components/currentTrackMarquee";
+
 import NavBar from "@/components/navbar";
 import { AnimatedText } from "@/components/ui/animatedUnderline";
 import HeroBadge from "@/components/ui/badge";
