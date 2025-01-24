@@ -1,3 +1,4 @@
+import { domAnimation, LazyMotion } from 'framer-motion';
 import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { Crimson_Pro,DM_Sans,Fraunces } from 'next/font/google';
@@ -21,7 +22,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${crimson.variable} ${fraunces.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
-        <RootProvider>{children}</RootProvider>
+        <RootProvider><LazyMotion features={domAnimation}>{children}</LazyMotion></RootProvider>
       </body>
     </html>
   );

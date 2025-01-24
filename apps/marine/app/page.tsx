@@ -9,7 +9,7 @@ import { GlowEffect } from "@/components/ui/glowEffect";
 import { SpaceButton } from "@/components/ui/spaceButton";
 import { Spotlight } from "@/components/ui/spotlights";
 import { StarsBackground } from "@/components/ui/stars";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { ArrowRight, Info, Music2 } from "lucide-react";
 import Link from "next/link";
 
@@ -37,19 +37,19 @@ export default function HomePage() {
             <div />
             <div>
               <HeroBadge
-                text="Join the Discord for more updates!"
+                text="Join the Discord community"
                 icon={<Info />}
                 endIcon={<ArrowRight />}
                 href="https://discord.gg/B67XEhYYjx"
               />
               <motion.h1
-                initial={{ opacity: 0.1, y: 50 }}
+                initial={{ opacity: 0.1, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: 0.8,
                   ease: "easeOut",
                 }}
-                className="mt-4 bg-gradient-to-br from-slate-300 to-slate-500 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl"
+                className="mt-4 bg-gradient-to-br from-slate-300 to-slate-500 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl transform-gpu"
               >
                 <div className="flex items-center justify-center space-x-1">
                   <div className="bg-teal-500 rounded-full p-3 h-16 w-16">
