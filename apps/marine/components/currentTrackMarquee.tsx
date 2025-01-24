@@ -64,21 +64,6 @@ export function Marquee({ speed = 30 }: MarqueeProps) {
     setIsLoading(false);
   }
 
-  const IconComponent = ({ type }: { type: MarqueeItem["icon"] }) => {
-    switch (type) {
-      case "music":
-        return <Music className="w-5 h-5" />;
-      case "disc":
-        return <Disc className="w-5 h-5" />;
-      case "radio":
-        return <Radio className="w-5 h-5" />;
-      case "mic":
-        return <Mic2 className="w-5 h-5" />;
-      case "play":
-        return <PlayCircle className="w-5 h-5" />;
-    }
-  };
-
   useEffect(() => {
     generateInitialItems();
   }, []);
