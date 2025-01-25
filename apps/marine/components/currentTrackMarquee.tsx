@@ -131,7 +131,7 @@ export function Marquee() {
         <div className="animate-marquee inline-flex gap-8">
           {items.map((item) => (
             <motion.div
-              key={`${item.id}-duplicate`}
+              key={`${item.id}-duplicate1`}
               className="flex-shrink-0 noisey w-[300px] p-2 bg-opacity-30 bg-muted/50 rounded-lg shadow-lg border border-purple-500/10 backdrop-blur-sm"
             >
               <TrackCard item={item} />
@@ -140,7 +140,7 @@ export function Marquee() {
           {/* Duplicate items for seamless loop */}
           {items.map((item) => (
             <motion.div
-              key={`${item.id}-duplicate`}
+              key={`${item.id}-duplicate2`}
               className="flex-shrink-0 noisey w-[300px] p-2 bg-opacity-30 bg-muted/50 rounded-lg shadow-lg border border-purple-500/10 backdrop-blur-sm"
             >
               <TrackCard item={item} />
@@ -148,7 +148,7 @@ export function Marquee() {
           ))}
           {items.map((item) => (
             <motion.div
-              key={`${item.id}-duplicate`}
+              key={`${item.id}-duplicate3`}
               className="flex-shrink-0 noisey w-[300px] p-2 bg-opacity-30 bg-muted/50 rounded-lg shadow-lg border border-purple-500/10 backdrop-blur-sm"
             >
               <TrackCard item={item} />
