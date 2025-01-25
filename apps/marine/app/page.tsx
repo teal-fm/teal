@@ -1,6 +1,7 @@
 "use client";
 
 
+import { Marquee } from "@/components/currentTrackMarquee";
 import NavBar from "@/components/navbar";
 import { AnimatedText } from "@/components/ui/animatedUnderline";
 import HeroBadge from "@/components/ui/badge";
@@ -110,13 +111,12 @@ export default function HomePage() {
               </motion.div>
             </div>
             {/* saving this until after stamps are GA */}
-            {/* <div className="gap-4 flex flex-col">
+            <div className="gap-4 flex flex-col">
               <p className="font-sans text-muted-foreground">
-                People (like you!) are currently listening to:
+                People (like you!) could be listening to:
               </p>
-              <Marquee speed={20} />
-            </div> */}
-            <div />
+              <Marquee />
+            </div>
             <StarsBackground
               starDensity={0.0003}
               allStarsTwinkle={true}
