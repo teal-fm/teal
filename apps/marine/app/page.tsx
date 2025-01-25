@@ -112,8 +112,10 @@ export default function HomePage() {
             </div>
             {/* saving this until after stamps are GA */}
             <div className="gap-4 flex flex-col">
-              <p className="font-sans text-muted-foreground">
-                People (like you!) could be listening to:
+              <p className="font-sans text-muted-foreground text-center">
+<span className="animate-pulse text-red-500">●</span>{' '}
+
+  Live: COUNT tracks scrobbled this hour.
               </p>
               <Marquee />
             </div>

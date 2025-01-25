@@ -48,27 +48,28 @@ export function Marquee() {
 
   useEffect(() => {
     generateInitialItems();
-  }, [generateInitialItems]);
-  useEffect(() => {
-    if (isLoading) return;
+  }, []);
+  
+  // useEffect(() => {
+  //   if (isLoading) return;
 
-    const FETCH_INTERVAL = 30000; // 30 seconds
-    let timeoutId: NodeJS.Timeout;
+  //   const FETCH_INTERVAL = 30000; // 30 seconds
+  //   let timeoutId: NodeJS.Timeout;
 
-    const fetchData = async () => {
-      //const tracks = await fetchLastFmTracks();
-      // if (tracks.length > 0) {
-      //   setTrackPool(tracks);
-      // }
-      timeoutId = setTimeout(fetchData, FETCH_INTERVAL);
-    };
+  //   const fetchData = async () => {
+  //     //const tracks = await fetchLastFmTracks();
+  //     // if (tracks.length > 0) {
+  //     //   setTrackPool(tracks);
+  //     // }
+  //     timeoutId = setTimeout(fetchData, FETCH_INTERVAL);
+  //   };
 
-    fetchData();
+  //   fetchData();
 
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isLoading]);
+  //   return () => {
+  //     if (timeoutId) clearTimeout(timeoutId);
+  //   };
+  // }, [isLoading]);
 
   // Separate effect for data fetching
   useEffect(() => {
