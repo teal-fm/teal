@@ -115,7 +115,7 @@ export default function HomePage() {
               <p className="font-sans text-muted-foreground text-center">
 <span className="animate-pulse text-red-500">●</span>{' '}
 
-  Live: COUNT tracks scrobbled this hour.
+  TODO: COUNT tracks scrobbled this hour.
               </p>
               <Marquee />
             </div>
