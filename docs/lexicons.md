@@ -3,9 +3,7 @@ title: Lexicons
 description: The auto-generated lexicon docs for teal.fm
 ---
 
-# Lexicons
-
-The following are the lexicons used in teal.fm, in alphabetical order. There may be better, non-auto-generated docs in the future, but these will always the most up-to-date.
+The following are the lexicons used in teal.fm, in alphabetical order. There may be better, non-auto-generated docs in the future for teal-fm specific lexicons, but these will always the most up-to-date.
 
 <!-- START lex generated content. Please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION! INSTEAD RE-RUN lex TO UPDATE -->
