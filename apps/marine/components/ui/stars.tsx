@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { m } from "framer-motion";
 import React, {
   useState,
   useEffect,
@@ -134,7 +135,7 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({
   }, [stars]);
 
   return (
-    <canvas
+    <m.canvas
       ref={canvasRef}
       className={cn(
         "h-full w-full absolute pointer-events-none inset-0",
@@ -142,6 +143,12 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({
       )}
       style={{
         mask: "radial-gradient(ellipse at 0% 0%, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 30%), radial-gradient(farthest-side at 100% 0%, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 50%), radial-gradient(farthest-side at 50% 45%, rgba(0, 0, 0, 1) 0%, rgba(0,0,0,0.5) 30%, rgba(0, 0, 0, 0) 70%)",
+      }}
+      initial={{  top: 10, scale: 1.1 }}
+      animate={{ top: 0, scale: 1 }}
+      transition={{
+        duration: 0.8,
+        ease: "easeInOut",
       }}
     />
   );

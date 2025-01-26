@@ -119,6 +119,7 @@ export default function HomePage() {
               </p>
               <Marquee />
             </div>
+
             <StarsBackground
               starDensity={0.0003}
               allStarsTwinkle={true}

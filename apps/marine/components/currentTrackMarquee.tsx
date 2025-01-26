@@ -168,9 +168,9 @@ const TrackCard = ({ item }: { item: MarqueeItem }) => {
         className="w-16 h-16 rounded-md object-cover"
       />
       <div className="flex-1 min-w-0 text-left">
-        <p className="text-white font-medium truncate">{item.track}</p>
-        <p className="text-gray-300 text-sm truncate">{item.artist}</p>
-        <p className="text-gray-300 text-xs truncate">{item.album}</p>
+        <p className="text-primary font-medium truncate">{item.track}</p>
+        <p className="text-muted-foreground text-sm truncate">{item.artist}</p>
+        <p className="text-muted-foreground/80 text-sm truncate">{item.album}</p>
       </div>
     </div>
   );
