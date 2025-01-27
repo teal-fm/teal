@@ -61,13 +61,13 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       animation: {
-        marquee: "scroll 180s linear infinite",
+        marquee: "scroll 10s linear infinite",
         "meteor-effect": "meteor 10s linear infinite",
       },
       keyframes: {
         scroll: {
-          "0%": { transform: "translateX(0)" },
-          "100%": { transform: "translateX(-33.333%)" },
+          "0%": { transform: "translateX(25%)" },
+          "100%": { transform: "translateX(-25%)" },
         },
         meteor: {
           "0%": { transform: "rotate(215deg) translateX(0)", opacity: "1" },

@@ -10,7 +10,6 @@ interface MarqueeItem {
   image: string;
 }
 
-
 export function Marquee() {
   const [items, setItems] = useState<MarqueeItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,18 +17,25 @@ export function Marquee() {
   async function fetchLastFmTracks(): Promise<MarqueeItem[]> {
     try {
       const response = await fetch(
-        "https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=XanSurnamehere&api_key=6f5ff9d828991a85bd78449a85548586&limit=50&format=json",
+        "https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=XanSurnamehere&api_key=6f5ff9d828991a85bd78449a85548586&limit=15&format=json",
       );
       const data = await response.json();
-      return data.recenttracks.track.map((track: { artist: { [x: string]: string; }; name: string; album: { [x: string]: string; }; image: { [x: string]: string; }[]; }) => ({
-        id: Math.random().toString(36).substring(2, 9),
-        artist: track.artist["#text"],
-        track: track.name,
-        album: track.album["#text"],
-        image:
-          track.image[2]["#text"] ||
-          "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop",
-      }));
+      return data.recenttracks.track.map(
+        (track: {
+          artist: { [x: string]: string };
+          name: string;
+          album: { [x: string]: string };
+          image: { [x: string]: string }[];
+        }) => ({
+          id: Math.random().toString(36).substring(2, 9),
+          artist: track.artist["#text"],
+          track: track.name,
+          album: track.album["#text"],
+          image:
+            track.image[2]["#text"] ||
+            "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop",
+        }),
+      );
     } catch (error) {
       console.error("Error fetching Last.fm data:", error);
       return [];
@@ -40,7 +46,7 @@ export function Marquee() {
     setIsLoading(true);
     const tracks = await fetchLastFmTracks();
     if (tracks.length > 0) {
-      setItems(tracks.slice(0, 30));
+      setItems(tracks.slice(0, 15));
       //setTrackPool(tracks.slice(30));
     }
     setIsLoading(false);
@@ -146,14 +152,14 @@ export function Marquee() {
               <TrackCard item={item} />
             </motion.div>
           ))}
-          {items.map((item) => (
+          {/* {items.map((item) => (
             <motion.div
               key={`${item.id}-duplicate3`}
               className="flex-shrink-0 noisey w-[300px] p-2 bg-opacity-30 bg-muted/50 rounded-lg shadow-lg border border-purple-500/10 backdrop-blur-sm"
             >
               <TrackCard item={item} />
             </motion.div>
-          ))}
+          ))} */}
         </div>
       </div>
     </motion.div>
@@ -170,7 +176,9 @@ const TrackCard = ({ item }: { item: MarqueeItem }) => {
       <div className="flex-1 min-w-0 text-left">
         <p className="text-primary font-medium truncate">{item.track}</p>
         <p className="text-muted-foreground text-sm truncate">{item.artist}</p>
-        <p className="text-muted-foreground/80 text-sm truncate">{item.album}</p>
+        <p className="text-muted-foreground/80 text-sm truncate">
+          {item.album}
+        </p>
       </div>
     </div>
   );
