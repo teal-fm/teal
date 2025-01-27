@@ -61,7 +61,7 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       animation: {
-        marquee: "scroll 10s linear infinite",
+        marquee: "scroll 180s linear infinite",
         "meteor-effect": "meteor 10s linear infinite",
       },
       keyframes: {
