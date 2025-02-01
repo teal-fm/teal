@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Marquee } from "@/components/currentTrackMarquee";
 import NavBar from "@/components/navbar";
 import { AnimatedText } from "@/components/ui/animatedUnderline";
@@ -11,12 +10,12 @@ import { SpaceButton } from "@/components/ui/spaceButton";
 import { Spotlight } from "@/components/ui/spotlights";
 import { StarsBackground } from "@/components/ui/stars";
 import { m as motion } from "framer-motion";
-import { ArrowRight, Info, Music2 } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="flex flex-1 flex-col text-center items-center px-2 md:px-8 ">
+    <main className="flex flex-1 flex-col text-center items-center px-2 md:px-8">
       <NavBar />
       <motion.div
         initial={{ opacity: 0.1 }}
@@ -25,15 +24,22 @@ export default function HomePage() {
           duration: 0.8,
           ease: "easeOut",
         }}
-        className="relative w-screen mt-8 md:-mt-14 p-2"
+        className="relative w-screen -mt-14 pt-24 md:pt-4 p-4 overflow-visible"
+        style={{
+          mask: "linear-gradient(to bottom, black 0%, black 60%, transparent 99%)",
+        }}
       >
         <GlowEffect
-          colors={["#0894FF", "#C95a9DD", "#2E54FF", "#90FFee"]}
-          mode="static"
+          colors={["#0894FF", "#C95a9D", "#2E54FF", "#90FFee"]}
+          mode="colorShift"
           blur="medium"
-          opacity={0.3}
+          opacity={0.1}
+          duration={240}
+          style={{
+            mask: "linear-gradient(to bottom, black 60%, transparent 80%)",
+          }}
         />
-        <div className="relative flex md:h-[98.5vh] h-[85vh] flex-col items-center justify-center overflow-hidden rounded-2xl bg-background">
+        <div className="relative flex md:h-[98.5vh] h-[85vh] flex-col max-w-full items-center justify-center overflow-hidden rounded-2xl bg-background">
           <div className="flex-1 max-w-screen-2xl w-screen relative flex h-[98.5vh] flex-col items-center justify-between rounded-2xl bg-background">
             <div />
             <div>
@@ -52,18 +58,9 @@ export default function HomePage() {
                 }}
                 className="mt-4 bg-gradient-to-br from-slate-300 to-slate-500 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl transform-gpu"
               >
-                <div className="flex items-center justify-center space-x-1">
-                  <div className="bg-teal-500 rounded-full p-3 h-16 w-16">
-                    <Music2 className="text-white h-full w-full" />
-                  </div>
-                  <h1 className="text-7xl sm:text-8xl font-semibold tracking-tight transition-scale">
-                    teal
-                    <span className="text-teal-500 font-serif italic">.fm</span>
-                  </h1>
-                </div>
-                <p className="font-sans text-2xl sm:text-4xl text-teal-700 dark:text-teal-100 max-w-2xl mx-auto font-light transition-all mt-4">
+                <p className="font-sans text-4xl sm:text-6xl text-teal-700 dark:text-teal-100 max-w-screen-2xl mx-auto font-light transition-all mt-4">
                   Your music,{" "}
-                  <span className="font-modern-serif font-medium text-teal-500">
+                  <span className="font-modern-serif font-medium text-teal-600 dark:text-teal-400">
                     beautifully
                   </span>{" "}
                   tracked.
@@ -79,9 +76,9 @@ export default function HomePage() {
               >
                 <AnimatedText
                   text={
-                    <span className="font-sans text-2xl sm:text-4xl text-teal-700 dark:text-teal-100 max-w-2xl mx-auto font-light transition-all">
+                    <span className="font-sans text-5xl sm:text-7xl text-teal-700 dark:text-teal-100 mx-auto font-light transition-all">
                       All{" "}
-                      <span className="text-teal-500 font-modern-serif font-medium">
+                      <span className="text-teal-600 dark:text-teal-400 font-modern-serif font-medium">
                         yours.
                       </span>
                     </span>
@@ -91,6 +88,18 @@ export default function HomePage() {
                   underlineDuration={1.5}
                 />
               </motion.div>
+              <div className="flex gap-2 items-center justify-center mt-8">
+                <p className="max-w-2xl text-md px-4">
+                  Track every listen, mood, and moment on ATProto:
+                  <br />
+                  decentralized, seamless, and{" "}
+                  <span className="text-teal-600 dark:text-teal-400 italic inline">
+                    yours.
+                  </span>{" "}
+                  No middlemen, no mysteries. <br />
+                  Just your music, your way.
+                </p>
+              </div>
               <motion.div
                 initial={{ opacity: 0.1, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -111,14 +120,7 @@ export default function HomePage() {
               </motion.div>
             </div>
             {/* saving this until after stamps are GA */}
-            <div className="gap-4 flex flex-col">
-              <p className="font-sans text-muted-foreground text-center">
-<span className="animate-pulse text-red-500">●</span>{' '}
-
-  TODO: COUNT tracks scrobbled this hour.
-              </p>
-              <Marquee />
-            </div>
+            <div className="h-32" />
 
             <StarsBackground
               starDensity={0.0003}
@@ -130,6 +132,32 @@ export default function HomePage() {
           </div>
         </div>
       </motion.div>
+      <div className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute z-0 md:-bottom-28 w-screen h-96">
+        <p className="text-accent-foreground text-3xl md:text-4xl text-center mt-6 font-modern-serif">
+          Now Playing
+        </p>
+        <p className="md:text-xl max-w-screen-md px-2">
+          {" "}
+          Get inspired by what’s trending. See what’s hot, discover new songs,
+          and join the conversation.
+        </p>
+        <div className="md:h-24" />
+        <p className="max-w-screen-md px-2">
+          Lorem ipsum is simply dummy text. Lorem ipsum has been the industry's
+          standard dummy text ever since the 1500s, when an unknown printer took
+          a galley of type and scrambled it to make a type specimen book. It has
+          survived not only five centuries, but also the leap into electronic
+          typesetting, remaining essentially unchanged.
+        </p>
+      </div>
+      <div
+        className="w-screen gap-4 flex flex-col items-center absolute z-0 md:bottom-0 bottom-12 overflow-x-hidden"
+        style={{
+          mask: "linear-gradient(to right, transparent 0%, black calc(5% + 2rem), black calc(95% - 2rem), transparent 100%)",
+        }}
+      >
+        <Marquee />
+      </div>
     </main>
   );
 }
