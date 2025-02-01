@@ -84,7 +84,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaView className="flex-1 flex flex-row min-h-screen justify-center bg-background">
-      <View className="max-w-screen-lg flex flex-1 border-x border-muted-foreground/20">
+      <View className="max-w-screen-md flex flex-1 border-x border-muted-foreground/20">
         {<RootLayoutNav />}
       </View>
     </SafeAreaView>
