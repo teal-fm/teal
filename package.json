@@ -11,6 +11,9 @@
     "nuke": "rimraf node_modules */*/node_modules",
     "lex:gen-server": "turbo lex:gen-server"
   },
+  "dependencies": {
+    "@atproto/oauth-client": "^0.3.8"
+  },
   "devDependencies": {
     "@types/node": "^20.17.10",
     "biome": "^0.3.3",
