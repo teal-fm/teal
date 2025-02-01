@@ -5,7 +5,7 @@ import { Pressable } from "react-native";
 
 import Colors from "../../constants/Colors";
 import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
-import useIsMobile from "@/hooks/useIsMobile";
+//import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
 import { useColorScheme } from "nativewind";
 
@@ -19,7 +19,7 @@ export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const authStatus = useStore((state) => state.status);
   // if we are on web but not native and web width is greater than 1024px
-  const hideTabBar = useIsMobile() || authStatus !== "loggedIn";
+  const hideTabBar = authStatus !== "loggedIn"; // || useIsMobile()
 
   return (
     <Tabs
@@ -33,7 +33,7 @@ export default function TabLayout() {
         tabBarShowLabel: true,
         tabBarStyle: {
           //height: 75,
-          display: "flex",
+          display: hideTabBar ? "none" : "flex",
         },
       }}
     >
