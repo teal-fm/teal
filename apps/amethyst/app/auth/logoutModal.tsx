@@ -32,7 +32,7 @@ export default function ModalScreen() {
             router.navigate("/");
           }}
         >
-          <Text className="font-semibold text-lg">Sign out</Text>
+          <Text className="text-lg">Sign out</Text>
         </Button>
 
         {/* Use a light status bar on iOS to account for the black space above the modal */}
