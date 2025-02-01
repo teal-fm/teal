@@ -12,7 +12,7 @@ import { useColorScheme } from "nativewind";
 function TabBarIcon(props: { name: LucideIcon; color: string }) {
   const Name = props.name;
   iconWithClassName(Name);
-  return <Name size={28} className="" {...props} />;
+  return <Name size={28} className="text-muted" {...props} />;
 }
 
 export default function TabLayout() {
@@ -33,14 +33,14 @@ export default function TabLayout() {
         tabBarShowLabel: true,
         tabBarStyle: {
           //height: 75,
-          display: hideTabBar ? "none" : "flex",
+          display: "flex",
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Tab One",
+          title: "Home",
           tabBarIcon: ({ color }) => <TabBarIcon name={Home} color={color} />,
           headerRight: () => (
             <Link href="/auth/logoutModal" asChild>
@@ -48,7 +48,7 @@ export default function TabLayout() {
                 {({ pressed }) => (
                   <Icon
                     icon={LogOut}
-                    className="text-2xl mr-4"
+                    className="text-2xl mr-4 text-muted-foreground"
                     name="log-out"
                   />
                 )}
