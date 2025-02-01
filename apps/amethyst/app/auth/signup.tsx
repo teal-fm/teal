@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { ArrowRight } from "lucide-react-native";
+import { ArrowRight, AtSignIcon } from "lucide-react-native";
 
 import { Stack, router } from "expo-router";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -19,26 +19,26 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="flex-1 justify-center p-8 gap-4 pb-32 w-screen max-w-screen-md">
-        <Text className="text-4xl font-semibold text-center text-foreground">
-          Sign up with{" "}
+      <View className="flex-1 justify-center p-8 gap-4 pb-32 w-screen max-w-md">
+        <Text className="text-3xl text-center text-foreground -mb-2">
+          Sign up via{" "}
           <Icon
-            icon={FontAwesome6}
-            className="color-bsky"
-            name="bluesky"
-            size={28}
+            icon={AtSignIcon}
+            className="color-bsky inline mb-2"
+            size={32}
           />{" "}
-          Bluesky
+          ATProto
+        </Text>
+        <Text className="text-foreground text-xl text-center">
+          No account? No problem.
         </Text>
         <View className="flex flex-col justify-center items-center">
-          <Text className="text-foreground text-lg">
-            No account? That's fine.
+          <Text className="mb-2 text-center -mx-3">
+            To use teal.fm, you’ll need a PDS—your personal data storage on the
+            AT Protocol. Signing up with Bluesky is a great way to begin.
           </Text>
-          <Text className="text-foreground text-center text-lg">
-            Sign up for Bluesky, then return here to sign in.
-          </Text>
-          <Text className="text-muted-foreground mt-2 mb-4 text-center text-xs">
-            You'll need a PDS to use teal.fm. Bluesky is a good way to get one.
+          <Text className="text-center mb-4 text-xs text-muted-foreground">
+            Sign up with Bluesky, then return here to start exploring.
           </Text>
           {/* on click, open tab, then in the background navigate to /login */}
           <Button
@@ -53,9 +53,9 @@ const LoginScreen = () => {
                 router.replace("/auth/login");
               }, 1000);
             }}
-            className="flex flex-row justify-center items-center gap-2"
+            className="flex flex-row justify-center items-center gap-2 bg-bsky"
           >
-            <Text className="text-sm ml-2 text-secondary">Go</Text>
+            <Text className="text-sm ml-2 text-secondary">To Bluesky</Text>
             <Icon icon={ArrowRight} />
           </Button>
         </View>

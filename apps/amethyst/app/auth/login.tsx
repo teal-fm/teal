@@ -23,7 +23,7 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     if (!handle) {
       setErr("Please enter a handle");
-      return
+      return;
     }
 
     setIsLoading(true);
@@ -71,7 +71,7 @@ const LoginScreen = () => {
         <View className="flex items-center">
           <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
         </View>
-        <Text className="text-3xl font-semibold text-center text-foreground">
+        <Text className="text-3xl text-center text-foreground">
           Sign in with your PDS
         </Text>
         <View>
@@ -118,12 +118,12 @@ const LoginScreen = () => {
           >
             {isRedirecting ? (
               <>
-                <Text className="font-semibold text-lg">Redirecting</Text>
+                <Text className="text-lg">Redirecting</Text>
                 <Icon icon={Check} />
               </>
             ) : (
               <>
-                <Text className="font-semibold text-lg">Login</Text>
+                <Text className="text-lg">Sign in</Text>
                 <Icon icon={ChevronRight} />
               </>
             )}

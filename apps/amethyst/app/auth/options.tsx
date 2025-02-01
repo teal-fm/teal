@@ -16,10 +16,10 @@ export default function AuthOptions() {
         }}
       />
       <View className="gap-2">
-        <Text className="text-5xl font-semibold text-center text-foreground">
+        <Text className="text-5xl text-center text-foreground">
           Get started with
         </Text>
-        <Text className="text-center text-5xl font-semibold text-foreground">
+        <Text className="text-center text-5xl text-foreground">
           teal
           <Text className="text-5xl font-serif-old-italic">.fm</Text>
         </Text>
