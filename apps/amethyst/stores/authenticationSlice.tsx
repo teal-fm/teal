@@ -1,10 +1,10 @@
-import create from "zustand";
 import { StateCreator } from "./mainStore";
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { OAuthSession } from "@atproto/oauth-client";
 import { ProfileViewDetailed } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { Agent } from "@atproto/api";
 import * as Lexicons from "@teal/lexicons/src/lexicons";
+import { resolveFromIdentity } from "@/lib/atp/pid";
 
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
@@ -19,7 +19,7 @@ export interface AuthenticationSlice {
     loading: boolean;
     error: null | string;
   };
-  pds: {
+  pds: null | {
     url: string;
     loading: boolean;
     error: null | string;
@@ -37,7 +37,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   // check if we have CF_PAGES_URL set. if not, use localhost
   const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
   console.log("Using base URL:", baseUrl);
-  const initialAuth = createOAuthClient(baseUrl);
+  const initialAuth = createOAuthClient(baseUrl, "bsky.social");
 
   console.log("Auth client created!");
 
@@ -54,15 +54,22 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       loading: false,
       error: null,
     },
-    pds: {
-      url: "bsky.social",
-      loading: false,
-      error: null,
-    },
+    pds: null,
 
     getLoginUrl: async (handle: string) => {
       try {
-        const url = await initialAuth.authorize(handle);
+        // resolve the handle to a PDS URL
+        const r = resolveFromIdentity(handle);
+        let auth = createOAuthClient(baseUrl, (await r).pds.hostname);
+        const url = await auth.authorize(handle);
+        set({
+          auth,
+          pds: {
+            url: url.toString(),
+            loading: false,
+            error: null,
+          },
+        });
         return url;
       } catch (error) {
         console.error("Failed to get login URL:", error);

@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { ArrowRight } from "lucide-react-native";
+import { ArrowRight, Info } from "lucide-react-native";
 
 import { Stack, router } from "expo-router";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -34,8 +34,11 @@ const LoginScreen = () => {
           <Text className="text-foreground text-lg">
             No account? That's fine.
           </Text>
-          <Text className="text-foreground mb-4 text-center text-lg">
+          <Text className="text-foreground text-center text-lg">
             Sign up for Bluesky, then return here to sign in.
+          </Text>
+          <Text className="text-muted-foreground mt-2 mb-4 text-center text-xs">
+            You'll need a PDS to use teal.fm. Bluesky is a good way to get one.
           </Text>
           {/* on click, open tab, then in the background navigate to /login */}
           <Button
