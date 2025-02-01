@@ -12,7 +12,8 @@ export type AquareumOAuthClient = Omit<
 >;
 
 export default function createOAuthClient(
-  baseUrl: string
+  baseUrl: string,
+  pdsBaseUrl: string,
 ): AquareumOAuthClient {
   if (!baseUrl) {
     throw new Error("baseUrl is required");
@@ -60,7 +61,7 @@ export default function createOAuthClient(
   };
   clientMetadataSchema.parse(meta);
   return new ReactNativeOAuthClient({
-    handleResolver: "https://bsky.social", // backend instances should use a DNS based resolver
+    handleResolver: "https://" + pdsBaseUrl, // backend instances should use a DNS based resolver
     responseMode: "query", // or "fragment" (frontend only) or "form_post" (backend only)
 
     // These must be the same metadata as the one exposed on the
