@@ -31,10 +31,9 @@ export default function HomePage() {
       >
         <GlowEffect
           colors={["#0894FF", "#C95a9D", "#2E54FF", "#90FFee"]}
-          mode="colorShift"
+          mode="static"
           blur="medium"
-          opacity={0.1}
-          duration={240}
+          opacity={0.3}
           style={{
             mask: "linear-gradient(to bottom, black 60%, transparent 80%)",
           }}
@@ -88,7 +87,15 @@ export default function HomePage() {
                   underlineDuration={1.5}
                 />
               </motion.div>
-              <div className="flex gap-2 items-center justify-center mt-8">
+              <motion.div
+                initial={{ opacity: 0.1, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.9,
+                  ease: "easeOut",
+                }}
+                className="flex gap-2 items-center justify-center mt-6"
+              >
                 <p className="max-w-2xl text-md px-4">
                   Track every listen, mood, and moment on ATProto:
                   <br />
@@ -99,12 +106,12 @@ export default function HomePage() {
                   No middlemen, no mysteries. <br />
                   Just your music, your way.
                 </p>
-              </div>
+              </motion.div>
               <motion.div
                 initial={{ opacity: 0.1, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
-                  duration: 0.85,
+                  duration: 1.2,
                   ease: "easeOut",
                 }}
                 className="flex gap-2 items-center justify-center mt-8"
@@ -132,7 +139,7 @@ export default function HomePage() {
           </div>
         </div>
       </motion.div>
-      <div className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute z-0 md:-bottom-28 w-screen h-96">
+      <div className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute relative bottom-12 z-0 md:-bottom-28 w-screen h-96">
         <p className="text-accent-foreground text-3xl md:text-4xl text-center mt-6 font-modern-serif">
           Now Playing
         </p>
