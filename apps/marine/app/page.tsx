@@ -146,15 +146,14 @@ export default function HomePage() {
         <p className="md:text-xl max-w-screen-md px-2">
           {" "}
           Get inspired by what’s trending. See what’s hot, discover new songs,
-          and join the conversation.
+          and share your unique style.
         </p>
         <div className="md:h-24" />
         <p className="max-w-screen-md px-2">
-          Lorem ipsum is simply dummy text. Lorem ipsum has been the industry's
-          standard dummy text ever since the 1500s, when an unknown printer took
-          a galley of type and scrambled it to make a type specimen book. It has
-          survived not only five centuries, but also the leap into electronic
-          typesetting, remaining essentially unchanged.
+          Stay connected to the music that moves you. Share your favorite tracks
+          with friends, explore what they’re listening to, and discover new
+          sounds together. Your music journey can evolve to become a shared
+          experience—let’s make it unforgettable.
         </p>
       </div>
       <div
