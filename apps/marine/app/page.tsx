@@ -148,21 +148,20 @@ export default function HomePage() {
           Get inspired by what’s trending. See what’s hot, discover new songs,
           and share your unique style.
         </p>
-        <div className="md:h-24" />
+        <div
+          className="w-screen flex flex-col items-center overflow-x-hidden -mb-8 mt-2"
+          style={{
+            mask: "linear-gradient(to right, transparent 0%, black calc(5% + 2rem), black calc(95% - 2rem), transparent 100%)",
+          }}
+        >
+          <Marquee />
+        </div>
         <p className="max-w-screen-md px-2">
           Stay connected to the music that moves you. Share your favorite tracks
           with friends, explore what they’re listening to, and discover new
           sounds together. Your music journey can evolve to become a shared
           experience—let’s make it unforgettable.
         </p>
-      </div>
-      <div
-        className="w-screen gap-4 flex flex-col items-center absolute z-0 md:bottom-0 bottom-12 overflow-x-hidden"
-        style={{
-          mask: "linear-gradient(to right, transparent 0%, black calc(5% + 2rem), black calc(95% - 2rem), transparent 100%)",
-        }}
-      >
-        <Marquee />
       </div>
     </main>
   );
