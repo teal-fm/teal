@@ -52,7 +52,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               seed="128"
               stitchTiles="stitch"
             />
-            <feBlend in="SourceGraphic" mode="multiply" />
+            <feBlend in="SourceGraphic" mode="hard-light" />
           </filter>
         </svg>
       </body>

@@ -66,9 +66,10 @@ export default function HomePage() {
                 </p>
               </motion.h1>
               <motion.div
-                initial={{ opacity: 0.1, y: 50 }}
+                initial={{ opacity: 0.1, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
+                  delay: 0.2,
                   duration: 0.8,
                   ease: "easeOut",
                 }}
@@ -91,6 +92,7 @@ export default function HomePage() {
                 initial={{ opacity: 0.1, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
+                  delay: 0.25,
                   duration: 0.9,
                   ease: "easeOut",
                 }}
@@ -111,6 +113,7 @@ export default function HomePage() {
                 initial={{ opacity: 0.1, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
+                  delay: 0.3,
                   duration: 1.2,
                   ease: "easeOut",
                 }}
@@ -139,7 +142,16 @@ export default function HomePage() {
           </div>
         </div>
       </motion.div>
-      <div className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute relative bottom-12 z-0 md:-bottom-28 w-screen h-96 px-2">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{
+          delay: 0.3,
+          duration: 0.9,
+          ease: "easeOut",
+        }}
+        className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute relative bottom-12 z-0 md:-bottom-28 w-screen h-96 px-2"
+      >
         <p className="text-accent-foreground text-3xl md:text-4xl text-center mt-6 font-modern-serif">
           Now Playing
         </p>
@@ -163,7 +175,7 @@ export default function HomePage() {
           sounds together. Your music journey can evolve to become a shared
           experience—let’s make it unforgettable.
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }
