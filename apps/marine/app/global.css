@@ -69,6 +69,10 @@ body {
   box-shadow: inset 0 0 9px rgba(70, 80, 90, 0.2);
 }
 
+.noisey-blurry {
+  box-shadow: inset 0 0 9px rgba(70, 80, 90, 0.2);
+}
+
 .noisey-teal {
   backdrop-filter: url("#grainy-blur");
   box-shadow: inset 0 0 9px rgba(60, 120, 120, 0.4);
@@ -76,7 +80,7 @@ body {
 
 .blurry {
   height: 200%;
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(64px);
   mask-image: linear-gradient(to bottom, black 0% 50%, transparent 50% 100%);
 }
 

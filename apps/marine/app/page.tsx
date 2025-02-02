@@ -15,7 +15,7 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="flex flex-1 flex-col text-center items-center px-2 md:px-8">
+    <div className="flex flex-1 flex-col text-center items-center px-2 md:px-8">
       <NavBar />
       <motion.div
         initial={{ opacity: 0.1 }}
@@ -24,7 +24,7 @@ export default function HomePage() {
           duration: 0.8,
           ease: "easeOut",
         }}
-        className="relative w-screen -mt-14 pt-24 md:pt-4 p-4 overflow-visible"
+        className="relative w-screen -mt-14 pt-24 md:p-4 p-2 overflow-visible"
         style={{
           mask: "linear-gradient(to bottom, black 0%, black 60%, transparent 99%)",
         }}
@@ -57,7 +57,7 @@ export default function HomePage() {
                 }}
                 className="mt-4 bg-gradient-to-br from-slate-300 to-slate-500 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl transform-gpu"
               >
-                <p className="font-sans text-4xl sm:text-6xl text-teal-700 dark:text-teal-100 max-w-screen-2xl mx-auto font-light transition-all mt-4">
+                <p className="font-sans text-3xl sm:text-6xl text-teal-700 dark:text-teal-100 max-w-screen-2xl mx-auto font-light transition-all mt-4">
                   Your music,{" "}
                   <span className="font-modern-serif font-medium text-teal-600 dark:text-teal-400">
                     beautifully
@@ -75,7 +75,7 @@ export default function HomePage() {
               >
                 <AnimatedText
                   text={
-                    <span className="font-sans text-5xl sm:text-7xl text-teal-700 dark:text-teal-100 mx-auto font-light transition-all">
+                    <span className="font-sans text-4xl sm:text-7xl text-teal-700 dark:text-teal-100 mx-auto font-light transition-all">
                       All{" "}
                       <span className="text-teal-600 dark:text-teal-400 font-modern-serif font-medium">
                         yours.
@@ -96,7 +96,7 @@ export default function HomePage() {
                 }}
                 className="flex gap-2 items-center justify-center mt-6"
               >
-                <p className="max-w-2xl text-md px-4">
+                <p className="max-w-2xl text-sm px-4">
                   Track every listen, mood, and moment on ATProto:
                   <br />
                   decentralized, seamless, and{" "}
@@ -139,7 +139,7 @@ export default function HomePage() {
           </div>
         </div>
       </motion.div>
-      <div className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute relative bottom-12 z-0 md:-bottom-28 w-screen h-96">
+      <div className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute relative bottom-12 z-0 md:-bottom-28 w-screen h-96 px-2">
         <p className="text-accent-foreground text-3xl md:text-4xl text-center mt-6 font-modern-serif">
           Now Playing
         </p>
@@ -149,13 +149,14 @@ export default function HomePage() {
           and share your unique style.
         </p>
         <div
-          className="w-screen flex flex-col items-center overflow-x-hidden -mb-8 mt-2"
+          className="w-screen flex flex-col items-center overflow-x-hidden absolute md:static -top-32 -mb-8 mt-2"
           style={{
             mask: "linear-gradient(to right, transparent 0%, black calc(5% + 2rem), black calc(95% - 2rem), transparent 100%)",
           }}
         >
           <Marquee />
         </div>
+        <div className="block md:hidden border-t w-64 my-4" />
         <p className="max-w-screen-md px-2">
           Stay connected to the music that moves you. Share your favorite tracks
           with friends, explore what they’re listening to, and discover new
@@ -163,6 +164,6 @@ export default function HomePage() {
           experience—let’s make it unforgettable.
         </p>
       </div>
-    </main>
+    </div>
   );
 }

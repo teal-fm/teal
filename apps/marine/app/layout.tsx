@@ -42,6 +42,19 @@ export default function Layout({ children }: { children: ReactNode }) {
         <RootProvider>
           <LazyMotion features={domAnimation}>{children}</LazyMotion>
         </RootProvider>
+        <svg width="0" height="0">
+          <filter id="grainy-blur" x="0" y="0" width="100%" height="100%">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.8"
+              numOctaves="6"
+              result="noise"
+              seed="128"
+              stitchTiles="stitch"
+            />
+            <feBlend in="SourceGraphic" mode="multiply" />
+          </filter>
+        </svg>
       </body>
     </html>
   );

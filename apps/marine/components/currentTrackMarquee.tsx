@@ -134,11 +134,14 @@ export function Marquee() {
           width: "100%",
         }}
       >
-        <div className="animate-marquee inline-flex gap-8">
+        <div className="animate-marquee inline-flex gap-8 backdrop-blur">
           {items.map((item) => (
             <motion.div
               key={`${item.id}-duplicate1`}
-              className="flex-shrink-0 noisey w-[300px] p-2 bg-opacity-30 bg-muted/50 rounded-lg shadow-lg border border-purple-500/10 backdrop-blur-sm"
+              className="flex-shrink-0 noisey w-[300px] p-2 bg-muted/80 rounded-lg shadow-lg border border-purple-500/10"
+              style={{
+                backdropFilter: "blur(10px)",
+              }}
             >
               <TrackCard item={item} />
             </motion.div>
@@ -147,7 +150,10 @@ export function Marquee() {
           {items.map((item) => (
             <motion.div
               key={`${item.id}-duplicate2`}
-              className="flex-shrink-0 noisey w-[300px] p-2 bg-opacity-30 bg-muted/50 rounded-lg shadow-lg border border-purple-500/10 backdrop-blur-sm"
+              className="flex-shrink-0 noisey w-[300px] p-2 bg-muted/80 rounded-lg shadow-lg border border-purple-500/10"
+              style={{
+                backdropFilter: "blur(10px)",
+              }}
             >
               <TrackCard item={item} />
             </motion.div>
