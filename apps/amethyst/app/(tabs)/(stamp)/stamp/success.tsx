@@ -1,5 +1,5 @@
 import { ExternalLink } from "@/components/ExternalLink";
-import { Stack, useRouter } from "expo-router";
+import { Redirect, Stack, useRouter } from "expo-router";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
@@ -20,7 +20,7 @@ export default function StepThree() {
   if (state.step !== StampStep.SUBMITTED) {
     console.log("Stamp state is not submitted!");
     console.log(state.step);
-    return <Text>No track selected?</Text>;
+    return <Redirect href="/stamp" />;
   }
   return (
     <View className="flex-1 p-4 bg-background items-center h-screen-safe">

@@ -6,7 +6,7 @@ import {
   Record as PlayRecord,
   validateRecord,
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
-import { Stack, useRouter } from "expo-router";
+import { Redirect, Stack, useRouter } from "expo-router";
 import { useContext, useState } from "react";
 import { Switch, View } from "react-native";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
@@ -142,8 +142,7 @@ export default function Submit() {
   if (state.step !== StampStep.SUBMITTING) {
     console.log("Stamp step is not SUBMITTING");
     console.log(state);
-    return <Text>No track selected?</Text>;
-    //return <Redirect href="/stamp" />;
+    return <Redirect href="/stamp" />;
   }
 
   const selectedTrack = state.submittingStamp;
@@ -191,16 +190,13 @@ ${record.trackName} by ${record.artistNames.join(", ")}
 powered by @teal.fm`,
         });
         await rt.detectFacets(agent);
-        // get metadata from Apple if available
-        // https://labs.api.listenbrainz.org/apple-music-id-from-mbid/json?recording_mbid=81c3eb6e-d8f4-423c-9007-694aefe62754
-        // https://music.apple.com/us/album/i-always-wanna-die-sometimes/1435546528?i=1435546783
         let embedInfo = await getEmbedInfo(selectedTrack.id);
         let urlEmbed: string | undefined = embedInfo?.urlEmbed;
         let customUrl: string | undefined = embedInfo?.customUrl;
 
         let releaseYear = selectedTrack.selectedRelease?.date?.split("-")[0];
         let title = `${record.trackName} by ${record.artistNames.join(", ")}`;
-        let description = `Song${releaseYear && " · "}${releaseYear}${
+        let description = `Song${releaseYear ? " · " + releaseYear : ""}${
           selectedTrack.length && " · " + ms2hms(selectedTrack.length)
         }`;
 
@@ -217,7 +213,9 @@ powered by @teal.fm`,
               )
             : undefined,
         });
-        submittedData.blueskyPostUrl = post.uri;
+        submittedData.blueskyPostUrl = post.uri
+          .replace("at://", "https://bsky.app/profile/")
+          .replace("app.bsky.feed.post", "post");
       }
       setState({
         step: StampStep.SUBMITTED,
