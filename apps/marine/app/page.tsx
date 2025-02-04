@@ -9,7 +9,7 @@ import { GlowEffect } from "@/components/ui/glowEffect";
 import { SpaceButton } from "@/components/ui/spaceButton";
 import { Spotlight } from "@/components/ui/spotlights";
 import { StarsBackground } from "@/components/ui/stars";
-import { m as motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
 
@@ -17,9 +17,9 @@ export default function HomePage() {
   return (
     <div className="flex flex-1 flex-col text-center items-center px-2 md:px-8">
       <NavBar />
-      <motion.div
+      <m.div
         initial={{ opacity: 0.1 }}
-        whileInView={{ opacity: 1 }}
+        animate={{ opacity: 1 }}
         transition={{
           duration: 0.8,
           ease: "easeOut",
@@ -38,8 +38,8 @@ export default function HomePage() {
             mask: "linear-gradient(to bottom, black 60%, transparent 80%)",
           }}
         />
-        <div className="relative flex md:h-[98.5vh] h-[85vh] flex-col max-w-full items-center justify-center overflow-hidden rounded-2xl bg-background">
-          <div className="flex-1 max-w-screen-2xl w-screen relative flex h-[98.5vh] flex-col items-center justify-between rounded-2xl bg-background">
+        <div className="relative flex md:h-[98.5vh] h-[85vh] flex-col max-w-full items-center justify-center overflow-hidden rounded-2xl bg-radial-[at_50%_75%] from-sky-200 via-blue-400 to-indigo-900 to-90% dark:bg-background">
+          <div className="flex-1 max-w-screen-2xl w-screen relative flex h-[98.5vh] flex-col items-center justify-between rounded-2xl bg-transparent">
             <div />
             <div>
               <HeroBadge
@@ -48,26 +48,28 @@ export default function HomePage() {
                 endIcon={<ArrowRight />}
                 href="https://discord.gg/B67XEhYYjx"
               />
-              <motion.h1
+              <m.h1
                 initial={{ opacity: 0.1, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: 0.8,
                   ease: "easeOut",
                 }}
                 className="mt-4 bg-gradient-to-br from-slate-300 to-slate-500 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl transform-gpu"
               >
-                <p className="font-sans text-3xl sm:text-6xl text-teal-700 dark:text-teal-100 max-w-screen-2xl mx-auto font-light transition-all mt-4">
+                <div className="font-sans text-4xl sm:text-6xl text-teal-700 dark:text-teal-100 max-w-screen-2xl mx-auto font-light transition-all mt-4">
                   Your music,{" "}
-                  <span className="font-modern-serif font-medium text-teal-600 dark:text-teal-400">
-                    beautifully
-                  </span>{" "}
-                  tracked.
-                </p>
-              </motion.h1>
-              <motion.div
+                  <div className="block md:inline">
+                    <span className="font-modern-serif font-medium text-teal-600 dark:text-teal-400">
+                      beautifully
+                    </span>{" "}
+                    tracked.
+                  </div>
+                </div>
+              </m.h1>
+              <m.div
                 initial={{ opacity: 0.1, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{
                   delay: 0.2,
                   duration: 0.8,
@@ -76,7 +78,7 @@ export default function HomePage() {
               >
                 <AnimatedText
                   text={
-                    <span className="font-sans text-4xl sm:text-7xl text-teal-700 dark:text-teal-100 mx-auto font-light transition-all">
+                    <span className="font-sans text-5xl sm:text-7xl text-teal-700 dark:text-teal-100 mx-auto font-light transition-all">
                       All{" "}
                       <span className="text-teal-600 dark:text-teal-400 font-modern-serif font-medium">
                         yours.
@@ -87,10 +89,10 @@ export default function HomePage() {
                   underlineClassName="-bottom-2.5 scale-x-110"
                   underlineDuration={1.5}
                 />
-              </motion.div>
-              <motion.div
+              </m.div>
+              <m.div
                 initial={{ opacity: 0.1, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{
                   delay: 0.25,
                   duration: 0.9,
@@ -108,10 +110,10 @@ export default function HomePage() {
                   No middlemen, no mysteries. <br />
                   Just your music, your way.
                 </p>
-              </motion.div>
-              <motion.div
+              </m.div>
+              <m.div
                 initial={{ opacity: 0.1, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{
                   delay: 0.3,
                   duration: 1.2,
@@ -127,7 +129,7 @@ export default function HomePage() {
                     Docs
                   </Button>
                 </Link>
-              </motion.div>
+              </m.div>
             </div>
             {/* saving this until after stamps are GA */}
             <div className="h-32" />
@@ -141,10 +143,10 @@ export default function HomePage() {
             <Spotlight />
           </div>
         </div>
-      </motion.div>
-      <motion.div
+      </m.div>
+      <m.div
         initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{
           delay: 0.3,
           duration: 0.9,
@@ -175,7 +177,7 @@ export default function HomePage() {
           sounds together. Your music journey can evolve to become a shared
           experience—let’s make it unforgettable.
         </p>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
