@@ -6,6 +6,11 @@ import { Agent } from "@atproto/api";
 import * as Lexicons from "@teal/lexicons/src/lexicons";
 import { resolveFromIdentity } from "@/lib/atp/pid";
 
+export interface AllProfileViews {
+  bsky: null | ProfileViewDetailed;
+  // todo: teal profile view
+}
+
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
   status: "start" | "loggedIn" | "loggedOut";
@@ -13,7 +18,7 @@ export interface AuthenticationSlice {
   oauthSession: null | OAuthSession;
   pdsAgent: null | Agent;
   isAgentReady: boolean;
-  profiles: { [key: string]: ProfileViewDetailed };
+  profiles: { [key: string]: AllProfileViews };
   client: null | AquareumOAuthClient;
   login: {
     loading: boolean;
@@ -28,6 +33,7 @@ export interface AuthenticationSlice {
   oauthCallback: (state: URLSearchParams) => Promise<void>;
   restorePdsAgent: () => void;
   logOut: () => void;
+  populateLoggedInProfile: () => Promise<void>;
 }
 
 export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
@@ -96,6 +102,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           pdsAgent: addDocs(agent),
           isAgentReady: true,
         });
+        get().populateLoggedInProfile();
       } catch (error: any) {
         console.error("OAuth callback failed:", error);
         set({
@@ -131,6 +138,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           isAgentReady: true,
           status: "loggedIn",
         });
+        get().populateLoggedInProfile();
         console.log("Restored agent");
       } catch (error) {
         console.error("Failed to restore agent:", error);
@@ -139,14 +147,44 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     },
     logOut: () => {
       console.log("Logging out");
+      let profiles = { ...get().profiles };
+      // TODO: something better than 'delete'
+      delete profiles[get().pdsAgent?.did ?? ""];
       set({
         status: "loggedOut",
         oauthSession: null,
         oauthState: null,
-        profiles: {},
+        profiles,
         pdsAgent: null,
         client: null,
+        pds: null,
       });
+    },
+    populateLoggedInProfile: async () => {
+      console.log("Populating logged in profile");
+      const agent = get().pdsAgent;
+      if (!agent) {
+        throw new Error("No agent");
+      }
+      if (!agent.did) {
+        throw new Error("No agent did! This is bad!");
+      }
+      try {
+        let bskyProfile = await agent
+          .getProfile({ actor: agent.did })
+          .then((profile) => {
+            console.log(profile);
+            return profile.data || null;
+          });
+
+        set({
+          profiles: {
+            [agent.did]: { bsky: bskyProfile },
+          },
+        });
+      } catch (error) {
+        console.error("Failed to get profile:", error);
+      }
     },
   };
 };
