@@ -6,7 +6,7 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { StyleProp, ViewStyle } from "react-native";
+import { StyleProp, View, ViewStyle } from "react-native";
 
 export default function SheetBackdrop({
   animatedIndex,
@@ -43,3 +43,15 @@ export default function SheetBackdrop({
     />
   );
 }
+
+// background-bg sheet handle
+export const SheetHandle = ({
+  animatedIndex,
+  style,
+}: BottomSheetBackdropProps) => {
+  return (
+    <View className="w-full items-center h-6 bg-background rounded-t-xl border-t border-x border-neutral-500/30">
+      <View className="w-16 bg-muted-foreground/50 hover:bg-muted-foreground/70 transition-colors h-1.5 m-1 rounded-xl" />
+    </View>
+  );
+};
