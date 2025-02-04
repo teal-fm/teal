@@ -200,27 +200,21 @@ powered by @teal.fm`,
 
         let releaseYear = selectedTrack.selectedRelease?.date?.split("-")[0];
         let title = `${record.trackName} by ${record.artistNames.join(", ")}`;
-        let description = `Song${releaseYear && " · "}${releaseYear} · ${
+        let description = `Song${releaseYear && " · "}${releaseYear}${
           selectedTrack.length && " · " + ms2hms(selectedTrack.length)
         }`;
-
-        console.log(urlEmbed, customUrl, title, description);
-
-        console.log(
-          await getBlueskyEmbedCard(
-            urlEmbed,
-            agent,
-            customUrl,
-            title,
-            description,
-          ),
-        );
 
         const post = await agent.post({
           text: rt.text,
           facets: rt.facets,
           embed: urlEmbed
-            ? await getBlueskyEmbedCard(urlEmbed, agent)
+            ? await getBlueskyEmbedCard(
+                urlEmbed,
+                agent,
+                customUrl,
+                title,
+                description,
+              )
             : undefined,
         });
         submittedData.blueskyPostUrl = post.uri;
