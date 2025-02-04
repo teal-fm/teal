@@ -1,17 +1,109 @@
 import VerticalPlayView from "@/components/play/verticalPlayView";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores/mainStore";
-import { ComAtprotoRepoCreateRecord } from "@atproto/api";
+import { Agent, ComAtprotoRepoCreateRecord, RichText } from "@atproto/api";
 import {
   Record as PlayRecord,
   validateRecord,
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { Stack, useRouter } from "expo-router";
+import { useContext, useState } from "react";
 import { Switch, View } from "react-native";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
 import { Text } from "@/components/ui/text";
 import { ExternalLink } from "@/components/ExternalLink";
+import { StampContext, StampContextValue, StampStep } from "./_layout";
+
+type CardyBResponse = {
+  error: string;
+  likely_type: string;
+  url: string;
+  title: string;
+  description: string;
+  image: string;
+};
+// call CardyB API to get embed card
+const getUrlMetadata = async (url: string): Promise<CardyBResponse> => {
+  const response = await fetch(`https://cardyb.bsky.app/v1/extract?url=${url}`);
+  if (response.status === 200) {
+    return await response.json();
+  } else {
+    throw new Error("Failed to fetch metadata from CardyB");
+  }
+};
+
+const getBlueskyEmbedCard = async (
+  url: string | undefined,
+  agent: Agent,
+  customUrl?: string,
+  customTitle?: string,
+  customDescription?: string,
+) => {
+  if (!url) return;
+
+  try {
+    const metadata = await getUrlMetadata(url);
+    const blob = await fetch(metadata.image).then((r) => r.blob());
+    const { data } = await agent.uploadBlob(blob, { encoding: "image/jpeg" });
+
+    return {
+      $type: "app.bsky.embed.external",
+      external: {
+        uri: customUrl || metadata.url,
+        title: customTitle || metadata.title,
+        description: customDescription || metadata.description,
+        thumb: data.blob,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching embed card:", error);
+    return;
+  }
+};
+interface EmbedInfo {
+  urlEmbed: string;
+  customUrl: string;
+}
+const getEmbedInfo = async (mbid: string): Promise<EmbedInfo | null> => {
+  let appleMusicResponse = await fetch(
+    `https://labs.api.listenbrainz.org/apple-music-id-from-mbid/json?recording_mbid=${mbid}`,
+  );
+  if (appleMusicResponse.status === 200) {
+    const appleMusicData = await appleMusicResponse.json();
+    console.log("Apple Music data:", appleMusicData);
+    if (appleMusicData[0].apple_music_track_ids.length > 0) {
+      let trackId = appleMusicData[0].apple_music_track_ids[0];
+      return {
+        urlEmbed: `https://music.apple.com/us/song/its-not-living-if-its-not-with-you/${trackId}`,
+        customUrl: `https://song.link/i/${trackId}`,
+      };
+    } else {
+      let spotifyResponse = await fetch(
+        `https://labs.api.listenbrainz.org/spotify-id-from-mbid/json?recording_mbid=${mbid}`,
+      );
+      if (spotifyResponse.status === 200) {
+        const spotifyData = await spotifyResponse.json();
+        console.log("Spotify data:", spotifyData);
+        if (spotifyData[0].spotify_track_ids.length > 0) {
+          let trackId = spotifyData[0].spotify_track_ids[0];
+          return {
+            urlEmbed: `https://open.spotify.com/track/${trackId}`,
+            customUrl: `https://song.link/s/${trackId}`,
+          };
+        }
+      }
+    }
+  }
+  return null;
+};
+
+const ms2hms = (ms: number): string => {
+  let seconds = Math.floor(ms / 1000);
+  let minutes = Math.floor(seconds / 60);
+  seconds = seconds % 60;
+  minutes = minutes % 60;
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+};
 
 const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
   let artistNames: string[] = [];
@@ -41,21 +133,26 @@ const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
 export default function Submit() {
   const router = useRouter();
   const agent = useStore((state) => state.pdsAgent);
-  // awful awful awful!
-  // I don't wanna use global state for something like this though!
-  const { track } = useLocalSearchParams();
-
-  const selectedTrack: MusicBrainzRecording | null = JSON.parse(
-    track as string,
-  );
+  const ctx = useContext(StampContext);
+  const { state, setState } = ctx as StampContextValue;
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [shareWithBluesky, setShareWithBluesky] = useState<boolean>(false);
+
+  if (state.step !== StampStep.SUBMITTING) {
+    console.log("Stamp step is not SUBMITTING");
+    console.log(state);
+    return <Text>No track selected?</Text>;
+    //return <Redirect href="/stamp" />;
+  }
+
+  const selectedTrack = state.submittingStamp;
 
   if (selectedTrack === null) {
     return <Text>No track selected</Text>;
   }
 
+  // TODO: PLEASE refactor me ASAP!!!
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -85,9 +182,57 @@ export default function Submit() {
         playRecord: record,
         blueskyPostUrl: null,
       };
+      if (shareWithBluesky && agent) {
+        // lol this type
+        const rt = new RichText({
+          text: `💮 now playing:
+${record.trackName} by ${record.artistNames.join(", ")}
+
+powered by @teal.fm`,
+        });
+        await rt.detectFacets(agent);
+        // get metadata from Apple if available
+        // https://labs.api.listenbrainz.org/apple-music-id-from-mbid/json?recording_mbid=81c3eb6e-d8f4-423c-9007-694aefe62754
+        // https://music.apple.com/us/album/i-always-wanna-die-sometimes/1435546528?i=1435546783
+        let embedInfo = await getEmbedInfo(selectedTrack.id);
+        let urlEmbed: string | undefined = embedInfo?.urlEmbed;
+        let customUrl: string | undefined = embedInfo?.customUrl;
+
+        let releaseYear = selectedTrack.selectedRelease?.date?.split("-")[0];
+        let title = `${record.trackName} by ${record.artistNames.join(", ")}`;
+        let description = `Song${releaseYear && " · "}${releaseYear} · ${
+          selectedTrack.length && " · " + ms2hms(selectedTrack.length)
+        }`;
+
+        console.log(urlEmbed, customUrl, title, description);
+
+        console.log(
+          await getBlueskyEmbedCard(
+            urlEmbed,
+            agent,
+            customUrl,
+            title,
+            description,
+          ),
+        );
+
+        const post = await agent.post({
+          text: rt.text,
+          facets: rt.facets,
+          embed: urlEmbed
+            ? await getBlueskyEmbedCard(urlEmbed, agent)
+            : undefined,
+        });
+        submittedData.blueskyPostUrl = post.uri;
+      }
+      setState({
+        step: StampStep.SUBMITTED,
+        submittedStamp: submittedData,
+      });
+      // wait for state updates
+      await Promise.resolve();
       router.replace({
         pathname: "/stamp/success",
-        params: { submittedData: JSON.stringify(submittedData) },
       });
     } catch (error) {
       console.error("Failed to submit play:", error);
@@ -111,7 +256,9 @@ export default function Submit() {
               selectedTrack?.title ||
               "No track selected! This should never happen!"
             }
-            artistName={selectedTrack?.["artist-credit"]?.[0]?.artist?.name}
+            artistName={selectedTrack?.["artist-credit"]
+              ?.map((a) => a.artist?.name)
+              .join(", ")}
             releaseTitle={selectedTrack?.selectedRelease?.title}
           />
           <Text className="text-sm text-gray-500 text-center mt-4">

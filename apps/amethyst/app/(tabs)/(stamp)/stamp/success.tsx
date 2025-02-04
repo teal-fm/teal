@@ -1,13 +1,27 @@
 import { ExternalLink } from "@/components/ExternalLink";
-import { PlaySubmittedData } from "@/lib/oldStamp";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { StampContext, StampContextValue, StampStep } from "./_layout";
+import { useContext, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function StepThree() {
-  const { submittedData } = useLocalSearchParams();
-  const responseData: PlaySubmittedData = JSON.parse(submittedData as string);
+  const router = useRouter();
+  const ctx = useContext(StampContext);
+  const { state, setState } = ctx as StampContextValue;
+  // reset on unmount
+  useEffect(() => {
+    return () => {
+      setState({ step: StampStep.IDLE, resetSearchState: true });
+    };
+  }, [setState]);
+  if (state.step !== StampStep.SUBMITTED) {
+    console.log("Stamp state is not submitted!");
+    console.log(state.step);
+    return <Text>No track selected?</Text>;
+  }
   return (
     <View className="flex-1 p-4 bg-background items-center h-screen-safe">
       <Stack.Screen
@@ -22,23 +36,36 @@ export default function StepThree() {
           You can view your play{" "}
           <ExternalLink
             className="text-blue-600 dark:text-blue-400"
-            href={`https://pdsls.dev/${responseData.playAtUrl}`}
+            href={`https://pdsls.dev/${state.submittedStamp.playAtUrl}`}
           >
             on PDSls
           </ExternalLink>
           <ExternalLinkIcon className="inline mb-0.5 ml-0.5" size="1rem" />
         </Text>
-        {responseData.blueskyPostUrl && (
+        {state.submittedStamp.blueskyPostUrl && (
           <Text>
             Or you can{" "}
             <ExternalLink
               className="text-blue-600 dark:text-blue-400"
-              href={`https://pdsls.dev/`}
+              href={state.submittedStamp.blueskyPostUrl}
             >
               view your Bluesky post.
             </ExternalLink>
           </Text>
         )}
+        <Button
+          className="mt-2"
+          onPress={() => {
+            setState({ step: StampStep.IDLE, resetSearchState: true });
+            router.back();
+            // in case above doesn't work
+            router.replace({
+              pathname: "/stamp",
+            });
+          }}
+        >
+          <Text>Submit another</Text>
+        </Button>
       </View>
     </View>
   );
