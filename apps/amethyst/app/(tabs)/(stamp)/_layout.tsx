@@ -21,7 +21,7 @@ const Layout = ({ segment }: { segment: string }) => {
     }
   }, [segment]);
 
-  return <Stack>{rootScreen}</Stack>;
+  return <Stack screenOptions={{ headerShown: false }}>{rootScreen}</Stack>;
 };
 
 export default Layout;

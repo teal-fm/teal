@@ -3,7 +3,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { Stack, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
 
-import React, { useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -22,10 +22,13 @@ import {
   SearchResultProps,
 } from "@/lib/oldStamp";
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import SheetBackdrop from "@/components/ui/sheetBackdrop";
+import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
+import { StampContext, StampContextValue, StampStep } from "./_layout";
 
 export default function StepOne() {
   const router = useRouter();
+  const ctx = useContext(StampContext);
+  const { state, setState } = ctx as StampContextValue;
   const [selectedTrack, setSelectedTrack] =
     useState<MusicBrainzRecording | null>(null);
 
@@ -41,6 +44,16 @@ export default function StepOne() {
   const [releaseSelections, setReleaseSelections] = useState<ReleaseSelections>(
     {},
   );
+
+  // reset search state if requested
+  useEffect(() => {
+    if (state.step === StampStep.IDLE && state.resetSearchState) {
+      setSearchFields({ track: "", artist: "", release: "" });
+      setSearchResults([]);
+      setSelectedTrack(null);
+      setReleaseSelections({});
+    }
+  }, [state]);
 
   const handleSearch = async (): Promise<void> => {
     if (!searchFields.track && !searchFields.artist && !searchFields.release) {
@@ -148,12 +161,15 @@ export default function StepOne() {
         {selectedTrack && (
           <View className="mt-4 sticky bottom-0">
             <Button
-              onPress={() =>
+              onPress={() => {
+                setState({
+                  step: StampStep.SUBMITTING,
+                  submittingStamp: selectedTrack,
+                });
                 router.push({
                   pathname: "/stamp/submit",
-                  params: { track: JSON.stringify(selectedTrack) },
-                })
-              }
+                });
+              }}
               className="w-full flex flex-row align-middle"
             >
               <Text>{`Submit "${selectedTrack.title}" as Play`}</Text>
@@ -258,8 +274,9 @@ export function SearchResult({
         enableDynamicSizing={true}
         detached={true}
         backdropComponent={SheetBackdrop}
+        handleComponent={SheetHandle}
       >
-        <View className="pb-4 border-b border-gray-200 -mt-2">
+        <View className="pb-4 border-b -mt-2 bg-background border-x border-neutral-500/30">
           <Text className="text-lg font-bold text-center">Select Release</Text>
           <TouchableOpacity
             className="absolute right-4 top-1.5"
@@ -268,7 +285,7 @@ export function SearchResult({
             <Text className="text-primary">Done</Text>
           </TouchableOpacity>
         </View>
-        <BottomSheetScrollView className="bg-card min-h-64">
+        <BottomSheetScrollView className="bg-card min-h-64 border-x border-neutral-500/30">
           {result.releases?.map((release) => (
             <TouchableOpacity
               key={release.id}
