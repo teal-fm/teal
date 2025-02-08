@@ -1,7 +1,7 @@
-import { Link, Stack, router } from "expo-router";
+import { Link, Stack } from "expo-router";
 import { View } from "react-native";
-import { Text } from "../../components/ui/text";
-import { Button } from "../../components/ui/button";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import React from "react";
 
 export default function AuthOptions() {
@@ -16,10 +16,10 @@ export default function AuthOptions() {
         }}
       />
       <View className="gap-2">
-        <Text className="text-5xl font-semibold text-center text-foreground">
+        <Text className="text-5xl text-center text-foreground">
           Get started with
         </Text>
-        <Text className="text-center text-5xl font-semibold text-foreground">
+        <Text className="text-center text-5xl text-foreground">
           teal
           <Text className="text-5xl font-serif-old-italic">.fm</Text>
         </Text>
@@ -28,20 +28,14 @@ export default function AuthOptions() {
         <Button
           className="flex flex-row justify-center items-center rounded-full dark-blue-800 dark:bg-blue-400 gap-2"
           size="lg"
-          onTouchStart={() => {
-            router.push("/auth/login");
-          }}
         >
           <Text>Sign in with ATProto</Text>
         </Button>
       </Link>
-      <Link href="/signup" className="text-secondary">
+      <Link href="/auth/signup" className="text-secondary">
         <Button
           className="flex flex-row justify-center items-center rounded-full"
           size="lg"
-          onTouchStart={() => {
-            router.push("/auth/signup");
-          }}
         >
           <Text>Sign up</Text>
         </Button>

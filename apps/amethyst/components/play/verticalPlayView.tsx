@@ -1,4 +1,6 @@
-import { View, Image, Text } from "react-native";
+import { View, Image } from "react-native";
+
+import { Text } from "@/components/ui/text";
 
 export default function VerticalPlayView({
   releaseMbid,

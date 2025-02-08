@@ -1,8 +1,8 @@
 import { StatusBar } from "expo-status-bar";
-import { Platform, StyleSheet, TouchableOpacity } from "react-native";
+import { Platform, TouchableOpacity } from "react-native";
 
 import { View } from "react-native";
-import { Text } from "../../components/ui/text";
+import { Text } from "@/components/ui/text";
 import { useStore } from "@/stores/mainStore";
 import { Button } from "@/components/ui/button";
 import { router } from "expo-router";
@@ -18,7 +18,7 @@ export default function ModalScreen() {
   };
   return (
     <TouchableOpacity
-      className="flex relative justify-center items-center bg-muted-foreground/60 w-screen h-screen backdrop-blur-sm"
+      className="flex relative justify-center items-center bg-muted/60 w-full h-screen backdrop-blur-sm"
       onPress={() => handleGoBack()}
     >
       <Icon icon={X} className="top-2 right-2 absolute" name="x" />
@@ -32,7 +32,7 @@ export default function ModalScreen() {
             router.navigate("/");
           }}
         >
-          <Text className="font-semibold text-lg">Sign out</Text>
+          <Text className="text-lg">Sign out</Text>
         </Button>
 
         {/* Use a light status bar on iOS to account for the black space above the modal */}

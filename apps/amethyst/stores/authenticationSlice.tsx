@@ -1,10 +1,15 @@
-import create from "zustand";
 import { StateCreator } from "./mainStore";
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { OAuthSession } from "@atproto/oauth-client";
 import { ProfileViewDetailed } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { Agent } from "@atproto/api";
 import * as Lexicons from "@teal/lexicons/src/lexicons";
+import { resolveFromIdentity } from "@/lib/atp/pid";
+
+export interface AllProfileViews {
+  bsky: null | ProfileViewDetailed;
+  // todo: teal profile view
+}
 
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
@@ -13,13 +18,13 @@ export interface AuthenticationSlice {
   oauthSession: null | OAuthSession;
   pdsAgent: null | Agent;
   isAgentReady: boolean;
-  profiles: { [key: string]: ProfileViewDetailed };
+  profiles: { [key: string]: AllProfileViews };
   client: null | AquareumOAuthClient;
   login: {
     loading: boolean;
     error: null | string;
   };
-  pds: {
+  pds: null | {
     url: string;
     loading: boolean;
     error: null | string;
@@ -28,6 +33,7 @@ export interface AuthenticationSlice {
   oauthCallback: (state: URLSearchParams) => Promise<void>;
   restorePdsAgent: () => void;
   logOut: () => void;
+  populateLoggedInProfile: () => Promise<void>;
 }
 
 export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
@@ -37,7 +43,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   // check if we have CF_PAGES_URL set. if not, use localhost
   const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
   console.log("Using base URL:", baseUrl);
-  const initialAuth = createOAuthClient(baseUrl);
+  const initialAuth = createOAuthClient(baseUrl, "bsky.social");
 
   console.log("Auth client created!");
 
@@ -54,15 +60,22 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       loading: false,
       error: null,
     },
-    pds: {
-      url: "bsky.social",
-      loading: false,
-      error: null,
-    },
+    pds: null,
 
     getLoginUrl: async (handle: string) => {
       try {
-        const url = await initialAuth.authorize(handle);
+        // resolve the handle to a PDS URL
+        const r = resolveFromIdentity(handle);
+        let auth = createOAuthClient(baseUrl, (await r).pds.hostname);
+        const url = await auth.authorize(handle);
+        set({
+          auth,
+          pds: {
+            url: url.toString(),
+            loading: false,
+            error: null,
+          },
+        });
         return url;
       } catch (error) {
         console.error("Failed to get login URL:", error);
@@ -89,6 +102,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           pdsAgent: addDocs(agent),
           isAgentReady: true,
         });
+        get().populateLoggedInProfile();
       } catch (error: any) {
         console.error("OAuth callback failed:", error);
         set({
@@ -124,6 +138,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           isAgentReady: true,
           status: "loggedIn",
         });
+        get().populateLoggedInProfile();
         console.log("Restored agent");
       } catch (error) {
         console.error("Failed to restore agent:", error);
@@ -132,14 +147,44 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     },
     logOut: () => {
       console.log("Logging out");
+      let profiles = { ...get().profiles };
+      // TODO: something better than 'delete'
+      delete profiles[get().pdsAgent?.did ?? ""];
       set({
         status: "loggedOut",
         oauthSession: null,
         oauthState: null,
-        profiles: {},
+        profiles,
         pdsAgent: null,
         client: null,
+        pds: null,
       });
+    },
+    populateLoggedInProfile: async () => {
+      console.log("Populating logged in profile");
+      const agent = get().pdsAgent;
+      if (!agent) {
+        throw new Error("No agent");
+      }
+      if (!agent.did) {
+        throw new Error("No agent did! This is bad!");
+      }
+      try {
+        let bskyProfile = await agent
+          .getProfile({ actor: agent.did })
+          .then((profile) => {
+            console.log(profile);
+            return profile.data || null;
+          });
+
+        set({
+          profiles: {
+            [agent.did]: { bsky: bskyProfile },
+          },
+        });
+      } catch (error) {
+        console.error("Failed to get profile:", error);
+      }
     },
   };
 };

@@ -2,27 +2,33 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { Stack, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
-import React, { useState } from "react";
+
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
-  Modal,
   ScrollView,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+
+import { Text } from "@/components/ui/text";
 import {
   MusicBrainzRecording,
   ReleaseSelections,
   searchMusicbrainz,
   SearchParams,
   SearchResultProps,
-} from "../../../../lib/oldStamp";
+} from "@/lib/oldStamp";
+import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
+import { StampContext, StampContextValue, StampStep } from "./_layout";
 
 export default function StepOne() {
   const router = useRouter();
+  const ctx = useContext(StampContext);
+  const { state, setState } = ctx as StampContextValue;
   const [selectedTrack, setSelectedTrack] =
     useState<MusicBrainzRecording | null>(null);
 
@@ -32,12 +38,22 @@ export default function StepOne() {
     release: "",
   });
   const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>(
-    []
+    [],
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [releaseSelections, setReleaseSelections] = useState<ReleaseSelections>(
-    {}
+    {},
   );
+
+  // reset search state if requested
+  useEffect(() => {
+    if (state.step === StampStep.IDLE && state.resetSearchState) {
+      setSearchFields({ track: "", artist: "", release: "" });
+      setSearchResults([]);
+      setSelectedTrack(null);
+      setReleaseSelections({});
+    }
+  }, [state]);
 
   const handleSearch = async (): Promise<void> => {
     if (!searchFields.track && !searchFields.artist && !searchFields.release) {
@@ -145,12 +161,15 @@ export default function StepOne() {
         {selectedTrack && (
           <View className="mt-4 sticky bottom-0">
             <Button
-              onPress={() =>
+              onPress={() => {
+                setState({
+                  step: StampStep.SUBMITTING,
+                  submittingStamp: selectedTrack,
+                });
                 router.push({
                   pathname: "/stamp/submit",
-                  params: { track: JSON.stringify(selectedTrack) },
-                })
-              }
+                });
+              }}
               className="w-full flex flex-row align-middle"
             >
               <Text>{`Submit "${selectedTrack.title}" as Play`}</Text>
@@ -170,9 +189,17 @@ export function SearchResult({
   selectedRelease,
   onReleaseSelect,
 }: SearchResultProps) {
-  const [showReleaseModal, setShowReleaseModal] = useState<boolean>(false);
+  const sheetRef = useRef<BottomSheetModal>(null);
 
   const currentRelease = selectedRelease || result.releases?.[0];
+
+  const showModal = () => {
+    sheetRef.current?.present();
+  };
+
+  const dismissModal = () => {
+    sheetRef.current?.dismiss();
+  };
 
   return (
     <TouchableOpacity
@@ -183,7 +210,7 @@ export function SearchResult({
             : {
                 ...result,
                 selectedRelease: currentRelease, // Pass the selected release with the track
-              }
+              },
         );
       }}
       className={`p-4 mb-2 rounded-lg ${
@@ -198,7 +225,7 @@ export function SearchResult({
           }}
         />
         <View className="flex-1">
-          <Text className="font-bold text-sm">{result.title}</Text>
+          <Text className="font-bold text-sm line-clamp-2">{result.title}</Text>
           <Text className="text-sm text-gray-600">
             {result["artist-credit"]?.[0]?.artist?.name ?? "Unknown Artist"}
           </Text>
@@ -206,12 +233,14 @@ export function SearchResult({
           {/* Release Selector Button */}
           {result.releases && result.releases?.length > 0 && (
             <TouchableOpacity
-              onPress={() => setShowReleaseModal(true)}
-              className="p-1 bg-secondary/10 rounded-lg flex md:flex-row items-start md:items-center justify-between md:gap-1"
+              onPress={() => showModal()}
+              className="p-1 bg-secondary/10 rounded-lg flex md:flex-row items-start md:items-center justify-between md:gap-1 w-full"
             >
-              <View className="flex md:flex-row items-start gap-1">
-                <Text className="text-sm text-gray-500">Release:</Text>
-                <Text className="text-sm" numberOfLines={1}>
+              <View className="flex-1 flex md:flex-row items-start gap-1 overflow-hidden w-full">
+                <Text className="text-sm text-gray-500 whitespace-nowrap">
+                  Release:
+                </Text>
+                <Text className="text-sm line-clamp-1">
                   {currentRelease?.title}
                   {currentRelease?.date ? ` (${currentRelease.date})` : ""}
                   {currentRelease?.country
@@ -240,67 +269,59 @@ export function SearchResult({
       </View>
 
       {/* Release Selection Modal */}
-      <Modal
-        visible={showReleaseModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowReleaseModal(false)}
+      <BottomSheetModal
+        ref={sheetRef}
+        enableDynamicSizing={true}
+        detached={true}
+        backdropComponent={SheetBackdrop}
+        handleComponent={SheetHandle}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-background rounded-t-3xl">
-            <View className="p-4 border-b border-gray-200">
-              <Text className="text-lg font-bold text-center">
-                Select Release
-              </Text>
-              <TouchableOpacity
-                className="absolute right-4 top-4"
-                onPress={() => setShowReleaseModal(false)}
-              >
-                <Text className="text-primary">Done</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView className="max-h-[50vh]">
-              {result.releases?.map((release) => (
-                <TouchableOpacity
-                  key={release.id}
-                  className={`p-4 border-b border-gray-100 ${
-                    selectedRelease?.id === release.id ? "bg-primary/10" : ""
-                  }`}
-                  onPress={() => {
-                    onReleaseSelect(result.id, release);
-                    setShowReleaseModal(false);
-                  }}
-                >
-                  <Text className="font-medium">{release.title}</Text>
-                  <View className="flex-row gap-2">
-                    {release.date && (
-                      <Text className="text-sm text-gray-500">
-                        {release.date}
-                      </Text>
-                    )}
-                    {release.country && (
-                      <Text className="text-sm text-gray-500">
-                        {release.country}
-                      </Text>
-                    )}
-                    {release.status && (
-                      <Text className="text-sm text-gray-500">
-                        {release.status}
-                      </Text>
-                    )}
-                  </View>
-                  {release.disambiguation && (
-                    <Text className="text-sm text-gray-400 italic">
-                      {release.disambiguation}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+        <View className="pb-4 border-b -mt-2 bg-background border-x border-neutral-500/30">
+          <Text className="text-lg font-bold text-center">Select Release</Text>
+          <TouchableOpacity
+            className="absolute right-4 top-1.5"
+            onPress={() => dismissModal()}
+          >
+            <Text className="text-primary">Done</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
+        <BottomSheetScrollView className="bg-card min-h-64 border-x border-neutral-500/30">
+          {result.releases?.map((release) => (
+            <TouchableOpacity
+              key={release.id}
+              className={`p-4 border-b border-gray-100 ${
+                selectedRelease?.id === release.id ? "bg-primary/10" : ""
+              }`}
+              onPress={() => {
+                onReleaseSelect(result.id, release);
+                dismissModal();
+              }}
+            >
+              <Text className="font-medium">{release.title}</Text>
+              <View className="flex-row gap-2">
+                {release.date && (
+                  <Text className="text-sm text-gray-500">{release.date}</Text>
+                )}
+                {release.country && (
+                  <Text className="text-sm text-gray-500">
+                    {release.country}
+                  </Text>
+                )}
+                {release.status && (
+                  <Text className="text-sm text-gray-500">
+                    {release.status}
+                  </Text>
+                )}
+              </View>
+              {release.disambiguation && (
+                <Text className="text-sm text-gray-400 italic">
+                  {release.disambiguation}
+                </Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </BottomSheetScrollView>
+      </BottomSheetModal>
     </TouchableOpacity>
   );
 }

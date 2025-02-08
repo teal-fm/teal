@@ -12,11 +12,14 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
-import { verifyInstallation } from "nativewind";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+import { verifyInstallation, useColorScheme } from "nativewind";
 
 import { GlobalTextClassContext } from "../components/ui/text";
-import { useColorScheme } from "../components/useColorScheme";
 import "../global.css";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { SafeAreaView, View } from "react-native";
 
 let defaultFamily = (weight: string) => {
   return {
@@ -79,29 +82,42 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <SafeAreaView className="flex-1 flex flex-row min-h-screen justify-center bg-background">
+      <View className="max-w-screen-md flex flex-1 border-x border-muted-foreground/20">
+        {<RootLayoutNav />}
+      </View>
+    </SafeAreaView>
+  );
 }
 
 function RootLayoutNav() {
   verifyInstallation();
-  const colorScheme = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
+
+  // what??? how does this not break something
+  setColorScheme(colorScheme ?? "system");
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
-      <GlobalTextClassContext.Provider value="font-sans">
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="auth/logoutModal"
-            options={{
-              presentation: "transparentModal",
-              animation: "fade",
-              headerShown: false,
-            }}
-          />
-        </Stack>
-        <PortalHost />
-      </GlobalTextClassContext.Provider>
-    </ThemeProvider>
+    <GestureHandlerRootView>
+      <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
+        <GlobalTextClassContext.Provider value="font-sans">
+          <BottomSheetModalProvider>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="auth/logoutModal"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "fade",
+                  headerShown: false,
+                }}
+              />
+            </Stack>
+            <PortalHost />
+          </BottomSheetModalProvider>
+        </GlobalTextClassContext.Provider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

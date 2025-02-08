@@ -1,15 +1,16 @@
-import React, { useState } from "react";
-import { View, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import { Check, ChevronRight, AtSign, AlertCircle } from "lucide-react-native";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { Link, Stack, router } from "expo-router";
-import { useStore } from "@/stores/mainStore";
+import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
+import React, { useState } from "react";
+import { Platform, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
+import { cn } from "@/lib/utils";
+
 import { openAuthSessionAsync } from "expo-web-browser";
+import { useStore } from "@/stores/mainStore";
 
 const LoginScreen = () => {
   const [handle, setHandle] = useState("");
@@ -70,7 +71,7 @@ const LoginScreen = () => {
         <View className="flex items-center">
           <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
         </View>
-        <Text className="text-3xl font-semibold text-center text-foreground">
+        <Text className="text-3xl text-center text-foreground">
           Sign in with your PDS
         </Text>
         <View>
@@ -117,12 +118,12 @@ const LoginScreen = () => {
           >
             {isRedirecting ? (
               <>
-                <Text className="font-semibold text-lg">Redirecting</Text>
+                <Text className="text-lg">Redirecting</Text>
                 <Icon icon={Check} />
               </>
             ) : (
               <>
-                <Text className="font-semibold text-lg">Login</Text>
+                <Text className="text-lg">Sign in</Text>
                 <Icon icon={ChevronRight} />
               </>
             )}

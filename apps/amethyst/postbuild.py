@@ -14,6 +14,11 @@ def update_metadata():
     if cf_pages_url.startswith('https://'):
         cf_pages_url = cf_pages_url[8:]
 
+    if os.environ.get('CF_PAGES_BRANCH') == 'main':
+        # trim pages url if we are building for prod
+        # TODO: remove this once we have a non-pages-dev url
+        cf_pages_url.split('.')[1:]
+        
     # Path to metadata file
     metadata_path_pre = 'assets/client-metadata.json'
     metadata_path = 'dist/client-metadata.json'
