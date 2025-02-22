@@ -206,7 +206,7 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-        <div className="max-w-screen-xl w-full min-h-[75vh] flex flex-col lg:flex-row items-center justify-between gap-4 p-2 px-8 pt-16 md:px-8 text-start">
+        <div className="max-w-screen-xl w-full min-h-[75vh] flex flex-col lg:flex-row items-center justify-between gap-4 p-2 px-4 pt-16 md:px-8 text-start">
           <div className="flex flex-col items-start text-start max-w-2xl gap-4">
             <h2 className="text-5xl font-modern-serif font-medium text-teal-800 dark:text-teal-300">
               {" "}
@@ -298,8 +298,8 @@ export default function HomePage() {
             <h2 className="text-5xl font-modern-serif font-medium text-teal-800 dark:text-teal-300 text-start md:text-center">
               Built for tomorrow&apos;s music.
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 items-start mt-12 text-start divide-x">
-              <div className="flex justify-center border-b md:border-b-0 pb-8 text-pretty">
+            <div className="grid grid-cols-1 md:grid-cols-2 items-start mt-12 text-start md:divide-x">
+              <div className="flex justify-center border-b md:border-b-0 mb-8 pb-8 md:mb-auto md:pb-0 text-pretty">
                 <div className="flex justify-center flex-col max-w-lg gap-4 md:ml-4">
                   <div className="text-7xl">
                     <AtSign
