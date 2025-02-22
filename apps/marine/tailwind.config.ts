@@ -1,8 +1,5 @@
 // @ts-check
 import { createPreset } from "fumadocs-ui/tailwind-plugin";
-import plugin from "tailwindcss";
-
-import { type PluginAPI } from "tailwindcss/types/config";
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -63,11 +60,16 @@ const config = {
       animation: {
         marquee: "scroll 180s linear infinite",
         "meteor-effect": "meteor 10s linear infinite",
+        "warning-slide": "scrollLeft 20s linear infinite",
       },
       keyframes: {
         scroll: {
           "0%": { transform: "translateX(25%)" },
           "100%": { transform: "translateX(-25%)" },
+        },
+        scrollLeft: {
+          from: { transform: "translateX(-20px)" },
+          to: { transform: "translateX(20px)" },
         },
         meteor: {
           "0%": { transform: "rotate(215deg) translateX(0)", opacity: "1" },

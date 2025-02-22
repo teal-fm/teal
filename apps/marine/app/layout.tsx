@@ -3,6 +3,8 @@ import "./global.css";
 import { RootProvider } from "fumadocs-ui/provider";
 import { Crimson_Pro, DM_Sans, Fraunces } from "next/font/google";
 import type { ReactNode } from "react";
+import UnderConstruction from "@/components/underConstruction";
+import Footer from "@/components/footer";
 
 const crimson = Crimson_Pro({
   subsets: ["latin"],
@@ -38,10 +40,14 @@ export default function Layout({ children }: { children: ReactNode }) {
       className={`${crimson.variable} ${fraunces.variable} ${dmSans.variable}`}
       suppressHydrationWarning
     >
-      <body className="flex flex-col min-h-screen max-w-[100vw] overflow-x-hidden">
+      <body className="flex flex-col min-h-screen max-w-[99vw] overflow-x-clip">
         <RootProvider>
-          <LazyMotion features={domAnimation}>{children}</LazyMotion>
+          <LazyMotion features={domAnimation}>
+            {children}
+            <Footer />
+          </LazyMotion>
         </RootProvider>
+        <UnderConstruction />
         <svg width="0" height="0">
           <filter id="grainy-blur" x="0" y="0" width="100%" height="100%">
             <feTurbulence

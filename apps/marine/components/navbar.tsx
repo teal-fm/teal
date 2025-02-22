@@ -53,8 +53,8 @@ export default function NavBar() {
   const [hoveredPath, setHoveredPath] = useState(pathname);
 
   return (
-    <div className="container p-0 z-10 sticky border border-foreground/20 dark:border-stone-800/90 overflow-hidden rounded-full top-4 bg-transparent shadow-inner shadow-stone-200 dark:shadow-stone-800 *:transition-colors">
-      <div className="absolute inset-0 blurry container-pad bg-muted dark:bg-muted/20" />
+    <div className="container p-0 z-10 sticky border border-foreground/20 dark:border-stone-800/90 overflow-hidden rounded-full top-4 md:top-6 bg-transparent shadow-inner shadow-stone-200 dark:shadow-stone-800 *:transition-colors">
+      <div className="absolute inset-0 blurry container-pad bg-muted/50 dark:bg-muted/20" />
       <div className="flex items-center justify-between w-full p-[0.4rem] noisey rounded-full">
         <nav className="flex relative justify-start w-full z-100 rounded-full">
           {navItems.map((item) => {

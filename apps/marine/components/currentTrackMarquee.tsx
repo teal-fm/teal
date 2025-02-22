@@ -17,7 +17,7 @@ export function Marquee() {
   async function fetchLastFmTracks(): Promise<MarqueeItem[]> {
     try {
       const response = await fetch(
-        "https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=XanSurnamehere&api_key=6f5ff9d828991a85bd78449a85548586&limit=15&format=json",
+        "https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=kanb&api_key=6f5ff9d828991a85bd78449a85548586&limit=15&format=json",
       );
       const data = await response.json();
       return data.recenttracks.track.map(
