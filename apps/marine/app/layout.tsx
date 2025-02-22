@@ -3,7 +3,6 @@ import "./global.css";
 import { RootProvider } from "fumadocs-ui/provider";
 import { Crimson_Pro, DM_Sans, Fraunces } from "next/font/google";
 import type { ReactNode } from "react";
-import UnderConstruction from "@/components/underConstruction";
 import Footer from "@/components/footer";
 
 const crimson = Crimson_Pro({
@@ -47,7 +46,6 @@ export default function Layout({ children }: { children: ReactNode }) {
             <Footer />
           </LazyMotion>
         </RootProvider>
-        <UnderConstruction />
         <svg width="0" height="0">
           <filter id="grainy-blur" x="0" y="0" width="100%" height="100%">
             <feTurbulence

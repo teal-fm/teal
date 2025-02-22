@@ -24,7 +24,7 @@ export default function UnderConstruction() {
   return (
     <div className="bg-full max-h-0">
       {/* Banner moved down from top */}
-      <div className="absolute top-24 md:top-28 left-0 right-0 overflow-visible max-w-screen">
+      <div className="absolute top-20 md:top-28 left-0 right-0 overflow-visible max-w-screen">
         <div className="construction-banner relative bg-yellow-300 dark:bg-yellow-600 h-8 shadow-xl transform -rotate-1 hover:-rotate-0 transition-transform overflow-hidden">
           {/* Darker stripes with higher contrast */}
           <div className="absolute inset-0 overflow-hidden marquee-container">

@@ -10,9 +10,11 @@ import { SpaceButton } from "@/components/ui/spaceButton";
 import { Spotlight } from "@/components/ui/spotlights";
 import { StarsBackground } from "@/components/ui/stars";
 import { m } from "framer-motion";
-import { ArrowRight, AtSign, Brain, Info, TriangleAlert } from "lucide-react";
+import { ArrowRight, AtSign, Brain, TriangleAlert } from "lucide-react";
+import { SiBluesky } from "react-icons/si";
 import Link from "next/link";
 import Image from "next/image";
+import UnderConstruction from "@/components/underConstruction";
 
 export default function HomePage() {
   return (
@@ -45,10 +47,12 @@ export default function HomePage() {
               <div />
               <div>
                 <HeroBadge
-                  text="Be the first to know"
-                  icon={<Info />}
-                  endIcon={<ArrowRight />}
-                  href="https://discord.gg/B67XEhYYjx"
+                  text="Follow us on Bluesky"
+                  icon={
+                    <SiBluesky className="text-lg text-[rgb(10,122,255)]" />
+                  }
+                  endIcon={<ArrowRight width={20} height="auto" />}
+                  href="https://bsky.app/profile/teal.fm"
                 />
                 <m.h1
                   initial={{ opacity: 0.1, y: 20 }}
@@ -80,7 +84,7 @@ export default function HomePage() {
                 >
                   <AnimatedText
                     text={
-                      <span className="font-sans text-5xl md:text-7xl text-teal-800 dark:text-teal-100 font-light transition-all">
+                      <span className="font-sans text-4xl md:text-7xl text-teal-800 dark:text-teal-100 font-light transition-all">
                         All{" "}
                         <span className="text-teal-700 dark:text-teal-400 font-modern-serif font-medium">
                           yours.
@@ -102,7 +106,7 @@ export default function HomePage() {
                   }}
                   className="flex gap-2 items-center justify-center mt-6"
                 >
-                  <p className="max-w-2xl text-sm px-4">
+                  <p className="max-w-2xl text-xs md:text-sm px-4 text-pretty">
                     Track every listen, mood, and moment on ATProto:
                     <br />
                     decentralized, seamless, and{" "}
@@ -121,10 +125,10 @@ export default function HomePage() {
                     duration: 1.2,
                     ease: "easeOut",
                   }}
-                  className="flex gap-2 items-center justify-center mt-8"
+                  className="flex gap-2 items-center justify-center mt-4 md:mt-8"
                 >
                   <Link href="https://discord.gg/B67XEhYYjx">
-                    <SpaceButton>Join teal.fm</SpaceButton>
+                    <SpaceButton>Join the Discord</SpaceButton>
                   </Link>
                   <Link href="/docs">
                     <Button variant={"secondary"} className="rounded-full">
@@ -164,7 +168,7 @@ export default function HomePage() {
             and share your unique style with the world.
           </p>
           <div
-            className="max-w-screen-2xl w-screen flex flex-col items-center absolute md:static -top-32 -mb-8 mt-2"
+            className="max-w-screen-2xl w-screen flex flex-col items-center absolute md:static overflow-clip -top-32 -mb-8 mt-2"
             style={{
               mask: "linear-gradient(to right, transparent 0%, black calc(5% + 2rem), black calc(95% - 2rem), transparent 100%)",
             }}
@@ -192,7 +196,7 @@ export default function HomePage() {
               shift as we rework and refine.
             </p>
             <p>
-              This page is also{" "}
+              This website is also{" "}
               <span className="font-semibold text-yellow-700 dark:text-yellow-300">
                 under heavy construction - expect surprises, placeholders, and
                 unexpected twists!
@@ -404,6 +408,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <UnderConstruction />
     </>
   );
 }
