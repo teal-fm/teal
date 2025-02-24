@@ -1,6 +1,5 @@
 "use client";
 
-
 import NavBar from "@/components/navbar";
 import { AnimatedText } from "@/components/ui/animatedUnderline";
 import HeroBadge from "@/components/ui/badge";
@@ -15,6 +14,7 @@ import { SiBluesky } from "react-icons/si";
 import Link from "next/link";
 import Image from "next/image";
 import UnderConstruction from "@/components/underConstruction";
+import { Marquee } from "@/components/currentTrackMarquee";
 
 export default function HomePage() {
   return (
@@ -28,7 +28,7 @@ export default function HomePage() {
             duration: 0.8,
             ease: "easeOut",
           }}
-          className="relative w-full -mt-14 pt-24 md:pt-4 p-0 overflow-hidden"
+          className="relative w-full -mt-14 pt-24 p-0 md:p-4 overflow-hidden"
           style={{
             mask: "linear-gradient(to bottom, black 0%, black 60%, transparent 99%)",
           }}
@@ -158,14 +158,15 @@ export default function HomePage() {
             duration: 0.9,
             ease: "easeOut",
           }}
-          className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey bg-opacity-30 bg-muted/30 md:absolute relative bottom-12 z-0 md:-bottom-28 pb-8 px-2"
+          className="flex flex-col items-center justify-start rounded-xl gap-2 max-w-screen-lg noisey border bg-opacity-30 bg-muted/30 md:absolute relative bottom-12 z-0 md:-bottom-4 pb-4 mx-4"
         >
           <p className="text-accent-foreground text-3xl md:text-4xl text-center mt-6 font-modern-serif">
             What&apos;s Playing?
           </p>
-          <p className="md:text-xl max-w-screen-md px-2">
-            Get inspired by what’s trending. See what’s hot, discover new songs,
-            and share your unique style with the world.
+          <p className="md:text-xl max-w-screen-md px-2 text-pretty">
+            Let every track spark inspiration—and pass it on. Share your latest
+            finds with friends, dive into their listens, or discover your next
+            favorite track.
           </p>
           <div
             className="max-w-screen-2xl w-screen flex flex-col items-center absolute md:static overflow-clip -top-32 -mb-8 mt-2"
@@ -175,17 +176,45 @@ export default function HomePage() {
           >
             <Marquee />
           </div>
-          <div className="block md:hidden border-t w-64 my-4" />
-          <p className="max-w-screen-md px-2">
-            Let every track spark inspiration—and pass it on. Share your latest
-            finds with friends, dive into their listens, or uncover hidden gems
-            together. With personalized picks and real-time updates (soon), your
-            music journey becomes a collaborative adventure. Turn every listen
-            into your shared soundtrack, crafted for the moments you’ll revisit.
-          </p>
         </m.div>
-        <div className="gap-4 p-2 md:mt-36 pt-12 text-start place-items-center md:border-t">
-          <div className="flex flex-col noisey items-center text-center md:items-start md:text-start justify-center max-w-2xl gap-2 h-full p-6 border rounded-xl">
+        <div className="mt-8">
+          <p className="text-xs text-muted-foreground py-8">
+            i am planning a real-time counter here btw: this is what it will
+            look like
+          </p>
+          <h3 className="text-5xl">
+            <p className="text-accent-foreground text-3xl md:text-4xl text-center mb-6 font-modern-serif">
+              By the numbers:
+            </p>
+            <div className="flex flex-col items-center gap-1">
+              <div className="text-base tracking-widest text-muted-foreground flex gap-2 justify-center items-center">
+                <div className=" h-4 w-4 bg-red-500 rounded-full" />
+                LIVE
+              </div>
+              <div className="flex flex-row normal-nums gap-1 font-semibold">
+                <span className="bg-teal-500/20 border rounded-sm p-auto py-1 w-10 text-center">
+                  4
+                </span>
+                <span className="bg-teal-500/20 border rounded-sm p-auto py-1 w-10">
+                  3
+                </span>
+                ,
+                <span className="bg-teal-500/20 border rounded-sm p-auto py-1 w-10">
+                  2
+                </span>
+                <span className="bg-teal-500/20 border rounded-sm p-auto py-1 w-10">
+                  1
+                </span>
+                <span className="bg-teal-500/20 border rounded-sm p-auto py-1 w-10 text-center">
+                  0
+                </span>
+              </div>
+              <div className="text-lg font-medium">plays recorded</div>
+            </div>
+          </h3>
+        </div>
+        <div className="gap-4 p-4 md:mt-36 pt-12 text-start place-items-center md:border-t">
+          <div className="flex flex-col noisey bg-yellow-500/5 items-center text-center md:items-start md:text-start justify-center max-w-2xl gap-2 h-full p-6 rounded-xl">
             <h1 className="text-3xl">
               <TriangleAlert className="inline h-full w-8 mb-2 mr-2 text-yellow-600 dark:text-yellow-400" />
               Heads up!
@@ -237,14 +266,14 @@ export default function HomePage() {
             />
           </div>
         </div>
-        <div className="max-w-screen-xl w-full min-h-[75vh] px-2 pt-16 md:pt-36 text-center md:text-start">
+        <div className="max-w-screen-xl w-full min-h-[75vh] px-2 py-16 md:py-36 text-center md:text-start">
           <div>
             <h2 className="text-5xl font-modern-serif font-medium text-teal-800 dark:text-teal-300 text-center">
               {" "}
               Innovate your listening.
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start mt-12">
-              <div className="border p-4 rounded-lg space-y-2">
+            <div className="grid grid-cols-1 sm:mx-16 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start mt-12">
+              <div className="border p-4 rounded-lg space-y-2 place-items-center">
                 <Image
                   height={300}
                   width={500}
@@ -259,7 +288,7 @@ export default function HomePage() {
                   music yours.
                 </p>
               </div>
-              <div className="border p-4 rounded-lg space-y-2">
+              <div className="border p-4 rounded-lg space-y-2 place-items-center">
                 <Image
                   height={300}
                   width={500}
@@ -274,7 +303,7 @@ export default function HomePage() {
                   gradients—your taste, ready to post.
                 </p>
               </div>
-              <div className="border p-4 rounded-lg space-y-2">
+              <div className="border p-4 rounded-lg space-y-2 place-items-center">
                 <Image
                   height={300}
                   width={500}
