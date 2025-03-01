@@ -1,32 +1,42 @@
-import { Record as Play } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
-import { View, Image, Text } from "react-native";
+import { View, Image } from "react-native";
+import { Text } from "@/components/ui/text";
 
-const PlayView = ({ play }: { play: Play }) => {
+export default function PlayView({
+  releaseMbid,
+  trackTitle,
+  artistName,
+  releaseTitle,
+}: {
+  releaseMbid?: string;
+  trackTitle: string;
+  artistName?: string;
+  releaseTitle?: string;
+}) {
   return (
     <View className="flex flex-row gap-2 max-w-full">
       <Image
-        className="w-20 h-20 rounded-lg bg-gray-500/50"
+        className="w-16 h-16 rounded-lg bg-gray-500/50"
         source={{
-          uri: `https://coverartarchive.org/release/${play.releaseMbId}/front-250`,
+          uri:
+            releaseMbid &&
+            `https://coverartarchive.org/release/${releaseMbid}/front-250`,
         }}
       />
-      <View className="shrink">
-        <Text className="text-lg text-foreground line-clamp-1 overflow-ellipsis">
-          {play.trackName}
+      <View className="shrink flex flex-col justify-center">
+        <Text className=" text-foreground line-clamp-1 overflow-ellipsis -mt-0.5">
+          {trackTitle}
         </Text>
-        {play.artistNames && (
-          <Text className="text-lg text-left text-muted-foreground">
-            {play.artistNames.join(", ")}
+        {artistName && (
+          <Text className=" text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
+            {artistName}
           </Text>
         )}
-        {play.releaseName && (
-          <Text className="text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
-            {play.releaseName}
+        {releaseTitle && (
+          <Text className="text-sm text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
+            {releaseTitle}
           </Text>
         )}
       </View>
     </View>
   );
-};
-
-export default PlayView;
+}
