@@ -18,13 +18,18 @@ export default function ModalScreen() {
   };
   return (
     <TouchableOpacity
-      className="flex relative justify-center items-center bg-muted/60 w-full h-screen backdrop-blur-sm"
+      className="flex justify-center items-center bg-muted/60 w-full h-screen backdrop-blur-sm fade-in animate-in"
       onPress={() => handleGoBack()}
     >
-      <Icon icon={X} className="top-2 right-2 absolute" name="x" />
-      <View className="flex-1 items-center justify-center gap-2 bg-background w-full max-w-96 max-h-80 shadow-xl rounded-xl">
+      <View className="flex-1 relative items-center justify-center gap-2 bg-background w-full max-w-96 max-h-80 shadow-xl rounded-xl">
+        <Icon
+          icon={X}
+          className="top-2 right-2 absolute text-muted-foreground hover:text-foreground"
+          name="x"
+        />
         <Text className="text-4xl">Surprise!</Text>
         <Text className="text-xl">You can sign out here!</Text>
+        <Text className="text-xl -mt-2">but... are you sure?</Text>
         <Button
           onPress={() => {
             logOut();
@@ -32,7 +37,7 @@ export default function ModalScreen() {
             router.navigate("/");
           }}
         >
-          <Text className="text-lg">Sign out</Text>
+          <Text className="text-lg">Sign Out</Text>
         </Button>
 
         {/* Use a light status bar on iOS to account for the black space above the modal */}

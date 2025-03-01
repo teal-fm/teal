@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { Stack, useRouter } from "expo-router";
+import { Link, Stack, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
 
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -16,6 +16,7 @@ import {
 import { Text } from "@/components/ui/text";
 import {
   MusicBrainzRecording,
+  MusicBrainzRelease,
   ReleaseSelections,
   searchMusicbrainz,
   SearchParams,
@@ -24,6 +25,7 @@ import {
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
 import { StampContext, StampContextValue, StampStep } from "./_layout";
+import { ExternalLink } from "@/components/ExternalLink";
 
 export default function StepOne() {
   const router = useRouter();
@@ -45,6 +47,8 @@ export default function StepOne() {
     {},
   );
 
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
+
   // reset search state if requested
   useEffect(() => {
     if (state.step === StampStep.IDLE && state.resetSearchState) {
@@ -65,6 +69,7 @@ export default function StepOne() {
     const results = await searchMusicbrainz(searchFields);
     setSearchResults(results);
     setIsLoading(false);
+    setHasSearched(true);
   };
 
   const clearSearch = () => {
@@ -74,7 +79,7 @@ export default function StepOne() {
   };
 
   return (
-    <ScrollView className="flex-1 p-4 bg-background items-center">
+    <ScrollView className="flex-1 justify-start items-center w-min bg-background pt-2">
       <Stack.Screen
         options={{
           title: "Stamp a play manually",
@@ -82,7 +87,7 @@ export default function StepOne() {
         }}
       />
       {/* Search Form */}
-      <View className="flex gap-4 max-w-screen-md w-screen px-4">
+      <View className="flex gap-4 max-w-2xl w-screen px-4">
         <Text className="font-bold text-lg">Search for a track</Text>
         <TextInput
           className="p-2 border rounded-lg border-gray-300 bg-white"
@@ -110,6 +115,19 @@ export default function StepOne() {
             }
           }}
         />
+        <TextInput
+          className="p-2 border rounded-lg border-gray-300 bg-white"
+          placeholder="Album name..."
+          value={searchFields.release}
+          onChangeText={(text) =>
+            setSearchFields((prev) => ({ ...prev, release: text }))
+          }
+          onKeyPress={(e) => {
+            if (e.nativeEvent.key === "Enter") {
+              handleSearch();
+            }
+          }}
+        />
         <View className="flex-row gap-2">
           <Button
             className="flex-1"
@@ -130,12 +148,13 @@ export default function StepOne() {
       </View>
 
       {/* Search Results */}
-      <View className="flex gap-4 max-w-screen-md w-screen px-4">
-        {searchResults.length > 0 && (
+      <View className="flex gap-4 max-w-2xl w-screen px-4">
+        {searchResults.length > 0 ? (
           <View className="mt-4">
             <Text className="text-lg font-bold mb-2">
               Search Results ({searchResults.length})
             </Text>
+
             <FlatList
               data={searchResults}
               renderItem={({ item }) => (
@@ -155,6 +174,31 @@ export default function StepOne() {
               keyExtractor={(item) => item.id}
             />
           </View>
+        ) : (
+          hasSearched && (
+            <View className="mt-4">
+              <Text className="text-lg text-muted-foreground mb-2 text-center">
+                No search results found.
+              </Text>
+              <Text className="text-lg text-muted-foreground mb-2 text-center">
+                Please try importing with{" "}
+                <ExternalLink
+                  href="https://harmony.pulsewidth.org.uk/"
+                  className="border-b border-muted-foreground/60 text-bsky"
+                >
+                  Harmony
+                </ExternalLink>{" "}
+                or manually on{" "}
+                <ExternalLink
+                  href="https://musicbrainz.org/release/add"
+                  className="border-b border-muted-foreground/60 text-bsky"
+                >
+                  Musicbrainz
+                </ExternalLink>
+                .
+              </Text>
+            </View>
+          )
         )}
 
         {/* Submit Button */}
@@ -182,6 +226,43 @@ export default function StepOne() {
   );
 }
 
+// Get 'best' release from MusicBrainz releases
+// 1. Sort releases by date (put non-released dates at the end)
+// 2. Return the oldest release where country is 'XW' or 'US' that is NOT the name of the track
+// 3. If none, return oldest release that is NOT the name of the track
+// 4. Return the oldest release.
+function getBestRelease(releases: MusicBrainzRelease[], trackTitle: string) {
+  if (!releases || releases.length === 0) return null;
+  if (releases.length === 1) return releases[0];
+
+  releases.sort(
+    (a, b) =>
+      a.date?.localeCompare(b.date || "ZZZ") ||
+      a.title.localeCompare(b.title) ||
+      a.id.localeCompare(b.id),
+  );
+
+  let bestRelease = releases.find(
+    (release) =>
+      (release.country === "XW" || release.country === "US") &&
+      release.title !== trackTitle,
+  );
+  if (!bestRelease)
+    bestRelease = releases.find((release) => release.title !== trackTitle);
+
+  if (!bestRelease) {
+    console.log(
+      "Could not find a suitable release for",
+      trackTitle,
+      "picking",
+      releases[0]?.title,
+    );
+    bestRelease = releases[0];
+  }
+
+  return bestRelease;
+}
+
 export function SearchResult({
   result,
   onSelectTrack,
@@ -191,7 +272,10 @@ export function SearchResult({
 }: SearchResultProps) {
   const sheetRef = useRef<BottomSheetModal>(null);
 
-  const currentRelease = selectedRelease || result.releases?.[0];
+  const currentRelease =
+    selectedRelease ||
+    getBestRelease(result.releases || [], result.title) ||
+    result.releases?.[0];
 
   const showModal = () => {
     sheetRef.current?.present();
@@ -213,11 +297,11 @@ export function SearchResult({
               },
         );
       }}
-      className={`p-4 mb-2 rounded-lg ${
+      className={`px-4 py-2 mb-2 rounded-lg ${
         isSelected ? "bg-primary/20" : "bg-secondary/10"
       }`}
     >
-      <View className="flex-row justify-between items-center gap-2">
+      <View className={`flex-row justify-between items-center gap-4`}>
         <Image
           className="w-16 h-16 rounded-lg bg-gray-500/50"
           source={{
@@ -226,7 +310,7 @@ export function SearchResult({
         />
         <View className="flex-1">
           <Text className="font-bold text-sm line-clamp-2">{result.title}</Text>
-          <Text className="text-sm text-gray-600">
+          <Text className="text-sm text-muted-foreground">
             {result["artist-credit"]?.[0]?.artist?.name ?? "Unknown Artist"}
           </Text>
 
@@ -276,7 +360,7 @@ export function SearchResult({
         backdropComponent={SheetBackdrop}
         handleComponent={SheetHandle}
       >
-        <View className="pb-4 border-b -mt-2 bg-background border-x border-neutral-500/30">
+        <View className="pb-4 border-b -mt-2 border-x border-neutral-500/30 bg-card">
           <Text className="text-lg font-bold text-center">Select Release</Text>
           <TouchableOpacity
             className="absolute right-4 top-1.5"

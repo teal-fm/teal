@@ -27,7 +27,13 @@ const Layout = ({ segment }: { segment: string }) => {
   });
   return (
     <StampContext.Provider value={{ state, setState }}>
-      <Stack>
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            height: 50,
+          } as any,
+        }}
+      >
         <Slot />
       </Stack>
     </StampContext.Provider>
