@@ -1,5 +1,11 @@
 import React from "react";
-import { FilePen, Home, LogOut, type LucideIcon } from "lucide-react-native";
+import {
+  FilePen,
+  Home,
+  LogOut,
+  Settings,
+  type LucideIcon,
+} from "lucide-react-native";
 import { Link, Tabs } from "expo-router";
 import { Pressable } from "react-native";
 
@@ -40,6 +46,9 @@ export default function TabLayout() {
         // to prevent a hydration error in
         // React Navigation v6.
         headerShown: false, // useClientOnlyValue(false, true),
+        headerStyle: {
+          height: 50,
+        },
         tabBarShowLabel: true,
         tabBarStyle: {
           //height: 75,
@@ -73,6 +82,15 @@ export default function TabLayout() {
           title: "Stamp",
           tabBarIcon: ({ color }) => (
             <TabBarIcon name={FilePen} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings/index"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name={Settings} color={color} />
           ),
         }}
       />

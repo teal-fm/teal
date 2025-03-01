@@ -50,7 +50,7 @@ export const SheetHandle = ({
   style,
 }: BottomSheetBackdropProps) => {
   return (
-    <View className="w-full items-center h-6 bg-background rounded-t-xl border-t border-x border-neutral-500/30">
+    <View className="w-full items-center h-6 bg-card rounded-t-xl border-t border-x border-neutral-500/30">
       <View className="w-16 bg-muted-foreground/50 hover:bg-muted-foreground/70 transition-colors h-1.5 m-1 rounded-xl" />
     </View>
   );

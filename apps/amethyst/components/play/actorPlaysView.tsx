@@ -1,7 +1,8 @@
 import { useStore } from "@/stores/mainStore";
 import { Record as Play } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 import { useEffect, useState } from "react";
-import { Text, ScrollView } from "react-native";
+import { ScrollView } from "react-native";
+import { Text } from "@/components/ui/text";
 import PlayView from "./playView";
 interface ActorPlaysViewProps {
   repo: string | undefined;
@@ -39,7 +40,13 @@ const ActorPlaysView = ({ repo }: ActorPlaysViewProps) => {
   return (
     <ScrollView className="w-full *:gap-4">
       {play.map((p) => (
-        <PlayView key={p.uri} play={p.value} />
+        <PlayView
+          key={p.uri}
+          releaseTitle={p.value.releaseName}
+          trackTitle={p.value.trackName}
+          artistName={p.value.artistNames.join(", ")}
+          releaseMbid={p.value.releaseMbId}
+        />
       ))}
     </ScrollView>
   );

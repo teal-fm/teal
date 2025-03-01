@@ -1,18 +1,25 @@
 import VerticalPlayView from "@/components/play/verticalPlayView";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores/mainStore";
-import { Agent, ComAtprotoRepoCreateRecord, RichText } from "@atproto/api";
+import {
+  Agent,
+  BlobRef,
+  ComAtprotoRepoCreateRecord,
+  RichText,
+} from "@atproto/api";
 import {
   Record as PlayRecord,
   validateRecord,
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 import { Redirect, Stack, useRouter } from "expo-router";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Switch, View } from "react-native";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
 import { Text } from "@/components/ui/text";
 import { ExternalLink } from "@/components/ExternalLink";
 import { StampContext, StampContextValue, StampStep } from "./_layout";
+import { Image } from "react-native";
+import PlayView from "@/components/play/playView";
 
 type CardyBResponse = {
   error: string;
@@ -32,13 +39,25 @@ const getUrlMetadata = async (url: string): Promise<CardyBResponse> => {
   }
 };
 
+interface EmbedCard {
+  $type: string;
+  external: {
+    uri: string;
+    title: string;
+    description: string;
+    thumb: BlobRef;
+    alt: string;
+    cardyThumbUrl: string;
+  };
+}
+
 const getBlueskyEmbedCard = async (
   url: string | undefined,
   agent: Agent,
   customUrl?: string,
   customTitle?: string,
   customDescription?: string,
-) => {
+): Promise<EmbedCard | undefined> => {
   if (!url) return;
 
   try {
@@ -53,6 +72,8 @@ const getBlueskyEmbedCard = async (
         title: customTitle || metadata.title,
         description: customDescription || metadata.description,
         thumb: data.blob,
+        alt: metadata.title,
+        cardyThumbUrl: metadata.image,
       },
     };
   } catch (error) {
@@ -122,9 +143,10 @@ const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
     releaseName: result.selectedRelease?.title ?? undefined,
     releaseMbId: result.selectedRelease?.id ?? undefined,
     isrc: result.isrcs?.[0] ?? undefined,
-    // not providing unless we have a way to map to tidal/odesli/etc
+    // not providing unless we have a way to map to tidal/odesli/etc w/out MB
     //originUrl: `https://tidal.com/browse/track/274816578?u`,
-    musicServiceBaseDomain: "tidal.com",
+    //musicServiceBaseDomain: "tidal.com",
+    // TODO: update this based on version/git commit hash on build
     submissionClientAgent: "tealtracker/0.0.1b",
     playedTime: new Date().toISOString(),
   };
@@ -139,13 +161,54 @@ export default function Submit() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [shareWithBluesky, setShareWithBluesky] = useState<boolean>(false);
 
+  const [blueskyEmbedCard, setBlueskyEmbedCard] = useState<EmbedCard | null>(
+    null,
+  ); // State to store Bluesky embed card
+
+  const selectedTrack =
+    state.step === StampStep.SUBMITTING ? state.submittingStamp : null;
+
+  useEffect(() => {
+    const fetchEmbedData = async (id: string) => {
+      try {
+        let info = await getEmbedInfo(id);
+        if (info) {
+          // After getting embedInfo, fetch Bluesky embed card
+          if (info.urlEmbed && agent && selectedTrack) {
+            // Ensure urlEmbed exists and agent is available
+            let releaseYear =
+              selectedTrack?.selectedRelease?.date?.split("-")[0];
+            let title = `${selectedTrack?.title} by ${selectedTrack?.["artist-credit"]?.map((artist) => artist.name).join(", ")}`;
+            let description = `Song${releaseYear ? " · " + releaseYear : ""}${
+              selectedTrack?.length && " · " + ms2hms(selectedTrack.length)
+            }`;
+            const card = await getBlueskyEmbedCard(
+              info.urlEmbed,
+              agent,
+              info.customUrl,
+              title,
+              description,
+            );
+            console.log(card?.external.thumb);
+            if (card) setBlueskyEmbedCard(card); // Store the fetched Bluesky embed card
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching embed info:", error);
+        return null;
+      }
+    };
+
+    if (selectedTrack?.id && shareWithBluesky) {
+      fetchEmbedData(selectedTrack.id);
+    }
+  }, [selectedTrack, agent, shareWithBluesky]);
+
   if (state.step !== StampStep.SUBMITTING) {
     console.log("Stamp step is not SUBMITTING");
     console.log(state);
     return <Redirect href="/stamp" />;
   }
-
-  const selectedTrack = state.submittingStamp;
 
   if (selectedTrack === null) {
     return <Text>No track selected</Text>;
@@ -204,13 +267,13 @@ powered by @teal.fm`,
           text: rt.text,
           facets: rt.facets,
           embed: urlEmbed
-            ? await getBlueskyEmbedCard(
+            ? ((await getBlueskyEmbedCard(
                 urlEmbed,
                 agent,
                 customUrl,
                 title,
                 description,
-              )
+              )) as any)
             : undefined,
         });
         submittedData.blueskyPostUrl = post.uri
@@ -239,10 +302,11 @@ powered by @teal.fm`,
           title: "Submit Stamp",
         }}
       />
-      <View className="flex justify-between align-middle gap-4 max-w-screen-md w-screen min-h-full px-4">
-        <Text className="font-bold text-lg">Submit Play</Text>
+      <View className="flex justify-between align-middle gap-4 max-w-2xl w-screen min-h-full px-4">
+        <View />
         <View>
           <VerticalPlayView
+            size={blueskyEmbedCard && shareWithBluesky ? "sm" : "md"}
             releaseMbid={selectedTrack?.selectedRelease?.id || ""}
             trackTitle={
               selectedTrack?.title ||
@@ -265,12 +329,41 @@ powered by @teal.fm`,
         </View>
 
         <View className="flex-col gap-4 items-center">
+          {blueskyEmbedCard && shareWithBluesky ? (
+            <View className="gap-2 w-full">
+              <Text className="text-sm text-muted-foreground text-center">
+                Card Preview:
+              </Text>
+              <View className="flex-col items-start rounded-xl bg-card border border-border">
+                <Image
+                  source={{
+                    uri: blueskyEmbedCard.external.cardyThumbUrl,
+                  }}
+                  className="rounded-t-xl aspect-video w-full"
+                />
+                <View className="p-2 items-start">
+                  <Text className="text-card-foreground text-start font-semibold">
+                    {blueskyEmbedCard.external.title}
+                  </Text>
+                  <Text className="text-muted-foreground text-start">
+                    {blueskyEmbedCard.external.description}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            shareWithBluesky && (
+              <Text className="text-sm text-muted-foreground text-center">
+                jsyk: there won't be an embed card on your post.
+              </Text>
+            )
+          )}
           <View className="flex-row gap-2 items-center">
             <Switch
               value={shareWithBluesky}
               onValueChange={setShareWithBluesky}
             />
-            <Text className="text-lg text-gray-500 text-center">
+            <Text className="text-lg text-muted-foreground text-center">
               Share with Bluesky?
             </Text>
           </View>
