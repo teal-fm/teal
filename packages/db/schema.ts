@@ -1,105 +1,176 @@
+import { sql } from "drizzle-orm";
 import {
-  numeric,
-  sqliteTable,
+  pgTable,
   text,
-  customType,
+  pgEnum,
+  timestamp,
+  uuid,
   integer,
-} from "drizzle-orm/sqlite-core";
+  jsonb,
+  primaryKey,
+  foreignKey,
+  pgMaterializedView,
+} from "drizzle-orm/pg-core";
+import { createDeflate } from "node:zlib";
 
-// string array custom type
-const json = <TData>() =>
-  customType<{ data: TData; driverData: string }>({
-    dataType() {
-      return "text";
-    },
-    toDriver(value: TData): string {
-      return JSON.stringify(value);
-    },
-    // handle single value (no json array) as well
-    fromDriver(value: string): TData {
-      if (value[0] === "[") {
-        return JSON.parse(value);
-      }
-      return [value] as TData;
-    },
-  })();
-
-// Tables
-
-export const status = sqliteTable("status", {
-  uri: text().primaryKey(),
-  authorDid: text().notNull(),
-  status: text().notNull(),
-  createdAt: text().notNull(),
-  indexedAt: text().notNull(),
+export const artists = pgTable("artists", {
+  mbid: uuid("mbid").primaryKey(),
+  name: text("name").notNull(),
+  playCount: integer("play_count").default(0),
 });
 
-// ATP Auth Tables (oAuth)
-export const atProtoSession = sqliteTable("atp_session", {
-  key: text().primaryKey(),
-  session: text().notNull(),
+export const plays = pgTable("plays", {
+  cid: text("cid").notNull(),
+  did: text("did").notNull(),
+  duration: integer("duration"),
+  isrc: text("isrc"),
+  musicServiceBaseDomain: text("music_service_base_domain"),
+  originUrl: text("origin_url"),
+  playedTime: timestamp("played_time", { withTimezone: true }),
+  processedTime: timestamp("processed_time", {
+    withTimezone: true,
+  }).defaultNow(),
+  rkey: text("rkey").notNull(),
+  recordingMbid: uuid("recording_mbid").references(() => recordings.mbid),
+  releaseMbid: uuid("release_mbid").references(() => releases.mbid),
+  releaseName: text("release_name"),
+  submissionClientAgent: text("submission_client_agent"),
+  trackName: text("track_name").notNull(),
+  uri: text("uri").primaryKey(),
 });
 
-export const authState = sqliteTable("auth_state", {
-  key: text().primaryKey(),
-  state: text().notNull(),
+export const playToArtists = pgTable(
+  "play_to_artists",
+  {
+    artistMbid: uuid("artist_mbid")
+      .references(() => artists.mbid)
+      .notNull(),
+    artistName: text("artist_name"),
+    playUri: text("play_uri")
+      .references(() => plays.uri)
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.playUri, table.artistMbid] })],
+);
+
+export const recordings = pgTable("recordings", {
+  mbid: uuid("mbid").primaryKey(),
+  name: text("name").notNull(),
+  playCount: integer("play_count").default(0),
 });
 
-export const tealSession = sqliteTable("teal_session", {
-  key: text().primaryKey(),
-  session: text().notNull(),
-  provider: text().notNull(),
+export const releases = pgTable("releases", {
+  mbid: uuid("mbid").primaryKey(),
+  name: text("name").notNull(),
+  playCount: integer("play_count").default(0),
 });
 
-// Regular Auth Tables
-export const tealUser = sqliteTable("teal_user", {
-  did: text().primaryKey(),
-  handle: text().notNull(),
-  avatar: text().notNull(),
-  bio: text(),
-  createdAt: text().notNull(),
+export const mvArtistPlayCounts = pgMaterializedView(
+  "mv_artist_play_counts",
+).as((qb) => {
+  return qb
+    .select({
+      artistMbid: artists.mbid,
+      artistName: artists.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(artists)
+    .leftJoin(playToArtists, sql`${artists.mbid} = ${playToArtists.artistMbid}`)
+    .leftJoin(plays, sql`${plays.uri} = ${playToArtists.playUri}`)
+    .groupBy(artists.mbid, artists.name);
 });
 
-// follow relationship
-export const follow = sqliteTable("follow", {
-  relId: text().primaryKey(),
-  follower: text().notNull(),
-  followed: text().notNull(),
-  createdAt: text().notNull(),
+export const mvGlobalPlayCount = pgMaterializedView("mv_global_play_count").as(
+  (qb) => {
+    return qb
+      .select({
+        totalPlays: sql<number>`count(${plays.uri})`.as("total_plays"),
+        uniqueListeners: sql<number>`count(distinct ${plays.did})`.as(
+          "unique_listeners",
+        ),
+      })
+      .from(plays);
+  },
+);
+
+export const mvRecordingPlayCounts = pgMaterializedView(
+  "mv_recording_play_counts",
+).as((qb) => {
+  return qb
+    .select({
+      recordingMbid: recordings.mbid,
+      recordingName: recordings.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(recordings)
+    .leftJoin(plays, sql`${plays.recordingMbid} = ${recordings.mbid}`)
+    .groupBy(recordings.mbid, recordings.name);
 });
 
-// play
-export const play = sqliteTable("play", {
-  rkey: text().primaryKey(),
-  authorDid: text().notNull(),
-  createdAt: text().notNull(),
-  indexedAt: text().notNull(),
+export const mvReleasePlayCounts = pgMaterializedView(
+  "mv_release_play_counts",
+).as((qb) => {
+  return qb
+    .select({
+      releaseMbid: releases.mbid,
+      releaseName: releases.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(releases)
+    .leftJoin(plays, sql`${plays.releaseMbid} = ${releases.mbid}`)
+    .groupBy(releases.mbid, releases.name);
+});
 
-  /** The name of the track */
-  trackName: text().notNull(),
-  /** The Musicbrainz ID of the track */
-  trackMbId: text(),
-  /** The Musicbrainz recording ID of the track */
-  recordingMbId: text(),
-  /** The length of the track in seconds */
-  duration: integer(),
-  /** The names of the artists in order of original appearance */
-  artistNames: json<string[]>(),
-  /** Array of Musicbrainz artist IDs */
-  // type of string[]
-  artistMbIds: json<string[]>(),
-  /** The name of the release/album */
-  releaseName: text(),
-  /** The Musicbrainz release ID */
-  releaseMbId: text(),
-  /** The ISRC code associated with the recording */
-  isrc: text(),
-  /** The URL associated with this track */
-  originUrl: text(),
-  /** The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. */
-  musicServiceBaseDomain: text(),
-  /** A user-agent style string specifying the user agent. e.g. fm.teal.frontend/0.0.1b */
-  submissionClientAgent: text(),
-  /** The unix timestamp of when the track was played */
-  playedTime: text(),
+export const mvTopArtists30Days = pgMaterializedView(
+  "mv_top_artists_30days",
+).as((qb) => {
+  return qb
+    .select({
+      artistMbid: artists.mbid,
+      artistName: artists.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(artists)
+    .innerJoin(
+      playToArtists,
+      sql`${artists.mbid} = ${playToArtists.artistMbid}`,
+    )
+    .innerJoin(plays, sql`${plays.uri} = ${playToArtists.playUri}`)
+    .where(sql`${plays.playedTime} >= NOW() - INTERVAL '30 days'`)
+    .groupBy(artists.mbid, artists.name)
+    .orderBy(sql`count(${plays.uri}) DESC`);
+});
+
+export const mvTopReleases30Days = pgMaterializedView(
+  "mv_top_releases_30days",
+).as((qb) => {
+  return qb
+    .select({
+      releaseMbid: releases.mbid,
+      releaseName: releases.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(releases)
+    .innerJoin(plays, sql`${plays.releaseMbid} = ${releases.mbid}`)
+    .where(sql`${plays.playedTime} >= NOW() - INTERVAL '30 days'`)
+    .groupBy(releases.mbid, releases.name)
+    .orderBy(sql`count(${plays.uri}) DESC`);
+});
+
+export const profiles = pgTable("profiles", {
+  did: text("did").primaryKey(),
+  handle: text("handle"),
+  displayName: text("display_name"),
+  description: text("description"),
+  descriptionFacets: jsonb("description_facets"),
+  // the IPLD of the image. bafy...
+  avatar: text("avatar"),
+  banner: text("banner"),
+  createdAt: timestamp("created_at"),
+});
+
+export const userFeaturedItems = pgTable("featured_items", {
+  did: text("did").primaryKey(),
+  mbid: text("mbid").notNull(),
+  type: text("type").notNull(),
 });

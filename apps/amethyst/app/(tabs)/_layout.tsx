@@ -8,6 +8,7 @@ import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
 //import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
 import { useColorScheme } from "nativewind";
+import AuthOptions from "../auth/options";
 
 function TabBarIcon(props: { name: LucideIcon; color: string }) {
   const Name = props.name;
@@ -20,6 +21,15 @@ export default function TabLayout() {
   const authStatus = useStore((state) => state.status);
   // if we are on web but not native and web width is greater than 1024px
   const hideTabBar = authStatus !== "loggedIn"; // || useIsMobile()
+
+  const j = useStore((state) => state.status);
+  // @me
+  const agent = useStore((state) => state.pdsAgent);
+  const profile = useStore((state) => state.profiles[agent?.did ?? ""]);
+
+  if (j !== "loggedIn") {
+    return <AuthOptions />;
+  }
 
   return (
     <Tabs

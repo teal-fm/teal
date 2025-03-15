@@ -6,7 +6,7 @@ import getActorFeed from "./feed/getActorFeed";
 // mount this on /xrpc
 const app = new Hono<EnvWithCtx>();
 
-app.get("fm.teal.alpha.getPlay", async (c) => c.json(await getPlay(c)));
+app.get("fm.teal.alpha.feed.getPlay", async (c) => c.json(await getPlay(c)));
 app.get("fm.teal.alpha.feed.getActorFeed", async (c) =>
   c.json(await getActorFeed(c)),
 );
