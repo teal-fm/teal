@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { Link, Stack, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
 
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -8,7 +8,6 @@ import {
   FlatList,
   Image,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -26,6 +25,7 @@ import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 import { ExternalLink } from "@/components/ExternalLink";
+import { Input } from "@/components/ui/input";
 
 export default function StepOne() {
   const router = useRouter();
@@ -87,10 +87,9 @@ export default function StepOne() {
         }}
       />
       {/* Search Form */}
-      <View className="flex gap-4 max-w-2xl w-screen px-4">
+      <View className="flex gap-2 max-w-2xl w-screen px-4">
         <Text className="font-bold text-lg">Search for a track</Text>
-        <TextInput
-          className="p-2 border rounded-lg border-gray-300 bg-white"
+        <Input
           placeholder="Track name..."
           value={searchFields.track}
           onChangeText={(text) =>
@@ -102,8 +101,7 @@ export default function StepOne() {
             }
           }}
         />
-        <TextInput
-          className="p-2 border rounded-lg border-gray-300 bg-white"
+        <Input
           placeholder="Artist name..."
           value={searchFields.artist}
           onChangeText={(text) =>
@@ -115,8 +113,7 @@ export default function StepOne() {
             }
           }}
         />
-        <TextInput
-          className="p-2 border rounded-lg border-gray-300 bg-white"
+        <Input
           placeholder="Album name..."
           value={searchFields.release}
           onChangeText={(text) =>
@@ -128,7 +125,7 @@ export default function StepOne() {
             }
           }}
         />
-        <View className="flex-row gap-2">
+        <View className="flex-row gap-2 mt-2">
           <Button
             className="flex-1"
             onPress={handleSearch}
