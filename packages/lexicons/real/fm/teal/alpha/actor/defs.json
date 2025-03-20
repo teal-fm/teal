@@ -1,0 +1,60 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.actor.defs",
+  "defs": {
+    "profileView": {
+      "type": "object",
+      "properties": {
+        "did": {
+          "type": "string",
+          "description": "The decentralized identifier of the actor"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-form profile description text."
+        },
+        "descriptionFacets": {
+          "type": "array",
+          "description": "Annotations of text in the profile description (mentions, URLs, hashtags, etc). May be changed to another (backwards compatible) lexicon.",
+          "items": { "type": "ref", "ref": "app.bsky.richtext.facet" }
+        },
+        "featuredItem": {
+          "type": "ref",
+          "description": "The user's most recent item featured on their profile.",
+          "ref": "fm.teal.alpha.actor.profile#featuredItem"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "IPLD of the avatar"
+        },
+        "banner": {
+          "type": "string",
+          "description": "IPLD of the banner image"
+        },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    },
+    "miniProfileView": {
+      "type": "object",
+      "properties": {
+        "did": {
+          "type": "string",
+          "description": "The decentralized identifier of the actor"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "IPLD of the avatar"
+        }
+      }
+    }
+  }
+}

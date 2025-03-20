@@ -1,20 +1,21 @@
-import dotenv from "dotenv";
-import { cleanEnv, host, port, str, testOnly } from "envalid";
-import process from "node:process";
+import dotenv from 'dotenv';
+import { cleanEnv, host, port, str, testOnly } from 'envalid';
+import process from 'node:process';
 
 dotenv.config();
 // in case our .env file is in the root folder
-dotenv.config({ path: "./../../.env" });
+dotenv.config({ path: './../../.env' });
 
 export const env = cleanEnv(process.env, {
   NODE_ENV: str({
-    devDefault: testOnly("test"),
-    choices: ["development", "production", "test"],
+    devDefault: testOnly('test'),
+    choices: ['development', 'production', 'test'],
   }),
-  HOST: host({ devDefault: testOnly("0.0.0.0") }),
+  HOST: host({ devDefault: testOnly('0.0.0.0') }),
   PORT: port({ devDefault: testOnly(3000) }),
   PUBLIC_URL: str({}),
-  APP_URI: str({ devDefault: "fm.teal.amethyst://" }),
-  DATABASE_URL: str({ devDefault: "file:./db.sqlite" }),
-  COOKIE_SECRET: str({ devDefault: "secret_cookie! very secret!" }),
+  DID_WEB_PUBKEY: str({ devDefault: testOnly('did:key:z6Mk...') }),
+  APP_URI: str({ devDefault: 'fm.teal.amethyst://' }),
+  DATABASE_URL: str({ devDefault: 'file:./db.sqlite' }),
+  COOKIE_SECRET: str({ devDefault: 'secret_cookie! very secret!' }),
 });

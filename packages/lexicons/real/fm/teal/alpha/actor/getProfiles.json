@@ -1,0 +1,40 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.actor.getProfiles",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves the associated profile.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["actors"],
+        "properties": {
+          "actors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "at-identifier"
+            },
+            "description": "Array of actor DIDs"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["actors"],
+          "properties": {
+            "actors": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.alpha.actor.defs#miniProfileView"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

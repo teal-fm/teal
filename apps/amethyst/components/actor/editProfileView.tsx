@@ -1,5 +1,5 @@
-import * as React from "react";
-import { useState } from "react";
+import * as React from 'react';
+import { useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -8,19 +8,22 @@ import {
   ActivityIndicator,
   Touchable,
   TouchableWithoutFeedback,
-} from "react-native";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-import * as ImagePicker from "expo-image-picker";
-import { Card } from "../ui/card";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { cn } from "@/lib/utils";
-import { useOnEscape } from "@/hooks/useOnEscape";
+} from 'react-native';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Text } from '@/components/ui/text';
+import { Button } from '@/components/ui/button';
+import * as ImagePicker from 'expo-image-picker';
+import { Card } from '../ui/card';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { cn } from '@/lib/utils';
+import { useOnEscape } from '@/hooks/useOnEscape';
+import { Icon } from '@/lib/icons/iconWithClassName';
+import { Pen } from 'lucide-react-native';
+import getImageCdnLink from '@/lib/atp/getImageCdnLink';
 
 const GITHUB_AVATAR_URI =
-  "https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg";
+  'https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg';
 
 export interface EditProfileModalProps {
   isVisible: boolean;
@@ -35,9 +38,9 @@ export default function EditProfileModal({
   profile, // Pass the profile data as a prop
   onSave, // Pass the onSave callback function
 }: EditProfileModalProps) {
-  const [editedProfile, setEditedProfile] = useState({ ...profile?.bsky });
-  const [avatarUri, setAvatarUri] = useState(profile?.bsky?.avatar);
-  const [bannerUri, setBannerUri] = useState(profile?.bsky?.banner);
+  const [editedProfile, setEditedProfile] = useState({ ...profile });
+  const [avatarUri, setAvatarUri] = useState(profile?.avatar);
+  const [bannerUri, setBannerUri] = useState(profile?.banner);
   const [loading, setLoading] = useState(false);
 
   const pickImage = async (
@@ -46,7 +49,7 @@ export default function EditProfileModal({
     setLoading(true); // Start loading
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: setType === setAvatarUri ? [1, 1] : [3, 1],
       quality: 1,
@@ -61,7 +64,7 @@ export default function EditProfileModal({
 
   const handleSave = () => {
     onSave(editedProfile, avatarUri, bannerUri); // Call the onSave callback with updated data
-    onClose();
+    //onClose();
   };
 
   useOnEscape(onClose);
@@ -83,32 +86,58 @@ export default function EditProfileModal({
               <Text className="text-xl font-bold mb-4">Edit Profile</Text>
               <Pressable onPress={() => pickImage(setBannerUri)}>
                 {loading && !bannerUri && <ActivityIndicator />}
-                {bannerUri && (
-                  <Image
-                    source={{ uri: bannerUri }}
-                    className="w-full h-24 rounded-lg"
-                  />
+                {bannerUri ? (
+                  <View className="relative group">
+                    <Image
+                      source={{
+                        uri: bannerUri?.includes(';')
+                          ? bannerUri
+                          : getImageCdnLink({
+                              did: editedProfile.did,
+                              hash: bannerUri,
+                            }),
+                      }}
+                      className="w-full h-24 rounded-lg"
+                    />
+                    <View className="absolute -right-2 -bottom-2 rounded-full bg-muted/70 group-hover:bg-muted/90 text-foreground transition-colors duration-300 border border-border p-1">
+                      <Icon icon={Pen} size={18} className="fill-muted" />
+                    </View>
+                  </View>
+                ) : (
+                  <View className="w-full max-w-[100vh] h-32 md:h-44 rounded-xl -mb-6 bg-muted" />
                 )}
               </Pressable>
 
               <Pressable
                 onPress={() => pickImage(setAvatarUri)}
-                className={cn("mb-4", bannerUri && "pl-4 -mt-8")}
+                className={cn('mb-4 relative group', bannerUri && 'pl-4 -mt-8')}
               >
                 {loading && !avatarUri && <ActivityIndicator />}
-                <Avatar
-                  className="w-20 h-20"
-                  alt={`Avatar for ${editedProfile?.displayName ?? "User"}`}
-                >
-                  <AvatarImage
-                    source={{ uri: avatarUri || GITHUB_AVATAR_URI }}
-                  />
-                  <AvatarFallback>
-                    <Text>
-                      {editedProfile?.displayName?.substring(0, 1) ?? "R"}
-                    </Text>
-                  </AvatarFallback>
-                </Avatar>
+                <View className="relative group w-min">
+                  <Avatar
+                    className="w-20 h-20"
+                    alt={`Avatar for ${editedProfile?.displayName ?? 'User'}`}
+                  >
+                    <AvatarImage
+                      source={{
+                        uri: avatarUri?.includes(';')
+                          ? avatarUri
+                          : getImageCdnLink({
+                              did: editedProfile.did,
+                              hash: avatarUri,
+                            }),
+                      }}
+                    />
+                    <AvatarFallback>
+                      <Text>
+                        {editedProfile?.displayName?.substring(0, 1) ?? 'R'}
+                      </Text>
+                    </AvatarFallback>
+                  </Avatar>
+                  <View className="absolute right-0 bottom-0 rounded-full bg-muted/70 group-hover:bg-muted/90 text-foreground transition-colors duration-300 border border-border p-1">
+                    <Icon icon={Pen} size={18} className="fill-muted" />
+                  </View>
+                </View>
               </Pressable>
 
               <Text className="text-sm font-semibold text-muted-foreground pl-1">

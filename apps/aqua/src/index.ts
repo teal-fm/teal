@@ -1,14 +1,15 @@
-import { env } from "./lib/env";
+import { env } from './lib/env';
 
-import { serve } from "@hono/node-server";
-import { serveStatic } from "@hono/node-server/serve-static";
-import { Hono } from "hono";
-import { db } from "@teal/db/connect";
-import pino from "pino";
-import { EnvWithCtx, setupContext, TealContext } from "./ctx";
-import { getXrpcRouter } from "./xrpc/route";
+import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
+import { Hono } from 'hono';
+import { db } from '@teal/db/connect';
+import pino from 'pino';
+import { EnvWithCtx, setupContext, TealContext } from './ctx';
+import { getXrpcRouter } from './xrpc/route';
+import { createDidWeb } from './did/web';
 
-const logger = pino({ name: "server start" });
+const logger = pino({ name: 'server start' });
 
 const app = new Hono<EnvWithCtx>();
 
@@ -55,19 +56,24 @@ const HOME_STYLES = `
   }
 `;
 
-app.get("/", (c) =>
+app.get('/', (c) =>
   c.html(
     `<html><head><style>${HOME_STYLES}</style></head><body><pre>${HOME_TEXT}</pre></body></html>`,
   ),
 );
 
-app.route("/xrpc", getXrpcRouter());
+app.route('/xrpc', getXrpcRouter());
 
-app.use("/*", serveStatic({ root: "/public" }));
+app.get('/.well-known/did.json', (c) =>
+  // assume public url is https!
+  c.json(createDidWeb(env.PUBLIC_URL.split('://')[1], env.DID_WEB_PUBKEY)),
+);
+
+app.use('/*', serveStatic({ root: '/public' }));
 
 const run = async () => {
-  logger.info("Running in " + navigator.userAgent);
-  if (navigator.userAgent.includes("Node")) {
+  logger.info('Running in ' + navigator.userAgent);
+  if (navigator.userAgent.includes('Node')) {
     serve(
       {
         fetch: app.fetch,
@@ -77,11 +83,11 @@ const run = async () => {
       (info) => {
         logger.info(
           `Listening on ${
-            info.address == "::1"
-              ? "http://localhost"
+            info.address == '::1'
+              ? 'http://0.0.0.0'
               : // TODO: below should probably be https://
                 // but i just want to ctrl click in the terminal
-                "http://" + info.address
+                'http://' + info.address
           }:${info.port} (${info.family})`,
         );
       },

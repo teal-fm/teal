@@ -166,7 +166,7 @@ export const profiles = pgTable("profiles", {
   // the IPLD of the image. bafy...
   avatar: text("avatar"),
   banner: text("banner"),
-  createdAt: timestamp("created_at"),
+  createdAt: timestamp("created_at", { withTimezone: true }),
 });
 
 export const userFeaturedItems = pgTable("featured_items", {

@@ -9,6 +9,9 @@ import {
   StreamAuthVerifier,
 } from '@atproto/xrpc-server'
 import { schemas } from './lexicons'
+import * as FmTealAlphaActorGetProfile from './types/fm/teal/alpha/actor/getProfile'
+import * as FmTealAlphaActorGetProfiles from './types/fm/teal/alpha/actor/getProfiles'
+import * as FmTealAlphaActorSearchActors from './types/fm/teal/alpha/actor/searchActors'
 import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed'
 import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay'
 
@@ -105,6 +108,39 @@ export class FmTealAlphaActorNS {
 
   constructor(server: Server) {
     this._server = server
+  }
+
+  getProfile<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaActorGetProfile.Handler<ExtractAuth<AV>>,
+      FmTealAlphaActorGetProfile.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.actor.getProfile' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getProfiles<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaActorGetProfiles.Handler<ExtractAuth<AV>>,
+      FmTealAlphaActorGetProfiles.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.actor.getProfiles' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  searchActors<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaActorSearchActors.Handler<ExtractAuth<AV>>,
+      FmTealAlphaActorSearchActors.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.actor.searchActors' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
   }
 }
 
