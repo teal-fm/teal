@@ -7,8 +7,10 @@ import AuthOptions from '../auth/options';
 import { Redirect, Stack } from 'expo-router';
 import ActorView from '@/components/actor/actorView';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 
 export default function Screen() {
+  const router = useRouter();
   const j = useStore((state) => state.status);
   // @me
   const agent = useStore((state) => state.pdsAgent);
@@ -34,6 +36,12 @@ export default function Screen() {
       } catch (error) {
         setHasTealProfile(false);
         console.error('Error fetching profile:', error);
+        if (
+          error instanceof Error &&
+          error.message.includes('could not resolve proxy did')
+        ) {
+          router.replace('/offline');
+        }
       }
     };
 
@@ -42,7 +50,7 @@ export default function Screen() {
     return () => {
       isMounted = false;
     };
-  }, [agent, tealDid]);
+  }, [agent, tealDid, router]);
 
   if (j !== 'loggedIn') {
     return <AuthOptions />;
