@@ -1,4 +1,4 @@
-import { ScrollView, View, Image } from 'react-native';
+import { View, Image } from 'react-native';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CardTitle } from '../../components/ui/card';
 import { Text } from '@/components/ui/text';
@@ -21,7 +21,7 @@ const GITHUB_AVATAR_URI =
 
 export interface ActorViewProps {
   actorDid: string;
-  pdsAgent: Agent;
+  pdsAgent: Agent | null;
 }
 
 export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
@@ -36,6 +36,9 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     let isMounted = true;
 
     const fetchProfile = async () => {
+      if (!pdsAgent) {
+        return;
+      }
       try {
         let res = await pdsAgent.call(
           'fm.teal.alpha.actor.getProfile',
@@ -58,13 +61,16 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     };
   }, [pdsAgent, actorDid, tealDid]);
 
-  const isSelf = actorDid === pdsAgent.did;
+  const isSelf = actorDid === (pdsAgent?.did || "");
 
   const handleSave = async (
     updatedProfile: { displayName: any; description: any },
     newAvatarUri: string,
     newBannerUri: string,
   ) => {
+    if (!pdsAgent) {
+      return;
+    }
     // Implement your save logic here (e.g., update your database or state)
     console.log('Saving profile:', updatedProfile, newAvatarUri, newBannerUri);
 
@@ -195,7 +201,11 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
                 <Text>Edit</Text>
               </Button>
             ) : (
-              <Button variant="outline" size="sm" className="">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl flex-row gap-2 justify-center items-center"
+              >
                 <Icon icon={Plus} size={18} />
                 <Text>Follow</Text>
               </Button>
@@ -224,9 +234,9 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
       </View>
       <View className="max-w-2xl w-full gap-4 py-4 pl-8">
         <Text className="text-left text-2xl border-b border-b-muted-foreground/30 -ml-2 pl-2 mr-6">
-          Your Stamps
+          Stamps
         </Text>
-        <ActorPlaysView repo={actorDid} />
+        <ActorPlaysView repo={actorDid} pdsAgent={pdsAgent} />
       </View>
       {isSelf && (
         <EditProfileModal

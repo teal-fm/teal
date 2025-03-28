@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Text } from '@/components/ui/text'; // Your UI components
-import { Button } from '@/components/ui/button';
 import ImageSelectionPage from './imageSelectionPage'; // Separate page components
 import DisplayNamePage from './displayNamePage';
 import DescriptionPage from './descriptionPage';
@@ -10,8 +9,6 @@ import ProgressDots from '@/components/onboarding/progressDots';
 
 import { Record as ProfileRecord } from '@teal/lexicons/src/types/fm/teal/alpha/actor/profile';
 import { useStore } from '@/stores/mainStore';
-import { Loader } from 'lucide-react-native';
-import { navigate } from 'expo-router/build/global-state/routing';
 import { useRouter } from 'expo-router';
 
 const OnboardingSubmissionSteps: string[] = [
@@ -31,11 +28,12 @@ export default function OnboardingPage() {
   const [bannerUri, setBannerUri] = useState('');
 
   const [submissionStep, setSubmissionStep] = useState(1);
-  const [submissionError, setSubmissionError] = useState(0);
+  const [submissionError, setSubmissionError] = useState('');
 
   const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
+  const profile = useStore((store) => store.profiles);
 
   const handleImageSelectionComplete = (avatar: string, banner: string) => {
     setAvatarUri(avatar);
@@ -127,11 +125,21 @@ export default function OnboardingPage() {
     return <div>Loading...</div>;
   }
 
+  // if we already have stuff then go back
+  //
+  if (profile[agent?.did!].teal) {
+    return (
+      <Text>
+        Profile already exists: {JSON.stringify(profile[agent?.did!].teal)}
+      </Text>
+    );
+  }
+
   if (submissionStep) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Profile updated successfully!</Text>
+        <Text>{OnboardingSubmissionSteps[submissionStep]}</Text>
       </View>
     );
   }
