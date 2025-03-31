@@ -180,24 +180,34 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             return profile.data || null;
           });
         // get teal did
-        let tealDid = get().tealDid;
-        let tealProfile = await agent
-          .call(
-            'fm.teal.alpha.actor.getProfile',
-            { actor: agent?.did },
-            {},
-            { headers: { 'atproto-proxy': tealDid + '#teal_fm_appview' } },
-          )
-          .then((profile) => {
-            console.log(profile);
-            return profile.data.agent || null;
-          });
+        try {
+          let tealDid = get().tealDid;
+          let tealProfile = await agent
+            .call(
+              'fm.teal.alpha.actor.getProfile',
+              { actor: agent?.did },
+              {},
+              { headers: { 'atproto-proxy': tealDid + '#teal_fm_appview' } },
+            )
+            .then((profile) => {
+              console.log(profile);
+              return profile.data.agent || null;
+            });
 
-        set({
-          profiles: {
-            [agent.did]: { bsky: bskyProfile, teal: tealProfile },
-          },
-        });
+          set({
+            profiles: {
+              [agent.did]: { bsky: bskyProfile, teal: tealProfile },
+            },
+          });
+        } catch (error) {
+          console.error('Failed to get teal profile:', error);
+          // insert bsky profile
+          set({
+            profiles: {
+              [agent.did]: { bsky: bskyProfile, teal: null },
+            },
+          });
+        }
       } catch (error) {
         console.error('Failed to get profile:', error);
       }

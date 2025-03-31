@@ -27,7 +27,7 @@ export default function OnboardingPage() {
   const [avatarUri, setAvatarUri] = useState('');
   const [bannerUri, setBannerUri] = useState('');
 
-  const [submissionStep, setSubmissionStep] = useState(1);
+  const [submissionStep, setSubmissionStep] = useState(0);
   const [submissionError, setSubmissionError] = useState('');
 
   const router = useRouter();
@@ -121,13 +121,15 @@ export default function OnboardingPage() {
     }, 2000);
   };
 
-  if (!agent) {
+  if (!agent || !profile[agent?.did!]) {
     return <div>Loading...</div>;
   }
 
   // if we already have stuff then go back
   //
-  if (profile[agent?.did!].teal) {
+
+  console.log(profile);
+  if (profile[agent?.did!].teal !== null) {
     return (
       <Text>
         Profile already exists: {JSON.stringify(profile[agent?.did!].teal)}

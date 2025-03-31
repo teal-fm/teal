@@ -56,19 +56,19 @@ export default function Screen() {
     return <AuthOptions />;
   }
 
+  if (hasTealProfile !== null && !hasTealProfile) {
+    return (
+      <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
+        <Redirect href="/onboarding" />
+      </View>
+    );
+  }
+
   // TODO: replace with skeleton
   if (!profile || !agent) {
     return (
       <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
         <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
-  if (hasTealProfile !== null && !hasTealProfile) {
-    return (
-      <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
-        <Redirect href="/onboarding" />
       </View>
     );
   }
