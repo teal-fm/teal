@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
 
@@ -83,6 +84,7 @@ export default function Screen() {
         }}
       />
       <ActorView actorDid={agent.did!} pdsAgent={agent} />
+
     </ScrollView>
   );
 }

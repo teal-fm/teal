@@ -1,3 +1,4 @@
+
 import { useStore } from '@/stores/mainStore';
 import { OutputSchema as ActorFeedResponse } from '@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed';
 import { useEffect, useState } from 'react';
@@ -46,6 +47,7 @@ const ActorPlaysView = ({ repo, pdsAgent }: ActorPlaysViewProps) => {
           trackTitle={p.trackName}
           artistName={p.artistNames.join(', ')}
           releaseMbid={p.releaseMbId}
+
         />
       ))}
     </ScrollView>

@@ -1,4 +1,6 @@
+
 import React from 'react';
+
 import {
   FilePen,
   Home,
@@ -53,6 +55,7 @@ export default function TabLayout() {
           height: 50,
         },
         tabBarShowLabel: isMobile,
+
         tabBarStyle: {
           //height: 75,
           display: hideTabBar ? 'none' : 'flex',
@@ -99,6 +102,7 @@ export default function TabLayout() {
         name="settings/index"
         options={{
           title: 'Settings',
+
           tabBarIcon: ({ color }) => (
             <TabBarIcon name={Settings} color={color} />
           ),
