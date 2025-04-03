@@ -140,6 +140,150 @@ export const schemaDict = {
       },
     },
   },
+  FmTealAlphaActorDefs: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.actor.defs',
+    defs: {
+      profileView: {
+        type: 'object',
+        properties: {
+          did: {
+            type: 'string',
+            description: 'The decentralized identifier of the actor',
+          },
+          displayName: {
+            type: 'string',
+          },
+          description: {
+            type: 'string',
+            description: 'Free-form profile description text.',
+          },
+          descriptionFacets: {
+            type: 'array',
+            description:
+              'Annotations of text in the profile description (mentions, URLs, hashtags, etc). May be changed to another (backwards compatible) lexicon.',
+            items: {
+              type: 'ref',
+              ref: 'lex:app.bsky.richtext.facet',
+            },
+          },
+          featuredItem: {
+            type: 'ref',
+            description:
+              "The user's most recent item featured on their profile.",
+            ref: 'lex:fm.teal.alpha.actor.profile#featuredItem',
+          },
+          avatar: {
+            type: 'string',
+            description: 'IPLD of the avatar',
+          },
+          banner: {
+            type: 'string',
+            description: 'IPLD of the banner image',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'datetime',
+          },
+        },
+      },
+      miniProfileView: {
+        type: 'object',
+        properties: {
+          did: {
+            type: 'string',
+            description: 'The decentralized identifier of the actor',
+          },
+          displayName: {
+            type: 'string',
+          },
+          handle: {
+            type: 'string',
+          },
+          avatar: {
+            type: 'string',
+            description: 'IPLD of the avatar',
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaActorGetProfile: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.actor.getProfile',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actor'],
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+              description: "The author's DID",
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['actor'],
+            properties: {
+              actor: {
+                type: 'ref',
+                ref: 'lex:fm.teal.alpha.actor.defs#profileView',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaActorGetProfiles: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.actor.getProfiles',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves the associated profile.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actors'],
+          properties: {
+            actors: {
+              type: 'array',
+              items: {
+                type: 'string',
+                format: 'at-identifier',
+              },
+              description: 'Array of actor DIDs',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['actors'],
+            properties: {
+              actors: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   FmTealAlphaActorProfile: {
     lexicon: 1,
     id: 'fm.teal.alpha.actor.profile',
@@ -211,6 +355,59 @@ export const schemaDict = {
             type: 'string',
             description:
               'The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc.',
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaActorSearchActors: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.actor.searchActors',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Searches for actors based on profile contents.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['q'],
+          properties: {
+            q: {
+              type: 'string',
+              description: 'The search query',
+              maxGraphemes: 128,
+              maxLength: 640,
+            },
+            limit: {
+              type: 'integer',
+              description: 'The maximum number of actors to return',
+              minimum: 1,
+              maximum: 25,
+            },
+            cursor: {
+              type: 'string',
+              description: 'Cursor for pagination',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['actors'],
+            properties: {
+              actors: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                },
+              },
+              cursor: {
+                type: 'string',
+                description: 'Cursor for pagination',
+              },
+            },
           },
         },
       },
@@ -493,7 +690,7 @@ export const schemaDict = {
               maxLength: 256,
               maxGraphemes: 2560,
               description:
-                "A metadata string specifying the user agent. e.g. com.example.frontend/0.0.1b (Linux; Android 13; SM-A715F). Defaults to 'manual/unknown' if unavailable or not provided.",
+                "A metadata string specifying the user agent where the format is `<app-identifier>/<version> (<kernel/OS-base>; <platform/OS-version>; <device-model>)`. If string is provided, only `app-identifier` and `version` are required. `app-identifier` is recommended to be in reverse dns format. Defaults to 'manual/unknown' if unavailable or not provided.",
             },
             playedTime: {
               type: 'string',
@@ -538,7 +735,11 @@ export const lexicons: Lexicons = new Lexicons(schemas)
 export const ids = {
   AppBskyActorProfile: 'app.bsky.actor.profile',
   AppBskyRichtextFacet: 'app.bsky.richtext.facet',
+  FmTealAlphaActorDefs: 'fm.teal.alpha.actor.defs',
+  FmTealAlphaActorGetProfile: 'fm.teal.alpha.actor.getProfile',
+  FmTealAlphaActorGetProfiles: 'fm.teal.alpha.actor.getProfiles',
   FmTealAlphaActorProfile: 'fm.teal.alpha.actor.profile',
+  FmTealAlphaActorSearchActors: 'fm.teal.alpha.actor.searchActors',
   FmTealAlphaActorStatus: 'fm.teal.alpha.actor.status',
   FmTealAlphaFeedDefs: 'fm.teal.alpha.feed.defs',
   FmTealAlphaFeedGetActorFeed: 'fm.teal.alpha.feed.getActorFeed',

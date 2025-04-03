@@ -1,51 +1,106 @@
 import { TealContext } from "@/ctx";
-import { db, tealSession, play } from "@teal/db";
-import { eq, and } from "drizzle-orm";
-import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getPlay";
+import { db, plays, playToArtists, artists } from "@teal/db";
+import { eq, and, lt, desc, sql } from "drizzle-orm";
+import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
 
-export default async function getPlay(c: TealContext) {
-  // do we have required query params?
+export default async function getActorFeed(c: TealContext) {
   const params = c.req.query();
-  if (params.authorDid === undefined) {
+  if (!params.authorDid) {
     throw new Error("authorDid is required");
   }
   if (!params.rkey) {
     throw new Error("rkey is required");
   }
 
-  let res = await db
-    .select()
-    .from(play)
-    .where(
-      and(eq(play.authorDid, params.authorDid), and(eq(play.uri, params.rkey))),
+  // Get plays with artists as arrays
+  const playRes = await db
+    .select({
+      play: plays,
+      artists: sql<Array<{ mbid: string; name: string }>>`
+        COALESCE(
+          array_agg(
+            CASE WHEN ${artists.mbid} IS NOT NULL THEN
+              jsonb_build_object(
+                'mbid', ${artists.mbid},
+                'name', ${artists.name}
+              )
+            END
+          ) FILTER (WHERE ${artists.mbid} IS NOT NULL),
+          ARRAY[]::jsonb[]
+        )
+      `.as("artists"),
+    })
+    .from(plays)
+    .leftJoin(playToArtists, sql`${plays.uri} = ${playToArtists.playUri}`)
+    .leftJoin(artists, sql`${playToArtists.artistMbid} = ${artists.mbid}`)
+    .where(and(eq(plays.did, params.authorDid), eq(plays.rkey, params.rkey)))
+    .groupBy(
+      plays.uri,
+      plays.cid,
+      plays.did,
+      plays.duration,
+      plays.isrc,
+      plays.musicServiceBaseDomain,
+      plays.originUrl,
+      plays.playedTime,
+      plays.processedTime,
+      plays.rkey,
+      plays.recordingMbid,
+      plays.releaseMbid,
+      plays.releaseName,
+      plays.submissionClientAgent,
+      plays.trackName,
     )
-    .execute();
+    .orderBy(desc(plays.playedTime))
+    .limit(1);
 
-  if (res.length === 0) {
+  if (playRes.length === 0) {
     throw new Error("Play not found");
   }
-  res[0];
 
-  // return a PlayView
   return {
-    play: {
-      uri: res[0].uri,
-      authorDid: res[0].authorDid,
-      createdAt: res[0].createdAt,
-      indexedAt: res[0].indexedAt,
-      trackName: res[0].trackName,
-      trackMbId: res[0].trackMbId,
-      recordingMbId: res[0].recordingMbId,
-      duration: res[0].duration,
-      artistNames: res[0].artistNames,
-      artistMbIds: res[0].artistMbIds,
-      releaseName: res[0].releaseName,
-      releaseMbId: res[0].releaseMbId,
-      isrc: res[0].isrc,
-      originUrl: res[0].originUrl,
-      musicServiceBaseDomain: res[0].musicServiceBaseDomain,
-      submissionClientAgent: res[0].submissionClientAgent,
-      playedTime: res[0].playedTime,
-    },
+    plays: playRes.map(({ play, artists }) => {
+      const {
+        uri,
+        did: authorDid,
+        processedTime: createdAt,
+        processedTime: indexedAt,
+        trackName,
+        cid: trackMbId,
+        cid: recordingMbId,
+        duration,
+        rkey,
+        releaseName,
+        cid: releaseMbId,
+        isrc,
+        originUrl,
+        musicServiceBaseDomain,
+        submissionClientAgent,
+        playedTime,
+      } = play;
+
+      return {
+        uri,
+        authorDid,
+        createdAt: createdAt?.toISOString(),
+        indexedAt: indexedAt?.toISOString(),
+        trackName,
+        trackMbId,
+        recordingMbId,
+        duration,
+        // Replace these with actual artist data from the array
+        artistNames: artists.map((artist) => artist.name),
+        artistMbIds: artists.map((artist) => artist.mbid),
+        // Or, if you want to keep the full artist objects:
+        // artists: artists,
+        releaseName,
+        releaseMbId,
+        isrc,
+        originUrl,
+        musicServiceBaseDomain,
+        submissionClientAgent,
+        playedTime: playedTime?.toISOString(),
+      };
+    }),
   } as OutputSchema;
 }

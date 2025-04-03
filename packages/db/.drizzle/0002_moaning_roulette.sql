@@ -1,1 +1,0 @@
-ALTER TABLE `auth_session` RENAME TO `atp_session`;

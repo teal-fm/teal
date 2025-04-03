@@ -1,1 +1,0 @@
-ALTER TABLE `play` RENAME COLUMN "uri" TO "rkey";

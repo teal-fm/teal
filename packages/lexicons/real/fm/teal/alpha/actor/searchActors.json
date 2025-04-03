@@ -1,0 +1,52 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.actor.searchActors",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Searches for actors based on profile contents.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["q"],
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "The search query",
+            "maxGraphemes": 128,
+            "maxLength": 640
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The maximum number of actors to return",
+            "minimum": 1,
+            "maximum": 25
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Cursor for pagination"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["actors"],
+          "properties": {
+            "actors": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.alpha.actor.defs#miniProfileView"
+              }
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Cursor for pagination"
+            }
+          }
+        }
+      }
+    }
+  }
+}

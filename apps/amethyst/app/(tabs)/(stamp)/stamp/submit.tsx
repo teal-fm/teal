@@ -19,7 +19,6 @@ import { Text } from "@/components/ui/text";
 import { ExternalLink } from "@/components/ExternalLink";
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 import { Image } from "react-native";
-import PlayView from "@/components/play/playView";
 
 type CardyBResponse = {
   error: string;

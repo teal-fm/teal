@@ -1,31 +1,31 @@
-import React from "react";
-import { Platform, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import { ArrowRight, AtSignIcon } from "lucide-react-native";
+import React from 'react';
+import { Platform, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text } from '@/components/ui/text';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/lib/icons/iconWithClassName';
+import { ArrowRight, AtSignIcon } from 'lucide-react-native';
 
-import { Stack, router } from "expo-router";
+import { Stack, router } from 'expo-router';
 
 const LoginScreen = () => {
   return (
     <SafeAreaView className="flex-1 flex justify-center items-center">
       <Stack.Screen
         options={{
-          title: "Sign in",
-          headerBackButtonDisplayMode: "minimal",
+          title: 'Sign in',
+          headerBackButtonDisplayMode: 'minimal',
           headerShown: false,
         }}
       />
       <View className="flex-1 justify-center p-8 gap-4 pb-32 w-screen max-w-md">
         <Text className="text-3xl text-center text-foreground -mb-2">
-          Sign up via <br /> the{" "}
+          Sign up via <br /> the{' '}
           <Icon
             icon={AtSignIcon}
-            className="color-bsky inline mb-2"
+            className="color-bsky inline mb-2 mr-1.5"
             size={32}
-          />{" "}
+          />
           Atmosphere
         </Text>
         <Text className="text-foreground text-xl text-center">
@@ -43,13 +43,13 @@ const LoginScreen = () => {
           <Button
             onPress={() => {
               // on web, open new tab
-              if (Platform.OS === "web") {
-                window.open("https://bsky.app/signup", "_blank");
+              if (Platform.OS === 'web') {
+                window.open('https://bsky.app/signup', '_blank');
               } else {
-                router.navigate("https://bsky.app");
+                router.navigate('https://bsky.app');
               }
               setTimeout(() => {
-                router.replace("/auth/login");
+                router.replace('/auth/login');
               }, 1000);
             }}
             className="flex flex-row justify-center items-center gap-2 bg-bsky"
