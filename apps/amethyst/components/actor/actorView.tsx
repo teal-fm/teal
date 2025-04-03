@@ -61,7 +61,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     };
   }, [pdsAgent, actorDid, tealDid]);
 
-  const isSelf = actorDid === (pdsAgent?.did || "");
+  const isSelf = actorDid === (pdsAgent?.did || '');
 
   const handleSave = async (
     updatedProfile: { displayName: any; description: any },
@@ -83,9 +83,24 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
       banner: newBannerUri,
     }));
 
+    // get the current user's profile (getRecord)
+    let currentUser: ProfileRecord | undefined;
+    let cid: string | undefined;
+    try {
+      const res = await pdsAgent.call('com.atproto.repo.getRecord', {
+        repo: pdsAgent.did,
+        collection: 'fm.teal.alpha.actor.profile',
+        rkey: 'self',
+      });
+      currentUser = res.data.value;
+      cid = res.data.cid;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+
     // upload blobs if necessary
-    let newAvatarBlob;
-    let newBannerBlob;
+    let newAvatarBlob = currentUser?.avatar ?? undefined;
+    let newBannerBlob = currentUser?.banner ?? undefined;
     if (newAvatarUri) {
       // if it is http/s url then do nothing
       if (!newAvatarUri.startsWith('http')) {
@@ -95,7 +110,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         const fileType = newAvatarUri.split(';')[0].split(':')[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = await pdsAgent.uploadBlob(blob);
+        newAvatarBlob = (await pdsAgent.uploadBlob(blob)).data.blob;
       }
     }
     if (newBannerUri) {
@@ -105,7 +120,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         const fileType = newBannerUri.split(';')[0].split(':')[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = await pdsAgent.uploadBlob(blob);
+        newBannerBlob = (await pdsAgent.uploadBlob(blob)).data.blob;
       }
     }
 
@@ -114,36 +129,36 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     let record: ProfileRecord = {
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
-      avatar: newAvatarBlob?.data.blob,
-      banner: newBannerBlob?.data.blob,
+      avatar: newAvatarBlob,
+      banner: newBannerBlob,
     };
 
-    console.log(record);
+    let post;
 
-    // delete existing record
-    await pdsAgent.call(
-      'com.atproto.repo.deleteRecord',
-      {},
-      {
-        repo: pdsAgent.did,
-        collection: 'fm.teal.alpha.actor.profile',
-        rkey: 'self',
-      },
-    );
-
-    // submit the profile to our PDS
-    let post = await pdsAgent.call(
-      'com.atproto.repo.createRecord',
-      {},
-      {
-        repo: pdsAgent.did,
-        collection: 'fm.teal.alpha.actor.profile',
-        rkey: 'self',
-        record,
-      },
-    );
-
-    console.log(post);
+    if (cid) {
+      post = await pdsAgent.call(
+        'com.atproto.repo.putRecord',
+        {},
+        {
+          repo: pdsAgent.did,
+          collection: 'fm.teal.alpha.actor.profile',
+          rkey: 'self',
+          record,
+          swapRecord: cid,
+        },
+      );
+    } else {
+      post = await pdsAgent.call(
+        'com.atproto.repo.createRecord',
+        {},
+        {
+          repo: pdsAgent.did,
+          collection: 'fm.teal.alpha.actor.profile',
+          rkey: 'self',
+          record,
+        },
+      );
+    }
 
     setIsEditing(false); // Close the modal after saving
   };

@@ -38,7 +38,7 @@ export default function OnboardingPage() {
   const handleImageSelectionComplete = (avatar: string, banner: string) => {
     setAvatarUri(avatar);
     setBannerUri(banner);
-    onComplete({ displayName, description }, avatarUri, bannerUri);
+    onComplete({ displayName, description }, avatar, banner);
   };
 
   const handleDisplayNameComplete = (name: string) => {
@@ -62,10 +62,26 @@ export default function OnboardingPage() {
 
     setSubmissionStep(1);
 
+    // get the current user's profile (getRecord)
+    let currentUser: ProfileRecord | undefined;
+    let cid: string | undefined;
+    try {
+      const res = await agent.call('com.atproto.repo.getRecord', {
+        repo: agent.did,
+        collection: 'fm.teal.alpha.actor.profile',
+        rkey: 'self',
+      });
+      currentUser = res.data.value;
+      cid = res.data.cid;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+
     // upload blobs if necessary
-    let newAvatarBlob;
-    let newBannerBlob;
+    let newAvatarBlob = currentUser?.avatar ?? undefined;
+    let newBannerBlob = currentUser?.banner ?? undefined;
     if (newAvatarUri) {
+      console.log(newAvatarUri);
       // if it is http/s url then do nothing
       if (!newAvatarUri.startsWith('http')) {
         setSubmissionStep(2);
@@ -75,7 +91,7 @@ export default function OnboardingPage() {
         const fileType = newAvatarUri.split(';')[0].split(':')[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = await agent.uploadBlob(blob);
+        newAvatarBlob = (await agent.uploadBlob(blob)).data.blob;
       }
     }
     if (newBannerUri) {
@@ -86,7 +102,7 @@ export default function OnboardingPage() {
         const fileType = newBannerUri.split(';')[0].split(':')[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = await agent.uploadBlob(blob);
+        newBannerBlob = (await agent.uploadBlob(blob)).data.blob;
       }
     }
 
@@ -97,21 +113,36 @@ export default function OnboardingPage() {
     let record: ProfileRecord = {
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
-      avatar: newAvatarBlob?.data.blob,
-      banner: newBannerBlob?.data.blob,
+      avatar: newAvatarBlob,
+      banner: newBannerBlob,
     };
 
-    // submit the profile to our PDS
-    let post = await agent.call(
-      'com.atproto.repo.createRecord',
-      {},
-      {
-        repo: agent.did,
-        collection: 'fm.teal.alpha.actor.profile',
-        rkey: 'self',
-        record,
-      },
-    );
+    let post;
+
+    if (cid) {
+      post = await agent.call(
+        'com.atproto.repo.putRecord',
+        {},
+        {
+          repo: agent.did,
+          collection: 'fm.teal.alpha.actor.profile',
+          rkey: 'self',
+          record,
+          swapRecord: cid,
+        },
+      );
+    } else {
+      post = await agent.call(
+        'com.atproto.repo.createRecord',
+        {},
+        {
+          repo: agent.did,
+          collection: 'fm.teal.alpha.actor.profile',
+          rkey: 'self',
+          record,
+        },
+      );
+    }
 
     console.log(post);
     setSubmissionStep(5);
