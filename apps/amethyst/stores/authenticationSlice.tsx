@@ -1,19 +1,21 @@
-import { StateCreator } from "./mainStore";
-import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
-import { OAuthSession } from "@atproto/oauth-client";
-import { ProfileViewDetailed } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
-import { Agent } from "@atproto/api";
-import * as Lexicons from "@teal/lexicons/src/lexicons";
-import { resolveFromIdentity } from "@/lib/atp/pid";
+import { StateCreator } from './mainStore';
+import createOAuthClient, { AquareumOAuthClient } from '../lib/atp/oauth';
+import { OAuthSession } from '@atproto/oauth-client';
+import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs';
+import { OutputSchema as GetProfileOutputSchema } from '@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile';
+import { Agent } from '@atproto/api';
+import * as Lexicons from '@teal/lexicons/src/lexicons';
+import { resolveFromIdentity } from '@/lib/atp/pid';
 
 export interface AllProfileViews {
   bsky: null | ProfileViewDetailed;
+  teal: null | GetProfileOutputSchema['actor'];
   // todo: teal profile view
 }
 
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
-  status: "start" | "loggedIn" | "loggedOut";
+  status: 'start' | 'loggedIn' | 'loggedOut';
   oauthState: null | string;
   oauthSession: null | OAuthSession;
   pdsAgent: null | Agent;
@@ -41,15 +43,15 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   get,
 ) => {
   // check if we have CF_PAGES_URL set. if not, use localhost
-  const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
-  console.log("Using base URL:", baseUrl);
-  const initialAuth = createOAuthClient(baseUrl, "bsky.social");
+  const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || 'http://localhost:8081';
+  console.log('Using base URL:', baseUrl);
+  const initialAuth = createOAuthClient(baseUrl, 'bsky.social');
 
-  console.log("Auth client created!");
+  console.log('Auth client created!');
 
   return {
     auth: initialAuth,
-    status: "start",
+    status: 'start',
     oauthState: null,
     oauthSession: null,
     pdsAgent: null,
@@ -78,40 +80,41 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         });
         return url;
       } catch (error) {
-        console.error("Failed to get login URL:", error);
+        console.error('Failed to get login URL:', error);
         return null;
       }
     },
 
     oauthCallback: async (state: URLSearchParams) => {
       try {
-        if (!(state.has("code") && state.has("state") && state.has("iss"))) {
-          throw new Error("Missing params, got: " + state);
+        if (!(state.has('code') && state.has('state') && state.has('iss'))) {
+          throw new Error('Missing params, got: ' + state);
         }
         // are we already logged in?
-        if (get().status === "loggedIn") {
+        if (get().status === 'loggedIn') {
           return;
         }
         const { session, state: oauthState } =
           await initialAuth.callback(state);
         const agent = new Agent(session);
         set({
-          oauthSession: session,
+          // TODO: fork or update auth lib
+          oauthSession: session as any,
           oauthState,
-          status: "loggedIn",
+          status: 'loggedIn',
           pdsAgent: addDocs(agent),
           isAgentReady: true,
         });
         get().populateLoggedInProfile();
       } catch (error: any) {
-        console.error("OAuth callback failed:", error);
+        console.error('OAuth callback failed:', error);
         set({
-          status: "loggedOut",
+          status: 'loggedOut',
           login: {
             loading: false,
             error:
               (error?.message as string) ||
-              "Unknown error during OAuth callback",
+              'Unknown error during OAuth callback',
           },
         });
       }
@@ -128,7 +131,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         let sess = await initialAuth.restore(did);
 
         if (!sess) {
-          throw new Error("Failed to restore session");
+          throw new Error('Failed to restore session');
         }
 
         const agent = new Agent(sess);
@@ -136,22 +139,22 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         set({
           pdsAgent: addDocs(agent),
           isAgentReady: true,
-          status: "loggedIn",
+          status: 'loggedIn',
         });
         get().populateLoggedInProfile();
-        console.log("Restored agent");
+        console.log('Restored agent');
       } catch (error) {
-        console.error("Failed to restore agent:", error);
+        console.error('Failed to restore agent:', error);
         get().logOut();
       }
     },
     logOut: () => {
-      console.log("Logging out");
+      console.log('Logging out');
       let profiles = { ...get().profiles };
       // TODO: something better than 'delete'
-      delete profiles[get().pdsAgent?.did ?? ""];
+      delete profiles[get().pdsAgent?.did ?? ''];
       set({
-        status: "loggedOut",
+        status: 'loggedOut',
         oauthSession: null,
         oauthState: null,
         profiles,
@@ -161,13 +164,13 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       });
     },
     populateLoggedInProfile: async () => {
-      console.log("Populating logged in profile");
+      console.log('Populating logged in profile');
       const agent = get().pdsAgent;
       if (!agent) {
-        throw new Error("No agent");
+        throw new Error('No agent');
       }
       if (!agent.did) {
-        throw new Error("No agent did! This is bad!");
+        throw new Error('No agent did! This is bad!');
       }
       try {
         let bskyProfile = await agent
@@ -176,14 +179,37 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             console.log(profile);
             return profile.data || null;
           });
+        // get teal did
+        try {
+          let tealDid = get().tealDid;
+          let tealProfile = await agent
+            .call(
+              'fm.teal.alpha.actor.getProfile',
+              { actor: agent?.did },
+              {},
+              { headers: { 'atproto-proxy': tealDid + '#teal_fm_appview' } },
+            )
+            .then((profile) => {
+              console.log(profile);
+              return profile.data.agent || null;
+            });
 
-        set({
-          profiles: {
-            [agent.did]: { bsky: bskyProfile },
-          },
-        });
+          set({
+            profiles: {
+              [agent.did]: { bsky: bskyProfile, teal: tealProfile },
+            },
+          });
+        } catch (error) {
+          console.error('Failed to get teal profile:', error);
+          // insert bsky profile
+          set({
+            profiles: {
+              [agent.did]: { bsky: bskyProfile, teal: null },
+            },
+          });
+        }
       } catch (error) {
-        console.error("Failed to get profile:", error);
+        console.error('Failed to get profile:', error);
       }
     },
   };
@@ -191,12 +217,12 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
 
 function addDocs(agent: Agent) {
   Lexicons.schemas
-    .filter((schema) => !schema.id.startsWith("app.bsky."))
+    .filter((schema) => !schema.id.startsWith('app.bsky.'))
     .map((schema) => {
       try {
         agent.lex.add(schema);
       } catch (e) {
-        console.error("Failed to add schema:", e);
+        console.error('Failed to add schema:', e);
       }
     });
   return agent;
