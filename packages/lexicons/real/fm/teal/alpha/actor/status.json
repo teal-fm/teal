@@ -15,6 +15,11 @@
             "format": "datetime",
             "description": "The unix timestamp of when the item was recorded"
           },
+          "expiry": {
+            "type": "string",
+            "format": "datetime",
+            "description": "The unix timestamp of the expiry time of the item. If unavailable, default to 10 minutes past the start time."
+          },
           "item": {
             "type": "ref",
             "ref": "fm.teal.alpha.feed.defs#playView"
