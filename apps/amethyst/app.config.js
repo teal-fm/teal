@@ -43,6 +43,8 @@ export default () => {
             useSQLCipher: true,
           },
         ],
+        "expo-router",
+        "expo-web-browser",
       ],
       experiments: {
         reactCompiler: true,
