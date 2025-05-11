@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "@aquareum/atproto-oauth-client-react-native": "^0.0.1",
-    "@atproto/api": "^0.15.5",
-    "@atproto/lex-cli": "^0.8.0",
-    "@atproto/oauth-client": "^0.3.15",
+    "@atproto/api": "^0.15.6",
+    "@atproto/lex-cli": "^0.8.1",
+    "@atproto/oauth-client": "^0.3.16",
     "@babel/plugin-transform-export-namespace-from": "^7.27.1",
     "@expo/vector-icons": "^14.1.0",
     "@gorhom/bottom-sheet": "^5.1.2",
