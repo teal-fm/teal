@@ -15,7 +15,9 @@ export default function Handle() {
   const [did, setDid] = useState<string | null>(null);
   useEffect(() => {
     const fetchAgent = async () => {
-      const agent = await resolveHandle(handle);
+      const agent = await resolveHandle(
+        typeof handle === "string" ? handle : handle[0] && handle[0],
+      );
       setDid(agent);
     };
     if (handle !== "undefined") fetchAgent();
