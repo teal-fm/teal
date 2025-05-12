@@ -1,23 +1,23 @@
-import { View, Image } from 'react-native';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CardTitle } from '../../components/ui/card';
-import { Text } from '@/components/ui/text';
-import { useStore } from '@/stores/mainStore';
+import { useEffect, useState } from "react";
+import { Image, View } from "react-native";
+import ActorPlaysView from "@/components/play/actorPlaysView";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
+import { Icon } from "@/lib/icons/iconWithClassName";
+import { useStore } from "@/stores/mainStore";
+import { Agent } from "@atproto/api";
+import { MoreHorizontal, Pen, Plus } from "lucide-react-native";
 
-import ActorPlaysView from '@/components/play/actorPlaysView';
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/lib/icons/iconWithClassName';
-import { MoreHorizontal, Pen, Plus } from 'lucide-react-native';
-import { Agent } from '@atproto/api';
-import { useState, useEffect } from 'react';
-import EditProfileModal from './editProfileView';
+import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile";
+import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
 
-import { Record as ProfileRecord } from '@teal/lexicons/src/types/fm/teal/alpha/actor/profile';
-import { OutputSchema as GetProfileOutputSchema } from '@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile';
-import getImageCdnLink from '@/lib/atp/getImageCdnLink';
+import { CardTitle } from "../../components/ui/card";
+import EditProfileModal from "./editProfileView";
 
 const GITHUB_AVATAR_URI =
-  'https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg';
+  "https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg";
 
 export interface ActorViewProps {
   actorDid: string;
@@ -27,7 +27,7 @@ export interface ActorViewProps {
 export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<
-    GetProfileOutputSchema['actor'] | null
+    GetProfileOutputSchema["actor"] | null
   >(null);
 
   const tealDid = useStore((state) => state.tealDid);
@@ -41,16 +41,16 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
       }
       try {
         let res = await pdsAgent.call(
-          'fm.teal.alpha.actor.getProfile',
+          "fm.teal.alpha.actor.getProfile",
           { actor: actorDid },
           {},
-          { headers: { 'atproto-proxy': tealDid + '#teal_fm_appview' } },
+          { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
         );
         if (isMounted) {
-          setProfile(res.data['actor'] as GetProfileOutputSchema['actor']);
+          setProfile(res.data["actor"] as GetProfileOutputSchema["actor"]);
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error("Error fetching profile:", error);
       }
     };
 
@@ -61,7 +61,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     };
   }, [pdsAgent, actorDid, tealDid]);
 
-  const isSelf = actorDid === (pdsAgent?.did || '');
+  const isSelf = actorDid === (pdsAgent?.did || "");
 
   const handleSave = async (
     updatedProfile: { displayName: any; description: any },
@@ -72,7 +72,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
       return;
     }
     // Implement your save logic here (e.g., update your database or state)
-    console.log('Saving profile:', updatedProfile, newAvatarUri, newBannerUri);
+    console.log("Saving profile:", updatedProfile, newAvatarUri, newBannerUri);
 
     // Update the local profile data
     setProfile((prevProfile) => ({
@@ -87,15 +87,15 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     let currentUser: ProfileRecord | undefined;
     let cid: string | undefined;
     try {
-      const res = await pdsAgent.call('com.atproto.repo.getRecord', {
+      const res = await pdsAgent.call("com.atproto.repo.getRecord", {
         repo: pdsAgent.did,
-        collection: 'fm.teal.alpha.actor.profile',
-        rkey: 'self',
+        collection: "fm.teal.alpha.actor.profile",
+        rkey: "self",
       });
       currentUser = res.data.value;
       cid = res.data.cid;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
     }
 
     // upload blobs if necessary
@@ -103,28 +103,28 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     let newBannerBlob = currentUser?.banner ?? undefined;
     if (newAvatarUri) {
       // if it is http/s url then do nothing
-      if (!newAvatarUri.startsWith('http')) {
-        console.log('Uploading avatar');
+      if (!newAvatarUri.startsWith("http")) {
+        console.log("Uploading avatar");
         // its a b64 encoded data uri, decode it and get a blob
         const data = await fetch(newAvatarUri).then((r) => r.blob());
-        const fileType = newAvatarUri.split(';')[0].split(':')[1];
+        const fileType = newAvatarUri.split(";")[0].split(":")[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
         newAvatarBlob = (await pdsAgent.uploadBlob(blob)).data.blob;
       }
     }
     if (newBannerUri) {
-      if (!newBannerUri.startsWith('http')) {
-        console.log('Uploading banner');
+      if (!newBannerUri.startsWith("http")) {
+        console.log("Uploading banner");
         const data = await fetch(newBannerUri).then((r) => r.blob());
-        const fileType = newBannerUri.split(';')[0].split(':')[1];
+        const fileType = newBannerUri.split(";")[0].split(":")[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
         newBannerBlob = (await pdsAgent.uploadBlob(blob)).data.blob;
       }
     }
 
-    console.log('done uploading');
+    console.log("done uploading");
 
     let record: ProfileRecord = {
       displayName: updatedProfile.displayName,
@@ -137,24 +137,24 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
 
     if (cid) {
       post = await pdsAgent.call(
-        'com.atproto.repo.putRecord',
+        "com.atproto.repo.putRecord",
         {},
         {
           repo: pdsAgent.did,
-          collection: 'fm.teal.alpha.actor.profile',
-          rkey: 'self',
+          collection: "fm.teal.alpha.actor.profile",
+          rkey: "self",
           record,
           swapRecord: cid,
         },
       );
     } else {
       post = await pdsAgent.call(
-        'com.atproto.repo.createRecord',
+        "com.atproto.repo.createRecord",
         {},
         {
           repo: pdsAgent.did,
-          collection: 'fm.teal.alpha.actor.profile',
-          rkey: 'self',
+          collection: "fm.teal.alpha.actor.profile",
+          rkey: "self",
           record,
         },
       );
@@ -171,7 +171,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     <>
       {profile.banner ? (
         <Image
-          className="w-full max-w-[100vh] h-32 md:h-44 scale-[1.32] rounded-xl -mb-6"
+          className="-mb-6 h-32 w-full max-w-[100vh] scale-[1.32] rounded-xl md:h-44"
           source={{
             uri:
               getImageCdnLink({ did: profile.did!, hash: profile.banner }) ??
@@ -179,12 +179,12 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
           }}
         />
       ) : (
-        <View className="w-full max-w-[100vh] h-32 md:h-44 scale-[1.32] rounded-xl -mb-6 bg-background" />
+        <View className="-mb-6 h-32 w-full max-w-[100vh] scale-[1.32] rounded-xl bg-background md:h-44" />
       )}
-      <View className="flex flex-col items-left justify-start text-left max-w-2xl w-screen gap-1 p-4 px-8">
-        <View className="flex flex-row justify-between items-center">
+      <View className="items-left flex w-screen max-w-2xl flex-col justify-start gap-1 p-4 px-8 text-left">
+        <View className="flex flex-row items-center justify-between">
           <View className="flex justify-between">
-            <Avatar alt="Rick Sanchez's Avatar" className="w-24 h-24">
+            <Avatar alt="Rick Sanchez's Avatar" className="h-24 w-24">
               <AvatarImage
                 source={{
                   uri:
@@ -197,11 +197,11 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
                 }}
               />
               <AvatarFallback>
-                <Text>{profile.displayName?.substring(0, 1) ?? 'R'}</Text>
+                <Text>{profile.displayName?.substring(0, 1) ?? "R"}</Text>
               </AvatarFallback>
             </Avatar>
-            <CardTitle className="text-left flex w-full justify-between mt-2">
-              {profile.displayName ?? ' Richard'}
+            <CardTitle className="mt-2 flex w-full justify-between text-left">
+              {profile.displayName ?? " Richard"}
             </CardTitle>
           </View>
           <View className="mt-2 flex-row gap-2">
@@ -209,7 +209,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl flex-row gap-2 justify-center items-center"
+                className="flex-row items-center justify-center gap-2 rounded-xl"
                 onPress={() => setIsEditing(true)}
               >
                 <Icon icon={Pen} size={18} />
@@ -219,7 +219,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl flex-row gap-2 justify-center items-center"
+                className="flex-row items-center justify-center gap-2 rounded-xl"
               >
                 <Icon icon={Plus} size={18} />
                 <Text>Follow</Text>
@@ -228,7 +228,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
             <Button
               variant="outline"
               size="sm"
-              className="text-white aspect-square p-0 rounded-full flex flex-row gap-2 justify-center items-center"
+              className="flex aspect-square flex-row items-center justify-center gap-2 rounded-full p-0 text-white"
             >
               <Icon icon={MoreHorizontal} size={18} />
             </Button>
@@ -236,19 +236,19 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         </View>
         <View>
           {profile
-            ? profile.description?.split('\n').map((str, i) => (
+            ? profile.description?.split("\n").map((str, i) => (
                 <Text
-                  className="text-start self-start place-self-start"
+                  className="place-self-start self-start text-start"
                   key={i}
                 >
                   {str}
                 </Text>
               )) || <Text>'A very mysterious person'</Text>
-            : 'Loading...'}
+            : "Loading..."}
         </View>
       </View>
-      <View className="max-w-2xl w-full gap-4 py-4 pl-8">
-        <Text className="text-left text-2xl border-b border-b-muted-foreground/30 -ml-2 pl-2 mr-6">
+      <View className="w-full max-w-2xl gap-4 py-4 pl-8">
+        <Text className="-ml-2 mr-6 border-b border-b-muted-foreground/30 pl-2 text-left text-2xl">
           Stamps
         </Text>
         <ActorPlaysView repo={actorDid} pdsAgent={pdsAgent} />

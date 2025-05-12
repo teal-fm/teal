@@ -1,11 +1,11 @@
-import { Link, Stack, router } from "expo-router";
-import { View } from "react-native";
-import { Text } from "@/components/ui/text";
 import React, { useEffect } from "react";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import { PencilLine } from "lucide-react-native";
+import { View } from "react-native";
+import { Link, router, Stack } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
+import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
+import { PencilLine } from "lucide-react-native";
 
 interface CallbackSearchParams {
   iss: string;
@@ -44,7 +44,7 @@ export default function AuthOptions() {
     );
   }
   return (
-    <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
+    <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
       <Stack.Screen
         options={{
           title: "Processing",
@@ -52,13 +52,13 @@ export default function AuthOptions() {
         }}
       />
       <Icon icon={PencilLine} size={64} />
-      <Text className="text-3xl font-semibold text-center text-foreground">
+      <Text className="text-center text-3xl font-semibold text-foreground">
         {status === "loggedIn" ? "Success!" : "Fetching your data..."}
       </Text>
       <Text className="text-sm text-muted-foreground">
         This may take a few seconds {status}
       </Text>
-      <Text className="text-sm text-muted-foreground font-mono bg-muted-foreground/30 py-1 px-2 rounded-full">
+      <Text className="rounded-full bg-muted-foreground/30 px-2 py-1 font-mono text-sm text-muted-foreground">
         {state}
       </Text>
     </View>

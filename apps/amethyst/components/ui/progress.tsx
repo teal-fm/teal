@@ -1,4 +1,3 @@
-import * as ProgressPrimitive from "@rn-primitives/progress";
 import * as React from "react";
 import { Platform, View } from "react-native";
 import Animated, {
@@ -8,6 +7,8 @@ import Animated, {
   useDerivedValue,
   withSpring,
 } from "react-native-reanimated";
+import * as ProgressPrimitive from "@rn-primitives/progress";
+
 import { cn } from "../../lib/utils";
 
 const Progress = React.forwardRef<
@@ -61,7 +62,7 @@ function Indicator({
         style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
       >
         <ProgressPrimitive.Indicator
-          className={cn("h-full w-full ", className)}
+          className={cn("h-full w-full", className)}
         />
       </View>
     );

@@ -1,11 +1,12 @@
-import { ExternalLink } from "@/components/ExternalLink";
-import { Redirect, Stack, useRouter } from "expo-router";
-import { Check, ExternalLinkIcon } from "lucide-react-native";
-import { View } from "react-native";
-import { Text } from "@/components/ui/text";
-import { StampContext, StampContextValue, StampStep } from "./_layout";
 import { useContext, useEffect } from "react";
+import { View } from "react-native";
+import { Redirect, Stack, useRouter } from "expo-router";
+import { ExternalLink } from "@/components/ExternalLink";
 import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { Check, ExternalLinkIcon } from "lucide-react-native";
+
+import { StampContext, StampContextValue, StampStep } from "./_layout";
 
 export default function StepThree() {
   const router = useRouter();
@@ -23,13 +24,13 @@ export default function StepThree() {
     return <Redirect href="/stamp" />;
   }
   return (
-    <View className="flex-1 p-4 bg-background items-center h-screen-safe">
+    <View className="h-screen-safe flex-1 items-center bg-background p-4">
       <Stack.Screen
         options={{
           title: "Play Successfully Submitted",
         }}
       />
-      <View className="flex justify-center items-center gap-2 max-w-screen-md w-screen min-h-full px-4">
+      <View className="flex min-h-full w-screen max-w-screen-md items-center justify-center gap-2 px-4">
         <Check size={48} className="text-green-600 dark:text-green-400" />
         <Text className="text-xl">Play Submitted!</Text>
         <Text>
@@ -40,7 +41,7 @@ export default function StepThree() {
           >
             on PDSls
           </ExternalLink>
-          <ExternalLinkIcon className="inline mb-0.5 ml-0.5" size="1rem" />
+          <ExternalLinkIcon className="mb-0.5 ml-0.5 inline" size="1rem" />
         </Text>
         {state.submittedStamp.blueskyPostUrl && (
           <Text>

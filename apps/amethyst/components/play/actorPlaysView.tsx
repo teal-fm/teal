@@ -1,28 +1,29 @@
+import { useEffect, useState } from "react";
+import { ScrollView } from "react-native";
+import { Text } from "@/components/ui/text";
+import { useStore } from "@/stores/mainStore";
+import { Agent } from "@atproto/api";
 
-import { useStore } from '@/stores/mainStore';
-import { OutputSchema as ActorFeedResponse } from '@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed';
-import { useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
-import { Text } from '@/components/ui/text';
-import PlayView from './playView';
-import { Agent } from '@atproto/api';
+import { OutputSchema as ActorFeedResponse } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
+
+import PlayView from "./playView";
 
 interface ActorPlaysViewProps {
   repo: string | undefined;
   pdsAgent: Agent | null;
 }
 const ActorPlaysView = ({ repo, pdsAgent }: ActorPlaysViewProps) => {
-  const [play, setPlay] = useState<ActorFeedResponse['plays'] | null>(null);
+  const [play, setPlay] = useState<ActorFeedResponse["plays"] | null>(null);
   const isReady = useStore((state) => state.isAgentReady);
   const tealDid = useStore((state) => state.tealDid);
   useEffect(() => {
     if (pdsAgent) {
       pdsAgent
         .call(
-          'fm.teal.alpha.feed.getActorFeed',
+          "fm.teal.alpha.feed.getActorFeed",
           { authorDID: repo },
           {},
-          { headers: { 'atproto-proxy': tealDid + '#teal_fm_appview' } },
+          { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
         )
         .then((res) => {
           res.data.plays as ActorFeedResponse;
@@ -32,7 +33,7 @@ const ActorPlaysView = ({ repo, pdsAgent }: ActorPlaysViewProps) => {
           console.log(e);
         });
     } else {
-      console.log('No agent');
+      console.log("No agent");
     }
   }, [isReady, pdsAgent, repo, tealDid]);
   if (!play) {
@@ -45,9 +46,8 @@ const ActorPlaysView = ({ repo, pdsAgent }: ActorPlaysViewProps) => {
           key={p.playedTime + p.trackName}
           releaseTitle={p.releaseName}
           trackTitle={p.trackName}
-          artistName={p.artistNames.join(', ')}
+          artistName={p.artistNames.join(", ")}
           releaseMbid={p.releaseMbId}
-
         />
       ))}
     </ScrollView>

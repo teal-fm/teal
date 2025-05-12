@@ -65,12 +65,8 @@
           "name": "play_to_artists_play_uri_plays_uri_fk",
           "tableFrom": "play_to_artists",
           "tableTo": "plays",
-          "columnsFrom": [
-            "play_uri"
-          ],
-          "columnsTo": [
-            "uri"
-          ],
+          "columnsFrom": ["play_uri"],
+          "columnsTo": ["uri"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -78,12 +74,8 @@
           "name": "play_to_artists_artist_mbid_artists_mbid_fk",
           "tableFrom": "play_to_artists",
           "tableTo": "artists",
-          "columnsFrom": [
-            "artist_mbid"
-          ],
-          "columnsTo": [
-            "mbid"
-          ],
+          "columnsFrom": ["artist_mbid"],
+          "columnsTo": ["mbid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -91,10 +83,7 @@
       "compositePrimaryKeys": {
         "play_to_artists_play_uri_artist_mbid_pk": {
           "name": "play_to_artists_play_uri_artist_mbid_pk",
-          "columns": [
-            "play_uri",
-            "artist_mbid"
-          ]
+          "columns": ["play_uri", "artist_mbid"]
         }
       },
       "uniqueConstraints": {},
@@ -198,12 +187,8 @@
           "name": "plays_release_mbid_releases_mbid_fk",
           "tableFrom": "plays",
           "tableTo": "releases",
-          "columnsFrom": [
-            "release_mbid"
-          ],
-          "columnsTo": [
-            "mbid"
-          ],
+          "columnsFrom": ["release_mbid"],
+          "columnsTo": ["mbid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -211,12 +196,8 @@
           "name": "plays_recording_mbid_recordings_mbid_fk",
           "tableFrom": "plays",
           "tableTo": "recordings",
-          "columnsFrom": [
-            "recording_mbid"
-          ],
-          "columnsTo": [
-            "mbid"
-          ],
+          "columnsFrom": ["recording_mbid"],
+          "columnsTo": ["mbid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

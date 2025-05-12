@@ -1,12 +1,12 @@
-import { Link, Stack } from "expo-router";
-import { View } from "react-native";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
 import React from "react";
+import { View } from "react-native";
+import { Link, Stack } from "expo-router";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 
 export default function AuthOptions() {
   return (
-    <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
+    <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -16,17 +16,17 @@ export default function AuthOptions() {
         }}
       />
       <View className="gap-2">
-        <Text className="text-5xl text-center text-foreground">
+        <Text className="text-center text-5xl text-foreground">
           Get started with
         </Text>
         <Text className="text-center text-5xl text-foreground">
           teal
-          <Text className="text-5xl font-serif-old-italic">.fm</Text>
+          <Text className="font-serif-old-italic text-5xl">.fm</Text>
         </Text>
       </View>
       <Link href="/auth/login" className="text-secondary">
         <Button
-          className="flex flex-row justify-center items-center rounded-full dark-blue-800 dark:bg-blue-400 gap-2"
+          className="dark-blue-800 flex flex-row items-center justify-center gap-2 rounded-full dark:bg-blue-400"
           size="lg"
         >
           <Text>Sign in with ATProto</Text>
@@ -34,7 +34,7 @@ export default function AuthOptions() {
       </Link>
       <Link href="/auth/signup" className="text-secondary">
         <Button
-          className="flex flex-row justify-center items-center rounded-full"
+          className="flex flex-row items-center justify-center rounded-full"
           size="lg"
         >
           <Text>Sign up</Text>

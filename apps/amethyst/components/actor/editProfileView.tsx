@@ -1,29 +1,30 @@
-import * as React from 'react';
-import { useState } from 'react';
+import * as React from "react";
+import { useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   Modal,
   Pressable,
-  View,
-  Image,
-  ActivityIndicator,
   Touchable,
   TouchableWithoutFeedback,
-} from 'react-native';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
-import * as ImagePicker from 'expo-image-picker';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { cn } from '@/lib/utils';
-import { useOnEscape } from '@/hooks/useOnEscape';
-import { Icon } from '@/lib/icons/iconWithClassName';
-import { Pen } from 'lucide-react-native';
-import getImageCdnLink from '@/lib/atp/getImageCdnLink';
+  View,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { useOnEscape } from "@/hooks/useOnEscape";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
+import { Icon } from "@/lib/icons/iconWithClassName";
+import { cn } from "@/lib/utils";
+import { Pen } from "lucide-react-native";
+
+import { Card } from "../ui/card";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 
 const GITHUB_AVATAR_URI =
-  'https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg';
+  "https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg";
 
 export interface EditProfileModalProps {
   isVisible: boolean;
@@ -49,7 +50,7 @@ export default function EditProfileModal({
     setLoading(true); // Start loading
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: setType === setAvatarUri ? [1, 1] : [3, 1],
       quality: 1,
@@ -71,7 +72,7 @@ export default function EditProfileModal({
 
   if (!profile) {
     return (
-      <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
+      <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
         <ActivityIndicator size="large" />
       </View>
     );
@@ -80,47 +81,47 @@ export default function EditProfileModal({
   return (
     <Modal animationType="fade" transparent={true} visible={isVisible}>
       <TouchableWithoutFeedback onPress={() => onClose()}>
-        <View className="flex-1 justify-center items-center bg-black/50 backdrop-blur">
+        <View className="flex-1 items-center justify-center bg-black/50 backdrop-blur">
           <TouchableWithoutFeedback>
-            <Card className="bg-card rounded-lg p-4 w-11/12 max-w-md">
-              <Text className="text-xl font-bold mb-4">Edit Profile</Text>
+            <Card className="w-11/12 max-w-md rounded-lg bg-card p-4">
+              <Text className="mb-4 text-xl font-bold">Edit Profile</Text>
               <Pressable onPress={() => pickImage(setBannerUri)}>
                 {loading && !bannerUri && <ActivityIndicator />}
                 {bannerUri ? (
-                  <View className="relative group">
+                  <View className="group relative">
                     <Image
                       source={{
-                        uri: bannerUri?.includes(';')
+                        uri: bannerUri?.includes(";")
                           ? bannerUri
                           : getImageCdnLink({
                               did: editedProfile.did,
                               hash: bannerUri,
                             }),
                       }}
-                      className="w-full h-24 rounded-lg"
+                      className="h-24 w-full rounded-lg"
                     />
-                    <View className="absolute -right-2 -bottom-2 rounded-full bg-muted/70 group-hover:bg-muted/90 text-foreground transition-colors duration-300 border border-border p-1">
+                    <View className="absolute -bottom-2 -right-2 rounded-full border border-border bg-muted/70 p-1 text-foreground transition-colors duration-300 group-hover:bg-muted/90">
                       <Icon icon={Pen} size={18} className="fill-muted" />
                     </View>
                   </View>
                 ) : (
-                  <View className="w-full max-w-[100vh] h-32 md:h-44 rounded-xl -mb-6 bg-muted" />
+                  <View className="-mb-6 h-32 w-full max-w-[100vh] rounded-xl bg-muted md:h-44" />
                 )}
               </Pressable>
 
               <Pressable
                 onPress={() => pickImage(setAvatarUri)}
-                className={cn('mb-4 relative group', bannerUri && 'pl-4 -mt-8')}
+                className={cn("group relative mb-4", bannerUri && "-mt-8 pl-4")}
               >
                 {loading && !avatarUri && <ActivityIndicator />}
-                <View className="relative group w-min">
+                <View className="group relative w-min">
                   <Avatar
-                    className="w-20 h-20"
-                    alt={`Avatar for ${editedProfile?.displayName ?? 'User'}`}
+                    className="h-20 w-20"
+                    alt={`Avatar for ${editedProfile?.displayName ?? "User"}`}
                   >
                     <AvatarImage
                       source={{
-                        uri: avatarUri?.includes(';')
+                        uri: avatarUri?.includes(";")
                           ? avatarUri
                           : getImageCdnLink({
                               did: editedProfile.did,
@@ -130,32 +131,32 @@ export default function EditProfileModal({
                     />
                     <AvatarFallback>
                       <Text>
-                        {editedProfile?.displayName?.substring(0, 1) ?? 'R'}
+                        {editedProfile?.displayName?.substring(0, 1) ?? "R"}
                       </Text>
                     </AvatarFallback>
                   </Avatar>
-                  <View className="absolute right-0 bottom-0 rounded-full bg-muted/70 group-hover:bg-muted/90 text-foreground transition-colors duration-300 border border-border p-1">
+                  <View className="absolute bottom-0 right-0 rounded-full border border-border bg-muted/70 p-1 text-foreground transition-colors duration-300 group-hover:bg-muted/90">
                     <Icon icon={Pen} size={18} className="fill-muted" />
                   </View>
                 </View>
               </Pressable>
 
-              <Text className="text-sm font-semibold text-muted-foreground pl-1">
+              <Text className="pl-1 text-sm font-semibold text-muted-foreground">
                 Display Name
               </Text>
               <Input
-                className="border border-gray-300 rounded px-3 py-2 mb-4"
+                className="mb-4 rounded border border-gray-300 px-3 py-2"
                 placeholder="Display Name"
                 value={editedProfile.displayName}
                 onChangeText={(text) =>
                   setEditedProfile({ ...editedProfile, displayName: text })
                 }
               />
-              <Text className="text-sm font-semibold text-muted-foreground pl-1">
+              <Text className="pl-1 text-sm font-semibold text-muted-foreground">
                 Description
               </Text>
               <Textarea
-                className="border border-gray-300 rounded px-3 py-2 mb-4"
+                className="mb-4 rounded border border-gray-300 px-3 py-2"
                 placeholder="Description"
                 multiline
                 value={editedProfile.description}

@@ -1,10 +1,10 @@
+import { Platform } from "react-native";
+import Constants from "expo-constants";
 import {
   ClientMetadata,
   clientMetadataSchema,
   ReactNativeOAuthClient,
 } from "@aquareum/atproto-oauth-client-react-native";
-import Constants from "expo-constants";
-import { Platform } from "react-native";
 
 export type AquareumOAuthClient = Omit<
   ReactNativeOAuthClient,
