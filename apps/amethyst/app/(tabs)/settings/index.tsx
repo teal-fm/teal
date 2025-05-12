@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Text } from "@/components/ui/text";
 import { ScrollView, Switch, View } from "react-native";
 import { Link, Stack } from "expo-router";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
@@ -22,7 +23,7 @@ export default function Settings() {
   ];
 
   return (
-    <ScrollView className="flex-1 justify-start items-center gap-5 bg-background w-full">
+    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
       <Stack.Screen
         options={{
           title: "Settings",
@@ -30,7 +31,7 @@ export default function Settings() {
           headerShown: true,
         }}
       />
-      <View className="max-w-2xl flex-1 w-screen flex flex-col p-4 divide-y divide-muted-foreground/50 gap-4 rounded-xl my-2 mx-5">
+      <View className="mx-5 my-2 flex w-screen max-w-2xl flex-1 flex-col gap-4 divide-y divide-muted-foreground/50 rounded-xl p-4">
         <ButtonSelector
           text="Theme"
           values={colorSchemeOptions}
@@ -107,7 +108,7 @@ function ButtonSelector({
           <Button
             key={value}
             onPress={() => setSelectedValue(value)}
-            className={`flex-1 w-full h-8`}
+            className={`h-8 w-full flex-1`}
             variant={selectedValue === value ? "secondary" : "ghost"}
           >
             <Text

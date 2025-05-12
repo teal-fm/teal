@@ -1,4 +1,4 @@
-import { View, Image } from "react-native";
+import { Image, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils"; // Assuming you have a utils file with cn function like in shadcn
 
@@ -64,7 +64,7 @@ export default function VerticalPlayView({
         <Text
           className={cn(
             secondaryTextSizes[size],
-            "text-muted-foreground text-center",
+            "text-center text-muted-foreground",
           )}
         >
           {artistName}
@@ -74,7 +74,7 @@ export default function VerticalPlayView({
         <Text
           className={cn(
             secondaryTextSizes[size],
-            "text-muted-foreground text-center",
+            "text-center text-muted-foreground",
           )}
         >
           {releaseTitle}

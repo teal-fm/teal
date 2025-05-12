@@ -1,4 +1,4 @@
-import { platformSelect, hairlineWidth } from "nativewind/theme";
+import { hairlineWidth, platformSelect } from "nativewind/theme";
 
 /** @type {import('tailwindcss').Config} */
 export const darkMode = "class";
@@ -10,13 +10,13 @@ export const theme = {
       sans: "DM Sans",
       "serif-old": "CrimsonPro",
       "serif-old-italic": "CrimsonPro Italic",
-      "serif": "Fraunces",
+      serif: "Fraunces",
       // serif: platformSelect({
       //   android: "Fraunces",
       //   ios: "Fraunces",
       //   web: 'Fraunces, Georgia, Cambria, "Times New Roman", Times, serif',
       // }),
-      mono: "PlexMono"
+      mono: "PlexMono",
       // mono: platformSelect({
       //   android: "PlexMono",
       //   ios: ["PlexMono"],

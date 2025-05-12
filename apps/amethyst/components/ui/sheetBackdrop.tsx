@@ -1,12 +1,12 @@
 import React, { useMemo } from "react";
-import { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
+import { StyleProp, View, ViewStyle } from "react-native";
 import Animated, {
   AnimatedStyle,
   Extrapolation,
   interpolate,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { StyleProp, View, ViewStyle } from "react-native";
+import { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 
 export default function SheetBackdrop({
   animatedIndex,
@@ -50,8 +50,8 @@ export const SheetHandle = ({
   style,
 }: BottomSheetBackdropProps) => {
   return (
-    <View className="w-full items-center h-6 bg-card rounded-t-xl border-t border-x border-neutral-500/30">
-      <View className="w-16 bg-muted-foreground/50 hover:bg-muted-foreground/70 transition-colors h-1.5 m-1 rounded-xl" />
+    <View className="h-6 w-full items-center rounded-t-xl border-x border-t border-neutral-500/30 bg-card">
+      <View className="m-1 h-1.5 w-16 rounded-xl bg-muted-foreground/50 transition-colors hover:bg-muted-foreground/70" />
     </View>
   );
 };

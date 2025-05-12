@@ -30,7 +30,7 @@ export default function Handle() {
   if (!did) return <ActivityIndicator size="large" color="#0000ff" />;
 
   return (
-    <ScrollView className="flex-1 justify-start items-center gap-5 bg-background w-full">
+    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
       <Stack.Screen
         options={{
           title: "Home",

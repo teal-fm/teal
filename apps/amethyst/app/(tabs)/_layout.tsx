@@ -1,5 +1,4 @@
 import React from "react";
-
 import {
   FilePen,
   Home,
@@ -72,7 +71,7 @@ export default function TabLayout() {
                 {({ pressed }) => (
                   <Icon
                     icon={LogOut}
-                    className="text-2xl mr-4 text-muted-foreground"
+                    className="mr-4 text-2xl text-muted-foreground"
                     name="log-out"
                   />
                 )}

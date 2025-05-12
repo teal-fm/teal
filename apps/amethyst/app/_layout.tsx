@@ -1,3 +1,7 @@
+import { useEffect } from "react";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
   DarkTheme,
@@ -6,17 +10,14 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+
 import "react-native-reanimated";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
-import { verifyInstallation, useColorScheme } from "nativewind";
+import { useColorScheme, verifyInstallation } from "nativewind";
 
 import { GlobalTextClassContext } from "../components/ui/text";
+
 import "../global.css";
 
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";

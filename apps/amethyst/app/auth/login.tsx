@@ -3,6 +3,8 @@ import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 import React, { useState, useEffect, useCallback, useRef } from "react"; // Added useCallback, useRef
 import { Platform, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link, router, Stack } from "expo-router";
+import { openAuthSessionAsync } from "expo-web-browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -210,7 +212,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 flex items-center justify-center w-full">
+    <SafeAreaView className="flex w-full flex-1 items-center justify-center">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -222,7 +224,7 @@ const LoginScreen = () => {
         <View className="flex items-center">
           <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
         </View>
-        <Text className="text-3xl text-center text-foreground">
+        <Text className="text-center text-3xl text-foreground">
           Sign in with your PDS
         </Text>
         <View>

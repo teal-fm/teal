@@ -9,11 +9,13 @@
     "typecheck": "pnpm -r exec tsc --noEmit",
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
     "nuke": "rimraf node_modules */*/node_modules",
-    "lex:gen-server": "turbo lex:gen-server"
+    "lex:gen-server": "turbo lex:gen-server",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@atproto/oauth-client": "^0.3.8",
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11"
   },
   "devDependencies": {

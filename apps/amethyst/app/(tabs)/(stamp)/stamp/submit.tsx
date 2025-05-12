@@ -1,5 +1,11 @@
+import { useContext, useEffect, useState } from "react";
+import { Image, Switch, View } from "react-native";
+import { Redirect, Stack, useRouter } from "expo-router";
+import { ExternalLink } from "@/components/ExternalLink";
 import VerticalPlayView from "@/components/play/verticalPlayView";
 import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
 import { useStore } from "@/stores/mainStore";
 import {
   Agent,
@@ -7,6 +13,7 @@ import {
   ComAtprotoRepoCreateRecord,
   RichText,
 } from "@atproto/api";
+
 import {
   Record as PlayRecord,
   validateRecord,
@@ -309,13 +316,13 @@ powered by @teal.fm`;
   };
 
   return (
-    <View className="flex-1 p-4 bg-background items-center h-screen-safe">
+    <View className="h-screen-safe flex-1 items-center bg-background p-4">
       <Stack.Screen
         options={{
           title: "Submit Stamp",
         }}
       />
-      <View className="flex justify-between align-middle gap-4 max-w-2xl w-screen min-h-full px-4">
+      <View className="flex min-h-full w-screen max-w-2xl justify-between gap-4 px-4 align-middle">
         <View />
         <View>
           <VerticalPlayView
@@ -330,7 +337,7 @@ powered by @teal.fm`;
               .join(", ")}
             releaseTitle={selectedTrack?.selectedRelease?.title}
           />
-          <Text className="text-sm text-gray-500 text-center mt-4">
+          <Text className="mt-4 text-center text-sm text-gray-500">
             Any missing info?{" "}
             <ExternalLink
               className="text-blue-600 dark:text-blue-400"
@@ -343,22 +350,22 @@ powered by @teal.fm`;
 
         <View className="flex-col gap-4 items-center w-full">
           {blueskyEmbedCard && shareWithBluesky ? (
-            <View className="gap-2 w-full">
-              <Text className="text-sm text-muted-foreground text-center">
+            <View className="w-full gap-2">
+              <Text className="text-center text-sm text-muted-foreground">
                 Card Preview:
               </Text>
-              <View className="flex-col items-start rounded-xl bg-card border border-border">
+              <View className="flex-col items-start rounded-xl border border-border bg-card">
                 <Image
                   source={{
                     uri: blueskyEmbedCard.external.cardyThumbUrl,
                   }}
-                  className="rounded-t-xl aspect-video w-full"
+                  className="aspect-video w-full rounded-t-xl"
                 />
-                <View className="p-2 items-start">
-                  <Text className="text-card-foreground text-start font-semibold">
+                <View className="items-start p-2">
+                  <Text className="text-start font-semibold text-card-foreground">
                     {blueskyEmbedCard.external.title}
                   </Text>
-                  <Text className="text-muted-foreground text-start">
+                  <Text className="text-start text-muted-foreground">
                     {blueskyEmbedCard.external.description}
                   </Text>
                 </View>
@@ -366,7 +373,7 @@ powered by @teal.fm`;
             </View>
           ) : (
             shareWithBluesky && (
-              <Text className="text-sm text-muted-foreground text-center">
+              <Text className="text-center text-sm text-muted-foreground">
                 jsyk: there won't be an embed card on your post.
               </Text>
             )
@@ -398,11 +405,11 @@ powered by @teal.fm`;
               value={shareWithBluesky}
               onValueChange={setShareWithBluesky}
             />
-            <Text className="text-lg text-muted-foreground text-center">
+            <Text className="text-center text-lg text-muted-foreground">
               Share with Bluesky?
             </Text>
           </View>
-          <View className="flex-row gap-2 w-full">
+          <View className="w-full flex-row gap-2">
             <Button
               className="flex-1"
               onPress={handleSubmit}

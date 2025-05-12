@@ -1,12 +1,13 @@
-import { TealContext } from '@/ctx';
-import { db, profiles } from '@teal/db';
-import { eq } from 'drizzle-orm';
-import { OutputSchema } from '@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile';
+import { TealContext } from "@/ctx";
+import { eq } from "drizzle-orm";
+
+import { db, profiles } from "@teal/db";
+import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile";
 
 export default async function getProfile(c: TealContext) {
   const params = c.req.query();
   if (!params.actor) {
-    throw new Error('actor is required');
+    throw new Error("actor is required");
   }
 
   // Assuming 'user' can be either a DID or a handle.  We'll try to resolve
@@ -30,7 +31,7 @@ export default async function getProfile(c: TealContext) {
   }
 
   if (!profile) {
-    throw new Error('Profile not found');
+    throw new Error("Profile not found");
   }
 
   profile = profile[0];
