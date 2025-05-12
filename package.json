@@ -12,7 +12,9 @@
     "lex:gen-server": "turbo lex:gen-server"
   },
   "dependencies": {
-    "@atproto/oauth-client": "^0.3.8"
+    "@atproto/oauth-client": "^0.3.8",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "prettier-plugin-tailwindcss": "^0.6.11"
   },
   "devDependencies": {
     "@types/node": "^20.17.10",
