@@ -1,5 +1,5 @@
 import { TealContext } from "@/ctx";
-import { db, plays, profiles } from "@teal/db";
+import { db, mvTopReleasesPerUser30Days, profiles } from "@teal/db";
 import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getTopAlbums";
 import { eq } from "drizzle-orm";
 
@@ -35,33 +35,11 @@ export default async function getTopAlbums(c: TealContext) {
 
   profile = profile[0];
 
-  const playsQuery = await db
+  const topReleases30Days = await db
     .select()
-    .from(plays)
-    .where(eq(plays.did, profile.did))
-
-    .limit(100);
-
-  const albums = playsQuery.map((play) => {
-    return {
-      albumName: play.releaseName,
-      // TODO: okay so this isn't in the db ?!
-      albumArtist: play.releaseName,
-      // TODO: see how its implemented on frontend
-      // albumArt: play.,
-      albumReleaseMBID: play.releaseMbid,
-    };
-  });
-
-  // TODO: idk this probably sucks, i'm going to bed im tired
-  const albumCounts = albums.reduce((acc: Record<string, number>, album) => {
-    if (album.albumName && album.albumArtist) {
-      acc[album.albumName] = (acc[album.albumName] || 0) + 1;
-    }
-    return acc;
-  }, {});
-  const sortedAlbums = Object.entries(albumCounts).sort((a, b) => b[1] - a[1]);
-  const topAlbums = sortedAlbums.slice(0, Number(params.limit) || 10);
+    .from(mvTopReleasesPerUser30Days)
+    .where(eq(mvTopReleasesPerUser30Days.userDid, profile.did))
+    .limit(Number(params.limit) ?? 10);
 
   const res: OutputSchema = {
     actor: {
@@ -74,11 +52,11 @@ export default async function getTopAlbums(c: TealContext) {
       createdAt: profile.createdAt?.toISOString(),
     },
     // TODO: actually implement this
-    albums: topAlbums.map(([albumName]) => ({
-      albumName,
-      albumArtist: "", // TODO: Get actual artist name
+    albums: topReleases30Days.map((release) => ({
+      albumName: release.releaseName,
+      albumArtist: release.releaseName,
       albumArt: undefined,
-      albumReleaseMBID: undefined,
+      albumReleaseMBID: release.releaseMbid,
     })),
   };
 

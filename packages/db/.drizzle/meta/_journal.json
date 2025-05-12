@@ -43,6 +43,13 @@
       "when": 1742260281562,
       "tag": "0005_plain_vulture",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1747022393536,
+      "tag": "0006_stale_romulus",
+      "breakpoints": true
     }
   ]
 }

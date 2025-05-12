@@ -1,17 +1,14 @@
 import { sql } from "drizzle-orm";
 import {
-  pgTable,
-  text,
-  pgEnum,
-  timestamp,
-  uuid,
   integer,
   jsonb,
-  primaryKey,
-  foreignKey,
   pgMaterializedView,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
-import { createDeflate } from "node:zlib";
 
 export const artists = pgTable("artists", {
   mbid: uuid("mbid").primaryKey(),
@@ -50,7 +47,7 @@ export const playToArtists = pgTable(
       .references(() => plays.uri)
       .notNull(),
   },
-  (table) => [primaryKey({ columns: [table.playUri, table.artistMbid] })],
+  (table) => [primaryKey({ columns: [table.playUri, table.artistMbid] })]
 );
 
 export const recordings = pgTable("recordings", {
@@ -66,7 +63,7 @@ export const releases = pgTable("releases", {
 });
 
 export const mvArtistPlayCounts = pgMaterializedView(
-  "mv_artist_play_counts",
+  "mv_artist_play_counts"
 ).as((qb) => {
   return qb
     .select({
@@ -86,15 +83,15 @@ export const mvGlobalPlayCount = pgMaterializedView("mv_global_play_count").as(
       .select({
         totalPlays: sql<number>`count(${plays.uri})`.as("total_plays"),
         uniqueListeners: sql<number>`count(distinct ${plays.did})`.as(
-          "unique_listeners",
+          "unique_listeners"
         ),
       })
       .from(plays);
-  },
+  }
 );
 
 export const mvRecordingPlayCounts = pgMaterializedView(
-  "mv_recording_play_counts",
+  "mv_recording_play_counts"
 ).as((qb) => {
   return qb
     .select({
@@ -108,7 +105,7 @@ export const mvRecordingPlayCounts = pgMaterializedView(
 });
 
 export const mvReleasePlayCounts = pgMaterializedView(
-  "mv_release_play_counts",
+  "mv_release_play_counts"
 ).as((qb) => {
   return qb
     .select({
@@ -121,8 +118,25 @@ export const mvReleasePlayCounts = pgMaterializedView(
     .groupBy(releases.mbid, releases.name);
 });
 
+export const mvTopReleasesPerUser30Days = pgMaterializedView(
+  "mv_top_releases_per_user_30days"
+).as((qb) => {
+  return qb
+    .select({
+      userDid: plays.did,
+      releaseMbid: releases.mbid,
+      releaseName: releases.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(releases)
+    .innerJoin(plays, sql`${plays.releaseMbid} = ${releases.mbid}`)
+    .where(sql`${plays.playedTime} >= NOW() - INTERVAL '30 days'`)
+    .groupBy(plays.did, releases.mbid, releases.name)
+    .orderBy(sql`count(${plays.uri}) DESC`);
+});
+
 export const mvTopArtists30Days = pgMaterializedView(
-  "mv_top_artists_30days",
+  "mv_top_artists_30days"
 ).as((qb) => {
   return qb
     .select({
@@ -133,7 +147,7 @@ export const mvTopArtists30Days = pgMaterializedView(
     .from(artists)
     .innerJoin(
       playToArtists,
-      sql`${artists.mbid} = ${playToArtists.artistMbid}`,
+      sql`${artists.mbid} = ${playToArtists.artistMbid}`
     )
     .innerJoin(plays, sql`${plays.uri} = ${playToArtists.playUri}`)
     .where(sql`${plays.playedTime} >= NOW() - INTERVAL '30 days'`)
@@ -142,7 +156,7 @@ export const mvTopArtists30Days = pgMaterializedView(
 });
 
 export const mvTopReleases30Days = pgMaterializedView(
-  "mv_top_releases_30days",
+  "mv_top_releases_30days"
 ).as((qb) => {
   return qb
     .select({
