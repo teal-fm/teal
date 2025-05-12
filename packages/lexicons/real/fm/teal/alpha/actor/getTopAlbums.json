@@ -1,0 +1,46 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.actor.getTopAlbums",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves a list of the top albums from a given user.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["actor"],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "The author's DID"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The maximum number of albums to return",
+            "default": 10
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["actor", "albums"],
+          "properties": {
+            "actor": {
+              "type": "ref",
+              "ref": "fm.teal.alpha.actor.defs#profileView"
+            },
+            "albums": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.alpha.actor.defs#albumView"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

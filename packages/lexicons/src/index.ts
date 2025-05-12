@@ -4,16 +4,17 @@
 import {
   createServer as createXrpcServer,
   Server as XrpcServer,
-  Options as XrpcOptions,
-  AuthVerifier,
-  StreamAuthVerifier,
+  type Options as XrpcOptions,
+  type AuthVerifier,
+  type StreamAuthVerifier,
 } from '@atproto/xrpc-server'
-import { schemas } from './lexicons'
-import * as FmTealAlphaActorGetProfile from './types/fm/teal/alpha/actor/getProfile'
-import * as FmTealAlphaActorGetProfiles from './types/fm/teal/alpha/actor/getProfiles'
-import * as FmTealAlphaActorSearchActors from './types/fm/teal/alpha/actor/searchActors'
-import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed'
-import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay'
+import { schemas } from './lexicons.js'
+import * as FmTealAlphaActorGetProfile from './types/fm/teal/alpha/actor/getProfile.js'
+import * as FmTealAlphaActorGetProfiles from './types/fm/teal/alpha/actor/getProfiles.js'
+import * as FmTealAlphaActorGetTopAlbums from './types/fm/teal/alpha/actor/getTopAlbums.js'
+import * as FmTealAlphaActorSearchActors from './types/fm/teal/alpha/actor/searchActors.js'
+import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed.js'
+import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay.js'
 
 export function createServer(options?: XrpcOptions): Server {
   return new Server(options)
@@ -129,6 +130,17 @@ export class FmTealAlphaActorNS {
     >,
   ) {
     const nsid = 'fm.teal.alpha.actor.getProfiles' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getTopAlbums<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaActorGetTopAlbums.Handler<ExtractAuth<AV>>,
+      FmTealAlphaActorGetTopAlbums.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.actor.getTopAlbums' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 

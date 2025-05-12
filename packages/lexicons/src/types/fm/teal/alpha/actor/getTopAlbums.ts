@@ -11,25 +11,24 @@ import {
   type OmitKey,
 } from '../../../../../util'
 import { HandlerAuth, HandlerPipeThrough } from '@atproto/xrpc-server'
-import type * as FmTealAlphaFeedDefs from './defs.js'
+import type * as FmTealAlphaActorDefs from './defs.js'
 
 const is$typed = _is$typed,
   validate = _validate
-const id = 'fm.teal.alpha.feed.getActorFeed'
+const id = 'fm.teal.alpha.actor.getTopAlbums'
 
 export interface QueryParams {
-  /** The author's DID for the play */
-  authorDID: string
-  /** The cursor to start the query from */
-  cursor?: string
-  /** The upper limit of tracks to get per request. Default is 20, max is 50. */
-  limit?: number
+  /** The author's DID */
+  actor: string
+  /** The maximum number of albums to return */
+  limit: number
 }
 
 export type InputSchema = undefined
 
 export interface OutputSchema {
-  plays: FmTealAlphaFeedDefs.PlayView[]
+  actor: FmTealAlphaActorDefs.ProfileView
+  albums: FmTealAlphaActorDefs.AlbumView[]
 }
 
 export type HandlerInput = undefined
