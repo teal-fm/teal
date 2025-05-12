@@ -1,11 +1,13 @@
 services:
-  aqua-api:
-    image: ghcr.io/teal-fm/aqua:latest
-    container_name: aqua-api
-    # pass through db.sqlite
-    volumes:
-      - ./db.sqlite:/app/db.sqlite
+  cadet:
+    image: ghcr.io/mmattbtw/cadet:asdf
     ports:
-      - "3000:3000"
+      - "9000:9000"
+    env_file:
+      - .env
+  satellite:
+    image: ghcr.io/mmattbtw/satellite:asdf
+    ports:
+      - "3132:3000"
     env_file:
       - .env
