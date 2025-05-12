@@ -41,7 +41,7 @@ export default function Settings() {
           labelText="Appview DID"
           initialValue={appviewDid || ""} // Ensure currentValue is a string
           onSubmit={(e) => setAppviewDid(e)}
-          placeholder="Enter your Appview DID (e.g., did:plc:...)"
+          placeholder="Enter your Appview DID (e.g., did:web:...)"
         />
         <Link href="/auth/logoutModal" asChild>
           <Button variant="destructive" size="sm" className="w-max pb-1">
