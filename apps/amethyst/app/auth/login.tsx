@@ -1,16 +1,15 @@
-import { Link, Stack, router } from "expo-router";
-import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 import React, { useState } from "react";
 import { Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link, router, Stack } from "expo-router";
+import { openAuthSessionAsync } from "expo-web-browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { cn } from "@/lib/utils";
-
-import { openAuthSessionAsync } from "expo-web-browser";
 import { useStore } from "@/stores/mainStore";
+import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 
 const LoginScreen = () => {
   const [handle, setHandle] = useState("");
@@ -59,7 +58,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 flex items-center justify-center w-full">
+    <SafeAreaView className="flex w-full flex-1 items-center justify-center">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -67,17 +66,17 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="justify-center align-center p-8 gap-4 pb-32 max-w-screen-sm w-screen">
+      <View className="align-center w-screen max-w-screen-sm justify-center gap-4 p-8 pb-32">
         <View className="flex items-center">
           <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
         </View>
-        <Text className="text-3xl text-center text-foreground">
+        <Text className="text-center text-3xl text-foreground">
           Sign in with your PDS
         </Text>
         <View>
           <Text className="text-sm text-muted-foreground">Handle</Text>
           <Input
-            className={err && `border-red-500 border-2`}
+            className={err && `border-2 border-red-500`}
             placeholder="alice.bsky.social"
             value={handle}
             onChangeText={setHandle}
@@ -90,10 +89,10 @@ const LoginScreen = () => {
             }}
           />
           {err ? (
-            <Text className="text-red-500 justify-baseline mt-1 text-xs">
+            <Text className="justify-baseline mt-1 text-xs text-red-500">
               <Icon
                 icon={AlertCircle}
-                className="mr-1 inline -mt-0.5 text-xs"
+                className="-mt-0.5 mr-1 inline text-xs"
                 size={20}
               />
               {err}
@@ -102,7 +101,7 @@ const LoginScreen = () => {
             <View className="h-6" />
           )}
         </View>
-        <View className="flex flex-row justify-between items-center">
+        <View className="flex flex-row items-center justify-between">
           <Link href="https://bsky.app/signup">
             <Text className="text-md ml-2 text-secondary">
               Sign up for Bluesky

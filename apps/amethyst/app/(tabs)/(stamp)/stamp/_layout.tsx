@@ -1,6 +1,6 @@
-import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
-import { Slot, Stack } from "expo-router";
 import { createContext, useState } from "react";
+import { Slot, Stack } from "expo-router";
+import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
 
 export enum StampStep {
   IDLE = "IDLE",

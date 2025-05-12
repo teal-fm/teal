@@ -72,7 +72,6 @@ export async function searchMusicbrainz(
       queryParts.push(`release:"${searchParams.release}"`);
     }
 
-
     const query = queryParts.join(" AND ");
 
     const res = await fetch(

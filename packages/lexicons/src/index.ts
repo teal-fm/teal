@@ -2,112 +2,113 @@
  * GENERATED CODE - DO NOT MODIFY
  */
 import {
-  createServer as createXrpcServer,
-  Server as XrpcServer,
-  Options as XrpcOptions,
   AuthVerifier,
+  createServer as createXrpcServer,
   StreamAuthVerifier,
-} from '@atproto/xrpc-server'
-import { schemas } from './lexicons'
-import * as FmTealAlphaActorGetProfile from './types/fm/teal/alpha/actor/getProfile'
-import * as FmTealAlphaActorGetProfiles from './types/fm/teal/alpha/actor/getProfiles'
-import * as FmTealAlphaActorSearchActors from './types/fm/teal/alpha/actor/searchActors'
-import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed'
-import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay'
+  Options as XrpcOptions,
+  Server as XrpcServer,
+} from "@atproto/xrpc-server";
+
+import { schemas } from "./lexicons";
+import * as FmTealAlphaActorGetProfile from "./types/fm/teal/alpha/actor/getProfile";
+import * as FmTealAlphaActorGetProfiles from "./types/fm/teal/alpha/actor/getProfiles";
+import * as FmTealAlphaActorSearchActors from "./types/fm/teal/alpha/actor/searchActors";
+import * as FmTealAlphaFeedGetActorFeed from "./types/fm/teal/alpha/feed/getActorFeed";
+import * as FmTealAlphaFeedGetPlay from "./types/fm/teal/alpha/feed/getPlay";
 
 export function createServer(options?: XrpcOptions): Server {
-  return new Server(options)
+  return new Server(options);
 }
 
 export class Server {
-  xrpc: XrpcServer
-  app: AppNS
-  fm: FmNS
-  xyz: XyzNS
+  xrpc: XrpcServer;
+  app: AppNS;
+  fm: FmNS;
+  xyz: XyzNS;
 
   constructor(options?: XrpcOptions) {
-    this.xrpc = createXrpcServer(schemas, options)
-    this.app = new AppNS(this)
-    this.fm = new FmNS(this)
-    this.xyz = new XyzNS(this)
+    this.xrpc = createXrpcServer(schemas, options);
+    this.app = new AppNS(this);
+    this.fm = new FmNS(this);
+    this.xyz = new XyzNS(this);
   }
 }
 
 export class AppNS {
-  _server: Server
-  bsky: AppBskyNS
+  _server: Server;
+  bsky: AppBskyNS;
 
   constructor(server: Server) {
-    this._server = server
-    this.bsky = new AppBskyNS(server)
+    this._server = server;
+    this.bsky = new AppBskyNS(server);
   }
 }
 
 export class AppBskyNS {
-  _server: Server
-  actor: AppBskyActorNS
-  richtext: AppBskyRichtextNS
+  _server: Server;
+  actor: AppBskyActorNS;
+  richtext: AppBskyRichtextNS;
 
   constructor(server: Server) {
-    this._server = server
-    this.actor = new AppBskyActorNS(server)
-    this.richtext = new AppBskyRichtextNS(server)
+    this._server = server;
+    this.actor = new AppBskyActorNS(server);
+    this.richtext = new AppBskyRichtextNS(server);
   }
 }
 
 export class AppBskyActorNS {
-  _server: Server
+  _server: Server;
 
   constructor(server: Server) {
-    this._server = server
+    this._server = server;
   }
 }
 
 export class AppBskyRichtextNS {
-  _server: Server
+  _server: Server;
 
   constructor(server: Server) {
-    this._server = server
+    this._server = server;
   }
 }
 
 export class FmNS {
-  _server: Server
-  teal: FmTealNS
+  _server: Server;
+  teal: FmTealNS;
 
   constructor(server: Server) {
-    this._server = server
-    this.teal = new FmTealNS(server)
+    this._server = server;
+    this.teal = new FmTealNS(server);
   }
 }
 
 export class FmTealNS {
-  _server: Server
-  alpha: FmTealAlphaNS
+  _server: Server;
+  alpha: FmTealAlphaNS;
 
   constructor(server: Server) {
-    this._server = server
-    this.alpha = new FmTealAlphaNS(server)
+    this._server = server;
+    this.alpha = new FmTealAlphaNS(server);
   }
 }
 
 export class FmTealAlphaNS {
-  _server: Server
-  actor: FmTealAlphaActorNS
-  feed: FmTealAlphaFeedNS
+  _server: Server;
+  actor: FmTealAlphaActorNS;
+  feed: FmTealAlphaFeedNS;
 
   constructor(server: Server) {
-    this._server = server
-    this.actor = new FmTealAlphaActorNS(server)
-    this.feed = new FmTealAlphaFeedNS(server)
+    this._server = server;
+    this.actor = new FmTealAlphaActorNS(server);
+    this.feed = new FmTealAlphaFeedNS(server);
   }
 }
 
 export class FmTealAlphaActorNS {
-  _server: Server
+  _server: Server;
 
   constructor(server: Server) {
-    this._server = server
+    this._server = server;
   }
 
   getProfile<AV extends AuthVerifier>(
@@ -117,8 +118,8 @@ export class FmTealAlphaActorNS {
       FmTealAlphaActorGetProfile.HandlerReqCtx<ExtractAuth<AV>>
     >,
   ) {
-    const nsid = 'fm.teal.alpha.actor.getProfile' // @ts-ignore
-    return this._server.xrpc.method(nsid, cfg)
+    const nsid = "fm.teal.alpha.actor.getProfile"; // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg);
   }
 
   getProfiles<AV extends AuthVerifier>(
@@ -128,8 +129,8 @@ export class FmTealAlphaActorNS {
       FmTealAlphaActorGetProfiles.HandlerReqCtx<ExtractAuth<AV>>
     >,
   ) {
-    const nsid = 'fm.teal.alpha.actor.getProfiles' // @ts-ignore
-    return this._server.xrpc.method(nsid, cfg)
+    const nsid = "fm.teal.alpha.actor.getProfiles"; // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg);
   }
 
   searchActors<AV extends AuthVerifier>(
@@ -139,16 +140,16 @@ export class FmTealAlphaActorNS {
       FmTealAlphaActorSearchActors.HandlerReqCtx<ExtractAuth<AV>>
     >,
   ) {
-    const nsid = 'fm.teal.alpha.actor.searchActors' // @ts-ignore
-    return this._server.xrpc.method(nsid, cfg)
+    const nsid = "fm.teal.alpha.actor.searchActors"; // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg);
   }
 }
 
 export class FmTealAlphaFeedNS {
-  _server: Server
+  _server: Server;
 
   constructor(server: Server) {
-    this._server = server
+    this._server = server;
   }
 
   getActorFeed<AV extends AuthVerifier>(
@@ -158,8 +159,8 @@ export class FmTealAlphaFeedNS {
       FmTealAlphaFeedGetActorFeed.HandlerReqCtx<ExtractAuth<AV>>
     >,
   ) {
-    const nsid = 'fm.teal.alpha.feed.getActorFeed' // @ts-ignore
-    return this._server.xrpc.method(nsid, cfg)
+    const nsid = "fm.teal.alpha.feed.getActorFeed"; // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg);
   }
 
   getPlay<AV extends AuthVerifier>(
@@ -169,51 +170,51 @@ export class FmTealAlphaFeedNS {
       FmTealAlphaFeedGetPlay.HandlerReqCtx<ExtractAuth<AV>>
     >,
   ) {
-    const nsid = 'fm.teal.alpha.feed.getPlay' // @ts-ignore
-    return this._server.xrpc.method(nsid, cfg)
+    const nsid = "fm.teal.alpha.feed.getPlay"; // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg);
   }
 }
 
 export class XyzNS {
-  _server: Server
-  statusphere: XyzStatusphereNS
+  _server: Server;
+  statusphere: XyzStatusphereNS;
 
   constructor(server: Server) {
-    this._server = server
-    this.statusphere = new XyzStatusphereNS(server)
+    this._server = server;
+    this.statusphere = new XyzStatusphereNS(server);
   }
 }
 
 export class XyzStatusphereNS {
-  _server: Server
+  _server: Server;
 
   constructor(server: Server) {
-    this._server = server
+    this._server = server;
   }
 }
 
 type SharedRateLimitOpts<T> = {
-  name: string
-  calcKey?: (ctx: T) => string | null
-  calcPoints?: (ctx: T) => number
-}
+  name: string;
+  calcKey?: (ctx: T) => string | null;
+  calcPoints?: (ctx: T) => number;
+};
 type RouteRateLimitOpts<T> = {
-  durationMs: number
-  points: number
-  calcKey?: (ctx: T) => string | null
-  calcPoints?: (ctx: T) => number
-}
-type HandlerOpts = { blobLimit?: number }
-type HandlerRateLimitOpts<T> = SharedRateLimitOpts<T> | RouteRateLimitOpts<T>
+  durationMs: number;
+  points: number;
+  calcKey?: (ctx: T) => string | null;
+  calcPoints?: (ctx: T) => number;
+};
+type HandlerOpts = { blobLimit?: number };
+type HandlerRateLimitOpts<T> = SharedRateLimitOpts<T> | RouteRateLimitOpts<T>;
 type ConfigOf<Auth, Handler, ReqCtx> =
   | Handler
   | {
-      auth?: Auth
-      opts?: HandlerOpts
-      rateLimit?: HandlerRateLimitOpts<ReqCtx> | HandlerRateLimitOpts<ReqCtx>[]
-      handler: Handler
-    }
+      auth?: Auth;
+      opts?: HandlerOpts;
+      rateLimit?: HandlerRateLimitOpts<ReqCtx> | HandlerRateLimitOpts<ReqCtx>[];
+      handler: Handler;
+    };
 type ExtractAuth<AV extends AuthVerifier | StreamAuthVerifier> = Extract<
   Awaited<ReturnType<AV>>,
   { credentials: unknown }
->
+>;

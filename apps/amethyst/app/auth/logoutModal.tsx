@@ -1,13 +1,11 @@
-import { StatusBar } from "expo-status-bar";
-import { Platform, TouchableOpacity } from "react-native";
-
-import { View } from "react-native";
-import { Text } from "@/components/ui/text";
-import { useStore } from "@/stores/mainStore";
-import { Button } from "@/components/ui/button";
+import { Platform, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
-import { X } from "lucide-react-native";
+import { StatusBar } from "expo-status-bar";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import { useStore } from "@/stores/mainStore";
+import { X } from "lucide-react-native";
 
 // should probably be a WebModal component or something?
 export default function ModalScreen() {
@@ -18,18 +16,18 @@ export default function ModalScreen() {
   };
   return (
     <TouchableOpacity
-      className="flex justify-center items-center bg-muted/60 w-full h-screen backdrop-blur-sm fade-in animate-in"
+      className="flex h-screen w-full items-center justify-center bg-muted/60 backdrop-blur-sm animate-in fade-in"
       onPress={() => handleGoBack()}
     >
-      <View className="flex-1 relative items-center justify-center gap-2 bg-background w-full max-w-96 max-h-80 shadow-xl rounded-xl">
+      <View className="relative max-h-80 w-full max-w-96 flex-1 items-center justify-center gap-2 rounded-xl bg-background shadow-xl">
         <Icon
           icon={X}
-          className="top-2 right-2 absolute text-muted-foreground hover:text-foreground"
+          className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
           name="x"
         />
         <Text className="text-4xl">Surprise!</Text>
         <Text className="text-xl">You can sign out here!</Text>
-        <Text className="text-xl -mt-2">but... are you sure?</Text>
+        <Text className="-mt-2 text-xl">but... are you sure?</Text>
         <Button
           onPress={() => {
             logOut();

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View } from 'react-native';
+import React from "react";
+import { View } from "react-native";
 
 interface ProgressDotsProps {
   totalSteps: number;
@@ -17,18 +17,12 @@ const ProgressDots: React.FC<ProgressDotsProps> = ({
     dots.push(
       <View
         key={i}
-        className={`
-          w-4
-          h-4
-          rounded-full
-          m-2
-          ${isActive ? `bg-accent` : `bg-muted`}
-        `}
+        className={`m-2 h-4 w-4 rounded-full ${isActive ? `bg-accent` : `bg-muted`} `}
       />,
     );
   }
 
-  return <View className="flex-row justify-center items-center">{dots}</View>;
+  return <View className="flex-row items-center justify-center">{dots}</View>;
 };
 
 export default ProgressDots;
