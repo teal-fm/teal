@@ -55,6 +55,28 @@
           "description": "IPLD of the avatar"
         }
       }
+    },
+    "albumView": {
+      "type": "object",
+      "required": ["albumName", "albumArtist"],
+      "properties": {
+        "albumName": {
+          "type": "string",
+          "description": "The name of the album"
+        },
+        "albumArtist": {
+          "type": "string",
+          "description": "The artist of the album"
+        },
+        "albumArt": {
+          "type": "string",
+          "description": "The URL of the album art"
+        },
+        "albumReleaseMBID": {
+          "type": "string",
+          "description": "The MusicBrainz ID of the album"
+        }
+      }
     }
   }
 }

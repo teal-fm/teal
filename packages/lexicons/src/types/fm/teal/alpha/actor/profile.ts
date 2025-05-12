@@ -1,13 +1,22 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
-import * as AppBskyRichtextFacet from '../../../../app/bsky/richtext/facet'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
+import type * as AppBskyRichtextFacet from '../../../../app/bsky/richtext/facet.js'
+
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.actor.profile'
 
 export interface Record {
+  $type: 'fm.teal.alpha.actor.profile'
   displayName?: string
   /** Free-form profile description text. */
   description?: string
@@ -22,35 +31,30 @@ export interface Record {
   [k: string]: unknown
 }
 
-export function isRecord(v: unknown): v is Record {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    (v.$type === 'fm.teal.alpha.actor.profile#main' ||
-      v.$type === 'fm.teal.alpha.actor.profile')
-  )
+const hashRecord = 'main'
+
+export function isRecord<V>(v: V) {
+  return is$typed(v, id, hashRecord)
 }
 
-export function validateRecord(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.actor.profile#main', v)
+export function validateRecord<V>(v: V) {
+  return validate<Record & V>(v, id, hashRecord, true)
 }
 
 export interface FeaturedItem {
+  $type?: 'fm.teal.alpha.actor.profile#featuredItem'
   /** The Musicbrainz ID of the item */
   mbid: string
   /** The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc. */
   type: string
-  [k: string]: unknown
 }
 
-export function isFeaturedItem(v: unknown): v is FeaturedItem {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.actor.profile#featuredItem'
-  )
+const hashFeaturedItem = 'featuredItem'
+
+export function isFeaturedItem<V>(v: V) {
+  return is$typed(v, id, hashFeaturedItem)
 }
 
-export function validateFeaturedItem(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.actor.profile#featuredItem', v)
+export function validateFeaturedItem<V>(v: V) {
+  return validate<FeaturedItem & V>(v, id, hashFeaturedItem)
 }

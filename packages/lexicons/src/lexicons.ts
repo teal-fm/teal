@@ -1,7 +1,13 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { LexiconDoc, Lexicons } from '@atproto/lexicon'
+import {
+  type LexiconDoc,
+  Lexicons,
+  ValidationError,
+  type ValidationResult,
+} from '@atproto/lexicon'
+import { type $Typed, is$typed, maybe$typed } from './util.js'
 
 export const schemaDict = {
   AppBskyActorProfile: {
@@ -206,6 +212,28 @@ export const schemaDict = {
           },
         },
       },
+      albumView: {
+        type: 'object',
+        required: ['albumName', 'albumArtist'],
+        properties: {
+          albumName: {
+            type: 'string',
+            description: 'The name of the album',
+          },
+          albumArtist: {
+            type: 'string',
+            description: 'The artist of the album',
+          },
+          albumArt: {
+            type: 'string',
+            description: 'The URL of the album art',
+          },
+          albumReleaseMBID: {
+            type: 'string',
+            description: 'The MusicBrainz ID of the album',
+          },
+        },
+      },
     },
   },
   FmTealAlphaActorGetProfile: {
@@ -276,6 +304,53 @@ export const schemaDict = {
                 items: {
                   type: 'ref',
                   ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaActorGetTopAlbums: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.actor.getTopAlbums',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves a list of the top albums from a given user.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actor'],
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+              description: "The author's DID",
+            },
+            limit: {
+              type: 'integer',
+              description: 'The maximum number of albums to return',
+              default: 10,
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['actor', 'albums'],
+            properties: {
+              actor: {
+                type: 'ref',
+                ref: 'lex:fm.teal.alpha.actor.defs#profileView',
+              },
+              albums: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.actor.defs#albumView',
                 },
               },
             },
@@ -430,6 +505,12 @@ export const schemaDict = {
               type: 'string',
               format: 'datetime',
               description: 'The unix timestamp of when the item was recorded',
+            },
+            expiry: {
+              type: 'string',
+              format: 'datetime',
+              description:
+                'The unix timestamp of the expiry time of the item. If unavailable, default to 10 minutes past the start time.',
             },
             item: {
               type: 'ref',
@@ -729,15 +810,44 @@ export const schemaDict = {
     },
   },
 } as const satisfies Record<string, LexiconDoc>
-
-export const schemas = Object.values(schemaDict)
+export const schemas = Object.values(schemaDict) satisfies LexiconDoc[]
 export const lexicons: Lexicons = new Lexicons(schemas)
+
+export function validate<T extends { $type: string }>(
+  v: unknown,
+  id: string,
+  hash: string,
+  requiredType: true,
+): ValidationResult<T>
+export function validate<T extends { $type?: string }>(
+  v: unknown,
+  id: string,
+  hash: string,
+  requiredType?: false,
+): ValidationResult<T>
+export function validate(
+  v: unknown,
+  id: string,
+  hash: string,
+  requiredType?: boolean,
+): ValidationResult {
+  return (requiredType ? is$typed : maybe$typed)(v, id, hash)
+    ? lexicons.validate(`${id}#${hash}`, v)
+    : {
+        success: false,
+        error: new ValidationError(
+          `Must be an object with "${hash === 'main' ? id : `${id}#${hash}`}" $type property`,
+        ),
+      }
+}
+
 export const ids = {
   AppBskyActorProfile: 'app.bsky.actor.profile',
   AppBskyRichtextFacet: 'app.bsky.richtext.facet',
   FmTealAlphaActorDefs: 'fm.teal.alpha.actor.defs',
   FmTealAlphaActorGetProfile: 'fm.teal.alpha.actor.getProfile',
   FmTealAlphaActorGetProfiles: 'fm.teal.alpha.actor.getProfiles',
+  FmTealAlphaActorGetTopAlbums: 'fm.teal.alpha.actor.getTopAlbums',
   FmTealAlphaActorProfile: 'fm.teal.alpha.actor.profile',
   FmTealAlphaActorSearchActors: 'fm.teal.alpha.actor.searchActors',
   FmTealAlphaActorStatus: 'fm.teal.alpha.actor.status',
@@ -746,4 +856,4 @@ export const ids = {
   FmTealAlphaFeedGetPlay: 'fm.teal.alpha.feed.getPlay',
   FmTealAlphaFeedPlay: 'fm.teal.alpha.feed.play',
   XyzStatusphereStatus: 'xyz.statusphere.status',
-}
+} as const

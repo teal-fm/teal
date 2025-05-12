@@ -1,9 +1,9 @@
 import { TealContext } from "@/ctx";
-import { db, profiles } from "@teal/db";
-import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile";
+import { db, mvTopReleasesPerUser30Days, profiles } from "@teal/db";
+import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getTopAlbums";
 import { eq } from "drizzle-orm";
 
-export default async function getProfile(c: TealContext) {
+export default async function getTopAlbums(c: TealContext) {
   const params = c.req.query();
   if (!params.actor) {
     throw new Error("actor is required");
@@ -35,6 +35,12 @@ export default async function getProfile(c: TealContext) {
 
   profile = profile[0];
 
+  const topReleases30Days = await db
+    .select()
+    .from(mvTopReleasesPerUser30Days)
+    .where(eq(mvTopReleasesPerUser30Days.userDid, profile.did))
+    .limit(Number(params.limit) ?? 10);
+
   const res: OutputSchema = {
     actor: {
       did: profile.did,
@@ -45,6 +51,13 @@ export default async function getProfile(c: TealContext) {
       banner: profile.banner || undefined,
       createdAt: profile.createdAt?.toISOString(),
     },
+    // TODO: actually implement this
+    albums: topReleases30Days.map((release) => ({
+      albumName: release.releaseName,
+      albumArtist: release.releaseName,
+      albumArt: undefined,
+      albumReleaseMBID: release.releaseMbid,
+    })),
   };
 
   return res;

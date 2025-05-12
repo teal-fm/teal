@@ -2,12 +2,20 @@
  * GENERATED CODE - DO NOT MODIFY
  */
 import express from 'express'
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
 import { HandlerAuth, HandlerPipeThrough } from '@atproto/xrpc-server'
-import * as FmTealAlphaFeedDefs from './defs'
+import type * as FmTealAlphaFeedDefs from './defs.js'
+
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.feed.getPlay'
 
 export interface QueryParams {
   /** The author's DID for the play */
@@ -20,7 +28,6 @@ export type InputSchema = undefined
 
 export interface OutputSchema {
   play: FmTealAlphaFeedDefs.PlayView
-  [k: string]: unknown
 }
 
 export type HandlerInput = undefined
