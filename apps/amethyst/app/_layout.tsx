@@ -18,6 +18,7 @@ import { verifyInstallation, useColorScheme } from "nativewind";
 
 import { GlobalTextClassContext } from "../components/ui/text";
 import "../global.css";
+
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { SafeAreaView, View } from "react-native";
 
@@ -84,23 +85,30 @@ export default function RootLayout() {
 
   return (
     <SafeAreaView className="flex-1 flex flex-row min-h-screen justify-center bg-background">
-      <View className="max-w-2xl flex flex-1 border-x border-muted-foreground/20">
-        {<RootLayoutNav />}
+      <View className="max-w-2xl flex flex-1 border-x bg-background border-muted-foreground/20">
+        <RootLayoutNav />
       </View>
     </SafeAreaView>
   );
 }
 
-function RootLayoutNav() {
-  verifyInstallation();
+function useTheme() {
   const { colorScheme, setColorScheme } = useColorScheme();
 
   // what??? how does this not break something
-  setColorScheme(colorScheme ?? "system");
+  setColorScheme(colorScheme || "system");
+
+  console.log("Current scheme is", colorScheme);
+
+  return colorScheme === "dark" ? DARK_THEME : LIGHT_THEME;
+}
+
+function RootLayoutNav() {
+  verifyInstallation();
 
   return (
     <GestureHandlerRootView>
-      <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
+      <ThemeProvider value={useTheme()}>
         <GlobalTextClassContext.Provider value="font-sans">
           <BottomSheetModalProvider>
             <Stack>

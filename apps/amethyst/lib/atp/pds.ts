@@ -14,7 +14,7 @@
  * @returns The PDS endpoint, if available
  */
 export const getPdsEndpoint = (doc: DidDocument): string | undefined => {
-	return getServiceEndpoint(doc, '#atproto_pds', 'AtprotoPersonalDataServer');
+  return getServiceEndpoint(doc, "#atproto_pds", "AtprotoPersonalDataServer");
 };
 
 /**
@@ -25,51 +25,57 @@ export const getPdsEndpoint = (doc: DidDocument): string | undefined => {
  * @returns The requested service endpoint, if available
  */
 export const getServiceEndpoint = (
-	doc: DidDocument,
-	serviceId: string,
-	serviceType: string,
+  doc: DidDocument,
+  serviceId: string,
+  serviceType: string,
 ): string | undefined => {
-	const did = doc.id;
+  const did = doc.id;
 
-	const didServiceId = did + serviceId;
-	const found = doc.service?.find((service) => service.id === serviceId || service.id === didServiceId);
+  const didServiceId = did + serviceId;
+  const found = doc.service?.find(
+    (service) => service.id === serviceId || service.id === didServiceId,
+  );
 
-	if (!found || found.type !== serviceType || typeof found.serviceEndpoint !== 'string') {
-		return undefined;
-	}
+  if (
+    !found ||
+    found.type !== serviceType ||
+    typeof found.serviceEndpoint !== "string"
+  ) {
+    return undefined;
+  }
 
-	return validateUrl(found.serviceEndpoint);
+  return validateUrl(found.serviceEndpoint);
 };
 const validateUrl = (urlStr: string): string | undefined => {
-	let url;
-	try {
-		url = new URL(urlStr);
-	} catch {
-		return undefined;
-	}
+  let url;
+  try {
+    url = new URL(urlStr);
+  } catch {
+    return undefined;
+  }
 
-	const proto = url.protocol;
+  const proto = url.protocol;
 
-	if (url.hostname && (proto === 'http:' || proto === 'https:')) {
-		return urlStr;
-	}
+  if (url.hostname && (proto === "http:" || proto === "https:")) {
+    return urlStr;
+  }
 };
 
 /**
  * DID document
  */
 export interface DidDocument {
-	id: string;
-	alsoKnownAs?: string[];
-	verificationMethod?: Array<{
-		id: string;
-		type: string;
-		controller: string;
-		publicKeyMultibase?: string;
-	}>;
-	service?: Array<{
-		id: string;
-		type: string;
-		serviceEndpoint: string | Record<string, unknown>;
-	}>;
+  id: string;
+  alsoKnownAs?: string[];
+  verificationMethod?: {
+    id: string;
+    type: string;
+    controller: string;
+    publicKeyMultibase?: string;
+  }[];
+  service?: {
+    id: string;
+    type: string;
+    serviceEndpoint: string | Record<string, unknown>;
+  }[];
 }
