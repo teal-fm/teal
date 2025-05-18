@@ -5,7 +5,7 @@
   "defs": {
     "playView": {
       "type": "object",
-      "required": ["trackName", "artistNames"],
+      "required": ["trackName", "artists"],
       "properties": {
         "trackName": {
           "type": "string",
@@ -26,22 +26,13 @@
           "type": "integer",
           "description": "The length of the track in seconds"
         },
-        "artistNames": {
+        "artists": {
           "type": "array",
           "items": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256,
-            "maxGraphemes": 2560
+            "type": "ref",
+            "ref": "#artist"
           },
-          "description": "Array of artist names in order of original appearance."
-        },
-        "artistMbIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Array of Musicbrainz artist IDs"
+          "description": "Array of artists in order of original appearance."
         },
         "releaseName": {
           "type": "string",
@@ -75,6 +66,23 @@
           "type": "string",
           "format": "datetime",
           "description": "The unix timestamp of when the track was played"
+        }
+      }
+    },
+    "artist": {
+      "type": "object",
+      "required": ["artistName"],
+      "properties": {
+        "artistName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "maxGraphemes": 2560,
+          "description": "The name of the artist"
+        },
+        "artistMbId": {
+          "type": "string",
+          "description": "The Musicbrainz ID of the artist"
         }
       }
     }

@@ -431,6 +431,12 @@ export const schemaDict = {
               format: 'datetime',
               description: 'The unix timestamp of when the item was recorded',
             },
+            expiry: {
+              type: 'string',
+              format: 'datetime',
+              description:
+                'The unix timestamp of the expiry time of the item. If unavailable, default to 10 minutes past the start time.',
+            },
             item: {
               type: 'ref',
               ref: 'lex:fm.teal.alpha.feed.defs#playView',
@@ -448,7 +454,7 @@ export const schemaDict = {
     defs: {
       playView: {
         type: 'object',
-        required: ['trackName', 'artistNames'],
+        required: ['trackName', 'artists'],
         properties: {
           trackName: {
             type: 'string',
@@ -469,23 +475,13 @@ export const schemaDict = {
             type: 'integer',
             description: 'The length of the track in seconds',
           },
-          artistNames: {
+          artists: {
             type: 'array',
             items: {
-              type: 'string',
-              minLength: 1,
-              maxLength: 256,
-              maxGraphemes: 2560,
+              type: 'ref',
+              ref: 'lex:fm.teal.alpha.feed.defs#artist',
             },
-            description:
-              'Array of artist names in order of original appearance.',
-          },
-          artistMbIds: {
-            type: 'array',
-            items: {
-              type: 'string',
-            },
-            description: 'Array of Musicbrainz artist IDs',
+            description: 'Array of artists in order of original appearance.',
           },
           releaseName: {
             type: 'string',
@@ -521,6 +517,23 @@ export const schemaDict = {
             type: 'string',
             format: 'datetime',
             description: 'The unix timestamp of when the track was played',
+          },
+        },
+      },
+      artist: {
+        type: 'object',
+        required: ['artistName'],
+        properties: {
+          artistName: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 256,
+            maxGraphemes: 2560,
+            description: 'The name of the artist',
+          },
+          artistMbId: {
+            type: 'string',
+            description: 'The Musicbrainz ID of the artist',
           },
         },
       },
@@ -623,7 +636,7 @@ export const schemaDict = {
         key: 'tid',
         record: {
           type: 'object',
-          required: ['trackName', 'artistNames'],
+          required: ['trackName'],
           properties: {
             trackName: {
               type: 'string',
@@ -653,14 +666,23 @@ export const schemaDict = {
                 maxGraphemes: 2560,
               },
               description:
-                'Array of artist names in order of original appearance.',
+                "Array of artist names in order of original appearance. Prefer using 'artists'.",
             },
             artistMbIds: {
               type: 'array',
               items: {
                 type: 'string',
               },
-              description: 'Array of Musicbrainz artist IDs',
+              description:
+                "Array of Musicbrainz artist IDs. Prefer using 'artists'.",
+            },
+            artists: {
+              type: 'array',
+              items: {
+                type: 'ref',
+                ref: 'lex:fm.teal.alpha.feed.defs#artist',
+              },
+              description: 'Array of artists in order of original appearance.',
             },
             releaseName: {
               type: 'string',

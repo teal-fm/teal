@@ -5,6 +5,7 @@ import { ValidationResult, BlobRef } from '@atproto/lexicon'
 import { lexicons } from '../../../../../lexicons'
 import { isObj, hasProp } from '../../../../../util'
 import { CID } from 'multiformats/cid'
+import * as FmTealAlphaFeedDefs from './defs'
 
 export interface Record {
   /** The name of the track */
@@ -15,10 +16,12 @@ export interface Record {
   recordingMbId?: string
   /** The length of the track in seconds */
   duration?: number
-  /** Array of artist names in order of original appearance. */
-  artistNames: string[]
-  /** Array of Musicbrainz artist IDs */
+  /** Array of artist names in order of original appearance. Prefer using 'artists'. */
+  artistNames?: string[]
+  /** Array of Musicbrainz artist IDs. Prefer using 'artists'. */
   artistMbIds?: string[]
+  /** Array of artists in order of original appearance. */
+  artists?: FmTealAlphaFeedDefs.Artist[]
   /** The name of the release/album */
   releaseName?: string
   /** The Musicbrainz release ID */

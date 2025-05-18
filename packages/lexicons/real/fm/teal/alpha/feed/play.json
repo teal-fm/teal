@@ -8,7 +8,7 @@
       "key": "tid",
       "record": {
         "type": "object",
-        "required": ["trackName", "artistNames"],
+        "required": ["trackName"],
         "properties": {
           "trackName": {
             "type": "string",
@@ -38,14 +38,14 @@
               "maxLength": 256,
               "maxGraphemes": 2560
             },
-            "description": "Array of artist names in order of original appearance."
+            "description": "Array of artist names in order of original appearance. Prefer using 'artists'."
           },
           "artistMbIds": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Array of Musicbrainz artist IDs"
+            "description": "Array of Musicbrainz artist IDs. Prefer using 'artists'."
           },
           "artists": {
             "type": "array",
@@ -88,23 +88,6 @@
             "format": "datetime",
             "description": "The unix timestamp of when the track was played"
           }
-        }
-      }
-    },
-    "artist": {
-      "type": "object",
-      "required": ["artistName"],
-      "properties": {
-        "artistName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256,
-          "maxGraphemes": 2560,
-          "description": "The name of the artist"
-        },
-        "artistMbId": {
-          "type": "string",
-          "description": "The Musicbrainz ID of the artist"
         }
       }
     }

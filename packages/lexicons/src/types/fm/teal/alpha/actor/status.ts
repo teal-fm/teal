@@ -10,6 +10,8 @@ import * as FmTealAlphaFeedDefs from '../feed/defs'
 export interface Record {
   /** The unix timestamp of when the item was recorded */
   time: string
+  /** The unix timestamp of the expiry time of the item. If unavailable, default to 10 minutes past the start time. */
+  expiry?: string
   item: FmTealAlphaFeedDefs.PlayView
   [k: string]: unknown
 }
