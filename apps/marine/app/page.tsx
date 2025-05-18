@@ -12,7 +12,6 @@ import { ArrowRight, AtSign, Brain, TriangleAlert } from "lucide-react";
 import { SiBluesky } from "react-icons/si";
 import Link from "next/link";
 import Image from "next/image";
-import UnderConstruction from "@/components/underConstruction";
 import { Marquee } from "@/components/currentTrackMarquee";
 import StaggeredText from "@/components/staggeredText";
 
