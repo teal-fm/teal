@@ -88,11 +88,12 @@ export default async function getActorFeed(c: TealContext) {
         trackMbId,
         recordingMbId,
         duration,
-        // Replace these with actual artist data from the array
-        artistNames: artists.map((artist) => artist.name),
-        artistMbIds: artists.map((artist) => artist.mbid),
-        // Or, if you want to keep the full artist objects:
-        // artists: artists,
+        artists: artists.map((a) => {
+          return {
+            artistMbId: a.mbid,
+            artistName: a.name,
+          };
+        }),
         releaseName,
         releaseMbId,
         isrc,

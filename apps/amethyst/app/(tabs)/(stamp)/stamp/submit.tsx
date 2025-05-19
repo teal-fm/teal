@@ -19,6 +19,7 @@ import { Text } from "@/components/ui/text";
 import { ExternalLink } from "@/components/ExternalLink";
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 import { Image } from "react-native";
+import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 type CardyBResponse = {
   error: string;
@@ -126,19 +127,21 @@ const ms2hms = (ms: number): string => {
 };
 
 const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
-  let artistNames: string[] = [];
-  if (result["artist-credit"]) {
-    artistNames = result["artist-credit"].map((a) => a.artist.name);
-  } else {
-    throw new Error("Artist must be specified!");
-  }
+  let artists = result["artist-credit"]?.map(
+    (a) =>
+      ({
+        artistName: a.artist.name,
+        artistMbId: a.artist.id,
+      }) as Artist,
+  );
+
+  console.log("artists", artists);
 
   return {
     trackName: result.title ?? "Unknown Title",
     recordingMbId: result.id ?? undefined,
     duration: result.length ? Math.floor(result.length / 1000) : undefined,
-    artistNames, // result["artist-credit"]?.[0]?.artist?.name ?? "Unknown Artist",
-    artistMbIds: result["artist-credit"]?.map((a) => a.artist.id) ?? undefined,
+    artists: artists,
     releaseName: result.selectedRelease?.title ?? undefined,
     releaseMbId: result.selectedRelease?.id ?? undefined,
     isrc: result.isrcs?.[0] ?? undefined,
@@ -148,7 +151,7 @@ const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
     // TODO: update this based on version/git commit hash on build
     submissionClientAgent: "tealtracker/0.0.1b",
     playedTime: new Date().toISOString(),
-  };
+  } as PlayRecord;
 };
 
 export default function Submit() {
@@ -247,7 +250,7 @@ export default function Submit() {
         // lol this type
         const rt = new RichText({
           text: `💮 now playing:
-${record.trackName} by ${record.artistNames.join(", ")}
+${record.trackName} by ${record.artists?.map((a) => a.artistName).join(", ")}
 
 powered by @teal.fm`,
         });
@@ -257,7 +260,7 @@ powered by @teal.fm`,
         let customUrl: string | undefined = embedInfo?.customUrl;
 
         let releaseYear = selectedTrack.selectedRelease?.date?.split("-")[0];
-        let title = `${record.trackName} by ${record.artistNames.join(", ")}`;
+        let title = `${record.trackName} by ${record.artists?.map((a) => a.artistName).join(", ")}`;
         let description = `Song${releaseYear ? " · " + releaseYear : ""}${
           selectedTrack.length && " · " + ms2hms(selectedTrack.length)
         }`;

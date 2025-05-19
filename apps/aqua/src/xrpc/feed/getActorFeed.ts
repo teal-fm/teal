@@ -1,19 +1,19 @@
-import { TealContext } from '@/ctx';
-import { artists, db, plays, playToArtists } from '@teal/db';
-import { eq, and, lt, desc, sql } from 'drizzle-orm';
-import { OutputSchema } from '@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed';
+import { TealContext } from "@/ctx";
+import { artists, db, plays, playToArtists } from "@teal/db";
+import { eq, and, lt, desc, sql } from "drizzle-orm";
+import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
 
 export default async function getActorFeed(c: TealContext) {
   const params = c.req.query();
   if (!params.authorDID) {
-    throw new Error('authorDID is required');
+    throw new Error("authorDID is required");
   }
 
   let limit = 20;
 
   if (params.limit) {
     limit = Number(params.limit);
-    if (limit > 50) throw new Error('Limit is over max allowed.');
+    if (limit > 50) throw new Error("Limit is over max allowed.");
   }
 
   // 'and' is here for typing reasons
@@ -30,7 +30,7 @@ export default async function getActorFeed(c: TealContext) {
     const cursorPlay = cursorResult[0]?.playedTime;
 
     if (!cursorPlay) {
-      throw new Error('Cursor not found');
+      throw new Error("Cursor not found");
     }
 
     whereClause = and(whereClause, lt(plays.playedTime, cursorPlay as any));
@@ -62,7 +62,7 @@ export default async function getActorFeed(c: TealContext) {
             AND pa.artist_name IS NOT NULL -- Ensure both are non-null
           ),
           '[]'::jsonb -- Correct empty JSONB array literal
-        )`.as('artists'),
+        )`.as("artists"),
     })
     .from(plays)
     .leftJoin(playToArtists, sql`${plays.uri} = ${playToArtists.playUri}`)
@@ -114,11 +114,12 @@ export default async function getActorFeed(c: TealContext) {
         recordingMbId: recordingMbid ?? undefined,
         duration: duration ?? undefined,
 
-        // For arrays derived from a guaranteed array, map is safe.
-        // The SQL query ensures `artists` is '[]'::jsonb if empty.
-        // The SQL query also ensures artist.name/mbid are NOT NULL within the jsonb_agg
-        artistNames: artists.map((artist) => artist.name), // Will be [] if artists is []
-        artistMbIds: artists.map((artist) => artist.mbid), // Will be [] if artists is []
+        artists: artists.map((a) => {
+          return {
+            artistMbId: a.mbid,
+            artistName: a.name,
+          };
+        }),
 
         releaseName: releaseName ?? undefined,
         releaseMbId: releaseMbid ?? undefined,
