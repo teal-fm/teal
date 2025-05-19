@@ -108,7 +108,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="/profile/undefined"
+        name="profile/[handle]"
         options={{
           title: "Stamp",
           tabBarIcon: ({ color }) => (
