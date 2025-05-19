@@ -87,9 +87,8 @@ export default function StepOne() {
           headerBackButtonDisplayMode: "generic",
         }}
       />
-      {/* Search Form */}
+i      {/* Search Form */}
       <View className="flex gap-2 max-w-2xl w-screen px-4">
-
         <Text className="font-bold text-lg">Search for a track</Text>
         <Input
           placeholder="Track name..."
@@ -116,7 +115,6 @@ export default function StepOne() {
           }}
         />
         <Input
-
           placeholder="Album name..."
           value={searchFields.release}
           onChangeText={(text) =>
@@ -129,7 +127,6 @@ export default function StepOne() {
           }}
         />
         <View className="flex-row gap-2 mt-2">
-
           <Button
             className="flex-1"
             onPress={handleSearch}

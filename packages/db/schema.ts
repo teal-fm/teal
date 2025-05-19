@@ -174,3 +174,79 @@ export const userFeaturedItems = pgTable("featured_items", {
   mbid: text("mbid").notNull(),
   type: text("type").notNull(),
 });
+
+export const mvTopArtistsForUser30Days = pgMaterializedView(
+  "mv_top_artists_for_user_30days",
+).as((qb) => {
+  return qb
+    .select({
+      artistMbid: artists.mbid,
+      artistName: artists.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(artists)
+    .innerJoin(
+      playToArtists,
+      sql`${artists.mbid} = ${playToArtists.artistMbid}`,
+    )
+    .innerJoin(plays, sql`${plays.uri} = ${playToArtists.playUri}`)
+    .innerJoin(profiles, sql`${profiles.did} = ${plays.did}`)
+    .where(sql`${plays.playedTime} >= NOW() - INTERVAL '30 days'`)
+    .groupBy(artists.mbid, artists.name)
+    .orderBy(sql`count(${plays.uri}) DESC`);
+});
+
+export const mvTopArtistsForUser7Days = pgMaterializedView(
+  "mv_top_artists_for_user_7days",
+).as((qb) => {
+  return qb
+    .select({
+      artistMbid: artists.mbid,
+      artistName: artists.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(artists)
+    .innerJoin(
+      playToArtists,
+      sql`${artists.mbid} = ${playToArtists.artistMbid}`,
+    )
+    .innerJoin(plays, sql`${plays.uri} = ${playToArtists.playUri}`)
+    .innerJoin(profiles, sql`${profiles.did} = ${plays.did}`)
+    .where(sql`${plays.playedTime} >= NOW() - INTERVAL '7 days'`)
+    .groupBy(artists.mbid, artists.name)
+    .orderBy(sql`count(${plays.uri}) DESC`);
+});
+
+export const mvTopReleasesForUser30Days = pgMaterializedView(
+  "mv_top_releases_for_user_30days",
+).as((qb) => {
+  return qb
+    .select({
+      releaseMbid: releases.mbid,
+      releaseName: releases.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(releases)
+    .innerJoin(plays, sql`${plays.releaseMbid} = ${releases.mbid}`)
+    .innerJoin(profiles, sql`${profiles.did} = ${plays.did}`)
+    .where(sql`${plays.playedTime} >= NOW() - INTERVAL '30 days'`)
+    .groupBy(releases.mbid, releases.name)
+    .orderBy(sql`count(${plays.uri}) DESC`);
+});
+
+export const mvTopReleasesForUser7Days = pgMaterializedView(
+  "mv_top_releases_for_user_7days",
+).as((qb) => {
+  return qb
+    .select({
+      releaseMbid: releases.mbid,
+      releaseName: releases.name,
+      playCount: sql<number>`count(${plays.uri})`.as("play_count"),
+    })
+    .from(releases)
+    .innerJoin(plays, sql`${plays.releaseMbid} = ${releases.mbid}`)
+    .innerJoin(profiles, sql`${profiles.did} = ${plays.did}`)
+    .where(sql`${plays.playedTime} >= NOW() - INTERVAL '7 days'`)
+    .groupBy(releases.mbid, releases.name)
+    .orderBy(sql`count(${plays.uri}) DESC`);
+});
