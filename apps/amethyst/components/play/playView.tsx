@@ -1,16 +1,17 @@
 import { View, Image } from "react-native";
 import { Text } from "@/components/ui/text";
+import { timeAgo } from "@/lib/utils";
 
 export default function PlayView({
   releaseMbid,
   trackTitle,
   artistName,
-  releaseTitle,
+  dateListened,
 }: {
   releaseMbid?: string;
   trackTitle: string;
   artistName?: string;
-  releaseTitle?: string;
+  dateListened?: Date;
 }) {
   return (
     <View className="flex flex-row gap-2 max-w-full">
@@ -27,13 +28,13 @@ export default function PlayView({
           {trackTitle}
         </Text>
         {artistName && (
-          <Text className=" text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
+          <Text className="text-sm text-left text-foreground line-clamp-1 overflow-ellipsis">
             {artistName}
           </Text>
         )}
-        {releaseTitle && (
+        {dateListened && (
           <Text className="text-sm text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
-            {releaseTitle}
+            played {timeAgo(dateListened)}
           </Text>
         )}
       </View>

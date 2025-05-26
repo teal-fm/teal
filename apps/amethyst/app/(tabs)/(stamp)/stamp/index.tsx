@@ -87,7 +87,7 @@ export default function StepOne() {
           headerBackButtonDisplayMode: "generic",
         }}
       />
-i      {/* Search Form */}
+      {/* Search Form */}
       <View className="flex gap-2 max-w-2xl w-screen px-4">
         <Text className="font-bold text-lg">Search for a track</Text>
         <Input
