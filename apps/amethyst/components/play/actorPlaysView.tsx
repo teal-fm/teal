@@ -42,7 +42,7 @@ const ActorPlaysView = ({ repo, pdsAgent }: ActorPlaysViewProps) => {
       {play.map((p) => (
         <PlayView
           key={p.playedTime + p.trackName}
-          releaseTitle={p.releaseName}
+          dateListened={p.playedTime ? new Date(p.playedTime) : undefined}
           trackTitle={p.trackName}
           artistName={p.artists.map((a) => a.artistName).join(", ")}
           releaseMbid={p.releaseMbId}

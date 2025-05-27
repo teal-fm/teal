@@ -16,10 +16,12 @@ import { useContext, useEffect, useState } from "react";
 import { Switch, View } from "react-native";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
 import { Text } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink } from "@/components/ExternalLink";
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 import { Image } from "react-native";
 import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import { cn } from "@/lib/utils";
 
 type CardyBResponse = {
   error: string;
@@ -162,6 +164,7 @@ export default function Submit() {
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [shareWithBluesky, setShareWithBluesky] = useState<boolean>(false);
+  const [blueskyPostText, setBlueskyPostText] = useState<string>("");
 
   const [blueskyEmbedCard, setBlueskyEmbedCard] = useState<EmbedCard | null>(
     null,
@@ -169,6 +172,17 @@ export default function Submit() {
 
   const selectedTrack =
     state.step === StampStep.SUBMITTING ? state.submittingStamp : null;
+
+  // Effect to initialize blueskyPostText when selectedTrack changes
+  useEffect(() => {
+    if (selectedTrack) {
+      const defaultText = `💮 now playing:
+${selectedTrack.title} by ${selectedTrack["artist-credit"]?.map((a) => a.artist.name).join(", ")}
+
+powered by @teal.fm`;
+      setBlueskyPostText(defaultText);
+    }
+  }, [selectedTrack]);
 
   useEffect(() => {
     const fetchEmbedData = async (id: string) => {
@@ -249,10 +263,7 @@ export default function Submit() {
       if (shareWithBluesky && agent) {
         // lol this type
         const rt = new RichText({
-          text: `💮 now playing:
-${record.trackName} by ${record.artists?.map((a) => a.artistName).join(", ")}
-
-powered by @teal.fm`,
+          text: blueskyPostText,
         });
         await rt.detectFacets(agent);
         let embedInfo = await getEmbedInfo(selectedTrack.id);
@@ -330,7 +341,7 @@ powered by @teal.fm`,
           </Text>
         </View>
 
-        <View className="flex-col gap-4 items-center">
+        <View className="flex-col gap-4 items-center w-full">
           {blueskyEmbedCard && shareWithBluesky ? (
             <View className="gap-2 w-full">
               <Text className="text-sm text-muted-foreground text-center">
@@ -359,6 +370,28 @@ powered by @teal.fm`,
                 jsyk: there won't be an embed card on your post.
               </Text>
             )
+          )}
+          {shareWithBluesky && (
+            <View className="text-sm text-muted-foreground w-full items-end">
+              <Textarea
+                className="w-full p-2 pb-4 border border-border rounded-md text-card-foreground bg-card min-h-[100px] max-h-[200px]"
+                multiline
+                value={blueskyPostText}
+                onChangeText={setBlueskyPostText}
+                placeholder="Enter your Bluesky post text here..."
+              />
+              <Text
+                className={cn(
+                  "text-sm text-muted-foreground text-center absolute bottom-1 right-2",
+                  blueskyPostText.length > 150
+                    ? "text-gray-600 dark:text-gray-300"
+                    : "",
+                  blueskyPostText.length > 290 ? "text-red-500" : "",
+                )}
+              >
+                {blueskyPostText.length}/300
+              </Text>
+            </View>
           )}
           <View className="flex-row gap-2 items-center">
             <Switch
