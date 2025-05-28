@@ -10,9 +10,24 @@ services:
       - app_network
     depends_on:
       - postgres
-      - redis
     env_file:
       - .env
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app_network
+    env_file: .env
   # traefik:
   #   image: traefik:v2.10
   #   container_name: traefik
@@ -31,19 +46,6 @@ services:
   #   extra_hosts:
   #     - "host.docker.internal:host-gateway" # This allows reaching host machine
 
-  # postgres:
-  #   image: postgres:latest
-  #   container_name: postgres_db
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: yourpassword
-  #     POSTGRES_DB: yourdatabase
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - app_network
 
   # redis:
   #   image: redis:latest
@@ -62,4 +64,4 @@ networks:
 
 volumes:
   postgres_data:
-  redis_data:
+#  redis_data:

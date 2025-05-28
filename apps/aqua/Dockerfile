@@ -5,7 +5,7 @@ FROM oven/bun:1.0 AS builder
 WORKDIR /app
 
 # Copy root workspace files
-COPY package.json bun.lockb ./
+COPY package.json ./
 
 # Copy turbo.json
 COPY turbo.json ./
@@ -22,8 +22,8 @@ COPY apps/aqua/ ./apps/aqua/
 RUN bun install
 
 # Build workspace packages (if needed)
-RUN bun run build --filter=@teal/db
-RUN bun run build --filter=@teal/lexicons
+RUN bun run build --filter=@teal/db --filter !@teal/amethyst
+RUN bun run build --filter=@teal/lexicons --filter !@teal/amethyst
 
 # Build the aqua app
 WORKDIR /app/apps/aqua
