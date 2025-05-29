@@ -31,6 +31,7 @@ services:
       - app_network
     environment:
       CLIENT_ADDRESS: ${CLIENT_ADDRESS}
+      EXPO_PUBLIC_DID_WEB: ${PUBLIC_DID_WEB}
   postgres:
     image: postgres:latest
     container_name: postgres_db

@@ -26,3 +26,4 @@ Open http://localhost:3000/ with your browser to see the home page. You will nee
 
 
 ### Hosting the aqua appview in docker locally 
+notes for caddy and cloud flare tunnel https://caddy.community/t/caddy-with-cloudflare-tunnel/18569
