@@ -265,6 +265,9 @@ importers:
       dotenv:
         specifier: ^16.4.5
         version: 16.4.7
+      dotenv-expand:
+        specifier: ^12.0.2
+        version: 12.0.2
       drizzle-orm:
         specifier: ^0.38.3
         version: 0.38.4(@libsql/client@0.14.0)(@types/react@19.0.14)(expo-sqlite@15.2.9(expo@53.0.9(@babel/core@7.26.0)(@expo/metro-runtime@5.0.4(react-native@0.79.2(@babel/core@7.26.0)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.2(@babel/core@7.26.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.2(@babel/core@7.26.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(postgres@3.4.5)(react@19.0.0)

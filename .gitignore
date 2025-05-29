@@ -47,3 +47,5 @@ yarn-error.log*
 package-lock.json
 **/*.bun
 .idea
+
+apps/amethyst/buld

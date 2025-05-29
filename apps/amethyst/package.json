@@ -9,6 +9,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build": "expo export --output-dir ./build --platform all",
+    "build:web": "expo export --output-dir ./buld --platform web",
     "test": "jest --watchAll",
     "lexgen": "lex gen-server ./lexicons/generated/server/ ./lexicons/src/"
   },

@@ -23,3 +23,6 @@ turbo dev --filter=@teal/aqua
 ```
 
 Open http://localhost:3000/ with your browser to see the home page. You will need to login with Bluesky to test the posting functionality of the app. Note: if the redirect back to the app after you login isn't working correctly, you may need to replace the `127.0.0.1` with `localhost`.
+
+
+### Hosting the aqua appview in docker locally 
