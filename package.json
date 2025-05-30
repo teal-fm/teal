@@ -9,7 +9,8 @@
     "typecheck": "pnpm -r exec tsc --noEmit",
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
     "nuke": "rimraf node_modules */*/node_modules",
-    "lex:gen-server": "turbo lex:gen-server"
+    "lex:gen-server": "turbo lex:gen-server",
+    "db:migrate": "cd ./packages/db && drizzle-kit migrate"
   },
   "dependencies": {
     "@atproto/oauth-client": "^0.3.8"

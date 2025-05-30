@@ -6,60 +6,90 @@ services:
     container_name: aqua-app
     ports:
       - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - app_network
     depends_on:
       - postgres
-      - redis
     env_file:
       - .env
-  # traefik:
-  #   image: traefik:v2.10
-  #   container_name: traefik
-  #   command:
-  #     - "--api.insecure=true"
-  #     - "--providers.file.directory=/etc/traefik/dynamic"
-  #     - "--providers.file.watch=true"
-  #     - "--entrypoints.web.address=:80"
-  #   ports:
-  #     - "80:80" # HTTP
-  #     - "8080:8080" # Dashboard
-  #   volumes:
-  #     - ./traefik/dynamic:/etc/traefik/dynamic:ro
-  #   networks:
-  #     - app_network
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway" # This allows reaching host machine
-
-  # postgres:
-  #   image: postgres:latest
-  #   container_name: postgres_db
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: yourpassword
-  #     POSTGRES_DB: yourdatabase
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - app_network
-
-  # redis:
-  #   image: redis:latest
-  #   container_name: redis_cache
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis_data:/data
-  #   command: redis-server --appendonly yes
-  #   networks:
-  #     - app_network
-
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL}
+  amethyst:
+    build:
+      context: .
+      dockerfile: apps/amethyst/Dockerfile
+      args:
+        - CLIENT_ADDRESS=${CLIENT_ADDRESS}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app_network
+    environment:
+      CLIENT_ADDRESS: ${CLIENT_ADDRESS}
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app_network
+  cadet:
+    image: ghcr.io/espeon/cadet
+    ports:
+      - "9000:9000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+  satellite:
+    image: ghcr.io/espeon/satellite
+    ports:
+      - "3132:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+  piper:
+    image: ghcr.io/teal-fm/piper:main
+    # Depends on your .env.air
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.air
+    volumes:
+      - piper_data:/db
 networks:
   app_network:
     driver: bridge
-
 volumes:
   postgres_data:
-  redis_data:
+  caddy_data:
+  caddy_config:
+  piper_data:

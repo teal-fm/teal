@@ -84,7 +84,7 @@ const run = async () => {
         logger.info(
           `Listening on ${
             info.address == '::1'
-              ? 'http://0.0.0.0'
+              ? `http://${env.HOST}`
               : // TODO: below should probably be https://
                 // but i just want to ctrl click in the terminal
                 'http://' + info.address
