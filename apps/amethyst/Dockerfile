@@ -42,7 +42,7 @@ RUN echo '{ \
             "client_uri": "https://'"${CLIENT_ADDRESS}"'", \
             "dpop_bound_access_tokens": true \
           }' > /app/client-metadata.json \
-    
+
 
 FROM caddy:2.1.0-alpine AS caddy
 EXPOSE 80

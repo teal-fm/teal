@@ -77,8 +77,7 @@ services:
     depends_on:
       - postgres
   piper:
-#    image: ghcr.io/teal-fm/piper:main
-    image: fatfingers23/piper:latest
+    image: ghcr.io/teal-fm/piper:main
     # Depends on your .env.air
     ports:
       - "8080:8080"
@@ -86,9 +85,6 @@ services:
       - .env.air
     volumes:
       - piper_data:/db
-
-#  db-migrations
-  #TODO to not forget to add an image to run db migrations or add it to aqua in a bash script on run
 networks:
   app_network:
     driver: bridge
