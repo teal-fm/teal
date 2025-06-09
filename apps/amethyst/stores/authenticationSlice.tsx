@@ -44,7 +44,6 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
 ) => {
   // check if we have CF_PAGES_URL set. if not, use localhost
   const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || 'http://localhost:8081';
-  console.log('Using base URL:', baseUrl);
   const initialAuth = createOAuthClient(baseUrl, 'bsky.social');
 
   console.log('Auth client created!');
