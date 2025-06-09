@@ -1,6 +1,3 @@
-import { useContext, useEffect, useState } from "react";
-import { Image, Switch, View } from "react-native";
-import { Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
 import VerticalPlayView from "@/components/play/verticalPlayView";
 import { Button } from "@/components/ui/button";
@@ -13,22 +10,18 @@ import {
   ComAtprotoRepoCreateRecord,
   RichText,
 } from "@atproto/api";
+import { Redirect, Stack, useRouter } from "expo-router";
+import { useContext, useEffect, useState } from "react";
+import { Image, Switch, View } from "react-native";
 
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 import {
   Record as PlayRecord,
   validateRecord,
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
-import { Redirect, Stack, useRouter } from "expo-router";
-import { useContext, useEffect, useState } from "react";
-import { Switch, View } from "react-native";
-import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
-import { Text } from "@/components/ui/text";
-import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink } from "@/components/ExternalLink";
 import { StampContext, StampContextValue, StampStep } from "./_layout";
-import { Image } from "react-native";
-import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
-import { cn } from "@/lib/utils";
 
 type CardyBResponse = {
   error: string;

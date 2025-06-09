@@ -1,27 +1,25 @@
-import { Link, Stack, router } from "expo-router";
-import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
-import React, { useState, useEffect, useCallback, useRef } from "react"; // Added useCallback, useRef
-import { Platform, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, router, Stack } from "expo-router";
-import { openAuthSessionAsync } from "expo-web-browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { capFirstLetter, cn } from "@/lib/utils";
-
+import { Link, router, Stack } from "expo-router";
 import { openAuthSessionAsync } from "expo-web-browser";
-import { useStore } from "@/stores/mainStore";
-import { resolveFromIdentity } from "@/lib/atp/pid";
+import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react"; // Added useCallback, useRef
+import { Platform, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import { resolveFromIdentity } from "@/lib/atp/pid";
+import { useStore } from "@/stores/mainStore";
+
+import { FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
   interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
-import { MaterialCommunityIcons, FontAwesome6 } from "@expo/vector-icons";
 
 type Url = URL;
 

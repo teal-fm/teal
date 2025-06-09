@@ -1,15 +1,14 @@
-import React, { useState } from "react";
-import { Text } from "@/components/ui/text";
-import { ScrollView, Switch, View } from "react-native";
-import { Link, Stack } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { cn } from "@/lib/utils";
+import { Link, Stack } from "expo-router";
+import React, { useState } from "react";
+import { ScrollView, Switch, View } from "react-native";
 
+import { Input } from "@/components/ui/input";
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
-import { Input } from "@/components/ui/input";
 
 export default function Settings() {
   const { colorScheme, setColorScheme } = useColorScheme();
