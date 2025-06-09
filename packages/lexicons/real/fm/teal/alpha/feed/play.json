@@ -19,7 +19,6 @@
           },
           "trackMbId": {
             "type": "string",
-
             "description": "The Musicbrainz ID of the track"
           },
           "recordingMbId": {
