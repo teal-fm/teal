@@ -1,0 +1,69 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.social.playlistItem",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | A teal.fm playlist item.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record containing a repost for a teal.fm post.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "createdAt", "trackName"],
+        "properties": {
+          "subject": { "type": "record", "ref": "com.atproto.repo.strongRef" },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this post was originally created."
+          },
+          "trackName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "maxGraphemes": 2560,
+            "description": "The name of the track"
+          },
+          "trackMbId": {
+            "type": "string",
+            "description": "The Musicbrainz ID of the track"
+          },
+          "recordingMbId": {
+            "type": "string",
+            "description": "The Musicbrainz recording ID of the track"
+          },
+          "artistNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "maxGraphemes": 2560
+            },
+            "description": "Array of artist names in order of original appearance. Prefer using 'artists'."
+          },
+          "artistMbIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Array of Musicbrainz artist IDs. Prefer using 'artists'."
+          },
+          "artists": {
+            "type": "array",
+            "items": { "type": "ref", "ref": "fm.teal.alpha.feed.defs#artist" },
+            "description": "Array of artists in order of original appearance."
+          },
+          "releaseName": {
+            "type": "string",
+            "maxLength": 256,
+            "maxGraphemes": 2560,
+            "description": "The name of the release/album"
+          },
+          "releaseMbId": {
+            "type": "string",
+            "description": "The Musicbrainz release ID"
+          }
+        }
+      }
+    }
+  }
+}
