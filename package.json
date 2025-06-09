@@ -11,6 +11,7 @@
     "nuke": "rimraf node_modules */*/node_modules",
     "lex:gen-server": "turbo lex:gen-server",
     "format": "prettier --write ."
+    "db:migrate": "cd ./packages/db && drizzle-kit migrate"=
   },
   "dependencies": {
     "@atproto/oauth-client": "^0.3.8",

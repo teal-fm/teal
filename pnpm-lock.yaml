@@ -274,6 +274,9 @@ importers:
       dotenv:
         specifier: ^16.4.5
         version: 16.4.7
+      dotenv-expand:
+        specifier: ^12.0.2
+        version: 12.0.2
       drizzle-orm:
         specifier: ^0.38.3
         version: 0.38.3(@libsql/client@0.14.0)(@types/react@19.0.14)(expo-sqlite@15.2.12(expo@53.0.11(@babel/core@7.26.0)(@expo/metro-runtime@5.0.4(react-native@0.79.2(@babel/core@7.26.0)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.2(@babel/core@7.26.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.2(@babel/core@7.26.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(postgres@3.4.7)(react@19.0.0)
@@ -344,7 +347,10 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^20.17.6
-        version: 20.17.9
+        version: 20.17.14
+      dotenv-expand:
+        specifier: ^12.0.2
+        version: 12.0.2
 
   packages/lexicons:
     dependencies:
@@ -3694,6 +3700,10 @@ packages:
 
   dotenv-expand@11.0.7:
     resolution: {integrity: sha512-zIHwmZPRshsCdpMDyVsqGmgyP0yT8GAgXUnkdAoJisxvf33k7yO6OuoKmcTGuXPWSsm8Oh88nZicRLA9Y0rUeA==}
+    engines: {node: '>=12'}
+
+  dotenv-expand@12.0.2:
+    resolution: {integrity: sha512-lXpXz2ZE1cea1gL4sz2Ipj8y4PiVjytYr3Ij0SWoms1PGxIv7m2CRKuRuCRtHdVuvM/hNJPMxt5PbhboNC4dPQ==}
     engines: {node: '>=12'}
 
   dotenv@16.4.7:
@@ -11024,6 +11034,10 @@ snapshots:
       domhandler: 5.0.3
 
   dotenv-expand@11.0.7:
+    dependencies:
+      dotenv: 16.4.7
+
+  dotenv-expand@12.0.2:
     dependencies:
       dotenv: 16.4.7
 
