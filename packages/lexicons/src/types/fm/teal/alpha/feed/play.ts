@@ -1,11 +1,12 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
-import { CID } from 'multiformats/cid'
-import * as FmTealAlphaFeedDefs from './defs'
+import { BlobRef, ValidationResult } from "@atproto/lexicon";
+import { CID } from "multiformats/cid";
+
+import { lexicons } from "../../../../../lexicons";
+import { hasProp, isObj } from "../../../../../util";
+import * as FmTealAlphaFeedDefs from "./defs";
 
 export interface Record {
   /** The name of the track */
@@ -15,13 +16,13 @@ export interface Record {
   /** The Musicbrainz recording ID of the track */
   recordingMbId?: string;
   /** The length of the track in seconds */
-  duration?: number
+  duration?: number;
   /** Array of artist names in order of original appearance. Prefer using 'artists'. */
-  artistNames?: string[]
+  artistNames?: string[];
   /** Array of Musicbrainz artist IDs. Prefer using 'artists'. */
-  artistMbIds?: string[]
+  artistMbIds?: string[];
   /** Array of artists in order of original appearance. */
-  artists?: FmTealAlphaFeedDefs.Artist[]
+  artists?: FmTealAlphaFeedDefs.Artist[];
   /** The name of the release/album */
   releaseName?: string;
   /** The Musicbrainz release ID */

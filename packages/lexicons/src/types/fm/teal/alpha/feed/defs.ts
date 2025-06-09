@@ -15,9 +15,9 @@ export interface PlayView {
   /** The Musicbrainz recording ID of the track */
   recordingMbId?: string;
   /** The length of the track in seconds */
-  duration?: number
+  duration?: number;
   /** Array of artists in order of original appearance. */
-  artists: Artist[]
+  artists: Artist[];
   /** The name of the release/album */
   releaseName?: string;
   /** The Musicbrainz release ID */
@@ -49,20 +49,20 @@ export function validatePlayView(v: unknown): ValidationResult {
 
 export interface Artist {
   /** The name of the artist */
-  artistName: string
+  artistName: string;
   /** The Musicbrainz ID of the artist */
-  artistMbId?: string
-  [k: string]: unknown
+  artistMbId?: string;
+  [k: string]: unknown;
 }
 
 export function isArtist(v: unknown): v is Artist {
   return (
     isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.feed.defs#artist'
-  )
+    hasProp(v, "$type") &&
+    v.$type === "fm.teal.alpha.feed.defs#artist"
+  );
 }
 
 export function validateArtist(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.feed.defs#artist', v)
+  return lexicons.validate("fm.teal.alpha.feed.defs#artist", v);
 }

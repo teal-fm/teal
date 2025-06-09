@@ -1,10 +1,10 @@
+import { useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, View } from "react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
 import ActorView from "@/components/actor/actorView";
 import { Text } from "@/components/ui/text";
 import { resolveHandle } from "@/lib/atp/pid";
 import { useStore } from "@/stores/mainStore";
-import { Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
 
 export default function Handle() {
   let { handle } = useLocalSearchParams();

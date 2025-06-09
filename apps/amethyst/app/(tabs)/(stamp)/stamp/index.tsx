@@ -86,8 +86,8 @@ export default function StepOne() {
         }}
       />
       {/* Search Form */}
-      <View className="flex gap-2 max-w-2xl w-screen px-4">
-        <Text className="font-bold text-lg">Search for a track</Text>
+      <View className="flex w-screen max-w-2xl gap-2 px-4">
+        <Text className="text-lg font-bold">Search for a track</Text>
         <Input
           placeholder="Track name..."
           value={searchFields.track}
@@ -124,7 +124,7 @@ export default function StepOne() {
             }
           }}
         />
-        <View className="flex-row gap-2 mt-2">
+        <View className="mt-2 flex-row gap-2">
           <Button
             className="flex-1"
             onPress={handleSearch}

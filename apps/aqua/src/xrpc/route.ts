@@ -1,10 +1,11 @@
 import { EnvWithCtx } from "@/ctx";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import getPlay from "./feed/getPlay";
-import getActorFeed from "./feed/getActorFeed";
+
 import getProfile from "./actor/getProfile";
 import searchActors from "./actor/searchActors";
+import getActorFeed from "./feed/getActorFeed";
+import getPlay from "./feed/getPlay";
 
 // mount this on /xrpc
 const app = new Hono<EnvWithCtx>();
