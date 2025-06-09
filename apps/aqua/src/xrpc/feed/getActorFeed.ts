@@ -1,6 +1,7 @@
 import { TealContext } from "@/ctx";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
+
 import { artists, db, plays, playToArtists } from "@teal/db";
-import { eq, and, lt, desc, sql } from "drizzle-orm";
 import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
 
 export default async function getActorFeed(c: TealContext) {

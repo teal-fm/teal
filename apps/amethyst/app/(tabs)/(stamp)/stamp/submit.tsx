@@ -1,8 +1,13 @@
+import { useContext, useEffect, useState } from "react";
+import { Image, Switch, View } from "react-native";
+import { Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
 import VerticalPlayView from "@/components/play/verticalPlayView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import {
   Agent,
@@ -10,17 +15,13 @@ import {
   ComAtprotoRepoCreateRecord,
   RichText,
 } from "@atproto/api";
-import { Redirect, Stack, useRouter } from "expo-router";
-import { useContext, useEffect, useState } from "react";
-import { Image, Switch, View } from "react-native";
 
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 import {
   Record as PlayRecord,
   validateRecord,
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 
 type CardyBResponse = {
@@ -341,7 +342,7 @@ powered by @teal.fm`;
           </Text>
         </View>
 
-        <View className="flex-col gap-4 items-center w-full">
+        <View className="w-full flex-col items-center gap-4">
           {blueskyEmbedCard && shareWithBluesky ? (
             <View className="w-full gap-2">
               <Text className="text-center text-sm text-muted-foreground">
@@ -372,9 +373,9 @@ powered by @teal.fm`;
             )
           )}
           {shareWithBluesky && (
-            <View className="text-sm text-muted-foreground w-full items-end">
+            <View className="w-full items-end text-sm text-muted-foreground">
               <Textarea
-                className="w-full p-2 pb-4 border border-border rounded-md text-card-foreground bg-card min-h-[100px] max-h-[200px]"
+                className="max-h-[200px] min-h-[100px] w-full rounded-md border border-border bg-card p-2 pb-4 text-card-foreground"
                 multiline
                 value={blueskyPostText}
                 onChangeText={setBlueskyPostText}
@@ -382,7 +383,7 @@ powered by @teal.fm`;
               />
               <Text
                 className={cn(
-                  "text-sm text-muted-foreground text-center absolute bottom-1 right-2",
+                  "absolute bottom-1 right-2 text-center text-sm text-muted-foreground",
                   blueskyPostText.length > 150
                     ? "text-gray-600 dark:text-gray-300"
                     : "",
@@ -393,7 +394,7 @@ powered by @teal.fm`;
               </Text>
             </View>
           )}
-          <View className="flex-row gap-2 items-center">
+          <View className="flex-row items-center gap-2">
             <Switch
               value={shareWithBluesky}
               onValueChange={setShareWithBluesky}

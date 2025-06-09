@@ -1,4 +1,9 @@
 import React from "react";
+import { Pressable } from "react-native";
+import { Link, Tabs } from "expo-router";
+import useIsMobile from "@/hooks/useIsMobile";
+//import useIsMobile from "@/hooks/useIsMobile";
+import { useStore } from "@/stores/mainStore";
 import {
   FilePen,
   Home,
@@ -7,16 +12,11 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react-native";
-import { Link, Tabs } from "expo-router";
-import { Pressable } from "react-native";
+import { useColorScheme } from "nativewind";
 
 import Colors from "../../constants/Colors";
 import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
-//import useIsMobile from "@/hooks/useIsMobile";
-import { useStore } from "@/stores/mainStore";
-import { useColorScheme } from "nativewind";
 import AuthOptions from "../auth/options";
-import useIsMobile from "@/hooks/useIsMobile";
 
 function TabBarIcon(props: { name: LucideIcon; color: string }) {
   const Name = props.name;

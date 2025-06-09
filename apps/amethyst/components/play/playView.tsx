@@ -28,12 +28,12 @@ export default function PlayView({
           {trackTitle}
         </Text>
         {artistName && (
-          <Text className="text-sm text-left text-foreground line-clamp-1 overflow-ellipsis">
+          <Text className="line-clamp-1 overflow-ellipsis text-left text-sm text-foreground">
             {artistName}
           </Text>
         )}
         {dateListened && (
-          <Text className="text-sm text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
+          <Text className="line-clamp-1 overflow-ellipsis text-left text-sm text-muted-foreground">
             played {timeAgo(dateListened)}
           </Text>
         )}

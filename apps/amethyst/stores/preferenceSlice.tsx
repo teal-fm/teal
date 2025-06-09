@@ -11,7 +11,7 @@ export const createPreferenceSlice: StateCreator<PreferenceSlice> = (set) => {
   return {
     colorTheme: "system",
     setColorTheme: (theme) => set({ colorTheme: theme }),
-    tealDid: process.env.EXPO_PUBLIC_DID_WEB ?? 'did:web:rina.z.teal.fm',
+    tealDid: process.env.EXPO_PUBLIC_DID_WEB ?? "did:web:rina.z.teal.fm",
     setTealDid: (url) => set({ tealDid: url }),
   };
 };
