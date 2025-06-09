@@ -1,12 +1,13 @@
-import { create, StateCreator as ZustandStateCreator } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create, StateCreator as ZustandStateCreator } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+
 import {
   AuthenticationSlice,
   createAuthenticationSlice,
-} from './authenticationSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createTempSlice, TempSlice } from './tempSlice';
-import { createPreferenceSlice, PreferenceSlice } from './preferenceSlice';
+} from "./authenticationSlice";
+import { createPreferenceSlice, PreferenceSlice } from "./preferenceSlice";
+import { createTempSlice, TempSlice } from "./tempSlice";
 
 /// Put all your non-shared slices here
 export type Slices = AuthenticationSlice & TempSlice & PreferenceSlice;
@@ -29,7 +30,7 @@ export const useStore = create<PlusSharedSlices>()(
       onRehydrateStorage: () => (state) => {
         state?.restorePdsAgent();
       },
-      name: 'mainStore',
+      name: "mainStore",
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),

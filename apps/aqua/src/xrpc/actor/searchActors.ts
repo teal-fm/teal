@@ -1,7 +1,8 @@
-import { TealContext } from '@/ctx';
-import { db, profiles } from '@teal/db';
-import { like, or, sql, lt, gt, and } from 'drizzle-orm';
-import { OutputSchema } from '@teal/lexicons/src/types/fm/teal/alpha/actor/searchActors';
+import { TealContext } from "@/ctx";
+import { and, gt, like, lt, or, sql } from "drizzle-orm";
+
+import { db, profiles } from "@teal/db";
+import { OutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/searchActors";
 
 export default async function searchActors(c: TealContext) {
   const params = c.req.query();
@@ -10,7 +11,7 @@ export default async function searchActors(c: TealContext) {
 
   if (!params.q) {
     c.status(400);
-    c.error = new Error('q is required');
+    c.error = new Error("q is required");
     return;
   }
 
@@ -40,9 +41,9 @@ export default async function searchActors(c: TealContext) {
 
     if (params.cursor) {
       // Decode the cursor
-      const [createdAtStr, didStr] = Buffer.from(params.cursor, 'base64')
-        .toString('utf-8')
-        .split(':');
+      const [createdAtStr, didStr] = Buffer.from(params.cursor, "base64")
+        .toString("utf-8")
+        .split(":");
 
       const createdAt = new Date(createdAtStr);
 
@@ -74,8 +75,8 @@ export default async function searchActors(c: TealContext) {
     if (results.length > limit) {
       const lastResult = results[limit - 1]; // Get the *limit*-th, not limit+1-th
       nextCursor = Buffer.from(
-        `${lastResult.createdAt?.toISOString() || ''}:${lastResult.did}`,
-      ).toString('base64');
+        `${lastResult.createdAt?.toISOString() || ""}:${lastResult.did}`,
+      ).toString("base64");
       results.pop(); // Remove the extra record we fetched
     }
     const res: OutputSchema = {
@@ -91,8 +92,8 @@ export default async function searchActors(c: TealContext) {
 
     return res;
   } catch (error) {
-    console.error('Database error:', error);
+    console.error("Database error:", error);
     c.status(500);
-    throw new Error('Internal server error');
+    throw new Error("Internal server error");
   }
 }

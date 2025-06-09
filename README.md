@@ -1,6 +1,7 @@
 ## Getting Started
 
 ### Prerequisites
+
 - Node (>= v21.0.0)
 - Go
 - Bun
@@ -12,6 +13,7 @@ To get started with this template, simply paste this command into your terminal:
 pnpm install && pnpm install -g turbo && cp apps/aqua/.env.example apps/aqua/.env &&
 pnpm run db:migrate
 ```
+
 Running on a Mac may also require adding @libsql/darwin-x64 dependency
 
 ## Development

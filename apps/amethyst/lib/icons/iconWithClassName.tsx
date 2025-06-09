@@ -1,9 +1,13 @@
-import type { LucideIcon } from "lucide-react-native";
-import type { FontAwesome6 } from "@expo/vector-icons";
-import { cssInterop } from "nativewind";
-import { cn } from "../utils";
-import { GlobalTextClassContext, TextClassContext } from "../../components/ui/text";
 import React from "react";
+import type { FontAwesome6 } from "@expo/vector-icons";
+import type { LucideIcon } from "lucide-react-native";
+import { cssInterop } from "nativewind";
+
+import {
+  GlobalTextClassContext,
+  TextClassContext,
+} from "../../components/ui/text";
+import { cn } from "../utils";
 
 /// This type is used to support multiple icon libraries.
 type SupportedIcons = LucideIcon | typeof FontAwesome6;

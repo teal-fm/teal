@@ -1,17 +1,17 @@
+import { createDeflate } from "node:zlib";
 import { sql } from "drizzle-orm";
 import {
-  pgTable,
-  text,
-  pgEnum,
-  timestamp,
-  uuid,
+  foreignKey,
   integer,
   jsonb,
-  primaryKey,
-  foreignKey,
+  pgEnum,
   pgMaterializedView,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
-import { createDeflate } from "node:zlib";
 
 export const artists = pgTable("artists", {
   mbid: uuid("mbid").primaryKey(),

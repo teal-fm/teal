@@ -1,8 +1,9 @@
+import path from "node:path";
+import process from "node:process";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+
 import * as schema from "./schema";
-import process from "node:process";
-import path from "node:path";
 
 /// Trim a password from a db connection url
 function withoutPassword(url: string) {
