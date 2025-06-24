@@ -193,7 +193,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             )
             .then((profile) => {
               console.log(profile);
-              return profile.data.agent || null;
+              return profile.data.actor || null;
             });
 
           set({

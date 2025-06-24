@@ -19,27 +19,23 @@ export default function AuthOptions() {
         <Text className="text-center text-5xl text-foreground">
           Get started with
         </Text>
-        <Text className="text-center text-5xl text-foreground">
+        <Text className="text-center text-5xl text-foreground font-bold">
           teal
-          <Text className="font-serif-old-italic text-5xl">.fm</Text>
+          <Text className="font-serif-old-italic text-5xl text-primary">.fm</Text>
         </Text>
       </View>
-      <Link href="/auth/login" className="text-secondary">
-        <Button
-          className="dark-blue-800 flex flex-row items-center justify-center gap-2 rounded-full dark:bg-blue-400"
-          size="lg"
-        >
-          <Text>Sign in with ATProto</Text>
-        </Button>
-      </Link>
-      <Link href="/auth/signup" className="text-secondary">
-        <Button
-          className="flex flex-row items-center justify-center rounded-full"
-          size="lg"
-        >
-          <Text>Sign up</Text>
-        </Button>
-      </Link>
+      <View className="flex items-center gap-6">
+        <Link href="/auth/login" className="text-secondary">
+          <Button size="lg">
+            <Text>Sign in with ATProto</Text>
+          </Button>
+        </Link>
+        <Link href="/auth/signup" className="text-secondary">
+          <Button size="lg">
+            <Text>Sign up</Text>
+          </Button>
+        </Link>
+      </View>
     </View>
   );
 }
