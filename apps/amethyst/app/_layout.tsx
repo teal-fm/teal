@@ -1,3 +1,6 @@
+import "../global.css";
+import "react-native-reanimated";
+
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -10,18 +13,12 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-
-import "react-native-reanimated";
-
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useColorScheme, verifyInstallation } from "nativewind";
-
-import { GlobalTextClassContext } from "../components/ui/text";
-
-import "../global.css";
-
+import { GlobalTextClassContext } from "@/components/ui/text";
 import { SafeAreaView, View } from "react-native";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { QueryProvider } from "@/lib/react-query";
 
 let defaultFamily = (weight: string) => {
   return {
@@ -109,24 +106,26 @@ function RootLayoutNav() {
 
   return (
     <GestureHandlerRootView>
-      <ThemeProvider value={useTheme()}>
-        <GlobalTextClassContext.Provider value="font-sans">
-          <BottomSheetModalProvider>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="auth/logoutModal"
-                options={{
-                  presentation: "transparentModal",
-                  animation: "fade",
-                  headerShown: false,
-                }}
-              />
-            </Stack>
-            <PortalHost />
-          </BottomSheetModalProvider>
-        </GlobalTextClassContext.Provider>
-      </ThemeProvider>
+      <QueryProvider>
+        <ThemeProvider value={useTheme()}>
+          <GlobalTextClassContext.Provider value="font-sans">
+            <BottomSheetModalProvider>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="auth/logoutModal"
+                  options={{
+                    presentation: "transparentModal",
+                    animation: "fade",
+                    headerShown: false,
+                  }}
+                />
+              </Stack>
+              <PortalHost />
+            </BottomSheetModalProvider>
+          </GlobalTextClassContext.Provider>
+        </ThemeProvider>
+      </QueryProvider>
     </GestureHandlerRootView>
   );
 }
