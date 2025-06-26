@@ -36,7 +36,7 @@ export default function TabLayout() {
           <HomeIcon />
         </TabTrigger>
 
-        <TabTrigger className={tabClass()} name="stamp" href="/stamp">
+        <TabTrigger className={tabClass()} name="(stamp)/stamp/index" href="/stamp">
           <PlayIcon />
         </TabTrigger>
 

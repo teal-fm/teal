@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -22,12 +22,12 @@ import {
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
 import { Controller, useForm } from "react-hook-form";
-
-import { StampContext, StampContextValue, StampStep } from "./_layout";
+import { StampStep, useStampCtx } from "@/lib/state/stamp";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useStampSearchMutation } from "@/lib/state/queries/stamp";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const stepOneFormSchema = z.object({
   track: z.string(),
@@ -38,7 +38,7 @@ type StepOneForm = z.infer<typeof stepOneFormSchema>;
 
 export default function StepOne() {
   const router = useRouter();
-  const ctx = useContext(StampContext);
+  const { state, setState } = useStampCtx();
 
   const {
     control,
@@ -60,13 +60,11 @@ export default function StepOne() {
     onSuccess: () => {},
   });
 
-  const { state, setState } = ctx as StampContextValue;
   const [selectedTrack, setSelectedTrack] = useState<MusicBrainzRecording | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [releaseSelections, setReleaseSelections] = useState<ReleaseSelections>(
     {},
   );
-
 
   // reset search state if requested
   useEffect(() => {
@@ -79,7 +77,7 @@ export default function StepOne() {
 
   const handleSearch = handleSubmit(async data => {
     setSelectedTrack(null);
-    search();
+    search(getValues());
     setHasSearched(true);
   });
 
@@ -89,9 +87,9 @@ export default function StepOne() {
   };
 
   return (
-    <ScrollView className="w-min flex-1 items-center justify-start bg-background pt-2">
+    <ScrollView className="flex-1 items-center justify-start bg-background p-4">
       {/* Search Form */}
-      <View className="flex flex-col w-screen max-w-screen-md gap-2 px-4">
+      <View className="flex flex-col w-screen max-w-2xl gap-2">
 
         <View className="flex flex-col gap-1">
           <Label className="text-muted-foreground">Track name</Label>
@@ -163,7 +161,7 @@ export default function StepOne() {
 
       {/* Search Results */}
       {data && (
-        <View className="flex w-screen max-w-2xl gap-4 px-4">
+        <View className="flex w-screen max-w-2xl gap-4">
           {data.length > 0 ? (
             <View className="mt-4">
               <Text className="mb-2 text-lg font-bold">
@@ -172,6 +170,7 @@ export default function StepOne() {
 
               <FlatList
                 data={data}
+                ItemSeparatorComponent={() => <View className="h-4" />}
                 renderItem={({ item }) => (
                   <SearchResult
                     result={item}
@@ -313,9 +312,7 @@ export function SearchResult({
               },
         );
       }}
-      className={`mb-2 rounded-lg px-4 py-2 ${
-        isSelected ? "bg-primary/20" : "bg-secondary/10"
-      }`}
+      className="rounded-lg px-4 py-2 border border-border shadow-sm shadow-foreground/10 bg-card focus:outline-none"
     >
       <View className={`flex-row items-center justify-between gap-4`}>
         <Image

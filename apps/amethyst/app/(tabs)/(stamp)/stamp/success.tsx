@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { View } from "react-native";
 import { Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
@@ -6,12 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
 
-import { StampContext, StampContextValue, StampStep } from "./_layout";
+import { StampStep, useStampCtx } from "@/lib/state/stamp";
 
 export default function StepThree() {
   const router = useRouter();
-  const ctx = useContext(StampContext);
-  const { state, setState } = ctx as StampContextValue;
+  const { state, setState } = useStampCtx();
   // reset on unmount
   useEffect(() => {
     return () => {

@@ -1,30 +1,44 @@
 import { z } from "zod";
-import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query";
-import { MusicBrainzRecording, searchMusicbrainz } from "@/lib/oldStamp";
+import { useMutation } from "@tanstack/react-query";
+import { MusicBrainzRecording } from "@/lib/oldStamp";
 
 export const stampSearchSchema = z.object({
   track: z.string(),
   artist: z.string(),
   release: z.string(),
 });
-type StampSearch = z.infer<typeof stampSearchSchema>;
+type StampSearch = z.infer<typeof stampSearchSchema> & {
+  [v: string]: string;
+};
 
-export const StampSearchQueryKey = (data: StampSearch) => [
-  'STAMP_MB_SEARCH',
-  data.track,
-  data.artist,
-  data.release,
-];
+const musicBrainzQueryUrl = 'https://musicbrainz.org/ws/2/recording';
 
-type useStampSearchQueryOpts = {
-  data: StampSearch | (() => StampSearch);
-} & UseMutationOptions<MusicBrainzRecording[]>;
+export const searchMusicBrainz = async (query: StampSearch): Promise<MusicBrainzRecording[]> => {
+  const url = new URL(musicBrainzQueryUrl);
+  url.searchParams.set('fmt', 'json');
 
-export const useStampSearchMutation = ({ data }: useStampSearchQueryOpts) => {
-  const getData = () => typeof data == 'function' ? data() : data;
+  const queryParts: string[] = [];
+  Object.keys(query).map(v => {
+    queryParts.push(`${v}:"${query[v]}"`);
+  });
+  url.searchParams.set('query', queryParts.join(' AND '));
 
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'tealtracker/0.0.1',
+    },
+  });
+
+  if (!res.ok) 
+    throw new Error(`MusicBrainz API returned ${res.status}`);
+
+  const data = await res.json();
+  return data.recordings || [];
+};
+
+export const useStampSearchMutation = () => {
   return useMutation({
-    mutationKey: StampSearchQueryKey(getData()),
-    mutationFn: () => searchMusicbrainz(getData()),
+    mutationKey: ['stamp:search'],
+    mutationFn: (data: StampSearch) => searchMusicBrainz(data),
   });
 };
