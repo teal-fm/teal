@@ -19,7 +19,7 @@ export const searchMusicBrainz = async (query: StampSearch): Promise<MusicBrainz
 
   const queryParts: string[] = [];
   Object.keys(query).map(v => {
-    queryParts.push(`${v}:"${query[v]}"`);
+    if (query[v]) queryParts.push(`${v}:"${query[v]}"`);
   });
   url.searchParams.set('query', queryParts.join(' AND '));
 

@@ -20,14 +20,13 @@ import {
   SearchResultProps,
 } from "@/lib/oldStamp";
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
+import { Check, ChevronDown, ChevronRight, MusicIcon } from "lucide-react-native";
 import { Controller, useForm } from "react-hook-form";
 import { StampStep, useStampCtx } from "@/lib/state/stamp";
 import { Label } from "@/components/ui/label";
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useStampSearchMutation } from "@/lib/state/queries/stamp";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const stepOneFormSchema = z.object({
   track: z.string(),
@@ -55,10 +54,7 @@ export default function StepOne() {
     resolver: zodResolver(stepOneFormSchema),
   });
 
-  const { mutate: search, reset: resetSearch, data, isPending } = useStampSearchMutation({
-    data: getValues,
-    onSuccess: () => {},
-  });
+  const { mutate: search, reset: resetSearch, data, isPending } = useStampSearchMutation();
 
   const [selectedTrack, setSelectedTrack] = useState<MusicBrainzRecording | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
@@ -88,11 +84,17 @@ export default function StepOne() {
 
   return (
     <ScrollView className="flex-1 items-center justify-start bg-background p-4">
-      {/* Search Form */}
-      <View className="flex flex-col w-screen max-w-2xl gap-2">
+      <View className="flex flex-col w-screen max-w-2xl mb-6">
+        <Text className="font-bold text-xl text-foreground">
+          Listen to something cool?{" "}
+          <Text className="text-primary text-xl">Stamp it.</Text>
+        </Text>
+      </View>
 
-        <View className="flex flex-col gap-1">
-          <Label className="text-muted-foreground">Track name</Label>
+      {/* Search Form */}
+      <View className="flex flex-col lg:grid lg:grid-cols-3 w-screen max-w-2xl gap-4">
+
+        <View className="flex flex-col gap-2 relative">
           <Controller
             control={control}
             name="track"
@@ -103,14 +105,14 @@ export default function StepOne() {
                 onBlur={onBlur}
                 onChange={onChange}
                 value={value}
+                onSubmitEditing={handleSearch}
               />
             )}
           />
           {errors.track && <Text>{errors.track.message}</Text>}
         </View>
 
-        <View className="flex flex-col gap-1">
-          <Label className="text-muted-foreground">Artist</Label>
+        <View className="flex flex-col gap-2">
           <Controller
             control={control}
             name="artist"
@@ -120,14 +122,14 @@ export default function StepOne() {
                 onBlur={onBlur}
                 onChange={onChange}
                 value={value}
+                onSubmitEditing={handleSearch}
               />
             )}
           />
           {errors.artist && <Text>{errors.artist.message}</Text>}
         </View>
 
-        <View className="flex flex-col gap-1">
-          <Label className="text-muted-foreground">Album</Label>
+        <View className="flex flex-col gap-2">
           <Controller
             control={control}
             name="release"
@@ -137,13 +139,14 @@ export default function StepOne() {
                 onBlur={onBlur}
                 onChange={onChange}
                 value={value}
+                onSubmitEditing={handleSearch}
               />
             )}
           />
           {errors.release && <Text>{errors.release.message}</Text>}
         </View>
 
-        <View className="mt-2 flex-row gap-2">
+        <View className="flex-row gap-4 lg:col-span-3">
           <Button
             className="flex-1"
             onPress={handleSearch}
@@ -156,7 +159,6 @@ export default function StepOne() {
             <Text>Clear</Text>
           </Button>
         </View>
-
       </View>
 
       {/* Search Results */}
