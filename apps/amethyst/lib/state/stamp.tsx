@@ -1,5 +1,4 @@
-import { createContext, useState } from "react";
-import { Slot, Stack } from "expo-router";
+import { createContext, PropsWithChildren, useContext, useState } from "react";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
 
 export enum StampStep {
@@ -20,24 +19,21 @@ export type StampContextValue = {
 
 export const StampContext = createContext<StampContextValue | null>(null);
 
-const Layout = ({ segment }: { segment: string }) => {
+export const StampProvider = ({ children }: PropsWithChildren) => {
   const [state, setState] = useState<StampContextState>({
     step: StampStep.IDLE,
     resetSearchState: false,
   });
+
   return (
     <StampContext.Provider value={{ state, setState }}>
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            height: 50,
-          } as any,
-        }}
-      >
-        <Slot />
-      </Stack>
+      {children}
     </StampContext.Provider>
   );
 };
 
-export default Layout;
+export const useStampCtx = () => {
+  const ctx = useContext(StampContext);
+  if (!ctx) throw new Error('useStampCtx() must be called inside a <StampProvider />!');
+  return ctx;
+};

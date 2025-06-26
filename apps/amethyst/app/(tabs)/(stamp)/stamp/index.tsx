@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Link, Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,126 +17,144 @@ import {
   MusicBrainzRecording,
   MusicBrainzRelease,
   ReleaseSelections,
-  searchMusicbrainz,
-  SearchParams,
   SearchResultProps,
 } from "@/lib/oldStamp";
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
+import { Check, ChevronDown, ChevronRight, MusicIcon } from "lucide-react-native";
+import { Controller, useForm } from "react-hook-form";
+import { StampStep, useStampCtx } from "@/lib/state/stamp";
+import { Label } from "@/components/ui/label";
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useStampSearchMutation } from "@/lib/state/queries/stamp";
 
-import { StampContext, StampContextValue, StampStep } from "./_layout";
+const stepOneFormSchema = z.object({
+  track: z.string(),
+  artist: z.string(),
+  release: z.string(),
+});
+type StepOneForm = z.infer<typeof stepOneFormSchema>;
 
 export default function StepOne() {
   const router = useRouter();
-  const ctx = useContext(StampContext);
-  const { state, setState } = ctx as StampContextValue;
-  const [selectedTrack, setSelectedTrack] =
-    useState<MusicBrainzRecording | null>(null);
+  const { state, setState } = useStampCtx();
 
-  const [searchFields, setSearchFields] = useState<SearchParams>({
-    track: "",
-    artist: "",
-    release: "",
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isDirty },
+    getValues,
+    reset,
+  } = useForm<StepOneForm>({
+    defaultValues: {
+      track: '',
+      artist: '',
+      release: '',
+    },
+    resolver: zodResolver(stepOneFormSchema),
   });
-  const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>(
-    [],
-  );
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const { mutate: search, reset: resetSearch, data, isPending } = useStampSearchMutation();
+
+  const [selectedTrack, setSelectedTrack] = useState<MusicBrainzRecording | null>(null);
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [releaseSelections, setReleaseSelections] = useState<ReleaseSelections>(
     {},
   );
 
-  const [hasSearched, setHasSearched] = useState<boolean>(false);
-
   // reset search state if requested
   useEffect(() => {
     if (state.step === StampStep.IDLE && state.resetSearchState) {
-      setSearchFields({ track: "", artist: "", release: "" });
-      setSearchResults([]);
+      reset();
+      resetSearch();
       setSelectedTrack(null);
-      setReleaseSelections({});
     }
   }, [state]);
 
-  const handleSearch = async (): Promise<void> => {
-    if (!searchFields.track && !searchFields.artist && !searchFields.release) {
-      return;
-    }
-
-    setIsLoading(true);
+  const handleSearch = handleSubmit(async data => {
     setSelectedTrack(null);
-    const results = await searchMusicbrainz(searchFields);
-    setSearchResults(results);
-    setIsLoading(false);
+    search(getValues());
     setHasSearched(true);
-  };
+  });
 
   const clearSearch = () => {
-    setSearchFields({ track: "", artist: "", release: "" });
-    setSearchResults([]);
+    resetSearch();
     setSelectedTrack(null);
   };
 
   return (
-    <ScrollView className="w-min flex-1 items-center justify-start bg-background pt-2">
-      <Stack.Screen
-        options={{
-          title: "Stamp a play manually",
-          headerBackButtonDisplayMode: "generic",
-        }}
-      />
+    <ScrollView className="flex-1 items-center justify-start bg-background p-4">
+      <View className="flex flex-col w-screen max-w-2xl mb-6">
+        <Text className="font-bold text-xl text-foreground">
+          Listen to something cool?{" "}
+          <Text className="text-primary text-xl">Stamp it.</Text>
+        </Text>
+      </View>
+
       {/* Search Form */}
-      <View className="flex w-screen max-w-2xl gap-2 px-4">
-        <Text className="text-lg font-bold">Search for a track</Text>
-        <Input
-          placeholder="Track name..."
-          value={searchFields.track}
-          onChangeText={(text) =>
-            setSearchFields((prev) => ({ ...prev, track: text }))
-          }
-          onKeyPress={(e) => {
-            if (e.nativeEvent.key === "Enter") {
-              handleSearch();
-            }
-          }}
-        />
-        <Input
-          placeholder="Artist name..."
-          value={searchFields.artist}
-          onChangeText={(text) =>
-            setSearchFields((prev) => ({ ...prev, artist: text }))
-          }
-          onKeyPress={(e) => {
-            if (e.nativeEvent.key === "Enter") {
-              handleSearch();
-            }
-          }}
-        />
-        <Input
-          placeholder="Album name..."
-          value={searchFields.release}
-          onChangeText={(text) =>
-            setSearchFields((prev) => ({ ...prev, release: text }))
-          }
-          onKeyPress={(e) => {
-            if (e.nativeEvent.key === "Enter") {
-              handleSearch();
-            }
-          }}
-        />
-        <View className="mt-2 flex-row gap-2">
+      <View className="flex flex-col lg:grid lg:grid-cols-3 w-screen max-w-2xl gap-4">
+
+        <View className="flex flex-col gap-2 relative">
+          <Controller
+            control={control}
+            name="track"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                id="track"
+                placeholder="Track name..."
+                onBlur={onBlur}
+                onChange={onChange}
+                value={value}
+                onSubmitEditing={handleSearch}
+              />
+            )}
+          />
+          {errors.track && <Text>{errors.track.message}</Text>}
+        </View>
+
+        <View className="flex flex-col gap-2">
+          <Controller
+            control={control}
+            name="artist"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                placeholder="Artist..."
+                onBlur={onBlur}
+                onChange={onChange}
+                value={value}
+                onSubmitEditing={handleSearch}
+              />
+            )}
+          />
+          {errors.artist && <Text>{errors.artist.message}</Text>}
+        </View>
+
+        <View className="flex flex-col gap-2">
+          <Controller
+            control={control}
+            name="release"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                placeholder="Album..."
+                onBlur={onBlur}
+                onChange={onChange}
+                value={value}
+                onSubmitEditing={handleSearch}
+              />
+            )}
+          />
+          {errors.release && <Text>{errors.release.message}</Text>}
+        </View>
+
+        <View className="flex-row gap-4 lg:col-span-3">
           <Button
             className="flex-1"
             onPress={handleSearch}
-            disabled={
-              isLoading ||
-              (!searchFields.track &&
-                !searchFields.artist &&
-                !searchFields.release)
-            }
+            disabled={isPending || !isDirty}
           >
-            <Text>{isLoading ? "Searching..." : "Search"}</Text>
+            <Text>{isPending ? "Searching..." : "Search"}</Text>
           </Button>
+
           <Button className="flex-1" onPress={clearSearch} variant="outline">
             <Text>Clear</Text>
           </Button>
@@ -144,80 +162,83 @@ export default function StepOne() {
       </View>
 
       {/* Search Results */}
-      <View className="flex w-screen max-w-2xl gap-4 px-4">
-        {searchResults.length > 0 ? (
-          <View className="mt-4">
-            <Text className="mb-2 text-lg font-bold">
-              Search Results ({searchResults.length})
-            </Text>
-
-            <FlatList
-              data={searchResults}
-              renderItem={({ item }) => (
-                <SearchResult
-                  result={item}
-                  onSelectTrack={setSelectedTrack}
-                  selectedRelease={releaseSelections[item.id]}
-                  isSelected={selectedTrack?.id === item.id}
-                  onReleaseSelect={(trackId, release) => {
-                    setReleaseSelections((prev) => ({
-                      ...prev,
-                      [trackId]: release,
-                    }));
-                  }}
-                />
-              )}
-              keyExtractor={(item) => item.id}
-            />
-          </View>
-        ) : (
-          hasSearched && (
+      {data && (
+        <View className="flex w-screen max-w-2xl gap-4">
+          {data.length > 0 ? (
             <View className="mt-4">
-              <Text className="mb-2 text-center text-lg text-muted-foreground">
-                No search results found.
+              <Text className="mb-2 text-lg font-bold">
+                Search Results ({data.length})
               </Text>
-              <Text className="mb-2 text-center text-lg text-muted-foreground">
-                Please try importing with{" "}
-                <ExternalLink
-                  href="https://harmony.pulsewidth.org.uk/"
-                  className="border-b border-muted-foreground/60 text-bsky"
-                >
-                  Harmony
-                </ExternalLink>{" "}
-                or manually on{" "}
-                <ExternalLink
-                  href="https://musicbrainz.org/release/add"
-                  className="border-b border-muted-foreground/60 text-bsky"
-                >
-                  Musicbrainz
-                </ExternalLink>
-                .
-              </Text>
-            </View>
-          )
-        )}
 
-        {/* Submit Button */}
-        {selectedTrack && (
-          <View className="sticky bottom-0 mt-4">
-            <Button
-              onPress={() => {
-                setState({
-                  step: StampStep.SUBMITTING,
-                  submittingStamp: selectedTrack,
-                });
-                router.push({
-                  pathname: "/stamp/submit",
-                });
-              }}
-              className="flex w-full flex-row align-middle"
-            >
-              <Text>{`Submit "${selectedTrack.title}" as Play`}</Text>
-              <ChevronRight className="ml-2 inline" />
-            </Button>
-          </View>
-        )}
-      </View>
+              <FlatList
+                data={data}
+                ItemSeparatorComponent={() => <View className="h-4" />}
+                renderItem={({ item }) => (
+                  <SearchResult
+                    result={item}
+                    onSelectTrack={setSelectedTrack}
+                    selectedRelease={releaseSelections[item.id]}
+                    isSelected={selectedTrack?.id === item.id}
+                    onReleaseSelect={(trackId, release) => {
+                      setReleaseSelections((prev) => ({
+                        ...prev,
+                        [trackId]: release,
+                      }));
+                    }}
+                  />
+                )}
+                keyExtractor={(item) => item.id}
+              />
+            </View>
+          ) : (
+            hasSearched && (
+              <View className="mt-4">
+                <Text className="mb-2 text-center text-lg text-muted-foreground">
+                  No search results found.
+                </Text>
+                <Text className="mb-2 text-center text-lg text-muted-foreground">
+                  Please try importing with{" "}
+                  <ExternalLink
+                    href="https://harmony.pulsewidth.org.uk/"
+                    className="border-b border-muted-foreground/60 text-bsky"
+                  >
+                    Harmony
+                  </ExternalLink>{" "}
+                  or manually on{" "}
+                  <ExternalLink
+                    href="https://musicbrainz.org/release/add"
+                    className="border-b border-muted-foreground/60 text-bsky"
+                  >
+                    Musicbrainz
+                  </ExternalLink>
+                  .
+                </Text>
+              </View>
+            )
+          )}
+
+          {/* Submit Button */}
+          {selectedTrack && (
+            <View className="sticky bottom-0 mt-4">
+              <Button
+                onPress={() => {
+                  setState({
+                    step: StampStep.SUBMITTING,
+                    submittingStamp: selectedTrack,
+                  });
+                  router.push({
+                    pathname: "/stamp/submit",
+                  });
+                }}
+                className="flex w-full flex-row align-middle"
+              >
+                <Text>{`Submit "${selectedTrack.title}" as Play`}</Text>
+                <ChevronRight className="ml-2 inline" />
+              </Button>
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -293,9 +314,7 @@ export function SearchResult({
               },
         );
       }}
-      className={`mb-2 rounded-lg px-4 py-2 ${
-        isSelected ? "bg-primary/20" : "bg-secondary/10"
-      }`}
+      className="rounded-lg px-4 py-2 border border-border shadow-sm shadow-foreground/10 bg-card focus:outline-none"
     >
       <View className={`flex-row items-center justify-between gap-4`}>
         <Image

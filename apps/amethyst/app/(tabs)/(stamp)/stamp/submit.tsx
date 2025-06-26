@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Switch, View } from "react-native";
 import { Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
@@ -22,7 +22,7 @@ import {
   validateRecord,
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 
-import { StampContext, StampContextValue, StampStep } from "./_layout";
+import { useStampCtx, StampContextValue, StampStep } from "@/lib/state/stamp";
 
 type CardyBResponse = {
   error: string;
@@ -160,7 +160,7 @@ const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
 export default function Submit() {
   const router = useRouter();
   const agent = useStore((state) => state.pdsAgent);
-  const ctx = useContext(StampContext);
+  const ctx = useStampCtx();
   const { state, setState } = ctx as StampContextValue;
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
