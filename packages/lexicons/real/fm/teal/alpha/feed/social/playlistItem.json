@@ -5,7 +5,7 @@
   "defs": {
     "main": {
       "type": "record",
-      "description": "Record containing a repost for a teal.fm post.",
+      "description": "Record containing a playlist item for a teal.fm playlist.",
       "key": "tid",
       "record": {
         "type": "object",
