@@ -17,6 +17,7 @@
             "maxGraphemes": 300,
             "description": "The primary post content. May be an empty string, if there are embeds."
           },
+
           "trackName": {
             "type": "string",
             "minLength": 1,
@@ -65,11 +66,12 @@
             "type": "string",
             "description": "The ISRC code associated with the recording"
           },
+          "reply": { "type": "ref", "ref": "#replyRef" },
           "facets": {
             "type": "array",
-            "items": { "type": "ref", "ref": "#facetRef" }
+            "description": "Rich text facets, which may include mentions, links, and other features.",
+            "items": { "type": "ref", "ref": "fm.teal.alpha.richtext.facet" }
           },
-          "reply": { "type": "ref", "ref": "#replyRef" },
           "langs": {
             "type": "array",
             "description": "Indicates human language of post primary text content.",
