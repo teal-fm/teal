@@ -1,37 +1,18 @@
-import { useMemo } from "react";
 import { Stack } from "expo-router";
+import { StampProvider } from "@/lib/state/stamp";
 
 const Layout = ({ segment }: { segment: string }) => {
-  const rootScreen = useMemo(() => {
-    switch (segment) {
-      case "(home)":
-        return (
-          <Stack.Screen
-            name="index"
-            options={{ title: "Home", headerShown: false }}
-          />
-        );
-      case "(explore)":
-        return (
-          <Stack.Screen
-            name="explore"
-            options={{ title: "Explore", headerShown: false }}
-          />
-        );
-    }
-  }, [segment]);
+  const screenOpts = {
+    headerShown: false,
+  };
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        headerStyle: {
-          height: 50,
-        } as any,
-      }}
-    >
-      {rootScreen}
-    </Stack>
+    <StampProvider>
+      <Stack>
+        {segment == '(stamp)' && <Stack.Screen name="stamp/index" options={screenOpts} />}
+        {segment == 'explore' && <Stack.Screen name="stamp/explore" options={screenOpts} />}
+      </Stack>
+    </StampProvider>
   );
 };
 
