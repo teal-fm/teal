@@ -8,6 +8,7 @@ import { Text } from "@/components/ui/text"; // Your UI components
 import { useStore } from "@/stores/mainStore";
 
 import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
 
 import DescriptionPage from "./descriptionPage";
 import DisplayNamePage from "./displayNamePage";
@@ -30,12 +31,39 @@ export default function OnboardingPage() {
   const [bannerUri, setBannerUri] = useState("");
 
   const [submissionStep, setSubmissionStep] = useState(0);
-  const [submissionError, setSubmissionError] = useState("");
+
+
+  // Profile status hooks - must be at top level
+  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
 
   const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
   const profile = useStore((store) => store.profiles);
+
+  // Check profile status
+  React.useEffect(() => {
+    const checkProfileStatus = async () => {
+      if (!agent) return;
+
+      try {
+        const res = await agent.call("com.atproto.repo.getRecord", {
+          repo: agent.did,
+          collection: "fm.teal.alpha.actor.profileStatus",
+          rkey: "self",
+        });
+        setProfileStatus(res.data.value as ProfileStatusRecord);
+      } catch {
+        // If no record exists, user hasn't completed onboarding
+        setProfileStatus(null);
+      } finally {
+        setStatusLoading(false);
+      }
+    };
+
+    checkProfileStatus();
+  }, [agent]);
 
   const handleImageSelectionComplete = (avatar: string, banner: string) => {
     setAvatarUri(avatar);
@@ -147,6 +175,47 @@ export default function OnboardingPage() {
     }
 
     console.log(post);
+
+    // Update profile status to mark onboarding as completed
+    const profileStatusRecord: ProfileStatusRecord = {
+      completedOnboarding: "profileOnboarding",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await agent.call(
+        "com.atproto.repo.createRecord",
+        {},
+        {
+          repo: agent.did,
+          collection: "fm.teal.alpha.actor.profileStatus",
+          rkey: "self",
+          record: profileStatusRecord,
+        },
+      );
+    } catch {
+      // If record already exists, update it
+      try {
+        await agent.call(
+          "com.atproto.repo.putRecord",
+          {},
+          {
+            repo: agent.did,
+            collection: "fm.teal.alpha.actor.profileStatus",
+            rkey: "self",
+            record: {
+              ...profileStatusRecord,
+              completedOnboarding: "profileOnboarding",
+              updatedAt: new Date().toISOString(),
+            },
+          },
+        );
+      } catch (updateError) {
+        console.error("Error updating profile status:", updateError);
+      }
+    }
+
     setSubmissionStep(5);
     //redirect to / after 2 seconds
     setTimeout(() => {
@@ -158,14 +227,19 @@ export default function OnboardingPage() {
     return <div>Loading...</div>;
   }
 
-  // if we already have stuff then go back
-  //
+  if (statusLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Checking profile status...</Text>
+      </View>
+    );
+  }
 
-  console.log(profile);
-  if (profile[agent?.did!].teal !== null) {
+  if (profileStatus && profileStatus.completedOnboarding !== "none") {
     return (
       <Text>
-        Profile already exists: {JSON.stringify(profile[agent?.did!].teal)}
+        Onboarding already completed: {profileStatus.completedOnboarding}
       </Text>
     );
   }

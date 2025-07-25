@@ -5,6 +5,8 @@ import { Redirect, Stack, useRouter } from "expo-router";
 import ActorView from "@/components/actor/actorView";
 import { useStore } from "@/stores/mainStore";
 
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
+
 import AuthOptions from "../auth/options";
 
 export default function Screen() {
@@ -14,47 +16,56 @@ export default function Screen() {
   const agent = useStore((state) => state.pdsAgent);
   const profile = useStore((state) => state.profiles[agent?.did ?? ""]);
   const tealDid = useStore((state) => state.tealDid);
-  const [hasTealProfile, setHasTealProfile] = useState<boolean | null>(null);
+  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [statusLoading, setStatusLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchProfile = async () => {
+    const fetchProfileStatus = async () => {
       try {
-        if (!agent || !tealDid) return;
-        let res = await agent.call(
-          "fm.teal.alpha.actor.getProfile",
-          { actor: agent?.did },
-          {},
-          { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
-        );
+        if (!agent) return;
+
+        const res = await agent.call("com.atproto.repo.getRecord", {
+          repo: agent.did,
+          collection: "fm.teal.alpha.actor.profileStatus",
+          rkey: "self",
+        });
+
         if (isMounted) {
-          setHasTealProfile(true);
+          setProfileStatus(res.data.value as ProfileStatusRecord);
         }
       } catch (error) {
-        setHasTealProfile(false);
-        console.error("Error fetching profile:", error);
+        if (isMounted) {
+          // If no record exists, user hasn't completed onboarding
+          setProfileStatus(null);
+        }
+        console.error("Error fetching profile status:", error);
         if (
           error instanceof Error &&
           error.message.includes("could not resolve proxy did")
         ) {
           router.replace("/offline");
         }
+      } finally {
+        if (isMounted) {
+          setStatusLoading(false);
+        }
       }
     };
 
-    fetchProfile();
+    fetchProfileStatus();
 
     return () => {
       isMounted = false;
     };
-  }, [agent, tealDid, router]);
+  }, [agent, router]);
 
   if (j !== "loggedIn") {
     return <AuthOptions />;
   }
 
-  if (hasTealProfile !== null && !hasTealProfile) {
+  if (!statusLoading && (!profileStatus || profileStatus.completedOnboarding === "none")) {
     return (
       <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
         <Redirect href="/onboarding" />
@@ -63,7 +74,7 @@ export default function Screen() {
   }
 
   // TODO: replace with skeleton
-  if (!profile || !agent) {
+  if (!profile || !agent || statusLoading) {
     return (
       <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
         <ActivityIndicator size="large" />

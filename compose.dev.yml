@@ -45,7 +45,7 @@ services:
       - app_network
     depends_on:
       - postgres
-      
+
   satellite:
     image: ghcr.io/espeon/satellite
     ports:
@@ -71,8 +71,6 @@ services:
     volumes:
       - piper_data:/db
       - garnet
-    env_file:
-      - .env
 
   garnet:
     image: ghcr.io/microsoft/garnet:latest

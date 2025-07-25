@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "build": "expo export --output-dir ./build --platform all",
     "build:web": "expo export --output-dir ./build --platform web --clear",
+    "build:ios": "expo export --output-dir ./build --platform ios --clear",
     "test": "jest --watchAll",
     "lexgen": "lex gen-server ./lexicons/generated/server/ ./lexicons/src/"
   },
@@ -55,6 +56,7 @@
     "react-compiler-runtime": "19.0.0-beta-37ed2a7-20241206",
     "react-dom": "19.0.0",
     "react-native": "0.79.2",
+    "react-native-css-interop": "^0.1.18",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-reanimated": "~3.17.5",
     "react-native-safe-area-context": "5.4.0",

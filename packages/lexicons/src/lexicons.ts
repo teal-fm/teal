@@ -446,6 +446,39 @@ export const schemaDict = {
       },
     },
   },
+  FmTealAlphaActorProfileStatus: {
+    lexicon: 1,
+    id: "fm.teal.alpha.actor.profileStatus",
+    defs: {
+      main: {
+        type: "record",
+        description:
+          "This lexicon is in a not officially released state. It is subject to change. | A declaration of the profile status and onboarding completion state of the actor.",
+        key: "literal:self",
+        record: {
+          type: "object",
+          required: ["completedOnboarding"],
+          properties: {
+            completedOnboarding: {
+              type: "string",
+              description: "The onboarding completion status",
+              knownValues: ["none", "profileOnboarding", "playOnboarding", "complete"],
+            },
+            createdAt: {
+              type: "string",
+              format: "datetime",
+              description: "The timestamp when this status was created",
+            },
+            updatedAt: {
+              type: "string",
+              format: "datetime",
+              description: "The timestamp when this status was last updated",
+            },
+          },
+        },
+      },
+    },
+  },
   FmTealAlphaFeedDefs: {
     lexicon: 1,
     id: "fm.teal.alpha.feed.defs",
@@ -761,6 +794,7 @@ export const ids = {
   FmTealAlphaActorGetProfile: "fm.teal.alpha.actor.getProfile",
   FmTealAlphaActorGetProfiles: "fm.teal.alpha.actor.getProfiles",
   FmTealAlphaActorProfile: "fm.teal.alpha.actor.profile",
+  FmTealAlphaActorProfileStatus: "fm.teal.alpha.actor.profileStatus",
   FmTealAlphaActorSearchActors: "fm.teal.alpha.actor.searchActors",
   FmTealAlphaActorStatus: "fm.teal.alpha.actor.status",
   FmTealAlphaFeedDefs: "fm.teal.alpha.feed.defs",
