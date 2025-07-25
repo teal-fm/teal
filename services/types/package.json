@@ -1,0 +1,11 @@
+{
+  "name": "@repo/types",
+  "private": true,
+  "scripts": {
+    "build": "cargo build --release",
+    "build:rust": "cargo build --release",
+    "dev": "echo 'Types package - no dev mode'",
+    "test": "cargo test",
+    "test:rust": "cargo test"
+  }
+}

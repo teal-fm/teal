@@ -1,8 +1,6 @@
 {
-  "name": "@teal/aqua",
-  "type": "module",
-  "version": "1.0.50",
-  "main": "index.ts",
+  "name": "@repo/aqua",
+  "private": true,
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts | pino-pretty",
     "build": "tsup && cp -r public dist/",
@@ -43,6 +41,11 @@
     "rimraf": "^6.0.1",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "build": "cargo build --release",
+    "build:rust": "cargo build --release",
+    "dev": "cargo watch -x 'run'",
+    "test": "cargo test",
+    "test:rust": "cargo test"
   }
 }

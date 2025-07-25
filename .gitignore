@@ -48,3 +48,7 @@ yarn-error.log*
 package-lock.json
 **/*.bun
 .idea
+
+# rust
+/target
+/**/target

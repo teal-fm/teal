@@ -1,0 +1,45 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.getActorFeed",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves multiple plays from the index or via an author's DID.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["authorDID"],
+        "properties": {
+          "authorDID": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "The author's DID for the play"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The cursor to start the query from"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The upper limit of tracks to get per request. Default is 20, max is 50."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["plays"],
+          "properties": {
+            "plays": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.alpha.feed.defs#playView"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

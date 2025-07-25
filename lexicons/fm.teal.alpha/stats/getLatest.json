@@ -1,0 +1,38 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.stats.getLatest",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get latest plays globally",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50,
+            "description": "Number of latest plays to return"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["plays"],
+          "properties": {
+            "plays": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.alpha.feed.defs#playView"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
