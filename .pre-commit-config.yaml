@@ -1,0 +1,111 @@
+# Pre-commit configuration for Teal project
+# Install with: pip install pre-commit && pre-commit install
+# Run manually with: pre-commit run --all-files
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # TypeScript/JavaScript formatting and linting
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        entry: pnpm prettier --write
+        language: system
+        files: \.(ts|tsx|js|jsx|json|md|yaml|yml)$
+        pass_filenames: true
+
+      - id: biome-check
+        name: Biome Check
+        entry: pnpm biome check --apply
+        language: system
+        files: \.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: typescript-check
+        name: TypeScript Check
+        entry: pnpm typecheck
+        language: system
+        files: \.(ts|tsx)$
+        pass_filenames: false
+
+  # Rust formatting and linting
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: Cargo Format
+        entry: pnpm rust:fmt
+        language: system
+        files: \.rs$
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: Cargo Clippy
+        entry: pnpm rust:clippy
+        language: system
+        files: \.rs$
+        pass_filenames: false
+        args: ["--", "-D", "warnings"]
+
+  # Lexicon validation and generation
+  - repo: local
+    hooks:
+      - id: lexicon-validate
+        name: Validate Lexicons
+        entry: pnpm lex:validate
+        language: system
+        files: lexicons/.*\.json$
+        pass_filenames: false
+
+      - id: lexicon-generate
+        name: Generate Lexicons
+        entry: pnpm lex:gen-server
+        language: system
+        files: lexicons/.*\.json$
+        pass_filenames: false
+
+  # Optional: Additional checks
+  - repo: local
+    hooks:
+      - id: no-console-log
+        name: Check for console.log
+        entry: bash -c 'if grep -r "console\.log" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" .; then echo "Found console.log statements. Please remove them."; exit 1; fi'
+        language: system
+        files: \.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: check-todos
+        name: Check for TODO/FIXME
+        entry: bash -c 'if grep -r -i "TODO\|FIXME" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.rs" .; then echo "Found TODO/FIXME comments. Consider addressing them."; fi'
+        language: system
+        files: \.(ts|tsx|js|jsx|rs)$
+        pass_filenames: false
+        verbose: true
+
+# Global settings
+default_language_version:
+  node: system
+  python: python3
+
+# Skip certain hooks for specific file patterns
+exclude: |
+  (?x)^(
+    vendor/.*|
+    node_modules/.*|
+    target/.*|
+    .git/.*|
+    .*\.lock$
+  )$

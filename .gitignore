@@ -55,9 +55,9 @@ package-lock.json
 
 # generated lexicons
 # js lexicons
-*/**/lexicons
+packages/lexicons/src
 # rust lexicons (types :)))
-*/**/types
+services/types/src
 
 # vendor directory for submodules
 !vendor/
