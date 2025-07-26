@@ -40,8 +40,23 @@ Or use the provided setup script:
 
 ### Updating ATProto Lexicons
 
-To update to the latest ATProto lexicons:
+To update to the latest ATProto lexicons, use the provided update script:
 
+```bash
+./scripts/update-lexicons.sh
+```
+
+This will:
+1. Fetch the latest changes from the atproto repository
+2. Show you what changed
+3. Stage the submodule update for commit
+
+Then commit the changes:
+```bash
+git commit -m "Update atproto lexicons to latest"
+```
+
+**Manual approach:**
 ```bash
 cd vendor/atproto
 git pull origin main
@@ -50,9 +65,11 @@ git add vendor/atproto
 git commit -m "Update atproto lexicons to latest"
 ```
 
-### Setup Script
+### Available Scripts
 
-A convenience script is available to handle the initial setup:
+Two convenience scripts are available:
+
+**Setup Script** - Handle the initial setup:
 
 ```bash
 #!/bin/bash
@@ -84,6 +101,17 @@ fi
 cd ..
 
 echo "Lexicons setup complete!"
+```
+
+**Update Script** - Update ATProto lexicons:
+
+```bash
+#!/bin/bash
+# scripts/update-lexicons.sh
+
+# Fetches latest changes from atproto repository
+# Shows what changed and stages the update for commit
+./scripts/update-lexicons.sh
 ```
 
 ### Adding Custom Lexicons
