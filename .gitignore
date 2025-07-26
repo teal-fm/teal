@@ -71,11 +71,11 @@ vendor/**/node_modules/
 # Track our custom lexicons
 !lexicons/fm.teal.alpha/
 !lexicons/fm.teal.alpha/**/*.json
-# Track the symlinks to atproto lexicons
-!lexicons/app
-!lexicons/chat
-!lexicons/com
-!lexicons/tools
+# Ignore symlinks to atproto lexicons (created during setup)
+lexicons/app
+lexicons/chat
+lexicons/com
+lexicons/tools
 # But ignore any generated files within lexicons
 lexicons/**/*.js
 lexicons/**/*.d.ts

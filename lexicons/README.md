@@ -17,10 +17,25 @@ The official ATProto lexicons are included as a git submodule located at `../ven
 
 ### Initial Setup
 
-If you're cloning this repository for the first time, you'll need to initialize the submodules:
+If you're cloning this repository for the first time, you'll need to initialize the submodules and create the symbolic links:
 
 ```bash
+# Initialize submodules
 git submodule update --init --recursive
+
+# Create symbolic links to atproto lexicons
+cd lexicons
+ln -s ../vendor/atproto/lexicons/app app
+ln -s ../vendor/atproto/lexicons/chat chat
+ln -s ../vendor/atproto/lexicons/com com
+ln -s ../vendor/atproto/lexicons/tools tools
+cd ..
+```
+
+Or use the provided setup script:
+
+```bash
+./scripts/setup-lexicons.sh
 ```
 
 ### Updating ATProto Lexicons
@@ -35,10 +50,44 @@ git add vendor/atproto
 git commit -m "Update atproto lexicons to latest"
 ```
 
+### Setup Script
+
+A convenience script is available to handle the initial setup:
+
+```bash
+#!/bin/bash
+# scripts/setup-lexicons.sh
+
+echo "Setting up lexicons..."
+
+# Initialize submodules
+git submodule update --init --recursive
+
+# Create symbolic links if they don't exist
+cd lexicons
+if [ ! -L app ]; then
+    ln -s ../vendor/atproto/lexicons/app app
+    echo "Created symlink: lexicons/app"
+fi
+if [ ! -L chat ]; then
+    ln -s ../vendor/atproto/lexicons/chat chat
+    echo "Created symlink: lexicons/chat"
+fi
+if [ ! -L com ]; then
+    ln -s ../vendor/atproto/lexicons/com com
+    echo "Created symlink: lexicons/com"
+fi
+if [ ! -L tools ]; then
+    ln -s ../vendor/atproto/lexicons/tools tools
+    echo "Created symlink: lexicons/tools"
+fi
+cd ..
+
+echo "Lexicons setup complete!"
+```
+
 ### Adding Custom Lexicons
 
 Custom lexicons should be added to the `fm.teal.alpha/` directory following the ATProto lexicon schema format. These files are tracked directly in our repository and not affected by submodule updates.
 
-## Generated Files
-
-This directory may contain generated files (`.js`, `.d.ts`, etc.) that are created by lexicon compilation tools. These are ignored by git as specified in the `.gitignore` file.
+**Note**: The symbolic links (`app`, `chat`, `com`, `tools`) are not tracked in git and will be created during setup. They are ignored in `.gitignore` to avoid conflicts.

@@ -29,6 +29,9 @@
    # Install all dependencies (Node.js and Rust)
    pnpm install
 
+   # clone submodules
+   git submodule update --init --recursive
+
    # Set up environment configuration
    cp apps/aqua/.env.example apps/aqua/.env
 
@@ -153,6 +156,16 @@ pnpm lex:validate
 
 # Show lexicon change impact
 pnpm lex:diff
+```
+
+# Updating Vendored Lexicons
+To update vendored lexicons (anything that's not under fm.teal), follow these steps:
+```bash
+cd vendor/atproto
+git pull origin main
+cd ../..
+git add vendor/atproto
+git commit -m "Update atproto lexicons to latest"
 ```
 
 See [`tools/lexicon-cli/README.md`](tools/lexicon-cli/README.md) for detailed documentation.
