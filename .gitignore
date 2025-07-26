@@ -58,3 +58,26 @@ package-lock.json
 */**/lexicons
 # rust lexicons (types :)))
 */**/types
+
+# vendor directory for submodules
+!vendor/
+vendor/**/*.js
+vendor/**/*.d.ts
+vendor/**/dist/
+vendor/**/node_modules/
+
+# lexicons directory structure
+!lexicons/
+# Track our custom lexicons
+!lexicons/fm.teal.alpha/
+!lexicons/fm.teal.alpha/**/*.json
+# Track the symlinks to atproto lexicons
+!lexicons/app
+!lexicons/chat
+!lexicons/com
+!lexicons/tools
+# But ignore any generated files within lexicons
+lexicons/**/*.js
+lexicons/**/*.d.ts
+lexicons/**/dist/
+lexicons/**/node_modules/
