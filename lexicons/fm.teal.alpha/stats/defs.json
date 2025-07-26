@@ -1,0 +1,60 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.stats.defs",
+  "defs": {
+    "artistView": {
+      "type": "object",
+      "required": ["mbid", "name", "playCount"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "description": "MusicBrainz artist ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Artist name"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Total number of plays for this artist"
+        }
+      }
+    },
+    "releaseView": {
+      "type": "object",
+      "required": ["mbid", "name", "playCount"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "description": "MusicBrainz release ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Release/album name"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Total number of plays for this release"
+        }
+      }
+    },
+    "recordingView": {
+      "type": "object",
+      "required": ["mbid", "name", "playCount"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "description": "MusicBrainz recording ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Recording/track name"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Total number of plays for this recording"
+        }
+      }
+    }
+  }
+}

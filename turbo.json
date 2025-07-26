@@ -6,10 +6,36 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["./dist/**"]
+      "outputs": ["./dist/**", "../target/**"]
+    },
+    "build:rust": {
+      "dependsOn": ["^build"],
+      "outputs": ["../target/**"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
+    },
+    "test": {
+      "dependsOn": ["build"]
+    },
+    "test:rust": {
+      "dependsOn": ["build:rust"]
+    },
+    "lex:gen-server": {
+      "dependsOn": [],
+      "outputs": ["./src/types/**"]
+    },
+    "lex:gen": {
+      "dependsOn": [],
+      "outputs": ["./src/types/**", "./src/**/*.rs"]
+    },
+    "lex:watch": {
+      "persistent": true,
+      "cache": false
+    },
+    "lex:validate": {
+      "dependsOn": [],
+      "cache": false
     },
     "dev": {
       "persistent": true,

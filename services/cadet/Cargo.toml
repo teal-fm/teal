@@ -1,0 +1,39 @@
+[package]
+name = "cadet"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+atrium-api.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
+reqwest.workspace = true
+url.workspace = true
+rand.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+metrics.workspace = true
+metrics-exporter-prometheus = "0.16.2"
+anyhow.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+rocketman.workspace = true
+types.workspace = true
+flume.workspace = true
+async-trait.workspace = true
+sqlx = { workspace = true, features = ["time"] }
+time.workspace = true
+dotenvy.workspace = true
+multihash-codetable = { version = "0.1.4", features = ["sha2", "serde"] }
+multibase = "0.9.1"
+
+# CAR file processing
+iroh-car.workspace = true
+libipld.workspace = true
+cid.workspace = true
+base64.workspace = true
+
+# Redis for job queues
+redis.workspace = true
+chrono.workspace = true
+uuid.workspace = true

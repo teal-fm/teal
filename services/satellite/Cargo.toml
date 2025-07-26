@@ -1,0 +1,18 @@
+[package]
+name = "satellite"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.8"
+tokio-cron-scheduler = "0.10"
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+dotenvy.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+uuid = { version = "1.15.1", features = ["v4", "serde"] }

@@ -2,19 +2,104 @@
 
 ### Prerequisites
 
-- Node (>= v21.0.0)
-- Go
-- Bun
-- Turbo
+#### Required
+- **Node.js** (>= v21.0.0) - JavaScript runtime
+- **Rust** (latest stable) - For Rust services compilation
+- **pnpm** (package manager) - Workspace management
+- **PostgreSQL** - Database server
 
-To get started with this template, simply paste this command into your terminal:
+#### Optional Development Tools
+- **Docker** & **Docker Compose** - Container orchestration (compose files included)
+- **cargo-watch** - Auto-rebuilding Rust services during development
+- **cargo-tarpaulin** - For checking code coverage in Rust
+
+### Installation
+
+1. **Install required dependencies**:
+   ```bash
+   # Install Rust (if not already installed)
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+   # Install pnpm (if not already installed)
+   npm install -g pnpm
+   ```
+
+2. **Set up the project**:
+   ```bash
+   # Install all dependencies (Node.js and Rust)
+   pnpm install
+
+   # clone submodules
+   git submodule update --init --recursive
+
+   # Set up environment configuration
+   cp apps/aqua/.env.example apps/aqua/.env
+
+   # Set up database with SQLx
+   ./scripts/setup-sqlx.sh
+
+   # Or manually:
+   pnpm run db:create
+   pnpm run db:migrate
+   ```
+
+3. **macOS-specific setup** (if needed):
+   ```bash
+   pnpm add @libsql/darwin-x64
+   ```
+
+4. **Optional: Install development tools**:
+   ```bash
+   # For Rust file watching during development
+   cargo install cargo-watch
+
+   # optionally, set up docker + docker-compose
+   # on Linux
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+
+   # on macOS, you should use colima or orbstack
+   brew install colima # or brew install orbstack
+   colima start # or use the GUI for orbstack
+   ```
+
+5. **Bring up dependencies** (Docker):
+   ```bash
+   # bring up all dependencies with the compose.dev.yml compose file
+   docker compose up -d -f compose.dev.yml garnet postgres
+   ```
+
+### Database Management
+
+This project uses **SQLx** for database management with PostgreSQL. Please note all database operations are handled through raw, albeit typechecked, SQL.
+
+#### Database Commands
 
 ```bash
-pnpm install && pnpm install -g turbo && cp apps/aqua/.env.example apps/aqua/.env &&
-pnpm run db:migrate
+# Set up database and run all migrations
+./scripts/setup-sqlx.sh
+
+# Individual database operations
+pnpm db:create          # Create database
+pnpm db:migrate         # Run migrations
+pnpm db:migrate:revert  # Revert last migration
+pnpm db:reset           # Drop, recreate, and migrate database
+pnpm db:prepare         # Prepare queries for compile-time verification
 ```
 
-Running on a Mac may also require adding @libsql/darwin-x64 dependency
+#### Migration Management
+
+- **Location**: `services/migrations/`
+- **Format**: `YYYYMMDDHHMMSS_description.sql` (timestamped SQL files)
+- **Type**: Forward-only SQL migrations managed by SQLx
+
+#### Database Schema
+
+The database includes tables for:
+- **Music data**: `artists`, `releases`, `recordings`, `plays`
+- **User data**: `profiles`, `statii` (status records), `featured_items`
+- **CAR imports**: `car_import_requests`, `car_blocks`, `car_extracted_records`
+- **Analytics**: Materialized views for play counts and top charts
 
 ## Development
 
@@ -54,3 +139,33 @@ Although you can just run it locally and it will work.
 3. Run `docker compose -f compose.dev.yml up -d`
 
 And that's it! You should have the full teal.fm stack running locally. Now if you are working on aqua you can do `docker container stop aqua-app` and run that locally during development while everything else is running in docker.
+
+### Lexicon Management
+
+We use AT Protocol lexicons with dual TypeScript/Rust codegen (lex-cli + esquema). Use the unified lexicon CLI for managing schema changes:
+
+```bash
+# Generate all types from lexicons
+pnpm lex:gen
+
+# Watch lexicons and auto-regenerate
+pnpm lex:watch
+
+# Validate type consistency
+pnpm lex:validate
+
+# Show lexicon change impact
+pnpm lex:diff
+```
+
+# Updating Vendored Lexicons
+To update vendored lexicons (anything that's not under fm.teal), follow these steps:
+```bash
+cd vendor/atproto
+git pull origin main
+cd ../..
+git add vendor/atproto
+git commit -m "Update atproto lexicons to latest"
+```
+
+See [`tools/lexicon-cli/README.md`](tools/lexicon-cli/README.md) for detailed documentation.

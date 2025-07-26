@@ -6,12 +6,25 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
+    "build:rust": "turbo run build:rust",
     "typecheck": "pnpm -r exec tsc --noEmit",
+    "test": "turbo run test test:rust",
+    "rust:fmt": "cd services && cargo fmt",
+    "rust:clippy": "cd services && cargo clippy",
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
     "nuke": "rimraf node_modules */*/node_modules",
     "lex:gen-server": "turbo lex:gen-server",
     "format": "prettier --write .",
-    "db:migrate": "cd ./packages/db && drizzle-kit migrate"
+    "lex:gen": "cd tools/lexicon-cli && node dist/index.js gen",
+    "lex:watch": "cd tools/lexicon-cli && node dist/index.js watch",
+    "lex:validate": "cd tools/lexicon-cli && node dist/index.js validate",
+    "lex:diff": "cd tools/lexicon-cli && node dist/index.js diff",
+    "db:migrate": "cd services && sqlx migrate run",
+    "db:migrate:revert": "cd services && sqlx migrate revert",
+    "db:create": "cd services && sqlx database create",
+    "db:drop": "cd services && sqlx database drop",
+    "db:reset": "cd services && sqlx database drop && sqlx database create && sqlx migrate run",
+    "db:prepare": "cd services && sqlx prepare"
   },
   "dependencies": {
     "@atproto/oauth-client": "^0.3.8",
@@ -27,6 +40,8 @@
   },
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "services/*",
+    "tools/*"
   ]
 }
