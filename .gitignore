@@ -52,3 +52,9 @@ package-lock.json
 # rust
 /target
 /**/target
+
+# generated lexicons
+# js lexicons
+*/**/lexicons
+# rust lexicons (types :)))
+*/**/types
