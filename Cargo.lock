@@ -139,7 +139,6 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
- "types",
  "url",
  "uuid",
  "vergen",
@@ -4074,7 +4073,6 @@ dependencies = [
  "serde_ipld_dagcbor",
  "serde_json",
  "thiserror 2.0.12",
- "uuid",
 ]
 
 [[package]]

@@ -1,2 +1,2 @@
-pub mod teal;
 pub mod car;
+pub mod teal;

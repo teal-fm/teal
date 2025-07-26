@@ -1,6 +1,6 @@
+use crate::types::fm::teal::alpha::feed::defs::PlayViewData;
+use crate::types::fm::teal::alpha::stats::defs::{ArtistViewData, ReleaseViewData};
 use async_trait::async_trait;
-use types::fm::teal::alpha::feed::defs::PlayViewData;
-use types::fm::teal::alpha::stats::defs::{ArtistViewData, ReleaseViewData};
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};
 
@@ -49,9 +49,10 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let Some(name) = row.name {
                 result.push(ArtistViewData {
-                    mbid: row.mbid.to_string(),
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                    mbid: Some(row.mbid.to_string()),
+                    name: Some(name),
+                    play_count: row.play_count,
+                    image: None,
                 });
             }
         }
@@ -84,10 +85,12 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let (Some(mbid), Some(name)) = (row.mbid, row.name) {
                 result.push(ReleaseViewData {
-                    mbid: mbid.to_string(),
-
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                    mbid: Some(mbid.to_string()),
+                    album: Some(name.clone()),
+                    artist: None,
+                    name: Some(name),
+                    play_count: row.play_count,
+                    image: None,
                 });
             }
         }
@@ -127,9 +130,10 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let Some(name) = row.name {
                 result.push(ArtistViewData {
-                    mbid: row.mbid.to_string(),
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                    mbid: Some(row.mbid.to_string()),
+                    name: Some(name),
+                    play_count: row.play_count,
+                    image: None,
                 });
             }
         }
@@ -168,9 +172,12 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let (Some(mbid), Some(name)) = (row.mbid, row.name) {
                 result.push(ReleaseViewData {
-                    mbid: mbid.to_string(),
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                    mbid: Some(mbid.to_string()),
+                    album: Some(name.clone()),
+                    artist: None,
+                    name: Some(name),
+                    play_count: row.play_count,
+                    image: None,
                 });
             }
         }
@@ -211,24 +218,37 @@ impl StatsRepo for PgDataSource {
 
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
-            let artists: Vec<types::fm::teal::alpha::feed::defs::Artist> = match row.artists {
+            let artists: Vec<crate::types::fm::teal::alpha::feed::defs::Artist> = match row.artists
+            {
                 Some(value) => serde_json::from_value(value).unwrap_or_default(),
                 None => vec![],
             };
 
             result.push(PlayViewData {
-                artists,
-                duration: row.duration.map(|d| d as i64),
-                isrc: row.isrc,
-                music_service_base_domain: row.music_service_base_domain,
-                origin_url: row.origin_url,
-                played_time: row.played_time.map(|t| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(t))),
-                recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
-                release_mb_id: row.release_mbid.map(|u| u.to_string()),
-                release_name: row.release_name,
-                submission_client_agent: row.submission_client_agent,
+                track_name: Some(row.track_name.clone()),
                 track_mb_id: Some(row.rkey.clone()),
-                track_name: row.track_name.clone(),
+                recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
+                duration: row.duration.map(|d| d as i64),
+                artists: Some(artists),
+                release_name: row.release_name.clone(),
+                release_mb_id: row.release_mbid.map(|u| u.to_string()),
+                isrc: row.isrc,
+                origin_url: row.origin_url,
+                music_service_base_domain: row.music_service_base_domain,
+                submission_client_agent: row.submission_client_agent,
+                played_time: row
+                    .played_time
+                    .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+                album: row.release_name,
+                artist: None,
+                created_at: row
+                    .played_time
+                    .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+                did: Some(row.did.clone()),
+                image: None,
+                title: Some(row.track_name),
+                track_number: None,
+                uri: Some(row.uri.clone()),
             });
         }
 

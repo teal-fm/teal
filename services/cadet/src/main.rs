@@ -17,8 +17,8 @@ use rocketman::{
 mod cursor;
 mod db;
 mod ingestors;
-mod resolve;
 mod redis_client;
+mod resolve;
 
 fn setup_tracing() {
     tracing_subscriber::fmt()
@@ -96,24 +96,27 @@ async fn main() {
 
     // CAR import job worker
     let car_ingestor = ingestors::car::CarImportIngestor::new(pool.clone());
-    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
-    
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+
     match redis_client::RedisClient::new(&redis_url) {
         Ok(redis_client) => {
             // Spawn CAR import job processing task
             tokio::spawn(async move {
-                use types::jobs::{CarImportJob, CarImportJobStatus, JobStatus, JobProgress, queue_keys};
-                use tracing::{info, error};
                 use chrono::Utc;
-                
+                use tracing::{error, info};
+                use types::jobs::{
+                    queue_keys, CarImportJob, CarImportJobStatus, JobProgress, JobStatus,
+                };
+
                 info!("Starting CAR import job worker, polling Redis queue...");
-                
+
                 loop {
                     // Block for up to 10 seconds waiting for jobs
                     match redis_client.pop_job(queue_keys::CAR_IMPORT_JOBS, 10).await {
                         Ok(Some(job_data)) => {
                             info!("Received CAR import job: {}", job_data);
-                            
+
                             // Parse job
                             match serde_json::from_str::<CarImportJob>(&job_data) {
                                 Ok(job) => {
@@ -132,17 +135,27 @@ async fn main() {
                                             blocks_processed: None,
                                         }),
                                     };
-                                    
+
                                     let status_key = queue_keys::job_status_key(&job.request_id);
-                                    if let Ok(status_data) = serde_json::to_string(&processing_status) {
-                                        let _ = redis_client.update_job_status(&status_key, &status_data).await;
+                                    if let Ok(status_data) =
+                                        serde_json::to_string(&processing_status)
+                                    {
+                                        let _ = redis_client
+                                            .update_job_status(&status_key, &status_data)
+                                            .await;
                                     }
-                                    
+
                                     // Process the job
-                                    match car_ingestor.fetch_and_process_identity_car(&job.identity).await {
+                                    match car_ingestor
+                                        .fetch_and_process_identity_car(&job.identity)
+                                        .await
+                                    {
                                         Ok(import_id) => {
-                                            info!("✅ CAR import job completed successfully: {}", job.request_id);
-                                            
+                                            info!(
+                                                "✅ CAR import job completed successfully: {}",
+                                                job.request_id
+                                            );
+
                                             let completed_status = CarImportJobStatus {
                                                 status: JobStatus::Completed,
                                                 created_at: job.created_at,
@@ -150,21 +163,31 @@ async fn main() {
                                                 completed_at: Some(Utc::now()),
                                                 error_message: None,
                                                 progress: Some(JobProgress {
-                                                    step: format!("CAR import completed: {}", import_id),
+                                                    step: format!(
+                                                        "CAR import completed: {}",
+                                                        import_id
+                                                    ),
                                                     user_did: None,
                                                     pds_host: None,
                                                     car_size_bytes: None,
                                                     blocks_processed: None,
                                                 }),
                                             };
-                                            
-                                            if let Ok(status_data) = serde_json::to_string(&completed_status) {
-                                                let _ = redis_client.update_job_status(&status_key, &status_data).await;
+
+                                            if let Ok(status_data) =
+                                                serde_json::to_string(&completed_status)
+                                            {
+                                                let _ = redis_client
+                                                    .update_job_status(&status_key, &status_data)
+                                                    .await;
                                             }
                                         }
                                         Err(e) => {
-                                            error!("❌ CAR import job failed: {}: {}", job.request_id, e);
-                                            
+                                            error!(
+                                                "❌ CAR import job failed: {}: {}",
+                                                job.request_id, e
+                                            );
+
                                             let failed_status = CarImportJobStatus {
                                                 status: JobStatus::Failed,
                                                 created_at: job.created_at,
@@ -173,9 +196,13 @@ async fn main() {
                                                 error_message: Some(e.to_string()),
                                                 progress: None,
                                             };
-                                            
-                                            if let Ok(status_data) = serde_json::to_string(&failed_status) {
-                                                let _ = redis_client.update_job_status(&status_key, &status_data).await;
+
+                                            if let Ok(status_data) =
+                                                serde_json::to_string(&failed_status)
+                                            {
+                                                let _ = redis_client
+                                                    .update_job_status(&status_key, &status_data)
+                                                    .await;
                                             }
                                         }
                                     }

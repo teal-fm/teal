@@ -1,7 +1,7 @@
 use crate::ctx::Context;
+use crate::types::fm::teal::alpha::actor::defs::ProfileViewData;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use serde::{Deserialize, Serialize};
-use types::fm::teal::alpha::actor::defs::ProfileViewData;
 
 // mount actor routes
 pub fn actor_routes() -> axum::Router {

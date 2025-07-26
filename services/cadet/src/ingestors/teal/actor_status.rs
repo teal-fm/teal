@@ -23,9 +23,9 @@ impl ActorStatusIngestor {
         status: &types::fm::teal::alpha::actor::status::RecordData,
     ) -> anyhow::Result<()> {
         let uri = assemble_at_uri(did.as_str(), "fm.teal.alpha.actor.status", rkey);
-        
+
         let record_json = serde_json::to_value(status)?;
-        
+
         sqlx::query!(
             r#"
                 INSERT INTO statii (uri, did, rkey, cid, record)
@@ -43,13 +43,13 @@ impl ActorStatusIngestor {
         )
         .execute(&self.sql)
         .await?;
-        
+
         Ok(())
     }
 
     pub async fn remove_status(&self, did: Did, rkey: &str) -> anyhow::Result<()> {
         let uri = assemble_at_uri(did.as_str(), "fm.teal.alpha.actor.status", rkey);
-        
+
         sqlx::query!(
             r#"
                 DELETE FROM statii WHERE uri = $1
@@ -58,7 +58,7 @@ impl ActorStatusIngestor {
         )
         .execute(&self.sql)
         .await?;
-        
+
         Ok(())
     }
 }
@@ -71,7 +71,7 @@ impl LexiconIngestor for ActorStatusIngestor {
                 let record = serde_json::from_value::<
                     types::fm::teal::alpha::actor::status::RecordData,
                 >(record.clone())?;
-                
+
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         self.insert_status(

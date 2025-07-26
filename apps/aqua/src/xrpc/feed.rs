@@ -1,7 +1,7 @@
 use crate::ctx::Context;
+use crate::types::fm::teal::alpha::feed::defs::PlayViewData;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use serde::{Deserialize, Serialize};
-use types::fm::teal::alpha::feed::defs::PlayViewData;
 
 // mount feed routes
 pub fn feed_routes() -> axum::Router {

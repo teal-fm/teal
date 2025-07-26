@@ -27,6 +27,5 @@ pub fn utc_to_atrium_datetime(
 }
 
 pub fn time_to_chrono_utc(dt: time::OffsetDateTime) -> chrono::DateTime<chrono::Utc> {
-    chrono::DateTime::from_timestamp(dt.unix_timestamp(), dt.nanosecond())
-        .unwrap_or_default()
+    chrono::DateTime::from_timestamp(dt.unix_timestamp(), dt.nanosecond()).unwrap_or_default()
 }

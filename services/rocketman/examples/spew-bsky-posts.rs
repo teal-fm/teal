@@ -1,17 +1,13 @@
+use async_trait::async_trait;
 use rocketman::{
     connection::JetstreamConnection,
     handler,
     ingestion::LexiconIngestor,
     options::JetstreamOptions,
-    types::event::{ Event, Commit },
+    types::event::{Commit, Event},
 };
 use serde_json::Value;
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    sync::Mutex,
-};
-use async_trait::async_trait;
+use std::{collections::HashMap, sync::Arc, sync::Mutex};
 
 #[tokio::main]
 async fn main() {
@@ -30,7 +26,6 @@ async fn main() {
         "app.bsky.feed.post".to_string(),
         Box::new(MyCoolIngestor),
     );
-
 
     // tracks the last message we've processed
     let cursor: Arc<Mutex<Option<u64>>> = Arc::new(Mutex::new(None));
@@ -67,7 +62,11 @@ pub struct MyCoolIngestor;
 #[async_trait]
 impl LexiconIngestor for MyCoolIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
-        if let Some(Commit { record: Some(record), .. }) = message.commit {
+        if let Some(Commit {
+            record: Some(record),
+            ..
+        }) = message.commit
+        {
             if let Some(Value::String(text)) = record.get("text") {
                 println!("{text:?}");
             }

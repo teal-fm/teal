@@ -1,6 +1,6 @@
+use crate::types::fm::teal::alpha::actor::defs::ProfileViewData;
 use async_trait::async_trait;
 use serde_json::Value;
-use types::fm::teal::alpha::actor::defs::ProfileViewData;
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};
 
@@ -30,7 +30,9 @@ impl From<PgProfileRepoRows> for ProfileViewData {
             avatar: row.avatar,
             banner: row.banner,
             // chrono -> atrium time
-            created_at: row.created_at.map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+            created_at: row
+                .created_at
+                .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
             description: row.description,
             description_facets: row
                 .description_facets
@@ -38,6 +40,7 @@ impl From<PgProfileRepoRows> for ProfileViewData {
             did: row.did,
             featured_item: None,
             display_name: row.display_name,
+            handle: None, // handle not available in PgProfileRepoRows
             status: row.status.and_then(|v| serde_json::from_value(v).ok()),
         }
     }

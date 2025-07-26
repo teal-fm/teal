@@ -67,7 +67,7 @@ pub async fn handle_message(
             counter!("jetstream.event").increment(1);
             let decoder = zstd::stream::Decoder::with_prepared_dictionary(
                 IoCursor::new(bytes),
-                &*ZSTD_DICTIONARY,
+                &ZSTD_DICTIONARY,
             )?;
             let envelope: Event<Value> = serde_json::from_reader(decoder)
                 .map_err(|e| anyhow::anyhow!("Failed to parse binary message: {}", e))?;

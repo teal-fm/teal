@@ -1,5 +1,5 @@
+use crate::types::fm::teal::alpha::feed::defs::{Artist, PlayViewData};
 use async_trait::async_trait;
-use types::fm::teal::alpha::feed::defs::{Artist, PlayViewData};
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};
 
@@ -49,18 +49,30 @@ impl FeedPlayRepo for PgDataSource {
         };
 
         Ok(Some(PlayViewData {
-            artists,
-            duration: row.duration.map(|d| d as i64),
-            isrc: row.isrc,
-            music_service_base_domain: row.music_service_base_domain,
-            origin_url: row.origin_url,
-            played_time: row.played_time.map(|t| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(t))),
-            recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
-            release_mb_id: row.release_mbid.map(|u| u.to_string()),
-            release_name: row.release_name,
-            submission_client_agent: row.submission_client_agent,
+            track_name: Some(row.track_name.clone()),
             track_mb_id: Some(row.rkey.clone()),
-            track_name: row.track_name.clone(),
+            recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
+            duration: row.duration.map(|d| d as i64),
+            artists: Some(artists),
+            release_name: row.release_name.clone(),
+            release_mb_id: row.release_mbid.map(|u| u.to_string()),
+            isrc: row.isrc,
+            origin_url: row.origin_url,
+            music_service_base_domain: row.music_service_base_domain,
+            submission_client_agent: row.submission_client_agent,
+            played_time: row
+                .played_time
+                .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+            album: row.release_name,
+            artist: None,
+            created_at: row
+                .played_time
+                .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+            did: Some(row.did.clone()),
+            image: None,
+            title: Some(row.track_name),
+            track_number: None,
+            uri: Some(row.uri.clone()),
         }))
     }
 
@@ -105,18 +117,30 @@ impl FeedPlayRepo for PgDataSource {
             };
 
             result.push(PlayViewData {
-                artists,
-                duration: row.duration.map(|d| d as i64),
-                isrc: row.isrc,
-                music_service_base_domain: row.music_service_base_domain,
-                origin_url: row.origin_url,
-                played_time: row.played_time.map(|t| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(t))),
-                recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
-                release_mb_id: row.release_mbid.map(|u| u.to_string()),
-                release_name: row.release_name,
-                submission_client_agent: row.submission_client_agent,
+                track_name: Some(row.track_name.clone()),
                 track_mb_id: Some(row.rkey.clone()),
-                track_name: row.track_name.clone(),
+                recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
+                duration: row.duration.map(|d| d as i64),
+                artists: Some(artists),
+                release_name: row.release_name.clone(),
+                release_mb_id: row.release_mbid.map(|u| u.to_string()),
+                isrc: row.isrc,
+                origin_url: row.origin_url,
+                music_service_base_domain: row.music_service_base_domain,
+                submission_client_agent: row.submission_client_agent,
+                played_time: row
+                    .played_time
+                    .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+                album: row.release_name,
+                artist: None,
+                created_at: row
+                    .played_time
+                    .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+                did: Some(row.did.clone()),
+                image: None,
+                title: Some(row.track_name.clone()),
+                track_number: None,
+                uri: Some(row.uri.clone()),
             });
         }
 

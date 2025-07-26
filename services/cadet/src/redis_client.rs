@@ -20,13 +20,13 @@ impl RedisClient {
     pub async fn pop_job(&self, queue_key: &str, timeout_seconds: u64) -> Result<Option<String>> {
         let mut conn = self.get_connection().await?;
         let result: Option<Vec<String>> = conn.brpop(queue_key, timeout_seconds as f64).await?;
-        
+
         match result {
             Some(mut items) if items.len() >= 2 => {
                 // brpop returns [queue_name, item], we want the item
                 Ok(Some(items.remove(1)))
             }
-            _ => Ok(None)
+            _ => Ok(None),
         }
     }
 

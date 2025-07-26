@@ -36,7 +36,7 @@
         },
         "status": {
           "type": "ref",
-          "ref": "fm.teal.alpha.actor.status#main"
+          "ref": "#statusView"
         },
         "createdAt": { "type": "string", "format": "datetime" }
       }
@@ -57,6 +57,26 @@
         "avatar": {
           "type": "string",
           "description": "IPLD of the avatar"
+        }
+      }
+    },
+    "statusView": {
+      "type": "object",
+      "description": "A declaration of the status of the actor.",
+      "properties": {
+        "time": {
+          "type": "string",
+          "format": "datetime",
+          "description": "The unix timestamp of when the item was recorded"
+        },
+        "expiry": {
+          "type": "string",
+          "format": "datetime",
+          "description": "The unix timestamp of the expiry time of the item. If unavailable, default to 10 minutes past the start time."
+        },
+        "item": {
+          "type": "ref",
+          "ref": "fm.teal.alpha.feed.defs#playView"
         }
       }
     }
