@@ -118,14 +118,8 @@ if [ -n "$LEXICON_FILES" ]; then
             exit 1
         fi
 
-        # Add generated lexicon files to staging
-        if [ -d "packages/lexicons/src" ]; then
-            find packages/lexicons/src -name "*.ts" -type f | while read -r file; do
-                if [ -f "$file" ]; then
-                    git add "$file"
-                fi
-            done
-        fi
+        # Note: Generated lexicon files are ignored by .gitignore and not added to staging
+        print_status "Generated lexicon files are ignored by .gitignore (as intended)"
     else
         print_warning "pnpm not found, skipping lexicon checks"
     fi

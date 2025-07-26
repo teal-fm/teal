@@ -17,7 +17,7 @@ teal/
 ├── lexicons/                    # Source lexicon JSON files
 │   └── fm.teal.alpha/          # Lexicon namespace
 ├── packages/lexicons/          # Generated TypeScript package
-│   ├── src/                    # Generated TypeScript files
+│   ├── src/                    # Generated TypeScript files (ignored by .gitignore)
 │   │   ├── types/              # Generated type definitions
 │   │   ├── index.ts           # Main exports
 │   │   └── lexicons.ts        # Lexicon registry

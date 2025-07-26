@@ -71,11 +71,12 @@ repos:
         pass_filenames: false
 
       - id: lexicon-generate
-        name: Generate Lexicons
+        name: Generate Lexicons (files ignored by .gitignore)
         entry: pnpm lex:gen-server
         language: system
         files: lexicons/.*\.json$
         pass_filenames: false
+        always_run: false
 
   # Optional: Additional checks
   - repo: local

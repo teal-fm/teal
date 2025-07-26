@@ -18,6 +18,10 @@ We provide two approaches for setting up git hooks:
 - ⚠️ **Console.log detection** (warning only)
 - ⚠️ **TODO/FIXME comments** (warning only)
 
+### Lexicon Files
+- ✅ **Lexicon validation** - Schema validation for lexicon JSON files
+- ✅ **Lexicon generation** - Regenerates TypeScript types (files remain ignored by .gitignore)
+
 ### Rust Files
 - ✅ **cargo fmt** - Code formatting
 - ✅ **cargo clippy** - Linting with warnings as errors
@@ -148,6 +152,8 @@ The hooks use existing npm scripts from `package.json`:
 - `pnpm rust:clippy` - Rust linting
 - `pnpm prettier --write` - JavaScript/TypeScript formatting
 - `pnpm biome check --apply` - Biome linting and formatting
+- `pnpm lex:validate` - Lexicon schema validation
+- `pnpm lex:gen-server` - TypeScript type generation from lexicons
 
 ## Troubleshooting
 
@@ -165,7 +171,12 @@ The hooks use existing npm scripts from `package.json`:
    - Run `pnpm rust:fmt` and `pnpm rust:clippy` manually
    - Fix clippy warnings or adjust clippy configuration
 
-4. **Hook is too slow:**
+4. **Generated files ignored warning:**
+   - This is expected behavior - generated lexicon files are ignored by .gitignore
+   - Only source lexicon JSON files should be committed
+   - Generated TypeScript files are recreated automatically
+
+5. **Hook is too slow:**
    - Use pre-commit framework for better performance
    - Consider running lighter checks in pre-commit and full checks in CI
 
@@ -258,6 +269,11 @@ Configure your IDE to:
 4. **Team consistency:** Ensure all team members use the same hook setup
 
 5. **CI/CD integration:** Run the same checks in your CI pipeline
+
+6. **Generated files approach:** Remember that generated files are ignored by .gitignore
+   - Only commit source lexicon JSON files
+   - Generated TypeScript files are automatically recreated
+   - This keeps git history clean and avoids merge conflicts
 
 ## Monitoring and Maintenance
 

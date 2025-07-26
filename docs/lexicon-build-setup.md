@@ -98,9 +98,9 @@ This document summarizes the lexicon build integration setup that ensures lexico
    ↓
 5. Hook runs: pnpm lex:gen-server
    ↓
-6. Hook stages generated TypeScript files
+6. Hook validates lexicons are properly generated
    ↓
-7. Commit proceeds with both source and generated files
+7. Commit proceeds with only source files (generated files are ignored by .gitignore)
 ```
 
 ## 🛠️ Available Commands
@@ -151,8 +151,9 @@ pnpm turbo build --filter=@teal/amethyst
 2. **Build Reliability**: Amethyst builds can't proceed without fresh lexicons
 3. **Developer Experience**: No need to remember to run lexicon commands
 4. **CI/CD Safety**: Docker builds include lexicon generation
-5. **Git Safety**: Commits with lexicon changes include generated files
+5. **Git Safety**: Commits with lexicon changes trigger validation and regeneration
 6. **Caching**: Turbo caches lexicon generation for performance
+7. **Clean Repository**: Generated files are ignored, only source lexicons are tracked
 
 ## 🔍 Verification
 
@@ -176,7 +177,7 @@ docker build -f apps/amethyst/Dockerfile .
 # Make a lexicon change
 echo '{}' > lexicons/test.json
 
-# Commit should validate and regenerate
+# Commit should validate and regenerate (generated files won't be staged)
 git add . && git commit -m "test lexicon change"
 ```
 
