@@ -9,7 +9,7 @@ atrium-xrpc = "0.12.1"
 chrono = "0.4.39"
 http = "1.2.0"
 ipld-core = { version = "0.4.2", features = ["serde"] }
-langtag = { version = "0.3", features = ["serde"] }
+langtag = { version = "0.4", features = ["serde"] }
 regex = "1.11.1"
 serde = { workspace = true, features = ["derive"] }
 serde_bytes = "0.11.15"
