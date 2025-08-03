@@ -453,7 +453,7 @@ dependencies = [
  "futures",
  "iroh-car 0.4.0",
  "libipld",
- "metrics 0.23.1",
+ "metrics",
  "metrics-exporter-prometheus",
  "multibase",
  "multihash-codetable",
@@ -827,7 +827,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 2.0.104",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -1907,16 +1907,6 @@ checksum = "32a282da65faaf38286cf3be983213fcf1d2e2a58700e808f83f4ea9a4804bc0"
 
 [[package]]
 name = "metrics"
-version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3045b4193fbdc5b5681f32f11070da9be3609f189a79f3390706d42587f46bb5"
-dependencies = [
- "ahash",
- "portable-atomic",
-]
-
-[[package]]
-name = "metrics"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25dea7ac8057892855ec285c440160265225438c3c45072613c25a4b26e98ef5"
@@ -1938,7 +1928,7 @@ dependencies = [
  "hyper-util",
  "indexmap",
  "ipnet",
- "metrics 0.24.2",
+ "metrics",
  "metrics-util",
  "quanta",
  "thiserror 1.0.69",
@@ -1955,7 +1945,7 @@ dependencies = [
  "crossbeam-epoch",
  "crossbeam-utils",
  "hashbrown 0.15.4",
- "metrics 0.24.2",
+ "metrics",
  "quanta",
  "rand 0.9.1",
  "rand_xoshiro",
@@ -2749,7 +2739,7 @@ dependencies = [
  "derive_builder",
  "flume",
  "futures-util",
- "metrics 0.23.1",
+ "metrics",
  "rand 0.8.5",
  "serde",
  "serde_json",
