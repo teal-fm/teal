@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT generate_synthetic_mbid($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "generate_synthetic_mbid",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "ad02971766fb37f49f4a75a6414807606be0562574826f8fe88827c645c01acd"
+}

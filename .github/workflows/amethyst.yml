@@ -1,0 +1,128 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Build Amethyst
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/amethyst/**"
+      - "packages/**"
+      - "lexicons/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/amethyst.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/amethyst/**"
+      - "packages/**"
+      - "lexicons/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/amethyst.yml"
+
+jobs:
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate lexicons
+        run: pnpm lex:gen-server
+
+      - name: Build web
+        run: |
+          cd apps/amethyst
+          pnpm build:web
+
+      - name: Upload web build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amethyst-web-build
+          path: apps/amethyst/build/
+          retention-days: 7
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate lexicons
+        run: pnpm lex:gen-server
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Build iOS
+        run: |
+          cd apps/amethyst
+          pnpm build:ios
+
+      - name: Upload iOS build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amethyst-ios-build
+          path: apps/amethyst/build/
+          retention-days: 7
+
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate lexicons
+        run: pnpm lex:gen-server
+
+      - name: Type check
+        run: |
+          cd apps/amethyst
+          npx tsc --noEmit
+
+      - name: Run tests
+        run: |
+          cd apps/amethyst
+          pnpm test --watchAll=false

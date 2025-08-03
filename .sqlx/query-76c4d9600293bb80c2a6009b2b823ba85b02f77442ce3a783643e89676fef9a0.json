@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    INSERT INTO artists_extended (mbid, name, mbid_type) VALUES ($1, $2, 'musicbrainz')\n                    ON CONFLICT (mbid) DO UPDATE SET\n                        name = EXCLUDED.name,\n                        updated_at = NOW()\n                    RETURNING id;\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "76c4d9600293bb80c2a6009b2b823ba85b02f77442ce3a783643e89676fef9a0"
+}

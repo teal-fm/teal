@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT DISTINCT\n                ae1.id as synthetic_id,\n                ae1.name as synthetic_name,\n                ae2.id as target_id,\n                ae2.name as target_name,\n                ae2.mbid as target_mbid,\n                similarity(LOWER(TRIM(ae1.name)), LOWER(TRIM(ae2.name))) as similarity_score\n            FROM artists_extended ae1\n            CROSS JOIN artists_extended ae2\n            WHERE ae1.id != ae2.id\n            AND ae1.mbid_type = 'synthetic'\n            AND ae2.mbid_type = 'musicbrainz'\n            AND similarity(LOWER(TRIM(ae1.name)), LOWER(TRIM(ae2.name))) >= $1\n            ORDER BY similarity_score DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "synthetic_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "synthetic_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "target_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "target_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "target_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "similarity_score",
+        "type_info": "Float4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "6fec79345247c090a72f32d06cb53290156d41f49abba3a9280bc2bedc1c9c56"
+}

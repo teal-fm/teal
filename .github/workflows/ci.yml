@@ -1,0 +1,128 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: true
+
+jobs:
+  rust-check:
+    name: Rust Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            services
+            apps/aqua
+
+      - name: Check Rust formatting (services)
+        run: |
+          cd services
+          cargo fmt --all -- --check
+
+      - name: Check Rust formatting (apps)
+        run: |
+          for dir in apps/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "Checking formatting for $dir"
+              cd "$dir"
+              cargo fmt --all -- --check
+              cd ../..
+            fi
+          done
+
+      - name: Run Clippy (services)
+        run: |
+          cd services
+          cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Clippy (apps)
+        run: |
+          for dir in apps/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "Running clippy for $dir"
+              cd "$dir"
+              cargo clippy --all-targets --all-features -- -D warnings
+              cd ../..
+            fi
+          done
+
+      - name: Run Rust tests (services)
+        run: |
+          cd services
+          cargo test --all-features
+
+  node-check:
+    name: Node.js Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Lint and format check
+        run: pnpm fix --check
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+  lexicon-check:
+    name: Lexicon Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate lexicons
+        run: pnpm lex:validate
+
+      - name: Check lexicon generation
+        run: |
+          pnpm lex:gen-server
+          git diff --exit-code || (echo "Lexicon files are out of sync. Run 'pnpm lex:gen-server' locally." && exit 1)

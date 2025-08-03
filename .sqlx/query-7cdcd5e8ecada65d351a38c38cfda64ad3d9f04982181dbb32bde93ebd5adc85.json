@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO plays (\n                    uri, cid, did, rkey, isrc, duration, track_name, played_time,\n                    processed_time, release_mbid, release_name, recording_mbid,\n                    submission_client_agent, music_service_base_domain, artist_names_raw,\n                    track_discriminant, release_discriminant\n                ) VALUES (\n                    $1, $2, $3, $4, $5, $6, $7, $8,\n                    NOW(), $9, $10, $11, $12, $13, $14, $15, $16\n                ) ON CONFLICT(uri) DO UPDATE SET\n                    isrc = EXCLUDED.isrc,\n                    duration = EXCLUDED.duration,\n                    track_name = EXCLUDED.track_name,\n                    played_time = EXCLUDED.played_time,\n                    processed_time = EXCLUDED.processed_time,\n                    release_mbid = EXCLUDED.release_mbid,\n                    release_name = EXCLUDED.release_name,\n                    recording_mbid = EXCLUDED.recording_mbid,\n                    submission_client_agent = EXCLUDED.submission_client_agent,\n                    music_service_base_domain = EXCLUDED.music_service_base_domain,\n                    artist_names_raw = EXCLUDED.artist_names_raw,\n                    track_discriminant = EXCLUDED.track_discriminant,\n                    release_discriminant = EXCLUDED.release_discriminant;\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Text",
+        "Timestamptz",
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7cdcd5e8ecada65d351a38c38cfda64ad3d9f04982181dbb32bde93ebd5adc85"
+}

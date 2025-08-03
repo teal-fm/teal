@@ -1,6 +1,0 @@
-[database]
-url = "postgres://localhost/teal"
-migrations = "./migrations"
-
-[compile_time_verification]
-offline = false

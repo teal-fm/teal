@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    UPDATE play_to_artists_extended\n                    SET artist_id = $1, artist_name = $2\n                    WHERE artist_id = $3\n                    AND NOT EXISTS (\n                        SELECT 1 FROM play_to_artists_extended existing\n                        WHERE existing.play_uri = play_to_artists_extended.play_uri\n                        AND existing.artist_id = $1\n                    )\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b1a3660fc7e391293278d11020b1f37ddf7446cbc73931c8e30ee38c2f3ae48"
+}

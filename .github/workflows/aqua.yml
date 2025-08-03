@@ -1,15 +1,19 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
 name: Build and Push Aqua
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - "apps/aqua/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/aqua.yml"
   pull_request:
-    branches: [main]
+    branches:
+      - main
     paths:
       - "apps/aqua/**"
       - "Cargo.toml"
@@ -17,7 +21,7 @@ on:
       - ".github/workflows/aqua.yml"
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: ghcr.iosyste
   IMAGE_NAME: ${{ github.repository }}/aqua
 
 jobs:

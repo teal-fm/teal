@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT DISTINCT\n                r1.name as recording1_name,\n                r2.name as recording2_name,\n                similarity(LOWER(TRIM(r1.name)), LOWER(TRIM(r2.name))) as similarity_score,\n                COUNT(DISTINCT ptae1.artist_id) as shared_artists,\n                STRING_AGG(DISTINCT ae.name, ', ') as artist_names\n            FROM recordings r1\n            CROSS JOIN recordings r2\n            INNER JOIN plays p1 ON p1.recording_mbid = r1.mbid\n            INNER JOIN plays p2 ON p2.recording_mbid = r2.mbid\n            INNER JOIN play_to_artists_extended ptae1 ON p1.uri = ptae1.play_uri\n            INNER JOIN play_to_artists_extended ptae2 ON p2.uri = ptae2.play_uri\n            INNER JOIN artists_extended ae ON ptae1.artist_id = ae.id\n            WHERE r1.mbid != r2.mbid\n            AND similarity(LOWER(TRIM(r1.name)), LOWER(TRIM(r2.name))) >= $1\n            AND ptae1.artist_id = ptae2.artist_id\n            GROUP BY r1.mbid, r1.name, r2.mbid, r2.name, similarity_score\n            HAVING COUNT(DISTINCT ptae1.artist_id) > 0\n            ORDER BY similarity_score DESC\n            LIMIT 5\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "recording1_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "recording2_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "similarity_score",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 3,
+        "name": "shared_artists",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "artist_names",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "b0036bbbb21b71900394c33f4c1db6f8281159b68ca492f6977dc153c60ab453"
+}
