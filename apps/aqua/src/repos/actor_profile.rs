@@ -1,6 +1,6 @@
-use crate::types::fm::teal::alpha::actor::defs::ProfileViewData;
 use async_trait::async_trait;
 use serde_json::Value;
+use types::fm::teal::alpha::actor::defs::ProfileViewData;
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};
 
@@ -9,7 +9,7 @@ pub trait ActorProfileRepo {
     async fn get_actor_profile(&self, identity: &str) -> anyhow::Result<Option<ProfileViewData>>;
     async fn get_multiple_actor_profiles(
         &self,
-        identities: &Vec<String>,
+        identities: &[String],
     ) -> anyhow::Result<Vec<ProfileViewData>>;
 }
 
@@ -38,9 +38,8 @@ impl From<PgProfileRepoRows> for ProfileViewData {
                 .description_facets
                 .and_then(|v| serde_json::from_value(v).ok()),
             did: row.did,
-            featured_item: None,
             display_name: row.display_name,
-            handle: None, // handle not available in PgProfileRepoRows
+            featured_item: None,
             status: row.status.and_then(|v| serde_json::from_value(v).ok()),
         }
     }
@@ -49,13 +48,13 @@ impl From<PgProfileRepoRows> for ProfileViewData {
 #[async_trait]
 impl ActorProfileRepo for PgDataSource {
     async fn get_actor_profile(&self, identity: &str) -> anyhow::Result<Option<ProfileViewData>> {
-        self.get_multiple_actor_profiles(&vec![identity.to_string()])
+        self.get_multiple_actor_profiles(&[identity.to_string()])
             .await
             .map(|p| p.first().cloned())
     }
     async fn get_multiple_actor_profiles(
         &self,
-        identities: &Vec<String>,
+        identities: &[String],
     ) -> anyhow::Result<Vec<ProfileViewData>> {
         // split identities into dids (prefixed with "did:") and handles (not prefixed) in one iteration
         let mut dids = Vec::new();

@@ -106,6 +106,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "atmst"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aeb2a4631a64a242ae62c3ceb140adfa2a8bdacb1b22a6549db5de2ce3389c1d"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "cid 0.11.1",
+ "dashmap",
+ "futures",
+ "ipld-core",
+ "iroh-car 0.5.1",
+ "log",
+ "multihash 0.19.3",
+ "serde",
+ "serde_ipld_dagcbor",
+ "serde_ipld_dagjson",
+ "sha2",
+ "thiserror 1.0.69",
+ "tokio",
+]
+
+[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -410,6 +433,9 @@ name = "bytes"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cadet"
@@ -417,13 +443,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "atmst",
  "atrium-api",
  "base64",
  "chrono",
  "cid 0.11.1",
  "dotenvy",
  "flume",
- "iroh-car",
+ "futures",
+ "iroh-car 0.4.0",
  "libipld",
  "metrics 0.23.1",
  "metrics-exporter-prometheus",
@@ -434,6 +462,7 @@ dependencies = [
  "reqwest",
  "rocketman",
  "serde",
+ "serde_ipld_dagcbor",
  "serde_json",
  "sqlx",
  "time",
@@ -1579,6 +1608,22 @@ dependencies = [
  "cid 0.10.1",
  "futures",
  "libipld",
+ "thiserror 1.0.69",
+ "tokio",
+ "unsigned-varint 0.7.2",
+]
+
+[[package]]
+name = "iroh-car"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb7f8cd4cb9aa083fba8b52e921764252d0b4dcb1cd6d120b809dbfe1106e81a"
+dependencies = [
+ "anyhow",
+ "cid 0.11.1",
+ "futures",
+ "serde",
+ "serde_ipld_dagcbor",
  "thiserror 1.0.69",
  "tokio",
  "unsigned-varint 0.7.2",
@@ -2978,6 +3023,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_ipld_dagjson"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3359b47ba7f4a306ef5984665e10539e212e97217afa489437d533208eecda36"
+dependencies = [
+ "ipld-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "serde_json"
 version = "1.0.141"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3063,6 +3119,15 @@ name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
+
+[[package]]
+name = "signal-hook-registry"
+version = "1.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9203b8055f63a2a00e2f593bb0510367fe707d7ff1e5c872de2f537b339e5410"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "signature"
@@ -3586,7 +3651,9 @@ dependencies = [
  "io-uring",
  "libc",
  "mio",
+ "parking_lot",
  "pin-project-lite",
+ "signal-hook-registry",
  "slab",
  "socket2 0.5.10",
  "tokio-macros",

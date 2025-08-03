@@ -43,7 +43,7 @@ async fn main() -> Result<(), String> {
 
     let db = db::init_pool().await.expect("failed to init db");
     let pgds = PgDataSource::new(db.clone()).boxed();
-    let ctx = RawContext::new(pgds).build();
+    let ctx = RawContext::new(pgds).build(); // Arc<RawContext>
 
     // Check if we should import a CAR file instead of starting the server
     if let Some(identity) = matches.get_one::<String>("import-identity-car") {
@@ -55,6 +55,7 @@ async fn main() -> Result<(), String> {
 
     let app = Router::new()
         .route("/meta_info", get(api::get_meta_info))
+        .route("/.well-known/did.json", get(api::get_did_document))
         .route("/api/car/upload", post(api::upload_car_import))
         .route("/api/car/fetch", post(api::fetch_car_from_user))
         .route(

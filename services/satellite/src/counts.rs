@@ -3,7 +3,6 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -43,7 +42,7 @@ pub struct LatestPlayQueryParams {
     pub limit: i64,
 }
 
-#[derive(FromRow, Debug, Deserialize, Serialize)]
+#[derive(FromRow, Debug)]
 pub struct Play {
     pub did: String,
     pub track_name: String,
@@ -51,7 +50,6 @@ pub struct Play {
     pub release_name: Option<String>,
     pub release_mbid: Option<Uuid>,
     pub duration: Option<i32>,
-    pub played_time: Option<DateTime<Utc>>,
     pub uri: Option<String>,
     // MASSIVE HUGE HACK
     pub artists: Option<String>,
@@ -65,7 +63,6 @@ pub struct PlayReturn {
     pub release_name: Option<String>,
     pub release_mbid: Option<Uuid>,
     pub duration: Option<i32>,
-    pub played_time: Option<DateTime<Utc>>,
     pub uri: Option<String>,
     pub artists: Vec<Artist>,
 }
@@ -92,7 +89,6 @@ pub async fn get_latest_plays(
                 -- TODO: replace with actual
                 STRING_AGG(pa.artist_name || '|' || TEXT(pa.artist_mbid), ',') AS artists,
                 p.release_name,
-                p.played_time,
                 p.duration,
                 p.uri,
                 p.recording_mbid,
@@ -138,7 +134,6 @@ pub async fn get_latest_plays(
                         release_name: play.release_name,
                         release_mbid: play.release_mbid,
                         duration: play.duration,
-                        played_time: play.played_time,
                         uri: play.uri,
                         artists,
                     }

@@ -93,14 +93,6 @@ pnpm db:prepare         # Prepare queries for compile-time verification
 - **Format**: `YYYYMMDDHHMMSS_description.sql` (timestamped SQL files)
 - **Type**: Forward-only SQL migrations managed by SQLx
 
-#### Database Schema
-
-The database includes tables for:
-- **Music data**: `artists`, `releases`, `recordings`, `plays`
-- **User data**: `profiles`, `statii` (status records), `featured_items`
-- **CAR imports**: `car_import_requests`, `car_blocks`, `car_extracted_records`
-- **Analytics**: Materialized views for play counts and top charts
-
 ## Development
 
 To start the development server run:
@@ -109,7 +101,7 @@ To start the development server run:
 turbo dev --filter=@teal/aqua
 ```
 
-Open http://localhost:3000/ with your browser to see the home page. You will need to login with Bluesky to test the posting functionality of the app. Note: if the redirect back to the app after you login isn't working correctly, you may need to replace the `127.0.0.1` with `localhost`.
+Open http://localhost:3000/ with your browser to see the home page. Note: if the redirect back to the app after you login isn't working correctly, you may need to replace the `127.0.0.1` with `localhost`, or you may need to set up a publicly accessible endpoint for the app to post to (see below).
 
 ### Running the full stack in docker for development
 

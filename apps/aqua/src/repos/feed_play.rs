@@ -1,5 +1,5 @@
-use crate::types::fm::teal::alpha::feed::defs::{Artist, PlayViewData};
 use async_trait::async_trait;
+use types::fm::teal::alpha::feed::defs::{Artist, PlayViewData};
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};
 
@@ -8,7 +8,7 @@ pub trait FeedPlayRepo: Send + Sync {
     async fn get_feed_play(&self, identity: &str) -> anyhow::Result<Option<PlayViewData>>;
     async fn get_feed_plays_for_profile(
         &self,
-        identities: &Vec<String>,
+        identities: &[String],
     ) -> anyhow::Result<Vec<PlayViewData>>;
 }
 
@@ -49,11 +49,11 @@ impl FeedPlayRepo for PgDataSource {
         };
 
         Ok(Some(PlayViewData {
-            track_name: Some(row.track_name.clone()),
-            track_mb_id: Some(row.rkey.clone()),
+            track_name: row.track_name.clone(),
+            track_mb_id: row.recording_mbid.map(|u| u.to_string()),
             recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
             duration: row.duration.map(|d| d as i64),
-            artists: Some(artists),
+            artists,
             release_name: row.release_name.clone(),
             release_mb_id: row.release_mbid.map(|u| u.to_string()),
             isrc: row.isrc,
@@ -63,22 +63,12 @@ impl FeedPlayRepo for PgDataSource {
             played_time: row
                 .played_time
                 .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
-            album: row.release_name,
-            artist: None,
-            created_at: row
-                .played_time
-                .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
-            did: Some(row.did.clone()),
-            image: None,
-            title: Some(row.track_name),
-            track_number: None,
-            uri: Some(row.uri.clone()),
         }))
     }
 
     async fn get_feed_plays_for_profile(
         &self,
-        identities: &Vec<String>,
+        identities: &[String],
     ) -> anyhow::Result<Vec<PlayViewData>> {
         let rows = sqlx::query!(
             r#"
@@ -117,11 +107,11 @@ impl FeedPlayRepo for PgDataSource {
             };
 
             result.push(PlayViewData {
-                track_name: Some(row.track_name.clone()),
-                track_mb_id: Some(row.rkey.clone()),
+                track_name: row.track_name.clone(),
+                track_mb_id: row.recording_mbid.map(|u| u.to_string()),
                 recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
                 duration: row.duration.map(|d| d as i64),
-                artists: Some(artists),
+                artists,
                 release_name: row.release_name.clone(),
                 release_mb_id: row.release_mbid.map(|u| u.to_string()),
                 isrc: row.isrc,
@@ -131,16 +121,6 @@ impl FeedPlayRepo for PgDataSource {
                 played_time: row
                     .played_time
                     .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
-                album: row.release_name,
-                artist: None,
-                created_at: row
-                    .played_time
-                    .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
-                did: Some(row.did.clone()),
-                image: None,
-                title: Some(row.track_name.clone()),
-                track_number: None,
-                uri: Some(row.uri.clone()),
             });
         }
 

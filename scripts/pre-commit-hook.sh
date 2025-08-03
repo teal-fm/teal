@@ -90,8 +90,8 @@ if [ -n "$RUST_FILES" ]; then
             fi
 
             print_status "Running cargo clippy on services workspace..."
-            if (cd services && cargo check) 2>/dev/null; then
-                if ! (cd services && cargo clippy -- -D warnings) 2>/dev/null; then
+            if (cd services && cargo check); then
+                if ! (cd services && cargo clippy -- -D warnings); then
                     print_warning "Cargo clippy found issues in services workspace. Please fix the warnings."
                     print_warning "Run 'pnpm rust:clippy:services' to see detailed errors."
                     # Don't fail the commit for clippy warnings, just warn
@@ -124,8 +124,8 @@ if [ -n "$RUST_FILES" ]; then
                     fi
 
                     print_status "Running cargo clippy on $check_dir..."
-                    if (cd "$check_dir" && cargo check) 2>/dev/null; then
-                        if ! (cd "$check_dir" && cargo clippy -- -D warnings) 2>/dev/null; then
+                    if (cd "$check_dir" && cargo check); then
+                        if ! (cd "$check_dir" && cargo clippy -- -D warnings); then
                             print_error "Cargo clippy found issues in $check_dir. Please fix the warnings and try again."
                             RUST_ERRORS=1
                         fi

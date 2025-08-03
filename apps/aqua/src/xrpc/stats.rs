@@ -1,8 +1,8 @@
 use crate::ctx::Context;
-use crate::types::fm::teal::alpha::feed::defs::PlayViewData;
-use crate::types::fm::teal::alpha::stats::defs::{ArtistViewData, ReleaseViewData};
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use serde::{Deserialize, Serialize};
+use types::fm::teal::alpha::feed::defs::PlayViewData;
+use types::fm::teal::alpha::stats::defs::{ArtistViewData, ReleaseViewData};
 
 // mount stats routes
 pub fn stats_routes() -> axum::Router {

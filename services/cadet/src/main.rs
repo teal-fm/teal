@@ -104,10 +104,10 @@ async fn main() {
             // Spawn CAR import job processing task
             tokio::spawn(async move {
                 use chrono::Utc;
-                use tracing::{error, info};
-                use types::jobs::{
+                use ingestors::car::jobs::{
                     queue_keys, CarImportJob, CarImportJobStatus, JobProgress, JobStatus,
                 };
+                use tracing::{error, info};
 
                 info!("Starting CAR import job worker, polling Redis queue...");
 

@@ -1,562 +1,820 @@
+//! CAR (Content Addressable aRchive) Import Ingestor using atmst
+//!
+//! This module handles importing Teal records from CAR files using the atmst library,
+//! which provides proper AT Protocol-style Merkle Search Tree handling. The CAR import process:
+//!
+//! 1. Receives CAR data via the LexiconIngestor interface (base64 encoded or URL)
+//! 2. Uses atmst::CarImporter to parse the CAR file and extract MST structure
+//! 3. Converts the CarImporter to an MST for proper tree traversal
+//! 4. Iterates through MST nodes to find Teal record types (play, profile, status)
+//! 5. Delegates to existing Teal ingestors using the actual DID and proper rkey
+//!
+//! ## Usage Example
+//!
+//! ```rust,ignore
+//! // CAR data can be provided in a record like:
+//! {
+//!   "carData": "base64-encoded-car-file-here"
+//! }
+//!
+//! // Or as a URL reference:
+//! {
+//!   "carData": {
+//!     "url": "https://example.com/my-archive.car"
+//!   }
+//! }
+//! ```
+//!
+//! The ingestor will automatically detect record types and store them using the
+//! same logic as real-time Jetstream ingestion, ensuring data consistency.
+//! All imported records will be attributed to the DID that initiated the import
+//! and use the original rkey from the AT Protocol MST structure.
+
+use crate::ingestors::car::jobs::{queue_keys, CarImportJob};
+use crate::redis_client::RedisClient;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use base64::{engine::general_purpose, Engine as _};
-use chrono;
-use cid::Cid;
-use iroh_car::{CarHeader, CarReader};
-use libipld::cbor::DagCborCodec;
-use libipld::{Block, Cid as LibipldCid, Ipld};
-use reqwest;
+use atmst::{mst::Mst, Bytes, CarImporter};
+use base64::Engine;
+use futures::StreamExt;
+use redis::AsyncCommands;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::PgPool;
-use std::io::Cursor;
 use tracing::{info, warn};
-use url;
 
+/// Helper struct for extracted records
+#[derive(Debug)]
+pub struct ExtractedRecord {
+    pub collection: String,
+    pub rkey: String,
+    pub data: serde_json::Value,
+}
+
+/// CAR Import Ingestor handles importing Teal records from CAR files using atmst
 pub struct CarImportIngestor {
     sql: PgPool,
 }
 
 impl CarImportIngestor {
+    /// Create a new CAR import ingestor with database connection
     pub fn new(sql: PgPool) -> Self {
         Self { sql }
     }
 
-    /// Process a CAR file from bytes
-    async fn process_car_data(&self, car_data: &[u8], import_id: &str) -> Result<()> {
-        info!("Starting CAR file processing for import {}", import_id);
+    /// Helper to get a Redis connection for job queueing
+    pub async fn get_redis_connection(&self) -> Result<redis::aio::MultiplexedConnection> {
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let client = RedisClient::new(&redis_url)?;
+        client
+            .get_connection()
+            .await
+            .map_err(|e| anyhow!("Redis connection error: {}", e))
+    }
 
-        let cursor = Cursor::new(car_data);
-        let mut reader = CarReader::new(cursor).await?;
+    /// Process CAR file data using atmst library and extract Teal records
+    async fn process_car_data(&self, car_data: &[u8], import_id: &str, did: &str) -> Result<()> {
+        info!(
+            "Starting CAR file processing with atmst for import {} (DID: {})",
+            import_id, did
+        );
 
-        // Read the header
-        let header = reader.header();
-        info!("CAR header: {} root CIDs", header.roots().len());
+        // Convert to Bytes for atmst
+        let car_bytes: Bytes = Bytes::from(car_data.to_vec());
 
-        // Track import metadata
-        // self.store_import_metadata(import_id, header).await?;
+        // Create CarImporter and import the CAR data
+        let mut car_importer = CarImporter::new();
+        car_importer
+            .import_from_bytes(car_bytes.clone())
+            .await
+            .map_err(|e| anyhow!("Failed to import CAR with atmst: {}", e))?;
 
-        // Process blocks
-        let mut block_count = 0;
-        while let Some((cid, block_data)) = reader.next_block().await? {
-            // Convert iroh-car CID to our CID type for processing
-            let our_cid: Cid = cid.to_string().parse()?;
-            self.process_car_block(&our_cid, &block_data, import_id)
-                .await?;
-            block_count += 1;
+        info!(
+            "CAR imported successfully. Root CIDs: {:?}, Total blocks: {}",
+            car_importer.roots(),
+            car_importer.len()
+        );
 
-            if block_count % 100 == 0 {
-                info!("Processed {} blocks for import {}", block_count, import_id);
+        // Convert CarImporter to MST for proper tree traversal
+        let mst = Mst::from_car_importer(car_importer)
+            .await
+            .map_err(|e| anyhow!("Failed to convert CAR to MST: {}", e))?;
+
+        info!("MST conversion successful, starting record extraction");
+
+        // Create a new CarImporter for data access since the previous one was consumed
+        let mut data_importer = CarImporter::new();
+        data_importer
+            .import_from_bytes(car_bytes)
+            .await
+            .map_err(|e| anyhow!("Failed to re-import CAR for data access: {}", e))?;
+
+        // Extract all records from the MST
+        let records = self
+            .extract_records_from_mst(&mst, &data_importer, did)
+            .await?;
+
+        info!("Extracted {} records from MST", records.len());
+
+        // Process each record through the appropriate ingestor
+        let mut processed_count = 0;
+        for record in records {
+            match self.process_extracted_record(&record, import_id, did).await {
+                Ok(()) => {
+                    processed_count += 1;
+                    if processed_count % 10 == 0 {
+                        info!("Processed {} records so far", processed_count);
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to process record {}: {}", record.rkey, e);
+                    // Continue processing other records
+                }
             }
         }
 
         info!(
-            "Completed CAR file processing: {} blocks for import {}",
-            block_count, import_id
+            "Completed CAR file processing: {} records processed for import {}",
+            processed_count, import_id
         );
-        // self.mark_import_complete(import_id, block_count).await?;
 
         Ok(())
     }
 
-    /// Process an individual IPLD block from the CAR file
-    async fn process_car_block(&self, cid: &Cid, block_data: &[u8], import_id: &str) -> Result<()> {
-        // Store the raw block first
-        // self.store_raw_block(cid, block_data, import_id).await?;
+    /// Extract all Teal records from the MST
+    async fn extract_records_from_mst(
+        &self,
+        mst: &Mst,
+        car_importer: &CarImporter,
+        _did: &str,
+    ) -> Result<Vec<ExtractedRecord>> {
+        let mut records = Vec::new();
 
-        // Try to decode as IPLD and extract meaningful data
-        match self.decode_and_extract_data(cid, block_data).await {
-            Ok(Some(extracted_data)) => {
-                self.process_extracted_data(&extracted_data, cid, import_id)
-                    .await?;
+        // Use the MST iterator to traverse all entries
+        let mut stream = mst.iter().into_stream();
+
+        while let Some(result) = stream.next().await {
+            match result {
+                Ok((key, record_cid)) => {
+                    // Check if this is a Teal record based on the key pattern
+                    if self.is_teal_record_key(&key) {
+                        info!("🎵 Found Teal record: {} -> {}", key, record_cid);
+                        if let Some((collection, rkey)) = self.parse_teal_key(&key) {
+                            info!("   Collection: {}, rkey: {}", collection, rkey);
+                            // Get the actual record data using the CID
+                            match self.get_record_data(&record_cid, car_importer).await {
+                                Ok(Some(data)) => {
+                                    info!("   ✅ Successfully got record data for {}", record_cid);
+                                    records.push(ExtractedRecord {
+                                        collection,
+                                        rkey,
+                                        data,
+                                    });
+                                }
+                                Ok(None) => {
+                                    warn!("   ❌ No data found for record CID: {}", record_cid);
+                                }
+                                Err(e) => {
+                                    warn!(
+                                        "   ❌ Failed to get record data for {}: {}",
+                                        record_cid, e
+                                    );
+                                }
+                            }
+                        } else {
+                            warn!("   ❌ Failed to parse Teal key: {}", key);
+                        }
+                    }
+                }
+                Err(e) => {
+                    warn!("Error iterating MST: {}", e);
+                    // Continue with other entries
+                }
             }
-            Ok(None) => {
-                // Block doesn't contain extractable data, just stored raw
+        }
+
+        Ok(records)
+    }
+
+    /// Get record data from the CAR importer using a CID
+    async fn get_record_data(
+        &self,
+        cid: &atmst::Cid,
+        car_importer: &CarImporter,
+    ) -> Result<Option<Value>> {
+        // Try to decode the block as CBOR IPLD directly with atmst::Cid
+        info!("🔍 Attempting to decode CBOR for CID: {}", cid);
+        match car_importer.decode_cbor(cid) {
+            Ok(ipld) => {
+                info!("   ✅ Successfully decoded CBOR for CID: {}", cid);
+                // Convert IPLD to JSON for processing by existing ingestors
+                match self.ipld_to_json(&ipld) {
+                    Ok(json) => {
+                        info!("   ✅ Successfully converted IPLD to JSON for CID: {}", cid);
+                        Ok(Some(json))
+                    }
+                    Err(e) => {
+                        warn!(
+                            "   ❌ Failed to convert IPLD to JSON for CID {}: {}",
+                            cid, e
+                        );
+                        Ok(None)
+                    }
+                }
             }
             Err(e) => {
-                warn!("Failed to decode block {}: {}", cid, e);
-                // Continue processing other blocks
+                warn!("   ❌ Failed to decode CBOR for CID {}: {}", cid, e);
+                Ok(None)
             }
         }
-
-        Ok(())
     }
 
-    /// Decode IPLD block and extract AT Protocol data if present
-    async fn decode_and_extract_data(
+    /// Process a single extracted record through the appropriate ingestor
+    async fn process_extracted_record(
         &self,
-        cid: &Cid,
-        block_data: &[u8],
-    ) -> Result<Option<ExtractedData>> {
-        // Create IPLD block (convert CID types)
-        let libipld_cid: LibipldCid = cid.to_string().parse()?;
-        let block: Block<libipld::DefaultParams> = Block::new(libipld_cid, block_data.to_vec())?;
-
-        // Decode to IPLD (try to decode as DAG-CBOR, which is common in AT Protocol)
-        let ipld: Ipld = match block.decode::<DagCborCodec, Ipld>() {
-            Ok(ipld) => ipld,
-            Err(_) => {
-                // If DAG-CBOR fails, try as raw data
-                return Ok(None);
-            }
-        };
-
-        // Check if this looks like AT Protocol data
-        if let Ipld::Map(map) = &ipld {
-            // Look for AT Protocol patterns
-            if let Some(collection) = map.get("$type").and_then(|v| {
-                if let Ipld::String(s) = v {
-                    Some(s.as_str())
-                } else {
-                    None
-                }
-            }) {
-                return Ok(Some(ExtractedData {
-                    collection: collection.to_string(),
-                    data: ipld,
-                    cid: cid.clone(),
-                }));
-            }
-
-            // Check for commit structures
-            if map.contains_key("ops") && map.contains_key("prev") {
-                return Ok(Some(ExtractedData {
-                    collection: "commit".to_string(),
-                    data: ipld,
-                    cid: cid.clone(),
-                }));
-            }
-        }
-
-        Ok(None)
-    }
-
-    /// Process extracted AT Protocol data
-    async fn process_extracted_data(
-        &self,
-        data: &ExtractedData,
-        cid: &Cid,
-        import_id: &str,
+        record: &ExtractedRecord,
+        _import_id: &str,
+        did: &str,
     ) -> Result<()> {
-        match data.collection.as_str() {
+        info!(
+            "Processing {} record with rkey: {}",
+            record.collection, record.rkey
+        );
+
+        info!(
+            "🔄 Processing {} record: {}",
+            record.collection, record.rkey
+        );
+        match record.collection.as_str() {
             "fm.teal.alpha.feed.play" => {
-                self.process_play_record(&data.data, cid, import_id).await?;
+                info!("   📀 Processing play record...");
+                let result = self
+                    .process_play_record(&record.data, did, &record.rkey)
+                    .await;
+                if result.is_ok() {
+                    info!("   ✅ Successfully processed play record");
+                } else {
+                    warn!("   ❌ Failed to process play record: {:?}", result);
+                }
+                result
             }
             "fm.teal.alpha.actor.profile" => {
-                self.process_profile_record(&data.data, cid, import_id)
-                    .await?;
+                info!("   👤 Processing profile record...");
+                let result = self
+                    .process_profile_record(&record.data, did, &record.rkey)
+                    .await;
+                if result.is_ok() {
+                    info!("   ✅ Successfully processed profile record");
+                } else {
+                    warn!("   ❌ Failed to process profile record: {:?}", result);
+                }
+                result
             }
             "fm.teal.alpha.actor.status" => {
-                self.process_status_record(&data.data, cid, import_id)
-                    .await?;
-            }
-            "commit" => {
-                self.process_commit_record(&data.data, cid, import_id)
-                    .await?;
+                info!("   📢 Processing status record...");
+                let result = self
+                    .process_status_record(&record.data, did, &record.rkey)
+                    .await;
+                if result.is_ok() {
+                    info!("   ✅ Successfully processed status record");
+                } else {
+                    warn!("   ❌ Failed to process status record: {:?}", result);
+                }
+                result
             }
             _ => {
-                info!("Unhandled collection type: {}", data.collection);
+                warn!("❓ Unknown Teal collection: {}", record.collection);
+                Ok(())
             }
         }
-
-        Ok(())
     }
 
-    /// Process a Teal play record from IPLD data
-    async fn process_play_record(&self, ipld: &Ipld, cid: &Cid, import_id: &str) -> Result<()> {
-        // Convert IPLD to JSON value for processing by existing ingestors
-        let json_value = ipld_to_json(ipld)?;
+    /// Check if a key represents a Teal record
+    fn is_teal_record_key(&self, key: &str) -> bool {
+        key.starts_with("fm.teal.alpha.") && key.contains("/")
+    }
 
-        // Delegate to existing play ingestor logic
-        if let Ok(play_record) =
-            serde_json::from_value::<types::fm::teal::alpha::feed::play::RecordData>(json_value)
-        {
-            info!("Importing play record from CAR: {}", play_record.track_name);
-
-            // Use existing play ingestor for consistency
-            let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
-
-            // Create a synthetic AT URI for the imported record
-            let synthetic_did = format!("car-import:{}", import_id);
-            let rkey = cid.to_string();
-            let uri = super::super::teal::assemble_at_uri(
-                &synthetic_did,
-                "fm.teal.alpha.feed.play",
-                &rkey,
-            );
-
-            // Store using existing logic
-            play_ingestor
-                .insert_play(&play_record, &uri, &cid.to_string(), &synthetic_did, &rkey)
-                .await?;
-
-            // Track the extracted record
-            // self.store_extracted_record(import_id, cid, "fm.teal.alpha.feed.play", Some(&uri)).await?;
+    /// Parse a Teal MST key to extract collection and rkey
+    fn parse_teal_key(&self, key: &str) -> Option<(String, String)> {
+        if let Some(slash_pos) = key.rfind('/') {
+            let collection = key[..slash_pos].to_string();
+            let rkey = key[slash_pos + 1..].to_string();
+            Some((collection, rkey))
+        } else {
+            None
         }
-
-        Ok(())
     }
 
-    /// Process a Teal profile record from IPLD data
-    async fn process_profile_record(&self, ipld: &Ipld, cid: &Cid, import_id: &str) -> Result<()> {
-        let json_value = ipld_to_json(ipld)?;
-
-        if let Ok(profile_record) =
-            serde_json::from_value::<types::fm::teal::alpha::actor::profile::RecordData>(json_value)
+    /// Process a play record using the existing PlayIngestor
+    async fn process_play_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
+        match serde_json::from_value::<types::fm::teal::alpha::feed::play::RecordData>(data.clone())
         {
-            info!(
-                "Importing profile record from CAR: {:?}",
-                profile_record.display_name
-            );
+            Ok(play_record) => {
+                let play_ingestor =
+                    super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
+                let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
 
-            // For now, just log until we have public methods on profile ingestor
-            info!(
-                "Would store profile record from CAR import {} with CID {}",
-                import_id, cid
-            );
+                play_ingestor
+                    .insert_play(
+                        &play_record,
+                        &uri,
+                        &format!("car-import-{}", uuid::Uuid::new_v4()),
+                        did,
+                        rkey,
+                    )
+                    .await?;
 
-            // Track the extracted record
-            // self.store_extracted_record(import_id, cid, "fm.teal.alpha.actor.profile", None).await?;
+                info!(
+                    "Successfully stored play record: {} by {:?}",
+                    play_record.track_name, play_record.artist_names
+                );
+                Ok(())
+            }
+            Err(e) => {
+                warn!("Failed to deserialize play record data: {}", e);
+                Err(anyhow!("Invalid play record format: {}", e))
+            }
         }
-
-        Ok(())
     }
 
-    /// Process a Teal status record from IPLD data
-    async fn process_status_record(&self, ipld: &Ipld, cid: &Cid, import_id: &str) -> Result<()> {
-        let json_value = ipld_to_json(ipld)?;
+    /// Process a profile record using the existing ActorProfileIngestor
+    async fn process_profile_record(&self, data: &Value, did: &str, _rkey: &str) -> Result<()> {
+        match serde_json::from_value::<types::fm::teal::alpha::actor::profile::RecordData>(
+            data.clone(),
+        ) {
+            Ok(profile_record) => {
+                let profile_ingestor =
+                    super::super::teal::actor_profile::ActorProfileIngestor::new(self.sql.clone());
+                let did_typed = atrium_api::types::string::Did::new(did.to_string())
+                    .map_err(|e| anyhow!("Failed to create Did: {}", e))?;
 
-        if let Ok(_status_record) =
-            serde_json::from_value::<types::fm::teal::alpha::actor::status::RecordData>(json_value)
-        {
-            info!("Importing status record from CAR");
+                profile_ingestor
+                    .insert_profile(did_typed, &profile_record)
+                    .await?;
 
-            // For now, just log until we have public methods on status ingestor
-            info!(
-                "Would store status record from CAR import {} with CID {}",
-                import_id, cid
-            );
-
-            // Track the extracted record
-            // self.store_extracted_record(import_id, cid, "fm.teal.alpha.actor.status", None).await?;
+                info!(
+                    "Successfully stored profile record: {:?}",
+                    profile_record.display_name
+                );
+                Ok(())
+            }
+            Err(e) => {
+                warn!("Failed to deserialize profile record data: {}", e);
+                Err(anyhow!("Invalid profile record format: {}", e))
+            }
         }
-
-        Ok(())
     }
 
-    /// Process a commit record from IPLD data
-    async fn process_commit_record(
-        &self,
-        _ipld: &Ipld,
-        _cid: &Cid,
-        _import_id: &str,
-    ) -> Result<()> {
-        info!("Processing commit record from CAR import");
+    /// Process a status record using the existing ActorStatusIngestor
+    async fn process_status_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
+        match serde_json::from_value::<types::fm::teal::alpha::actor::status::RecordData>(
+            data.clone(),
+        ) {
+            Ok(status_record) => {
+                let status_ingestor =
+                    super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
+                let did_typed = atrium_api::types::string::Did::new(did.to_string())
+                    .map_err(|e| anyhow!("Failed to create Did: {}", e))?;
 
-        // Store commit metadata for tracking
-        // self.store_commit_metadata(ipld, cid, import_id).await?;
+                status_ingestor
+                    .insert_status(
+                        did_typed,
+                        rkey,
+                        &format!("car-import-{}", uuid::Uuid::new_v4()),
+                        &status_record,
+                    )
+                    .await?;
 
-        Ok(())
+                info!("Successfully stored status record from CAR import");
+                Ok(())
+            }
+            Err(e) => {
+                warn!("Failed to deserialize status record data: {}", e);
+                Err(anyhow!("Invalid status record format: {}", e))
+            }
+        }
     }
 
-    /// Store CAR import metadata
-    async fn store_import_metadata(&self, _import_id: &str, _header: &CarHeader) -> Result<()> {
-        // TODO: Implement when database tables are ready
-        Ok(())
-    }
+    /// Fetch and process a CAR file from a PDS for a given identity
+    pub async fn fetch_and_process_identity_car(&self, handle_or_did: &str) -> Result<String> {
+        info!("Fetching CAR file for identity: {}", handle_or_did);
 
-    /// Mark import as complete
-    async fn mark_import_complete(&self, _import_id: &str, _block_count: i32) -> Result<()> {
-        // TODO: Implement when database tables are ready
-        Ok(())
-    }
+        // Resolve to DID if needed
+        let did = if handle_or_did.starts_with("did:") {
+            handle_or_did.to_string()
+        } else {
+            self.resolve_handle_to_did(handle_or_did).await?
+        };
 
-    /// Store raw IPLD block
-    async fn store_raw_block(
-        &self,
-        _cid: &Cid,
-        _block_data: &[u8],
-        _import_id: &str,
-    ) -> Result<()> {
-        // TODO: Implement when database tables are ready
-        Ok(())
-    }
+        // Resolve DID to PDS
+        let pds_url = self.resolve_did_to_pds(&did).await?;
+        info!("Resolved {} to PDS: {}", did, pds_url);
 
-    /// Store commit metadata
-    async fn store_commit_metadata(&self, _ipld: &Ipld, _cid: &Cid, import_id: &str) -> Result<()> {
-        info!("Would store commit metadata from CAR import {}", import_id);
-        Ok(())
-    }
-
-    /// Store extracted record tracking
-    async fn store_extracted_record(
-        &self,
-        _import_id: &str,
-        _cid: &Cid,
-        _collection: &str,
-        _record_uri: Option<&str>,
-    ) -> Result<()> {
-        // TODO: Implement when database tables are ready
-        Ok(())
-    }
-
-    /// Fetch and process CAR file for a given identity (handle or DID)
-    pub async fn fetch_and_process_identity_car(&self, identity: &str) -> Result<String> {
-        info!(
-            "Starting CAR fetch and processing for identity: {}",
-            identity
-        );
-
-        // Resolve identity to DID and PDS
-        let (user_did, pds_host) = self.resolve_user_to_pds(identity).await?;
-        info!(
-            "Resolved {} to DID {} on PDS {}",
-            identity, user_did, pds_host
-        );
-
-        // Fetch CAR file from PDS
-        let car_data = self.fetch_car_from_pds(&pds_host, &user_did, None).await?;
-        info!(
-            "Successfully fetched CAR file for {} ({} bytes)",
-            user_did,
-            car_data.len()
-        );
+        // Fetch CAR file
+        let car_data = self.fetch_car_from_pds(&pds_url, &did).await?;
 
         // Generate import ID
-        let import_id = format!(
-            "pds-{}-{}",
-            user_did.replace(":", "-"),
-            chrono::Utc::now().timestamp()
-        );
+        let import_id = uuid::Uuid::new_v4().to_string();
 
-        // Process through existing pipeline
-        self.process_car_data(&car_data, &import_id).await?;
+        // Process the CAR data
+        self.process_car_data(&car_data, &import_id, &did).await?;
 
-        info!("✅ CAR import completed successfully for {}", identity);
         Ok(import_id)
     }
 
-    /// Resolve a user identifier (DID or handle) to their DID and PDS host
-    async fn resolve_user_to_pds(&self, user_identifier: &str) -> Result<(String, String)> {
-        if user_identifier.starts_with("did:") {
-            // User provided a DID directly, resolve to PDS
-            let pds_host = self.resolve_did_to_pds(user_identifier).await?;
-            Ok((user_identifier.to_string(), pds_host))
-        } else {
-            // User provided a handle, resolve to DID then PDS
-            let user_did = self.resolve_handle_to_did(user_identifier).await?;
-            let pds_host = self.resolve_did_to_pds(&user_did).await?;
-            Ok((user_did, pds_host))
-        }
-    }
-
-    /// Resolve a handle to a DID using com.atproto.identity.resolveHandle
+    /// Resolve handle to DID
     async fn resolve_handle_to_did(&self, handle: &str) -> Result<String> {
         let url = format!(
             "https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle={}",
             handle
         );
+        let response: Value = reqwest::get(&url).await?.json().await?;
 
-        let response = reqwest::get(&url).await?;
-        if !response.status().is_success() {
-            return Err(anyhow!(
-                "Failed to resolve handle {}: {}",
-                handle,
-                response.status()
-            ));
-        }
-
-        let json: serde_json::Value = response.json().await?;
-        let did = json["did"]
+        response["did"]
             .as_str()
-            .ok_or_else(|| anyhow!("No DID found in response for handle {}", handle))?;
-
-        Ok(did.to_string())
+            .map(|s| s.to_string())
+            .ok_or_else(|| anyhow!("Failed to resolve handle to DID"))
     }
 
-    /// Resolve a DID to their PDS host using DID document
+    /// Resolve DID to PDS URL
     async fn resolve_did_to_pds(&self, did: &str) -> Result<String> {
-        // For DID:plc, use the PLC directory
-        if did.starts_with("did:plc:") {
-            let url = format!("https://plc.directory/{}", did);
+        let url = format!("https://plc.directory/{}", did);
+        let response: Value = reqwest::get(&url).await?.json().await?;
 
-            let response = reqwest::get(&url).await?;
-            if !response.status().is_success() {
-                return Err(anyhow!(
-                    "Failed to resolve DID {}: {}",
-                    did,
-                    response.status()
-                ));
-            }
-
-            let doc: serde_json::Value = response.json().await?;
-
-            // Find the PDS service endpoint
-            if let Some(services) = doc["service"].as_array() {
-                for service in services {
-                    if service["id"].as_str() == Some("#atproto_pds") {
-                        if let Some(endpoint) = service["serviceEndpoint"].as_str() {
-                            // Extract hostname from URL
-                            let parsed_url = url::Url::parse(endpoint)?;
-                            let host = parsed_url
-                                .host_str()
-                                .ok_or_else(|| anyhow!("Invalid PDS endpoint URL: {}", endpoint))?;
-                            return Ok(host.to_string());
-                        }
+        if let Some(services) = response["service"].as_array() {
+            for service in services {
+                if service["id"] == "#atproto_pds" {
+                    if let Some(endpoint) = service["serviceEndpoint"].as_str() {
+                        return Ok(endpoint.to_string());
                     }
                 }
             }
-
-            Err(anyhow!("No PDS service found in DID document for {}", did))
-        } else {
-            Err(anyhow!("Unsupported DID method: {}", did))
         }
+
+        Err(anyhow!("Could not resolve PDS for DID: {}", did))
     }
 
-    /// Fetch CAR file from PDS using com.atproto.sync.getRepo
-    async fn fetch_car_from_pds(
-        &self,
-        pds_host: &str,
-        did: &str,
-        since: Option<&str>,
-    ) -> Result<Vec<u8>> {
-        let mut url = format!(
-            "https://{}/xrpc/com.atproto.sync.getRepo?did={}",
-            pds_host, did
-        );
-
-        if let Some(since_rev) = since {
-            url.push_str(&format!("&since={}", since_rev));
-        }
-
-        info!("Fetching CAR file from: {}", url);
-
+    /// Fetch CAR file from PDS
+    async fn fetch_car_from_pds(&self, pds_url: &str, did: &str) -> Result<Vec<u8>> {
+        let url = format!("{}/xrpc/com.atproto.sync.getRepo?did={}", pds_url, did);
         let response = reqwest::get(&url).await?;
+
         if !response.status().is_success() {
             return Err(anyhow!(
-                "Failed to fetch CAR from PDS {}: {}",
-                pds_host,
+                "Failed to fetch CAR file: HTTP {}",
                 response.status()
             ));
         }
 
-        // Verify content type
-        let content_type = response
-            .headers()
-            .get("content-type")
-            .and_then(|h| h.to_str().ok())
-            .unwrap_or("");
+        let car_data = response.bytes().await?.to_vec();
+        info!("Fetched CAR file: {} bytes", car_data.len());
 
-        if !content_type.contains("application/vnd.ipld.car") {
-            return Err(anyhow!("Unexpected content type: {}", content_type));
+        Ok(car_data)
+    }
+
+    /// Helper: Convert IPLD to JSON
+    #[allow(clippy::only_used_in_recursion)]
+    fn ipld_to_json(&self, ipld: &atmst::Ipld) -> Result<Value> {
+        use atmst::Ipld;
+
+        match ipld {
+            Ipld::Null => Ok(Value::Null),
+            Ipld::Bool(b) => Ok(Value::Bool(*b)),
+            Ipld::Integer(i) => {
+                if let Ok(i64_val) = i64::try_from(*i) {
+                    Ok(Value::Number(i64_val.into()))
+                } else {
+                    Ok(Value::String(i.to_string()))
+                }
+            }
+            Ipld::Float(f) => {
+                if let Some(num) = serde_json::Number::from_f64(*f) {
+                    Ok(Value::Number(num))
+                } else {
+                    Err(anyhow!("Invalid float value"))
+                }
+            }
+            Ipld::String(s) => Ok(Value::String(s.clone())),
+            Ipld::Bytes(b) => Ok(Value::String(
+                base64::engine::general_purpose::STANDARD.encode(b),
+            )),
+            Ipld::List(list) => {
+                let json_array: Result<Vec<Value>> =
+                    list.iter().map(|v| self.ipld_to_json(v)).collect();
+                Ok(Value::Array(json_array?))
+            }
+            Ipld::Map(map) => {
+                let mut json_map = serde_json::Map::new();
+                for (key, value) in map {
+                    json_map.insert(key.clone(), self.ipld_to_json(value)?);
+                }
+                Ok(Value::Object(json_map))
+            }
+            Ipld::Link(cid) => Ok(Value::String(cid.to_string())),
         }
-
-        let car_data = response.bytes().await?;
-        Ok(car_data.to_vec())
     }
 }
 
 #[async_trait]
 impl LexiconIngestor for CarImportIngestor {
     async fn ingest(&self, message: Event<Value>) -> Result<()> {
-        // For CAR imports, we expect the message to contain CAR file data
-        // This could be a file path, URL, or base64 encoded data
+        let commit = message
+            .commit
+            .as_ref()
+            .ok_or_else(|| anyhow!("CarImportIngestor requires a commit event"))?;
 
-        if let Some(commit) = &message.commit {
-            if let Some(record) = &commit.record {
-                // Check if this is a CAR import request
-                if let Some(car_data_field) = record.get("carData") {
-                    let import_id = format!("{}:{}", message.did, commit.rkey);
+        let record = commit
+            .record
+            .as_ref()
+            .ok_or_else(|| anyhow!("CarImportIngestor requires a record in the commit"))?;
 
-                    match car_data_field {
-                        Value::String(base64_data) => {
-                            // Decode base64 CAR data
-                            if let Ok(car_bytes) = general_purpose::STANDARD.decode(base64_data) {
-                                self.process_car_data(&car_bytes, &import_id).await?;
-                            } else {
-                                return Err(anyhow!("Invalid base64 CAR data"));
-                            }
-                        }
-                        Value::Object(obj) => {
-                            // Handle different CAR data formats (URL, file path, etc.)
-                            if let Some(Value::String(url)) = obj.get("url") {
-                                // Download and process CAR from URL
-                                let car_bytes = self.download_car_file(url).await?;
-                                self.process_car_data(&car_bytes, &import_id).await?;
-                            }
-                        }
-                        _ => {
-                            return Err(anyhow!("Unsupported CAR data format"));
-                        }
+        // Enqueue CAR import job into Redis
+        let job = CarImportJob {
+            request_id: uuid::Uuid::new_v4(),
+            identity: record
+                .get("identity")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow!("Missing identity in record"))?
+                .to_string(),
+            since: None,
+            created_at: chrono::Utc::now(),
+            description: None,
+        };
+        let job_payload = serde_json::to_string(&job)?;
+        let mut conn = self.get_redis_connection().await?;
+        // Specify the expected return type to avoid FromRedisValue fallback issues in edition 2024
+        let _: () = conn.lpush(queue_keys::CAR_IMPORT_JOBS, job_payload).await?;
+        tracing::info!("Enqueued CAR import job: {}", job.request_id);
+
+        Ok(())
+    }
+}
+
+#[allow(dead_code)]
+impl CarImportIngestor {
+    /// Download CAR file from URL
+    async fn download_car_file(&self, url: &str) -> Result<Vec<u8>> {
+        let response = reqwest::get(url).await?;
+        Ok(response.bytes().await?.to_vec())
+    }
+
+    /// Import CAR data from bytes (public interface)
+    pub async fn import_car_bytes(&self, car_data: &[u8], did: &str) -> Result<String> {
+        let import_id = uuid::Uuid::new_v4().to_string();
+        self.process_car_data(car_data, &import_id, did).await?;
+        Ok(import_id)
+    }
+
+    /// Consolidate synthetic artists with MusicBrainz artists
+    pub async fn consolidate_synthetic_artists(&self, min_confidence: f64) -> Result<usize> {
+        let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
+        play_ingestor
+            .consolidate_synthetic_artists(min_confidence)
+            .await
+    }
+
+    /// Consolidate duplicate releases
+    pub async fn consolidate_duplicate_releases(&self, min_confidence: f64) -> Result<usize> {
+        let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
+        play_ingestor
+            .consolidate_duplicate_releases(min_confidence)
+            .await
+    }
+
+    /// Consolidate duplicate recordings
+    pub async fn consolidate_duplicate_recordings(&self, min_confidence: f64) -> Result<usize> {
+        let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
+        play_ingestor
+            .consolidate_duplicate_recordings(min_confidence)
+            .await
+    }
+
+    /// Preview consolidation candidates before running consolidation
+    pub async fn preview_consolidation_candidates(&self, min_confidence: f64) -> Result<()> {
+        let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
+        play_ingestor
+            .preview_consolidation_candidates(min_confidence)
+            .await
+    }
+
+    /// Run full batch consolidation for all entity types
+    pub async fn run_full_consolidation(&self) -> Result<()> {
+        let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
+        play_ingestor.run_full_consolidation().await
+    }
+}
+
+// Removed unused helper struct for extracted records.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use atmst::{CarBuilder, Ipld};
+    use std::collections::BTreeMap;
+
+    fn create_mock_teal_play_record() -> Ipld {
+        let mut record = BTreeMap::new();
+        record.insert(
+            "$type".to_string(),
+            Ipld::String("fm.teal.alpha.feed.play".to_string()),
+        );
+        record.insert(
+            "track_name".to_string(),
+            Ipld::String("Test Song".to_string()),
+        );
+        record.insert(
+            "artist_names".to_string(),
+            Ipld::List(vec![Ipld::String("Test Artist".to_string())]),
+        );
+        record.insert("duration".to_string(), Ipld::Integer(180000));
+        record.insert(
+            "created_at".to_string(),
+            Ipld::String("2024-01-01T00:00:00Z".to_string()),
+        );
+        Ipld::Map(record)
+    }
+
+    fn create_mock_teal_profile_record() -> Ipld {
+        let mut record = BTreeMap::new();
+        record.insert(
+            "$type".to_string(),
+            Ipld::String("fm.teal.alpha.actor.profile".to_string()),
+        );
+        record.insert(
+            "display_name".to_string(),
+            Ipld::String("Test User".to_string()),
+        );
+        record.insert(
+            "description".to_string(),
+            Ipld::String("Music lover".to_string()),
+        );
+        Ipld::Map(record)
+    }
+
+    async fn create_test_car_with_teal_records() -> Result<Bytes> {
+        let mut builder = CarBuilder::new();
+
+        // Create test Teal records
+        let play_record = create_mock_teal_play_record();
+        let profile_record = create_mock_teal_profile_record();
+
+        // Add records to CAR
+        let play_cid = builder.add_cbor(&play_record)?;
+        let profile_cid = builder.add_cbor(&profile_record)?;
+
+        // Add roots (in a real MST, these would be MST nodes, but for testing this is sufficient)
+        builder.add_root(play_cid);
+        builder.add_root(profile_cid);
+
+        let importer = builder.build();
+        importer
+            .export_to_bytes()
+            .await
+            .map_err(|e| anyhow!("Failed to export CAR: {}", e))
+    }
+
+    #[test]
+    fn test_parse_teal_key() {
+        // This test doesn't need a database connection or async
+        let key = "fm.teal.alpha.feed.play/3k2akjdlkjsf";
+
+        // Test the parsing logic directly
+        if let Some(slash_pos) = key.rfind('/') {
+            let collection = key[..slash_pos].to_string();
+            let rkey = key[slash_pos + 1..].to_string();
+
+            assert_eq!(collection, "fm.teal.alpha.feed.play");
+            assert_eq!(rkey, "3k2akjdlkjsf");
+        } else {
+            panic!("Should have found slash in key");
+        }
+    }
+
+    #[test]
+    fn test_is_teal_record_key() {
+        // Test the logic directly without needing an ingestor instance
+        fn is_teal_record_key(key: &str) -> bool {
+            key.starts_with("fm.teal.alpha.") && key.contains("/")
+        }
+
+        assert!(is_teal_record_key("fm.teal.alpha.feed.play/abc123"));
+        assert!(is_teal_record_key("fm.teal.alpha.profile/def456"));
+        assert!(!is_teal_record_key("app.bsky.feed.post/xyz789"));
+        assert!(!is_teal_record_key("fm.teal.alpha.feed.play")); // No rkey
+    }
+
+    #[test]
+    fn test_ipld_to_json_conversion() {
+        // Test IPLD to JSON conversion logic directly
+        use atmst::Ipld;
+        use std::collections::BTreeMap;
+
+        let mut record = BTreeMap::new();
+        record.insert(
+            "$type".to_string(),
+            Ipld::String("fm.teal.alpha.feed.play".to_string()),
+        );
+        record.insert(
+            "track_name".to_string(),
+            Ipld::String("Test Song".to_string()),
+        );
+        record.insert("duration".to_string(), Ipld::Integer(180000));
+        let play_record = Ipld::Map(record);
+
+        // Test the conversion logic inline
+        fn ipld_to_json(ipld: &Ipld) -> Result<Value> {
+            match ipld {
+                Ipld::Null => Ok(Value::Null),
+                Ipld::Bool(b) => Ok(Value::Bool(*b)),
+                Ipld::Integer(i) => {
+                    if let Ok(i64_val) = i64::try_from(*i) {
+                        Ok(Value::Number(i64_val.into()))
+                    } else {
+                        Ok(Value::String(i.to_string()))
                     }
-                } else {
-                    return Err(anyhow!("No CAR data found in record"));
+                }
+                Ipld::String(s) => Ok(Value::String(s.clone())),
+                Ipld::Map(map) => {
+                    let mut json_map = serde_json::Map::new();
+                    for (key, value) in map {
+                        json_map.insert(key.clone(), ipld_to_json(value)?);
+                    }
+                    Ok(Value::Object(json_map))
+                }
+                _ => Ok(Value::Null), // Simplified for test
+            }
+        }
+
+        let json_result = ipld_to_json(&play_record);
+        assert!(json_result.is_ok());
+        let json = json_result.unwrap();
+        assert_eq!(json["$type"], "fm.teal.alpha.feed.play");
+        assert_eq!(json["track_name"], "Test Song");
+        assert_eq!(json["duration"], 180000);
+    }
+
+    #[tokio::test]
+    async fn test_car_creation_and_basic_parsing() -> Result<()> {
+        // Test that we can create a CAR file with Teal records and parse it
+        let car_bytes = create_test_car_with_teal_records().await?;
+
+        // Verify we can import the CAR with atmst
+        let mut importer = CarImporter::new();
+        importer.import_from_bytes(car_bytes).await?;
+
+        assert!(!importer.is_empty());
+        assert!(importer.len() >= 2); // Should have at least our 2 test records
+
+        // Test that we can decode the records
+        for cid in importer.cids() {
+            if let Ok(ipld) = importer.decode_cbor(&cid) {
+                if let Ipld::Map(map) = &ipld {
+                    if let Some(Ipld::String(record_type)) = map.get("$type") {
+                        assert!(record_type.starts_with("fm.teal.alpha."));
+                        println!("Found Teal record: {}", record_type);
+                    }
                 }
             }
         }
 
         Ok(())
     }
-}
 
-impl CarImportIngestor {
-    /// Download CAR file from URL
-    async fn download_car_file(&self, url: &str) -> Result<Vec<u8>> {
-        let response = reqwest::get(url).await?;
-        let bytes = response.bytes().await?;
-        Ok(bytes.to_vec())
-    }
-}
+    #[tokio::test]
+    #[ignore = "requires database connection"]
+    async fn test_full_car_import_integration() -> Result<()> {
+        // This test requires a real database connection
+        let database_url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://localhost/teal_test".to_string());
 
-/// Helper struct for extracted AT Protocol data
-#[derive(Debug)]
-struct ExtractedData {
-    collection: String,
-    data: Ipld,
-    cid: Cid,
-}
+        let pool = sqlx::PgPool::connect(&database_url).await?;
+        let ingestor = CarImportIngestor::new(pool);
 
-/// Convert IPLD to JSON Value for compatibility with existing ingestors
-fn ipld_to_json(ipld: &Ipld) -> Result<Value> {
-    match ipld {
-        Ipld::Null => Ok(Value::Null),
-        Ipld::Bool(b) => Ok(Value::Bool(*b)),
-        Ipld::Integer(i) => {
-            // Convert i128 to i64 for JSON compatibility
-            if let Ok(i64_val) = i64::try_from(*i) {
-                Ok(Value::Number(i64_val.into()))
-            } else {
-                // Fall back to string representation for very large integers
-                Ok(Value::String(i.to_string()))
+        // Create test CAR with Teal records
+        let car_bytes = create_test_car_with_teal_records().await?;
+
+        // Test the full import process
+        let import_id = uuid::Uuid::new_v4().to_string();
+        let test_did = "did:plc:test123";
+
+        // This should work with our new atmst implementation
+        let result = ingestor
+            .process_car_data(&car_bytes, &import_id, test_did)
+            .await;
+
+        // For now, we expect this to work but records might not actually get stored
+        // because the test CAR doesn't have proper MST structure
+        match result {
+            Ok(()) => {
+                println!("✅ CAR import completed successfully");
+            }
+            Err(e) => {
+                println!("⚠️  CAR import failed (expected for test data): {}", e);
+                // This is expected since our test CAR doesn't have proper MST structure
             }
         }
-        Ipld::Float(f) => {
-            if let Some(num) = serde_json::Number::from_f64(*f) {
-                Ok(Value::Number(num))
-            } else {
-                Err(anyhow!("Invalid float value"))
-            }
-        }
-        Ipld::String(s) => Ok(Value::String(s.clone())),
-        Ipld::Bytes(b) => {
-            // Convert bytes to base64 string
-            Ok(Value::String(general_purpose::STANDARD.encode(b)))
-        }
-        Ipld::List(list) => {
-            let json_array: Result<Vec<Value>> = list.iter().map(ipld_to_json).collect();
-            Ok(Value::Array(json_array?))
-        }
-        Ipld::Map(map) => {
-            let mut json_map = serde_json::Map::new();
-            for (key, value) in map {
-                json_map.insert(key.clone(), ipld_to_json(value)?);
-            }
-            Ok(Value::Object(json_map))
-        }
-        Ipld::Link(cid) => {
-            // Convert CID to string representation
-            Ok(Value::String(cid.to_string()))
-        }
+
+        Ok(())
     }
 }

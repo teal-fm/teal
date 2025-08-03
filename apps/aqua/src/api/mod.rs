@@ -1,10 +1,8 @@
 use anyhow::Result;
 use axum::{Extension, Json, extract::Multipart, extract::Path, http::StatusCode};
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 use tracing::{error, info};
-use uuid;
-
-use sys_info;
 
 use crate::ctx::Context;
 use crate::redis_client::RedisClient;
@@ -502,4 +500,143 @@ pub async fn fetch_car_from_pds(pds_host: &str, did: &str, since: Option<&str>) 
 
     let car_data = response.bytes().await?;
     Ok(car_data.to_vec())
+}
+
+/// Generate a DID document for did:web
+fn generate_did_document(host: &str, pubkey: &str) -> Value {
+    json!({
+        "@context": [
+            "https://www.w3.org/ns/did/v1",
+            "https://w3id.org/security/multikey/v1",
+            "https://w3id.org/security/suites/secp256k1-2019/v1"
+        ],
+        "id": format!("did:web:{}", host),
+        "alsoKnownAs": [
+            format!("at://{}", host)
+        ],
+        "service": [
+            {
+                "id": "#bsky_fg",
+                "type": "BskyFeedGenerator",
+                "serviceEndpoint": format!("https://{}", host)
+            },
+            {
+                "id": "#atproto_pds",
+                "type": "AtprotoPersonalDataServer",
+                "serviceEndpoint": format!("https://{}", host)
+            }
+        ],
+        "verificationMethod": [
+            {
+                "id": format!("did:web:{}#atproto", host),
+                "type": "Multikey",
+                "controller": format!("did:web:{}", host),
+                "publicKeyMultibase": pubkey
+            }
+        ]
+    })
+}
+
+/// Handler for /.well-known/did.json endpoint
+pub async fn get_did_document(
+    Extension(_ctx): Extension<Context>,
+) -> impl axum::response::IntoResponse {
+    // Get the host from environment variable or use default
+    let host = std::env::var("APP_HOST")
+        .or_else(|_| std::env::var("HOST"))
+        .unwrap_or_else(|_| "localhost:3000".to_string());
+
+    // get pubkey from environment variable or use default
+    let pubkey = std::env::var("TEST_PUBKEY").unwrap_or_else(|_| {
+        "z6Mkw5f8g3h4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i".to_string()
+    });
+
+    let did_doc = generate_did_document(&host, &pubkey);
+
+    (
+        StatusCode::OK,
+        [("Content-Type", "application/json")],
+        Json(did_doc),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_PUBKEY: &str = "z6Mkw5f8g3h4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i";
+
+    #[test]
+    fn test_generate_did_document() {
+        let host = "example.com";
+        let did_doc = generate_did_document(host, TEST_PUBKEY);
+
+        // Verify the structure of the generated DID document
+        assert_eq!(did_doc["id"], format!("did:web:{}", host));
+        assert_eq!(did_doc["alsoKnownAs"][0], format!("at://{}", host));
+
+        // Check services
+        let services = did_doc["service"].as_array().unwrap();
+        assert_eq!(services.len(), 2);
+
+        let bsky_fg = &services[0];
+        assert_eq!(bsky_fg["id"], "#bsky_fg");
+        assert_eq!(bsky_fg["type"], "BskyFeedGenerator");
+        assert_eq!(bsky_fg["serviceEndpoint"], format!("https://{}", host));
+
+        let atproto_pds = &services[1];
+        assert_eq!(atproto_pds["id"], "#atproto_pds");
+        assert_eq!(atproto_pds["type"], "AtprotoPersonalDataServer");
+        assert_eq!(atproto_pds["serviceEndpoint"], format!("https://{}", host));
+
+        // Check verification method
+        let verification_methods = did_doc["verificationMethod"].as_array().unwrap();
+        assert_eq!(verification_methods.len(), 1);
+
+        let vm = &verification_methods[0];
+        assert_eq!(vm["id"], format!("did:web:{}#atproto", host));
+        assert_eq!(vm["type"], "Multikey");
+        assert_eq!(vm["controller"], format!("did:web:{}", host));
+        assert!(vm["publicKeyMultibase"].as_str().unwrap().starts_with("z"));
+    }
+
+    #[test]
+    fn test_did_document_context() {
+        let host = "test.example.org";
+        let did_doc = generate_did_document(host, TEST_PUBKEY);
+
+        let context = did_doc["@context"].as_array().unwrap();
+        assert_eq!(context.len(), 3);
+        assert_eq!(context[0], "https://www.w3.org/ns/did/v1");
+        assert_eq!(context[1], "https://w3id.org/security/multikey/v1");
+        assert_eq!(
+            context[2],
+            "https://w3id.org/security/suites/secp256k1-2019/v1"
+        );
+    }
+
+    #[test]
+    fn test_different_hosts() {
+        // Test with different host formats
+        let hosts = vec![
+            "localhost:3000",
+            "bsky.social",
+            "example.org:8080",
+            "my-service.com",
+        ];
+
+        for host in hosts {
+            let did_doc = generate_did_document(host, TEST_PUBKEY);
+
+            // Verify basic structure for each host
+            assert_eq!(did_doc["id"], format!("did:web:{}", host));
+            assert_eq!(did_doc["alsoKnownAs"][0], format!("at://{}", host));
+
+            let services = did_doc["service"].as_array().unwrap();
+            assert_eq!(services.len(), 2);
+
+            let verification_methods = did_doc["verificationMethod"].as_array().unwrap();
+            assert_eq!(verification_methods.len(), 1);
+        }
+    }
 }

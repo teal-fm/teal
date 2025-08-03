@@ -1,7 +1,7 @@
 use crate::ctx::Context;
-use crate::types::fm::teal::alpha::actor::defs::ProfileViewData;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use serde::{Deserialize, Serialize};
+use types::fm::teal::alpha::actor::defs::ProfileViewData;
 
 // mount actor routes
 pub fn actor_routes() -> axum::Router {
@@ -58,7 +58,7 @@ pub async fn get_actors(
     let repo = &ctx.db; // assuming ctx.db is Box<dyn ActorProfileRepo + Send + Sync>
     let actor = &query.actors;
 
-    if actor.len() == 0 {
+    if actor.is_empty() {
         return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
     }
 

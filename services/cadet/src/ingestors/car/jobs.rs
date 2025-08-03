@@ -32,7 +32,7 @@ pub enum JobStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JobProgress {
-    step: String,
+    pub step: String,
     pub user_did: Option<String>,
     pub pds_host: Option<String>,
     pub car_size_bytes: Option<u64>,

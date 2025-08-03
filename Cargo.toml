@@ -1,5 +1,10 @@
 [workspace]
-members = ["apps/aqua", "services/cadet", "services/rocketman"]
+members = [
+    "apps/aqua",
+    "services/cadet",
+    "services/rocketman",
+    "tools/teal-cli",
+]
 resolver = "2"
 
 [workspace.dependencies]
@@ -14,14 +19,14 @@ serde_json = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 metrics = "0.23"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 url = "2.5"
 rand = "0.8"
 flume = "0.11"
 async-trait = "0.1"
 time = "0.3"
 dotenvy = "0.15"
-tokio-tungstenite = "0.24"
+tokio-tungstenite = { version = "*", features = ["rustls-tls-webpki-roots"] }
 atrium-api = "0.25"
 chrono = "0.4"
 uuid = { version = "1.0", features = ["v4", "serde"] }
@@ -33,6 +38,7 @@ iroh-car = "0.4"
 libipld = { version = "0.16", features = ["dag-cbor", "dag-json"] }
 cid = "0.11"
 base64 = "0.22"
+atmst = "0.0.1"
 
 # Redis for job queues and caching
 redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
