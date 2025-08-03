@@ -140,7 +140,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.service == 'aqua' && './apps/aqua' || './services/cadet' }}
           file: ${{ matrix.service == 'aqua' && './apps/aqua/Dockerfile' || './services/cadet/Dockerfile' }}
