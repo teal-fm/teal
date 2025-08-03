@@ -21,7 +21,7 @@ on:
       - ".github/workflows/aqua.yml"
 
 env:
-  REGISTRY: ghcr.iosyste
+  REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/aqua
 
 jobs:
