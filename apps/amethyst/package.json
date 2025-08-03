@@ -80,7 +80,7 @@
     "babel-plugin-react-compiler": "19.0.0-beta-37ed2a7-20241206",
     "eslint": "^8",
     "eslint-config-expo": "~9.2.0",
-    "react-refresh": "^0.16.0",
+    "react-refresh": "^0.17.0",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
