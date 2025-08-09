@@ -46,9 +46,7 @@ jobs:
         run: pnpm lex:gen-server
 
       - name: Build web
-        run: |
-          cd apps/amethyst
-          pnpm build:web
+        run: pnpm turbo build:web --filter=@teal/amethyst
 
       - name: Upload web build artifacts
         uses: actions/upload-artifact@v4
@@ -84,9 +82,7 @@ jobs:
         run: npm install -g @expo/cli
 
       - name: Build iOS
-        run: |
-          cd apps/amethyst
-          pnpm build:ios
+        run: pnpm turbo build:ios --filter=@teal/amethyst
 
       - name: Upload iOS build artifacts
         uses: actions/upload-artifact@v4
@@ -118,11 +114,7 @@ jobs:
         run: pnpm lex:gen-server
 
       - name: Type check
-        run: |
-          cd apps/amethyst
-          npx tsc --noEmit
+        run: pnpm turbo check-types --filter=@teal/amethyst
 
       - name: Run tests
-        run: |
-          cd apps/amethyst
-          pnpm test --watchAll=false
+        run: pnpm turbo test --filter=@teal/amethyst

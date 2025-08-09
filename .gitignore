@@ -65,19 +65,3 @@ vendor/**/*.js
 vendor/**/*.d.ts
 vendor/**/dist/
 vendor/**/node_modules/
-
-# lexicons directory structure
-!lexicons/
-# Track our custom lexicons
-!lexicons/fm.teal.alpha/
-!lexicons/fm.teal.alpha/**/*.json
-# Ignore symlinks to atproto lexicons (created during setup)
-lexicons/app
-lexicons/chat
-lexicons/com
-lexicons/tools
-# But ignore any generated files within lexicons
-lexicons/**/*.js
-lexicons/**/*.d.ts
-lexicons/**/dist/
-lexicons/**/node_modules/

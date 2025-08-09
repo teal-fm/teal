@@ -41,12 +41,18 @@ RUN apt-get update && apt-get install -y gcc-aarch64-linux-gnu && rm -rf /var/li
 # Set up cross-compilation environment
 ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
 
+# Force SQLx to use offline mode with workspace cache
+ENV SQLX_OFFLINE=true
+
+# copy sqlx in
+COPY .sqlx ./services/cadet/.sqlx
+
 # Debug platform detection and run build
 RUN echo "DEBUG Before target.sh: TARGETPLATFORM=$TARGETPLATFORM TARGETARCH=$TARGETARCH" && \
     . ./target.sh && \
-    touch src/main.rs && \
+    touch services/cadet/src/main.rs && \
     echo "Building for $TARGET_ARCH" && \
-    cargo build --release --target $RUST_TARGET && \
+    cargo build --release --target $RUST_TARGET --package cadet && \
     cp target/$RUST_TARGET/release/cadet target/cadet
 
 FROM --platform=${TARGETARCH:-$BUILDPLATFORM} gcr.io/distroless/cc

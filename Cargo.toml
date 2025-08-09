@@ -34,11 +34,11 @@ types = { path = "services/types" }
 rocketman = { path = "services/rocketman" }
 
 # CAR and IPLD dependencies
-iroh-car = "0.4"
+iroh-car = "0.5"
 libipld = { version = "0.16", features = ["dag-cbor", "dag-json"] }
 cid = "0.11"
 base64 = "0.22"
 atmst = "0.0.1"
 
 # Redis for job queues and caching
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "0.32", features = ["tokio-comp", "connection-manager"] }
