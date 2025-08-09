@@ -45,7 +45,7 @@ ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
 ENV SQLX_OFFLINE=true
 
 # copy sqlx in
-COPY .sqlx ./services/cadet/.sqlx
+COPY ./.sqlx ./services/cadet/.sqlx
 
 # Debug platform detection and run build
 RUN echo "DEBUG Before target.sh: TARGETPLATFORM=$TARGETPLATFORM TARGETARCH=$TARGETARCH" && \
