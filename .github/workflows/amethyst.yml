@@ -41,6 +41,9 @@ jobs:
         id: cache-key
         run: echo "key=amethyst-build-${{ hashFiles('apps/amethyst/**', 'packages/**', 'lexicons/**') }}" >> $GITHUB_OUTPUT
 
+      - name: Build lex tool
+        run: cd tools/lexicon-cli && pnpm i && pnpm build
+
       - name: Build web
         run: pnpm turbo build:web --filter=@teal/amethyst
 
@@ -70,6 +73,9 @@ jobs:
         uses: ./.github/actions/setup
         with:
           setup-node: "true"
+
+      - name: Build lex tool
+        run: cd tools/lexicon-cli && pnpm i && pnpm build
 
       - name: Setup Expo CLI
         run: npm install -g @expo/cli
