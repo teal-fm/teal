@@ -18,7 +18,7 @@ anyhow = "1.0"
 serde_json = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
-metrics = "0.23"
+metrics = "0.24"
 reqwest = { version = "0.12", features = ["json"] }
 url = "2.5"
 rand = "0.8"
