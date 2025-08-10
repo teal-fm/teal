@@ -41,6 +41,7 @@ RUN npm install -g pnpm
 
 # Install dependencies and generate lexicons
 RUN pnpm install
+RUN cd tools/lexicon-cli && pnpm build
 RUN pnpm lex:gen --rust-only
 
 # Install cross-compilation toolchains

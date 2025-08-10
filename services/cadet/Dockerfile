@@ -41,7 +41,8 @@ RUN npm install -g pnpm
 
 # Install dependencies and generate lexicons
 RUN pnpm install
-RUN pnpm lex:gen
+RUN cd tools/lexicon-cli && pnpm build
+RUN pnpm lex:gen --rust-only
 
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
