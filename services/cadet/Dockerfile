@@ -32,6 +32,17 @@ RUN echo "DEBUG Before copy: TARGETPLATFORM=$TARGETPLATFORM TARGETARCH=$TARGETAR
 
 COPY ./ .
 
+# Setup lexicons and install dependencies
+RUN ./scripts/setup-lexicons.sh
+
+# Install Node.js and pnpm for lexicon generation
+RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm
+
+# Install dependencies and generate lexicons
+RUN pnpm install
+RUN pnpm lex:gen --rust-only
+
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
 

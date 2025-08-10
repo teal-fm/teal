@@ -14,7 +14,6 @@ dist/
 .next/
 
 # Development and cache files
-.git/
 .gitignore
 **/.DS_Store
 *.log
