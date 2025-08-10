@@ -47,11 +47,23 @@ RUN pnpm lex:gen --rust-only
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
 
-# Install cross-compilation tools for ARM64
-RUN apt-get update && apt-get install -y gcc-aarch64-linux-gnu && rm -rf /var/lib/apt/lists/*
+# Enable ARM64 architecture and install cross-compilation tools
+RUN dpkg --add-architecture arm64 && \
+    apt-get update && \
+    apt-get install -y \
+    gcc-aarch64-linux-gnu \
+    libssl-dev:arm64 \
+    libssl-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set up cross-compilation environment
 ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+ENV PKG_CONFIG_ALLOW_CROSS=1
+ENV PKG_CONFIG_PATH_aarch64_unknown_linux_gnu=/usr/lib/aarch64-linux-gnu/pkgconfig
+ENV OPENSSL_DIR_aarch64_unknown_linux_gnu=/usr
+ENV OPENSSL_LIB_DIR_aarch64_unknown_linux_gnu=/usr/lib/aarch64-linux-gnu
+ENV OPENSSL_INCLUDE_DIR_aarch64_unknown_linux_gnu=/usr/include/openssl
 
 
 # Debug platform detection and run build
