@@ -28,6 +28,11 @@ COPY apps/amethyst/ ./apps/amethyst/
 COPY ../../.env ./apps/amethyst/.env
 
 # Install dependencies and generate lexicons
+RUN cd tools/lexicon-cli && pnpm build
+
+# Generate lexicons before building amethyst
+RUN pnpm lex:gen-server
+
 RUN pnpm install
 
 # Build the amethyst app
