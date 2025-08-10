@@ -23,30 +23,32 @@ on:
       - ".github/workflows/amethyst.yml"
 
 jobs:
-  build-web:
-    name: Build Web
+  build:
+    name: Build Amethyst
     runs-on: ubuntu-latest
+    outputs:
+      build-cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
-          node-version: "20"
-          cache: "pnpm"
+          setup-node: "true"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate lexicons
-        run: pnpm lex:gen-server
+      - name: Generate cache key
+        id: cache-key
+        run: echo "key=amethyst-build-${{ hashFiles('apps/amethyst/**', 'packages/**', 'lexicons/**') }}" >> $GITHUB_OUTPUT
 
       - name: Build web
         run: pnpm turbo build:web --filter=@teal/amethyst
+
+      - name: Type check
+        run: pnpm turbo check-types --filter=@teal/amethyst
+
+      - name: Run tests
+        run: pnpm turbo test --filter=@teal/amethyst
 
       - name: Upload web build artifacts
         uses: actions/upload-artifact@v4
@@ -58,25 +60,16 @@ jobs:
   build-ios:
     name: Build iOS
     runs-on: macos-latest
+    needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate lexicons
-        run: pnpm lex:gen-server
+          setup-node: "true"
 
       - name: Setup Expo CLI
         run: npm install -g @expo/cli
@@ -90,31 +83,3 @@ jobs:
           name: amethyst-ios-build
           path: apps/amethyst/build/
           retention-days: 7
-
-  lint-and-test:
-    name: Lint and Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate lexicons
-        run: pnpm lex:gen-server
-
-      - name: Type check
-        run: pnpm turbo check-types --filter=@teal/amethyst
-
-      - name: Run tests
-        run: pnpm turbo test --filter=@teal/amethyst

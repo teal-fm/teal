@@ -13,97 +13,146 @@ env:
   SQLX_OFFLINE: true
 
 jobs:
-  rust-check:
-    name: Rust Check
+  setup-and-build:
+    name: Setup and Build All
     runs-on: ubuntu-latest
+    outputs:
+      rust-cache-key: ${{ steps.rust-cache.outputs.cache-hit }}
+      node-cache-key: ${{ steps.node-cache.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup lexicons
-        run: ./scripts/setup-lexicons.sh
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
-          node-version: "20"
-          cache: "pnpm"
+          setup-rust: "true"
+          setup-node: "true"
+          cache-key-suffix: "ci-build"
 
-      - name: Install dependencies and generate lexicons
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm lex:gen --rust-only
+      - name: Build Node packages
+        run: pnpm build
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            services
-            apps/aqua
-
-      - name: Check Rust formatting (services)
+      - name: Build Rust services (x86_64)
         run: |
           cd services
-          cargo fmt --all -- --check
+          cargo build --release --all-features
 
-      - name: Check Rust formatting (apps)
+      - name: Build Rust apps (x86_64)
         run: |
-          for dir in apps/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "Checking formatting for $dir"
-              cd "$dir"
-              cargo fmt --all -- --check
-              cd ../..
-            fi
-          done
+          cd apps/aqua
+          cargo build --release --all-features
 
-      - name: Run Clippy (services)
-        run: |
-          cd services
-          cargo clippy --all-targets --all-features -- -D warnings
+      - name: Upload Node build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-builds
+          path: |
+            packages/*/dist/
+            apps/amethyst/build/
+          retention-days: 1
 
-      - name: Run Clippy (apps)
-        run: |
-          for dir in apps/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "Running clippy for $dir"
-              cd "$dir"
-              cargo clippy --all-targets --all-features -- -D warnings
-              cd ../..
-            fi
-          done
+      - name: Upload Rust build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-builds-x86_64
+          path: |
+            target/release/
+            apps/aqua/target/release/
+          retention-days: 1
 
-      - name: Run Rust tests (services)
-        run: |
-          cd services
-          cargo test --all-features
-
-  node-check:
-    name: Node.js Check
+  rust-cross-compile:
+    name: Cross-compile Rust
     runs-on: ubuntu-latest
+    needs: setup-and-build
+    strategy:
+      matrix:
+        target: [aarch64-unknown-linux-gnu]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
-          node-version: "20"
-          cache: "pnpm"
+          setup-rust: "true"
+          setup-node: "true"
+          lexicons-only-rust: "true"
+          cache-key-suffix: "cross-${{ matrix.target }}"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install cross-compilation tools
+        run: |
+          cargo install cross
+          rustup target add ${{ matrix.target }}
+
+      - name: Cross-compile services
+        run: |
+          cd services
+          cross build --release --all-features --target ${{ matrix.target }}
+
+      - name: Cross-compile apps
+        run: |
+          cd apps/aqua
+          cross build --release --all-features --target ${{ matrix.target }}
+
+      - name: Upload cross-compiled artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-builds-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/
+            apps/aqua/target/${{ matrix.target }}/release/
+          retention-days: 1
+
+  rust-quality:
+    name: Rust Quality Checks
+    runs-on: ubuntu-latest
+    needs: setup-and-build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-rust: "true"
+          setup-node: "true"
+          lexicons-only-rust: "true"
+          cache-key-suffix: "ci-build"
+
+      - name: Check Rust formatting
+        run: |
+          cd services && cargo fmt --all -- --check
+          cd ../apps/aqua && cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: |
+          cd services && cargo clippy --all-targets --all-features -- -D warnings
+          cd ../apps/aqua && cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Rust tests
+        run: |
+          cd services && cargo test --all-features
+
+  node-quality:
+    name: Node.js Quality Checks
+    runs-on: ubuntu-latest
+    needs: setup-and-build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-node: "true"
+          cache-key-suffix: "ci-build"
+
+      - name: Download Node build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: node-builds
+          path: .
 
       - name: Type check
         run: pnpm typecheck
@@ -111,38 +160,57 @@ jobs:
       - name: Lint and format check
         run: pnpm fix --check
 
-      - name: Build packages
-        run: pnpm build
-
       - name: Run tests
         run: pnpm test
 
-  lexicon-check:
+  lexicon-validation:
     name: Lexicon Validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup lexicons
-        run: ./scripts/setup-lexicons.sh
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          setup-node: "true"
 
       - name: Validate lexicons
         run: pnpm lex:validate
 
-      - name: Check lexicon generation
+      - name: Check lexicon generation consistency
         run: |
           pnpm lex:gen
           git diff --exit-code || (echo "Lexicon files are out of sync. Run 'pnpm lex:gen' locally." && exit 1)
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-rust: "true"
+          setup-node: "true"
+          rust-components: "rustfmt,clippy"
+          cache-key-suffix: "security"
+
+      - name: Install and configure cargo-audit
+        run: |
+          cargo install cargo-audit
+          cargo audit fetch
+
+      - name: Run Rust security audit
+        run: |
+          for dir in services/ apps/aqua/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "Running security audit for $dir"
+              (cd "$dir" && cargo audit --deny-warnings --deny-unmaintained)
+            fi
+          done
+
+      - name: Run Node.js security audit
+        run: pnpm audit --audit-level=high

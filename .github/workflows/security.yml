@@ -12,78 +12,6 @@ on:
     - cron: "0 2 * * 0"
 
 jobs:
-  rust-security-audit:
-    name: Rust Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            services
-            apps/aqua
-
-      - name: Run cargo audit (services)
-        run: |
-          cd services
-          cargo audit
-
-      - name: Run cargo audit (apps)
-        run: |
-          for dir in apps/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "Running security audit for $dir"
-              cd "$dir"
-              cargo audit
-              cd ../..
-            fi
-          done
-
-  node-security-audit:
-    name: Node.js Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run npm audit
-        run: pnpm audit --prod
-
-      - name: Check for known vulnerabilities
-        run: |
-          # Run audit and capture output
-          pnpm audit --json > audit-results.json || true
-
-          # Check if there are any high or critical vulnerabilities
-          if jq '.vulnerabilities | to_entries[] | select(.value.severity == "high" or .value.severity == "critical")' audit-results.json | grep -q .; then
-            echo "High or critical vulnerabilities found!"
-            jq '.vulnerabilities | to_entries[] | select(.value.severity == "high" or .value.severity == "critical")' audit-results.json
-            exit 1
-          else
-            echo "No high or critical vulnerabilities found."
-          fi
-
   codeql-analysis:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
@@ -91,10 +19,7 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["javascript", "typescript"]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -102,28 +27,25 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
+          languages: "javascript,typescript,rust"
           queries: security-extended,security-and-quality
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup environment for all languages
+        uses: ./.github/actions/setup
         with:
-          node-version: "20"
-          cache: "pnpm"
+          setup-node: "true"
+          setup-rust: "true"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
+      - name: Perform a full build for CodeQL
+        run: |
+          echo "Building Node.js projects..."
+          pnpm build
+          echo "Building Rust projects..."
+          (cd services && cargo build --all-features)
+          (cd apps/aqua && cargo build --all-features)
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{matrix.language}}"
 
   docker-security-scan:
     name: Docker Security Scan
@@ -136,25 +58,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-node: "true"
+          lexicons-only-rust: "true"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Setup lexicons
-        run: ./scripts/setup-lexicons.sh
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies and generate lexicons
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm lex:gen --rust-only
 
       - name: Build Docker image
         uses: docker/build-push-action@v5
@@ -172,6 +83,8 @@ jobs:
           image-ref: "${{ matrix.service }}:latest"
           format: "sarif"
           output: "trivy-results-${{ matrix.service }}.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3

@@ -1,0 +1,76 @@
+name: 'Setup Teal Environment'
+description: 'Sets up the common environment for Teal builds including Node.js, Rust, pnpm, and lexicons'
+
+inputs:
+  setup-rust:
+    description: 'Whether to setup Rust toolchain'
+    required: false
+    default: 'false'
+  rust-components:
+    description: 'Rust components to install (e.g., "rustfmt,clippy")'
+    required: false
+    default: 'rustfmt,clippy'
+  setup-node:
+    description: 'Whether to setup Node.js and pnpm'
+    required: false
+    default: 'true'
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+  lexicons-only-rust:
+    description: 'Generate only Rust lexicons'
+    required: false
+    default: 'false'
+  cache-key-suffix:
+    description: 'Additional suffix for cache keys'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup lexicons
+      shell: bash
+      run: ./scripts/setup-lexicons.sh
+
+    - name: Install pnpm
+      if: inputs.setup-node == 'true'
+      uses: pnpm/action-setup@v4
+
+    - name: Setup Node.js
+      if: inputs.setup-node == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'pnpm'
+
+    - name: Install Node dependencies
+      if: inputs.setup-node == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Generate lexicons
+      if: inputs.setup-node == 'true'
+      shell: bash
+      run: |
+        if [ "${{ inputs.lexicons-only-rust }}" = "true" ]; then
+          pnpm lex:gen --rust-only
+        else
+          pnpm lex:gen
+        fi
+
+    - name: Install Rust toolchain
+      if: inputs.setup-rust == 'true'
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: ${{ inputs.rust-components }}
+
+    - name: Cache Rust dependencies
+      if: inputs.setup-rust == 'true'
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: |
+          services
+          apps/aqua
+        key: ${{ inputs.cache-key-suffix }}
