@@ -122,17 +122,17 @@ jobs:
 
       - name: Check Rust formatting
         run: |
-          cd services && cargo fmt --all -- --check
+          cargo fmt --all -- --check
           cd ../apps/aqua && cargo fmt --all -- --check
 
       - name: Run Clippy
         run: |
-          cd services && cargo clippy --all-targets --all-features -- -D warnings
+          cargo clippy --all-targets --all-features -- -D warnings
           cd ../apps/aqua && cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run Rust tests
         run: |
-          cd services && cargo test --all-features
+          cargo test --all-features
 
   node-quality:
     name: Node.js Quality Checks
