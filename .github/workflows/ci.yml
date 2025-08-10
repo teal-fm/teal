@@ -34,14 +34,8 @@ jobs:
       - name: Build Node packages
         run: pnpm build
 
-      - name: Build Rust services (x86_64)
+      - name: Build Rust (x86_64)
         run: |
-          cd services
-          cargo build --release --all-features
-
-      - name: Build Rust apps (x86_64)
-        run: |
-          cd apps/aqua
           cargo build --release --all-features
 
       - name: Upload Node build artifacts
@@ -59,7 +53,6 @@ jobs:
           name: rust-builds-x86_64
           path: |
             target/release/
-            apps/aqua/target/release/
           retention-days: 1
 
   rust-cross-compile:
@@ -86,15 +79,8 @@ jobs:
           cargo install cross
           rustup target add ${{ matrix.target }}
 
-      - name: Cross-compile services
-        run: |
-          cd services
-          cross build --release --all-features --target ${{ matrix.target }}
-
-      - name: Cross-compile apps
-        run: |
-          cd apps/aqua
-          cross build --release --all-features --target ${{ matrix.target }}
+      - name: Cross-compile rust
+        run: cross build --release --all-features --target ${{ matrix.target }}
 
       - name: Upload cross-compiled artifacts
         uses: actions/upload-artifact@v4
@@ -102,7 +88,6 @@ jobs:
           name: rust-builds-${{ matrix.target }}
           path: |
             target/${{ matrix.target }}/release/
-            apps/aqua/target/${{ matrix.target }}/release/
           retention-days: 1
 
   rust-quality:
