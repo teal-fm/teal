@@ -11,6 +11,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   SQLX_OFFLINE: true
+  SQLX_OFFLINE_DIR: "./.sqlx"
 
 jobs:
   setup-and-build:
