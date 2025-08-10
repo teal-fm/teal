@@ -139,10 +139,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Setup lexicons
+        run: ./scripts/setup-lexicons.sh
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies and generate lexicons
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lex:gen --rust-only
+
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.service == 'aqua' && './apps/aqua' || './services/cadet' }}
+          context: .
           file: ${{ matrix.service == 'aqua' && './apps/aqua/Dockerfile' || './services/cadet/Dockerfile' }}
           load: true
           tags: ${{ matrix.service }}:latest

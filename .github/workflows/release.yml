@@ -71,6 +71,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup lexicons
+        run: ./scripts/setup-lexicons.sh
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies and generate lexicons
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lex:gen --rust-only
+
       - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
@@ -102,7 +119,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/aqua
+          context: .
           file: ./apps/aqua/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -121,6 +138,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup lexicons
+        run: ./scripts/setup-lexicons.sh
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies and generate lexicons
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lex:gen --rust-only
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
@@ -153,7 +187,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/cadet
+          context: .
           file: ./services/cadet/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -184,6 +218,27 @@ jobs:
           else
             echo "has_dockerfile=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Setup lexicons
+        if: steps.check.outputs.has_dockerfile == 'true'
+        run: ./scripts/setup-lexicons.sh
+
+      - name: Install pnpm
+        if: steps.check.outputs.has_dockerfile == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.check.outputs.has_dockerfile == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies and generate lexicons
+        if: steps.check.outputs.has_dockerfile == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lex:gen --rust-only
 
       - name: Log in to Container Registry
         if: steps.check.outputs.has_dockerfile == 'true'
@@ -221,7 +276,7 @@ jobs:
         if: steps.check.outputs.has_dockerfile == 'true'
         uses: docker/build-push-action@v5
         with:
-          context: ./services/${{ matrix.service }}
+          context: .
           file: ./services/${{ matrix.service }}/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -250,8 +305,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup lexicons
+        run: ./scripts/setup-lexicons.sh
+
       - name: Generate lexicons
-        run: pnpm lex:gen-server
+        run: pnpm lex:gen
 
       - name: Build for all platforms
         run: |
