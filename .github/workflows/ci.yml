@@ -37,9 +37,28 @@ jobs:
       - name: Build Node packages
         run: pnpm build
 
-      - name: Build Rust (x86_64)
+      - name: Build Rust services (x86_64)
         run: |
           cargo build --release --all-features
+
+      - name: Build Rust apps (x86_64)
+        run: |
+          cd apps/aqua
+          cargo build --release --all-features
+
+      - name: Collect executables (x86_64)
+        run: |
+          mkdir -p artifacts/x86_64
+          # Copy service executables
+          if [ -d "services/target/release" ]; then
+            find services/target/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/x86_64/ \;
+          fi
+          # Copy app executables
+          if [ -d "apps/aqua/target/release" ]; then
+            find apps/aqua/target/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/x86_64/ \;
+          fi
+          echo "x86_64 executables:"
+          ls -la artifacts/x86_64/ || echo "No executables found"
 
       - name: Upload Node build artifacts
         uses: actions/upload-artifact@v4
@@ -55,7 +74,7 @@ jobs:
         with:
           name: rust-builds-x86_64
           path: |
-            target/release/
+            artifacts/x86_64/
           retention-days: 1
 
   rust-cross-compile:
@@ -82,18 +101,35 @@ jobs:
 
       - name: Install cross-compilation tools
         run: |
-          cargo install cross
+          cargo install cross --git https://github.com/cross-rs/cross
           rustup target add ${{ matrix.target }}
+          # Set up environment for cross-compilation
+          echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
 
-      - name: Cross-compile rust
-        run: cross build --release --all-features --target ${{ matrix.target }}
+      - name: Cross-compile services
+        run: |
+          cross build --release --all-features --target ${{ matrix.target }}
+
+      - name: Collect cross-compiled executables
+        run: |
+          mkdir -p artifacts/${{ matrix.target }}
+          # Copy service executables
+          if [ -d "services/target/${{ matrix.target }}/release" ]; then
+            find services/target/${{ matrix.target }}/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/${{ matrix.target }}/ \;
+          fi
+          # Copy app executables
+          if [ -d "apps/aqua/target/${{ matrix.target }}/release" ]; then
+            find apps/aqua/target/${{ matrix.target }}/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/${{ matrix.target }}/ \;
+          fi
+          echo "Cross-compiled executables for ${{ matrix.target }}:"
+          ls -la artifacts/${{ matrix.target }}/ || echo "No executables found"
 
       - name: Upload cross-compiled artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rust-builds-${{ matrix.target }}
           path: |
-            target/${{ matrix.target }}/release/
+            artifacts/${{ matrix.target }}/
           retention-days: 1
 
   rust-quality:
