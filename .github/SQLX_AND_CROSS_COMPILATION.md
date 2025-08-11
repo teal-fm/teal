@@ -36,6 +36,14 @@ Updated workspace dependencies to use rustls instead of OpenSSL:
 
 ```toml
 # Root Cargo.toml
+tokio = { version = "1.0", features = [
+    "rt-multi-thread",
+    "macros",
+    "time",        # Required for tokio::time module
+    "net",         # Required for networking
+    "sync",        # Required for synchronization primitives
+] }
+
 sqlx = { version = "0.8", features = [
     "runtime-tokio",
     "postgres", 
@@ -52,6 +60,8 @@ reqwest = { version = "0.12", default-features = false, features = [
 
 tokio-tungstenite = { version = "*", default-features = false, features = [
     "rustls-tls-webpki-roots",  # Instead of default native-tls
+    "connect",                   # For connect_async function
+    "handshake",                # For accept_async function (tests)
 ] }
 ```
 
@@ -162,6 +172,17 @@ When you add or modify SQL queries:
 - Check that `PKG_CONFIG_ALLOW_CROSS=1` is set
 - Verify no dependencies are pulling in OpenSSL (use `cargo tree | grep openssl`)
 
+### tokio-tungstenite Import Errors
+If you see "unresolved import `tokio_tungstenite::connect_async`" errors:
+- Ensure the `connect` feature is enabled for client functionality
+- Add the `handshake` feature if using `accept_async` for server functionality
+- Check that `default-features = false` is set to avoid OpenSSL dependencies
+
+### tokio Module Errors
+If you see "could not find `time` in `tokio`" or similar errors:
+- Ensure tokio workspace dependency includes required features: `time`, `net`, `sync`
+- These features are often included in default features but must be explicit when using `default-features = false`
+
 ### SQLx Offline Errors
 - Run `./scripts/setup-sqlx-offline.sh` after any SQL query changes
 - Ensure `.sqlx` directory exists in workspace root
@@ -177,5 +198,12 @@ To maintain cross-compilation compatibility, avoid dependencies that:
 - Default to OpenSSL (use rustls variants)
 - Require system libraries not available in cross containers
 - Have complex native build requirements
+
+### Common Feature Configuration Issues
+When disabling default features to avoid OpenSSL:
+- `tokio`: Must explicitly enable `time`, `net`, `sync` features for common functionality
+- `tokio-tungstenite`: Must explicitly enable `connect` and `handshake` features
+- `reqwest`: Must explicitly enable required features like `json`, `stream`, `gzip`
+- `sqlx`: Use `tls-rustls` instead of default OpenSSL TLS
 
 Always test cross-compilation locally before pushing changes.
