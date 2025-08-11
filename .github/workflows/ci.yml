@@ -31,6 +31,9 @@ jobs:
           setup-node: "true"
           cache-key-suffix: "ci-build"
 
+      - name: Setup SQLx offline files
+        run: ./scripts/setup-sqlx-offline.sh
+
       - name: Build Node packages
         run: pnpm build
 
@@ -74,6 +77,9 @@ jobs:
           lexicons-only-rust: "true"
           cache-key-suffix: "cross-${{ matrix.target }}"
 
+      - name: Setup SQLx offline files
+        run: ./scripts/setup-sqlx-offline.sh
+
       - name: Install cross-compilation tools
         run: |
           cargo install cross
@@ -105,6 +111,9 @@ jobs:
           setup-node: "true"
           lexicons-only-rust: "true"
           cache-key-suffix: "ci-build"
+
+      - name: Setup SQLx offline files
+        run: ./scripts/setup-sqlx-offline.sh
 
       - name: Check Rust formatting
         run: |
@@ -183,6 +192,9 @@ jobs:
           setup-node: "true"
           rust-components: "rustfmt,clippy"
           cache-key-suffix: "security"
+
+      - name: Setup SQLx offline files
+        run: ./scripts/setup-sqlx-offline.sh
 
       - name: Install and configure cargo-audit
         run: |
