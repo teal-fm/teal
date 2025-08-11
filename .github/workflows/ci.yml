@@ -180,7 +180,7 @@ jobs:
           cache-key-suffix: "ci-build"
 
       - name: Download Node build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: node-builds
           path: .
