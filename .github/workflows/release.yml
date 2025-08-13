@@ -193,7 +193,7 @@ jobs:
 
       - name: Download build artifacts
         if: steps.check.outputs.has_dockerfile == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: rust-release-builds
           path: .
