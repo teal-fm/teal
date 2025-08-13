@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@aquareum/atproto-oauth-client-react-native": "^0.0.1",
-    "@atproto/api": "^0.15.14",
+    "@atproto/api": "^0.16.2",
     "@atproto/lex-cli": "^0.8.1",
     "@atproto/oauth-client": "^0.3.16",
     "@babel/plugin-transform-export-namespace-from": "^7.27.1",
