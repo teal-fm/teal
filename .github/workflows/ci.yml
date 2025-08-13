@@ -105,6 +105,7 @@ jobs:
           rustup target add ${{ matrix.target }}
           # Set up environment for cross-compilation
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
+          echo "CROSS_NO_WARNINGS=0" >> $GITHUB_ENV
 
       - name: Cross-compile services
         run: |
