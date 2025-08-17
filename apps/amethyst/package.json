@@ -31,7 +31,7 @@
     "@rn-primitives/avatar": "^1.1.0",
     "@rn-primitives/hover-card": "^1.1.0",
     "@rn-primitives/portal": "^1.2.0",
-    "@rn-primitives/progress": "^1.1.0",
+    "@rn-primitives/progress": "^1.2.0",
     "@rn-primitives/slot": "^1.1.0",
     "@rn-primitives/tooltip": "^1.1.0",
     "@rn-primitives/types": "^1.1.0",
