@@ -14,7 +14,7 @@
   "dependencies": {
     "@atproto/lex-cli": "^0.5.4",
     "chokidar": "^4.0.1",
-    "commander": "^12.1.0",
+    "commander": "^14.0.0",
     "execa": "^9.5.1",
     "glob": "^11.0.0",
     "picocolors": "^1.1.1"
