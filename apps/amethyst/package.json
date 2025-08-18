@@ -21,7 +21,7 @@
     "@aquareum/atproto-oauth-client-react-native": "^0.0.1",
     "@atproto/api": "^0.15.14",
     "@atproto/lex-cli": "^0.8.1",
-    "@atproto/oauth-client": "^0.3.16",
+    "@atproto/oauth-client": "^0.5.2",
     "@babel/plugin-transform-export-namespace-from": "^7.27.1",
     "@expo/vector-icons": "^14.1.0",
     "@gorhom/bottom-sheet": "^5.1.3",
