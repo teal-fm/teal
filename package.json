@@ -36,7 +36,7 @@
     "db:prepare": "cd services && sqlx prepare"
   },
   "dependencies": {
-    "@atproto/oauth-client": "^0.3.8",
+    "@atproto/oauth-client": "^0.5.3",
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11"
