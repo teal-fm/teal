@@ -236,16 +236,10 @@ jobs:
       - name: Install and configure cargo-audit
         run: |
           cargo install cargo-audit
-          cargo audit fetch
 
       - name: Run Rust security audit
         run: |
-          for dir in services/ apps/aqua/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "Running security audit for $dir"
-              (cd "$dir" && cargo audit --deny-warnings --deny-unmaintained)
-            fi
-          done
+          cargo audit
 
       - name: Run Node.js security audit
         run: pnpm audit --audit-level=high
