@@ -65,3 +65,6 @@ vendor/**/*.js
 vendor/**/*.d.ts
 vendor/**/dist/
 vendor/**/node_modules/
+
+# claude
+.claude

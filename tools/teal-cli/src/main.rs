@@ -31,7 +31,7 @@ enum Commands {
         force: bool,
 
         /// Output format: json, multibase, or files
-        #[arg(short, long, default_value = "files")]
+        #[arg(long, default_value = "files")]
         format: String,
     },
 
