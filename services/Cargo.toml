@@ -1,5 +1,5 @@
 [workspace]
-members = ["cadet", "rocketman", "satellite", "types"]
+members = ["cadet", "satellite", "types"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -32,7 +32,7 @@ atrium-api = "0.25"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
 types = { path = "types" }
-rocketman = { path = "rocketman" }
+rocketman = "0.2.5"
 
 # CAR and IPLD dependencies
 iroh-car = "0.4"
