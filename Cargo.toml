@@ -1,5 +1,6 @@
 [workspace]
 members = ["apps/aqua", "services/cadet", "tools/teal-cli"]
+default-members = ["services/types"]
 resolver = "2"
 
 [workspace.dependencies]
