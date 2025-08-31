@@ -768,12 +768,10 @@ mod tests {
 
         // Test that we can decode the records
         for cid in importer.cids() {
-            if let Ok(ipld) = importer.decode_cbor(&cid) {
-                if let Ipld::Map(map) = &ipld {
-                    if let Some(Ipld::String(record_type)) = map.get("$type") {
-                        assert!(record_type.starts_with("fm.teal.alpha."));
-                        println!("Found Teal record: {}", record_type);
-                    }
+            if let Ok(Ipld::Map(map)) = importer.decode_cbor(&cid) {
+                if let Some(Ipld::String(record_type)) = map.get("$type") {
+                    assert!(record_type.starts_with("fm.teal.alpha."));
+                    println!("Found Teal record: {}", record_type);
                 }
             }
         }
