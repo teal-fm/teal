@@ -158,7 +158,7 @@ jobs:
 
       - name: Run Clippy
         run: |
-          cargo clippy --all-targets --all-features --exclude types -- -D warnings
+          cargo clippy --all-targets --all-features --workspace --exclude types -- -D warnings
 
       - name: Run Rust tests
         run: |
