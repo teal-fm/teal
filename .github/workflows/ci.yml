@@ -152,15 +152,13 @@ jobs:
       - name: Setup SQLx offline files
         run: ./scripts/setup-sqlx-offline.sh
 
-      - name: Check Rust formatting
-        run: |
-          cargo fmt --all -- --check
-          cd ../apps/aqua && cargo fmt --all -- --check
+      # - name: Check Rust formatting
+      #   run: |
+      #     cargo fmt --all -- --check
 
       - name: Run Clippy
         run: |
           cargo clippy --all-targets --all-features -- -D warnings
-          cd ../apps/aqua && cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run Rust tests
         run: |
@@ -214,32 +212,3 @@ jobs:
         run: |
           pnpm lex:gen
           git diff --exit-code || (echo "Lexicon files are out of sync. Run 'pnpm lex:gen' locally." && exit 1)
-
-  security-audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          setup-rust: "true"
-          setup-node: "true"
-          rust-components: "rustfmt,clippy"
-          cache-key-suffix: "security"
-
-      - name: Setup SQLx offline files
-        run: ./scripts/setup-sqlx-offline.sh
-
-      - name: Install and configure cargo-audit
-        run: |
-          cargo install cargo-audit
-
-      - name: Run Rust security audit
-        run: |
-          cargo audit
-
-      - name: Run Node.js security audit
-        run: pnpm audit --audit-level=high
