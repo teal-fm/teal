@@ -1,10 +1,12 @@
-import { useStore } from "@/stores/mainStore";
-import { OutputSchema as ActorFeedResponse } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
 import { useEffect, useState } from "react";
 import { ScrollView } from "react-native";
 import { Text } from "@/components/ui/text";
-import PlayView from "./playView";
+import { useStore } from "@/stores/mainStore";
 import { Agent } from "@atproto/api";
+
+import { OutputSchema as ActorFeedResponse } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
+
+import PlayView from "./playView";
 
 interface ActorPlaysViewProps {
   repo: string | undefined;

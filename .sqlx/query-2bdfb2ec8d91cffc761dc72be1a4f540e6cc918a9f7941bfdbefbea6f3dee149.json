@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT DISTINCT\n                r1.mbid as release1_mbid,\n                r1.name as release1_name,\n                r2.mbid as release2_mbid,\n                r2.name as release2_name,\n                similarity(LOWER(TRIM(r1.name)), LOWER(TRIM(r2.name))) as similarity_score,\n                COUNT(DISTINCT ptae1.artist_id) as shared_artists\n            FROM releases r1\n            CROSS JOIN releases r2\n            INNER JOIN plays p1 ON p1.release_mbid = r1.mbid\n            INNER JOIN plays p2 ON p2.release_mbid = r2.mbid\n            INNER JOIN play_to_artists_extended ptae1 ON p1.uri = ptae1.play_uri\n            INNER JOIN play_to_artists_extended ptae2 ON p2.uri = ptae2.play_uri\n            WHERE r1.mbid != r2.mbid\n            AND similarity(LOWER(TRIM(r1.name)), LOWER(TRIM(r2.name))) >= $1\n            AND ptae1.artist_id = ptae2.artist_id  -- Same artist\n            AND (\n                (r1.discriminant IS NULL AND r2.discriminant IS NULL) OR\n                (LOWER(TRIM(COALESCE(r1.discriminant, ''))) = LOWER(TRIM(COALESCE(r2.discriminant, ''))))\n            )  -- Same or no discriminants\n            GROUP BY r1.mbid, r1.name, r2.mbid, r2.name, similarity_score\n            HAVING COUNT(DISTINCT ptae1.artist_id) > 0  -- At least one shared artist\n            ORDER BY similarity_score DESC, shared_artists DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "release1_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "release1_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "release2_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "release2_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "similarity_score",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 5,
+        "name": "shared_artists",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "2bdfb2ec8d91cffc761dc72be1a4f540e6cc918a9f7941bfdbefbea6f3dee149"
+}

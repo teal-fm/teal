@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, created_at)\n                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n                ON CONFLICT (did) DO UPDATE SET\n                    display_name = EXCLUDED.display_name,\n                    description = EXCLUDED.description,\n                    description_facets = EXCLUDED.description_facets,\n                    avatar = EXCLUDED.avatar,\n                    banner = EXCLUDED.banner,\n                    created_at = EXCLUDED.created_at;\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Text",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b9ca1a73cba5a29665e5f996fd33410054936bbd74cfd611767bf6a7893ebded"
+}

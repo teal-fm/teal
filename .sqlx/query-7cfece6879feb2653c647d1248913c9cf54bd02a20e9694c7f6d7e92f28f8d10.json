@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE plays SET release_mbid = $1, release_name = $2 WHERE release_mbid = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7cfece6879feb2653c647d1248913c9cf54bd02a20e9694c7f6d7e92f28f8d10"
+}

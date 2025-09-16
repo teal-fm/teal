@@ -1,1 +1,0 @@
-ALTER TABLE "plays" ADD COLUMN "origin_url" text;

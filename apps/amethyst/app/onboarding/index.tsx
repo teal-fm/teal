@@ -1,39 +1,69 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { Text } from '@/components/ui/text'; // Your UI components
-import ImageSelectionPage from './imageSelectionPage'; // Separate page components
-import DisplayNamePage from './displayNamePage';
-import DescriptionPage from './descriptionPage';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import ProgressDots from '@/components/onboarding/progressDots';
+import React, { useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import ProgressDots from "@/components/onboarding/progressDots";
+import { Text } from "@/components/ui/text"; // Your UI components
 
-import { Record as ProfileRecord } from '@teal/lexicons/src/types/fm/teal/alpha/actor/profile';
-import { useStore } from '@/stores/mainStore';
-import { useRouter } from 'expo-router';
+import { useStore } from "@/stores/mainStore";
+
+import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
+
+import DescriptionPage from "./descriptionPage";
+import DisplayNamePage from "./displayNamePage";
+import ImageSelectionPage from "./imageSelectionPage"; // Separate page components
 
 const OnboardingSubmissionSteps: string[] = [
-  '',
-  'Double checking everything',
-  'Submitting Profile Picture',
-  'Submitting Header Image',
-  'Submitting Profile',
-  'Done!',
+  "",
+  "Double checking everything",
+  "Submitting Profile Picture",
+  "Submitting Header Image",
+  "Submitting Profile",
+  "Done!",
 ];
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
-  const [displayName, setDisplayName] = useState('');
-  const [description, setDescription] = useState('');
-  const [avatarUri, setAvatarUri] = useState('');
-  const [bannerUri, setBannerUri] = useState('');
+  const [displayName, setDisplayName] = useState("");
+  const [description, setDescription] = useState("");
+  const [avatarUri, setAvatarUri] = useState("");
+  const [bannerUri, setBannerUri] = useState("");
 
   const [submissionStep, setSubmissionStep] = useState(0);
-  const [submissionError, setSubmissionError] = useState('');
+
+
+  // Profile status hooks - must be at top level
+  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
 
   const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
   const profile = useStore((store) => store.profiles);
+
+  // Check profile status
+  React.useEffect(() => {
+    const checkProfileStatus = async () => {
+      if (!agent) return;
+
+      try {
+        const res = await agent.call("com.atproto.repo.getRecord", {
+          repo: agent.did,
+          collection: "fm.teal.alpha.actor.profileStatus",
+          rkey: "self",
+        });
+        setProfileStatus(res.data.value as ProfileStatusRecord);
+      } catch {
+        // If no record exists, user hasn't completed onboarding
+        setProfileStatus(null);
+      } finally {
+        setStatusLoading(false);
+      }
+    };
+
+    checkProfileStatus();
+  }, [agent]);
 
   const handleImageSelectionComplete = (avatar: string, banner: string) => {
     setAvatarUri(avatar);
@@ -58,7 +88,7 @@ export default function OnboardingPage() {
   ) => {
     if (!agent) return;
     // Implement your save logic here (e.g., update your database or state)
-    console.log('Saving profile:', updatedProfile, newAvatarUri, newBannerUri);
+    console.log("Saving profile:", updatedProfile, newAvatarUri, newBannerUri);
 
     setSubmissionStep(1);
 
@@ -66,15 +96,15 @@ export default function OnboardingPage() {
     let currentUser: ProfileRecord | undefined;
     let cid: string | undefined;
     try {
-      const res = await agent.call('com.atproto.repo.getRecord', {
+      const res = await agent.call("com.atproto.repo.getRecord", {
         repo: agent.did,
-        collection: 'fm.teal.alpha.actor.profile',
-        rkey: 'self',
+        collection: "fm.teal.alpha.actor.profile",
+        rkey: "self",
       });
       currentUser = res.data.value;
       cid = res.data.cid;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
     }
 
     // upload blobs if necessary
@@ -83,30 +113,30 @@ export default function OnboardingPage() {
     if (newAvatarUri) {
       console.log(newAvatarUri);
       // if it is http/s url then do nothing
-      if (!newAvatarUri.startsWith('http')) {
+      if (!newAvatarUri.startsWith("http")) {
         setSubmissionStep(2);
-        console.log('Uploading avatar');
+        console.log("Uploading avatar");
         // its a b64 encoded data uri, decode it and get a blob
         const data = await fetch(newAvatarUri).then((r) => r.blob());
-        const fileType = newAvatarUri.split(';')[0].split(':')[1];
+        const fileType = newAvatarUri.split(";")[0].split(":")[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
         newAvatarBlob = (await agent.uploadBlob(blob)).data.blob;
       }
     }
     if (newBannerUri) {
-      if (!newBannerUri.startsWith('http')) {
+      if (!newBannerUri.startsWith("http")) {
         setSubmissionStep(3);
-        console.log('Uploading banner');
+        console.log("Uploading banner");
         const data = await fetch(newBannerUri).then((r) => r.blob());
-        const fileType = newBannerUri.split(';')[0].split(':')[1];
+        const fileType = newBannerUri.split(";")[0].split(":")[1];
         console.log(fileType);
         const blob = new Blob([data], { type: fileType });
         newBannerBlob = (await agent.uploadBlob(blob)).data.blob;
       }
     }
 
-    console.log('done uploading');
+    console.log("done uploading");
 
     setSubmissionStep(4);
 
@@ -121,34 +151,75 @@ export default function OnboardingPage() {
 
     if (cid) {
       post = await agent.call(
-        'com.atproto.repo.putRecord',
+        "com.atproto.repo.putRecord",
         {},
         {
           repo: agent.did,
-          collection: 'fm.teal.alpha.actor.profile',
-          rkey: 'self',
+          collection: "fm.teal.alpha.actor.profile",
+          rkey: "self",
           record,
           swapRecord: cid,
         },
       );
     } else {
       post = await agent.call(
-        'com.atproto.repo.createRecord',
+        "com.atproto.repo.createRecord",
         {},
         {
           repo: agent.did,
-          collection: 'fm.teal.alpha.actor.profile',
-          rkey: 'self',
+          collection: "fm.teal.alpha.actor.profile",
+          rkey: "self",
           record,
         },
       );
     }
 
     console.log(post);
+
+    // Update profile status to mark onboarding as completed
+    const profileStatusRecord: ProfileStatusRecord = {
+      completedOnboarding: "profileOnboarding",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await agent.call(
+        "com.atproto.repo.createRecord",
+        {},
+        {
+          repo: agent.did,
+          collection: "fm.teal.alpha.actor.profileStatus",
+          rkey: "self",
+          record: profileStatusRecord,
+        },
+      );
+    } catch {
+      // If record already exists, update it
+      try {
+        await agent.call(
+          "com.atproto.repo.putRecord",
+          {},
+          {
+            repo: agent.did,
+            collection: "fm.teal.alpha.actor.profileStatus",
+            rkey: "self",
+            record: {
+              ...profileStatusRecord,
+              completedOnboarding: "profileOnboarding",
+              updatedAt: new Date().toISOString(),
+            },
+          },
+        );
+      } catch (updateError) {
+        console.error("Error updating profile status:", updateError);
+      }
+    }
+
     setSubmissionStep(5);
     //redirect to / after 2 seconds
     setTimeout(() => {
-      router.replace('/');
+      router.replace("/");
     }, 2000);
   };
 
@@ -156,21 +227,26 @@ export default function OnboardingPage() {
     return <div>Loading...</div>;
   }
 
-  // if we already have stuff then go back
-  //
+  if (statusLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Checking profile status...</Text>
+      </View>
+    );
+  }
 
-  console.log(profile);
-  if (profile[agent?.did!].teal !== null) {
+  if (profileStatus && profileStatus.completedOnboarding !== "none") {
     return (
       <Text>
-        Profile already exists: {JSON.stringify(profile[agent?.did!].teal)}
+        Onboarding already completed: {profileStatus.completedOnboarding}
       </Text>
     );
   }
 
   if (submissionStep) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#0000ff" />
         <Text>{OnboardingSubmissionSteps[submissionStep]}</Text>
       </View>
@@ -210,7 +286,7 @@ export default function OnboardingPage() {
 
   return (
     <SafeAreaView className="flex-1 p-5 pt-5">
-      <View className="flex-1 flex min-h-max h-full">{renderPage()}</View>
+      <View className="flex h-full min-h-max flex-1">{renderPage()}</View>
       <ProgressDots totalSteps={3} currentStep={step} />
     </SafeAreaView>
   );

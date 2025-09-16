@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                p.release_mbid as mbid,\n                p.release_name as name,\n                COUNT(*) as play_count\n            FROM plays p\n            WHERE p.did = $1\n              AND p.release_mbid IS NOT NULL\n              AND p.release_name IS NOT NULL\n            GROUP BY p.release_mbid, p.release_name\n            ORDER BY play_count DESC\n            LIMIT $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "play_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "af5c1fdabaee1cbc49f89d1df92e13cbb4a0837e3c644de9c7cf8e33e170d2e3"
+}

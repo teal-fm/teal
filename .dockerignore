@@ -1,0 +1,51 @@
+# Rust build artifacts
+target/
+**/target/
+services/target/
+apps/*/target/
+
+# Node.js dependencies and build artifacts
+node_modules/
+**/node_modules/
+.turbo/
+**/.turbo/
+build/
+dist/
+.next/
+
+# Development and cache files
+.gitignore
+**/.DS_Store
+*.log
+*.tmp
+*.temp
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment and config files
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Test coverage
+coverage/
+**/coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# SQLx offline query cache
+# Include workspace-level cache for monorepo builds
+# Uncomment the line below if you want to force online compilation
+# .sqlx/

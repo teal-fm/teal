@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(grep:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm build:*)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(cargo check:*)",
+      "Bash(pnpm run:*)",
+      "Bash(SQLX_OFFLINE=true cargo check --bin aqua)",
+      "Bash(cargo run:*)",
+      "Bash(rg:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(cargo build:*)"
+    ],
+    "deny": []
+  }
+}

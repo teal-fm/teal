@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                ae.id,\n                ae.name\n            FROM artists_extended ae\n            WHERE ae.mbid_type = 'musicbrainz'\n            AND (\n                LOWER(TRIM(ae.name)) = $1\n                OR LOWER(TRIM(ae.name)) LIKE '%' || $1 || '%'\n                OR $1 LIKE '%' || LOWER(TRIM(ae.name)) || '%'\n                OR similarity(LOWER(TRIM(ae.name)), $1) > 0.6\n            )\n            ORDER BY similarity(LOWER(TRIM(ae.name)), $1) DESC\n            LIMIT 10\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "fd5f376dac5f38005efa3217c9614e377703c681e1510fc0c6539b1edee289b7"
+}

@@ -1,90 +1,97 @@
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, View } from "react-native";
+import { Redirect, Stack, useRouter } from "expo-router";
+import ActorView from "@/components/actor/actorView";
+import { useStore } from "@/stores/mainStore";
 
-import * as React from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
 
-import { useStore } from '@/stores/mainStore';
-import AuthOptions from '../auth/options';
-
-import { Redirect, Stack } from 'expo-router';
-import ActorView from '@/components/actor/actorView';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import AuthOptions from "../auth/options";
 
 export default function Screen() {
   const router = useRouter();
   const j = useStore((state) => state.status);
   // @me
   const agent = useStore((state) => state.pdsAgent);
-  const profile = useStore((state) => state.profiles[agent?.did ?? '']);
+  const profile = useStore((state) => state.profiles[agent?.did ?? ""]);
   const tealDid = useStore((state) => state.tealDid);
-  const [hasTealProfile, setHasTealProfile] = useState<boolean | null>(null);
+  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [statusLoading, setStatusLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchProfile = async () => {
+    const fetchProfileStatus = async () => {
       try {
-        if (!agent || !tealDid) return;
-        let res = await agent.call(
-          'fm.teal.alpha.actor.getProfile',
-          { actor: agent?.did },
-          {},
-          { headers: { 'atproto-proxy': tealDid + '#teal_fm_appview' } },
-        );
+        if (!agent) return;
+
+        const res = await agent.call("com.atproto.repo.getRecord", {
+          repo: agent.did,
+          collection: "fm.teal.alpha.actor.profileStatus",
+          rkey: "self",
+        });
+
         if (isMounted) {
-          setHasTealProfile(true);
+          setProfileStatus(res.data.value as ProfileStatusRecord);
         }
       } catch (error) {
-        setHasTealProfile(false);
-        console.error('Error fetching profile:', error);
+        if (isMounted) {
+          // If no record exists, user hasn't completed onboarding
+          setProfileStatus(null);
+        }
+        console.error("Error fetching profile status:", error);
         if (
           error instanceof Error &&
-          error.message.includes('could not resolve proxy did')
+          error.message.includes("could not resolve proxy did")
         ) {
-          router.replace('/offline');
+          router.replace("/offline");
+        }
+      } finally {
+        if (isMounted) {
+          setStatusLoading(false);
         }
       }
     };
 
-    fetchProfile();
+    fetchProfileStatus();
 
     return () => {
       isMounted = false;
     };
-  }, [agent, tealDid, router]);
+  }, [agent, router]);
 
-  if (j !== 'loggedIn') {
+  if (j !== "loggedIn") {
     return <AuthOptions />;
   }
 
-  if (hasTealProfile !== null && !hasTealProfile) {
+  if (!statusLoading && (!profileStatus || profileStatus.completedOnboarding === "none")) {
     return (
-      <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
+      <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
         <Redirect href="/onboarding" />
       </View>
     );
   }
 
   // TODO: replace with skeleton
-  if (!profile || !agent) {
+  if (!profile || !agent || statusLoading) {
     return (
-      <View className="flex-1 justify-center items-center gap-5 p-6 bg-background">
+      <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
   return (
-    <ScrollView className="flex-1 justify-start items-center gap-5 bg-background w-full">
+    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
       <Stack.Screen
         options={{
-          title: 'Home',
-          headerBackButtonDisplayMode: 'minimal',
+          title: "Home",
+          headerBackButtonDisplayMode: "minimal",
           headerShown: false,
         }}
       />
       <ActorView actorDid={agent.did!} pdsAgent={agent} />
-
     </ScrollView>
   );
 }

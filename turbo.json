@@ -6,10 +6,36 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["./dist/**"]
+      "outputs": ["./dist/**", "../target/**"]
+    },
+    "build:rust": {
+      "dependsOn": ["^build"],
+      "outputs": ["../target/**"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
+    },
+    "test": {
+      "dependsOn": ["build"]
+    },
+    "test:rust": {
+      "dependsOn": ["build:rust"]
+    },
+    "lex:gen-server": {
+      "dependsOn": [],
+      "outputs": ["./src/**"]
+    },
+    "lex:gen": {
+      "dependsOn": [],
+      "outputs": ["./src/types/**", "./src/**/*.rs"]
+    },
+    "lex:watch": {
+      "persistent": true,
+      "cache": false
+    },
+    "lex:validate": {
+      "dependsOn": [],
+      "cache": false
     },
     "dev": {
       "persistent": true,
@@ -17,6 +43,18 @@
     },
     "db:migrate": {
       "cache": false
+    },
+    "@teal/amethyst#build": {
+      "dependsOn": ["@teal/lexicons#lex:gen-server"],
+      "outputs": ["./build/**"]
+    },
+    "@teal/amethyst#build:web": {
+      "dependsOn": ["@teal/lexicons#lex:gen-server"],
+      "outputs": ["./build/**"]
+    },
+    "@teal/amethyst#build:ios": {
+      "dependsOn": ["@teal/lexicons#lex:gen-server"],
+      "outputs": ["./build/**"]
     }
   }
 }

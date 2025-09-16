@@ -1,10 +1,10 @@
+import { useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, View } from "react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
 import ActorView from "@/components/actor/actorView";
 import { Text } from "@/components/ui/text";
 import { resolveHandle } from "@/lib/atp/pid";
 import { useStore } from "@/stores/mainStore";
-import { Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
 
 export default function Handle() {
   let { handle } = useLocalSearchParams();
@@ -30,7 +30,7 @@ export default function Handle() {
   if (!did) return <ActivityIndicator size="large" color="#0000ff" />;
 
   return (
-    <ScrollView className="flex-1 justify-start items-center gap-5 bg-background w-full">
+    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
       <Stack.Screen
         options={{
           title: "Home",

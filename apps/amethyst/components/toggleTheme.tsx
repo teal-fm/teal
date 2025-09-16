@@ -1,5 +1,5 @@
-import { useColorScheme } from "nativewind";
 import { Text } from "@/components/ui/text";
+import { useColorScheme } from "nativewind";
 
 export default function ToggleTheme() {
   const { colorScheme, setColorScheme } = useColorScheme();

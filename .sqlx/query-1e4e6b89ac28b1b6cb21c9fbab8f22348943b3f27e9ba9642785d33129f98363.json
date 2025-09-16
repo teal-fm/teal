@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM play_to_artists WHERE play_uri = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1e4e6b89ac28b1b6cb21c9fbab8f22348943b3f27e9ba9642785d33129f98363"
+}

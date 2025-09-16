@@ -6,13 +6,40 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
-    "typecheck": "pnpm -r exec tsc --noEmit",
+    "build:rust": "turbo run build:rust",
+    "typecheck": "pnpm -r --filter='!./vendor/*' exec tsc --noEmit",
+    "test": "turbo run test test:rust",
+    "rust:fmt": "pnpm rust:fmt:services && pnpm rust:fmt:apps",
+    "rust:clippy": "pnpm rust:clippy:services && pnpm rust:clippy:apps",
+    "rust:fmt:services": "cd services && cargo fmt",
+    "rust:clippy:services": "cd services && cargo clippy -- -D warnings",
+    "rust:fmt:apps": "for dir in apps/*/; do if [ -f \"$dir/Cargo.toml\" ]; then echo \"Formatting $dir\" && cd \"$dir\" && cargo fmt && cd ../..; fi; done",
+    "rust:clippy:apps": "for dir in apps/*/; do if [ -f \"$dir/Cargo.toml\" ]; then echo \"Linting $dir\" && cd \"$dir\" && cargo clippy -- -D warnings && cd ../..; fi; done",
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
+    "hooks:install": "./scripts/install-git-hooks.sh",
+    "hooks:install-precommit": "pre-commit install",
+    "postinstall": "pnpm lex:gen-server",
     "nuke": "rimraf node_modules */*/node_modules",
-    "lex:gen-server": "turbo lex:gen-server"
+    "lex:gen-server": "turbo lex:gen-server",
+    "format": "prettier --write .",
+    "lex:gen": "cd tools/lexicon-cli && node dist/index.js gen",
+    "lex:watch": "cd tools/lexicon-cli && node dist/index.js watch",
+    "lex:validate": "cd tools/lexicon-cli && node dist/index.js validate",
+    "lex:diff": "cd tools/lexicon-cli && node dist/index.js diff",
+    "lex:build-amethyst": "pnpm lex:gen-server && pnpm turbo build --filter=@teal/amethyst",
+    "lex:dev": "pnpm lex:gen-server && pnpm turbo dev --filter=@teal/amethyst",
+    "db:migrate": "cd services && sqlx migrate run",
+    "db:migrate:revert": "cd services && sqlx migrate revert",
+    "db:create": "cd services && sqlx database create",
+    "db:drop": "cd services && sqlx database drop",
+    "db:reset": "cd services && sqlx database drop && sqlx database create && sqlx migrate run",
+    "db:prepare": "cd services && sqlx prepare"
   },
   "dependencies": {
-    "@atproto/oauth-client": "^0.3.8"
+    "@atproto/oauth-client": "^0.3.8",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "prettier": "^3.5.3",
+    "prettier-plugin-tailwindcss": "^0.6.11"
   },
   "devDependencies": {
     "@types/node": "^20.17.10",
@@ -22,6 +49,8 @@
   },
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "services/*",
+    "tools/*"
   ]
 }

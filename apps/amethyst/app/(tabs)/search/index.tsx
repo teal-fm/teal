@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { Link, Stack } from 'expo-router';
-import { Input } from '@/components/ui/input';
-import { Text } from '@/components/ui/text';
-import { useStore } from '@/stores/mainStore';
+import React, { useEffect, useState } from "react";
+import { ScrollView, View } from "react-native";
+import { Link, Stack } from "expo-router";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
+import { useStore } from "@/stores/mainStore";
 
-import { OutputSchema as SearchActorsOutputSchema } from '@teal/lexicons/src/types/fm/teal/alpha/actor/searchActors';
-import { MiniProfileView } from '@teal/lexicons/src/types/fm/teal/alpha/actor/defs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import getImageCdnLink from '@/lib/atp/getImageCdnLink';
+import { MiniProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
+import { OutputSchema as SearchActorsOutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/searchActors";
 
 export default function Search() {
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [searchResults, setSearchResults] = useState<MiniProfileView[]>([]);
 
   const tealDid = useStore((state) => state.tealDid);
@@ -28,18 +28,18 @@ export default function Search() {
       }
       try {
         let res = await agent.call(
-          'fm.teal.alpha.actor.searchActors',
+          "fm.teal.alpha.actor.searchActors",
           { q: searchQuery },
           {},
-          { headers: { 'atproto-proxy': tealDid + '#teal_fm_appview' } },
+          { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
         );
         if (isMounted) {
           setSearchResults(
-            res.data['actors'] as SearchActorsOutputSchema['actors'],
+            res.data["actors"] as SearchActorsOutputSchema["actors"],
           );
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error("Error fetching profile:", error);
       }
     };
 
@@ -51,31 +51,31 @@ export default function Search() {
   }, [agent, tealDid, searchQuery]);
 
   return (
-    <ScrollView className="flex-1 justify-start items-center gap-5 bg-background w-full">
+    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
       <Stack.Screen
         options={{
-          title: 'Search',
-          headerBackButtonDisplayMode: 'minimal',
+          title: "Search",
+          headerBackButtonDisplayMode: "minimal",
           headerShown: false,
         }}
       />
-      <View className="max-w-2xl flex-1 w-screen flex flex-col p-4 divide-y divide-muted-foreground/50 gap-4 rounded-xl my-2 mt-5">
+      <View className="my-2 mt-5 flex w-screen max-w-2xl flex-1 flex-col gap-4 divide-y divide-muted-foreground/50 rounded-xl p-4">
         <Input
           placeholder="Search for users..."
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
-      <View className="my-2 mx-5">
+      <View className="mx-5 my-2">
         {searchResults.map((user) => (
           <Link
-            href={`/profile/${user.handle?.replace('at://', '')}`}
+            href={`/profile/${user.handle?.replace("at://", "")}`}
             key={user.did}
-            className="flex flex-row items-center gap-4 hover:bg-muted-foreground/20 p-2 rounded-xl"
+            className="flex flex-row items-center gap-4 rounded-xl p-2 hover:bg-muted-foreground/20"
           >
             <Avatar
               alt={`${user.displayName}'s profile`}
-              className="w-14 h-14 border border-border"
+              className="h-14 w-14 border border-border"
             >
               <AvatarImage
                 source={{
@@ -91,14 +91,14 @@ export default function Search() {
                 <Text>
                   {user.displayName?.substring(0, 1) ??
                     user.handle?.substring(0, 1) ??
-                    'R'}
+                    "R"}
                 </Text>
               </AvatarFallback>
             </Avatar>
             <View className="flex flex-col">
               <Text className="font-semibold">{user.displayName}</Text>
               <Text className="text-muted-foreground">
-                {user.handle?.replace('at://', '@')}
+                {user.handle?.replace("at://", "@")}
               </Text>
             </View>
           </Link>

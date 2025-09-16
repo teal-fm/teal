@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import { Text } from "@/components/ui/text";
 import { ScrollView, Switch, View } from "react-native";
 import { Link, Stack } from "expo-router";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
-import { Input } from "@/components/ui/input";
 
 export default function Settings() {
   const { colorScheme, setColorScheme } = useColorScheme();
@@ -22,7 +21,7 @@ export default function Settings() {
   ];
 
   return (
-    <ScrollView className="flex-1 justify-start items-center gap-5 bg-background w-full">
+    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
       <Stack.Screen
         options={{
           title: "Settings",
@@ -30,7 +29,7 @@ export default function Settings() {
           headerShown: true,
         }}
       />
-      <View className="max-w-2xl flex-1 w-screen flex flex-col p-4 divide-y divide-muted-foreground/50 gap-4 rounded-xl my-2 mx-5">
+      <View className="mx-5 my-2 flex w-screen max-w-2xl flex-1 flex-col gap-4 divide-y divide-muted-foreground/50 rounded-xl p-4">
         <ButtonSelector
           text="Theme"
           values={colorSchemeOptions}
@@ -102,12 +101,12 @@ function ButtonSelector({
   return (
     <View className="items-start gap-2 pt-2">
       <Text className="text-base font-semibold">{text}</Text>
-      <View className="flex-row items-center justify-around gap-1 w-full bg-muted h-10 px-1 rounded-xl">
+      <View className="h-10 w-full flex-row items-center justify-around gap-1 rounded-xl bg-muted px-1">
         {values.map(({ label, value }) => (
           <Button
             key={value}
             onPress={() => setSelectedValue(value)}
-            className={`flex-1 w-full h-8`}
+            className={`h-8 w-full flex-1`}
             variant={selectedValue === value ? "secondary" : "ghost"}
           >
             <Text
@@ -146,9 +145,9 @@ function TextInputRow({
   return (
     <View className="items-start gap-2 pt-2">
       <Text className="text-base font-semibold">{labelText}</Text>
-      <View className="flex-row gap-2 w-full items-center">
+      <View className="w-full flex-row items-center gap-2">
         <Input
-          className="border border-muted-foreground/50 bg-transparent text-foreground h-10 w-full rounded-md px-3 py-2 text-base"
+          className="h-10 w-full rounded-md border border-muted-foreground/50 bg-transparent px-3 py-2 text-base text-foreground"
           value={inputValue}
           onChangeText={setInputValue} // Update internal state on change
           placeholder={placeholder}

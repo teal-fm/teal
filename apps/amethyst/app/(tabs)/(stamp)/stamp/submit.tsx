@@ -1,5 +1,13 @@
+import { useContext, useEffect, useState } from "react";
+import { Image, Switch, View } from "react-native";
+import { Redirect, Stack, useRouter } from "expo-router";
+import { ExternalLink } from "@/components/ExternalLink";
 import VerticalPlayView from "@/components/play/verticalPlayView";
 import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
+import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import {
   Agent,
@@ -7,21 +15,14 @@ import {
   ComAtprotoRepoCreateRecord,
   RichText,
 } from "@atproto/api";
+
+import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 import {
   Record as PlayRecord,
   validateRecord,
 } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
-import { Redirect, Stack, useRouter } from "expo-router";
-import { useContext, useEffect, useState } from "react";
-import { Switch, View } from "react-native";
-import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
-import { Text } from "@/components/ui/text";
-import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink } from "@/components/ExternalLink";
+
 import { StampContext, StampContextValue, StampStep } from "./_layout";
-import { Image } from "react-native";
-import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
-import { cn } from "@/lib/utils";
 
 type CardyBResponse = {
   error: string;
@@ -309,13 +310,13 @@ powered by @teal.fm`;
   };
 
   return (
-    <View className="flex-1 p-4 bg-background items-center h-screen-safe">
+    <View className="h-screen-safe flex-1 items-center bg-background p-4">
       <Stack.Screen
         options={{
           title: "Submit Stamp",
         }}
       />
-      <View className="flex justify-between align-middle gap-4 max-w-2xl w-screen min-h-full px-4">
+      <View className="flex min-h-full w-screen max-w-2xl justify-between gap-4 px-4 align-middle">
         <View />
         <View>
           <VerticalPlayView
@@ -330,7 +331,7 @@ powered by @teal.fm`;
               .join(", ")}
             releaseTitle={selectedTrack?.selectedRelease?.title}
           />
-          <Text className="text-sm text-gray-500 text-center mt-4">
+          <Text className="mt-4 text-center text-sm text-gray-500">
             Any missing info?{" "}
             <ExternalLink
               className="text-blue-600 dark:text-blue-400"
@@ -341,24 +342,24 @@ powered by @teal.fm`;
           </Text>
         </View>
 
-        <View className="flex-col gap-4 items-center w-full">
+        <View className="w-full flex-col items-center gap-4">
           {blueskyEmbedCard && shareWithBluesky ? (
-            <View className="gap-2 w-full">
-              <Text className="text-sm text-muted-foreground text-center">
+            <View className="w-full gap-2">
+              <Text className="text-center text-sm text-muted-foreground">
                 Card Preview:
               </Text>
-              <View className="flex-col items-start rounded-xl bg-card border border-border">
+              <View className="flex-col items-start rounded-xl border border-border bg-card">
                 <Image
                   source={{
                     uri: blueskyEmbedCard.external.cardyThumbUrl,
                   }}
-                  className="rounded-t-xl aspect-video w-full"
+                  className="aspect-video w-full rounded-t-xl"
                 />
-                <View className="p-2 items-start">
-                  <Text className="text-card-foreground text-start font-semibold">
+                <View className="items-start p-2">
+                  <Text className="text-start font-semibold text-card-foreground">
                     {blueskyEmbedCard.external.title}
                   </Text>
-                  <Text className="text-muted-foreground text-start">
+                  <Text className="text-start text-muted-foreground">
                     {blueskyEmbedCard.external.description}
                   </Text>
                 </View>
@@ -366,15 +367,15 @@ powered by @teal.fm`;
             </View>
           ) : (
             shareWithBluesky && (
-              <Text className="text-sm text-muted-foreground text-center">
+              <Text className="text-center text-sm text-muted-foreground">
                 jsyk: there won't be an embed card on your post.
               </Text>
             )
           )}
           {shareWithBluesky && (
-            <View className="text-sm text-muted-foreground w-full items-end">
+            <View className="w-full items-end text-sm text-muted-foreground">
               <Textarea
-                className="w-full p-2 pb-4 border border-border rounded-md text-card-foreground bg-card min-h-[100px] max-h-[200px]"
+                className="max-h-[200px] min-h-[100px] w-full rounded-md border border-border bg-card p-2 pb-4 text-card-foreground"
                 multiline
                 value={blueskyPostText}
                 onChangeText={setBlueskyPostText}
@@ -382,7 +383,7 @@ powered by @teal.fm`;
               />
               <Text
                 className={cn(
-                  "text-sm text-muted-foreground text-center absolute bottom-1 right-2",
+                  "absolute bottom-1 right-2 text-center text-sm text-muted-foreground",
                   blueskyPostText.length > 150
                     ? "text-gray-600 dark:text-gray-300"
                     : "",
@@ -393,16 +394,16 @@ powered by @teal.fm`;
               </Text>
             </View>
           )}
-          <View className="flex-row gap-2 items-center">
+          <View className="flex-row items-center gap-2">
             <Switch
               value={shareWithBluesky}
               onValueChange={setShareWithBluesky}
             />
-            <Text className="text-lg text-muted-foreground text-center">
+            <Text className="text-center text-lg text-muted-foreground">
               Share with Bluesky?
             </Text>
           </View>
-          <View className="flex-row gap-2 w-full">
+          <View className="w-full flex-row gap-2">
             <Button
               className="flex-1"
               onPress={handleSubmit}

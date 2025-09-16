@@ -1,5 +1,5 @@
-import { Stack } from "expo-router";
 import { useMemo } from "react";
+import { Stack } from "expo-router";
 
 const Layout = ({ segment }: { segment: string }) => {
   const rootScreen = useMemo(() => {

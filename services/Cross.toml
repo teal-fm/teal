@@ -1,0 +1,20 @@
+[build.env]
+passthrough = [
+    "CARGO_HOME",
+    "CARGO_TARGET_DIR",
+    "SQLX_OFFLINE",
+    "PKG_CONFIG_ALLOW_CROSS",
+]
+
+[target.aarch64-unknown-linux-gnu]
+image = "ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main"
+
+[target.aarch64-unknown-linux-gnu.env]
+passthrough = ["CARGO_HOME", "CARGO_TARGET_DIR", "SQLX_OFFLINE"]
+# Allow cross-compilation of native dependencies
+PKG_CONFIG_ALLOW_CROSS = "1"
+# Use static linking to reduce runtime dependencies
+RUSTFLAGS = "-C target-feature=+crt-static -C link-arg=-s"
+# Disable problematic features that might require OpenSSL
+CC_aarch64_unknown_linux_gnu = "aarch64-linux-gnu-gcc"
+CXX_aarch64_unknown_linux_gnu = "aarch64-linux-gnu-g++"

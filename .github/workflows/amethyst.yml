@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Build Amethyst
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/amethyst/**"
+      - "packages/**"
+      - "lexicons/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/amethyst.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/amethyst/**"
+      - "packages/**"
+      - "lexicons/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/amethyst.yml"
+
+jobs:
+  build:
+    name: Build Amethyst
+    runs-on: ubuntu-latest
+    outputs:
+      build-cache-key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-node: "true"
+
+      - name: Generate cache key
+        id: cache-key
+        run: echo "key=amethyst-build-${{ hashFiles('apps/amethyst/**', 'packages/**', 'lexicons/**') }}" >> $GITHUB_OUTPUT
+
+      - name: Build lex tool
+        run: cd tools/lexicon-cli && pnpm i && pnpm build
+
+      - name: Build web
+        run: pnpm turbo build:web --filter=@teal/amethyst
+
+      - name: Type check
+        run: pnpm turbo check-types --filter=@teal/amethyst
+
+      - name: Run tests
+        run: pnpm turbo test --filter=@teal/amethyst
+
+      - name: Upload web build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amethyst-web-build
+          path: apps/amethyst/build/
+          retention-days: 7
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-node: "true"
+
+      - name: Build lex tool
+        run: cd tools/lexicon-cli && pnpm i && pnpm build
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Build iOS
+        run: pnpm turbo build:ios --filter=@teal/amethyst
+
+      - name: Upload iOS build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amethyst-ios-build
+          path: apps/amethyst/build/
+          retention-days: 7

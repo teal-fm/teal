@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "REFRESH MATERIALIZED VIEW mv_artist_play_counts;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "9af33e4329198dee7814519573b63858eaf69f08ad2959d96ffee5c8387af0ba"
+}

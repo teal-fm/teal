@@ -1,4 +1,4 @@
-import { View, Image } from "react-native";
+import { Image, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { timeAgo } from "@/lib/utils";
 
@@ -14,26 +14,26 @@ export default function PlayView({
   dateListened?: Date;
 }) {
   return (
-    <View className="flex flex-row gap-2 max-w-full">
+    <View className="flex max-w-full flex-row gap-2">
       <Image
-        className="w-16 h-16 rounded-lg bg-gray-500/50"
+        className="h-16 w-16 rounded-lg bg-gray-500/50"
         source={{
           uri:
             releaseMbid &&
             `https://coverartarchive.org/release/${releaseMbid}/front-250`,
         }}
       />
-      <View className="shrink flex flex-col justify-center">
-        <Text className=" text-foreground line-clamp-1 overflow-ellipsis -mt-0.5">
+      <View className="flex shrink flex-col justify-center">
+        <Text className="-mt-0.5 line-clamp-1 overflow-ellipsis text-foreground">
           {trackTitle}
         </Text>
         {artistName && (
-          <Text className="text-sm text-left text-foreground line-clamp-1 overflow-ellipsis">
+          <Text className="line-clamp-1 overflow-ellipsis text-left text-sm text-foreground">
             {artistName}
           </Text>
         )}
         {dateListened && (
-          <Text className="text-sm text-left text-muted-foreground line-clamp-1 overflow-ellipsis">
+          <Text className="line-clamp-1 overflow-ellipsis text-left text-sm text-muted-foreground">
             played {timeAgo(dateListened)}
           </Text>
         )}

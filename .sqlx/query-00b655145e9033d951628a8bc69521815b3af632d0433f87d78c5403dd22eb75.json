@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT DISTINCT\n                ae1.name as synthetic_name,\n                ae2.name as target_name,\n                similarity(LOWER(TRIM(ae1.name)), LOWER(TRIM(ae2.name))) as similarity_score,\n                COUNT(ptae1.play_uri) as synthetic_plays,\n                COUNT(ptae2.play_uri) as target_plays\n            FROM artists_extended ae1\n            CROSS JOIN artists_extended ae2\n            LEFT JOIN play_to_artists_extended ptae1 ON ae1.id = ptae1.artist_id\n            LEFT JOIN play_to_artists_extended ptae2 ON ae2.id = ptae2.artist_id\n            WHERE ae1.id != ae2.id\n            AND ae1.mbid_type = 'synthetic'\n            AND ae2.mbid_type = 'musicbrainz'\n            AND similarity(LOWER(TRIM(ae1.name)), LOWER(TRIM(ae2.name))) >= $1\n            GROUP BY ae1.id, ae1.name, ae2.id, ae2.name, similarity_score\n            ORDER BY similarity_score DESC\n            LIMIT 10\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "synthetic_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "target_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "similarity_score",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 3,
+        "name": "synthetic_plays",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "target_plays",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "00b655145e9033d951628a8bc69521815b3af632d0433f87d78c5403dd22eb75"
+}

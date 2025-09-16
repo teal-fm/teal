@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT extract_edition_discriminant($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "extract_edition_discriminant",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "28b1d571a1d045115bcae785b2583f7bf6d02b0b19946b322192dd7f62748d4e"
+}

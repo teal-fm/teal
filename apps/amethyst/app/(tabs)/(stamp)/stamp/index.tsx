@@ -1,8 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import { Link, Stack, useRouter } from "expo-router";
-import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
-
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -11,8 +6,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { Link, Stack, useRouter } from "expo-router";
+import { ExternalLink } from "@/components/ExternalLink";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
 import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   MusicBrainzRecording,
   MusicBrainzRelease,
@@ -22,11 +22,9 @@ import {
   SearchResultProps,
 } from "@/lib/oldStamp";
 import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
-import { StampContext, StampContextValue, StampStep } from "./_layout";
-import { ExternalLink } from "@/components/ExternalLink";
+import { Check, ChevronDown, ChevronRight } from "lucide-react-native";
 
-import { Input } from "@/components/ui/input";
+import { StampContext, StampContextValue, StampStep } from "./_layout";
 
 export default function StepOne() {
   const router = useRouter();
@@ -80,7 +78,7 @@ export default function StepOne() {
   };
 
   return (
-    <ScrollView className="flex-1 justify-start items-center w-min bg-background pt-2">
+    <ScrollView className="w-min flex-1 items-center justify-start bg-background pt-2">
       <Stack.Screen
         options={{
           title: "Stamp a play manually",
@@ -88,8 +86,8 @@ export default function StepOne() {
         }}
       />
       {/* Search Form */}
-      <View className="flex gap-2 max-w-2xl w-screen px-4">
-        <Text className="font-bold text-lg">Search for a track</Text>
+      <View className="flex w-screen max-w-2xl gap-2 px-4">
+        <Text className="text-lg font-bold">Search for a track</Text>
         <Input
           placeholder="Track name..."
           value={searchFields.track}
@@ -126,7 +124,7 @@ export default function StepOne() {
             }
           }}
         />
-        <View className="flex-row gap-2 mt-2">
+        <View className="mt-2 flex-row gap-2">
           <Button
             className="flex-1"
             onPress={handleSearch}
@@ -146,10 +144,10 @@ export default function StepOne() {
       </View>
 
       {/* Search Results */}
-      <View className="flex gap-4 max-w-2xl w-screen px-4">
+      <View className="flex w-screen max-w-2xl gap-4 px-4">
         {searchResults.length > 0 ? (
           <View className="mt-4">
-            <Text className="text-lg font-bold mb-2">
+            <Text className="mb-2 text-lg font-bold">
               Search Results ({searchResults.length})
             </Text>
 
@@ -175,10 +173,10 @@ export default function StepOne() {
         ) : (
           hasSearched && (
             <View className="mt-4">
-              <Text className="text-lg text-muted-foreground mb-2 text-center">
+              <Text className="mb-2 text-center text-lg text-muted-foreground">
                 No search results found.
               </Text>
-              <Text className="text-lg text-muted-foreground mb-2 text-center">
+              <Text className="mb-2 text-center text-lg text-muted-foreground">
                 Please try importing with{" "}
                 <ExternalLink
                   href="https://harmony.pulsewidth.org.uk/"
@@ -201,7 +199,7 @@ export default function StepOne() {
 
         {/* Submit Button */}
         {selectedTrack && (
-          <View className="mt-4 sticky bottom-0">
+          <View className="sticky bottom-0 mt-4">
             <Button
               onPress={() => {
                 setState({
@@ -212,7 +210,7 @@ export default function StepOne() {
                   pathname: "/stamp/submit",
                 });
               }}
-              className="w-full flex flex-row align-middle"
+              className="flex w-full flex-row align-middle"
             >
               <Text>{`Submit "${selectedTrack.title}" as Play`}</Text>
               <ChevronRight className="ml-2 inline" />
@@ -295,19 +293,19 @@ export function SearchResult({
               },
         );
       }}
-      className={`px-4 py-2 mb-2 rounded-lg ${
+      className={`mb-2 rounded-lg px-4 py-2 ${
         isSelected ? "bg-primary/20" : "bg-secondary/10"
       }`}
     >
-      <View className={`flex-row justify-between items-center gap-4`}>
+      <View className={`flex-row items-center justify-between gap-4`}>
         <Image
-          className="w-16 h-16 rounded-lg bg-gray-500/50"
+          className="h-16 w-16 rounded-lg bg-gray-500/50"
           source={{
             uri: `https://coverartarchive.org/release/${currentRelease?.id}/front-250`,
           }}
         />
         <View className="flex-1">
-          <Text className="font-bold text-sm line-clamp-2">{result.title}</Text>
+          <Text className="line-clamp-2 text-sm font-bold">{result.title}</Text>
           <Text className="text-sm text-muted-foreground">
             {result["artist-credit"]?.[0]?.artist?.name ?? "Unknown Artist"}
           </Text>
@@ -316,13 +314,13 @@ export function SearchResult({
           {result.releases && result.releases?.length > 0 && (
             <TouchableOpacity
               onPress={() => showModal()}
-              className="p-1 bg-secondary/10 rounded-lg flex md:flex-row items-start md:items-center justify-between md:gap-1 w-full"
+              className="flex w-full items-start justify-between rounded-lg bg-secondary/10 p-1 md:flex-row md:items-center md:gap-1"
             >
-              <View className="flex-1 flex md:flex-row items-start gap-1 overflow-hidden w-full">
-                <Text className="text-sm text-gray-500 whitespace-nowrap">
+              <View className="flex w-full flex-1 items-start gap-1 overflow-hidden md:flex-row">
+                <Text className="whitespace-nowrap text-sm text-gray-500">
                   Release:
                 </Text>
-                <Text className="text-sm line-clamp-1">
+                <Text className="line-clamp-1 text-sm">
                   {currentRelease?.title}
                   {currentRelease?.date ? ` (${currentRelease.date})` : ""}
                   {currentRelease?.country
@@ -331,7 +329,7 @@ export function SearchResult({
                 </Text>
               </View>
               {/* the chevron looks odd in the other layout so I'm just hiding it for now. -mm */}
-              <ChevronDown className="md:ml-1 md:block hidden w-6 h-6" />
+              <ChevronDown className="hidden h-6 w-6 md:ml-1 md:block" />
             </TouchableOpacity>
           )}
         </View>
@@ -342,11 +340,11 @@ export function SearchResult({
           </View>
         </Link> */}
         {isSelected ? (
-          <View className="bg-primary rounded-full p-1">
+          <View className="rounded-full bg-primary p-1">
             <Icon icon={Check} size={20} />
           </View>
         ) : (
-          <View className="border-2 border-secondary rounded-full p-3"></View>
+          <View className="rounded-full border-2 border-secondary p-3"></View>
         )}
       </View>
 
@@ -358,8 +356,8 @@ export function SearchResult({
         backdropComponent={SheetBackdrop}
         handleComponent={SheetHandle}
       >
-        <View className="pb-4 border-b -mt-2 border-x border-neutral-500/30 bg-card">
-          <Text className="text-lg font-bold text-center">Select Release</Text>
+        <View className="-mt-2 border-x border-b border-neutral-500/30 bg-card pb-4">
+          <Text className="text-center text-lg font-bold">Select Release</Text>
           <TouchableOpacity
             className="absolute right-4 top-1.5"
             onPress={() => dismissModal()}
@@ -367,11 +365,11 @@ export function SearchResult({
             <Text className="text-primary">Done</Text>
           </TouchableOpacity>
         </View>
-        <BottomSheetScrollView className="bg-card min-h-64 border-x border-neutral-500/30">
+        <BottomSheetScrollView className="min-h-64 border-x border-neutral-500/30 bg-card">
           {result.releases?.map((release) => (
             <TouchableOpacity
               key={release.id}
-              className={`p-4 border-b border-gray-100 ${
+              className={`border-b border-gray-100 p-4 ${
                 selectedRelease?.id === release.id ? "bg-primary/10" : ""
               }`}
               onPress={() => {
@@ -396,7 +394,7 @@ export function SearchResult({
                 )}
               </View>
               {release.disambiguation && (
-                <Text className="text-sm text-gray-400 italic">
+                <Text className="text-sm italic text-gray-400">
                   {release.disambiguation}
                 </Text>
               )}

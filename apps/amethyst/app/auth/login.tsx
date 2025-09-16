@@ -1,25 +1,23 @@
-import { Link, Stack, router } from "expo-router";
-import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
-import React, { useState, useEffect, useCallback, useRef } from "react"; // Added useCallback, useRef
+import React, { useCallback, useEffect, useRef, useState } from "react"; // Added useCallback, useRef
 import { Platform, TextInput, View } from "react-native";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link, router, Stack } from "expo-router";
+import { openAuthSessionAsync } from "expo-web-browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { resolveFromIdentity } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { capFirstLetter, cn } from "@/lib/utils";
-
-import { openAuthSessionAsync } from "expo-web-browser";
 import { useStore } from "@/stores/mainStore";
-import { resolveFromIdentity } from "@/lib/atp/pid";
-
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  interpolate,
-} from "react-native-reanimated";
-import { MaterialCommunityIcons, FontAwesome6 } from "@expo/vector-icons";
+import { FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
+import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 
 type Url = URL;
 
@@ -210,7 +208,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 flex items-center justify-center w-full">
+    <SafeAreaView className="flex w-full flex-1 items-center justify-center">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -218,11 +216,11 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="justify-center align-center p-8 gap-4 pb-32 max-w-lg w-screen">
+      <View className="align-center w-screen max-w-lg justify-center gap-4 p-8 pb-32">
         <View className="flex items-center">
           <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
         </View>
-        <Text className="text-3xl text-center text-foreground">
+        <Text className="text-center text-3xl text-foreground">
           Sign in with your PDS
         </Text>
         <View>
@@ -250,7 +248,7 @@ const LoginScreen = () => {
           <Animated.View style={messageContainerAnimatedStyle}>
             <View
               className={cn(
-                "p-2 -mt-7 rounded-xl border border-border transition-all duration-300",
+                "-mt-7 rounded-xl border border-border p-2 transition-all duration-300",
                 isSelected ? "pt-9" : "pt-8",
                 pdsUrl !== null
                   ? pdsUrl.hostname.includes("bsky.network")
@@ -263,7 +261,7 @@ const LoginScreen = () => {
                 <Text>
                   PDS:{" "}
                   {pdsUrl.hostname.includes("bsky.network") && (
-                    <View className="gap-0.5 pr-0.5 flex-row">
+                    <View className="flex-row gap-0.5 pr-0.5">
                       <Icon
                         icon={FontAwesome6}
                         className="color-bsky"
@@ -286,20 +284,20 @@ const LoginScreen = () => {
                 <Text className="justify-baseline px-1">
                   <Icon
                     icon={AlertCircle}
-                    className="mr-1 inline -mt-0.5 text-xs"
+                    className="-mt-0.5 mr-1 inline text-xs"
                     size={24}
                   />
                   {pdsResolutionError}
                 </Text>
               ) : (
-                <Text className="text-muted-foreground px-1">
+                <Text className="px-1 text-muted-foreground">
                   Resolving PDS...
                 </Text>
               )}
             </View>
           </Animated.View>
         </View>
-        <View className="flex flex-row justify-between items-center">
+        <View className="flex flex-row items-center justify-between">
           <Link href="https://bsky.app/signup" asChild>
             <Button variant="link" className="p-0">
               <Text className="text-md text-secondary">

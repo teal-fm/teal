@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO releases (mbid, name, discriminant) VALUES ($1, $2, $3)\n                ON CONFLICT (mbid) DO UPDATE SET\n                    name = EXCLUDED.name,\n                    discriminant = COALESCE(EXCLUDED.discriminant, releases.discriminant)\n                RETURNING mbid;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f8caa11009d6220e139157dff83a0d3ffb37fcd8590527a5d7d3fc6e2e8f3672"
+}
