@@ -20,6 +20,10 @@
           "track": {
             "type": "ref",
             "ref": "fm.teal.alpha.feed.social.defs#trackView"
+          },
+          "order": {
+            "type": "integer",
+            "description": "The order of the track in the playlist"
           }
         }
       }
