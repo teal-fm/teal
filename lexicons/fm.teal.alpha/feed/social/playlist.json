@@ -5,7 +5,7 @@
   "defs": {
     "main": {
       "type": "record",
-      "description": "Record containing a repost for a teal.fm post.",
+      "description": "Record containing the playlist metadata.",
       "key": "tid",
       "record": {
         "type": "object",
@@ -21,7 +21,7 @@
           "createdAt": {
             "type": "string",
             "format": "datetime",
-            "description": "Client-declared timestamp when this post was originally created."
+            "description": "Client-declared timestamp when this playlist was originally created."
           }
         }
       }
