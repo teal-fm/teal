@@ -10,7 +10,7 @@
     },
     "build:rust": {
       "dependsOn": ["^build"],
-      "outputs": ["../target/**", "./target/**"]
+      "outputs": ["../../target/**"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]

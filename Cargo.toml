@@ -44,7 +44,7 @@ tokio-tungstenite = { version = "*", default-features = false, features = [
     "handshake",
 ] }
 atrium-api = "0.25"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
 types = { path = "services/types" }
 rocketman = "0.2.3"
