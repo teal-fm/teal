@@ -2,10 +2,12 @@
   "name": "@repo/cadet",
   "private": true,
   "scripts": {
-    "build": "cargo build --release",
-    "build:rust": "cargo build --release",
-    "dev": "cargo watch -x 'run'",
-    "test": "cargo test",
-    "test:rust": "cargo test"
-  }
+    "install": ":",
+    "build": "cargo build --release --manifest-path ../../Cargo.toml -p cadet",
+    "build:rust": "cargo build --release --manifest-path ../../Cargo.toml -p cadet",
+    "dev": "cargo watch -x 'run -p cadet'",
+    "test": "cargo test -p cadet",
+    "test:rust": "cargo test -p cadet"
+  },
+  "packageManager": "pnpm@10.18.0"
 }

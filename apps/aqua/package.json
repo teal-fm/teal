@@ -2,10 +2,12 @@
   "name": "@repo/aqua",
   "private": true,
   "scripts": {
-    "build": "cargo build --release",
-    "build:rust": "cargo build --release",
-    "dev": "cargo watch -x 'run'",
-    "test": "cargo test",
-    "test:rust": "cargo test"
-  }
+    "install": ":",
+    "build": "cargo build --release --manifest-path ../../Cargo.toml -p aqua",
+    "build:rust": "cargo build --release --manifest-path ../../Cargo.toml -p aqua",
+    "dev": "cargo watch -x 'run -p aqua'",
+    "test": "cargo test -p aqua",
+    "test:rust": "cargo test -p aqua"
+  },
+  "packageManager": "pnpm@10.18.0"
 }

@@ -37,25 +37,16 @@ jobs:
       - name: Build Node packages
         run: pnpm build
 
-      - name: Build Rust services (x86_64)
+      - name: Build Rust workspace (x86_64)
         run: |
-          cargo build --release --all-features
-
-      - name: Build Rust apps (x86_64)
-        run: |
-          cd apps/aqua
-          cargo build --release --all-features
+          cargo build --release --all-features --workspace
 
       - name: Collect executables (x86_64)
         run: |
           mkdir -p artifacts/x86_64
-          # Copy service executables
-          if [ -d "services/target/release" ]; then
-            find services/target/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/x86_64/ \;
-          fi
-          # Copy app executables
-          if [ -d "apps/aqua/target/release" ]; then
-            find apps/aqua/target/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/x86_64/ \;
+          # Copy all executables from unified workspace
+          if [ -d "target/release" ]; then
+            find target/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/x86_64/ \;
           fi
           echo "x86_64 executables:"
           ls -la artifacts/x86_64/ || echo "No executables found"
@@ -107,20 +98,16 @@ jobs:
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
           echo "CROSS_NO_WARNINGS=0" >> $GITHUB_ENV
 
-      - name: Cross-compile services
+      - name: Cross-compile workspace
         run: |
-          cross build --release --all-features --target ${{ matrix.target }}
+          cross build --release --all-features --workspace --target ${{ matrix.target }}
 
       - name: Collect cross-compiled executables
         run: |
           mkdir -p artifacts/${{ matrix.target }}
-          # Copy service executables
-          if [ -d "services/target/${{ matrix.target }}/release" ]; then
-            find services/target/${{ matrix.target }}/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/${{ matrix.target }}/ \;
-          fi
-          # Copy app executables
-          if [ -d "apps/aqua/target/${{ matrix.target }}/release" ]; then
-            find apps/aqua/target/${{ matrix.target }}/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/${{ matrix.target }}/ \;
+          # Copy all executables from unified workspace
+          if [ -d "target/${{ matrix.target }}/release" ]; then
+            find target/${{ matrix.target }}/release -maxdepth 1 -type f -executable ! -name "*.d" ! -name "*-*" -exec cp {} artifacts/${{ matrix.target }}/ \;
           fi
           echo "Cross-compiled executables for ${{ matrix.target }}:"
           ls -la artifacts/${{ matrix.target }}/ || echo "No executables found"
