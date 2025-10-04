@@ -9,5 +9,8 @@
     "test": "cargo test -p aqua",
     "test:rust": "cargo test -p aqua"
   },
-  "packageManager": "pnpm@10.18.0"
+  "packageManager": "pnpm@10.18.0",
+  "dependencies": {
+    "jest-expo": "^54.0.12"
+  }
 }
