@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                p.did,\n                p.track_name,\n                -- TODO: replace with actual\n                STRING_AGG(pa.artist_name || '|' || TEXT(pa.artist_mbid), ',') AS artists,\n                p.release_name,\n                p.duration,\n                p.uri,\n                p.recording_mbid,\n                p.release_mbid\n\n            FROM plays AS p\n            LEFT JOIN play_to_artists AS pa ON pa.play_uri = p.uri\n            GROUP BY p.did, p.track_name, p.release_name, p.played_time, p.duration, p.uri, p.recording_mbid, p.release_mbid\n            ORDER BY p.played_time DESC\n            LIMIT $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "did",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "track_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "artists",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "release_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "duration",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "uri",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "recording_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "release_mbid",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      true,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "78d9f0eb3a550928cccd0a8c0faf3c9176a354238bf32b97a73a7bb41014b5eb"
+}
