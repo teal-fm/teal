@@ -11,12 +11,18 @@
     "build": "expo export --output-dir ./build --platform all",
     "build:web": "expo export --output-dir ./build --platform web --clear",
     "build:ios": "expo export --output-dir ./build --platform ios --clear",
-    "test": "jest --watchAll",
+    "test": "jest",
     "lexgen": "lex gen-server ./lexicons/generated/server/ ./lexicons/src/",
     "install": "expo prebuild"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest-setup.ts"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@rn-primitives/.*))"
+    ]
   },
   "dependencies": {
     "@aquareum/atproto-oauth-client-react-native": "^0.0.1",
@@ -77,9 +83,13 @@
     "@expo/prebuild-config": "^54.0.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@react-native/typescript-config": "^0.76.5",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.10.1",
     "@types/react": "19.1.17",
     "@types/react-dom": "19.1.11",
+    "@types/react-test-renderer": "^19.1.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-plugin-react-compiler": "19.0.0-beta-37ed2a7-20241206",
     "eslint": "^8",
