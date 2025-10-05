@@ -17,15 +17,10 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="w-screen max-w-md flex-1 justify-center gap-4 p-8 pb-32">
+      <View className="w-screen max-w-md flex-1 items-center justify-center gap-4 p-8 pb-32">
+        <Icon icon={AtSignIcon} className="mb-2 mr-1.5 color-bsky" size={48} />
         <Text className="-mb-2 text-center text-3xl text-foreground">
-          Sign up via <br /> the{" "}
-          <Icon
-            icon={AtSignIcon}
-            className="mb-2 mr-1.5 inline color-bsky"
-            size={32}
-          />
-          Atmosphere
+          Sign up via the Atmosphere
         </Text>
         <Text className="text-center text-xl text-foreground">
           No account? No problem.

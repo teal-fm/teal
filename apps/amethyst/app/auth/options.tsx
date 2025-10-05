@@ -24,7 +24,7 @@ export default function AuthOptions() {
           <Text className="font-serif-old-italic text-5xl">.fm</Text>
         </Text>
       </View>
-      <Link href="/auth/login" className="text-secondary">
+      <Link href="/auth/login" asChild>
         <Button
           className="dark-blue-800 flex flex-row items-center justify-center gap-2 rounded-full dark:bg-blue-400"
           size="lg"
@@ -32,7 +32,7 @@ export default function AuthOptions() {
           <Text>Sign in with ATProto</Text>
         </Button>
       </Link>
-      <Link href="/auth/signup" className="text-secondary">
+      <Link href="/auth/signup" asChild>
         <Button
           className="flex flex-row items-center justify-center rounded-full"
           size="lg"
