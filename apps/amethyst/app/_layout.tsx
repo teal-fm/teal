@@ -20,7 +20,8 @@ import { GlobalTextClassContext } from "../components/ui/text";
 
 import "../global.css";
 
-import { SafeAreaView, View } from "react-native";
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 let defaultFamily = (weight: string) => {

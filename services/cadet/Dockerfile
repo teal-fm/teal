@@ -68,9 +68,6 @@ ENV OPENSSL_INCLUDE_DIR_aarch64_unknown_linux_gnu=/usr/include/openssl
 # Force SQLx to use offline mode with workspace cache
 ENV SQLX_OFFLINE=true
 
-# copy sqlx in
-COPY ./.sqlx ./services/cadet/.sqlx
-
 # Debug platform detection and run build
 RUN echo "DEBUG Before target.sh: TARGETPLATFORM=$TARGETPLATFORM TARGETARCH=$TARGETARCH" && \
     . ./target.sh && \

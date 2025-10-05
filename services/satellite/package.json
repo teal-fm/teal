@@ -2,10 +2,12 @@
   "name": "@repo/satellite",
   "private": true,
   "scripts": {
-    "build": "cargo build --release",
-    "build:rust": "cargo build --release",
-    "dev": "cargo watch -x 'run'",
-    "test": "cargo test",
-    "test:rust": "cargo test"
-  }
+    "install": ":",
+    "build": "cargo build --release --manifest-path ../../Cargo.toml -p satellite",
+    "build:rust": "cargo build --release --manifest-path ../../Cargo.toml -p satellite",
+    "dev": "cargo watch -x 'run -p satellite'",
+    "test": "cargo test -p satellite",
+    "test:rust": "cargo test -p satellite"
+  },
+  "packageManager": "pnpm@10.18.0"
 }
