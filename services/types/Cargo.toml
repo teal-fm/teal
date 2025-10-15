@@ -4,28 +4,19 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-atrium-api.workspace = true
-atrium-xrpc = "0.12.1"
-chrono = "0.4.39"
-http = "1.2.0"
-ipld-core = { version = "0.4.2", features = ["serde"] }
-langtag = { version = "0.3", features = ["serde"] }
-regex = "1.11.1"
+jacquard-common.workspace = true
+jacquard-derive.workspace = true
 serde = { workspace = true, features = ["derive"] }
-serde_bytes = "0.11.15"
-serde_ipld_dagcbor = "0.6.2"
-serde_json.workspace = true
-thiserror = "2.0.11"
+thiserror.workspace = true
+miette = "7.6"
+bon = "3.8.0"
+bytes = "1.10.1"
 
 # features
 [features]
-default = [
-    "namespace-fmteal",
-    "namespace-appbsky",
-    "namespace-toolsozone",
-    "namespace-chatbsky",
-]
-namespace-fmteal = []
-namespace-appbsky = []
-namespace-toolsozone = []
-namespace-chatbsky = []
+default = ["app_bsky", "com_atproto", "fm_teal"]
+app_bsky = []
+chat_bsky = []
+com_atproto = []
+fm_teal = []
+tools_ozone = []

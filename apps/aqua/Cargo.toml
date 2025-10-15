@@ -9,7 +9,6 @@ sys-info = "0.9.1"
 axum = { workspace = true, features = ["multipart"] }
 tower-http = { workspace = true, features = ["cors"] }
 time.workspace = true
-atrium-api.workspace = true
 async-trait.workspace = true
 anyhow.workspace = true
 serde = { workspace = true, features = ["derive"] }
@@ -21,6 +20,7 @@ sqlx = { workspace = true, features = ["time"] }
 dotenvy.workspace = true
 types.workspace = true
 chrono.workspace = true
+jacquard-common.workspace = true
 
 # CAR import functionality
 iroh-car.workspace = true
