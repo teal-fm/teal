@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-use atrium_api::types::string::{Datetime, Did};
-use multibase::Base;
+use jacquard_common::types::{did::Did, value};
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::PgPool;
@@ -11,17 +10,8 @@ pub struct ActorProfileIngestor {
     sql: PgPool,
 }
 
-fn get_blob_ref(blob_ref: &atrium_api::types::BlobRef) -> anyhow::Result<String> {
-    match blob_ref {
-        atrium_api::types::BlobRef::Typed(r) => match r {
-            atrium_api::types::TypedBlobRef::Blob(blob) => blob
-                .r#ref
-                .0
-                .to_string_of_base(Base::Base32Lower)
-                .map_err(|e| anyhow::anyhow!(e)),
-        },
-        atrium_api::types::BlobRef::Untyped(u) => Ok(u.cid.clone()),
-    }
+fn get_blob_ref(blob_ref: &jacquard_common::types::blob::Blob) -> String {
+    blob_ref.r#ref.as_ref().to_string()
 }
 
 impl ActorProfileIngestor {
@@ -29,10 +19,10 @@ impl ActorProfileIngestor {
         Self { sql }
     }
 
-    pub async fn insert_profile(
+    pub async fn insert_profile<'a>(
         &self,
-        provided_did: Did,
-        profile: &types::fm::teal::alpha::actor::profile::RecordData,
+        provided_did: Did<'_>,
+        profile: &'a types::fm_teal::alpha::actor::profile::Profile<'a>,
     ) -> anyhow::Result<()> {
         dbg!(&profile);
         // TODO: cache the doc for like 8 hours or something
@@ -40,20 +30,17 @@ impl ActorProfileIngestor {
 
         let handle = did.doc.also_known_as.first().to_owned();
 
-        let created_time = profile.created_at.clone().unwrap_or(Datetime::now());
+        let created_time = profile
+            .created_at
+            .clone()
+            .unwrap_or(jacquard_common::types::string::Datetime::now());
         let time_datetime =
             time::OffsetDateTime::from_unix_timestamp(created_time.as_ref().timestamp())
                 .unwrap_or_else(|_| time::OffsetDateTime::now_utc());
 
         dbg!(&profile.avatar);
-        let avatar = profile
-            .avatar
-            .clone()
-            .and_then(|bref| get_blob_ref(&bref).ok());
-        let banner = profile
-            .banner
-            .clone()
-            .and_then(|bref| get_blob_ref(&bref).ok());
+        let avatar = profile.avatar.as_ref().map(|bref| get_blob_ref(bref));
+        let banner = profile.banner.as_ref().map(|bref| get_blob_ref(bref));
         sqlx::query!(
             r#"
                 INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, created_at)
@@ -68,8 +55,8 @@ impl ActorProfileIngestor {
             "#,
             did.identity,
             handle,
-            profile.display_name,
-            profile.description,
+            profile.display_name.as_ref().map(|s| s.as_ref()),
+            profile.description.as_ref().map(|s| s.as_ref()),
             serde_json::to_value(profile.description_facets.clone())?,
             avatar,
             banner,
@@ -79,7 +66,7 @@ impl ActorProfileIngestor {
         .await?;
         Ok(())
     }
-    pub async fn remove_profile(&self, did: Did) -> anyhow::Result<()> {
+    pub async fn remove_profile(&self, did: Did<'_>) -> anyhow::Result<()> {
         sqlx::query!(
             r#"
                 DELETE FROM profiles WHERE did = $1
@@ -97,14 +84,14 @@ impl LexiconIngestor for ActorProfileIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record = serde_json::from_value::<
-                    types::fm::teal::alpha::actor::profile::RecordData,
-                >(record.clone())?;
+                let data = &value::Data::from_json(record).to_owned()?;
+                let record: types::fm_teal::alpha::actor::profile::Profile =
+                    value::from_data(data)?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref _cid) = commit.cid {
                         // TODO: verify cid
                         self.insert_profile(
-                            Did::new(message.did)
+                            Did::new(&message.did)
                                 .map_err(|e| anyhow::anyhow!("Failed to create Did: {}", e))?,
                             &record,
                         )
@@ -114,7 +101,7 @@ impl LexiconIngestor for ActorProfileIngestor {
             } else {
                 println!("{}: Message {} deleted", message.did, commit.rkey);
                 self.remove_profile(
-                    Did::new(message.did)
+                    Did::new(&message.did)
                         .map_err(|e| anyhow::anyhow!("Failed to create Did: {}", e))?,
                 )
                 .await?;

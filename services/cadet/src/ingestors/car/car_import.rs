@@ -37,6 +37,8 @@ use async_trait::async_trait;
 use atmst::{mst::Mst, Bytes, CarImporter};
 use base64::Engine;
 use futures::StreamExt;
+use jacquard_common::types::did::Did;
+use jacquard_common::types::value;
 use redis::AsyncCommands;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
@@ -308,92 +310,72 @@ impl CarImportIngestor {
 
     /// Process a play record using the existing PlayIngestor
     async fn process_play_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        match serde_json::from_value::<types::fm::teal::alpha::feed::play::RecordData>(data.clone())
-        {
-            Ok(play_record) => {
-                let play_ingestor =
-                    super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
-                let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
+        let data = value::Data::from_json(data).to_owned()?;
+        let play_record = value::from_data::<types::fm_teal::alpha::feed::play::Play>(&data)?;
 
-                play_ingestor
-                    .insert_play(
-                        &play_record,
-                        &uri,
-                        &format!("car-import-{}", uuid::Uuid::new_v4()),
-                        did,
-                        rkey,
-                    )
-                    .await?;
+        let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
+        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
 
-                info!(
-                    "Successfully stored play record: {} by {:?}",
-                    play_record.track_name, play_record.artist_names
-                );
-                Ok(())
-            }
-            Err(e) => {
-                warn!("Failed to deserialize play record data: {}", e);
-                Err(anyhow!("Invalid play record format: {}", e))
-            }
-        }
+        play_ingestor
+            .insert_play(
+                &play_record,
+                &uri,
+                &format!("car-import-{}", uuid::Uuid::new_v4()),
+                did,
+                rkey,
+            )
+            .await?;
+
+        info!(
+            "Successfully stored play record: {} by {:?}",
+            play_record.track_name, play_record.artist_names
+        );
+        Ok(())
     }
 
     /// Process a profile record using the existing ActorProfileIngestor
     async fn process_profile_record(&self, data: &Value, did: &str, _rkey: &str) -> Result<()> {
-        match serde_json::from_value::<types::fm::teal::alpha::actor::profile::RecordData>(
-            data.clone(),
-        ) {
-            Ok(profile_record) => {
-                let profile_ingestor =
-                    super::super::teal::actor_profile::ActorProfileIngestor::new(self.sql.clone());
-                let did_typed = atrium_api::types::string::Did::new(did.to_string())
-                    .map_err(|e| anyhow!("Failed to create Did: {}", e))?;
+        let data = value::Data::from_json(data).to_owned()?;
+        let profile_record =
+            value::from_data::<types::fm_teal::alpha::actor::profile::Profile>(&data)?;
 
-                profile_ingestor
-                    .insert_profile(did_typed, &profile_record)
-                    .await?;
+        let profile_ingestor =
+            super::super::teal::actor_profile::ActorProfileIngestor::new(self.sql.clone());
+        let did_typed = jacquard_common::types::did::Did::new(did)
+            .map_err(|e| anyhow!("Failed to create Did: {}", e))?;
 
-                info!(
-                    "Successfully stored profile record: {:?}",
-                    profile_record.display_name
-                );
-                Ok(())
-            }
-            Err(e) => {
-                warn!("Failed to deserialize profile record data: {}", e);
-                Err(anyhow!("Invalid profile record format: {}", e))
-            }
-        }
+        profile_ingestor
+            .insert_profile(did_typed, &profile_record)
+            .await?;
+
+        info!(
+            "Successfully stored profile record: {:?}",
+            profile_record.display_name
+        );
+        Ok(())
     }
 
     /// Process a status record using the existing ActorStatusIngestor
     async fn process_status_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        match serde_json::from_value::<types::fm::teal::alpha::actor::status::RecordData>(
-            data.clone(),
-        ) {
-            Ok(status_record) => {
-                let status_ingestor =
-                    super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
-                let did_typed = atrium_api::types::string::Did::new(did.to_string())
-                    .map_err(|e| anyhow!("Failed to create Did: {}", e))?;
+        let data = value::Data::from_json(data).to_owned()?;
+        let status_record =
+            value::from_data::<types::fm_teal::alpha::actor::status::Status>(&data)?;
 
-                status_ingestor
-                    .insert_status(
-                        did_typed,
-                        rkey,
-                        &format!("car-import-{}", uuid::Uuid::new_v4()),
-                        &status_record,
-                    )
-                    .await?;
+        let status_ingestor =
+            super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
+        let did_typed = Did::new(did).map_err(|e| anyhow!("Failed to create Did: {}", e))?;
 
-                info!("Successfully stored status record from CAR import");
-                Ok(())
-            }
-            Err(e) => {
-                warn!("Failed to deserialize status record data: {}", e);
-                Err(anyhow!("Invalid status record format: {}", e))
-            }
-        }
+        status_ingestor
+            .insert_status(
+                did_typed,
+                rkey,
+                &format!("car-import-{}", uuid::Uuid::new_v4()),
+                &status_record,
+            )
+            .await?;
+
+        info!("Successfully stored status record from CAR import");
+        Ok(())
     }
 
     /// Fetch and process a CAR file from a PDS for a given identity

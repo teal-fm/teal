@@ -5,7 +5,6 @@ edition = "2021"
 
 
 [dependencies]
-atrium-api.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
 reqwest.workspace = true
@@ -27,6 +26,7 @@ time.workspace = true
 dotenvy.workspace = true
 multihash-codetable = { version = "0.1.4", features = ["sha2", "serde"] }
 multibase = "0.9.1"
+jacquard-common.workspace = true
 
 # CAR file processing
 iroh-car.workspace = true
