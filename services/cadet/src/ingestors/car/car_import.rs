@@ -310,7 +310,7 @@ impl CarImportIngestor {
 
     /// Process a play record using the existing PlayIngestor
     async fn process_play_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        let data = value::Data::from_json(data).to_owned()?;
+        let data = value::Data::from_json(data)?;
         let play_record = value::from_data::<types::fm_teal::alpha::feed::play::Play>(&data)?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
