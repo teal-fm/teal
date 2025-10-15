@@ -1,29 +1,30 @@
 use async_trait::async_trait;
-use types::fm::teal::alpha::feed::defs::PlayViewData;
-use types::fm::teal::alpha::stats::defs::{ArtistViewData, ReleaseViewData};
+use jacquard_common::from_json_value;
+use types::fm_teal::alpha::feed::PlayView;
+use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};
 
 #[async_trait]
 pub trait StatsRepo: Send + Sync {
-    async fn get_top_artists(&self, limit: Option<i32>) -> anyhow::Result<Vec<ArtistViewData>>;
-    async fn get_top_releases(&self, limit: Option<i32>) -> anyhow::Result<Vec<ReleaseViewData>>;
+    async fn get_top_artists(&self, limit: Option<i32>) -> anyhow::Result<Vec<ArtistView>>;
+    async fn get_top_releases(&self, limit: Option<i32>) -> anyhow::Result<Vec<ReleaseView>>;
     async fn get_user_top_artists(
         &self,
         did: &str,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ArtistViewData>>;
+    ) -> anyhow::Result<Vec<ArtistView>>;
     async fn get_user_top_releases(
         &self,
         did: &str,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ReleaseViewData>>;
-    async fn get_latest(&self, limit: Option<i32>) -> anyhow::Result<Vec<PlayViewData>>;
+    ) -> anyhow::Result<Vec<ReleaseView>>;
+    async fn get_latest(&self, limit: Option<i32>) -> anyhow::Result<Vec<PlayView>>;
 }
 
 #[async_trait]
 impl StatsRepo for PgDataSource {
-    async fn get_top_artists(&self, limit: Option<i32>) -> anyhow::Result<Vec<ArtistViewData>> {
+    async fn get_top_artists(&self, limit: Option<i32>) -> anyhow::Result<Vec<ArtistView>> {
         let limit = limit.unwrap_or(50).min(100) as i64;
 
         let rows = sqlx::query!(
@@ -48,10 +49,11 @@ impl StatsRepo for PgDataSource {
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
             if let Some(name) = row.name {
-                result.push(ArtistViewData {
-                    mbid: row.mbid.to_string(),
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                result.push(ArtistView {
+                    mbid: Some(row.mbid.to_string().into()),
+                    name: Some(name.into()),
+                    play_count: Some(row.play_count.unwrap_or(0)),
+                    extra_data: Default::default(),
                 });
             }
         }
@@ -59,7 +61,7 @@ impl StatsRepo for PgDataSource {
         Ok(result)
     }
 
-    async fn get_top_releases(&self, limit: Option<i32>) -> anyhow::Result<Vec<ReleaseViewData>> {
+    async fn get_top_releases(&self, limit: Option<i32>) -> anyhow::Result<Vec<ReleaseView>> {
         let limit = limit.unwrap_or(50).min(100) as i64;
 
         let rows = sqlx::query!(
@@ -83,10 +85,11 @@ impl StatsRepo for PgDataSource {
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
             if let (Some(mbid), Some(name)) = (row.mbid, row.name) {
-                result.push(ReleaseViewData {
-                    mbid: mbid.to_string(),
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                result.push(ReleaseView {
+                    mbid: Some(mbid.to_string().into()),
+                    name: Some(name.into()),
+                    play_count: Some(row.play_count.unwrap_or(0)),
+                    extra_data: Default::default(),
                 });
             }
         }
@@ -98,7 +101,7 @@ impl StatsRepo for PgDataSource {
         &self,
         did: &str,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ArtistViewData>> {
+    ) -> anyhow::Result<Vec<ArtistView>> {
         let limit = limit.unwrap_or(50).min(100) as i64;
 
         let rows = sqlx::query!(
@@ -125,10 +128,11 @@ impl StatsRepo for PgDataSource {
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
             if let Some(name) = row.name {
-                result.push(ArtistViewData {
-                    mbid: row.mbid.to_string(),
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                result.push(ArtistView {
+                    mbid: Some(row.mbid.to_string().into()),
+                    name: Some(name.into()),
+                    play_count: Some(row.play_count.unwrap_or(0)),
+                    extra_data: Default::default(),
                 });
             }
         }
@@ -140,7 +144,7 @@ impl StatsRepo for PgDataSource {
         &self,
         did: &str,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ReleaseViewData>> {
+    ) -> anyhow::Result<Vec<ReleaseView>> {
         let limit = limit.unwrap_or(50).min(100) as i64;
 
         let rows = sqlx::query!(
@@ -166,10 +170,11 @@ impl StatsRepo for PgDataSource {
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
             if let (Some(mbid), Some(name)) = (row.mbid, row.name) {
-                result.push(ReleaseViewData {
-                    mbid: mbid.to_string(),
-                    name,
-                    play_count: row.play_count.unwrap_or(0),
+                result.push(ReleaseView {
+                    mbid: Some(mbid.to_string().into()),
+                    name: Some(name.into()),
+                    play_count: Some(row.play_count.unwrap_or(0)),
+                    extra_data: Default::default(),
                 });
             }
         }
@@ -177,7 +182,7 @@ impl StatsRepo for PgDataSource {
         Ok(result)
     }
 
-    async fn get_latest(&self, limit: Option<i32>) -> anyhow::Result<Vec<PlayViewData>> {
+    async fn get_latest(&self, limit: Option<i32>) -> anyhow::Result<Vec<PlayView>> {
         let limit = limit.unwrap_or(50).min(100) as i64;
 
         let rows = sqlx::query!(
@@ -210,26 +215,30 @@ impl StatsRepo for PgDataSource {
 
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
-            let artists: Vec<types::fm::teal::alpha::feed::defs::Artist> = match row.artists {
-                Some(value) => serde_json::from_value(value).unwrap_or_default(),
+            let artists = match row.artists {
+                Some(value) => {
+                    from_json_value::<Vec<types::fm_teal::alpha::feed::Artist<'_>>>(value)
+                        .unwrap_or_default()
+                }
                 None => vec![],
             };
 
-            result.push(PlayViewData {
-                track_name: row.track_name.clone(),
-                track_mb_id: row.recording_mbid.map(|u| u.to_string()),
-                recording_mb_id: row.recording_mbid.map(|u| u.to_string()),
+            result.push(PlayView {
+                track_name: row.track_name.into(),
+                track_mb_id: row.recording_mbid.map(|u| u.to_string().into()),
+                recording_mb_id: row.recording_mbid.map(|u| u.to_string().into()),
                 duration: row.duration.map(|d| d as i64),
-                artists,
-                release_name: row.release_name.clone(),
-                release_mb_id: row.release_mbid.map(|u| u.to_string()),
-                isrc: row.isrc,
-                origin_url: row.origin_url,
-                music_service_base_domain: row.music_service_base_domain,
-                submission_client_agent: row.submission_client_agent,
+                artists: artists.into_iter().map(|a| a.to_owned()).collect(),
+                release_name: row.release_name.map(|s| s.into()),
+                release_mb_id: row.release_mbid.map(|u| u.to_string().into()),
+                isrc: row.isrc.map(|s| s.into()),
+                origin_url: row.origin_url.map(|s| s.into()),
+                music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+                submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time
                     .map(|dt| utc_to_atrium_datetime(crate::repos::time_to_chrono_utc(dt))),
+                extra_data: Default::default(),
             });
         }
 

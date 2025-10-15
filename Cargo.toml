@@ -20,8 +20,8 @@ sqlx = { version = "0.8", features = [
     "chrono",
     "tls-rustls",
 ] }
-jacquard-common = { version = "0.5.0", features = ["reqwest-client"] }
-jacquard-derive = { version = "0.5.0" }
+jacquard-common = { version = "0.5", features = ["reqwest-client"] }
+jacquard-derive = { version = "0.5" }
 serde = { version = "1.0", features = ["derive"] }
 anyhow = "1.0"
 serde_json = "1.0"

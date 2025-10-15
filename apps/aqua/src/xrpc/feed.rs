@@ -1,7 +1,8 @@
 use crate::ctx::Context;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm::teal::alpha::feed::defs::PlayViewData;
+use types::fm_teal::alpha::feed::PlayView;
 
 // mount feed routes
 pub fn feed_routes() -> axum::Router {
@@ -16,8 +17,8 @@ pub struct GetFeedPlayQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetFeedPlayResponse {
-    play: PlayViewData,
+pub struct GetFeedPlayResponse<'a> {
+    play: PlayView<'a>,
 }
 
 pub async fn get_feed_play(
@@ -35,7 +36,9 @@ pub async fn get_feed_play(
         .get_feed_play(identity.as_ref().expect("identity is not none").as_str())
         .await
     {
-        Ok(Some(play)) => Ok(axum::Json(GetFeedPlayResponse { play })),
+        Ok(Some(play)) => Ok(axum::Json(GetFeedPlayResponse {
+            play: play.into_static(),
+        })),
         Ok(None) => Err((StatusCode::NOT_FOUND, "Feed play not found".to_string())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -47,8 +50,8 @@ pub struct GetFeedPlaysQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetFeedPlaysResponse {
-    plays: Vec<PlayViewData>,
+pub struct GetFeedPlaysResponse<'a> {
+    plays: Vec<PlayView<'a>>,
 }
 
 pub async fn get_feed_plays(
@@ -66,7 +69,9 @@ pub async fn get_feed_plays(
     }
 
     match repo.get_feed_plays_for_profile(identities).await {
-        Ok(plays) => Ok(axum::Json(GetFeedPlaysResponse { plays })),
+        Ok(plays) => Ok(axum::Json(GetFeedPlaysResponse {
+            plays: plays.into_static(),
+        })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

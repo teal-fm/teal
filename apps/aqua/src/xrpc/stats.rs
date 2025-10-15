@@ -1,8 +1,9 @@
 use crate::ctx::Context;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm::teal::alpha::feed::defs::PlayViewData;
-use types::fm::teal::alpha::stats::defs::{ArtistViewData, ReleaseViewData};
+use types::fm_teal::alpha::feed::PlayView;
+use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
 
 // mount stats routes
 pub fn stats_routes() -> axum::Router {
@@ -26,8 +27,8 @@ pub struct GetTopArtistsQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetTopArtistsResponse {
-    artists: Vec<ArtistViewData>,
+pub struct GetTopArtistsResponse<'a> {
+    artists: Vec<ArtistView<'a>>,
 }
 
 pub async fn get_top_artists(
@@ -37,7 +38,9 @@ pub async fn get_top_artists(
     let repo = &ctx.db;
 
     match repo.get_top_artists(query.limit).await {
-        Ok(artists) => Ok(axum::Json(GetTopArtistsResponse { artists })),
+        Ok(artists) => Ok(axum::Json(GetTopArtistsResponse {
+            artists: artists.into_static(),
+        })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
@@ -48,8 +51,8 @@ pub struct GetTopReleasesQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetTopReleasesResponse {
-    releases: Vec<ReleaseViewData>,
+pub struct GetTopReleasesResponse<'a> {
+    releases: Vec<ReleaseView<'a>>,
 }
 
 pub async fn get_top_releases(
@@ -59,7 +62,9 @@ pub async fn get_top_releases(
     let repo = &ctx.db;
 
     match repo.get_top_releases(query.limit).await {
-        Ok(releases) => Ok(axum::Json(GetTopReleasesResponse { releases })),
+        Ok(releases) => Ok(axum::Json(GetTopReleasesResponse {
+            releases: releases.into_static(),
+        })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
@@ -71,8 +76,8 @@ pub struct GetUserTopArtistsQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetUserTopArtistsResponse {
-    artists: Vec<ArtistViewData>,
+pub struct GetUserTopArtistsResponse<'a> {
+    artists: Vec<ArtistView<'a>>,
 }
 
 pub async fn get_user_top_artists(
@@ -86,7 +91,9 @@ pub async fn get_user_top_artists(
     }
 
     match repo.get_user_top_artists(&query.actor, query.limit).await {
-        Ok(artists) => Ok(axum::Json(GetUserTopArtistsResponse { artists })),
+        Ok(artists) => Ok(axum::Json(GetUserTopArtistsResponse {
+            artists: artists.into_static(),
+        })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
@@ -98,8 +105,8 @@ pub struct GetUserTopReleasesQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetUserTopReleasesResponse {
-    releases: Vec<ReleaseViewData>,
+pub struct GetUserTopReleasesResponse<'a> {
+    releases: Vec<ReleaseView<'a>>,
 }
 
 pub async fn get_user_top_releases(
@@ -113,7 +120,9 @@ pub async fn get_user_top_releases(
     }
 
     match repo.get_user_top_releases(&query.actor, query.limit).await {
-        Ok(releases) => Ok(axum::Json(GetUserTopReleasesResponse { releases })),
+        Ok(releases) => Ok(axum::Json(GetUserTopReleasesResponse {
+            releases: releases.into_static(),
+        })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
@@ -124,8 +133,8 @@ pub struct GetLatestQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetLatestResponse {
-    plays: Vec<PlayViewData>,
+pub struct GetLatestResponse<'a> {
+    plays: Vec<PlayView<'a>>,
 }
 
 pub async fn get_latest(
@@ -135,7 +144,9 @@ pub async fn get_latest(
     let repo = &ctx.db;
 
     match repo.get_latest(query.limit).await {
-        Ok(plays) => Ok(axum::Json(GetLatestResponse { plays })),
+        Ok(plays) => Ok(axum::Json(GetLatestResponse {
+            plays: plays.into_static(),
+        })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
