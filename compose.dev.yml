@@ -37,7 +37,7 @@ services:
   cadet:
     build:
       context: .
-      dockerfile: apps/cadet/Dockerfile
+      dockerfile: services/cadet/Dockerfile
     container_name: cadet-app
     ports:
       - "3001:3000"
