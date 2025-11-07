@@ -1,0 +1,24 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.social.like",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | The action of 'Liking' a Teal.fm post.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record containing a like for a teal.fm post.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "createdAt"],
+        "properties": {
+          "subject": { "type": "ref", "ref": "com.atproto.repo.strongRef" },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this post was originally created."
+          }
+        }
+      }
+    }
+  }
+}
