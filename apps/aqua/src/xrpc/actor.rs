@@ -1,7 +1,8 @@
 use crate::ctx::Context;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm::teal::alpha::actor::defs::ProfileViewData;
+use types::fm_teal::alpha::actor::ProfileView;
 
 // mount actor routes
 pub fn actor_routes() -> axum::Router {
@@ -16,8 +17,8 @@ pub struct GetProfileQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetProfileResponse {
-    profile: ProfileViewData,
+pub struct GetProfileResponse<'a> {
+    profile: ProfileView<'a>,
 }
 
 pub async fn get_actor(
@@ -35,7 +36,9 @@ pub async fn get_actor(
         .get_actor_profile(identity.as_ref().expect("actor is not none").as_str())
         .await
     {
-        Ok(Some(profile)) => Ok(axum::Json(GetProfileResponse { profile })),
+        Ok(Some(profile)) => Ok(axum::Json(GetProfileResponse {
+            profile: profile.into_static(),
+        })),
         Ok(None) => Err((StatusCode::NOT_FOUND, "Profile not found".to_string())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -47,8 +50,8 @@ pub struct GetProfilesQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetProfilesResponse {
-    profiles: Vec<ProfileViewData>,
+pub struct GetProfilesResponse<'a> {
+    profiles: Vec<ProfileView<'a>>,
 }
 
 pub async fn get_actors(
@@ -63,7 +66,9 @@ pub async fn get_actors(
     }
 
     match repo.get_multiple_actor_profiles(actor).await {
-        Ok(profiles) => Ok(axum::Json(GetProfilesResponse { profiles })),
+        Ok(profiles) => Ok(axum::Json(GetProfilesResponse {
+            profiles: profiles.into_static(),
+        })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

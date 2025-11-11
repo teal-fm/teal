@@ -20,8 +20,8 @@ pub trait DataSource: ActorProfileRepo + FeedPlayRepo + StatsRepo + Send + Sync 
 
 pub fn utc_to_atrium_datetime(
     dt: chrono::DateTime<chrono::Utc>,
-) -> atrium_api::types::string::Datetime {
-    atrium_api::types::string::Datetime::new(
+) -> jacquard_common::types::string::Datetime {
+    jacquard_common::types::string::Datetime::new(
         dt.with_timezone(&chrono::FixedOffset::west_opt(0).expect("0 is not negative")),
     )
 }

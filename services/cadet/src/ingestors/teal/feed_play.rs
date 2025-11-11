@@ -1,6 +1,9 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
-use atrium_api::types::string::Datetime;
+use jacquard_common::{
+    types::{string::Datetime, value},
+    IntoStatic,
+};
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::{types::Uuid, PgPool};
@@ -220,8 +223,8 @@ pub struct PlayIngestor {
 }
 
 fn clean(
-    record: &types::fm::teal::alpha::feed::play::RecordData,
-) -> types::fm::teal::alpha::feed::play::RecordData {
+    record: &types::fm_teal::alpha::feed::play::Play<'_>,
+) -> types::fm_teal::alpha::feed::play::Play<'static> {
     let mut cleaned = record.clone();
 
     // Clean artist MBIDs inside artists vector, if present
@@ -258,7 +261,7 @@ fn clean(
         }
     }
 
-    cleaned
+    cleaned.into_static()
 }
 
 impl PlayIngestor {
@@ -1136,7 +1139,7 @@ impl PlayIngestor {
 
     pub async fn insert_play(
         &self,
-        play_record: &types::fm::teal::alpha::feed::play::RecordData,
+        play_record: &types::fm_teal::alpha::feed::play::Play<'_>,
         uri: &str,
         cid: &str,
         did: &str,
@@ -1150,7 +1153,7 @@ impl PlayIngestor {
         if let Some(ref artists) = &play_record.artists {
             for artist in artists {
                 let artist_name = artist.artist_name.clone();
-                artist_names_raw.push(artist_name.clone());
+                artist_names_raw.push(artist_name.as_str().to_owned());
                 let artist_mbid = artist.artist_mb_id.as_deref();
 
                 let artist_id = self
@@ -1161,14 +1164,14 @@ impl PlayIngestor {
                         play_record.release_name.as_deref(),
                     )
                     .await?;
-                parsed_artists.push((artist_id, artist_name.clone()));
+                parsed_artists.push((artist_id, artist_name.as_str().to_owned()));
             }
         } else if let Some(artist_names) = &play_record.artist_names {
             for (index, artist_name) in artist_names.iter().enumerate() {
-                artist_names_raw.push(artist_name.clone());
+                artist_names_raw.push(artist_name.as_str().to_owned());
 
                 let artist_mbid_opt = if let Some(ref mbid_list) = play_record.artist_mb_ids {
-                    mbid_list.get(index)
+                    mbid_list.get(index).map(|s| s.as_str())
                 } else {
                     None
                 };
@@ -1176,12 +1179,12 @@ impl PlayIngestor {
                 let artist_id = self
                     .find_or_create_artist_with_fuzzy_matching(
                         artist_name,
-                        artist_mbid_opt.map(|s| s.as_str()),
+                        artist_mbid_opt,
                         &play_record.track_name,
                         play_record.release_name.as_deref(),
                     )
                     .await?;
-                parsed_artists.push((artist_id, artist_name.clone()));
+                parsed_artists.push((artist_id, artist_name.as_str().to_owned()));
             }
         } else {
             // No artist information provided - create a fallback artist
@@ -1246,7 +1249,7 @@ impl PlayIngestor {
 
         // let release_discriminant = play_record.release_discriminant.clone().or_else(|| {
         let release_discriminant = {
-            if let Some(ref release_name) = play_record.release_name {
+            if let Some(release_name) = &play_record.release_name {
                 futures::executor::block_on(async {
                     // Try edition-specific patterns first, then general patterns
                     self.extract_edition_discriminant_from_db(release_name)
@@ -1271,42 +1274,48 @@ impl PlayIngestor {
 
         sqlx::query!(
             r#"
-                INSERT INTO plays (
-                    uri, cid, did, rkey, isrc, duration, track_name, played_time,
-                    processed_time, release_mbid, release_name, recording_mbid,
-                    submission_client_agent, music_service_base_domain, artist_names_raw,
-                    track_discriminant, release_discriminant
-                ) VALUES (
-                    $1, $2, $3, $4, $5, $6, $7, $8,
-                    NOW(), $9, $10, $11, $12, $13, $14, $15, $16
-                ) ON CONFLICT(uri) DO UPDATE SET
-                    isrc = EXCLUDED.isrc,
-                    duration = EXCLUDED.duration,
-                    track_name = EXCLUDED.track_name,
-                    played_time = EXCLUDED.played_time,
-                    processed_time = EXCLUDED.processed_time,
-                    release_mbid = EXCLUDED.release_mbid,
-                    release_name = EXCLUDED.release_name,
-                    recording_mbid = EXCLUDED.recording_mbid,
-                    submission_client_agent = EXCLUDED.submission_client_agent,
-                    music_service_base_domain = EXCLUDED.music_service_base_domain,
-                    artist_names_raw = EXCLUDED.artist_names_raw,
-                    track_discriminant = EXCLUDED.track_discriminant,
-                    release_discriminant = EXCLUDED.release_discriminant;
-            "#,
+                    INSERT INTO plays (
+                        uri, cid, did, rkey, isrc, duration, track_name, played_time,
+                        processed_time, release_mbid, release_name, recording_mbid,
+                        submission_client_agent, music_service_base_domain, artist_names_raw,
+                        track_discriminant, release_discriminant
+                    ) VALUES (
+                        $1, $2, $3, $4, $5, $6, $7, $8,
+                        NOW(), $9, $10, $11, $12, $13, $14, $15, $16
+                    ) ON CONFLICT(uri) DO UPDATE SET
+                        isrc = EXCLUDED.isrc,
+                        duration = EXCLUDED.duration,
+                        track_name = EXCLUDED.track_name,
+                        played_time = EXCLUDED.played_time,
+                        processed_time = EXCLUDED.processed_time,
+                        release_mbid = EXCLUDED.release_mbid,
+                        release_name = EXCLUDED.release_name,
+                        recording_mbid = EXCLUDED.recording_mbid,
+                        submission_client_agent = EXCLUDED.submission_client_agent,
+                        music_service_base_domain = EXCLUDED.music_service_base_domain,
+                        artist_names_raw = EXCLUDED.artist_names_raw,
+                        track_discriminant = EXCLUDED.track_discriminant,
+                        release_discriminant = EXCLUDED.release_discriminant;
+                "#,
             uri,
             cid,
             did,
             rkey,
-            play_record.isrc, // Assuming ISRC is in play_record
+            play_record.isrc.as_ref().map(|s| s.as_ref()),
             play_record.duration.map(|d| d as i32),
-            play_record.track_name,
+            play_record.track_name.as_ref(),
             time_datetime,
             release_mbid_opt,
-            play_record.release_name,
+            play_record.release_name.as_ref().map(|s| s.as_ref()),
             recording_mbid_opt,
-            play_record.submission_client_agent,
-            play_record.music_service_base_domain,
+            play_record
+                .submission_client_agent
+                .as_ref()
+                .map(|s| s.as_ref()),
+            play_record
+                .music_service_base_domain
+                .as_ref()
+                .map(|s| s.as_ref()),
             artist_names_json,
             track_discriminant,
             release_discriminant
@@ -1317,17 +1326,17 @@ impl PlayIngestor {
         // Insert plays into the extended join table (supports all artists)
         for (artist_id, artist_name) in &parsed_artists {
             sqlx::query!(
-                r#"
-                    INSERT INTO play_to_artists_extended (play_uri, artist_id, artist_name) VALUES
-                    ($1, $2, $3)
-                    ON CONFLICT (play_uri, artist_id) DO NOTHING;
-                "#,
-                uri,
-                artist_id,
-                artist_name
-            )
-            .execute(&self.sql)
-            .await?;
+                    r#"
+                        INSERT INTO play_to_artists_extended (play_uri, artist_id, artist_name) VALUES
+                        ($1, $2, $3)
+                        ON CONFLICT (play_uri, artist_id) DO NOTHING;
+                    "#,
+                    uri,
+                    artist_id,
+                    artist_name
+                )
+                .execute(&self.sql)
+                .await?;
         }
 
         // Refresh materialized views concurrently (if needed, consider if this should be done less frequently)
@@ -1388,14 +1397,13 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let play_record = serde_json::from_value::<
-                    types::fm::teal::alpha::feed::play::RecordData,
-                >(record.clone())?;
+                let data = &value::Data::from_json(record).to_owned()?;
+                let record: types::fm_teal::alpha::feed::play::Play = value::from_data(data)?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         // TODO: verify cid
                         self.insert_play(
-                            &play_record,
+                            &record,
                             &assemble_at_uri(&message.did, &commit.collection, &commit.rkey),
                             cid,
                             &message.did,
