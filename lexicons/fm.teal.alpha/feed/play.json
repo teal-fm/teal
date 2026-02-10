@@ -65,6 +65,15 @@
             "type": "string",
             "description": "The Musicbrainz release ID"
           },
+          "releaseGroupMbId": {
+            "type": "string",
+            "description": "The Musicbrainz release group ID"
+          },
+          "coverArtUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the cover art"
+          },
           "isrc": {
             "type": "string",
             "description": "The ISRC code associated with the recording"
