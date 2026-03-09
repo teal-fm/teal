@@ -65,9 +65,9 @@ export default function OnboardingPage() {
     checkProfileStatus();
   }, [agent]);
 
-  const handleImageSelectionComplete = (avatar: string, banner: string) => {
-    setAvatarUri(avatar);
-    setBannerUri(banner);
+  const handleImageSelectionComplete = (avatar: string | undefined, banner: string | undefined) => {
+    setAvatarUri(avatar ?? "");
+    setBannerUri(banner ?? "");
     onComplete({ displayName, description }, avatar, banner);
   };
 
@@ -83,12 +83,10 @@ export default function OnboardingPage() {
 
   const onComplete = async (
     updatedProfile: { displayName: any; description: any },
-    newAvatarUri: string,
-    newBannerUri: string,
+    newAvatarUri: string | undefined,
+    newBannerUri: string | undefined,
   ) => {
     if (!agent) return;
-    // Implement your save logic here (e.g., update your database or state)
-    console.log("Saving profile:", updatedProfile, newAvatarUri, newBannerUri);
 
     setSubmissionStep(1);
 
@@ -111,32 +109,23 @@ export default function OnboardingPage() {
     let newAvatarBlob = currentUser?.avatar ?? undefined;
     let newBannerBlob = currentUser?.banner ?? undefined;
     if (newAvatarUri) {
-      console.log(newAvatarUri);
-      // if it is http/s url then do nothing
       if (!newAvatarUri.startsWith("http")) {
         setSubmissionStep(2);
-        console.log("Uploading avatar");
-        // its a b64 encoded data uri, decode it and get a blob
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
-        console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await agent.uploadBlob(blob)).data.blob;
+        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob;
       }
     }
     if (newBannerUri) {
       if (!newBannerUri.startsWith("http")) {
         setSubmissionStep(3);
-        console.log("Uploading banner");
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
-        console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await agent.uploadBlob(blob)).data.blob;
+        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob;
       }
     }
-
-    console.log("done uploading");
 
     setSubmissionStep(4);
 
@@ -173,8 +162,6 @@ export default function OnboardingPage() {
         },
       );
     }
-
-    console.log(post);
 
     // Update profile status to mark onboarding as completed
     const profileStatusRecord: ProfileStatusRecord = {
