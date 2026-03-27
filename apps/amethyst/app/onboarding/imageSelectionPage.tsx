@@ -8,7 +8,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { Pen } from "lucide-react-native";
 
 interface ImageSelectionPageProps {
-  onComplete: (avatarUri: string, bannerUri: string) => void;
+  onComplete: (avatarUri: string | undefined, bannerUri: string | undefined) => void;
   initialAvatar?: string;
   initialBanner?: string;
 }
@@ -39,9 +39,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
     setLoading(false);
   };
   const handleNext = () => {
-    if (avatarUri && bannerUri) {
-      onComplete(avatarUri, bannerUri);
-    }
+    onComplete(avatarUri || undefined, bannerUri || undefined);
   };
 
   return (
@@ -90,11 +88,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         </View>
       </Pressable>
 
-      <Button
-        onPress={handleNext}
-        disabled={!avatarUri || !bannerUri}
-        className="w-full"
-      >
+      <Button onPress={handleNext} className="w-full">
         <Text>Next</Text>
       </Button>
     </View>

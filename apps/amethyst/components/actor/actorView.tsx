@@ -71,9 +71,6 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     if (!pdsAgent) {
       return;
     }
-    // Implement your save logic here (e.g., update your database or state)
-    console.log("Saving profile:", updatedProfile, newAvatarUri, newBannerUri);
-
     // Update the local profile data
     setProfile((prevProfile) => ({
       ...prevProfile,
@@ -104,27 +101,20 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     if (newAvatarUri) {
       // if it is http/s url then do nothing
       if (!newAvatarUri.startsWith("http")) {
-        console.log("Uploading avatar");
-        // its a b64 encoded data uri, decode it and get a blob
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
-        console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await pdsAgent.uploadBlob(blob)).data.blob;
+        newAvatarBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob;
       }
     }
     if (newBannerUri) {
       if (!newBannerUri.startsWith("http")) {
-        console.log("Uploading banner");
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
-        console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await pdsAgent.uploadBlob(blob)).data.blob;
+        newBannerBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob;
       }
     }
-
-    console.log("done uploading");
 
     let record: ProfileRecord = {
       displayName: updatedProfile.displayName,
