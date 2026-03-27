@@ -22,6 +22,7 @@
 .DS_Store
 *.pem
 *.sqlite
+*.db
 
 # debug
 npm-debug.log*
@@ -68,3 +69,11 @@ vendor/**/node_modules/
 
 # claude
 .claude
+
+# archive (exploration code and old docs - not part of production)
+archive/
+
+# evaluation results (data files, not code)
+scripts/eval/results/
+
+.lastfm_session_key
