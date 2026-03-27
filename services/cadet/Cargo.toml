@@ -41,3 +41,4 @@ futures = "0.3"
 redis.workspace = true
 chrono.workspace = true
 uuid.workspace = true
+unicode-normalization = "0.1"
