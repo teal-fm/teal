@@ -4,6 +4,7 @@ use atrium_api::types::string::Datetime;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::{types::Uuid, PgPool};
+use unicode_normalization::UnicodeNormalization;
 
 use super::assemble_at_uri;
 
@@ -17,10 +18,12 @@ struct FuzzyMatchCandidate {
 struct MusicBrainzCleaner;
 
 impl MusicBrainzCleaner {
-    /// List of common "guff" words found in parentheses that should be removed
+    /// Words commonly found in parenthetical/bracketed content that can be removed.
+    /// Kept in sync with apps/amethyst/lib/musicbrainzCleaner.ts GUFF_WORDS.
     const GUFF_WORDS: &'static [&'static str] = &[
         "a cappella",
         "acoustic",
+        "anniversary",
         "bonus",
         "censored",
         "clean",
@@ -29,16 +32,23 @@ impl MusicBrainzCleaner {
         "composition",
         "cut",
         "dance",
+        "deluxe",
         "demo",
         "dialogue",
         "dirty",
+        "dub",
         "edit",
+        "edition",
         "excerpt",
+        "expanded",
         "explicit",
         "extended",
         "feat",
         "featuring",
         "ft",
+        "hd",
+        "hifi",
+        "hi-fi",
         "instrumental",
         "interlude",
         "intro",
@@ -46,6 +56,7 @@ impl MusicBrainzCleaner {
         "live",
         "long",
         "main",
+        "master",
         "maxi",
         "megamix",
         "mix",
@@ -57,6 +68,10 @@ impl MusicBrainzCleaner {
         "outtake",
         "outtakes",
         "piano",
+        "preview",
+        "prod",
+        "produced",
+        "production",
         "quadraphonic",
         "radio",
         "rap",
@@ -65,12 +80,11 @@ impl MusicBrainzCleaner {
         "refix",
         "rehearsal",
         "reinterpreted",
-        "released",
         "release",
+        "released",
         "remake",
-        "remastered",
         "remaster",
-        "master",
+        "remastered",
         "remix",
         "remixed",
         "remode",
@@ -82,6 +96,7 @@ impl MusicBrainzCleaner {
         "short",
         "single",
         "skit",
+        "special",
         "stereo",
         "studio",
         "take",
@@ -93,8 +108,8 @@ impl MusicBrainzCleaner {
         "unknown",
         "unplugged",
         "untitled",
-        "version",
         "ver",
+        "version",
         "video",
         "vocal",
         "vs",
@@ -102,81 +117,223 @@ impl MusicBrainzCleaner {
         "without",
     ];
 
+    /// Generic track names that commonly need disambiguation info preserved.
+    const GENERIC_TRACK_NAMES: &'static [&'static str] = &[
+        "beat", "dream", "five", "four", "heart", "high", "home", "life", "love", "low", "music",
+        "one", "piece", "song", "sound", "three", "time", "track", "tune", "two",
+    ];
+
+    const SHORT_NAME_THRESHOLD: usize = 15;
+    const COMMON_PHRASE_LENGTH: usize = 20;
+    const MIN_ARTIST_NAME_LENGTH: usize = 4;
+
+    /// Find the byte range of the first matched-depth bracket pair.
+    /// Returns (open_byte, content_start_byte, content_end_byte, close_end_byte).
+    fn find_bracketed(s: &str, open: char, close: char) -> Option<(usize, usize, usize, usize)> {
+        let mut chars = s.char_indices();
+        // Find opening bracket
+        let (open_byte, _) = chars.find(|&(_, c)| c == open)?;
+        let content_start = open_byte + open.len_utf8();
+        let mut depth: usize = 1;
+        for (i, c) in chars {
+            if c == open {
+                depth += 1;
+            } else if c == close {
+                depth -= 1;
+                if depth == 0 {
+                    return Some((open_byte, content_start, i, i + close.len_utf8()));
+                }
+            }
+        }
+        None // unbalanced
+    }
+
+    /// Check if parenthetical content should be kept for disambiguation.
+    /// Partially mirrors the TS shouldKeepForDisambiguation logic (remix/feat only, not version).
+    fn should_keep_for_disambiguation(content: &str, base_name: &str, kind: &str) -> bool {
+        let content_lower = content.to_lowercase();
+        let base_lower = base_name.to_lowercase();
+
+        let is_relevant = match kind {
+            "remix" => {
+                content_lower.contains("remix")
+                    || content_lower.contains("rmx")
+                    || content_lower.contains("rework")
+                    || content_lower.contains("refix")
+                    || content_lower.contains("remode")
+            }
+            "feat" => {
+                content_lower.contains("feat")
+                    || content_lower.contains("ft")
+                    || content_lower.contains("featuring")
+            }
+            _ => false,
+        };
+        if !is_relevant {
+            return false;
+        }
+
+        // Generic word check
+        let is_generic = Self::GENERIC_TRACK_NAMES
+            .iter()
+            .any(|&w| base_lower == w || base_lower.starts_with(&format!("{w} ")));
+        let char_count = base_name.chars().count();
+        let is_short = char_count < Self::SHORT_NAME_THRESHOLD;
+        let word_count = base_name.split_whitespace().count();
+        let is_common_phrase = word_count <= 3 && char_count < Self::COMMON_PHRASE_LENGTH;
+
+        // Check for artist name in content
+        let keyword_pattern: &[&str] = match kind {
+            "remix" => &["remix", "rmx", "rework", "refix", "remode"],
+            _ => &["feat", "ft", "featuring"],
+        };
+        let has_artist_name = content_lower.split_whitespace().any(|w| {
+            w.chars().count() >= Self::MIN_ARTIST_NAME_LENGTH
+                && !keyword_pattern.iter().any(|kw| w.contains(kw))
+        });
+
+        is_generic || (is_short && is_common_phrase) || has_artist_name
+    }
+
+    /// Remove a bracketed section from `s` if it is guff and not needed for disambiguation.
+    /// Works for both () and []. Returns the cleaned string.
+    fn strip_guff_bracket(s: &str, open: char, close: char, check_disambiguation: bool) -> String {
+        if let Some((open_byte, content_start, content_end, close_end)) =
+            Self::find_bracketed(s, open, close)
+        {
+            let content = &s[content_start..content_end];
+            let base_name = s[..open_byte].trim();
+
+            if Self::is_likely_guff(&content.to_lowercase()) {
+                if check_disambiguation {
+                    let keep_remix =
+                        Self::should_keep_for_disambiguation(content, base_name, "remix");
+                    let keep_feat =
+                        Self::should_keep_for_disambiguation(content, base_name, "feat");
+                    if keep_remix || keep_feat {
+                        return s.to_string();
+                    }
+                    // Don't remove if it would leave the name empty
+                    let after = s[close_end..].trim();
+                    if base_name.is_empty() && after.is_empty() {
+                        return s.to_string();
+                    }
+                }
+                let result = format!("{}{}", &s[..open_byte], &s[close_end..]);
+                return result.split_whitespace().collect::<Vec<_>>().join(" ");
+            }
+        }
+        s.to_string()
+    }
+
+    /// Case-insensitive find of `pattern` in `s`, returning the byte offset in `s`.
+    /// Safe for non-ASCII: searches char-by-char in the original string, avoiding
+    /// the to_lowercase() byte-length mismatch problem.
+    fn find_case_insensitive(s: &str, pattern: &str) -> Option<usize> {
+        let pat_lower = pattern.to_lowercase();
+        let pat_char_count = pat_lower.chars().count();
+        if pat_char_count == 0 {
+            return None;
+        }
+        for (byte_pos, _) in s.char_indices() {
+            let candidate: String = s[byte_pos..].chars().take(pat_char_count).collect();
+            if candidate.to_lowercase() == pat_lower {
+                return Some(byte_pos);
+            }
+        }
+        None
+    }
+
     /// Clean artist name by removing common variations and guff
     fn clean_artist_name(name: &str) -> String {
         let mut cleaned = name.trim().to_string();
 
-        // Remove common featuring patterns
-        if let Some(pos) = cleaned.to_lowercase().find(" feat") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-        if let Some(pos) = cleaned.to_lowercase().find(" ft.") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-        if let Some(pos) = cleaned.to_lowercase().find(" featuring") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-
-        // Remove parenthetical content if it looks like guff
-        if let Some(start) = cleaned.find('(') {
-            if let Some(end) = cleaned.find(')') {
-                let paren_content = &cleaned[start + 1..end].to_lowercase();
-                if Self::is_likely_guff(paren_content) {
-                    cleaned = format!("{}{}", &cleaned[..start], &cleaned[end + 1..])
-                        .trim()
-                        .to_string();
-                }
+        // Remove common featuring patterns (take the first match)
+        for pat in &[" feat", " ft.", " featuring"] {
+            if let Some(byte_pos) = Self::find_case_insensitive(&cleaned, pat) {
+                cleaned = cleaned[..byte_pos].trim().to_string();
+                break;
             }
         }
 
-        // Remove brackets with guff
-        if let Some(start) = cleaned.find('[') {
-            if let Some(end) = cleaned.find(']') {
-                let bracket_content = &cleaned[start + 1..end].to_lowercase();
-                if Self::is_likely_guff(bracket_content) {
-                    cleaned = format!("{}{}", &cleaned[..start], &cleaned[end + 1..])
-                        .trim()
-                        .to_string();
-                }
-            }
-        }
+        // Remove parenthetical guff (no disambiguation check for artist names)
+        cleaned = Self::strip_guff_bracket(&cleaned, '(', ')', false);
+        cleaned = Self::strip_guff_bracket(&cleaned, '[', ']', false);
 
-        // Remove common prefixes/suffixes
-        if cleaned.to_lowercase().starts_with("the ") && cleaned.len() > 4 {
-            let without_the = &cleaned[4..];
-            if !without_the.trim().is_empty() {
-                return without_the.trim().to_string();
-            }
-        }
+        // Don't strip "The " prefix -- MusicBrainz indexes artists with "The"
+        // (e.g., "The Beatles", "The Rolling Stones") and stripping causes
+        // exact search misses in the matching pipeline.
 
-        cleaned.trim().to_string()
+        cleaned
     }
 
-    /// Clean track name by removing common variations and guff
+    /// Clean track name by removing common variations and guff.
+    /// Includes disambiguation-aware cleaning: preserves remix/feat info for
+    /// short or generic track names (matching TS frontend logic).
     fn clean_track_name(name: &str) -> String {
         let mut cleaned = name.trim().to_string();
 
-        // Remove parenthetical content if it looks like guff
-        if let Some(start) = cleaned.find('(') {
-            if let Some(end) = cleaned.find(')') {
-                let paren_content = &cleaned[start + 1..end].to_lowercase();
-                if Self::is_likely_guff(paren_content) {
-                    cleaned = format!("{}{}", &cleaned[..start], &cleaned[end + 1..])
-                        .trim()
-                        .to_string();
+        // Strip leading/trailing decorative characters (aligned with TS frontend)
+        let decorative: &[char] = &[
+            '*', '~', '\u{00b7}', '\u{2022}', '\u{2605}', '\u{2606}', '\u{266a}', '\u{266b}', '|',
+            '_', '>', '<',
+        ];
+        cleaned = cleaned
+            .trim_start_matches(|c: char| c.is_whitespace() || decorative.contains(&c))
+            .to_string();
+        cleaned = cleaned
+            .trim_end_matches(|c: char| c.is_whitespace() || decorative.contains(&c))
+            .to_string();
+        cleaned = cleaned.trim().to_string();
+
+        // Remove parenthetical guff (with disambiguation check) -- process all groups
+        loop {
+            let next = Self::strip_guff_bracket(&cleaned, '(', ')', true);
+            if next == cleaned {
+                break;
+            }
+            cleaned = next;
+        }
+        loop {
+            let next = Self::strip_guff_bracket(&cleaned, '[', ']', true);
+            if next == cleaned {
+                break;
+            }
+            cleaned = next;
+        }
+
+        // Remove dash-separated suffixes that look like guff or remix info
+        // Common in scrobbler data: "Song - Single Version", "Song - Artist Remix"
+        if let Some(dash_pos) = cleaned.find(" - ") {
+            let base_name = cleaned[..dash_pos].trim();
+            let suffix = cleaned[dash_pos + 3..].trim();
+            if !base_name.is_empty() && !suffix.is_empty() {
+                let should_keep_remix =
+                    Self::should_keep_for_disambiguation(suffix, base_name, "remix");
+                let should_keep_feat =
+                    Self::should_keep_for_disambiguation(suffix, base_name, "feat");
+                if Self::is_likely_guff(&suffix.to_lowercase())
+                    && !should_keep_remix
+                    && !should_keep_feat
+                {
+                    cleaned = base_name.to_string();
                 }
             }
         }
 
-        // Remove featuring artists from track titles
-        if let Some(pos) = cleaned.to_lowercase().find(" feat") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-        if let Some(pos) = cleaned.to_lowercase().find(" ft.") {
-            cleaned = cleaned[..pos].trim().to_string();
+        // Remove featuring artists from track titles (with disambiguation check)
+        for pat in &[" feat", " ft.", " featuring"] {
+            if let Some(byte_pos) = Self::find_case_insensitive(&cleaned, pat) {
+                let base_name = cleaned[..byte_pos].trim();
+                let feat_content = cleaned[byte_pos..].trim();
+                if !Self::should_keep_for_disambiguation(feat_content, base_name, "feat") {
+                    cleaned = base_name.to_string();
+                }
+                break;
+            }
         }
 
-        cleaned.trim().to_string()
+        cleaned
     }
 
     /// Check if parenthetical content is likely "guff" that should be removed
@@ -184,17 +341,23 @@ impl MusicBrainzCleaner {
         let content_lower = content.to_lowercase();
         let words: Vec<&str> = content_lower.split_whitespace().collect();
 
-        // If most words are guff words, consider it guff
+        // Count guff words (strip trailing punctuation for matching)
         let guff_word_count = words
             .iter()
-            .filter(|word| Self::GUFF_WORDS.contains(word))
+            .filter(|word| {
+                let stripped = word.trim_end_matches(|c: char| c.is_ascii_punctuation());
+                Self::GUFF_WORDS.contains(word) || Self::GUFF_WORDS.contains(&stripped)
+            })
             .count();
 
-        // Also check for years (19XX or 20XX)
-        let has_year = content_lower.chars().collect::<String>().contains("19")
-            || content_lower.contains("20");
+        // Check for years (19XX or 20XX) -- match 4-digit years only, not "Part 19" etc.
+        let has_year = content_lower.as_bytes().windows(4).any(|w| {
+            (w[0] == b'1' && w[1] == b'9' || w[0] == b'2' && w[1] == b'0')
+                && w[2].is_ascii_digit()
+                && w[3].is_ascii_digit()
+        });
 
-        // Consider it guff if >50% are guff words, or if it contains years, or if it's short and common
+        // >50% guff words, or contains years, or short and contains a guff word
         guff_word_count > words.len() / 2
             || has_year
             || (words.len() <= 2
@@ -203,9 +366,21 @@ impl MusicBrainzCleaner {
                     .any(|&guff| content_lower.contains(guff)))
     }
 
-    /// Normalize text for comparison (remove special chars, lowercase, etc.)
+    /// Normalize text for comparison (remove special chars, lowercase).
+    /// Aligned with frontend normalizeForComparison in musicbrainzCleaner.ts:
+    /// 1. NFD decomposition to separate base characters from accents
+    /// 2. Strip combining diacritical marks (U+0300..U+036F)
+    /// 3. Keep all Unicode alphanumeric characters (CJK, Cyrillic, etc.)
+    /// 4. NFC recomposition, lowercase, whitespace collapse
     fn normalize_for_comparison(text: &str) -> String {
-        text.chars()
+        // Step 1+2: NFD decompose, strip combining marks (accents)
+        let stripped: String = text
+            .nfd()
+            .filter(|c| !('\u{0300}'..='\u{036f}').contains(c))
+            .collect();
+        // Step 3+4: keep alphanumeric + whitespace, NFC, lowercase, collapse whitespace
+        stripped
+            .nfc()
             .filter(|c| c.is_alphanumeric() || c.is_whitespace())
             .collect::<String>()
             .to_lowercase()
