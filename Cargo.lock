@@ -600,6 +600,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "types",
+ "unicode-normalization",
  "url",
  "uuid",
 ]
@@ -5393,3 +5394,7 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "textprep"
+version = "0.1.4"

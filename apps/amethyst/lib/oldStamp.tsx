@@ -1,5 +1,9 @@
 import { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 
+// Re-export searchMusicbrainz from the orchestrator module.
+// This keeps backward compatibility for existing imports.
+export { searchMusicbrainz } from "./searchOrchestrator";
+
 // MusicBrainz API Types
 export interface MusicBrainzArtistCredit {
   artist: {
@@ -11,6 +15,12 @@ export interface MusicBrainzArtistCredit {
   name: string;
 }
 
+export interface MusicBrainzReleaseGroup {
+  id: string;
+  title?: string;
+  "primary-type"?: string;
+}
+
 export interface MusicBrainzRelease {
   id: string;
   title: string;
@@ -19,16 +29,20 @@ export interface MusicBrainzRelease {
   country?: string;
   disambiguation?: string;
   "track-count"?: number;
+  "release-group"?: MusicBrainzReleaseGroup;
 }
 
 export interface MusicBrainzRecording {
   id: string;
   title: string;
+  score?: number; // MB API relevance score (0-100)
   length?: number;
   isrcs?: string[];
+  disambiguation?: string;
+  "first-release-date"?: string;
   "artist-credit"?: MusicBrainzArtistCredit[];
   releases?: MusicBrainzRelease[];
-  selectedRelease?: MusicBrainzRelease; // Added for UI state
+  selectedRelease?: MusicBrainzRelease;
 }
 
 export interface SearchParams {
@@ -55,44 +69,3 @@ export interface PlaySubmittedData {
   blueskyPostUrl: string | null;
 }
 
-export async function searchMusicbrainz(
-  searchParams: SearchParams,
-): Promise<MusicBrainzRecording[]> {
-  try {
-    const queryParts: string[] = [];
-    if (searchParams.track) {
-      queryParts.push(`title:"${searchParams.track}"`);
-    }
-
-    if (searchParams.artist) {
-      queryParts.push(`artist:"${searchParams.artist}"`);
-    }
-
-    if (searchParams.release) {
-      queryParts.push(`release:"${searchParams.release}"`);
-    }
-
-    const query = queryParts.join(" AND ");
-
-    const res = await fetch(
-      `https://musicbrainz.org/ws/2/recording?query=${encodeURIComponent(
-        query,
-      )}&fmt=json`,
-      {
-        headers: {
-          "User-Agent": "tealtracker/0.0.1",
-        },
-      },
-    );
-
-    if (!res.ok) {
-      throw new Error(`MusicBrainz API returned ${res.status}`);
-    }
-
-    const data = await res.json();
-    return data.recordings || [];
-  } catch (error) {
-    console.error("Failed to fetch MusicBrainz data:", error);
-    return [];
-  }
-}
