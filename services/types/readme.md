@@ -2,9 +2,11 @@
 Rust lexicons for teal.fm and others.
 
 ### Generate lexicons
-You will need to install [esquema-cli](https://github.com/fatfingers23/esquema) a fork of the [atrium codegen tool](https://github.com/sugyan/atrium).
+You will need to install [jacquard-lexicon](https://crates.io/crates/jacquard-lexicon) for lexicon code generation.
 
-Currently can install directly from the repo
-`cargo install esquema-cli --git https://github.com/fatfingers23/esquema.git`
+Install with:
+`cargo install jacquard-lexicon`
 
-Then can recreate with `esquema-cli generate local --lexdir ./lexicons --outdir ./src` from this directory
+Then, from the workspace root, you can run `jacquard-codegen --input ./lexicons --output ./services/types/src` to manually generate lexicons
+
+Or: run the workspace command `pnpm lex:gen --rust-only` to generate rust lexicons automatically.

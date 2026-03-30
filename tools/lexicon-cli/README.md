@@ -5,7 +5,7 @@ A unified command-line tool for managing AT Protocol lexicons across TypeScript 
 ## Features
 
 - **Unified Generation**: Generate both TypeScript and Rust types from lexicons with a single command
-- **Auto-installation**: Automatically installs required dependencies (esquema-cli) when needed
+- **Auto-installation**: Automatically installs required dependencies (jacquard-lexicon) when needed
 - **File Watching**: Watch lexicon files for changes and auto-regenerate types
 - **Cross-language Validation**: Validate consistency between TypeScript and Rust generated types
 - **Diff Analysis**: Show impact of lexicon changes on generated code
@@ -81,10 +81,10 @@ lex diff HEAD~3
 - Outputs to `packages/lexicons/src/types/`
 
 ### Rust Generation
-- Uses `esquema-cli` (forked from atrium-codegen) 
+- Uses `jacquard-codegen` for Rust code generation 
 - Sources lexicons from `services/types/lexicons/`
 - Outputs to `services/types/src/`
-- Auto-installs esquema-cli if not present
+- Auto-installs jacquard-lexicon if not present (tries cargo-binstall first for speed)
 
 ### File Watching
 - Monitors both lexicon source directories
@@ -121,10 +121,16 @@ The tool integrates with the existing Turbo build pipeline:
 
 ## Troubleshooting
 
-### esquema-cli Installation Issues
+### jacquard-lexicon Installation Issues
 If automatic installation fails:
 ```bash
-cargo install esquema-cli --git https://github.com/fatfingers23/esquema.git
+cargo install jacquard-lexicon
+```
+
+For faster installation, consider using cargo-binstall:
+```bash
+cargo install cargo-binstall
+cargo binstall jacquard-lexicon
 ```
 
 ### Type Generation Failures
