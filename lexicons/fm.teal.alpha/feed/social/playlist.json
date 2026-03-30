@@ -1,0 +1,30 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.social.playlist",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | A teal.fm playlist, representing a list of tracks.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record containing the playlist metadata.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["name", "createdAt"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the playlist, required.",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "description": { "type": "string", "maxLength": 5000 },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this playlist was originally created."
+          }
+        }
+      }
+    }
+  }
+}
