@@ -216,10 +216,8 @@ impl StatsRepo for PgDataSource {
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
             let artists = match row.artists {
-                Some(value) => {
-                    from_json_value::<Vec<types::fm_teal::alpha::feed::Artist<'_>>>(value)
-                        .unwrap_or_default()
-                }
+                Some(value) => from_json_value::<Vec<types::fm_teal::alpha::feed::Artist>>(value)
+                    .unwrap_or_default(),
                 None => vec![],
             };
 

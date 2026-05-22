@@ -94,19 +94,28 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
         // Try cargo-binstall first for faster installation
         try {
           await execa("cargo", ["binstall", "--version"], { stdio: "pipe" });
-          await execa("cargo", ["binstall", "-y", "jacquard-lexicon"], {
-            stdio: "inherit",
-          });
+          await execa(
+            "cargo",
+            ["binstall", "-y", "jacquard-lexgen", "--version", "0.12.0-beta.2"],
+            {
+              stdio: "inherit",
+            },
+          );
         } catch {
           // Fallback to cargo install if binstall not available
-          await execa("cargo", ["install", "jacquard-lexicon"], {
+          await execa("cargo", [
+            "install",
+            "jacquard-lexgen",
+            "--version",
+            "0.12.0-beta.2",
+          ], {
             stdio: "inherit",
           });
         }
         console.log(pc.green("    ✓ jacquard-codegen installed successfully"));
       } catch (installError) {
         throw new Error(
-          "Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexicon",
+          "Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version 0.12.0-beta.2",
         );
       }
     }

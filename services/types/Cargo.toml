@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 jacquard-common.workspace = true
 jacquard-derive.workspace = true
+jacquard-lexicon.workspace = true
 serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true
 miette = "7.6"
@@ -20,3 +21,18 @@ chat_bsky = []
 com_atproto = []
 fm_teal = []
 tools_ozone = []
+streaming = ["jacquard-common/websocket"]
+
+[lints.rust]
+unused_imports = "allow"
+non_snake_case = "allow"
+
+[lints.clippy]
+absurd_extreme_comparisons = "allow"
+manual_strip = "allow"
+needless_update = "allow"
+new_ret_no_self = "allow"
+new_without_default = "allow"
+should_implement_trait = "allow"
+type_complexity = "allow"
+unit_arg = "allow"

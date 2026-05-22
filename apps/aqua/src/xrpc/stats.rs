@@ -27,8 +27,8 @@ pub struct GetTopArtistsQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetTopArtistsResponse<'a> {
-    artists: Vec<ArtistView<'a>>,
+pub struct GetTopArtistsResponse {
+    artists: Vec<ArtistView>,
 }
 
 pub async fn get_top_artists(
@@ -51,8 +51,8 @@ pub struct GetTopReleasesQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetTopReleasesResponse<'a> {
-    releases: Vec<ReleaseView<'a>>,
+pub struct GetTopReleasesResponse {
+    releases: Vec<ReleaseView>,
 }
 
 pub async fn get_top_releases(
@@ -76,8 +76,8 @@ pub struct GetUserTopArtistsQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetUserTopArtistsResponse<'a> {
-    artists: Vec<ArtistView<'a>>,
+pub struct GetUserTopArtistsResponse {
+    artists: Vec<ArtistView>,
 }
 
 pub async fn get_user_top_artists(
@@ -105,8 +105,8 @@ pub struct GetUserTopReleasesQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetUserTopReleasesResponse<'a> {
-    releases: Vec<ReleaseView<'a>>,
+pub struct GetUserTopReleasesResponse {
+    releases: Vec<ReleaseView>,
 }
 
 pub async fn get_user_top_releases(
@@ -133,8 +133,8 @@ pub struct GetLatestQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetLatestResponse<'a> {
-    plays: Vec<PlayView<'a>>,
+pub struct GetLatestResponse {
+    plays: Vec<PlayView>,
 }
 
 pub async fn get_latest(

@@ -17,8 +17,8 @@ pub struct GetProfileQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetProfileResponse<'a> {
-    profile: ProfileView<'a>,
+pub struct GetProfileResponse {
+    profile: ProfileView,
 }
 
 pub async fn get_actor(
@@ -50,8 +50,8 @@ pub struct GetProfilesQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetProfilesResponse<'a> {
-    profiles: Vec<ProfileView<'a>>,
+pub struct GetProfilesResponse {
+    profiles: Vec<ProfileView>,
 }
 
 pub async fn get_actors(
