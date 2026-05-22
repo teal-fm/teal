@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use async_trait::async_trait;
 use jacquard_common::from_json_value;
 use serde_json::Value;
@@ -30,7 +28,7 @@ pub struct PgProfileRepoRows {
     pub status: Option<Value>,
 }
 
-impl From<PgProfileRepoRows> for ProfileView<'static> {
+impl From<PgProfileRepoRows> for ProfileView {
     fn from(row: PgProfileRepoRows) -> Self {
         Self {
             avatar: row.avatar.map(Into::into),
@@ -42,14 +40,14 @@ impl From<PgProfileRepoRows> for ProfileView<'static> {
             description: row.description.map(Into::into),
             description_facets: row
                 .description_facets
-                .and_then(|v| from_json_value::<Vec<Facet<'_>>>(v).ok()),
+                .and_then(|v| from_json_value::<Vec<Facet>>(v).ok()),
             did: row.did.map(Into::into),
             display_name: row.display_name.map(Into::into),
             featured_item: None,
             status: row
                 .status
-                .and_then(|v| from_json_value::<StatusView<'_>>(v).ok()),
-            extra_data: BTreeMap::new(),
+                .and_then(|v| from_json_value::<StatusView>(v).ok()),
+            extra_data: Default::default(),
         }
     }
 }

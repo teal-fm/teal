@@ -17,8 +17,8 @@ pub struct GetFeedPlayQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetFeedPlayResponse<'a> {
-    play: PlayView<'a>,
+pub struct GetFeedPlayResponse {
+    play: PlayView,
 }
 
 pub async fn get_feed_play(
@@ -50,8 +50,8 @@ pub struct GetFeedPlaysQuery {
 }
 
 #[derive(Serialize)]
-pub struct GetFeedPlaysResponse<'a> {
-    plays: Vec<PlayView<'a>>,
+pub struct GetFeedPlaysResponse {
+    plays: Vec<PlayView>,
 }
 
 pub async fn get_feed_plays(

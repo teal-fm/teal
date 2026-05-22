@@ -37,7 +37,6 @@ use async_trait::async_trait;
 use atmst::{mst::Mst, Bytes, CarImporter};
 use base64::Engine;
 use futures::StreamExt;
-use jacquard_common::types::did::Did;
 use jacquard_common::types::value;
 use redis::AsyncCommands;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
@@ -310,8 +309,8 @@ impl CarImportIngestor {
 
     /// Process a play record using the existing PlayIngestor
     async fn process_play_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        let data = value::Data::from_json(data)?;
-        let play_record = value::from_data::<types::fm_teal::alpha::feed::play::Play>(&data)?;
+        let play_record: types::fm_teal::alpha::feed::play::Play =
+            value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(data.clone())?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
         let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
@@ -335,17 +334,14 @@ impl CarImportIngestor {
 
     /// Process a profile record using the existing ActorProfileIngestor
     async fn process_profile_record(&self, data: &Value, did: &str, _rkey: &str) -> Result<()> {
-        let data = value::Data::from_json(data).to_owned()?;
-        let profile_record =
-            value::from_data::<types::fm_teal::alpha::actor::profile::Profile>(&data)?;
+        let profile_record: types::fm_teal::alpha::actor::profile::Profile =
+            value::from_json_value::<types::fm_teal::alpha::actor::profile::Profile>(data.clone())?;
 
         let profile_ingestor =
             super::super::teal::actor_profile::ActorProfileIngestor::new(self.sql.clone());
-        let did_typed = jacquard_common::types::did::Did::new(did)
-            .map_err(|e| anyhow!("Failed to create Did: {}", e))?;
 
         profile_ingestor
-            .insert_profile(did_typed, &profile_record)
+            .insert_profile(did, &profile_record)
             .await?;
 
         info!(
@@ -357,17 +353,15 @@ impl CarImportIngestor {
 
     /// Process a status record using the existing ActorStatusIngestor
     async fn process_status_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        let data = value::Data::from_json(data).to_owned()?;
-        let status_record =
-            value::from_data::<types::fm_teal::alpha::actor::status::Status>(&data)?;
+        let status_record: types::fm_teal::alpha::actor::status::Status =
+            value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(data.clone())?;
 
         let status_ingestor =
             super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
-        let did_typed = Did::new(did).map_err(|e| anyhow!("Failed to create Did: {}", e))?;
 
         status_ingestor
             .insert_status(
-                did_typed,
+                did,
                 rkey,
                 &format!("car-import-{}", uuid::Uuid::new_v4()),
                 &status_record,

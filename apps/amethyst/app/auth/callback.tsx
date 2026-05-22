@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { View } from "react-native";
 import { Link, router, Stack } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
@@ -7,27 +7,23 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { PencilLine } from "lucide-react-native";
 
-interface CallbackSearchParams {
-  iss: string;
-  state: string;
-  code: string;
-}
-
 export default function AuthOptions() {
-  const { oauthCallback, status } = useStore((state) => state);
-
+  const status = useStore((state) => state.status);
   const params = useLocalSearchParams<"iss" | "state" | "code">();
   const { state } = params;
-  useEffect(() => {
-    // Only proceed if params exist
-    if (params) {
-      const searchParams = new URLSearchParams(params);
-      oauthCallback(searchParams);
-    }
-  }, [params, oauthCallback]);
+  const calledRef = useRef(false);
 
   useEffect(() => {
-    // Wrap navigation in requestAnimationFrame to ensure root layout is mounted
+    // The OAuth state in IndexedDB is deleted on first read (replay prevention).
+    // Must only call oauthCallback once -- a second call will fail with
+    // "Unknown authorization session".
+    if (calledRef.current || !params) return;
+    calledRef.current = true;
+    const searchParams = new URLSearchParams(params);
+    useStore.getState().oauthCallback(searchParams);
+  }, [params]);
+
+  useEffect(() => {
     if (status === "loggedIn") {
       requestAnimationFrame(() => {
         router.replace("/");
@@ -35,7 +31,6 @@ export default function AuthOptions() {
     }
   }, [status]);
 
-  // if no state then redirect to error page
   if (!params) {
     return (
       <View>

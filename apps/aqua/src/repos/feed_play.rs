@@ -17,32 +17,32 @@ pub trait FeedPlayRepo: Send + Sync {
 impl FeedPlayRepo for PgDataSource {
     async fn get_feed_play(&self, uri: &str) -> anyhow::Result<Option<PlayView>> {
         let row = sqlx::query!(
-                r#"
-                SELECT
-                    uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
-                    release_mbid, release_name, recording_mbid, submission_client_agent,
-                    music_service_base_domain, origin_url,
-                    COALESCE(
-                      json_agg(
-                        json_build_object(
-                          'artist_mbid', pta.artist_mbid,
-                          'artist_name', pta.artist_name
-                        )
-                      ) FILTER (WHERE pta.artist_name IS NOT NULL),
-                      '[]'
-                    ) AS artists
-                FROM plays
-                LEFT JOIN play_to_artists as pta ON uri = pta.play_uri
-                WHERE uri = $1
-                GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
-                         release_mbid, release_name, recording_mbid, submission_client_agent,
-                         music_service_base_domain, origin_url
-                ORDER BY processed_time desc
-                "#,
-                &uri.to_string()
-            )
-            .fetch_one(&self.db)
-            .await?;
+            r#"
+            SELECT
+                uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
+                release_mbid, release_name, recording_mbid, submission_client_agent,
+                music_service_base_domain, origin_url,
+                COALESCE(
+                  json_agg(
+                    json_build_object(
+                      'artist_mbid', pta.artist_mbid,
+                      'artist_name', pta.artist_name
+                    )
+                  ) FILTER (WHERE pta.artist_name IS NOT NULL),
+                  '[]'
+                ) AS artists
+            FROM plays
+            LEFT JOIN play_to_artists as pta ON uri = pta.play_uri
+            WHERE uri = $1
+            GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
+                     release_mbid, release_name, recording_mbid, submission_client_agent,
+                     music_service_base_domain, origin_url
+            ORDER BY processed_time desc
+            "#,
+            &uri.to_string()
+        )
+        .fetch_one(&self.db)
+        .await?;
 
         let artists: Vec<Artist> = match row.artists {
             Some(value) => from_json_value::<Vec<Artist>>(value).unwrap_or_default(),
@@ -73,32 +73,32 @@ impl FeedPlayRepo for PgDataSource {
         identities: &[String],
     ) -> anyhow::Result<Vec<PlayView>> {
         let rows = sqlx::query!(
-                r#"
-                SELECT
-                    uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
-                    release_mbid, release_name, recording_mbid, submission_client_agent,
-                    music_service_base_domain, origin_url,
-                    COALESCE(
-                      json_agg(
-                        json_build_object(
-                          'artist_mbid', pta.artist_mbid,
-                          'artist_name', pta.artist_name
-                        )
-                      ) FILTER (WHERE pta.artist_name IS NOT NULL),
-                      '[]'
-                    ) AS artists
-                FROM plays
-                LEFT JOIN play_to_artists as pta ON uri = pta.play_uri
-                WHERE did = ANY($1)
-                GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
-                         release_mbid, release_name, recording_mbid, submission_client_agent,
-                         music_service_base_domain, origin_url
-                ORDER BY processed_time desc
-                "#,
-                identities
-            )
-            .fetch_all(&self.db)
-            .await?;
+            r#"
+            SELECT
+                uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
+                release_mbid, release_name, recording_mbid, submission_client_agent,
+                music_service_base_domain, origin_url,
+                COALESCE(
+                  json_agg(
+                    json_build_object(
+                      'artist_mbid', pta.artist_mbid,
+                      'artist_name', pta.artist_name
+                    )
+                  ) FILTER (WHERE pta.artist_name IS NOT NULL),
+                  '[]'
+                ) AS artists
+            FROM plays
+            LEFT JOIN play_to_artists as pta ON uri = pta.play_uri
+            WHERE did = ANY($1)
+            GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
+                     release_mbid, release_name, recording_mbid, submission_client_agent,
+                     music_service_base_domain, origin_url
+            ORDER BY processed_time desc
+            "#,
+            identities
+        )
+        .fetch_all(&self.db)
+        .await?;
 
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
