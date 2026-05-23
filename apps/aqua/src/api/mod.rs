@@ -443,15 +443,15 @@ async fn resolve_did_to_pds(did: &str) -> Result<String> {
         // Find the PDS service endpoint
         if let Some(services) = doc["service"].as_array() {
             for service in services {
-                if service["id"].as_str() == Some("#atproto_pds") {
-                    if let Some(endpoint) = service["serviceEndpoint"].as_str() {
-                        // Extract hostname from URL
-                        let url = url::Url::parse(endpoint)?;
-                        let host = url.host_str().ok_or_else(|| {
-                            anyhow::anyhow!("Invalid PDS endpoint URL: {}", endpoint)
-                        })?;
-                        return Ok(host.to_string());
-                    }
+                if service["id"].as_str() == Some("#atproto_pds")
+                    && let Some(endpoint) = service["serviceEndpoint"].as_str()
+                {
+                    // Extract hostname from URL
+                    let url = url::Url::parse(endpoint)?;
+                    let host = url
+                        .host_str()
+                        .ok_or_else(|| anyhow::anyhow!("Invalid PDS endpoint URL: {}", endpoint))?;
+                    return Ok(host.to_string());
                 }
             }
         }

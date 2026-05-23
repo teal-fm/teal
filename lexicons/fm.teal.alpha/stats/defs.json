@@ -4,7 +4,6 @@
   "defs": {
     "artistView": {
       "type": "object",
-      "required": ["mbid", "name", "playCount"],
       "properties": {
         "mbid": {
           "type": "string",
@@ -22,7 +21,6 @@
     },
     "releaseView": {
       "type": "object",
-      "required": ["mbid", "name", "playCount"],
       "properties": {
         "mbid": {
           "type": "string",
@@ -40,7 +38,6 @@
     },
     "recordingView": {
       "type": "object",
-      "required": ["mbid", "name", "playCount"],
       "properties": {
         "mbid": {
           "type": "string",

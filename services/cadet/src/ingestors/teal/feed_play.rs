@@ -1,6 +1,9 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
-use atrium_api::types::string::Datetime;
+use jacquard_common::{
+    types::{string::Datetime, value},
+    IntoStatic,
+};
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::{types::Uuid, PgPool};
@@ -395,8 +398,8 @@ pub struct PlayIngestor {
 }
 
 fn clean(
-    record: &types::fm::teal::alpha::feed::play::RecordData,
-) -> types::fm::teal::alpha::feed::play::RecordData {
+    record: &types::fm_teal::alpha::feed::play::Play,
+) -> types::fm_teal::alpha::feed::play::Play {
     let mut cleaned = record.clone();
 
     // Clean artist MBIDs inside artists vector, if present
@@ -433,7 +436,7 @@ fn clean(
         }
     }
 
-    cleaned
+    cleaned.into_static()
 }
 
 impl PlayIngestor {
@@ -1311,7 +1314,7 @@ impl PlayIngestor {
 
     pub async fn insert_play(
         &self,
-        play_record: &types::fm::teal::alpha::feed::play::RecordData,
+        play_record: &types::fm_teal::alpha::feed::play::Play,
         uri: &str,
         cid: &str,
         did: &str,
@@ -1325,7 +1328,7 @@ impl PlayIngestor {
         if let Some(ref artists) = &play_record.artists {
             for artist in artists {
                 let artist_name = artist.artist_name.clone();
-                artist_names_raw.push(artist_name.clone());
+                artist_names_raw.push(artist_name.as_str().to_owned());
                 let artist_mbid = artist.artist_mb_id.as_deref();
 
                 let artist_id = self
@@ -1336,14 +1339,14 @@ impl PlayIngestor {
                         play_record.release_name.as_deref(),
                     )
                     .await?;
-                parsed_artists.push((artist_id, artist_name.clone()));
+                parsed_artists.push((artist_id, artist_name.as_str().to_owned()));
             }
         } else if let Some(artist_names) = &play_record.artist_names {
             for (index, artist_name) in artist_names.iter().enumerate() {
-                artist_names_raw.push(artist_name.clone());
+                artist_names_raw.push(artist_name.as_str().to_owned());
 
                 let artist_mbid_opt = if let Some(ref mbid_list) = play_record.artist_mb_ids {
-                    mbid_list.get(index)
+                    mbid_list.get(index).map(|s| s.as_str())
                 } else {
                     None
                 };
@@ -1351,12 +1354,12 @@ impl PlayIngestor {
                 let artist_id = self
                     .find_or_create_artist_with_fuzzy_matching(
                         artist_name,
-                        artist_mbid_opt.map(|s| s.as_str()),
+                        artist_mbid_opt,
                         &play_record.track_name,
                         play_record.release_name.as_deref(),
                     )
                     .await?;
-                parsed_artists.push((artist_id, artist_name.clone()));
+                parsed_artists.push((artist_id, artist_name.as_str().to_owned()));
             }
         } else {
             // No artist information provided - create a fallback artist
@@ -1421,7 +1424,7 @@ impl PlayIngestor {
 
         // let release_discriminant = play_record.release_discriminant.clone().or_else(|| {
         let release_discriminant = {
-            if let Some(ref release_name) = play_record.release_name {
+            if let Some(release_name) = &play_record.release_name {
                 futures::executor::block_on(async {
                     // Try edition-specific patterns first, then general patterns
                     self.extract_edition_discriminant_from_db(release_name)
@@ -1443,6 +1446,17 @@ impl PlayIngestor {
         } else {
             None
         };
+        let isrc = play_record.isrc.as_ref().map(ToString::to_string);
+        let track_name = play_record.track_name.to_string();
+        let release_name = play_record.release_name.as_ref().map(ToString::to_string);
+        let submission_client_agent = play_record
+            .submission_client_agent
+            .as_ref()
+            .map(ToString::to_string);
+        let music_service_base_domain = play_record
+            .music_service_base_domain
+            .as_ref()
+            .map(ToString::to_string);
 
         sqlx::query!(
             r#"
@@ -1473,15 +1487,15 @@ impl PlayIngestor {
             cid,
             did,
             rkey,
-            play_record.isrc, // Assuming ISRC is in play_record
+            isrc,
             play_record.duration.map(|d| d as i32),
-            play_record.track_name,
+            track_name,
             time_datetime,
             release_mbid_opt,
-            play_record.release_name,
+            release_name,
             recording_mbid_opt,
-            play_record.submission_client_agent,
-            play_record.music_service_base_domain,
+            submission_client_agent,
+            music_service_base_domain,
             artist_names_json,
             track_discriminant,
             release_discriminant
@@ -1563,14 +1577,15 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let play_record = serde_json::from_value::<
-                    types::fm::teal::alpha::feed::play::RecordData,
-                >(record.clone())?;
+                let record: types::fm_teal::alpha::feed::play::Play =
+                    value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(
+                        record.clone(),
+                    )?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         // TODO: verify cid
                         self.insert_play(
-                            &play_record,
+                            &record,
                             &assemble_at_uri(&message.did, &commit.collection, &commit.rkey),
                             cid,
                             &message.did,
