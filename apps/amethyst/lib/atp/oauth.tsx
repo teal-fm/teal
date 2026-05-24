@@ -2,14 +2,11 @@ import { Platform } from "react-native";
 import Constants from "expo-constants";
 import {
   ClientMetadata,
+  ExpoOAuthClient,
   clientMetadataSchema,
-  ReactNativeOAuthClient,
-} from "@aquareum/atproto-oauth-client-react-native";
+} from "@atproto/oauth-client-expo";
 
-export type AquareumOAuthClient = Omit<
-  ReactNativeOAuthClient,
-  "keyset" | "serverFactory" | "jwks"
->;
+export type AquareumOAuthClient = ExpoOAuthClient;
 
 export default function createOAuthClient(
   baseUrl: string,
@@ -54,13 +51,15 @@ export default function createOAuthClient(
     client_name: "Amethyst",
     response_types: ["code"],
     grant_types: ["authorization_code", "refresh_token"],
+    subject_type: "public",
+    authorization_signed_response_alg: "none",
     // > There is a special exception for the localhost development workflow [ ... ]
     // > These clients use web URLs, but have application_type set to native in the generated client metadata.
     application_type: hostname === "localhost" ? "native" : "web",
     dpop_bound_access_tokens: true,
   };
   clientMetadataSchema.parse(meta);
-  return new ReactNativeOAuthClient({
+  return new ExpoOAuthClient({
     handleResolver: "https://" + pdsBaseUrl, // backend instances should use a DNS based resolver
     responseMode: "query", // or "fragment" (frontend only) or "form_post" (backend only)
 
