@@ -52,7 +52,8 @@
       "properties": {
         "mbid": {
           "type": "string",
-          "description": "The Musicbrainz ID of the item"
+          "format": "uri",
+          "description": "The MusicBrainz ID URI of the item, formatted as mbid:<uuid>"
         },
         "type": {
           "type": "string",

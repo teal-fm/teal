@@ -16,11 +16,13 @@
         },
         "trackMbId": {
           "type": "string",
-          "description": "The Musicbrainz ID of the track"
+          "format": "uri",
+          "description": "The MusicBrainz ID URI of the track, formatted as mbid:<uuid>"
         },
         "recordingMbId": {
           "type": "string",
-          "description": "The Musicbrainz recording ID of the track"
+          "format": "uri",
+          "description": "The MusicBrainz recording ID URI of the track, formatted as mbid:<uuid>"
         },
         "duration": {
           "type": "integer",
@@ -42,7 +44,8 @@
         },
         "releaseMbId": {
           "type": "string",
-          "description": "The Musicbrainz release ID"
+          "format": "uri",
+          "description": "The MusicBrainz release ID URI, formatted as mbid:<uuid>"
         },
         "isrc": {
           "type": "string",
@@ -82,7 +85,8 @@
         },
         "artistMbId": {
           "type": "string",
-          "description": "The Musicbrainz ID of the artist"
+          "format": "uri",
+          "description": "The MusicBrainz artist ID URI, formatted as mbid:<uuid>"
         }
       }
     }
