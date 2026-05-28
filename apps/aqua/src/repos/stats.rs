@@ -3,7 +3,7 @@ use jacquard_common::from_json_value;
 use types::fm_teal::alpha::feed::PlayView;
 use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
 
-use super::{pg::PgDataSource, utc_to_atrium_datetime};
+use super::{mbid_uri, pg::PgDataSource, utc_to_atrium_datetime};
 
 #[async_trait]
 pub trait StatsRepo: Send + Sync {
@@ -50,7 +50,7 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let Some(name) = row.name {
                 result.push(ArtistView {
-                    mbid: Some(row.mbid.to_string().into()),
+                    mbid: Some(mbid_uri(row.mbid)),
                     name: Some(name.into()),
                     play_count: Some(row.play_count.unwrap_or(0)),
                     extra_data: Default::default(),
@@ -86,7 +86,7 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let (Some(mbid), Some(name)) = (row.mbid, row.name) {
                 result.push(ReleaseView {
-                    mbid: Some(mbid.to_string().into()),
+                    mbid: Some(mbid_uri(mbid)),
                     name: Some(name.into()),
                     play_count: Some(row.play_count.unwrap_or(0)),
                     extra_data: Default::default(),
@@ -129,7 +129,7 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let Some(name) = row.name {
                 result.push(ArtistView {
-                    mbid: Some(row.mbid.to_string().into()),
+                    mbid: Some(mbid_uri(row.mbid)),
                     name: Some(name.into()),
                     play_count: Some(row.play_count.unwrap_or(0)),
                     extra_data: Default::default(),
@@ -171,7 +171,7 @@ impl StatsRepo for PgDataSource {
         for row in rows {
             if let (Some(mbid), Some(name)) = (row.mbid, row.name) {
                 result.push(ReleaseView {
-                    mbid: Some(mbid.to_string().into()),
+                    mbid: Some(mbid_uri(mbid)),
                     name: Some(name.into()),
                     play_count: Some(row.play_count.unwrap_or(0)),
                     extra_data: Default::default(),
@@ -223,12 +223,12 @@ impl StatsRepo for PgDataSource {
 
             result.push(PlayView {
                 track_name: row.track_name.into(),
-                track_mb_id: row.recording_mbid.map(|u| u.to_string().into()),
-                recording_mb_id: row.recording_mbid.map(|u| u.to_string().into()),
+                track_mb_id: row.recording_mbid.map(mbid_uri),
+                recording_mb_id: row.recording_mbid.map(mbid_uri),
                 duration: row.duration.map(|d| d as i64),
                 artists: artists.into_iter().map(|a| a.to_owned()).collect(),
                 release_name: row.release_name.map(|s| s.into()),
-                release_mb_id: row.release_mbid.map(|u| u.to_string().into()),
+                release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
                 origin_url: row.origin_url.map(|s| s.into()),
                 music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),

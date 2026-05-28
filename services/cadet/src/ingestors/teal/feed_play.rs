@@ -1,7 +1,10 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
 use jacquard_common::{
-    types::{string::Datetime, value},
+    types::{
+        string::{Datetime, UriValue},
+        value,
+    },
     IntoStatic,
 };
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
@@ -397,6 +400,14 @@ pub struct PlayIngestor {
     sql: PgPool,
 }
 
+fn mbid_value(mbid: &str) -> &str {
+    mbid.strip_prefix("mbid:").unwrap_or(mbid)
+}
+
+fn uri_mbid_value(mbid: &UriValue) -> &str {
+    mbid_value(mbid.as_str())
+}
+
 fn clean(
     record: &types::fm_teal::alpha::feed::play::Play,
 ) -> types::fm_teal::alpha::feed::play::Play {
@@ -406,7 +417,7 @@ fn clean(
     if let Some(artists) = &mut cleaned.artists {
         for artist in artists.iter_mut() {
             if let Some(mbid) = &artist.artist_mb_id {
-                if mbid.is_empty() {
+                if mbid.as_str().is_empty() {
                     artist.artist_mb_id = None;
                 }
             }
@@ -424,14 +435,14 @@ fn clean(
 
     // Clean release_mb_id
     if let Some(release_mbid) = &cleaned.release_mb_id {
-        if release_mbid.is_empty() {
+        if release_mbid.as_str().is_empty() {
             cleaned.release_mb_id = None;
         }
     }
 
     // Clean recording_mb_id
     if let Some(recording_mbid) = &cleaned.recording_mb_id {
-        if recording_mbid.is_empty() {
+        if recording_mbid.as_str().is_empty() {
             cleaned.recording_mb_id = None;
         }
     }
@@ -1176,7 +1187,7 @@ impl PlayIngestor {
     /// Returns the internal ID of the artist.
     async fn insert_artist_extended(&self, mbid: Option<&str>, name: &str) -> anyhow::Result<i32> {
         if let Some(mbid) = mbid {
-            let artist_uuid = Uuid::parse_str(mbid)?;
+            let artist_uuid = Uuid::parse_str(mbid_value(mbid))?;
             let res = sqlx::query!(
                 r#"
                     INSERT INTO artists_extended (mbid, name, mbid_type) VALUES ($1, $2, 'musicbrainz')
@@ -1215,7 +1226,7 @@ impl PlayIngestor {
     /// Inserts or updates a release in the database.
     /// Returns the Uuid of the release.
     async fn insert_release(&self, mbid: &str, name: &str) -> anyhow::Result<Uuid> {
-        let release_uuid = Uuid::parse_str(mbid)?;
+        let release_uuid = Uuid::parse_str(mbid_value(mbid))?;
 
         // Extract discriminant from release name for new releases
         // Prioritize edition-specific patterns for better quality
@@ -1251,7 +1262,7 @@ impl PlayIngestor {
     /// Inserts or updates a recording in the database.
     /// Returns the Uuid of the recording.
     async fn insert_recording(&self, mbid: &str, name: &str) -> anyhow::Result<Uuid> {
-        let recording_uuid = Uuid::parse_str(mbid)?;
+        let recording_uuid = Uuid::parse_str(mbid_value(mbid))?;
 
         // Extract discriminant from recording name for new recordings
         // Prioritize edition-specific patterns for better quality
@@ -1329,7 +1340,7 @@ impl PlayIngestor {
             for artist in artists {
                 let artist_name = artist.artist_name.clone();
                 artist_names_raw.push(artist_name.as_str().to_owned());
-                let artist_mbid = artist.artist_mb_id.as_deref();
+                let artist_mbid = artist.artist_mb_id.as_ref().map(uri_mbid_value);
 
                 let artist_id = self
                     .find_or_create_artist_with_fuzzy_matching(
@@ -1380,7 +1391,10 @@ impl PlayIngestor {
         // Insert release if missing
         let release_mbid_opt = if let Some(release_mbid) = &play_record.release_mb_id {
             if let Some(release_name) = &play_record.release_name {
-                Some(self.insert_release(release_mbid, release_name).await?)
+                Some(
+                    self.insert_release(uri_mbid_value(release_mbid), release_name)
+                        .await?,
+                )
             } else {
                 None
             }
@@ -1392,7 +1406,7 @@ impl PlayIngestor {
         let recording_mbid_opt = if let Some(recording_mbid) = &play_record.recording_mb_id {
             let recording_name = play_record.track_name.clone();
             Some(
-                self.insert_recording(recording_mbid, &recording_name)
+                self.insert_recording(uri_mbid_value(recording_mbid), &recording_name)
                     .await?,
             )
         } else {
