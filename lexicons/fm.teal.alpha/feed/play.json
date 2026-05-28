@@ -39,15 +39,14 @@
               "maxLength": 256,
               "maxGraphemes": 2560
             },
-            "description": "Array of artist names in order of original appearance. Prefer using 'artists'."
+            "description": "DEPRECATED: USE 'artists' INSTEAD. Array of artist names in order of original appearance."
           },
           "artistMbIds": {
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uri"
+              "type": "string"
             },
-            "description": "Array of MusicBrainz artist ID URIs, formatted as mbid:<uuid>. Prefer using 'artists'."
+            "description": "DEPRECATED: USE 'artists' INSTEAD. Array of Musicbrainz artist IDs."
           },
           "artists": {
             "type": "array",
