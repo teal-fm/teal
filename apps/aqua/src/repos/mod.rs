@@ -1,4 +1,6 @@
 use actor_profile::ActorProfileRepo;
+use jacquard_common::{deps::smol_str::SmolStr, types::string::UriValue};
+use uuid::Uuid;
 
 use crate::repos::feed_play::FeedPlayRepo;
 use crate::repos::stats::StatsRepo;
@@ -28,4 +30,8 @@ pub fn utc_to_atrium_datetime(
 
 pub fn time_to_chrono_utc(dt: time::OffsetDateTime) -> chrono::DateTime<chrono::Utc> {
     chrono::DateTime::from_timestamp(dt.unix_timestamp(), dt.nanosecond()).unwrap_or_default()
+}
+
+pub fn mbid_uri(mbid: Uuid) -> UriValue {
+    UriValue::Any(SmolStr::new(format!("mbid:{mbid}")))
 }
