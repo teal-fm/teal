@@ -50,10 +50,14 @@ async function getXrpc<T>(
   return response.json() as Promise<T>;
 }
 
-export function getLatestPlays(limit = 50) {
-  return getXrpc<{ plays: PlayView[] }>("fm.teal.alpha.stats.getLatest", {
-    limit,
-  });
+export function getLatestPlays(limit = 50, cursor?: string) {
+  return getXrpc<{ plays: PlayView[]; cursor?: string }>(
+    "fm.teal.alpha.stats.getLatest",
+    {
+      limit,
+      cursor,
+    },
+  );
 }
 
 export function getActorFeed(authorDID: string, limit = 50) {

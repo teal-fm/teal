@@ -5,7 +5,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 ## Current State
 
 - Amethyst has a Teal-branded Songish-style shell with desktop navigation, mobile navigation, Home, searchable Explore, Notifications, Profile, and music detail views.
-- Aqua exposes Teal XRPC routes for latest plays, individual plays, actor feeds, profiles, stats, and indexed search across listeners, songs, artists, and albums.
+- Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, and indexed search across listeners, songs, artists, and albums.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
@@ -40,6 +40,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 ## Next: Aqua And Lexicons
 
 - [ ] Add pagination support for `fm.teal.alpha.feed.getActorFeed` cursor and limit parameters.
+- [x] Add keyset pagination and infinite scrolling for the global latest-play feed.
 - [x] Run SQLx prepare against the development Postgres instance and commit refreshed query cache data.
 - [ ] Resolve the existing Satellite SQLx offline-cache gap so `pnpm turbo run test:rust` passes without a live Docker hostname.
 - [ ] Decide whether the legacy `play_to_artists` join table can be removed after Aqua reads move fully to `play_to_artists_extended`.

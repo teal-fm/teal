@@ -130,11 +130,13 @@ pub async fn get_user_top_releases(
 #[derive(Deserialize)]
 pub struct GetLatestQuery {
     pub limit: Option<i32>,
+    pub cursor: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct GetLatestResponse {
     plays: Vec<PlayView>,
+    cursor: Option<String>,
 }
 
 pub async fn get_latest(
@@ -143,9 +145,10 @@ pub async fn get_latest(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let repo = &ctx.db;
 
-    match repo.get_latest(query.limit).await {
-        Ok(plays) => Ok(axum::Json(GetLatestResponse {
-            plays: plays.into_static(),
+    match repo.get_latest(query.limit, query.cursor.as_deref()).await {
+        Ok(page) => Ok(axum::Json(GetLatestResponse {
+            plays: page.plays.into_static(),
+            cursor: page.cursor,
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
