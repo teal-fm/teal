@@ -1,15 +1,24 @@
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
-import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
-import type { ArtistView, ReleaseView } from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
 import type { AppBskyActorDefs } from "@atproto/api";
 
+import type {
+  MiniProfileView,
+  ProfileView,
+} from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { SongResult } from "@teal/lexicons/src/types/fm/teal/alpha/search/defs";
+import type {
+  ArtistView,
+  ReleaseView,
+} from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
+
 const rawBase =
-  process.env.EXPO_PUBLIC_AQUA_URL ||
-  process.env.EXPO_PUBLIC_APPVIEW_URL ||
-  "";
+  process.env.EXPO_PUBLIC_AQUA_URL || process.env.EXPO_PUBLIC_APPVIEW_URL || "";
 
 const requestBase =
-  rawBase || (typeof window === "undefined" ? "http://localhost:3000" : window.location.origin);
+  rawBase ||
+  (typeof window === "undefined"
+    ? "http://localhost:3000"
+    : window.location.origin);
 const xrpcBase = requestBase.endsWith("/xrpc")
   ? requestBase
   : `${requestBase.replace(/\/$/, "")}/xrpc`;
@@ -79,9 +88,12 @@ export async function getBlueskyProfile(actor: string) {
 }
 
 export function getTopArtists(limit = 5) {
-  return getXrpc<{ artists: ArtistView[] }>("fm.teal.alpha.stats.getTopArtists", {
-    limit,
-  });
+  return getXrpc<{ artists: ArtistView[] }>(
+    "fm.teal.alpha.stats.getTopArtists",
+    {
+      limit,
+    },
+  );
 }
 
 export function getTopReleases(limit = 5) {
@@ -91,9 +103,42 @@ export function getTopReleases(limit = 5) {
   );
 }
 
+export type SearchResults = {
+  users: MiniProfileView[];
+  songs: SongResult[];
+  artists: ArtistView[];
+  albums: ReleaseView[];
+};
+
+export function getSearchResults(q: string, limit = 8) {
+  return getXrpc<SearchResults>("fm.teal.alpha.search.getResults", {
+    q,
+    limit,
+  });
+}
+
+export async function searchBlueskyUsers(q: string, limit = 8) {
+  const url = new URL(
+    "https://public.api.bsky.app/xrpc/app.bsky.actor.searchActors",
+  );
+  url.searchParams.set("q", q);
+  url.searchParams.set("limit", String(limit));
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    throw new XrpcError("app.bsky.actor.searchActors", response.status);
+  }
+
+  return response.json() as Promise<{
+    actors: AppBskyActorDefs.ProfileViewBasic[];
+  }>;
+}
+
 export function coverArtUrl(releaseMbId?: string, size = 250) {
   const mbid = releaseMbId?.replace(/^mbid:/, "");
-  return mbid ? `https://coverartarchive.org/release/${mbid}/front-${size}` : undefined;
+  return mbid
+    ? `https://coverartarchive.org/release/${mbid}/front-${size}`
+    : undefined;
 }
 
 export function displayArtists(play: PlayView) {
