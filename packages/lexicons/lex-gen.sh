@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
-# Navigate to the lexicons directory and find all .json files
+# Navigate to the lexicons directory and find Teal schemas plus the upstream
+# schemas referenced by Teal records. Avoid generating the full ATProto tree:
+# newer upstream lexicons may use syntax unsupported by this repo's lex-cli.
 cd ../../lexicons
-json_files=$(find . -name "*.json" -type f)
+json_files=$(find ./fm.teal.alpha -name "*.json" -type f)
+json_files="$json_files ./app/bsky/richtext/facet.json"
 
 # Go back to the lexicons package directory
 cd ../packages/lexicons

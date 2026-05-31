@@ -1,0 +1,65 @@
+# Teal Songish Clone TODO
+
+This file is the working handoff for the Songish-style Teal clone. Keep it updated as implementation and QA move forward.
+
+## Current State
+
+- Amethyst has a Teal-branded Songish-style shell with desktop navigation, mobile navigation, Home, Explore, Notifications, Profile, and music detail views.
+- Aqua exposes Teal XRPC routes for latest plays, individual plays, actor feeds, profiles, and stats.
+- Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, ingests profiles and plays, and deletes plays by AT URI.
+- Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
+- Development Compose includes an optional Cloudflare Tunnel profile.
+- Current temporary UI preview: `https://directory-extensive-viewer-agreement.trycloudflare.com`
+  - This is an account-less Cloudflare quick tunnel. It remains available while the local tunnel process is running and its hostname will change after restart.
+  - The preview serves the current Amethyst export and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
+  - The current preview build enables a demo fallback when Aqua returns an empty feed, so the UI remains inspectable while Cadet fills the local index from Jetstream.
+  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://directory-extensive-viewer-agreement.trycloudflare.com` and serves a matching `/client-metadata.json` OAuth redirect.
+  - OAuth callback testing still requires the stable-host work below.
+
+## Next: Public Demo And OAuth
+
+- [ ] Reserve a stable Cloudflare Tunnel hostname for development OAuth testing. Quick tunnels are useful for UI previews but their random hostnames change after restart.
+- [ ] Route the stable public hostname to Amethyst and expose Aqua through a public HTTPS origin or a same-origin reverse proxy.
+- [ ] Build Amethyst with `EXPO_PUBLIC_BASE_URL=https://<tunnel-host>` and `EXPO_PUBLIC_AQUA_URL=https://<public-aqua-host>`.
+- [ ] Serve `/client-metadata.json` with `redirect_uris=["https://<tunnel-host>/auth/callback"]`.
+- [ ] Complete ATProto OAuth sign-in and callback QA through the stable public hostname.
+- [ ] Document the stable tunnel token or named-tunnel setup without committing secrets.
+
+## Next: Firehose Ingestion
+
+- [ ] Add Cadet create, update, and delete integration tests for `fm.teal.alpha.feed.play`.
+- [ ] Add profile ingestion integration tests for `fm.teal.alpha.actor.profile`.
+- [ ] Verify Jetstream filtering against `wantedCollections=fm.teal.alpha.feed.play` in a live environment.
+- [ ] Verify Cadet cursor recovery after restart with Garnet enabled.
+- [ ] Verify delete handling removes the play URI from `plays`, `play_to_artists`, and `play_to_artists_extended`.
+- [ ] Add a `subscribeRepos` CBOR adapter only if relay-level firehose sync becomes necessary.
+- [ ] Keep CAR import as a backfill path and add regression tests for it.
+
+## Next: Aqua And Lexicons
+
+- [ ] Add pagination support for `fm.teal.alpha.feed.getActorFeed` cursor and limit parameters.
+- [ ] Run SQLx prepare against the development Postgres instance and commit refreshed query cache data.
+- [ ] Resolve the existing Satellite SQLx offline-cache gap so `pnpm turbo run test:rust` passes without a live Docker hostname.
+- [ ] Decide whether the legacy `play_to_artists` join table can be removed after Aqua reads move fully to `play_to_artists_extended`.
+- [ ] Validate the Teal lexicons and regenerate Rust and TypeScript bindings before each PR.
+
+## Next: Amethyst UI
+
+- [ ] Finish profile avatar and banner blob URL rendering.
+- [ ] Add artist and release detail routes in addition to track detail.
+- [ ] Render real Cover Art Archive images for recordings with MusicBrainz IDs and polished fallbacks for missing art.
+- [ ] Exercise empty, loading, error, signed-out, and populated feed states at desktop and mobile widths.
+- [ ] Verify SPA fallback routing in the production Caddy image for Home, Explore, Notifications, Profile, music detail, and OAuth callback routes.
+- [ ] Capture final Chrome screenshots after Aqua and Cadet are running with live ingested data.
+
+## Verification Commands
+
+```bash
+pnpm lex:gen-server
+SQLX_OFFLINE=true cargo check -p aqua -p cadet
+SQLX_OFFLINE=true cargo test -p cadet stores_and_loads_cursor_from_file_when_redis_is_unavailable
+pnpm --filter=@teal/amethyst build:web
+docker compose -f compose.dev.yml config
+docker compose -f compose.yaml config
+docker compose -f compose.dev.yml --profile tunnel up
+```

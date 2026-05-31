@@ -1,0 +1,100 @@
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Image, View } from "react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
+import PlayFeedCard from "@/components/songish/PlayFeedCard";
+import RightRail from "@/components/songish/RightRail";
+import SongishShell from "@/components/songish/SongishShell";
+import { Text } from "@/components/ui/text";
+import { coverArtUrl, displayArtists, getLatestPlays, getPlayByUri } from "@/lib/teal/api";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+
+export default function MusicDetail() {
+  const params = useLocalSearchParams();
+  const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri;
+  const [play, setPlay] = useState<PlayView | null>(null);
+  const [related, setRelated] = useState<PlayView[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const selected = uri
+          ? (await getPlayByUri(uri)).play
+          : (await getLatestPlays(1)).plays[0];
+        const latest = await getLatestPlays(20);
+        if (!mounted) return;
+        setPlay(selected);
+        setRelated(
+          latest.plays.filter((candidate) =>
+            selected?.trackName
+              ? candidate.trackName === selected.trackName ||
+                candidate.releaseMbId === selected.releaseMbId
+              : false,
+          ),
+        );
+      } catch (e) {
+        if (mounted) setError(e instanceof Error ? e.message : String(e));
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [uri]);
+
+  return (
+    <SongishShell rightRail={<RightRail />}>
+      <Stack.Screen options={{ title: play?.trackName || "Music", headerShown: false }} />
+      {!play && !error && (
+        <View className="min-h-[24rem] items-center justify-center">
+          <ActivityIndicator size="large" />
+        </View>
+      )}
+      {error && (
+        <View className="rounded-2xl bg-destructive/15 p-4">
+          <Text className="font-bold text-destructive">Could not load music detail: {error}</Text>
+        </View>
+      )}
+      {play && (
+        <>
+          <View className="mb-10 overflow-hidden rounded-3xl bg-background/70">
+            <View className="h-44 bg-muted">
+              {coverArtUrl(play.releaseMbId, 500) && (
+                <Image
+                  source={{ uri: coverArtUrl(play.releaseMbId, 500) }}
+                  className="h-full w-full opacity-40"
+                />
+              )}
+            </View>
+            <View className="-mt-8 flex-row gap-4 px-5 pb-8">
+              {coverArtUrl(play.releaseMbId) ? (
+                <Image
+                  source={{ uri: coverArtUrl(play.releaseMbId) }}
+                  className="h-36 w-36 rounded-2xl bg-muted"
+                />
+              ) : (
+                <View className="h-36 w-36 rounded-2xl bg-muted" />
+              )}
+              <View className="min-w-0 flex-1 justify-end pb-2">
+                <Text className="font-serif text-3xl font-black" numberOfLines={2}>
+                  {play.trackName}
+                </Text>
+                <Text className="text-lg font-bold text-muted-foreground">
+                  {displayArtists(play) || "Unknown artist"}
+                </Text>
+                {play.releaseName && (
+                  <Text className="text-muted-foreground">{play.releaseName}</Text>
+                )}
+              </View>
+            </View>
+          </View>
+          <Text className="mb-4 text-2xl font-black">Plays</Text>
+          {(related.length ? related : [play]).map((item, index) => (
+            <PlayFeedCard key={item.uri || `${item.trackName}-${index}`} play={item} />
+          ))}
+        </>
+      )}
+    </SongishShell>
+  );
+}

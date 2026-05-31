@@ -1576,6 +1576,10 @@ impl PlayIngestor {
     }
 
     async fn remove_play(&self, uri: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
+            .bind(uri)
+            .execute(&self.sql)
+            .await?;
         sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
             .execute(&self.sql)
             .await?;
@@ -1609,8 +1613,9 @@ impl LexiconIngestor for PlayIngestor {
                     }
                 }
             } else {
-                println!("{}: Message {} deleted", message.did, commit.rkey);
-                self.remove_play(&message.did).await?;
+                let uri = assemble_at_uri(&message.did, &commit.collection, &commit.rkey);
+                tracing::info!("{}: Play {} deleted", message.did, uri);
+                self.remove_play(&uri).await?;
             }
         } else {
             return Err(anyhow!("Message has no commit"));

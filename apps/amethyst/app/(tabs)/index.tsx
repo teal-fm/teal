@@ -1,97 +1,63 @@
-import * as React from "react";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
-import { Redirect, Stack, useRouter } from "expo-router";
-import ActorView from "@/components/actor/actorView";
-import { useStore } from "@/stores/mainStore";
+import { ActivityIndicator, View } from "react-native";
+import { Stack } from "expo-router";
+import PlayFeedCard from "@/components/songish/PlayFeedCard";
+import RightRail from "@/components/songish/RightRail";
+import SongishShell from "@/components/songish/SongishShell";
+import { Text } from "@/components/ui/text";
+import { getLatestPlays } from "@/lib/teal/api";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
-import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
-
-import AuthOptions from "../auth/options";
-
-export default function Screen() {
-  const router = useRouter();
-  const j = useStore((state) => state.status);
-  // @me
-  const agent = useStore((state) => state.pdsAgent);
-  const profile = useStore((state) => state.profiles[agent?.did ?? ""]);
-  const tealDid = useStore((state) => state.tealDid);
-  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
-  const [statusLoading, setStatusLoading] = useState<boolean>(true);
+export default function HomeScreen() {
+  const [plays, setPlays] = useState<PlayView[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchProfileStatus = async () => {
-      try {
-        if (!agent) return;
-
-        const res = await agent.call("com.atproto.repo.getRecord", {
-          repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
-          rkey: "self",
-        });
-
-        if (isMounted) {
-          setProfileStatus(res.data.value as ProfileStatusRecord);
+    let mounted = true;
+    getLatestPlays(50)
+      .then((res) => {
+        if (mounted) setPlays(res.plays);
+      })
+      .catch((e) => {
+        if (mounted) {
+          setError(e instanceof Error ? e.message : String(e));
+          setPlays([]);
         }
-      } catch (error) {
-        if (isMounted) {
-          // If no record exists, user hasn't completed onboarding
-          setProfileStatus(null);
-        }
-        console.error("Error fetching profile status:", error);
-        if (
-          error instanceof Error &&
-          error.message.includes("could not resolve proxy did")
-        ) {
-          router.replace("/offline");
-        }
-      } finally {
-        if (isMounted) {
-          setStatusLoading(false);
-        }
-      }
-    };
-
-    fetchProfileStatus();
-
+      });
     return () => {
-      isMounted = false;
+      mounted = false;
     };
-  }, [agent, router]);
-
-  if (j !== "loggedIn") {
-    return <AuthOptions />;
-  }
-
-  if (!statusLoading && (!profileStatus || profileStatus.completedOnboarding === "none")) {
-    return (
-      <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
-        <Redirect href="/onboarding" />
-      </View>
-    );
-  }
-
-  // TODO: replace with skeleton
-  if (!profile || !agent || statusLoading) {
-    return (
-      <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  }, []);
 
   return (
-    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
-      <Stack.Screen
-        options={{
-          title: "Home",
-          headerBackButtonDisplayMode: "minimal",
-          headerShown: false,
-        }}
-      />
-      <ActorView actorDid={agent.did!} pdsAgent={agent} />
-    </ScrollView>
+    <SongishShell rightRail={<RightRail />}>
+      <Stack.Screen options={{ title: "Teal", headerShown: false }} />
+      {!plays && (
+        <View className="min-h-[24rem] items-center justify-center">
+          <ActivityIndicator size="large" />
+        </View>
+      )}
+      {error && (
+        <View className="mb-6 rounded-2xl bg-destructive/15 p-4">
+          <Text className="font-bold text-destructive">
+            Could not load the Teal play feed: {error}
+          </Text>
+        </View>
+      )}
+      {plays?.length === 0 && !error && (
+        <View className="min-h-[24rem] items-center justify-center rounded-2xl bg-background/70 p-8">
+          <Text className="text-center text-2xl font-black">No plays indexed yet.</Text>
+          <Text className="mt-2 text-center text-muted-foreground">
+            Cadet will fill this feed as ATProto firehose records arrive.
+          </Text>
+        </View>
+      )}
+      {plays?.map((play, index) => (
+        <PlayFeedCard
+          key={play.uri || `${play.trackName}-${play.playedTime}-${index}`}
+          play={play}
+        />
+      ))}
+    </SongishShell>
   );
 }

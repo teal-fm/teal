@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use jacquard_common::from_json_value;
+use jacquard_common::types::string::{AtUri, Did};
 use types::fm_teal::alpha::feed::{Artist, PlayView};
 
 use super::{mbid_uri, pg::PgDataSource, utc_to_atrium_datetime};
@@ -51,6 +52,10 @@ impl FeedPlayRepo for PgDataSource {
 
         Ok(Some(PlayView {
             track_name: row.track_name.clone().into(),
+            uri: AtUri::try_from(row.uri.clone()).ok(),
+            cid: Some(row.cid.clone().into()),
+            author_did: Did::new_owned(&row.did).ok(),
+            rkey: Some(row.rkey.clone().into()),
             track_mb_id: row.recording_mbid.map(mbid_uri),
             recording_mb_id: row.recording_mbid.map(mbid_uri),
             duration: row.duration.map(|d| d as i64),
@@ -110,6 +115,10 @@ impl FeedPlayRepo for PgDataSource {
 
             result.push(PlayView {
                 track_name: row.track_name.clone().into(),
+                uri: AtUri::try_from(row.uri.clone()).ok(),
+                cid: Some(row.cid.clone().into()),
+                author_did: Did::new_owned(&row.did).ok(),
+                rkey: Some(row.rkey.clone().into()),
                 track_mb_id: row.recording_mbid.map(mbid_uri),
                 recording_mb_id: row.recording_mbid.map(mbid_uri),
                 duration: row.duration.map(|d| d as i64),
