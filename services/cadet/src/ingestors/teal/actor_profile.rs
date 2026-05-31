@@ -35,7 +35,12 @@ impl ActorProfileIngestor {
         // TODO: cache the doc for like 8 hours or something
         let did = resolve_identity(provided_did, "https://public.api.bsky.app").await?;
 
-        let handle = did.doc.also_known_as.first().map(String::as_str);
+        let handle = did
+            .doc
+            .also_known_as
+            .first()
+            .map(String::as_str)
+            .and_then(|alias| alias.strip_prefix("at://"));
 
         self.upsert_profile(&did.identity, handle, profile).await
     }
@@ -171,7 +176,7 @@ mod tests {
         ingestor
             .upsert_profile(
                 &did,
-                Some("at://first.example"),
+                Some("first.example"),
                 &profile("First Name", "Initial profile")?,
             )
             .await?;
@@ -190,7 +195,7 @@ mod tests {
         .bind(&did)
         .fetch_one(&pool)
         .await?;
-        assert_eq!(inserted.0.as_deref(), Some("at://first.example"));
+        assert_eq!(inserted.0.as_deref(), Some("first.example"));
         assert_eq!(inserted.1.as_deref(), Some("First Name"));
         assert_eq!(inserted.2.as_deref(), Some("Initial profile"));
         assert_eq!(
@@ -201,7 +206,7 @@ mod tests {
         ingestor
             .upsert_profile(
                 &did,
-                Some("at://updated.example"),
+                Some("updated.example"),
                 &profile("Updated Name", "Updated profile")?,
             )
             .await?;
@@ -220,7 +225,7 @@ mod tests {
         .bind(&did)
         .fetch_one(&pool)
         .await?;
-        assert_eq!(updated.0.as_deref(), Some("at://updated.example"));
+        assert_eq!(updated.0.as_deref(), Some("updated.example"));
         assert_eq!(updated.1.as_deref(), Some("Updated Name"));
         assert_eq!(updated.2.as_deref(), Some("Updated profile"));
         assert_eq!(

@@ -21,6 +21,11 @@
           "format": "did",
           "description": "The DID of the account that authored this play"
         },
+        "author": {
+          "type": "ref",
+          "ref": "fm.teal.alpha.actor.defs#miniProfileView",
+          "description": "Compact Teal profile metadata for the account that authored this play"
+        },
         "rkey": {
           "type": "string",
           "description": "The record key for this play"
