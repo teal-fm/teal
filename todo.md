@@ -7,12 +7,13 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 - Amethyst has a Teal-branded Songish-style shell with desktop navigation, mobile navigation, Home, Explore, Notifications, Profile, and music detail views.
 - Aqua exposes Teal XRPC routes for latest plays, individual plays, actor feeds, profiles, and stats.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, ingests profiles and plays, and deletes plays by AT URI.
+- The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
+- Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
 - Development Compose includes an optional Cloudflare Tunnel profile.
 - Current temporary UI preview: `https://directory-extensive-viewer-agreement.trycloudflare.com`
   - This is an account-less Cloudflare quick tunnel. It remains available while the local tunnel process is running and its hostname will change after restart.
   - The preview serves the current Amethyst export and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
-  - The current preview build enables a demo fallback when Aqua returns an empty feed, so the UI remains inspectable while Cadet fills the local index from Jetstream.
   - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://directory-extensive-viewer-agreement.trycloudflare.com` and serves a matching `/client-metadata.json` OAuth redirect.
   - OAuth callback testing still requires the stable-host work below.
 
@@ -38,7 +39,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 ## Next: Aqua And Lexicons
 
 - [ ] Add pagination support for `fm.teal.alpha.feed.getActorFeed` cursor and limit parameters.
-- [ ] Run SQLx prepare against the development Postgres instance and commit refreshed query cache data.
+- [x] Run SQLx prepare against the development Postgres instance and commit refreshed query cache data.
 - [ ] Resolve the existing Satellite SQLx offline-cache gap so `pnpm turbo run test:rust` passes without a live Docker hostname.
 - [ ] Decide whether the legacy `play_to_artists` join table can be removed after Aqua reads move fully to `play_to_artists_extended`.
 - [ ] Validate the Teal lexicons and regenerate Rust and TypeScript bindings before each PR.
@@ -49,6 +50,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 - [ ] Add artist and release detail routes in addition to track detail.
 - [ ] Render real Cover Art Archive images for recordings with MusicBrainz IDs and polished fallbacks for missing art.
 - [ ] Exercise empty, loading, error, signed-out, and populated feed states at desktop and mobile widths.
+- [ ] Fix populated desktop feed-card text collisions for long DIDs, track titles, and artist names.
 - [ ] Verify SPA fallback routing in the production Caddy image for Home, Explore, Notifications, Profile, music detail, and OAuth callback routes.
 - [ ] Capture final Chrome screenshots after Aqua and Cadet are running with live ingested data.
 

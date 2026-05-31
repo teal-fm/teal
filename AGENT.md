@@ -65,17 +65,13 @@ redirect_uris=["https://<tunnel-host>/auth/callback"]
 - Verify `/client-metadata.json` publicly before initiating login.
 - Never test public OAuth with a bundle that falls back to `localhost` or `127.0.0.1`.
 
-## Preview Feed Rule
+## Live Feed Rule
 
 - The production data path is Cadet Jetstream ingestion into Postgres, surfaced by Aqua XRPC.
 - Keep `/xrpc/*` same-origin through the Amethyst reverse proxy.
-- Preview-only fallback data may be enabled with:
-
-```bash
-EXPO_PUBLIC_ENABLE_DEMO_FALLBACK=true
-```
-
-- Demo fallback must remain opt-in and must not replace live ingestion in production.
+- Never add backup, seeded, mocked, or demo play data to Amethyst.
+- If Aqua is unavailable, show an error state.
+- If Aqua has not indexed plays yet, show an empty state.
 
 ## Minimum Verification
 
@@ -96,4 +92,3 @@ For public-preview changes, also verify:
 curl --fail https://<tunnel-host>/client-metadata.json
 curl --fail "https://<tunnel-host>/xrpc/fm.teal.alpha.stats.getLatest?limit=5"
 ```
-

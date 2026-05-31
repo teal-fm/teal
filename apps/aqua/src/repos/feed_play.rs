@@ -26,14 +26,15 @@ impl FeedPlayRepo for PgDataSource {
                 COALESCE(
                   json_agg(
                     json_build_object(
-                      'artist_mbid', pta.artist_mbid,
-                      'artist_name', pta.artist_name
+                      'artistMbId', ae.mbid,
+                      'artistName', ptae.artist_name
                     )
-                  ) FILTER (WHERE pta.artist_name IS NOT NULL),
+                  ) FILTER (WHERE ptae.artist_name IS NOT NULL),
                   '[]'
                 ) AS artists
             FROM plays
-            LEFT JOIN play_to_artists as pta ON uri = pta.play_uri
+            LEFT JOIN play_to_artists_extended as ptae ON uri = ptae.play_uri
+            LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id
             WHERE uri = $1
             GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
                      release_mbid, release_name, recording_mbid, submission_client_agent,
@@ -86,14 +87,15 @@ impl FeedPlayRepo for PgDataSource {
                 COALESCE(
                   json_agg(
                     json_build_object(
-                      'artist_mbid', pta.artist_mbid,
-                      'artist_name', pta.artist_name
+                      'artistMbId', ae.mbid,
+                      'artistName', ptae.artist_name
                     )
-                  ) FILTER (WHERE pta.artist_name IS NOT NULL),
+                  ) FILTER (WHERE ptae.artist_name IS NOT NULL),
                   '[]'
                 ) AS artists
             FROM plays
-            LEFT JOIN play_to_artists as pta ON uri = pta.play_uri
+            LEFT JOIN play_to_artists_extended as ptae ON uri = ptae.play_uri
+            LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id
             WHERE did = ANY($1)
             GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
                      release_mbid, release_name, recording_mbid, submission_client_agent,

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,\n                release_mbid, release_name, recording_mbid, submission_client_agent,\n                music_service_base_domain, origin_url,\n                COALESCE(\n                  json_agg(\n                    json_build_object(\n                      'artist_mbid', pta.artist_mbid,\n                      'artist_name', pta.artist_name\n                    )\n                  ) FILTER (WHERE pta.artist_name IS NOT NULL),\n                  '[]'\n                ) AS artists\n            FROM plays\n            LEFT JOIN play_to_artists as pta ON uri = pta.play_uri\n            WHERE uri = $1\n            GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,\n                     release_mbid, release_name, recording_mbid, submission_client_agent,\n                     music_service_base_domain, origin_url\n            ORDER BY processed_time desc\n            ",
+  "query": "\n            SELECT\n                uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,\n                release_mbid, release_name, recording_mbid, submission_client_agent,\n                music_service_base_domain, origin_url,\n                COALESCE(\n                  json_agg(\n                    json_build_object(\n                      'artistMbId', ae.mbid,\n                      'artistName', ptae.artist_name\n                    )\n                  ) FILTER (WHERE ptae.artist_name IS NOT NULL),\n                  '[]'\n                ) AS artists\n            FROM plays\n            LEFT JOIN play_to_artists_extended as ptae ON uri = ptae.play_uri\n            LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id\n            WHERE did = ANY($1)\n            GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,\n                     release_mbid, release_name, recording_mbid, submission_client_agent,\n                     music_service_base_domain, origin_url\n            ORDER BY processed_time desc\n            ",
   "describe": {
     "columns": [
       {
@@ -86,7 +86,7 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "TextArray"
       ]
     },
     "nullable": [
@@ -108,5 +108,5 @@
       null
     ]
   },
-  "hash": "651c94b4edd5afa55c3679a5f8c1ef1cbe53f7dac01b050ec7ad9100950527c0"
+  "hash": "7fa22b474b224ecad073e47528ca7b3f6aa61951da0c7618f5c06324f25b0afd"
 }

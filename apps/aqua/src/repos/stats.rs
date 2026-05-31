@@ -31,14 +31,14 @@ impl StatsRepo for PgDataSource {
         let rows = sqlx::query!(
             r#"
             SELECT
-                pta.artist_mbid as mbid,
-                pta.artist_name as name,
+                ae.mbid,
+                ptae.artist_name as name,
                 COUNT(*) as play_count
             FROM plays p
-            INNER JOIN play_to_artists pta ON p.uri = pta.play_uri
-            WHERE pta.artist_mbid IS NOT NULL
-              AND pta.artist_name IS NOT NULL
-            GROUP BY pta.artist_mbid, pta.artist_name
+            INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri
+            INNER JOIN artists_extended ae ON ptae.artist_id = ae.id
+            WHERE ptae.artist_name IS NOT NULL
+            GROUP BY ae.mbid, ptae.artist_name
             ORDER BY play_count DESC
             LIMIT $1
             "#,
@@ -49,14 +49,12 @@ impl StatsRepo for PgDataSource {
 
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
-            if let Some(name) = row.name {
-                result.push(ArtistView {
-                    mbid: Some(mbid_uri(row.mbid)),
-                    name: Some(name.into()),
-                    play_count: Some(row.play_count.unwrap_or(0)),
-                    extra_data: Default::default(),
-                });
-            }
+            result.push(ArtistView {
+                mbid: row.mbid.map(mbid_uri),
+                name: Some(row.name.into()),
+                play_count: Some(row.play_count.unwrap_or(0)),
+                extra_data: Default::default(),
+            });
         }
 
         Ok(result)
@@ -108,15 +106,15 @@ impl StatsRepo for PgDataSource {
         let rows = sqlx::query!(
             r#"
             SELECT
-                pta.artist_mbid as mbid,
-                pta.artist_name as name,
+                ae.mbid,
+                ptae.artist_name as name,
                 COUNT(*) as play_count
             FROM plays p
-            INNER JOIN play_to_artists pta ON p.uri = pta.play_uri
+            INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri
+            INNER JOIN artists_extended ae ON ptae.artist_id = ae.id
             WHERE p.did = $1
-              AND pta.artist_mbid IS NOT NULL
-              AND pta.artist_name IS NOT NULL
-            GROUP BY pta.artist_mbid, pta.artist_name
+              AND ptae.artist_name IS NOT NULL
+            GROUP BY ae.mbid, ptae.artist_name
             ORDER BY play_count DESC
             LIMIT $2
             "#,
@@ -128,14 +126,12 @@ impl StatsRepo for PgDataSource {
 
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
-            if let Some(name) = row.name {
-                result.push(ArtistView {
-                    mbid: Some(mbid_uri(row.mbid)),
-                    name: Some(name.into()),
-                    play_count: Some(row.play_count.unwrap_or(0)),
-                    extra_data: Default::default(),
-                });
-            }
+            result.push(ArtistView {
+                mbid: row.mbid.map(mbid_uri),
+                name: Some(row.name.into()),
+                play_count: Some(row.play_count.unwrap_or(0)),
+                extra_data: Default::default(),
+            });
         }
 
         Ok(result)
@@ -195,14 +191,15 @@ impl StatsRepo for PgDataSource {
                 COALESCE(
                   json_agg(
                     json_build_object(
-                      'artist_mbid', pta.artist_mbid,
-                      'artist_name', pta.artist_name
+                      'artistMbId', ae.mbid,
+                      'artistName', ptae.artist_name
                     )
-                  ) FILTER (WHERE pta.artist_name IS NOT NULL),
+                  ) FILTER (WHERE ptae.artist_name IS NOT NULL),
                   '[]'
                 ) AS artists
             FROM plays p
-            LEFT JOIN play_to_artists as pta ON p.uri = pta.play_uri
+            LEFT JOIN play_to_artists_extended as ptae ON p.uri = ptae.play_uri
+            LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id
             GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
                      release_mbid, release_name, recording_mbid, submission_client_agent,
                      music_service_base_domain, origin_url

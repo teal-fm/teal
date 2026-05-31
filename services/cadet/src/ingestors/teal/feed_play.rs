@@ -1230,12 +1230,10 @@ impl PlayIngestor {
 
         // Extract discriminant from release name for new releases
         // Prioritize edition-specific patterns for better quality
-        let discriminant = self
-            .extract_edition_discriminant_from_db(name)
-            .await
-            .or_else(|| {
-                futures::executor::block_on(async { self.extract_discriminant_from_db(name).await })
-            });
+        let discriminant = match self.extract_edition_discriminant_from_db(name).await {
+            Some(discriminant) => Some(discriminant),
+            None => self.extract_discriminant_from_db(name).await,
+        };
 
         let res = sqlx::query!(
             r#"
@@ -1266,12 +1264,10 @@ impl PlayIngestor {
 
         // Extract discriminant from recording name for new recordings
         // Prioritize edition-specific patterns for better quality
-        let discriminant = self
-            .extract_edition_discriminant_from_db(name)
-            .await
-            .or_else(|| {
-                futures::executor::block_on(async { self.extract_discriminant_from_db(name).await })
-            });
+        let discriminant = match self.extract_edition_discriminant_from_db(name).await {
+            Some(discriminant) => Some(discriminant),
+            None => self.extract_discriminant_from_db(name).await,
+        };
 
         let res = sqlx::query!(
             r#"
@@ -1331,7 +1327,6 @@ impl PlayIngestor {
         did: &str,
         rkey: &str,
     ) -> anyhow::Result<()> {
-        dbg!("ingesting", play_record);
         let play_record = clean(play_record);
         let mut parsed_artists: Vec<(i32, String)> = vec![];
         let mut artist_names_raw: Vec<String> = vec![];
@@ -1422,36 +1417,28 @@ impl PlayIngestor {
         // First try lexicon fields, then extract from names with preference for edition-specific patterns
         // TODO: Enable when types are updated with discriminant fields
         // let track_discriminant = play_record.track_discriminant.clone().or_else(|| {
-        let track_discriminant = {
-            // Try edition-specific patterns first, then general patterns
-            futures::executor::block_on(async {
-                self.extract_edition_discriminant_from_db(&play_record.track_name)
+        let track_discriminant = match self
+            .extract_edition_discriminant_from_db(&play_record.track_name)
+            .await
+        {
+            Some(discriminant) => Some(discriminant),
+            None => {
+                self.extract_discriminant_from_db(&play_record.track_name)
                     .await
-                    .or_else(|| {
-                        futures::executor::block_on(async {
-                            self.extract_discriminant_from_db(&play_record.track_name)
-                                .await
-                        })
-                    })
-            })
+            }
         };
 
         // let release_discriminant = play_record.release_discriminant.clone().or_else(|| {
-        let release_discriminant = {
-            if let Some(release_name) = &play_record.release_name {
-                futures::executor::block_on(async {
-                    // Try edition-specific patterns first, then general patterns
-                    self.extract_edition_discriminant_from_db(release_name)
-                        .await
-                        .or_else(|| {
-                            futures::executor::block_on(async {
-                                self.extract_discriminant_from_db(release_name).await
-                            })
-                        })
-                })
-            } else {
-                None
+        let release_discriminant = if let Some(release_name) = &play_record.release_name {
+            match self
+                .extract_edition_discriminant_from_db(release_name)
+                .await
+            {
+                Some(discriminant) => Some(discriminant),
+                None => self.extract_discriminant_from_db(release_name).await,
             }
+        } else {
+            None
         };
 
         // Our main insert into plays with raw artist names and discriminants
