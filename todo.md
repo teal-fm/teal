@@ -9,6 +9,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, ingests profiles and plays, and deletes plays by AT URI.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
+- Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
 - Development Compose includes an optional Cloudflare Tunnel profile.
 - Current temporary UI preview: `https://directory-extensive-viewer-agreement.trycloudflare.com`

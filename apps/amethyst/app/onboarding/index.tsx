@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import ProgressDots from "@/components/onboarding/progressDots";
-import { Text } from "@/components/ui/text"; // Your UI components
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 
 import { useStore } from "@/stores/mainStore";
+import { ArrowLeft, Check, Disc3, Music2, Sparkles } from "lucide-react-native";
 
 import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
 import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
@@ -40,7 +43,16 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
-  const profile = useStore((store) => store.profiles);
+  const profiles = useStore((store) => store.profiles);
+  const profile = agent?.did ? profiles[agent.did] : undefined;
+
+  useEffect(() => {
+    if (!profile?.bsky) return;
+    setDisplayName((current) => current || profile.bsky?.displayName || "");
+    setDescription((current) => current || profile.bsky?.description || "");
+    setAvatarUri((current) => current || profile.bsky?.avatar || "");
+    setBannerUri((current) => current || profile.bsky?.banner || "");
+  }, [profile?.bsky]);
 
   // Check profile status
   React.useEffect(() => {
@@ -210,32 +222,74 @@ export default function OnboardingPage() {
     }, 2000);
   };
 
-  if (!agent || !profile[agent?.did!]) {
-    return <div>Loading...</div>;
+  if (!agent) {
+    return (
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+        <View className="w-full max-w-md gap-4 rounded-2xl border border-border bg-background/80 p-6">
+          <Icon icon={Disc3} size={42} className="text-primary" />
+          <Text className="font-serif text-4xl font-black">Create your Teal profile</Text>
+          <Text className="text-muted-foreground">
+            Sign in with your ATProto account before setting up your music identity.
+          </Text>
+          <Link href="/auth/login" asChild>
+            <Button>
+              <Text>Sign in</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <View className="min-h-screen flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   if (statusLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Checking profile status...</Text>
+      <View className="min-h-screen flex-1 items-center justify-center gap-3 bg-background">
+        <ActivityIndicator size="large" />
+        <Text className="text-muted-foreground">Checking your Teal profile...</Text>
       </View>
     );
   }
 
   if (profileStatus && profileStatus.completedOnboarding !== "none") {
     return (
-      <Text>
-        Onboarding already completed: {profileStatus.completedOnboarding}
-      </Text>
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+        <View className="w-full max-w-md items-start gap-4 rounded-2xl border border-border bg-background/80 p-6">
+          <Icon icon={Check} size={42} className="text-primary" />
+          <Text className="font-serif text-4xl font-black">Your Teal profile is ready</Text>
+          <Text className="text-muted-foreground">
+            Your music identity already exists. You can return to your profile
+            and keep listening.
+          </Text>
+          <Link href={`/profile/${agent.did}` as any} asChild>
+            <Button>
+              <Text>View profile</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (submissionStep) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{OnboardingSubmissionSteps[submissionStep]}</Text>
+      <View className="min-h-screen flex-1 items-center justify-center gap-4 bg-background">
+        <View className="h-20 w-20 items-center justify-center rounded-full border-8 border-primary/20 bg-primary/10">
+          <ActivityIndicator size="large" />
+        </View>
+        <Text className="font-serif text-3xl font-black">
+          {OnboardingSubmissionSteps[submissionStep]}
+        </Text>
+        <Text className="text-muted-foreground">
+          Publishing your profile to the Atmosphere.
+        </Text>
       </View>
     );
   }
@@ -264,6 +318,7 @@ export default function OnboardingPage() {
             onComplete={handleImageSelectionComplete}
             initialAvatar={avatarUri}
             initialBanner={bannerUri}
+            onBack={() => setStep(2)}
           />
         );
       default:
@@ -272,9 +327,53 @@ export default function OnboardingPage() {
   };
 
   return (
-    <SafeAreaView className="flex-1 p-5 pt-5">
-      <View className="flex h-full min-h-max flex-1">{renderPage()}</View>
-      <ProgressDots totalSteps={3} currentStep={step} />
+    <SafeAreaView className="min-h-screen flex-1 bg-background">
+      <View className="absolute inset-0 bg-[linear-gradient(135deg,#fff8fd_0%,#ffffff_48%,#dff9f5_100%)] dark:bg-[linear-gradient(135deg,#150913_0%,#080808_52%,#062a2a_100%)]" />
+      <View className="z-10 min-h-screen flex-1 flex-row">
+        <View className="hidden w-[22rem] justify-between border-r border-border/60 bg-background/55 p-10 backdrop-blur-xl lg:flex">
+          <Link href="/" asChild>
+            <Button variant="ghost" size="sm" className="self-start">
+              <Icon icon={ArrowLeft} size={18} />
+              <Text className="ml-2">Back to Teal</Text>
+            </Button>
+          </Link>
+          <View className="gap-5">
+            <View className="h-20 w-20 items-center justify-center rounded-full border-[8px] border-foreground bg-background">
+              <View className="h-7 w-7 rounded-full bg-foreground" />
+            </View>
+            <Text className="font-serif text-5xl font-black">Make it yours.</Text>
+            <Text className="text-lg text-muted-foreground">
+              A Teal profile lives in your ATProto repository and follows your
+              listening history across the Atmosphere.
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Icon icon={Music2} size={18} className="text-primary" />
+            <Text className="font-mono text-xs text-muted-foreground">
+              fm.teal.alpha.actor.profile
+            </Text>
+          </View>
+        </View>
+        <View className="min-h-screen flex-1 px-5 py-8 md:px-12">
+          <View className="mx-auto w-full max-w-2xl flex-1">
+            <View className="mb-8 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3">
+                <Icon icon={Sparkles} size={20} className="text-primary" />
+                <Text className="font-mono text-xs font-bold uppercase text-muted-foreground">
+                  Teal profile setup
+                </Text>
+              </View>
+              <Text className="font-mono text-xs text-muted-foreground">
+                0{step} / 03
+              </Text>
+            </View>
+            <View className="flex-1 rounded-2xl border border-border/70 bg-background/80 p-6 backdrop-blur-xl md:p-10">
+              {renderPage()}
+            </View>
+            <ProgressDots totalSteps={3} currentStep={step} />
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
