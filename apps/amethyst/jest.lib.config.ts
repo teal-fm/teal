@@ -16,6 +16,7 @@ const config: Config = {
           esModuleInterop: true,
           target: "es2020",
           lib: ["es2020"],
+          types: ["jest", "node"],
           strict: true,
         },
       },

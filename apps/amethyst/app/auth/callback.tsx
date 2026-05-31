@@ -7,6 +7,22 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { PencilLine } from "lucide-react-native";
 
+const toSearchParams = (
+  params: Record<string, string | string[] | undefined>,
+): URLSearchParams => {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        searchParams.append(key, item);
+      }
+    } else if (value !== undefined) {
+      searchParams.set(key, value);
+    }
+  }
+  return searchParams;
+};
+
 export default function AuthOptions() {
   const status = useStore((state) => state.status);
   const params = useLocalSearchParams<"iss" | "state" | "code">();
@@ -19,7 +35,7 @@ export default function AuthOptions() {
     // "Unknown authorization session".
     if (calledRef.current || !params) return;
     calledRef.current = true;
-    const searchParams = new URLSearchParams(params);
+    const searchParams = toSearchParams(params);
     useStore.getState().oauthCallback(searchParams);
   }, [params]);
 

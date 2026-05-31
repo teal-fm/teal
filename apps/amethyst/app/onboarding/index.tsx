@@ -106,15 +106,15 @@ export default function OnboardingPage() {
     }
 
     // upload blobs if necessary
-    let newAvatarBlob = currentUser?.avatar ?? undefined;
-    let newBannerBlob = currentUser?.banner ?? undefined;
+    let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
+    let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
     if (newAvatarUri) {
       if (!newAvatarUri.startsWith("http")) {
         setSubmissionStep(2);
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob;
+        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["avatar"];
       }
     }
     if (newBannerUri) {
@@ -123,7 +123,7 @@ export default function OnboardingPage() {
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob;
+        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["banner"];
       }
     }
 
