@@ -6,7 +6,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 
 - Amethyst has a Teal-branded Songish-style shell with desktop navigation, mobile navigation, Home, Explore, Notifications, Profile, and music detail views.
 - Aqua exposes Teal XRPC routes for latest plays, individual plays, actor feeds, profiles, and stats.
-- Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, ingests profiles and plays, and deletes plays by AT URI.
+- Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
@@ -30,7 +30,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 ## Next: Firehose Ingestion
 
 - [ ] Add Cadet create, update, and delete integration tests for `fm.teal.alpha.feed.play`.
-- [ ] Add profile ingestion integration tests for `fm.teal.alpha.actor.profile`.
+- [x] Add profile create, update, and delete ingestion integration tests for `fm.teal.alpha.actor.profile`.
 - [ ] Verify Jetstream filtering against `wantedCollections=fm.teal.alpha.feed.play` in a live environment.
 - [ ] Verify Cadet cursor recovery after restart with Garnet enabled.
 - [ ] Verify delete handling removes the play URI from `plays`, `play_to_artists`, and `play_to_artists_extended`.

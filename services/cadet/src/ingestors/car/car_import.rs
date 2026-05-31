@@ -334,8 +334,7 @@ impl CarImportIngestor {
 
     /// Process a profile record using the existing ActorProfileIngestor
     async fn process_profile_record(&self, data: &Value, did: &str, _rkey: &str) -> Result<()> {
-        let profile_record: types::fm_teal::alpha::actor::profile::Profile =
-            value::from_json_value::<types::fm_teal::alpha::actor::profile::Profile>(data.clone())?;
+        let profile_record = super::super::teal::actor_profile::deserialize_profile(data)?;
 
         let profile_ingestor =
             super::super::teal::actor_profile::ActorProfileIngestor::new(self.sql.clone());
