@@ -13,7 +13,6 @@ export default () => {
       icon: "./assets/images/icon.png",
       scheme: "fm.teal.amethyst",
       userInterfaceStyle: "automatic",
-      newArchEnabled: true,
       splash: {
         image: "./assets/images/splash-icon.png",
         resizeMode: "contain",
@@ -49,8 +48,19 @@ export default () => {
             useSQLCipher: true,
           },
         ],
+        [
+          "expo-build-properties",
+          {
+            ios: {
+              deploymentTarget: "16.4",
+              buildReactNativeFromSource: true,
+            },
+          },
+        ],
         "expo-router",
         "expo-web-browser",
+        "expo-splash-screen",
+        "expo-status-bar",
       ],
       experiments: {
         reactCompiler: true,
