@@ -31,7 +31,7 @@ const DisplayNamePage: React.FC<DisplayNamePageProps> = ({
         <View className="h-12 w-12 items-center justify-center rounded-lg bg-accent">
           <Icon icon={BadgeCheck} size={24} className="text-primary" />
         </View>
-        <Text className="font-serif text-3xl font-black">
+        <Text className="font-sans text-3xl font-black">
           What should listeners call you?
         </Text>
         <Text className="text-base text-muted-foreground">

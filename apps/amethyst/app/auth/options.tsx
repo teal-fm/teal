@@ -16,7 +16,7 @@ export default function AuthOptions() {
         }}
       />
       <View className="w-full max-w-md gap-5 rounded-lg border border-border bg-card p-7">
-        <Text className="font-serif text-4xl font-black text-foreground">
+        <Text className="font-sans text-4xl font-black text-foreground">
           Welcome to Teal
         </Text>
         <Text className="leading-6 text-muted-foreground">

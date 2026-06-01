@@ -25,7 +25,7 @@ const LoginScreen = () => {
             size={24}
           />
         </View>
-        <Text className="text-center font-serif text-3xl font-black text-foreground">
+        <Text className="text-center font-sans text-3xl font-black text-foreground">
           Sign up via the Atmosphere
         </Text>
         <Text className="text-center text-lg font-bold text-foreground">

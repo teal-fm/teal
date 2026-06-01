@@ -131,7 +131,7 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               )}
-              <Text className="mt-3 font-serif text-3xl font-black">
+              <Text className="mt-3 font-sans text-3xl font-black">
                 {profile?.displayName || actor}
               </Text>
               {profile?.handle && (

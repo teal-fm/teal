@@ -29,7 +29,7 @@ const DescriptionPage: React.FC<DescriptionPageProps> = ({
         <View className="h-12 w-12 items-center justify-center rounded-lg bg-accent">
           <Icon icon={MessageSquareText} size={24} className="text-primary" />
         </View>
-        <Text className="font-serif text-3xl font-black">
+        <Text className="font-sans text-3xl font-black">
           Add a liner note.
         </Text>
         <Text className="text-base text-muted-foreground">

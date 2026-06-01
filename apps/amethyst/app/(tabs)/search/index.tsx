@@ -355,7 +355,7 @@ export default function Explore() {
         {!hasQuery && (
           <View className="min-h-[20rem] items-center justify-center gap-3 px-8">
             <Icon icon={Search} size={38} className="text-muted-foreground" />
-            <Text className="text-center font-serif text-2xl font-black">
+            <Text className="text-center font-sans text-2xl font-black">
               Find something playing
             </Text>
             <Text className="text-center text-muted-foreground">

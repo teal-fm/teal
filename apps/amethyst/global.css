@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --base-font-family: "EBGaramond";
+    --base-font-family: "DM Sans";
     --background: 48 33% 97%;
     --foreground: 174 33% 10%;
     --muted: 162 16% 91%;

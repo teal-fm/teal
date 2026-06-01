@@ -231,7 +231,7 @@ export default function OnboardingPage() {
       <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
         <View className="w-full max-w-md gap-4 rounded-lg border border-border bg-card p-6">
           <Icon icon={Disc3} size={42} className="text-primary" />
-          <Text className="font-serif text-3xl font-black">
+          <Text className="font-sans text-3xl font-black">
             Create your Teal profile
           </Text>
           <Text className="text-muted-foreground">
@@ -272,7 +272,7 @@ export default function OnboardingPage() {
       <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
         <View className="w-full max-w-md items-start gap-4 rounded-lg border border-border bg-card p-6">
           <Icon icon={Check} size={42} className="text-primary" />
-          <Text className="font-serif text-3xl font-black">
+          <Text className="font-sans text-3xl font-black">
             Your Teal profile is ready
           </Text>
           <Text className="text-muted-foreground">
@@ -295,7 +295,7 @@ export default function OnboardingPage() {
         <View className="h-20 w-20 items-center justify-center rounded-full border-8 border-primary/20 bg-primary/10">
           <ActivityIndicator size="large" />
         </View>
-        <Text className="font-serif text-3xl font-black">
+        <Text className="font-sans text-3xl font-black">
           {OnboardingSubmissionSteps[submissionStep]}
         </Text>
         <Text className="text-muted-foreground">
@@ -351,7 +351,7 @@ export default function OnboardingPage() {
             <View className="h-16 w-16 items-center justify-center rounded-full border-[7px] border-background">
               <View className="h-5 w-5 rounded-full bg-secondary" />
             </View>
-            <Text className="font-serif text-4xl font-black text-background">
+            <Text className="font-sans text-4xl font-black text-background">
               Make it yours.
             </Text>
             <Text className="text-base leading-6 text-background/65">

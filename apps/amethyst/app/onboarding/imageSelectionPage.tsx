@@ -53,7 +53,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         <View className="h-12 w-12 items-center justify-center rounded-lg bg-accent">
           <Icon icon={ImagePlus} size={24} className="text-primary" />
         </View>
-        <Text className="font-serif text-3xl font-black">Set the artwork.</Text>
+        <Text className="font-sans text-3xl font-black">Set the artwork.</Text>
         <Text className="text-base text-muted-foreground">
           Add an avatar and banner, or keep the images from your Bluesky
           profile. Both are optional.

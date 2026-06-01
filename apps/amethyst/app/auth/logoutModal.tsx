@@ -25,7 +25,7 @@ export default function ModalScreen() {
           className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
           name="x"
         />
-        <Text className="font-serif text-3xl font-black">
+        <Text className="font-sans text-3xl font-black">
           Sign out of Teal?
         </Text>
         <Text className="text-center text-sm leading-5 text-muted-foreground">

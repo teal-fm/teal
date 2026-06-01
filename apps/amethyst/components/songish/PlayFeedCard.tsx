@@ -6,7 +6,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, displayArtists, getBlueskyProfile } from "@/lib/teal/api";
 import { musicTrackHref } from "@/lib/teal/routes";
 import { cn, timeAgo } from "@/lib/utils";
-import { Disc3, Play } from "lucide-react-native";
+import { Disc3 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
@@ -131,7 +131,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
         <Link href={musicHref(play) as any} asChild>
           <Pressable className="flex-row items-center justify-between gap-3">
             <View className="min-w-0 flex-1">
-              <Text className="font-serif text-xl font-black" numberOfLines={2}>
+              <Text className="font-sans text-xl font-black" numberOfLines={2}>
                 {play.trackName}
               </Text>
               <Text
@@ -141,7 +141,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
                 {displayArtists(play) || "Unknown artist"}
               </Text>
             </View>
-            <View className="relative">
+            <View>
               {art ? (
                 <Image
                   source={{ uri: art }}
@@ -157,9 +157,6 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
                   />
                 </View>
               )}
-              <View className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center rounded-full border border-border bg-background">
-                <Icon icon={Play} size={14} className="text-primary" />
-              </View>
             </View>
           </Pressable>
         </Link>

@@ -242,7 +242,7 @@ const LoginScreen = () => {
             />
           </View>
         </View>
-        <Text className="text-center font-serif text-3xl font-black text-foreground">
+        <Text className="text-center font-sans text-3xl font-black text-foreground">
           Sign in to Teal
         </Text>
         <Text className="text-center text-sm leading-5 text-muted-foreground">

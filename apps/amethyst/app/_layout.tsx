@@ -62,10 +62,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    CrimsonPro: require("../assets/fonts/CrimsonPro-VariableFont_wght.ttf"),
-    "CrimsonPro Italic": require("../assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf"),
     "DM Sans": require("../assets/fonts/DMSans-VariableFont_opsz,wght.ttf"),
-    Fraunces: require("../assets/fonts/Fraunces-VariableFont_SOFT,WONK,opsz,wght.ttf"),
     PlexMono: require("../assets/fonts/IBMPlexMono-Regular.ttf"),
     ...FontAwesome.font,
   });

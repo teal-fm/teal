@@ -44,7 +44,7 @@ export default function RightRail() {
             Trending now
           </Text>
         </View>
-        <Text className="font-serif text-3xl font-black text-background">
+        <Text className="font-sans text-3xl font-black text-background">
           Live from the network
         </Text>
         <Text className="mt-2 text-sm leading-5 text-background/65">

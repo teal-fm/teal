@@ -37,7 +37,7 @@ export default function StepThree() {
         <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
           <Check size={24} className="text-primary" />
         </View>
-        <Text className="font-serif text-3xl font-black">Play submitted</Text>
+        <Text className="font-sans text-3xl font-black">Play submitted</Text>
         <Text>
           You can view your play{" "}
           <ExternalLink

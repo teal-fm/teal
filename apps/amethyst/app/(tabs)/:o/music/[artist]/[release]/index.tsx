@@ -152,7 +152,7 @@ export default function AlbumDetail() {
                   Album
                 </Text>
                 <Text
-                  className="font-serif text-2xl font-black md:text-3xl"
+                  className="font-sans text-2xl font-black md:text-3xl"
                   numberOfLines={3}
                 >
                   {album.name}

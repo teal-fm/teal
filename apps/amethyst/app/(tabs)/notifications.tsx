@@ -18,7 +18,7 @@ export default function Notifications() {
         <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
           <Icon icon={Bell} size={22} className="text-primary" />
         </View>
-        <Text className="max-w-md text-center font-serif text-3xl font-black">
+        <Text className="max-w-md text-center font-sans text-3xl font-black">
           {status === "loggedIn"
             ? "Notifications are coming later."
             : "You must be signed in to view your notifications."}

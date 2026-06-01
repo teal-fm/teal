@@ -34,7 +34,7 @@ function RecordLogo() {
         <View className="h-3 w-3 rounded-full bg-secondary" />
       </View>
       <View>
-        <Text className="font-serif text-3xl font-black leading-8">Teal</Text>
+        <Text className="font-sans text-3xl font-black leading-8">Teal</Text>
         <Text className="font-mono text-[10px] uppercase text-muted-foreground">
           listening network
         </Text>
@@ -191,7 +191,7 @@ export function SectionHeading({
             {eyebrow}
           </Text>
         )}
-        <Text className="font-serif text-2xl font-black">{title}</Text>
+        <Text className="font-sans text-2xl font-black">{title}</Text>
       </View>
       {detail && (
         <Text className="font-mono text-[10px] text-muted-foreground">
@@ -228,7 +228,7 @@ export default function SongishShell({
         >
           <View className="min-h-screen w-full max-w-[48rem] px-4 py-7 md:px-7 lg:px-8">
             {title && (
-              <Text className="mb-7 font-serif text-4xl font-black">
+              <Text className="mb-7 font-sans text-4xl font-black">
                 {title}
               </Text>
             )}

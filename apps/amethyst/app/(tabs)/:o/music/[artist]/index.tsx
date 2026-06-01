@@ -93,7 +93,7 @@ export default function ArtistDetail() {
                   Artist
                 </Text>
                 <Text
-                  className="font-serif text-2xl font-black"
+                  className="font-sans text-2xl font-black"
                   numberOfLines={3}
                 >
                   {artist.name}
