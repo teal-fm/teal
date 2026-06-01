@@ -4,6 +4,7 @@ import { Link } from "expo-router";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, displayArtists, getBlueskyProfile } from "@/lib/teal/api";
+import { musicTrackHref } from "@/lib/teal/routes";
 import { cn, timeAgo } from "@/lib/utils";
 import { Disc3, MoreVertical, Play } from "lucide-react-native";
 
@@ -41,18 +42,13 @@ function getCachedBlueskyProfile(did: string) {
   return profile;
 }
 
-function routePart(value?: string) {
-  return encodeURIComponent(
-    (value || "unknown")
-      .toLowerCase()
-      .replace(/^mbid:/, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "") || "unknown",
-  );
-}
-
 export function musicHref(play: PlayView) {
-  return `/:o/music/${routePart(displayArtists(play))}/${routePart(play.releaseName)}/${routePart(play.trackName)}?uri=${encodeURIComponent(play.uri || "")}`;
+  return musicTrackHref(
+    displayArtists(play),
+    play.releaseName,
+    play.trackName,
+    play.uri || "",
+  );
 }
 
 export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {

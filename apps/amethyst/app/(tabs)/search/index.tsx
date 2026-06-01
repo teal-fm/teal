@@ -13,6 +13,11 @@ import {
   searchBlueskyUsers,
   type SearchResults,
 } from "@/lib/teal/api";
+import {
+  musicAlbumHref,
+  musicArtistHref,
+  musicTrackHref,
+} from "@/lib/teal/routes";
 import type { AppBskyActorDefs } from "@atproto/api";
 import {
   Disc3,
@@ -41,18 +46,13 @@ const EMPTY_RESULTS: SearchResults = {
   albums: [],
 };
 
-function routePart(value?: string) {
-  return encodeURIComponent(
-    (value || "unknown")
-      .toLowerCase()
-      .replace(/^mbid:/, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "") || "unknown",
-  );
-}
-
 function songHref(song: SongResult) {
-  return `/:o/music/${routePart(song.artistName)}/${routePart(song.releaseName)}/${routePart(song.trackName)}?uri=${encodeURIComponent(song.uri)}`;
+  return musicTrackHref(
+    song.artistName,
+    song.releaseName,
+    song.trackName,
+    song.uri,
+  );
 }
 
 function mergeUsers(
@@ -194,28 +194,27 @@ function MusicEntityRow({
   icon,
   name,
   playCount,
-  onPress,
+  href,
 }: {
   icon: typeof Mic2;
   name?: string;
   playCount?: number;
-  onPress: () => void;
+  href: string;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      className="flex-row items-center gap-3 border-b border-border/70 px-1 py-4"
-    >
-      <View className="h-12 w-12 items-center justify-center rounded-full bg-muted">
-        <Icon icon={icon} size={22} className="text-muted-foreground" />
-      </View>
-      <Text className="min-w-0 flex-1 font-black" numberOfLines={1}>
-        {name || "Unknown"}
-      </Text>
-      <Text className="font-mono text-xs text-muted-foreground">
-        {playCount || 0} plays
-      </Text>
-    </Pressable>
+    <Link href={href as any} asChild>
+      <Pressable className="flex-row items-center gap-3 border-b border-border/70 px-1 py-4">
+        <View className="h-12 w-12 items-center justify-center rounded-full bg-muted">
+          <Icon icon={icon} size={22} className="text-muted-foreground" />
+        </View>
+        <Text className="min-w-0 flex-1 font-black" numberOfLines={1}>
+          {name || "Unknown"}
+        </Text>
+        <Text className="font-mono text-xs text-muted-foreground">
+          {playCount || 0} plays
+        </Text>
+      </Pressable>
+    </Link>
   );
 }
 
@@ -286,12 +285,6 @@ export default function Explore() {
   };
   const hasQuery = query.trim().length >= 2;
   const hasResults = counts[activeTab] > 0;
-  const searchMusic = (name?: string) => {
-    if (!name) return;
-    setQuery(name);
-    setActiveTab("songs");
-  };
-
   return (
     <SongishShell title="Explore" rightRail={<RightRail />}>
       <Stack.Screen options={{ title: "Explore", headerShown: false }} />
@@ -384,7 +377,7 @@ export default function Explore() {
               icon={Mic2}
               name={artist.name}
               playCount={artist.playCount}
-              onPress={() => searchMusic(artist.name)}
+              href={musicArtistHref(artist.name || "Unknown", artist.mbid)}
             />
           ))}
         {activeTab === "albums" &&
@@ -394,7 +387,11 @@ export default function Explore() {
               icon={Disc3}
               name={album.name}
               playCount={album.playCount}
-              onPress={() => searchMusic(album.name)}
+              href={musicAlbumHref(
+                "album",
+                album.name || "Unknown",
+                album.mbid!,
+              )}
             />
           ))}
       </View>

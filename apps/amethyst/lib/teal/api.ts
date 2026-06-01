@@ -5,6 +5,10 @@ import type {
   ProfileView,
 } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type {
+  AlbumView,
+  ArtistView as MusicArtistView,
+} from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
 import type { SongResult } from "@teal/lexicons/src/types/fm/teal/alpha/search/defs";
 import type {
   ArtistView,
@@ -69,6 +73,20 @@ export function getActorFeed(authorDID: string, limit = 50) {
 
 export function getPlayByUri(uri: string) {
   return getXrpc<{ play: PlayView }>("fm.teal.alpha.feed.getPlay", { uri });
+}
+
+export function getArtist(mbid?: string, name?: string) {
+  return getXrpc<{ artist: MusicArtistView }>("fm.teal.alpha.music.getArtist", {
+    mbid,
+    name,
+  });
+}
+
+export function getAlbum(mbid: string, limit = 30, cursor?: string) {
+  return getXrpc<{ album: AlbumView; plays: PlayView[]; cursor?: string }>(
+    "fm.teal.alpha.music.getAlbum",
+    { mbid, limit, cursor },
+  );
 }
 
 export function getProfile(actor: string) {

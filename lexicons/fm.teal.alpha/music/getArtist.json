@@ -1,0 +1,36 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.music.getArtist",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get an indexed artist and their release discography",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "mbid": {
+            "type": "string",
+            "description": "MusicBrainz artist ID URI or UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Artist name fallback when no MusicBrainz ID is available"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["artist"],
+          "properties": {
+            "artist": {
+              "type": "ref",
+              "ref": "fm.teal.alpha.music.defs#artistView"
+            }
+          }
+        }
+      }
+    }
+  }
+}
