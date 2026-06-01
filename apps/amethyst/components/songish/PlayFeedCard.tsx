@@ -6,7 +6,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, displayArtists, getBlueskyProfile } from "@/lib/teal/api";
 import { musicTrackHref } from "@/lib/teal/routes";
 import { cn, timeAgo } from "@/lib/utils";
-import { Disc3, MoreVertical, Play } from "lucide-react-native";
+import { Disc3, Play } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
@@ -53,6 +53,7 @@ export function musicHref(play: PlayView) {
 
 export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
   const [blueskyAuthor, setBlueskyAuthor] = useState<FeedAuthor>();
+  const [artFailed, setArtFailed] = useState(false);
   const indexedAuthor = play.author;
   const authorProfile = indexedAuthor || blueskyAuthor;
   const authorDid = authorProfile?.did || play.authorDid;
@@ -71,7 +72,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
     };
   }, [authorDid, indexedAuthor]);
 
-  const art = coverArtUrl(play.releaseMbId);
+  const art = artFailed ? undefined : coverArtUrl(play.releaseMbId);
   const authorHandle = authorProfile?.handle?.replace(/^at:\/\//, "");
   const authorName =
     authorProfile?.displayName ||
@@ -92,17 +93,17 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
   return (
     <View
       className={cn(
-        "mb-7 rounded-2xl bg-background/70 p-4 shadow-sm backdrop-blur-xl",
+        "mb-4 w-full rounded-lg border border-border bg-card p-4 web:transition-colors web:hover:border-primary/45",
         compact ? "max-w-[34rem]" : "w-full",
       )}
     >
       <View className="flex-row items-center gap-3">
         <Link href={`/profile/${authorHref}` as any} asChild>
-          <Pressable className="h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-primary/60">
+          <Pressable className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary">
             {authorAvatar ? (
               <Image source={{ uri: authorAvatar }} className="h-full w-full" />
             ) : (
-              <Text className="text-2xl font-black text-primary-foreground">
+              <Text className="text-lg font-black text-primary-foreground">
                 {authorName.slice(0, 1).toUpperCase()}
               </Text>
             )}
@@ -120,15 +121,17 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
               @{authorHandle}
             </Text>
           )}
-          <Text className="text-sm text-muted-foreground">listened {when}</Text>
+          <Text className="font-mono text-[10px] text-muted-foreground">
+            listened {when}
+          </Text>
         </View>
       </View>
 
-      <View className="mt-4">
+      <View className="mt-4 border-t border-border pt-4">
         <Link href={musicHref(play) as any} asChild>
           <Pressable className="flex-row items-center justify-between gap-3">
             <View className="min-w-0 flex-1">
-              <Text className="text-lg font-black leading-5" numberOfLines={2}>
+              <Text className="font-serif text-xl font-black" numberOfLines={2}>
                 {play.trackName}
               </Text>
               <Text
@@ -142,36 +145,31 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
               {art ? (
                 <Image
                   source={{ uri: art }}
-                  className="h-20 w-20 rounded-xl bg-muted"
+                  className="h-16 w-16 rounded-lg bg-muted"
+                  onError={() => setArtFailed(true)}
                 />
               ) : (
-                <View className="h-20 w-20 items-center justify-center rounded-xl bg-muted">
+                <View className="h-16 w-16 items-center justify-center rounded-lg bg-muted">
                   <Icon
                     icon={Disc3}
-                    size={34}
+                    size={26}
                     className="text-muted-foreground"
                   />
                 </View>
               )}
-              <View className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full bg-background">
-                <Icon icon={Play} size={18} className="text-foreground" />
+              <View className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center rounded-full border border-border bg-background">
+                <Icon icon={Play} size={14} className="text-primary" />
               </View>
             </View>
           </Pressable>
         </Link>
       </View>
 
-      <Text className="mt-4 text-lg font-black">
-        {play.releaseName ? `from ${play.releaseName}` : "a fresh Teal play"}
-      </Text>
-
-      <View className="mt-3 flex-row items-center justify-between">
-        <View className="flex-row gap-4 opacity-45">
-          <Text className="font-black">♡ 0</Text>
-          <Text className="font-black">◼ 0</Text>
-        </View>
-        <Icon icon={MoreVertical} size={20} className="text-muted-foreground" />
-      </View>
+      {play.releaseName && (
+        <Text className="mt-3 font-mono text-[10px] uppercase text-muted-foreground">
+          from {play.releaseName}
+        </Text>
+      )}
     </View>
   );
 }

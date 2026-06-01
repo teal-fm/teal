@@ -26,17 +26,17 @@ const DescriptionPage: React.FC<DescriptionPageProps> = ({
   return (
     <View className="flex-1 justify-between gap-10">
       <View className="gap-5">
-        <View className="h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
+        <View className="h-12 w-12 items-center justify-center rounded-lg bg-accent">
           <Icon icon={MessageSquareText} size={24} className="text-primary" />
         </View>
-        <Text className="font-serif text-4xl font-black">
+        <Text className="font-serif text-3xl font-black">
           Add a liner note.
         </Text>
         <Text className="text-base text-muted-foreground">
           Say a little about your listening life, or leave this blank for now.
         </Text>
         <Textarea
-          className="min-h-[170px] rounded-xl border border-border bg-background px-4 py-3 text-base"
+          className="min-h-[170px] rounded-lg border border-border bg-background px-4 py-3 text-base"
           placeholder="What keeps ending up in your headphones?"
           multiline
           value={description}
@@ -50,10 +50,7 @@ const DescriptionPage: React.FC<DescriptionPageProps> = ({
             <Text>Back</Text>
           </Button>
         )}
-        <Button
-          onPress={handleComplete}
-          className="flex-row gap-2"
-        >
+        <Button onPress={handleComplete} className="flex-row gap-2">
           <Text>{description ? "Next" : "Skip for now"}</Text>
           <Icon icon={ArrowRight} size={18} />
         </Button>

@@ -6,7 +6,6 @@ import ProgressDots from "@/components/onboarding/progressDots";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-
 import { useStore } from "@/stores/mainStore";
 import { ArrowLeft, Check, Disc3, Music2, Sparkles } from "lucide-react-native";
 
@@ -35,9 +34,9 @@ export default function OnboardingPage() {
 
   const [submissionStep, setSubmissionStep] = useState(0);
 
-
   // Profile status hooks - must be at top level
-  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [profileStatus, setProfileStatus] =
+    useState<ProfileStatusRecord | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
   const router = useRouter();
@@ -77,7 +76,10 @@ export default function OnboardingPage() {
     checkProfileStatus();
   }, [agent]);
 
-  const handleImageSelectionComplete = (avatar: string | undefined, banner: string | undefined) => {
+  const handleImageSelectionComplete = (
+    avatar: string | undefined,
+    banner: string | undefined,
+  ) => {
     setAvatarUri(avatar ?? "");
     setBannerUri(banner ?? "");
     onComplete({ displayName, description }, avatar, banner);
@@ -126,7 +128,8 @@ export default function OnboardingPage() {
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["avatar"];
+        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
+          .data.blob as unknown as ProfileRecord["avatar"];
       }
     }
     if (newBannerUri) {
@@ -135,7 +138,8 @@ export default function OnboardingPage() {
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["banner"];
+        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
+          .data.blob as unknown as ProfileRecord["banner"];
       }
     }
 
@@ -225,11 +229,14 @@ export default function OnboardingPage() {
   if (!agent) {
     return (
       <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
-        <View className="w-full max-w-md gap-4 rounded-2xl border border-border bg-background/80 p-6">
+        <View className="w-full max-w-md gap-4 rounded-lg border border-border bg-card p-6">
           <Icon icon={Disc3} size={42} className="text-primary" />
-          <Text className="font-serif text-4xl font-black">Create your Teal profile</Text>
+          <Text className="font-serif text-3xl font-black">
+            Create your Teal profile
+          </Text>
           <Text className="text-muted-foreground">
-            Sign in with your ATProto account before setting up your music identity.
+            Sign in with your ATProto account before setting up your music
+            identity.
           </Text>
           <Link href="/auth/login" asChild>
             <Button>
@@ -253,7 +260,9 @@ export default function OnboardingPage() {
     return (
       <View className="min-h-screen flex-1 items-center justify-center gap-3 bg-background">
         <ActivityIndicator size="large" />
-        <Text className="text-muted-foreground">Checking your Teal profile...</Text>
+        <Text className="text-muted-foreground">
+          Checking your Teal profile...
+        </Text>
       </View>
     );
   }
@@ -261,9 +270,11 @@ export default function OnboardingPage() {
   if (profileStatus && profileStatus.completedOnboarding !== "none") {
     return (
       <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
-        <View className="w-full max-w-md items-start gap-4 rounded-2xl border border-border bg-background/80 p-6">
+        <View className="w-full max-w-md items-start gap-4 rounded-lg border border-border bg-card p-6">
           <Icon icon={Check} size={42} className="text-primary" />
-          <Text className="font-serif text-4xl font-black">Your Teal profile is ready</Text>
+          <Text className="font-serif text-3xl font-black">
+            Your Teal profile is ready
+          </Text>
           <Text className="text-muted-foreground">
             Your music identity already exists. You can return to your profile
             and keep listening.
@@ -328,28 +339,29 @@ export default function OnboardingPage() {
 
   return (
     <SafeAreaView className="min-h-screen flex-1 bg-background">
-      <View className="absolute inset-0 bg-[linear-gradient(135deg,#fff8fd_0%,#ffffff_48%,#dff9f5_100%)] dark:bg-[linear-gradient(135deg,#150913_0%,#080808_52%,#062a2a_100%)]" />
       <View className="z-10 min-h-screen flex-1 flex-row">
-        <View className="hidden w-[22rem] justify-between border-r border-border/60 bg-background/55 p-10 backdrop-blur-xl lg:flex">
+        <View className="hidden w-[20rem] justify-between border-r border-border bg-foreground p-8 lg:flex">
           <Link href="/" asChild>
             <Button variant="ghost" size="sm" className="self-start">
-              <Icon icon={ArrowLeft} size={18} />
-              <Text className="ml-2">Back to Teal</Text>
+              <Icon icon={ArrowLeft} size={18} className="text-background" />
+              <Text className="ml-2 text-background">Back to Teal</Text>
             </Button>
           </Link>
           <View className="gap-5">
-            <View className="h-20 w-20 items-center justify-center rounded-full border-[8px] border-foreground bg-background">
-              <View className="h-7 w-7 rounded-full bg-foreground" />
+            <View className="h-16 w-16 items-center justify-center rounded-full border-[7px] border-background">
+              <View className="h-5 w-5 rounded-full bg-secondary" />
             </View>
-            <Text className="font-serif text-5xl font-black">Make it yours.</Text>
-            <Text className="text-lg text-muted-foreground">
+            <Text className="font-serif text-4xl font-black text-background">
+              Make it yours.
+            </Text>
+            <Text className="text-base leading-6 text-background/65">
               A Teal profile lives in your ATProto repository and follows your
               listening history across the Atmosphere.
             </Text>
           </View>
           <View className="flex-row items-center gap-2">
-            <Icon icon={Music2} size={18} className="text-primary" />
-            <Text className="font-mono text-xs text-muted-foreground">
+            <Icon icon={Music2} size={18} className="text-secondary" />
+            <Text className="font-mono text-xs text-background/55">
               fm.teal.alpha.actor.profile
             </Text>
           </View>
@@ -367,7 +379,7 @@ export default function OnboardingPage() {
                 0{step} / 03
               </Text>
             </View>
-            <View className="flex-1 rounded-2xl border border-border/70 bg-background/80 p-6 backdrop-blur-xl md:p-10">
+            <View className="flex-1 rounded-lg border border-border bg-card p-6 md:p-10">
               {renderPage()}
             </View>
             <ProgressDots totalSteps={3} currentStep={step} />

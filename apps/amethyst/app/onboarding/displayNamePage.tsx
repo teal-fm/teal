@@ -28,18 +28,18 @@ const DisplayNamePage: React.FC<DisplayNamePageProps> = ({
   return (
     <View className="flex-1 justify-between gap-10">
       <View className="gap-5">
-        <View className="h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
+        <View className="h-12 w-12 items-center justify-center rounded-lg bg-accent">
           <Icon icon={BadgeCheck} size={24} className="text-primary" />
         </View>
-        <Text className="font-serif text-4xl font-black">
+        <Text className="font-serif text-3xl font-black">
           What should listeners call you?
         </Text>
         <Text className="text-base text-muted-foreground">
-          This is the name shown beside your plays. We started with your
-          Bluesky display name when one was available.
+          This is the name shown beside your plays. We started with your Bluesky
+          display name when one was available.
         </Text>
         <Input
-          className="h-14 rounded-xl border border-border bg-background px-4 text-lg"
+          className="h-14 rounded-lg border border-border bg-background px-4 text-lg"
           placeholder="Display name"
           value={displayName}
           onChangeText={setDisplayName}

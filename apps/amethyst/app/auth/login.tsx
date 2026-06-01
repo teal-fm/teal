@@ -220,7 +220,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex w-full flex-1 items-center justify-center">
+    <SafeAreaView className="flex w-full flex-1 items-center justify-center bg-muted px-5">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -229,21 +229,32 @@ const LoginScreen = () => {
         }}
       />
       <Animated.View
-        className="align-center w-screen max-w-lg justify-center gap-4 p-8 pb-32"
+        className="align-center w-full max-w-md justify-center gap-5 rounded-lg border border-border bg-background p-7 shadow-sm md:p-8"
         style={containerAnimatedStyle}
       >
         <View className="flex items-center">
-          <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
+          <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
+            <Icon
+              icon={AtSign}
+              className="text-primary-foreground"
+              name="at"
+              size={24}
+            />
+          </View>
         </View>
-        <Text className="text-center text-3xl text-foreground">
-          Sign in with your PDS
+        <Text className="text-center font-serif text-3xl font-black text-foreground">
+          Sign in to Teal
         </Text>
-        <View>
-          <Text className="text-sm text-muted-foreground">Handle</Text>
+        <Text className="text-center text-sm leading-5 text-muted-foreground">
+          Use the handle for your ATProto account. Teal will resolve your PDS
+          before continuing.
+        </Text>
+        <View className="gap-2">
+          <Text className="text-sm font-bold text-foreground">Handle</Text>
           <Input
             ref={handleInputRef}
             className={cn(
-              "ring-0, rounded-xl",
+              "h-12 rounded-lg",
               (err || pdsResolutionError) && `border-red-500`,
             )}
             placeholder="alice.bsky.social or did:plc:..."
@@ -263,7 +274,7 @@ const LoginScreen = () => {
           <Animated.View style={messageContainerAnimatedStyle}>
             <View
               className={cn(
-                "-mt-7 rounded-xl border border-border p-2 transition-all duration-300",
+                "-mt-7 rounded-lg border border-border p-2 transition-all duration-300",
                 isSelected ? "pt-9" : "pt-8",
                 pdsUrl !== null
                   ? pdsUrl.hostname.includes("bsky.network")
@@ -314,7 +325,7 @@ const LoginScreen = () => {
             </View>
           </Animated.View>
         </View>
-        <View className="flex flex-row items-center justify-between">
+        <View className="mt-2 flex flex-row items-center justify-between gap-3">
           <Link href="https://bsky.app/signup" asChild>
             <Button variant="link" className="p-0">
               <Text className="text-md text-secondary">
@@ -324,22 +335,22 @@ const LoginScreen = () => {
           </Link>
           <Button
             className={cn(
-              "duration-500, flex flex-row justify-end rounded-xl",
-              isRedirecting ? "bg-green-500" : "bg-bsky",
+              "flex flex-row justify-end gap-1",
+              isRedirecting ? "bg-primary" : "bg-primary",
             )}
             onPress={handleLogin}
             disabled={!pdsUrl}
           >
             {isRedirecting ? (
               <>
-                <Text className="text-lg">Redirecting</Text>
+                <Text>Redirecting</Text>
                 <Icon icon={Check} />
               </>
             ) : isLoading ? (
-              <Text className="text-lg">Signing in...</Text>
+              <Text>Signing in...</Text>
             ) : (
               <>
-                <Text className="text-lg">Sign in</Text>
+                <Text>Sign in</Text>
                 <Icon icon={ChevronRight} />
               </>
             )}

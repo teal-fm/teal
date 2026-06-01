@@ -8,7 +8,10 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { ArrowLeft, ImagePlus, Pen, UserRoundCheck } from "lucide-react-native";
 
 interface ImageSelectionPageProps {
-  onComplete: (avatarUri: string | undefined, bannerUri: string | undefined) => void;
+  onComplete: (
+    avatarUri: string | undefined,
+    bannerUri: string | undefined,
+  ) => void;
   initialAvatar?: string;
   initialBanner?: string;
   onBack?: () => void;
@@ -47,54 +50,57 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
   return (
     <View className="flex-1 justify-between gap-8">
       <View className="gap-5">
-        <View className="h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
+        <View className="h-12 w-12 items-center justify-center rounded-lg bg-accent">
           <Icon icon={ImagePlus} size={24} className="text-primary" />
         </View>
-        <Text className="font-serif text-4xl font-black">Set the artwork.</Text>
+        <Text className="font-serif text-3xl font-black">Set the artwork.</Text>
         <Text className="text-base text-muted-foreground">
           Add an avatar and banner, or keep the images from your Bluesky
           profile. Both are optional.
         </Text>
-      <Pressable
-        onPress={() => pickImage(setBannerUri)}
-        className="aspect-[3/1] w-full"
-      >
-        <View className="relative flex-1 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
-          {loading && !bannerUri && <ActivityIndicator />}
-          {bannerUri ? (
-            <>
-              <Image
-                source={{ uri: bannerUri }}
-                className="h-full w-full rounded-lg object-cover"
-              />
-              <View className="absolute -bottom-2 -right-2 rounded-full bg-gray-500/50 p-1">
-                <Icon icon={Pen} size={18} className="fill-white" />
-              </View>
-            </>
-          ) : (
-            <Text className="text-muted-foreground">Add banner image</Text>
-          )}
-        </View>
-      </Pressable>
-      <Pressable onPress={() => pickImage(setAvatarUri)} className="self-start">
-        <View className="relative">
-          {loading && !avatarUri && <ActivityIndicator />}
-          <Avatar className="h-24 w-24" alt="User Avatar">
-            {avatarUri ? (
+        <Pressable
+          onPress={() => pickImage(setBannerUri)}
+          className="aspect-[3/1] w-full"
+        >
+          <View className="relative flex-1 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+            {loading && !bannerUri && <ActivityIndicator />}
+            {bannerUri ? (
               <>
-                <AvatarImage source={{ uri: avatarUri }} />
-                <View className="absolute bottom-0 right-0 rounded-full bg-gray-500/50 p-1">
+                <Image
+                  source={{ uri: bannerUri }}
+                  className="h-full w-full rounded-lg object-cover"
+                />
+                <View className="absolute -bottom-2 -right-2 rounded-full bg-gray-500/50 p-1">
                   <Icon icon={Pen} size={18} className="fill-white" />
                 </View>
               </>
             ) : (
-              <AvatarFallback>
-                <Text>?</Text>
-              </AvatarFallback>
+              <Text className="text-muted-foreground">Add banner image</Text>
             )}
-          </Avatar>
-        </View>
-      </Pressable>
+          </View>
+        </Pressable>
+        <Pressable
+          onPress={() => pickImage(setAvatarUri)}
+          className="self-start"
+        >
+          <View className="relative">
+            {loading && !avatarUri && <ActivityIndicator />}
+            <Avatar className="h-24 w-24" alt="User Avatar">
+              {avatarUri ? (
+                <>
+                  <AvatarImage source={{ uri: avatarUri }} />
+                  <View className="absolute bottom-0 right-0 rounded-full bg-gray-500/50 p-1">
+                    <Icon icon={Pen} size={18} className="fill-white" />
+                  </View>
+                </>
+              ) : (
+                <AvatarFallback>
+                  <Text>?</Text>
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </View>
+        </Pressable>
       </View>
       <View className="w-full flex-row justify-between">
         {onBack && (

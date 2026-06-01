@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import RightRail from "@/components/songish/RightRail";
-import SongishShell from "@/components/songish/SongishShell";
+import SongishShell, {
+  SectionHeading,
+} from "@/components/songish/SongishShell";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, getArtist } from "@/lib/teal/api";
@@ -52,7 +54,7 @@ export default function ArtistDetail() {
         </View>
       )}
       {error && (
-        <View className="rounded-2xl bg-destructive/15 p-4">
+        <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="font-bold text-destructive">
             Could not load artist: {error}
           </Text>
@@ -60,7 +62,7 @@ export default function ArtistDetail() {
       )}
       {artist && (
         <>
-          <View className="mb-10 overflow-hidden rounded-2xl bg-background/75">
+          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
             <View className="h-40 bg-muted">
               {representativeArt && (
                 <Image
@@ -71,7 +73,7 @@ export default function ArtistDetail() {
               )}
             </View>
             <View className="-mt-10 flex-row items-end gap-4 px-5 pb-7">
-              <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-muted md:h-28 md:w-28">
+              <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-muted md:h-28 md:w-28">
                 {representativeArt ? (
                   <Image
                     source={{ uri: representativeArt }}
@@ -103,8 +105,12 @@ export default function ArtistDetail() {
             </View>
           </View>
 
-          <Text className="mb-4 text-2xl font-black">Discography</Text>
-          <View className="overflow-hidden rounded-2xl bg-background/75 px-4">
+          <SectionHeading
+            eyebrow="Catalog"
+            title="Discography"
+            detail={`${artist.albums.length} RELEASES`}
+          />
+          <View className="overflow-hidden rounded-lg border border-border bg-card px-3">
             {artist.albums.map((album) => {
               const art = coverArtUrl(album.mbid);
               return (

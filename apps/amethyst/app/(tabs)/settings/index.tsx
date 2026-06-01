@@ -1,6 +1,10 @@
 import React, { useState } from "react";
-import { ScrollView, Switch, View } from "react-native";
+import { Switch, View } from "react-native";
 import { Link, Stack } from "expo-router";
+import RightRail from "@/components/songish/RightRail";
+import SongishShell, {
+  SectionHeading,
+} from "@/components/songish/SongishShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -21,15 +25,16 @@ export default function Settings() {
   ];
 
   return (
-    <ScrollView className="w-full flex-1 items-center justify-start gap-5 bg-background">
+    <SongishShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{
           title: "Settings",
           headerBackButtonDisplayMode: "minimal",
-          headerShown: true,
+          headerShown: false,
         }}
       />
-      <View className="mx-5 my-2 flex w-screen max-w-2xl flex-1 flex-col gap-4 divide-y divide-muted-foreground/50 rounded-xl p-4">
+      <SectionHeading eyebrow="Preferences" title="Settings" />
+      <View className="flex flex-col gap-5 rounded-lg border border-border bg-card p-5">
         <ButtonSelector
           text="Theme"
           values={colorSchemeOptions}
@@ -62,7 +67,7 @@ export default function Settings() {
           </Text>
         </View>
       </View>
-    </ScrollView>
+    </SongishShell>
   );
 }
 
@@ -101,7 +106,7 @@ function ButtonSelector({
   return (
     <View className="items-start gap-2 pt-2">
       <Text className="text-base font-semibold">{text}</Text>
-      <View className="h-10 w-full flex-row items-center justify-around gap-1 rounded-xl bg-muted px-1">
+      <View className="h-10 w-full flex-row items-center justify-around gap-1 rounded-lg bg-muted px-1">
         {values.map(({ label, value }) => (
           <Button
             key={value}

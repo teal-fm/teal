@@ -8,7 +8,9 @@ import {
 import { Stack } from "expo-router";
 import PlayFeedCard from "@/components/songish/PlayFeedCard";
 import RightRail from "@/components/songish/RightRail";
-import SongishShell from "@/components/songish/SongishShell";
+import SongishShell, {
+  SectionHeading,
+} from "@/components/songish/SongishShell";
 import { Text } from "@/components/ui/text";
 import { getLatestPlays } from "@/lib/teal/api";
 
@@ -80,20 +82,25 @@ export default function HomeScreen() {
   return (
     <SongishShell rightRail={<RightRail />} onScroll={handleScroll}>
       <Stack.Screen options={{ title: "Teal", headerShown: false }} />
+      <SectionHeading
+        eyebrow="Global feed"
+        title="Recently listened"
+        detail="LIVE INDEX"
+      />
       {!plays && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
         </View>
       )}
       {error && (
-        <View className="mb-6 rounded-2xl bg-destructive/15 p-4">
+        <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="font-bold text-destructive">
             Could not load the Teal play feed: {error}
           </Text>
         </View>
       )}
       {plays?.length === 0 && !error && (
-        <View className="min-h-[24rem] items-center justify-center rounded-2xl bg-background/70 p-8">
+        <View className="min-h-[24rem] items-center justify-center rounded-lg border border-border bg-card p-8">
           <Text className="text-center text-2xl font-black">
             No plays indexed yet.
           </Text>

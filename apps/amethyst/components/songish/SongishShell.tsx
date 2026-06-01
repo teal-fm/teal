@@ -9,7 +9,14 @@ import { Link, usePathname } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
-import { Bell, Home, LogIn, Search, UserCircle } from "lucide-react-native";
+import {
+  Bell,
+  CircleUserRound,
+  Home,
+  LogIn,
+  Radio,
+  Search,
+} from "lucide-react-native";
 
 import { Text } from "../ui/text";
 
@@ -22,15 +29,16 @@ type SongishShellProps = {
 
 function RecordLogo() {
   return (
-    <View className="items-center">
-      <View className="h-24 w-24 items-center justify-center rounded-full border-[10px] border-foreground bg-background shadow-lg">
-        <View className="h-10 w-10 items-center justify-center rounded-full bg-foreground">
-          <View className="h-4 w-4 rounded-full bg-background" />
-        </View>
+    <View className="flex-row items-center gap-3">
+      <View className="h-11 w-11 items-center justify-center rounded-full border-[5px] border-foreground">
+        <View className="h-3 w-3 rounded-full bg-secondary" />
       </View>
-      <Text className="-mt-5 font-serif text-5xl font-black text-foreground web:drop-shadow-lg">
-        Teal
-      </Text>
+      <View>
+        <Text className="font-serif text-3xl font-black leading-8">Teal</Text>
+        <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+          listening network
+        </Text>
+      </View>
     </View>
   );
 }
@@ -48,17 +56,19 @@ function NavItem({
 }) {
   return (
     <Link href={href as any} asChild>
-      <Pressable className="flex-row items-center gap-4 rounded-xl p-3 web:hover:bg-background/60">
+      <Pressable
+        className={`flex-row items-center gap-3 rounded-lg px-3 py-3 web:transition-colors ${
+          active ? "bg-accent" : "web:hover:bg-accent/60"
+        }`}
+      >
         <Icon
           icon={icon}
-          size={36}
-          className={active ? "text-foreground" : "text-muted-foreground"}
+          size={20}
+          className={active ? "text-primary" : "text-muted-foreground"}
         />
         <Text
           className={
-            active
-              ? "text-2xl font-black text-foreground"
-              : "text-2xl font-black text-muted-foreground"
+            active ? "font-black text-foreground" : "font-bold text-foreground"
           }
         >
           {label}
@@ -74,97 +84,120 @@ function LeftRail() {
   const agent = useStore((state) => state.pdsAgent);
 
   return (
-    <View className="hidden w-[25rem] shrink-0 items-center px-8 py-10 lg:flex">
+    <View className="hidden w-[16rem] shrink-0 border-r border-border bg-background/95 px-5 py-7 lg:flex">
       <RecordLogo />
-      <View className="mt-16 w-full rounded-2xl bg-background/55 p-4 backdrop-blur-xl">
+      <View className="mt-12 gap-1">
         <NavItem href="/" icon={Home} label="Home" active={pathname === "/"} />
-        <NavItem
-          href="/notifications"
-          icon={Bell}
-          label="Notifications"
-          active={pathname.includes("notifications")}
-        />
         <NavItem
           href="/search"
           icon={Search}
           label="Explore"
           active={pathname.includes("search")}
         />
+        <NavItem
+          href="/notifications"
+          icon={Bell}
+          label="Notifications"
+          active={pathname.includes("notifications")}
+        />
       </View>
-      <Link
-        href={
-          status === "loggedIn" && agent?.did
-            ? (`/profile/${agent.did}` as any)
-            : ("/auth/login" as any)
-        }
-        asChild
-      >
-        <Pressable className="mt-14 w-full flex-row items-center justify-between rounded-2xl bg-background/65 p-5 backdrop-blur-xl web:hover:bg-background/80">
-          <View className="flex-row items-center gap-4">
-            <View className="h-14 w-14 items-center justify-center rounded-xl bg-foreground">
+      <View className="mt-auto border-t border-border pt-5">
+        <Text className="mb-3 font-mono text-[10px] uppercase text-muted-foreground">
+          ATProto appview
+        </Text>
+        <Link
+          href={
+            status === "loggedIn" && agent?.did
+              ? (`/profile/${agent.did}` as any)
+              : ("/auth/login" as any)
+          }
+          asChild
+        >
+          <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card p-3 web:hover:border-primary/50">
+            <View className="h-9 w-9 items-center justify-center rounded-full bg-primary">
               <Icon
-                icon={status === "loggedIn" ? UserCircle : LogIn}
-                size={28}
-                className="text-background"
+                icon={status === "loggedIn" ? CircleUserRound : LogIn}
+                size={18}
+                className="text-primary-foreground"
               />
             </View>
-            <Text className="text-2xl font-black">
-              {status === "loggedIn" ? "Profile" : "Login"}
-            </Text>
-          </View>
-          <Text className="text-3xl">→</Text>
-        </Pressable>
-      </Link>
+            <View className="min-w-0 flex-1">
+              <Text className="text-sm font-black">
+                {status === "loggedIn" ? "Your profile" : "Sign in"}
+              </Text>
+              <Text
+                className="font-mono text-[10px] text-muted-foreground"
+                numberOfLines={1}
+              >
+                {status === "loggedIn"
+                  ? "Manage your Teal identity"
+                  : "with ATProto"}
+              </Text>
+            </View>
+          </Pressable>
+        </Link>
+      </View>
     </View>
   );
 }
 
 function MobileNav() {
   const pathname = usePathname();
+  const items = [
+    { href: "/", icon: Home, active: pathname === "/" },
+    { href: "/search", icon: Search, active: pathname.includes("search") },
+    {
+      href: "/notifications",
+      icon: Bell,
+      active: pathname.includes("notifications"),
+    },
+    { href: "/auth/login", icon: CircleUserRound, active: false },
+  ];
   return (
-    <View className="absolute bottom-4 left-4 right-4 z-30 flex-row items-center justify-around rounded-3xl bg-background/75 p-4 backdrop-blur-xl lg:hidden">
-      <Link href="/" asChild>
-        <Pressable>
-          <Icon
-            icon={Home}
-            size={34}
-            className={
-              pathname === "/" ? "text-foreground" : "text-muted-foreground"
-            }
-          />
-        </Pressable>
-      </Link>
-      <Link href="/notifications" asChild>
-        <Pressable>
-          <Icon
-            icon={Bell}
-            size={34}
-            className={
-              pathname.includes("notifications")
-                ? "text-foreground"
-                : "text-muted-foreground"
-            }
-          />
-        </Pressable>
-      </Link>
-      <Link href="/search" asChild>
-        <Pressable>
-          <Icon
-            icon={Search}
-            size={38}
-            className={
-              pathname.includes("search")
-                ? "text-foreground"
-                : "text-muted-foreground"
-            }
-          />
-        </Pressable>
-      </Link>
-      <Link href="/auth/login" asChild>
-        <Pressable className="h-12 w-12 items-center justify-center rounded-full bg-foreground/30">
-          <Icon icon={LogIn} size={24} className="text-foreground" />
-        </Pressable>
-      </Link>
+    <View className="absolute bottom-4 left-4 right-4 z-30 flex-row items-center justify-around rounded-lg border border-border bg-background/95 p-2 shadow-lg lg:hidden">
+      {items.map((item) => (
+        <Link key={item.href} href={item.href as any} asChild>
+          <Pressable
+            className={`h-11 w-11 items-center justify-center rounded-lg ${
+              item.active ? "bg-accent" : ""
+            }`}
+          >
+            <Icon
+              icon={item.icon}
+              size={21}
+              className={item.active ? "text-primary" : "text-muted-foreground"}
+            />
+          </Pressable>
+        </Link>
+      ))}
+    </View>
+  );
+}
+
+export function SectionHeading({
+  eyebrow,
+  title,
+  detail,
+}: {
+  eyebrow?: string;
+  title: string;
+  detail?: string;
+}) {
+  return (
+    <View className="mb-4 flex-row items-end justify-between gap-4">
+      <View className="min-w-0 flex-1">
+        {eyebrow && (
+          <Text className="mb-1 font-mono text-[10px] uppercase text-primary">
+            {eyebrow}
+          </Text>
+        )}
+        <Text className="font-serif text-2xl font-black">{title}</Text>
+      </View>
+      {detail && (
+        <Text className="font-mono text-[10px] text-muted-foreground">
+          {detail}
+        </Text>
+      )}
     </View>
   );
 }
@@ -179,11 +212,12 @@ export default function SongishShell({
 
   return (
     <View className="min-h-screen flex-1 bg-background">
-      <View className="absolute inset-0 bg-[linear-gradient(110deg,#ffffff_0%,#ffffff_34%,#8fb4ff_60%,#0a43ff_100%)] dark:bg-[linear-gradient(110deg,#08040b_0%,#13091a_38%,#26356f_68%,#0f49ff_100%)]" />
-      <Text className="z-20 h-7 text-center text-sm font-black">
-        teal is in active development: expect bugs, missing features, and
-        regular index rebuilds
-      </Text>
+      <View className="z-20 flex-row items-center justify-center gap-2 border-b border-border bg-foreground px-3 py-2">
+        <Icon icon={Radio} size={13} className="text-secondary" />
+        <Text className="font-mono text-[10px] uppercase text-background">
+          Live ATProto index · early preview
+        </Text>
+      </View>
       <View className="z-10 flex-1 flex-row">
         <LeftRail />
         <ScrollView
@@ -192,17 +226,17 @@ export default function SongishShell({
           onScroll={onScroll}
           scrollEventThrottle={onScroll ? 200 : undefined}
         >
-          <View className="min-h-screen w-full max-w-[42rem] rounded-t-3xl bg-background/60 px-3 py-8 backdrop-blur-xl md:px-8">
+          <View className="min-h-screen w-full max-w-[48rem] px-4 py-7 md:px-7 lg:px-8">
             {title && (
-              <Text className="mb-8 text-center font-serif text-5xl font-black">
+              <Text className="mb-7 font-serif text-4xl font-black">
                 {title}
               </Text>
             )}
             {children}
           </View>
         </ScrollView>
-        {!isMobile && (
-          <View className="hidden w-[25rem] shrink-0 px-5 py-12 lg:flex">
+        {!isMobile && rightRail && (
+          <View className="hidden w-[19rem] shrink-0 border-l border-border bg-foreground px-5 py-7 xl:flex">
             {rightRail}
           </View>
         )}

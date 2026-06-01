@@ -5,6 +5,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 ## Current State
 
 - Amethyst has a Teal-branded Songish-style shell with desktop navigation, mobile navigation, Home, searchable Explore, Notifications, Profile, and music detail views.
+- Amethyst uses a cleaned editorial utility UI system with compact rails, consistent surfaces, responsive center content, and restrained Teal identity across browsing, authentication, onboarding, settings, and manual stamping flows.
 - Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, indexed search, artist discographies, and albums with track lists plus cursor-paginated listens.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
@@ -51,6 +52,7 @@ This file is the working handoff for the Songish-style Teal clone. Keep it updat
 - [x] Add Explore search for users, songs, artists, and albums.
 - [ ] Finish profile avatar and banner blob URL rendering.
 - [x] Add artist and release detail routes in addition to track detail.
+- [x] Refresh the shared UI system and apply it across feed, search, profiles, music pages, sign-in, onboarding, settings, and manual stamping.
 - [ ] Select a dedicated artist-image source. Artist pages currently use representative Cover Art Archive release artwork.
 - [ ] Enrich album track ordering from MusicBrainz release media. Teal currently lists the tracks observed in indexed plays alphabetically.
 - [ ] Render real Cover Art Archive images for recordings with MusicBrainz IDs and polished fallbacks for missing art.

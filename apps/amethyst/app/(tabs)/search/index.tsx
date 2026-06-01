@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack } from "expo-router";
 import RightRail from "@/components/songish/RightRail";
-import SongishShell from "@/components/songish/SongishShell";
+import SongishShell, {
+  SectionHeading,
+} from "@/components/songish/SongishShell";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
@@ -99,7 +101,7 @@ function SearchTabButton({
   return (
     <Pressable
       onPress={onPress}
-      className={`min-w-0 flex-1 flex-row items-center justify-center gap-1 border-b-2 px-1 py-4 ${
+      className={`min-w-0 flex-1 flex-row items-center justify-center gap-1 border-b-2 px-1 py-3 ${
         active ? "border-foreground" : "border-transparent"
       }`}
     >
@@ -126,7 +128,7 @@ function UserRow({ user }: { user: UserResult }) {
   const handle = user.handle?.replace(/^at:\/\//, "");
   return (
     <Link href={`/profile/${handle || user.did}` as any} asChild>
-      <Pressable className="flex-row items-center gap-3 border-b border-border/70 px-1 py-4">
+      <Pressable className="flex-row items-center gap-3 border-b border-border px-2 py-4 web:hover:bg-accent/45">
         <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-primary/60">
           {user.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} className="h-full w-full" />
@@ -158,7 +160,7 @@ function SongRow({ song }: { song: SongResult }) {
   const art = coverArtUrl(song.releaseMbId);
   return (
     <Link href={songHref(song) as any} asChild>
-      <Pressable className="flex-row items-center gap-3 border-b border-border/70 px-1 py-4">
+      <Pressable className="flex-row items-center gap-3 border-b border-border px-2 py-4 web:hover:bg-accent/45">
         <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-muted">
           {art ? (
             <Image source={{ uri: art }} className="h-full w-full" />
@@ -203,7 +205,7 @@ function MusicEntityRow({
 }) {
   return (
     <Link href={href as any} asChild>
-      <Pressable className="flex-row items-center gap-3 border-b border-border/70 px-1 py-4">
+      <Pressable className="flex-row items-center gap-3 border-b border-border px-2 py-4 web:hover:bg-accent/45">
         <View className="h-12 w-12 items-center justify-center rounded-full bg-muted">
           <Icon icon={icon} size={22} className="text-muted-foreground" />
         </View>
@@ -286,9 +288,14 @@ export default function Explore() {
   const hasQuery = query.trim().length >= 2;
   const hasResults = counts[activeTab] > 0;
   return (
-    <SongishShell title="Explore" rightRail={<RightRail />}>
+    <SongishShell rightRail={<RightRail />}>
       <Stack.Screen options={{ title: "Explore", headerShown: false }} />
-      <View className="overflow-hidden rounded-2xl bg-background/75 shadow-sm backdrop-blur-xl">
+      <SectionHeading
+        eyebrow="Discovery"
+        title="Explore the index"
+        detail="LIVE SEARCH"
+      />
+      <View className="overflow-hidden rounded-lg border border-border bg-card">
         <View className="flex-row items-center gap-3 px-4 py-4">
           <Icon icon={Search} size={23} className="text-muted-foreground" />
           <Input
@@ -344,11 +351,11 @@ export default function Explore() {
         </View>
       </View>
 
-      <View className="mt-5 rounded-2xl bg-background/75 px-4 py-2 backdrop-blur-xl">
+      <View className="mt-5 overflow-hidden rounded-lg border border-border bg-card px-3 py-1">
         {!hasQuery && (
           <View className="min-h-[20rem] items-center justify-center gap-3 px-8">
             <Icon icon={Search} size={38} className="text-muted-foreground" />
-            <Text className="text-center font-serif text-3xl font-black">
+            <Text className="text-center font-serif text-2xl font-black">
               Find something playing
             </Text>
             <Text className="text-center text-muted-foreground">
