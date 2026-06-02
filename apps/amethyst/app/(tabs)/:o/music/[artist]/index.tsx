@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell, {
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
   SectionHeading,
-} from "@/components/songish/SongishShell";
+} from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, getArtist } from "@/lib/teal/api";
@@ -44,7 +44,7 @@ export default function ArtistDetail() {
     : coverArtUrl(artist?.albums[0]?.mbid, 500);
 
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{ title: artist?.name || "Artist", headerShown: false }}
       />
@@ -160,6 +160,6 @@ export default function ArtistDetail() {
           </View>
         </>
       )}
-    </SongishShell>
+    </TealShell>
   );
 }

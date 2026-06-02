@@ -6,11 +6,11 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Stack } from "expo-router";
-import PlayFeedCard from "@/components/songish/PlayFeedCard";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell, {
+import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
   SectionHeading,
-} from "@/components/songish/SongishShell";
+} from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import { getLatestPlays } from "@/lib/teal/api";
 
@@ -80,7 +80,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <SongishShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
       <Stack.Screen options={{ title: "Teal", headerShown: false }} />
       <SectionHeading
         eyebrow="Global feed"
@@ -125,6 +125,6 @@ export default function HomeScreen() {
           You reached the beginning of the indexed feed.
         </Text>
       )}
-    </SongishShell>
+    </TealShell>
   );
 }

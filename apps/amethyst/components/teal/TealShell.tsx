@@ -20,7 +20,7 @@ import {
 
 import { Text } from "../ui/text";
 
-type SongishShellProps = {
+type TealShellProps = {
   children: ReactNode;
   rightRail?: ReactNode;
   title?: string;
@@ -202,12 +202,12 @@ export function SectionHeading({
   );
 }
 
-export default function SongishShell({
+export default function TealShell({
   children,
   rightRail,
   title,
   onScroll,
-}: SongishShellProps) {
+}: TealShellProps) {
   const isMobile = useIsMobile();
 
   return (

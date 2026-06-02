@@ -8,11 +8,11 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
-import PlayFeedCard from "@/components/songish/PlayFeedCard";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell, {
+import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
   SectionHeading,
-} from "@/components/songish/SongishShell";
+} from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, getAlbum } from "@/lib/teal/api";
@@ -103,7 +103,7 @@ export default function AlbumDetail() {
   const art = artFailed ? undefined : coverArtUrl(album?.mbid, 500);
 
   return (
-    <SongishShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
       <Stack.Screen
         options={{ title: album?.name || "Album", headerShown: false }}
       />
@@ -256,6 +256,6 @@ export default function AlbumDetail() {
           )}
         </>
       )}
-    </SongishShell>
+    </TealShell>
   );
 }

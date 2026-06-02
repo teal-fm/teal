@@ -1,10 +1,10 @@
-# Teal Songish Clone TODO
+# Teal App TODO
 
-This file is the working handoff for the Songish-style Teal clone. Keep it updated as implementation and QA move forward.
+This file is the working handoff for the Teal-native Teal clone. Keep it updated as implementation and QA move forward.
 
 ## Current State
 
-- Amethyst has a Teal-branded Songish-style shell with desktop navigation, mobile navigation, Home, searchable Explore, Notifications, Profile, and music detail views.
+- Amethyst has a Teal-branded Teal-native shell with desktop navigation, mobile navigation, Home, searchable Explore, Notifications, Profile, and music detail views.
 - Amethyst uses a cleaned editorial utility UI system with compact rails, consistent surfaces, responsive center content, and restrained Teal identity across browsing, authentication, onboarding, settings, and manual stamping flows.
 - Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, indexed search, artist discographies, and albums with track lists plus cursor-paginated listens.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.

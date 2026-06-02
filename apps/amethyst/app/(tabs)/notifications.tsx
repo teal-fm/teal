@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { Link, Stack } from "expo-router";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell from "@/components/songish/SongishShell";
+import RightRail from "@/components/teal/RightRail";
+import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -12,7 +12,7 @@ export default function Notifications() {
   const status = useStore((state) => state.status);
 
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen options={{ title: "Notifications", headerShown: false }} />
       <View className="min-h-[32rem] items-center justify-center gap-4 rounded-lg border border-border bg-card px-8">
         <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
@@ -35,6 +35,6 @@ export default function Notifications() {
           </Link>
         )}
       </View>
-    </SongishShell>
+    </TealShell>
   );
 }

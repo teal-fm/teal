@@ -2,10 +2,10 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { Link, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell, {
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
   SectionHeading,
-} from "@/components/songish/SongishShell";
+} from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
@@ -76,7 +76,7 @@ export default function StepOne() {
   };
 
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{
           title: "Stamp a play manually",
@@ -221,7 +221,7 @@ export default function StepOne() {
           </View>
         )}
       </View>
-    </SongishShell>
+    </TealShell>
   );
 }
 

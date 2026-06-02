@@ -2,8 +2,8 @@ import { useContext, useEffect } from "react";
 import { View } from "react-native";
 import { Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell from "@/components/songish/SongishShell";
+import RightRail from "@/components/teal/RightRail";
+import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
@@ -26,7 +26,7 @@ export default function StepThree() {
     return <Redirect href="/stamp" />;
   }
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{
           title: "Play submitted",
@@ -73,6 +73,6 @@ export default function StepThree() {
           <Text>Submit another</Text>
         </Button>
       </View>
-    </SongishShell>
+    </TealShell>
   );
 }

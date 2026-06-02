@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
-import PlayFeedCard from "@/components/songish/PlayFeedCard";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell, {
+import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
   SectionHeading,
-} from "@/components/songish/SongishShell";
+} from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import {
   coverArtUrl,
@@ -54,7 +54,7 @@ export default function MusicDetail() {
   }, [uri]);
 
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{ title: play?.trackName || "Music", headerShown: false }}
       />
@@ -155,6 +155,6 @@ export default function MusicDetail() {
           ))}
         </>
       )}
-    </SongishShell>
+    </TealShell>
   );
 }

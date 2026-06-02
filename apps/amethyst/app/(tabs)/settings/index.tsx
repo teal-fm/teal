@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Switch, View } from "react-native";
 import { Link, Stack } from "expo-router";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell, {
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
   SectionHeading,
-} from "@/components/songish/SongishShell";
+} from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -25,7 +25,7 @@ export default function Settings() {
   ];
 
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{
           title: "Settings",
@@ -67,7 +67,7 @@ export default function Settings() {
           </Text>
         </View>
       </View>
-    </SongishShell>
+    </TealShell>
   );
 }
 

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack } from "expo-router";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell, {
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
   SectionHeading,
-} from "@/components/songish/SongishShell";
+} from "@/components/teal/TealShell";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
@@ -288,7 +288,7 @@ export default function Explore() {
   const hasQuery = query.trim().length >= 2;
   const hasResults = counts[activeTab] > 0;
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen options={{ title: "Explore", headerShown: false }} />
       <SectionHeading
         eyebrow="Discovery"
@@ -402,6 +402,6 @@ export default function Explore() {
             />
           ))}
       </View>
-    </SongishShell>
+    </TealShell>
   );
 }

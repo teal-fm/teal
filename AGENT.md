@@ -1,6 +1,6 @@
 # Teal Clone Agent Workflow
 
-This file is the operational addendum for work on the Songish-style Teal clone. Read `AGENTS.md` first for the full repository development guidelines.
+This file is the operational addendum for work on the Teal-native Teal clone. Read `AGENTS.md` first for the full repository development guidelines.
 
 ## Keep The Handoff Current
 
