@@ -85,8 +85,11 @@ pub async fn get_latest_plays(
             SELECT
                 p.did,
                 p.track_name,
-                -- TODO: replace with actual
-                STRING_AGG(pa.artist_name || '|' || TEXT(pa.artist_mbid), ',') AS artists,
+                STRING_AGG(
+                    ptae.artist_name || '|' || COALESCE(TEXT(ae.mbid), ''),
+                    ','
+                    ORDER BY ptae.artist_name
+                ) AS artists,
                 p.release_name,
                 p.duration,
                 p.uri,
@@ -94,7 +97,8 @@ pub async fn get_latest_plays(
                 p.release_mbid
 
             FROM plays AS p
-            LEFT JOIN play_to_artists AS pa ON pa.play_uri = p.uri
+            LEFT JOIN play_to_artists_extended AS ptae ON ptae.play_uri = p.uri
+            LEFT JOIN artists_extended AS ae ON ae.id = ptae.artist_id
             GROUP BY p.did, p.track_name, p.release_name, p.played_time, p.duration, p.uri, p.recording_mbid, p.release_mbid
             ORDER BY p.played_time DESC
             LIMIT $1
@@ -111,8 +115,9 @@ pub async fn get_latest_plays(
                 .map(|play| -> PlayReturn {
                     let artists = play
                         .artists
-                        .expect("Artists found")
+                        .unwrap_or_default()
                         .split(',')
+                        .filter(|artist| !artist.is_empty())
                         .map(|artist| {
                             let mut parts = artist.split('|');
                             Artist {
