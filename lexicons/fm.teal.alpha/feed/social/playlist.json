@@ -9,15 +9,39 @@
       "key": "tid",
       "record": {
         "type": "object",
-        "required": ["name", "createdAt"],
+        "required": ["name", "authors", "createdAt"],
         "properties": {
           "name": {
             "type": "string",
             "description": "Display name for the playlist, required.",
             "minLength": 1,
-            "maxLength": 50
+            "maxLength": 100,
+            "maxGraphemes": 100
           },
-          "description": { "type": "string", "maxLength": 5000 },
+          "description": {
+            "type": "string",
+            "description": "Free-form playlist description text.",
+            "maxLength": 5000,
+            "maxGraphemes": 500
+          },
+          "descriptionFacets": {
+            "type": "array",
+            "description": "Annotations of text in the playlist description.",
+            "items": { "type": "ref", "ref": "fm.teal.alpha.richtext.facet" }
+          },
+          "authors": {
+            "type": "array",
+            "description": "DIDs of actors who can author playlist items for this playlist. Include the playlist record author. Appviews may attribute playlist items to this playlist when the item's repo author appears in this list.",
+            "minLength": 1,
+            "maxLength": 100,
+            "items": { "type": "string", "format": "did" }
+          },
+          "cover": {
+            "type": "blob",
+            "description": "Optional image displayed for the playlist.",
+            "accept": ["image/png", "image/jpeg"],
+            "maxSize": 1000000
+          },
           "createdAt": {
             "type": "string",
             "format": "datetime",

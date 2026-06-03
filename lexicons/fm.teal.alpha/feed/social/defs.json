@@ -1,54 +1,89 @@
 {
   "lexicon": 1,
   "id": "fm.teal.alpha.feed.social.defs",
-  "description": "This lexicon is in a not officially released state. It is subject to change. | Misc. items related to the social feed..",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Miscellaneous types related to the social feed.",
   "defs": {
     "trackView": {
-      "trackName": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 256,
-        "maxGraphemes": 2560,
-        "description": "The name of the track"
-      },
-      "trackMbId": {
-        "type": "string",
-        "description": "The Musicbrainz ID of the track"
-      },
-      "recordingMbId": {
-        "type": "string",
-        "description": "The Musicbrainz recording ID of the track"
-      },
-      "artistNames": {
-        "type": "array",
-        "items": {
+      "type": "object",
+      "required": ["trackName"],
+      "properties": {
+        "trackName": {
           "type": "string",
           "minLength": 1,
           "maxLength": 256,
-          "maxGraphemes": 2560
+          "maxGraphemes": 2560,
+          "description": "The name of the track."
         },
-        "description": "Array of artist names in order of original appearance. Prefer using 'artists'."
-      },
-      "artistMbIds": {
-        "type": "array",
-        "items": { "type": "string" },
-        "description": "Array of Musicbrainz artist IDs. Prefer using 'artists'."
-      },
-      "artists": {
-        "type": "array",
-        "items": { "type": "ref", "ref": "fm.teal.alpha.feed.defs#artist" },
-        "description": "Array of artists in order of original appearance."
-      },
-      "releaseName": {
-        "type": "string",
-        "maxLength": 256,
-        "maxGraphemes": 2560,
-        "description": "The name of the release/album"
-      },
-      "releaseMbId": {
-        "type": "string",
-        "description": "The Musicbrainz release ID"
+        "trackMbId": {
+          "type": "string",
+          "description": "The MusicBrainz track ID."
+        },
+        "recordingMbId": {
+          "type": "string",
+          "description": "The MusicBrainz recording ID."
+        },
+        "duration": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The length of the track in seconds."
+        },
+        "artistNames": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "maxGraphemes": 2560
+          },
+          "description": "Array of artist names in order of original appearance. Prefer using 'artists'."
+        },
+        "artistMbIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of MusicBrainz artist IDs. Prefer using 'artists'."
+        },
+        "artists": {
+          "type": "array",
+          "items": { "type": "ref", "ref": "fm.teal.alpha.feed.defs#artist" },
+          "description": "Array of artists in order of original appearance."
+        },
+        "releaseName": {
+          "type": "string",
+          "maxLength": 256,
+          "maxGraphemes": 2560,
+          "description": "The name of the release or album."
+        },
+        "releaseMbId": {
+          "type": "string",
+          "description": "The MusicBrainz release ID."
+        },
+        "isrc": {
+          "type": "string",
+          "description": "The ISRC code associated with the recording."
+        },
+        "trackDiscriminant": {
+          "type": "string",
+          "maxLength": 128,
+          "maxGraphemes": 1280,
+          "description": "Distinguishing information for track variants."
+        },
+        "releaseDiscriminant": {
+          "type": "string",
+          "maxLength": 128,
+          "maxGraphemes": 1280,
+          "description": "Distinguishing information for release variants."
+        },
+        "originUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL associated with this track."
+        }
       }
+    },
+    "badgeType": {
+      "type": "string",
+      "description": "The category of badge.",
+      "knownValues": ["verification", "listeningParty", "achievement"]
     }
   }
 }
