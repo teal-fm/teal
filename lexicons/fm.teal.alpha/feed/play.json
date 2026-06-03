@@ -44,9 +44,10 @@
           "artistMbIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uri"
             },
-            "description": "DEPRECATED: USE 'artists' INSTEAD. Array of Musicbrainz artist IDs."
+            "description": "DEPRECATED: USE 'artists' INSTEAD. Array of MusicBrainz artist ID URIs, formatted as mbid:<uuid>."
           },
           "artists": {
             "type": "array",
