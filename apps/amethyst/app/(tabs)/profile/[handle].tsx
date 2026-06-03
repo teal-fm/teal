@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
@@ -40,8 +46,11 @@ export default function ProfileScreen() {
   const [did, setDid] = useState<string | null>(null);
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
   const [plays, setPlays] = useState<PlayView[]>([]);
+  const [cursor, setCursor] = useState<string>();
+  const [loadingMore, setLoadingMore] = useState(false);
   const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loadingMoreRef = useRef(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
 
   useEffect(() => {
@@ -49,12 +58,17 @@ export default function ProfileScreen() {
     async function load() {
       if (!actor) return;
       try {
+        setError(null);
+        setDid(null);
+        setProfile(null);
+        setPlays([]);
+        setCursor(undefined);
         const resolved = actor.startsWith("did:")
           ? actor
           : await resolveHandle(actor);
         if (!mounted) return;
         setDid(resolved);
-        const feedRes = await getActorFeed(resolved, 50);
+        const feedRes = await getActorFeed(resolved, 30);
         let nextProfile: DisplayProfile | null = null;
         let nextIsBlueskyFallback = false;
 
@@ -78,6 +92,7 @@ export default function ProfileScreen() {
         setProfile(nextProfile);
         setIsBlueskyFallback(nextIsBlueskyFallback);
         setPlays(feedRes.plays);
+        setCursor(feedRes.cursor);
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
       }
@@ -88,10 +103,47 @@ export default function ProfileScreen() {
     };
   }, [actor]);
 
+  const loadMore = useCallback(() => {
+    if (!did || !cursor || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    getActorFeed(did, 30, cursor)
+      .then((feedRes) => {
+        setPlays((current) => {
+          const knownUris = new Set(current.map((play) => play.uri));
+          return [
+            ...current,
+            ...feedRes.plays.filter(
+              (play) => !play.uri || !knownUris.has(play.uri),
+            ),
+          ];
+        });
+        setCursor(feedRes.cursor);
+      })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      });
+  }, [cursor, did]);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } =
+        event.nativeEvent;
+      const remaining =
+        contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      if (remaining < 800) loadMore();
+    },
+    [loadMore],
+  );
+
   const isSelf = did === pdsAgent?.did;
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
       <Stack.Screen
         options={{ title: actor || "Profile", headerShown: false }}
       />
@@ -177,6 +229,16 @@ export default function ProfileScreen() {
                 play={play}
               />
             ))
+          )}
+          {loadingMore && (
+            <View className="items-center justify-center py-5">
+              <ActivityIndicator />
+            </View>
+          )}
+          {plays.length > 0 && !cursor && (
+            <Text className="pb-6 text-center font-mono text-xs text-muted-foreground">
+              You reached the beginning of this listener's indexed plays.
+            </Text>
           )}
         </>
       )}

@@ -36,6 +36,10 @@
                 "type": "ref",
                 "ref": "fm.teal.alpha.feed.defs#playView"
               }
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Opaque cursor for the next page of plays"
             }
           }
         }

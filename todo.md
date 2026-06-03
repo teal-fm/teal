@@ -40,7 +40,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 
 ## Next: Aqua And Lexicons
 
-- [ ] Add pagination support for `fm.teal.alpha.feed.getActorFeed` cursor and limit parameters.
+- [x] Add pagination support for `fm.teal.alpha.feed.getActorFeed` cursor and limit parameters.
 - [x] Add keyset pagination and infinite scrolling for the global latest-play feed.
 - [x] Run SQLx prepare against the development Postgres instance and commit refreshed query cache data.
 - [ ] Resolve the existing Satellite SQLx offline-cache gap so `pnpm turbo run test:rust` passes without a live Docker hostname.

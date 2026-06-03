@@ -64,11 +64,15 @@ export function getLatestPlays(limit = 50, cursor?: string) {
   );
 }
 
-export function getActorFeed(authorDID: string, limit = 50) {
-  return getXrpc<{ plays: PlayView[] }>("fm.teal.alpha.feed.getActorFeed", {
-    authorDID,
-    limit,
-  });
+export function getActorFeed(authorDID: string, limit = 30, cursor?: string) {
+  return getXrpc<{ plays: PlayView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.getActorFeed",
+    {
+      authorDID,
+      limit,
+      cursor,
+    },
+  );
 }
 
 export function getPlayByUri(uri: string) {

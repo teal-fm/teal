@@ -54,7 +54,7 @@ export function musicHref(play: PlayView) {
 export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
   const [blueskyAuthor, setBlueskyAuthor] = useState<FeedAuthor>();
   const [artFailed, setArtFailed] = useState(false);
-  const indexedAuthor = play.author;
+  const indexedAuthor = play.author as FeedAuthor | undefined;
   const authorProfile = indexedAuthor || blueskyAuthor;
   const authorDid = authorProfile?.did || play.authorDid;
 

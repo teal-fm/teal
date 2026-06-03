@@ -63,6 +63,7 @@ pub struct GetActorFeedQuery {
 #[derive(Serialize)]
 pub struct GetActorFeedResponse {
     plays: Vec<PlayView>,
+    cursor: Option<String>,
 }
 
 pub async fn get_actor_feed(
@@ -75,12 +76,13 @@ pub async fn get_actor_feed(
         return Err((StatusCode::BAD_REQUEST, "authorDID is required".to_string()));
     }
 
-    // Cursor and limit are accepted for lexicon compatibility; repository pagination is deferred.
-    let _ = (query.limit, query.cursor);
-
-    match repo.get_feed_plays_for_profile(&[query.author_did]).await {
-        Ok(plays) => Ok(axum::Json(GetActorFeedResponse {
-            plays: plays.into_static(),
+    match repo
+        .get_actor_feed(&query.author_did, query.limit, query.cursor.as_deref())
+        .await
+    {
+        Ok(page) => Ok(axum::Json(GetActorFeedResponse {
+            cursor: page.cursor,
+            plays: page.plays.into_static(),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
