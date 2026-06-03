@@ -132,12 +132,12 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
           </Pressable>
         </Link>
         <View className="min-w-0 flex-1 justify-center">
-          <Text className="font-black" numberOfLines={1}>
+          <Text className="max-w-full font-black" numberOfLines={1}>
             {authorName}
           </Text>
           {authorHandle && (
             <Text
-              className="font-mono text-xs text-muted-foreground"
+              className="max-w-full font-mono text-xs text-muted-foreground"
               numberOfLines={1}
             >
               @{authorHandle}
@@ -152,18 +152,21 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
       <View className="mt-4 border-t border-border pt-4">
         <Link href={musicHref(play) as any} asChild>
           <Pressable className="flex-row items-center justify-between gap-3">
-            <View className="min-w-0 flex-1">
-              <Text className="font-sans text-xl font-black" numberOfLines={2}>
+            <View className="min-w-0 flex-1 pr-1">
+              <Text
+                className="max-w-full font-sans text-xl font-black leading-tight"
+                numberOfLines={2}
+              >
                 {play.trackName}
               </Text>
               <Text
-                className="text-sm font-bold text-muted-foreground"
+                className="max-w-full text-sm font-bold text-muted-foreground"
                 numberOfLines={1}
               >
                 {displayArtists(play) || "Unknown artist"}
               </Text>
             </View>
-            <View>
+            <View className="shrink-0">
               {art ? (
                 <Image
                   source={{ uri: art }}
@@ -185,7 +188,10 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
       </View>
 
       {play.releaseName && (
-        <Text className="mt-3 font-mono text-[10px] uppercase text-muted-foreground">
+        <Text
+          className="mt-3 max-w-full font-mono text-[10px] uppercase text-muted-foreground"
+          numberOfLines={2}
+        >
           from {play.releaseName}
         </Text>
       )}
