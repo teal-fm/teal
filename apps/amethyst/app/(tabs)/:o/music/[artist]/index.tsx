@@ -7,7 +7,7 @@ import TealShell, {
 } from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { coverArtUrl, getArtist } from "@/lib/teal/api";
+import { coverArtUrl, getArtist, getArtistImageUrl } from "@/lib/teal/api";
 import { musicAlbumHref } from "@/lib/teal/routes";
 import { ChevronRight, Disc3, Mic2 } from "lucide-react-native";
 
@@ -20,6 +20,7 @@ export default function ArtistDetail() {
   const [artist, setArtist] = useState<ArtistView | null>(null);
   const [error, setError] = useState<string>();
   const [artFailed, setArtFailed] = useState(false);
+  const [artistImage, setArtistImage] = useState<string>();
 
   useEffect(() => {
     let mounted = true;
@@ -39,9 +40,27 @@ export default function ArtistDetail() {
     };
   }, [mbid, name]);
 
-  const representativeArt = artFailed
-    ? undefined
-    : coverArtUrl(artist?.albums[0]?.mbid, 500);
+  useEffect(() => {
+    let mounted = true;
+    setArtistImage(undefined);
+    if (!artist?.mbid) return;
+    getArtistImageUrl(artist.mbid, 500).then((imageUrl) => {
+      if (mounted) setArtistImage(imageUrl);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [artist?.mbid]);
+
+  const representativeArt = coverArtUrl(artist?.albums[0]?.mbid, 500);
+  const heroArt = artistImage || (artFailed ? undefined : representativeArt);
+  const handleHeroArtError = () => {
+    if (artistImage) {
+      setArtistImage(undefined);
+    } else {
+      setArtFailed(true);
+    }
+  };
 
   return (
     <TealShell rightRail={<RightRail />}>
@@ -64,21 +83,21 @@ export default function ArtistDetail() {
         <>
           <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
             <View className="h-40 bg-muted">
-              {representativeArt && (
+              {heroArt && (
                 <Image
-                  source={{ uri: representativeArt }}
+                  source={{ uri: heroArt }}
                   className="h-full w-full opacity-40"
-                  onError={() => setArtFailed(true)}
+                  onError={handleHeroArtError}
                 />
               )}
             </View>
             <View className="-mt-10 flex-row items-end gap-4 px-5 pb-7">
               <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-muted md:h-28 md:w-28">
-                {representativeArt ? (
+                {heroArt ? (
                   <Image
-                    source={{ uri: representativeArt }}
+                    source={{ uri: heroArt }}
                     className="h-full w-full"
-                    onError={() => setArtFailed(true)}
+                    onError={handleHeroArtError}
                   />
                 ) : (
                   <Icon

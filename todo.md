@@ -54,7 +54,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Finish profile avatar and banner blob URL rendering.
 - [x] Add artist and release detail routes in addition to track detail.
 - [x] Refresh the shared UI system and apply it across feed, search, profiles, music pages, sign-in, onboarding, settings, and manual stamping.
-- [ ] Select a dedicated artist-image source. Artist pages currently use representative Cover Art Archive release artwork.
+- [x] Select a dedicated artist-image source. Artist pages currently use representative Cover Art Archive release artwork.
 - [x] Enrich album track ordering from MusicBrainz release media. Teal currently lists the tracks observed in indexed plays alphabetically.
 - [x] Render real Cover Art Archive images for recordings with MusicBrainz IDs and polished fallbacks for missing art.
 - [ ] Exercise empty, loading, error, signed-out, and populated feed states at desktop and mobile widths.

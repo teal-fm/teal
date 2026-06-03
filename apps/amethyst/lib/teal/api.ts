@@ -168,6 +168,7 @@ export function coverArtUrl(releaseMbId?: string, size = 250) {
 }
 
 const recordingCoverArtCache = new Map<string, Promise<string | undefined>>();
+const artistImageCache = new Map<string, Promise<string | undefined>>();
 
 export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
   const mbid = recordingMbId?.replace(/^mbid:/, "");
@@ -186,6 +187,76 @@ export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
       })
       .catch(() => undefined);
     recordingCoverArtCache.set(cacheKey, cached);
+  }
+  return cached;
+}
+
+type MusicBrainzArtistRelations = {
+  relations?: Array<{
+    type?: string;
+    url?: {
+      resource?: string;
+    };
+  }>;
+};
+
+type WikidataEntityResponse = {
+  entities?: Record<
+    string,
+    {
+      claims?: {
+        P18?: Array<{
+          mainsnak?: {
+            datavalue?: {
+              value?: string;
+            };
+          };
+        }>;
+      };
+    }
+  >;
+};
+
+function extractWikidataId(resource?: string) {
+  const match = resource?.match(/wikidata\.org\/(?:wiki|entity)\/(Q\d+)/i);
+  return match?.[1];
+}
+
+function commonsFilePath(filename: string, width: number) {
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
+}
+
+export function getArtistImageUrl(artistMbId?: string, width = 500) {
+  const mbid = artistMbId?.replace(/^mbid:/, "");
+  if (!mbid) return Promise.resolve(undefined);
+
+  const cacheKey = `${mbid}:${width}`;
+  let cached = artistImageCache.get(cacheKey);
+  if (!cached) {
+    cached = fetch(
+      `https://musicbrainz.org/ws/2/artist/${encodeURIComponent(mbid)}?inc=url-rels&fmt=json`,
+    )
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((artist?: MusicBrainzArtistRelations) => {
+        const wikidataId = artist?.relations
+          ?.map((relation) => relation.url?.resource)
+          .map(extractWikidataId)
+          .find(Boolean);
+        return wikidataId
+          ? fetch(
+              `https://www.wikidata.org/wiki/Special:EntityData/${wikidataId}.json`,
+            )
+          : undefined;
+      })
+      .then((response) => response?.ok ? response.json() : undefined)
+      .then((data?: WikidataEntityResponse) => {
+        const entity = data?.entities ? Object.values(data.entities)[0] : undefined;
+        const filename =
+          entity?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        return filename ? commonsFilePath(filename, width) : undefined;
+      })
+      .catch(() => undefined);
+    artistImageCache.set(cacheKey, cached);
   }
   return cached;
 }
