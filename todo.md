@@ -59,7 +59,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Render real Cover Art Archive images for recordings with MusicBrainz IDs and polished fallbacks for missing art.
 - [ ] Exercise empty, loading, error, signed-out, and populated feed states at desktop and mobile widths.
 - [x] Fix populated desktop feed-card text collisions for long DIDs, track titles, and artist names.
-- [ ] Verify SPA fallback routing in the production Caddy image for Home, Explore, Notifications, Profile, music detail, and OAuth callback routes.
+- [x] Verify SPA fallback routing in the production Caddy image for Home, Explore, Notifications, Profile, music detail, and OAuth callback routes.
 - [ ] Capture final Chrome screenshots after Aqua and Cadet are running with live ingested data.
 
 ## Verification Commands
