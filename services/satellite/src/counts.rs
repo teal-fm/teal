@@ -80,8 +80,7 @@ pub async fn get_latest_plays(
     if params.limit < 1 || params.limit > 50 {
         return Err((StatusCode::BAD_REQUEST, "Invalid limit".to_string()));
     }
-    let result = sqlx::query_as!(
-        Play,
+    let result = sqlx::query_as::<_, Play>(
         r#"
             SELECT
                 p.did,
@@ -100,8 +99,8 @@ pub async fn get_latest_plays(
             ORDER BY p.played_time DESC
             LIMIT $1
         "#,
-        params.limit
     )
+    .bind(params.limit)
     .fetch_all(&state.db_pool)
     .await;
 
