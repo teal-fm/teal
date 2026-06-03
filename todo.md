@@ -35,7 +35,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [ ] Verify Jetstream filtering against `wantedCollections=fm.teal.alpha.feed.play` in a live environment.
 - [x] Verify Cadet cursor recovery after restart with Garnet enabled.
 - [x] Verify delete handling removes the play URI from `plays`, `play_to_artists`, and `play_to_artists_extended`.
-- [ ] Add a `subscribeRepos` CBOR adapter only if relay-level firehose sync becomes necessary.
+- [x] Add a `subscribeRepos` CBOR adapter only if relay-level firehose sync becomes necessary.
 - [x] Keep CAR import as a backfill path and add regression tests for it.
 
 ## Next: Aqua And Lexicons
