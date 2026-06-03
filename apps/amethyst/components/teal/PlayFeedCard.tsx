@@ -3,7 +3,12 @@ import { Image, Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { coverArtUrl, displayArtists, getBlueskyProfile } from "@/lib/teal/api";
+import {
+  coverArtUrl,
+  displayArtists,
+  getBlueskyProfile,
+  getRecordingCoverArtUrl,
+} from "@/lib/teal/api";
 import { musicTrackHref } from "@/lib/teal/routes";
 import { cn, timeAgo } from "@/lib/utils";
 import { Disc3 } from "lucide-react-native";
@@ -54,9 +59,12 @@ export function musicHref(play: PlayView) {
 export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
   const [blueskyAuthor, setBlueskyAuthor] = useState<FeedAuthor>();
   const [artFailed, setArtFailed] = useState(false);
+  const [recordingArt, setRecordingArt] = useState<string>();
   const indexedAuthor = play.author as FeedAuthor | undefined;
   const authorProfile = indexedAuthor || blueskyAuthor;
   const authorDid = authorProfile?.did || play.authorDid;
+  const releaseArt = coverArtUrl(play.releaseMbId);
+  const art = artFailed ? undefined : releaseArt || recordingArt;
 
   useEffect(() => {
     let mounted = true;
@@ -72,7 +80,21 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
     };
   }, [authorDid, indexedAuthor]);
 
-  const art = artFailed ? undefined : coverArtUrl(play.releaseMbId);
+  useEffect(() => {
+    let mounted = true;
+    setArtFailed(false);
+    if (releaseArt || !play.recordingMbId) {
+      setRecordingArt(undefined);
+      return;
+    }
+    getRecordingCoverArtUrl(play.recordingMbId).then((url) => {
+      if (mounted) setRecordingArt(url);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [play.recordingMbId, releaseArt]);
+
   const authorHandle = authorProfile?.handle?.replace(/^at:\/\//, "");
   const authorName =
     authorProfile?.displayName ||

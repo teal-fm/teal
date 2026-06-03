@@ -167,6 +167,29 @@ export function coverArtUrl(releaseMbId?: string, size = 250) {
     : undefined;
 }
 
+const recordingCoverArtCache = new Map<string, Promise<string | undefined>>();
+
+export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
+  const mbid = recordingMbId?.replace(/^mbid:/, "");
+  if (!mbid) return Promise.resolve(undefined);
+
+  const cacheKey = `${mbid}:${size}`;
+  let cached = recordingCoverArtCache.get(cacheKey);
+  if (!cached) {
+    cached = fetch(
+      `https://musicbrainz.org/ws/2/recording/${encodeURIComponent(mbid)}?inc=releases&fmt=json`,
+    )
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((recording?: { releases?: Array<{ id?: string }> }) => {
+        const releaseId = recording?.releases?.find((release) => release.id)?.id;
+        return releaseId ? coverArtUrl(releaseId, size) : undefined;
+      })
+      .catch(() => undefined);
+    recordingCoverArtCache.set(cacheKey, cached);
+  }
+  return cached;
+}
+
 export function displayArtists(play: PlayView) {
   return play.artists.map((artist) => artist.artistName).join(", ");
 }
