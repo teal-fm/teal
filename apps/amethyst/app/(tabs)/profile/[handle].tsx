@@ -14,6 +14,7 @@ import TealShell, {
 } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { resolveHandle } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
@@ -38,6 +39,12 @@ type DisplayProfile = Pick<
 
 function isHttpUrl(value?: string) {
   return value?.startsWith("http://") || value?.startsWith("https://");
+}
+
+function profileImageUrl(did: string, value?: string) {
+  if (!value) return undefined;
+  if (isHttpUrl(value) || value.startsWith("data:")) return value;
+  return getImageCdnLink({ did, hash: value });
 }
 
 export default function ProfileScreen() {
@@ -141,6 +148,8 @@ export default function ProfileScreen() {
   );
 
   const isSelf = did === pdsAgent?.did;
+  const avatarUrl = did ? profileImageUrl(did, profile?.avatar) : undefined;
+  const bannerUrl = did ? profileImageUrl(did, profile?.banner) : undefined;
 
   return (
     <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
@@ -163,17 +172,17 @@ export default function ProfileScreen() {
         <>
           <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
             <View className="h-40 bg-primary/30">
-              {profile?.banner && isHttpUrl(profile.banner) && (
+              {bannerUrl && (
                 <Image
-                  source={{ uri: profile.banner }}
+                  source={{ uri: bannerUrl }}
                   className="h-full w-full"
                 />
               )}
             </View>
             <View className="-mt-12 px-6 pb-6">
-              {profile?.avatar && isHttpUrl(profile.avatar) ? (
+              {avatarUrl ? (
                 <Image
-                  source={{ uri: profile.avatar }}
+                  source={{ uri: avatarUrl }}
                   className="h-24 w-24 rounded-lg border-4 border-background bg-primary"
                 />
               ) : (
