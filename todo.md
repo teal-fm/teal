@@ -50,7 +50,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 ## Next: Amethyst UI
 
 - [x] Add Explore search for users, songs, artists, and albums.
-- [ ] Add album-cover preview controls only after Teal has a real audio preview source and playback behavior.
+- [x] Add album-cover preview controls only after Teal has a real audio preview source and playback behavior.
 - [x] Finish profile avatar and banner blob URL rendering.
 - [x] Add artist and release detail routes in addition to track detail.
 - [x] Refresh the shared UI system and apply it across feed, search, profiles, music pages, sign-in, onboarding, settings, and manual stamping.
