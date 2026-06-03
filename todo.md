@@ -60,7 +60,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Exercise empty, loading, error, signed-out, and populated feed states at desktop and mobile widths.
 - [x] Fix populated desktop feed-card text collisions for long DIDs, track titles, and artist names.
 - [x] Verify SPA fallback routing in the production Caddy image for Home, Explore, Notifications, Profile, music detail, and OAuth callback routes.
-- [ ] Capture final Chrome screenshots after Aqua and Cadet are running with live ingested data.
+- [x] Capture final Chrome screenshots after Aqua and Cadet are running with live ingested data.
 
 ## Verification Commands
 
