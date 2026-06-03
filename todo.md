@@ -44,7 +44,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Add keyset pagination and infinite scrolling for the global latest-play feed.
 - [x] Run SQLx prepare against the development Postgres instance and commit refreshed query cache data.
 - [x] Resolve the existing Satellite SQLx offline-cache gap so `pnpm turbo run test:rust` passes without a live Docker hostname.
-- [ ] Decide whether the legacy `play_to_artists` join table can be removed after Aqua reads move fully to `play_to_artists_extended`.
+- [x] Decide whether the legacy `play_to_artists` join table can be removed after Aqua reads move fully to `play_to_artists_extended`.
 - [x] Validate the Teal lexicons and regenerate Rust and TypeScript bindings before each PR.
 
 ## Next: Amethyst UI
