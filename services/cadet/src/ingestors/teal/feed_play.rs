@@ -1504,18 +1504,25 @@ impl PlayIngestor {
         .execute(&self.sql)
         .await?;
 
+        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
+            .bind(uri)
+            .execute(&self.sql)
+            .await?;
+        sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
+            .execute(&self.sql)
+            .await?;
+
         // Insert plays into the extended join table (supports all artists)
         for (artist_id, artist_name) in &parsed_artists {
-            sqlx::query!(
+            sqlx::query(
                 r#"
                     INSERT INTO play_to_artists_extended (play_uri, artist_id, artist_name) VALUES
-                    ($1, $2, $3)
-                    ON CONFLICT (play_uri, artist_id) DO NOTHING;
+                    ($1, $2, $3);
                 "#,
-                uri,
-                artist_id,
-                artist_name
             )
+            .bind(uri)
+            .bind(artist_id)
+            .bind(artist_name)
             .execute(&self.sql)
             .await?;
         }
@@ -1607,6 +1614,164 @@ impl LexiconIngestor for PlayIngestor {
         } else {
             return Err(anyhow!("Message has no commit"));
         }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use jacquard_common::types::value;
+    use rocketman::{
+        ingestion::LexiconIngestor,
+        types::event::{Commit, Event, Kind, Operation},
+    };
+    use serde_json::json;
+    use sqlx::PgPool;
+    use uuid::Uuid;
+
+    use super::PlayIngestor;
+
+    async fn test_pool() -> anyhow::Result<PgPool> {
+        let database_url = std::env::var("DATABASE_URL")?;
+        Ok(PgPool::connect(&database_url).await?)
+    }
+
+    fn play_record(
+        track_name: &str,
+        artist_name: &str,
+        release_mbid: Uuid,
+        recording_mbid: Uuid,
+    ) -> anyhow::Result<types::fm_teal::alpha::feed::play::Play> {
+        Ok(value::from_json_value::<
+            types::fm_teal::alpha::feed::play::Play,
+        >(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": track_name,
+            "recordingMbId": format!("mbid:{recording_mbid}"),
+            "releaseName": "Cadet Test Release",
+            "releaseMbId": format!("mbid:{release_mbid}"),
+            "duration": 181,
+            "artists": [{
+                "artistName": artist_name
+            }],
+            "musicServiceBaseDomain": "tests.teal.fm",
+            "submissionClientAgent": "cadet-test/1.0",
+            "playedTime": "2026-06-01T00:00:00Z"
+        }))?)
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn creates_updates_and_deletes_play() -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let ingestor = PlayIngestor::new(pool.clone());
+        let did = format!("did:plc:cadet-play-test-{}", Uuid::new_v4());
+        let rkey = "3k2akjdlkjsf";
+        let uri = format!("at://{did}/fm.teal.alpha.feed.play/{rkey}");
+        let release_mbid = Uuid::new_v4();
+        let recording_mbid = Uuid::new_v4();
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "First Cadet Test Track",
+                    "First Cadet Test Artist",
+                    release_mbid,
+                    recording_mbid,
+                )?,
+                &uri,
+                "bafyreicadetcreate",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let inserted = sqlx::query_as::<_, (String, Option<String>, Option<String>)>(
+            "SELECT track_name, release_name, music_service_base_domain FROM plays WHERE uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(inserted.0, "First Cadet Test Track");
+        assert_eq!(inserted.1.as_deref(), Some("Cadet Test Release"));
+        assert_eq!(inserted.2.as_deref(), Some("tests.teal.fm"));
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "Updated Cadet Test Track",
+                    "Updated Cadet Test Artist",
+                    release_mbid,
+                    recording_mbid,
+                )?,
+                &uri,
+                "bafyreicadetupdate",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let updated = sqlx::query_as::<_, (String, Option<serde_json::Value>)>(
+            "SELECT track_name, artist_names_raw FROM plays WHERE uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(updated.0, "Updated Cadet Test Track");
+        assert_eq!(
+            updated.1,
+            Some(json!(["Updated Cadet Test Artist"]))
+        );
+
+        let extended_artist_links = sqlx::query_as::<_, (i64, Option<String>)>(
+            "SELECT COUNT(*), MAX(artist_name) FROM play_to_artists_extended WHERE play_uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(extended_artist_links.0, 1);
+        assert_eq!(
+            extended_artist_links.1.as_deref(),
+            Some("Updated Cadet Test Artist")
+        );
+
+        ingestor
+            .ingest(Event {
+                did: did.clone(),
+                time_us: Some(1),
+                kind: Kind::Commit,
+                commit: Some(Commit {
+                    rev: "test-rev".to_string(),
+                    operation: Operation::Delete,
+                    collection: "fm.teal.alpha.feed.play".to_string(),
+                    rkey: rkey.to_string(),
+                    record: None,
+                    cid: None,
+                }),
+                identity: None,
+            })
+            .await?;
+
+        let remaining_plays =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plays WHERE uri = $1")
+                .bind(&uri)
+                .fetch_one(&pool)
+                .await?;
+        let remaining_legacy_links =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM play_to_artists WHERE play_uri = $1")
+                .bind(&uri)
+                .fetch_one(&pool)
+                .await?;
+        let remaining_extended_links =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM play_to_artists_extended WHERE play_uri = $1")
+                .bind(&uri)
+                .fetch_one(&pool)
+                .await?;
+
+        assert_eq!(remaining_plays, 0);
+        assert_eq!(remaining_legacy_links, 0);
+        assert_eq!(remaining_extended_links, 0);
+
         Ok(())
     }
 }
