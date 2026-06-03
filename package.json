@@ -28,12 +28,16 @@
     "lex:diff": "cd tools/lexicon-cli && node dist/index.js diff",
     "lex:build-amethyst": "pnpm lex:gen-server && pnpm turbo build --filter=@teal/amethyst",
     "lex:dev": "pnpm lex:gen-server && pnpm turbo dev --filter=@teal/amethyst",
-    "db:migrate": "cd services && sqlx migrate run",
-    "db:migrate:revert": "cd services && sqlx migrate revert",
-    "db:create": "cd services && sqlx database create",
-    "db:drop": "cd services && sqlx database drop",
-    "db:reset": "cd services && sqlx database drop && sqlx database create && sqlx migrate run",
-    "db:prepare": "cd services && sqlx prepare"
+    "db:migrate": "sqlx migrate run",
+    "db:migrate:revert": "sqlx migrate revert",
+    "db:create": "sqlx database create",
+    "db:drop": "sqlx database drop",
+    "db:reset": "sqlx database drop && sqlx database create && sqlx migrate run",
+    "db:prepare": "sqlx prepare",
+    "eval:auth": "tsx scripts/eval/evaluate.ts --auth-only",
+    "eval:run": "tsx scripts/eval/evaluate.ts",
+    "eval:resolve-lb": "tsx scripts/eval/listenbrainz-resolve.ts",
+    "test:musicbrainz": "pnpm test --filter=@teal/amethyst -- --testPathPattern=\"musicbrainz|fuzzy\" --passWithNoTests"
   },
   "dependencies": {
     "@atproto/oauth-client": "^0.3.8",
@@ -42,9 +46,13 @@
     "prettier-plugin-tailwindcss": "^0.6.11"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.17.10",
+    "better-sqlite3": "^12.5.0",
     "biome": "^0.3.3",
+    "dotenv": "^16.4.7",
     "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
     "turbo": "^2.3.3"
   },
   "workspaces": [

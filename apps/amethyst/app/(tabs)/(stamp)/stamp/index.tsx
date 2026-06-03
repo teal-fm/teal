@@ -1,13 +1,11 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import {
-  FlatList,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { Link, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
+  SectionHeading,
+} from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
@@ -78,16 +76,21 @@ export default function StepOne() {
   };
 
   return (
-    <ScrollView className="w-min flex-1 items-center justify-start bg-background pt-2">
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{
           title: "Stamp a play manually",
           headerBackButtonDisplayMode: "generic",
+          headerShown: false,
         }}
       />
-      {/* Search Form */}
-      <View className="flex w-screen max-w-2xl gap-2 px-4">
-        <Text className="text-lg font-bold">Search for a track</Text>
+      <SectionHeading
+        eyebrow="Manual entry"
+        title="Stamp a play"
+        detail="MUSICBRAINZ"
+      />
+      <View className="flex gap-3 rounded-lg border border-border bg-card p-4">
+        <Text className="text-sm font-bold">Search for a track</Text>
         <Input
           placeholder="Track name..."
           value={searchFields.track}
@@ -144,7 +147,7 @@ export default function StepOne() {
       </View>
 
       {/* Search Results */}
-      <View className="flex w-screen max-w-2xl gap-4 px-4">
+      <View className="flex gap-4">
         {searchResults.length > 0 ? (
           <View className="mt-4">
             <Text className="mb-2 text-lg font-bold">
@@ -218,7 +221,7 @@ export default function StepOne() {
           </View>
         )}
       </View>
-    </ScrollView>
+    </TealShell>
   );
 }
 

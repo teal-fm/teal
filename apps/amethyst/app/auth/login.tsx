@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"; // Adde
 import { Platform, TextInput, View } from "react-native";
 import Animated, {
   interpolate,
+  useAnimatedKeyboard,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -16,7 +17,7 @@ import { resolveFromIdentity } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { capFirstLetter, cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
-import { FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 
 type Url = URL;
@@ -40,6 +41,8 @@ const LoginScreen = () => {
   const [pdsResolutionError, setPdsResolutionError] = useState<
     string | undefined
   >();
+
+  const kb = useAnimatedKeyboard();
 
   const handleInputRef = useRef<TextInput>(null);
 
@@ -70,6 +73,15 @@ const LoginScreen = () => {
       paddingTop: 8,
       overflow: "hidden",
       zIndex: -1,
+    };
+  });
+
+  const containerAnimatedStyle = useAnimatedStyle(() => {
+    const isKeyboardOpen = kb.height.value > 0;
+    return {
+      bottom: withTiming(isKeyboardOpen ? kb.height.value / 3 : 0, {
+        duration: 250,
+      }),
     };
   });
 
@@ -119,7 +131,7 @@ const LoginScreen = () => {
     },
     [isResolvingPds, pdsResolutionError],
   );
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -208,7 +220,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex w-full flex-1 items-center justify-center">
+    <SafeAreaView className="flex w-full flex-1 items-center justify-center bg-muted px-5">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -216,19 +228,33 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="align-center w-screen max-w-lg justify-center gap-4 p-8 pb-32">
+      <Animated.View
+        className="align-center w-full max-w-md justify-center gap-5 rounded-lg border border-border bg-background p-7 shadow-sm md:p-8"
+        style={containerAnimatedStyle}
+      >
         <View className="flex items-center">
-          <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
+          <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
+            <Icon
+              icon={AtSign}
+              className="text-primary-foreground"
+              name="at"
+              size={24}
+            />
+          </View>
         </View>
-        <Text className="text-center text-3xl text-foreground">
-          Sign in with your PDS
+        <Text className="text-center font-sans text-3xl font-black text-foreground">
+          Sign in to Teal
         </Text>
-        <View>
-          <Text className="text-sm text-muted-foreground">Handle</Text>
+        <Text className="text-center text-sm leading-5 text-muted-foreground">
+          Use the handle for your ATProto account. Teal will resolve your PDS
+          before continuing.
+        </Text>
+        <View className="gap-2">
+          <Text className="text-sm font-bold text-foreground">Handle</Text>
           <Input
             ref={handleInputRef}
             className={cn(
-              "ring-0",
+              "h-12 rounded-lg",
               (err || pdsResolutionError) && `border-red-500`,
             )}
             placeholder="alice.bsky.social or did:plc:..."
@@ -248,7 +274,7 @@ const LoginScreen = () => {
           <Animated.View style={messageContainerAnimatedStyle}>
             <View
               className={cn(
-                "-mt-7 rounded-xl border border-border p-2 transition-all duration-300",
+                "-mt-7 rounded-lg border border-border p-2 transition-all duration-300",
                 isSelected ? "pt-9" : "pt-8",
                 pdsUrl !== null
                   ? pdsUrl.hostname.includes("bsky.network")
@@ -258,37 +284,39 @@ const LoginScreen = () => {
               )}
             >
               {pdsUrl !== null ? (
-                <Text>
-                  PDS:{" "}
+                <View className="flex flex-row items-center gap-1">
+                  <Text>PDS:</Text>
                   {pdsUrl.hostname.includes("bsky.network") && (
-                    <View className="flex-row gap-0.5 pr-0.5">
+                    <View className="flex flex-row justify-center gap-0.5 pr-0.5">
                       <Icon
                         icon={FontAwesome6}
                         className="color-bsky"
                         name="bluesky"
                         size={16}
                       />
-                      <Icon
-                        icon={MaterialCommunityIcons}
-                        className="color-red-400"
-                        name="mushroom"
-                        size={18}
-                      />
                     </View>
                   )}
-                  {pdsUrl.hostname.includes("bsky.network")
-                    ? capFirstLetter(pdsUrl.hostname.split(".").shift() || "")
-                    : pdsUrl.hostname}
-                </Text>
+                  <Text>
+                    {pdsUrl.hostname.includes("bsky.network")
+                      ? "Bluesky (" +
+                        capFirstLetter(
+                          pdsUrl.hostname.split(".").shift() || "",
+                        ) +
+                        ")"
+                      : pdsUrl.hostname}
+                  </Text>
+                </View>
               ) : pdsResolutionError ? (
-                <Text className="justify-baseline px-1">
+                <View className="flex flex-row">
                   <Icon
                     icon={AlertCircle}
-                    className="-mt-0.5 mr-1 inline text-xs"
-                    size={24}
+                    className="mr-1 inline text-foreground"
+                    size={18}
                   />
-                  {pdsResolutionError}
-                </Text>
+                  <Text className="justify-baseline flex">
+                    {pdsResolutionError}
+                  </Text>
+                </View>
               ) : (
                 <Text className="px-1 text-muted-foreground">
                   Resolving PDS...
@@ -297,7 +325,7 @@ const LoginScreen = () => {
             </View>
           </Animated.View>
         </View>
-        <View className="flex flex-row items-center justify-between">
+        <View className="mt-2 flex flex-row items-center justify-between gap-3">
           <Link href="https://bsky.app/signup" asChild>
             <Button variant="link" className="p-0">
               <Text className="text-md text-secondary">
@@ -307,28 +335,28 @@ const LoginScreen = () => {
           </Link>
           <Button
             className={cn(
-              "flex flex-row justify-end duration-500",
-              isRedirecting ? "bg-green-500" : "bg-bsky",
+              "flex flex-row justify-end gap-1",
+              isRedirecting ? "bg-primary" : "bg-primary",
             )}
             onPress={handleLogin}
             disabled={!pdsUrl}
           >
             {isRedirecting ? (
               <>
-                <Text className="text-lg">Redirecting</Text>
+                <Text>Redirecting</Text>
                 <Icon icon={Check} />
               </>
             ) : isLoading ? (
-              <Text className="text-lg">Signing in...</Text>
+              <Text>Signing in...</Text>
             ) : (
               <>
-                <Text className="text-lg">Sign in</Text>
+                <Text>Sign in</Text>
                 <Icon icon={ChevronRight} />
               </>
             )}
           </Button>
         </View>
-      </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };

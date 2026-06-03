@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use atrium_api::types::string::Did;
+use jacquard_common::types::value;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::PgPool;
@@ -17,12 +17,12 @@ impl ActorStatusIngestor {
 
     pub async fn insert_status(
         &self,
-        did: Did,
+        did: &str,
         rkey: &str,
         cid: &str,
-        status: &types::fm::teal::alpha::actor::status::RecordData,
+        status: &types::fm_teal::alpha::actor::status::Status,
     ) -> anyhow::Result<()> {
-        let uri = assemble_at_uri(did.as_str(), "fm.teal.alpha.actor.status", rkey);
+        let uri = assemble_at_uri(did, "fm.teal.alpha.actor.status", rkey);
 
         let record_json = serde_json::to_value(status)?;
 
@@ -36,7 +36,7 @@ impl ActorStatusIngestor {
                     indexed_at = NOW();
             "#,
             uri,
-            did.as_str(),
+            did,
             rkey,
             cid,
             record_json
@@ -47,8 +47,8 @@ impl ActorStatusIngestor {
         Ok(())
     }
 
-    pub async fn remove_status(&self, did: Did, rkey: &str) -> anyhow::Result<()> {
-        let uri = assemble_at_uri(did.as_str(), "fm.teal.alpha.actor.status", rkey);
+    pub async fn remove_status(&self, did: &str, rkey: &str) -> anyhow::Result<()> {
+        let uri = assemble_at_uri(did, "fm.teal.alpha.actor.status", rkey);
 
         sqlx::query!(
             r#"
@@ -68,30 +68,18 @@ impl LexiconIngestor for ActorStatusIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record = serde_json::from_value::<
-                    types::fm::teal::alpha::actor::status::RecordData,
-                >(record.clone())?;
+                let record: types::fm_teal::alpha::actor::status::Status =
+                    value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(
+                        record.clone(),
+                    )?;
 
-                if let Some(ref commit) = message.commit {
-                    if let Some(ref cid) = commit.cid {
-                        self.insert_status(
-                            Did::new(message.did)
-                                .map_err(|e| anyhow::anyhow!("Failed to create Did: {}", e))?,
-                            &commit.rkey,
-                            cid,
-                            &record,
-                        )
+                if let Some(ref cid) = commit.cid {
+                    self.insert_status(&message.did, &commit.rkey, cid, &record)
                         .await?;
-                    }
                 }
             } else {
                 println!("{}: Status {} deleted", message.did, commit.rkey);
-                self.remove_status(
-                    Did::new(message.did)
-                        .map_err(|e| anyhow::anyhow!("Failed to create Did: {}", e))?,
-                    &commit.rkey,
-                )
-                .await?;
+                self.remove_status(&message.did, &commit.rkey).await?;
             }
         } else {
             return Err(anyhow::anyhow!("Message has no commit"));

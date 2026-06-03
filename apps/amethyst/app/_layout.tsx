@@ -20,7 +20,8 @@ import { GlobalTextClassContext } from "../components/ui/text";
 
 import "../global.css";
 
-import { SafeAreaView, View } from "react-native";
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 let defaultFamily = (weight: string) => {
@@ -61,10 +62,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    CrimsonPro: require("../assets/fonts/CrimsonPro-VariableFont_wght.ttf"),
-    "CrimsonPro Italic": require("../assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf"),
     "DM Sans": require("../assets/fonts/DMSans-VariableFont_opsz,wght.ttf"),
-    Fraunces: require("../assets/fonts/Fraunces-VariableFont_SOFT,WONK,opsz,wght.ttf"),
     PlexMono: require("../assets/fonts/IBMPlexMono-Regular.ttf"),
     ...FontAwesome.font,
   });
@@ -85,10 +83,8 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaView className="flex min-h-screen flex-1 flex-row justify-center bg-background">
-      <View className="flex max-w-2xl flex-1 border-x border-muted-foreground/20 bg-background">
-        <RootLayoutNav />
-      </View>
+    <SafeAreaView className="flex min-h-screen flex-1 bg-background">
+      <RootLayoutNav />
     </SafeAreaView>
   );
 }
@@ -114,6 +110,7 @@ function RootLayoutNav() {
           <BottomSheetModalProvider>
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen
                 name="auth/logoutModal"
                 options={{

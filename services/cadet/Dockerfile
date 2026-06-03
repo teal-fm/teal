@@ -37,12 +37,12 @@ RUN ./scripts/setup-lexicons.sh
 
 # Install Node.js and pnpm for lexicon generation
 RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9.15.0
 
 # Install dependencies and generate lexicons
 RUN pnpm install
 RUN cd tools/lexicon-cli && pnpm build
-RUN pnpm lex:gen
+RUN pnpm lex:gen --rust-only
 
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
@@ -67,9 +67,6 @@ ENV OPENSSL_INCLUDE_DIR_aarch64_unknown_linux_gnu=/usr/include/openssl
 
 # Force SQLx to use offline mode with workspace cache
 ENV SQLX_OFFLINE=true
-
-# copy sqlx in
-COPY ./.sqlx ./services/cadet/.sqlx
 
 # Debug platform detection and run build
 RUN echo "DEBUG Before target.sh: TARGETPLATFORM=$TARGETPLATFORM TARGETARCH=$TARGETARCH" && \

@@ -9,7 +9,7 @@ import { ArrowRight, AtSignIcon } from "lucide-react-native";
 
 const LoginScreen = () => {
   return (
-    <SafeAreaView className="flex flex-1 items-center justify-center">
+    <SafeAreaView className="flex flex-1 items-center justify-center bg-muted px-5">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -17,17 +17,18 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="w-screen max-w-md flex-1 justify-center gap-4 p-8 pb-32">
-        <Text className="-mb-2 text-center text-3xl text-foreground">
-          Sign up via <br /> the{" "}
+      <View className="w-full max-w-md items-center justify-center gap-4 rounded-lg border border-border bg-card p-7">
+        <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
           <Icon
             icon={AtSignIcon}
-            className="mb-2 mr-1.5 inline color-bsky"
-            size={32}
+            className="text-primary-foreground"
+            size={24}
           />
-          Atmosphere
+        </View>
+        <Text className="text-center font-sans text-3xl font-black text-foreground">
+          Sign up via the Atmosphere
         </Text>
-        <Text className="text-center text-xl text-foreground">
+        <Text className="text-center text-lg font-bold text-foreground">
           No account? No problem.
         </Text>
         <View className="flex flex-col items-center justify-center">
@@ -51,9 +52,9 @@ const LoginScreen = () => {
                 router.replace("/auth/login");
               }, 1000);
             }}
-            className="flex flex-row items-center justify-center gap-2 bg-bsky"
+            className="flex flex-row items-center justify-center gap-2"
           >
-            <Text className="ml-2 text-sm text-secondary">To Bluesky</Text>
+            <Text className="ml-2 text-sm">Continue to Bluesky</Text>
             <Icon icon={ArrowRight} />
           </Button>
         </View>

@@ -1,9 +1,16 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
-use atrium_api::types::string::Datetime;
+use jacquard_common::{
+    types::{
+        string::{Datetime, UriValue},
+        value,
+    },
+    IntoStatic,
+};
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::{types::Uuid, PgPool};
+use unicode_normalization::UnicodeNormalization;
 
 use super::assemble_at_uri;
 
@@ -17,10 +24,12 @@ struct FuzzyMatchCandidate {
 struct MusicBrainzCleaner;
 
 impl MusicBrainzCleaner {
-    /// List of common "guff" words found in parentheses that should be removed
+    /// Words commonly found in parenthetical/bracketed content that can be removed.
+    /// Kept in sync with apps/amethyst/lib/musicbrainzCleaner.ts GUFF_WORDS.
     const GUFF_WORDS: &'static [&'static str] = &[
         "a cappella",
         "acoustic",
+        "anniversary",
         "bonus",
         "censored",
         "clean",
@@ -29,16 +38,23 @@ impl MusicBrainzCleaner {
         "composition",
         "cut",
         "dance",
+        "deluxe",
         "demo",
         "dialogue",
         "dirty",
+        "dub",
         "edit",
+        "edition",
         "excerpt",
+        "expanded",
         "explicit",
         "extended",
         "feat",
         "featuring",
         "ft",
+        "hd",
+        "hifi",
+        "hi-fi",
         "instrumental",
         "interlude",
         "intro",
@@ -46,6 +62,7 @@ impl MusicBrainzCleaner {
         "live",
         "long",
         "main",
+        "master",
         "maxi",
         "megamix",
         "mix",
@@ -57,6 +74,10 @@ impl MusicBrainzCleaner {
         "outtake",
         "outtakes",
         "piano",
+        "preview",
+        "prod",
+        "produced",
+        "production",
         "quadraphonic",
         "radio",
         "rap",
@@ -65,12 +86,11 @@ impl MusicBrainzCleaner {
         "refix",
         "rehearsal",
         "reinterpreted",
-        "released",
         "release",
+        "released",
         "remake",
-        "remastered",
         "remaster",
-        "master",
+        "remastered",
         "remix",
         "remixed",
         "remode",
@@ -82,6 +102,7 @@ impl MusicBrainzCleaner {
         "short",
         "single",
         "skit",
+        "special",
         "stereo",
         "studio",
         "take",
@@ -93,8 +114,8 @@ impl MusicBrainzCleaner {
         "unknown",
         "unplugged",
         "untitled",
-        "version",
         "ver",
+        "version",
         "video",
         "vocal",
         "vs",
@@ -102,81 +123,223 @@ impl MusicBrainzCleaner {
         "without",
     ];
 
+    /// Generic track names that commonly need disambiguation info preserved.
+    const GENERIC_TRACK_NAMES: &'static [&'static str] = &[
+        "beat", "dream", "five", "four", "heart", "high", "home", "life", "love", "low", "music",
+        "one", "piece", "song", "sound", "three", "time", "track", "tune", "two",
+    ];
+
+    const SHORT_NAME_THRESHOLD: usize = 15;
+    const COMMON_PHRASE_LENGTH: usize = 20;
+    const MIN_ARTIST_NAME_LENGTH: usize = 4;
+
+    /// Find the byte range of the first matched-depth bracket pair.
+    /// Returns (open_byte, content_start_byte, content_end_byte, close_end_byte).
+    fn find_bracketed(s: &str, open: char, close: char) -> Option<(usize, usize, usize, usize)> {
+        let mut chars = s.char_indices();
+        // Find opening bracket
+        let (open_byte, _) = chars.find(|&(_, c)| c == open)?;
+        let content_start = open_byte + open.len_utf8();
+        let mut depth: usize = 1;
+        for (i, c) in chars {
+            if c == open {
+                depth += 1;
+            } else if c == close {
+                depth -= 1;
+                if depth == 0 {
+                    return Some((open_byte, content_start, i, i + close.len_utf8()));
+                }
+            }
+        }
+        None // unbalanced
+    }
+
+    /// Check if parenthetical content should be kept for disambiguation.
+    /// Partially mirrors the TS shouldKeepForDisambiguation logic (remix/feat only, not version).
+    fn should_keep_for_disambiguation(content: &str, base_name: &str, kind: &str) -> bool {
+        let content_lower = content.to_lowercase();
+        let base_lower = base_name.to_lowercase();
+
+        let is_relevant = match kind {
+            "remix" => {
+                content_lower.contains("remix")
+                    || content_lower.contains("rmx")
+                    || content_lower.contains("rework")
+                    || content_lower.contains("refix")
+                    || content_lower.contains("remode")
+            }
+            "feat" => {
+                content_lower.contains("feat")
+                    || content_lower.contains("ft")
+                    || content_lower.contains("featuring")
+            }
+            _ => false,
+        };
+        if !is_relevant {
+            return false;
+        }
+
+        // Generic word check
+        let is_generic = Self::GENERIC_TRACK_NAMES
+            .iter()
+            .any(|&w| base_lower == w || base_lower.starts_with(&format!("{w} ")));
+        let char_count = base_name.chars().count();
+        let is_short = char_count < Self::SHORT_NAME_THRESHOLD;
+        let word_count = base_name.split_whitespace().count();
+        let is_common_phrase = word_count <= 3 && char_count < Self::COMMON_PHRASE_LENGTH;
+
+        // Check for artist name in content
+        let keyword_pattern: &[&str] = match kind {
+            "remix" => &["remix", "rmx", "rework", "refix", "remode"],
+            _ => &["feat", "ft", "featuring"],
+        };
+        let has_artist_name = content_lower.split_whitespace().any(|w| {
+            w.chars().count() >= Self::MIN_ARTIST_NAME_LENGTH
+                && !keyword_pattern.iter().any(|kw| w.contains(kw))
+        });
+
+        is_generic || (is_short && is_common_phrase) || has_artist_name
+    }
+
+    /// Remove a bracketed section from `s` if it is guff and not needed for disambiguation.
+    /// Works for both () and []. Returns the cleaned string.
+    fn strip_guff_bracket(s: &str, open: char, close: char, check_disambiguation: bool) -> String {
+        if let Some((open_byte, content_start, content_end, close_end)) =
+            Self::find_bracketed(s, open, close)
+        {
+            let content = &s[content_start..content_end];
+            let base_name = s[..open_byte].trim();
+
+            if Self::is_likely_guff(&content.to_lowercase()) {
+                if check_disambiguation {
+                    let keep_remix =
+                        Self::should_keep_for_disambiguation(content, base_name, "remix");
+                    let keep_feat =
+                        Self::should_keep_for_disambiguation(content, base_name, "feat");
+                    if keep_remix || keep_feat {
+                        return s.to_string();
+                    }
+                    // Don't remove if it would leave the name empty
+                    let after = s[close_end..].trim();
+                    if base_name.is_empty() && after.is_empty() {
+                        return s.to_string();
+                    }
+                }
+                let result = format!("{}{}", &s[..open_byte], &s[close_end..]);
+                return result.split_whitespace().collect::<Vec<_>>().join(" ");
+            }
+        }
+        s.to_string()
+    }
+
+    /// Case-insensitive find of `pattern` in `s`, returning the byte offset in `s`.
+    /// Safe for non-ASCII: searches char-by-char in the original string, avoiding
+    /// the to_lowercase() byte-length mismatch problem.
+    fn find_case_insensitive(s: &str, pattern: &str) -> Option<usize> {
+        let pat_lower = pattern.to_lowercase();
+        let pat_char_count = pat_lower.chars().count();
+        if pat_char_count == 0 {
+            return None;
+        }
+        for (byte_pos, _) in s.char_indices() {
+            let candidate: String = s[byte_pos..].chars().take(pat_char_count).collect();
+            if candidate.to_lowercase() == pat_lower {
+                return Some(byte_pos);
+            }
+        }
+        None
+    }
+
     /// Clean artist name by removing common variations and guff
     fn clean_artist_name(name: &str) -> String {
         let mut cleaned = name.trim().to_string();
 
-        // Remove common featuring patterns
-        if let Some(pos) = cleaned.to_lowercase().find(" feat") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-        if let Some(pos) = cleaned.to_lowercase().find(" ft.") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-        if let Some(pos) = cleaned.to_lowercase().find(" featuring") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-
-        // Remove parenthetical content if it looks like guff
-        if let Some(start) = cleaned.find('(') {
-            if let Some(end) = cleaned.find(')') {
-                let paren_content = &cleaned[start + 1..end].to_lowercase();
-                if Self::is_likely_guff(paren_content) {
-                    cleaned = format!("{}{}", &cleaned[..start], &cleaned[end + 1..])
-                        .trim()
-                        .to_string();
-                }
+        // Remove common featuring patterns (take the first match)
+        for pat in &[" feat", " ft.", " featuring"] {
+            if let Some(byte_pos) = Self::find_case_insensitive(&cleaned, pat) {
+                cleaned = cleaned[..byte_pos].trim().to_string();
+                break;
             }
         }
 
-        // Remove brackets with guff
-        if let Some(start) = cleaned.find('[') {
-            if let Some(end) = cleaned.find(']') {
-                let bracket_content = &cleaned[start + 1..end].to_lowercase();
-                if Self::is_likely_guff(bracket_content) {
-                    cleaned = format!("{}{}", &cleaned[..start], &cleaned[end + 1..])
-                        .trim()
-                        .to_string();
-                }
-            }
-        }
+        // Remove parenthetical guff (no disambiguation check for artist names)
+        cleaned = Self::strip_guff_bracket(&cleaned, '(', ')', false);
+        cleaned = Self::strip_guff_bracket(&cleaned, '[', ']', false);
 
-        // Remove common prefixes/suffixes
-        if cleaned.to_lowercase().starts_with("the ") && cleaned.len() > 4 {
-            let without_the = &cleaned[4..];
-            if !without_the.trim().is_empty() {
-                return without_the.trim().to_string();
-            }
-        }
+        // Don't strip "The " prefix -- MusicBrainz indexes artists with "The"
+        // (e.g., "The Beatles", "The Rolling Stones") and stripping causes
+        // exact search misses in the matching pipeline.
 
-        cleaned.trim().to_string()
+        cleaned
     }
 
-    /// Clean track name by removing common variations and guff
+    /// Clean track name by removing common variations and guff.
+    /// Includes disambiguation-aware cleaning: preserves remix/feat info for
+    /// short or generic track names (matching TS frontend logic).
     fn clean_track_name(name: &str) -> String {
         let mut cleaned = name.trim().to_string();
 
-        // Remove parenthetical content if it looks like guff
-        if let Some(start) = cleaned.find('(') {
-            if let Some(end) = cleaned.find(')') {
-                let paren_content = &cleaned[start + 1..end].to_lowercase();
-                if Self::is_likely_guff(paren_content) {
-                    cleaned = format!("{}{}", &cleaned[..start], &cleaned[end + 1..])
-                        .trim()
-                        .to_string();
+        // Strip leading/trailing decorative characters (aligned with TS frontend)
+        let decorative: &[char] = &[
+            '*', '~', '\u{00b7}', '\u{2022}', '\u{2605}', '\u{2606}', '\u{266a}', '\u{266b}', '|',
+            '_', '>', '<',
+        ];
+        cleaned = cleaned
+            .trim_start_matches(|c: char| c.is_whitespace() || decorative.contains(&c))
+            .to_string();
+        cleaned = cleaned
+            .trim_end_matches(|c: char| c.is_whitespace() || decorative.contains(&c))
+            .to_string();
+        cleaned = cleaned.trim().to_string();
+
+        // Remove parenthetical guff (with disambiguation check) -- process all groups
+        loop {
+            let next = Self::strip_guff_bracket(&cleaned, '(', ')', true);
+            if next == cleaned {
+                break;
+            }
+            cleaned = next;
+        }
+        loop {
+            let next = Self::strip_guff_bracket(&cleaned, '[', ']', true);
+            if next == cleaned {
+                break;
+            }
+            cleaned = next;
+        }
+
+        // Remove dash-separated suffixes that look like guff or remix info
+        // Common in scrobbler data: "Song - Single Version", "Song - Artist Remix"
+        if let Some(dash_pos) = cleaned.find(" - ") {
+            let base_name = cleaned[..dash_pos].trim();
+            let suffix = cleaned[dash_pos + 3..].trim();
+            if !base_name.is_empty() && !suffix.is_empty() {
+                let should_keep_remix =
+                    Self::should_keep_for_disambiguation(suffix, base_name, "remix");
+                let should_keep_feat =
+                    Self::should_keep_for_disambiguation(suffix, base_name, "feat");
+                if Self::is_likely_guff(&suffix.to_lowercase())
+                    && !should_keep_remix
+                    && !should_keep_feat
+                {
+                    cleaned = base_name.to_string();
                 }
             }
         }
 
-        // Remove featuring artists from track titles
-        if let Some(pos) = cleaned.to_lowercase().find(" feat") {
-            cleaned = cleaned[..pos].trim().to_string();
-        }
-        if let Some(pos) = cleaned.to_lowercase().find(" ft.") {
-            cleaned = cleaned[..pos].trim().to_string();
+        // Remove featuring artists from track titles (with disambiguation check)
+        for pat in &[" feat", " ft.", " featuring"] {
+            if let Some(byte_pos) = Self::find_case_insensitive(&cleaned, pat) {
+                let base_name = cleaned[..byte_pos].trim();
+                let feat_content = cleaned[byte_pos..].trim();
+                if !Self::should_keep_for_disambiguation(feat_content, base_name, "feat") {
+                    cleaned = base_name.to_string();
+                }
+                break;
+            }
         }
 
-        cleaned.trim().to_string()
+        cleaned
     }
 
     /// Check if parenthetical content is likely "guff" that should be removed
@@ -184,17 +347,23 @@ impl MusicBrainzCleaner {
         let content_lower = content.to_lowercase();
         let words: Vec<&str> = content_lower.split_whitespace().collect();
 
-        // If most words are guff words, consider it guff
+        // Count guff words (strip trailing punctuation for matching)
         let guff_word_count = words
             .iter()
-            .filter(|word| Self::GUFF_WORDS.contains(word))
+            .filter(|word| {
+                let stripped = word.trim_end_matches(|c: char| c.is_ascii_punctuation());
+                Self::GUFF_WORDS.contains(word) || Self::GUFF_WORDS.contains(&stripped)
+            })
             .count();
 
-        // Also check for years (19XX or 20XX)
-        let has_year = content_lower.chars().collect::<String>().contains("19")
-            || content_lower.contains("20");
+        // Check for years (19XX or 20XX) -- match 4-digit years only, not "Part 19" etc.
+        let has_year = content_lower.as_bytes().windows(4).any(|w| {
+            (w[0] == b'1' && w[1] == b'9' || w[0] == b'2' && w[1] == b'0')
+                && w[2].is_ascii_digit()
+                && w[3].is_ascii_digit()
+        });
 
-        // Consider it guff if >50% are guff words, or if it contains years, or if it's short and common
+        // >50% guff words, or contains years, or short and contains a guff word
         guff_word_count > words.len() / 2
             || has_year
             || (words.len() <= 2
@@ -203,9 +372,21 @@ impl MusicBrainzCleaner {
                     .any(|&guff| content_lower.contains(guff)))
     }
 
-    /// Normalize text for comparison (remove special chars, lowercase, etc.)
+    /// Normalize text for comparison (remove special chars, lowercase).
+    /// Aligned with frontend normalizeForComparison in musicbrainzCleaner.ts:
+    /// 1. NFD decomposition to separate base characters from accents
+    /// 2. Strip combining diacritical marks (U+0300..U+036F)
+    /// 3. Keep all Unicode alphanumeric characters (CJK, Cyrillic, etc.)
+    /// 4. NFC recomposition, lowercase, whitespace collapse
     fn normalize_for_comparison(text: &str) -> String {
-        text.chars()
+        // Step 1+2: NFD decompose, strip combining marks (accents)
+        let stripped: String = text
+            .nfd()
+            .filter(|c| !('\u{0300}'..='\u{036f}').contains(c))
+            .collect();
+        // Step 3+4: keep alphanumeric + whitespace, NFC, lowercase, collapse whitespace
+        stripped
+            .nfc()
             .filter(|c| c.is_alphanumeric() || c.is_whitespace())
             .collect::<String>()
             .to_lowercase()
@@ -219,16 +400,24 @@ pub struct PlayIngestor {
     sql: PgPool,
 }
 
+fn mbid_value(mbid: &str) -> &str {
+    mbid.strip_prefix("mbid:").unwrap_or(mbid)
+}
+
+fn uri_mbid_value(mbid: &UriValue) -> &str {
+    mbid_value(mbid.as_str())
+}
+
 fn clean(
-    record: &types::fm::teal::alpha::feed::play::RecordData,
-) -> types::fm::teal::alpha::feed::play::RecordData {
+    record: &types::fm_teal::alpha::feed::play::Play,
+) -> types::fm_teal::alpha::feed::play::Play {
     let mut cleaned = record.clone();
 
     // Clean artist MBIDs inside artists vector, if present
     if let Some(artists) = &mut cleaned.artists {
         for artist in artists.iter_mut() {
             if let Some(mbid) = &artist.artist_mb_id {
-                if mbid.is_empty() {
+                if mbid.as_str().is_empty() {
                     artist.artist_mb_id = None;
                 }
             }
@@ -246,19 +435,19 @@ fn clean(
 
     // Clean release_mb_id
     if let Some(release_mbid) = &cleaned.release_mb_id {
-        if release_mbid.is_empty() {
+        if release_mbid.as_str().is_empty() {
             cleaned.release_mb_id = None;
         }
     }
 
     // Clean recording_mb_id
     if let Some(recording_mbid) = &cleaned.recording_mb_id {
-        if recording_mbid.is_empty() {
+        if recording_mbid.as_str().is_empty() {
             cleaned.recording_mb_id = None;
         }
     }
 
-    cleaned
+    cleaned.into_static()
 }
 
 impl PlayIngestor {
@@ -998,7 +1187,7 @@ impl PlayIngestor {
     /// Returns the internal ID of the artist.
     async fn insert_artist_extended(&self, mbid: Option<&str>, name: &str) -> anyhow::Result<i32> {
         if let Some(mbid) = mbid {
-            let artist_uuid = Uuid::parse_str(mbid)?;
+            let artist_uuid = Uuid::parse_str(mbid_value(mbid))?;
             let res = sqlx::query!(
                 r#"
                     INSERT INTO artists_extended (mbid, name, mbid_type) VALUES ($1, $2, 'musicbrainz')
@@ -1037,16 +1226,14 @@ impl PlayIngestor {
     /// Inserts or updates a release in the database.
     /// Returns the Uuid of the release.
     async fn insert_release(&self, mbid: &str, name: &str) -> anyhow::Result<Uuid> {
-        let release_uuid = Uuid::parse_str(mbid)?;
+        let release_uuid = Uuid::parse_str(mbid_value(mbid))?;
 
         // Extract discriminant from release name for new releases
         // Prioritize edition-specific patterns for better quality
-        let discriminant = self
-            .extract_edition_discriminant_from_db(name)
-            .await
-            .or_else(|| {
-                futures::executor::block_on(async { self.extract_discriminant_from_db(name).await })
-            });
+        let discriminant = match self.extract_edition_discriminant_from_db(name).await {
+            Some(discriminant) => Some(discriminant),
+            None => self.extract_discriminant_from_db(name).await,
+        };
 
         let res = sqlx::query!(
             r#"
@@ -1073,16 +1260,14 @@ impl PlayIngestor {
     /// Inserts or updates a recording in the database.
     /// Returns the Uuid of the recording.
     async fn insert_recording(&self, mbid: &str, name: &str) -> anyhow::Result<Uuid> {
-        let recording_uuid = Uuid::parse_str(mbid)?;
+        let recording_uuid = Uuid::parse_str(mbid_value(mbid))?;
 
         // Extract discriminant from recording name for new recordings
         // Prioritize edition-specific patterns for better quality
-        let discriminant = self
-            .extract_edition_discriminant_from_db(name)
-            .await
-            .or_else(|| {
-                futures::executor::block_on(async { self.extract_discriminant_from_db(name).await })
-            });
+        let discriminant = match self.extract_edition_discriminant_from_db(name).await {
+            Some(discriminant) => Some(discriminant),
+            None => self.extract_discriminant_from_db(name).await,
+        };
 
         let res = sqlx::query!(
             r#"
@@ -1136,13 +1321,12 @@ impl PlayIngestor {
 
     pub async fn insert_play(
         &self,
-        play_record: &types::fm::teal::alpha::feed::play::RecordData,
+        play_record: &types::fm_teal::alpha::feed::play::Play,
         uri: &str,
         cid: &str,
         did: &str,
         rkey: &str,
     ) -> anyhow::Result<()> {
-        dbg!("ingesting", play_record);
         let play_record = clean(play_record);
         let mut parsed_artists: Vec<(i32, String)> = vec![];
         let mut artist_names_raw: Vec<String> = vec![];
@@ -1150,8 +1334,8 @@ impl PlayIngestor {
         if let Some(ref artists) = &play_record.artists {
             for artist in artists {
                 let artist_name = artist.artist_name.clone();
-                artist_names_raw.push(artist_name.clone());
-                let artist_mbid = artist.artist_mb_id.as_deref();
+                artist_names_raw.push(artist_name.as_str().to_owned());
+                let artist_mbid = artist.artist_mb_id.as_ref().map(uri_mbid_value);
 
                 let artist_id = self
                     .find_or_create_artist_with_fuzzy_matching(
@@ -1161,14 +1345,14 @@ impl PlayIngestor {
                         play_record.release_name.as_deref(),
                     )
                     .await?;
-                parsed_artists.push((artist_id, artist_name.clone()));
+                parsed_artists.push((artist_id, artist_name.as_str().to_owned()));
             }
         } else if let Some(artist_names) = &play_record.artist_names {
             for (index, artist_name) in artist_names.iter().enumerate() {
-                artist_names_raw.push(artist_name.clone());
+                artist_names_raw.push(artist_name.as_str().to_owned());
 
                 let artist_mbid_opt = if let Some(ref mbid_list) = play_record.artist_mb_ids {
-                    mbid_list.get(index)
+                    mbid_list.get(index).map(|s| s.as_str())
                 } else {
                     None
                 };
@@ -1176,12 +1360,12 @@ impl PlayIngestor {
                 let artist_id = self
                     .find_or_create_artist_with_fuzzy_matching(
                         artist_name,
-                        artist_mbid_opt.map(|s| s.as_str()),
+                        artist_mbid_opt,
                         &play_record.track_name,
                         play_record.release_name.as_deref(),
                     )
                     .await?;
-                parsed_artists.push((artist_id, artist_name.clone()));
+                parsed_artists.push((artist_id, artist_name.as_str().to_owned()));
             }
         } else {
             // No artist information provided - create a fallback artist
@@ -1202,7 +1386,10 @@ impl PlayIngestor {
         // Insert release if missing
         let release_mbid_opt = if let Some(release_mbid) = &play_record.release_mb_id {
             if let Some(release_name) = &play_record.release_name {
-                Some(self.insert_release(release_mbid, release_name).await?)
+                Some(
+                    self.insert_release(uri_mbid_value(release_mbid), release_name)
+                        .await?,
+                )
             } else {
                 None
             }
@@ -1214,7 +1401,7 @@ impl PlayIngestor {
         let recording_mbid_opt = if let Some(recording_mbid) = &play_record.recording_mb_id {
             let recording_name = play_record.track_name.clone();
             Some(
-                self.insert_recording(recording_mbid, &recording_name)
+                self.insert_recording(uri_mbid_value(recording_mbid), &recording_name)
                     .await?,
             )
         } else {
@@ -1230,36 +1417,28 @@ impl PlayIngestor {
         // First try lexicon fields, then extract from names with preference for edition-specific patterns
         // TODO: Enable when types are updated with discriminant fields
         // let track_discriminant = play_record.track_discriminant.clone().or_else(|| {
-        let track_discriminant = {
-            // Try edition-specific patterns first, then general patterns
-            futures::executor::block_on(async {
-                self.extract_edition_discriminant_from_db(&play_record.track_name)
+        let track_discriminant = match self
+            .extract_edition_discriminant_from_db(&play_record.track_name)
+            .await
+        {
+            Some(discriminant) => Some(discriminant),
+            None => {
+                self.extract_discriminant_from_db(&play_record.track_name)
                     .await
-                    .or_else(|| {
-                        futures::executor::block_on(async {
-                            self.extract_discriminant_from_db(&play_record.track_name)
-                                .await
-                        })
-                    })
-            })
+            }
         };
 
         // let release_discriminant = play_record.release_discriminant.clone().or_else(|| {
-        let release_discriminant = {
-            if let Some(ref release_name) = play_record.release_name {
-                futures::executor::block_on(async {
-                    // Try edition-specific patterns first, then general patterns
-                    self.extract_edition_discriminant_from_db(release_name)
-                        .await
-                        .or_else(|| {
-                            futures::executor::block_on(async {
-                                self.extract_discriminant_from_db(release_name).await
-                            })
-                        })
-                })
-            } else {
-                None
+        let release_discriminant = if let Some(release_name) = &play_record.release_name {
+            match self
+                .extract_edition_discriminant_from_db(release_name)
+                .await
+            {
+                Some(discriminant) => Some(discriminant),
+                None => self.extract_discriminant_from_db(release_name).await,
             }
+        } else {
+            None
         };
 
         // Our main insert into plays with raw artist names and discriminants
@@ -1268,6 +1447,17 @@ impl PlayIngestor {
         } else {
             None
         };
+        let isrc = play_record.isrc.as_ref().map(ToString::to_string);
+        let track_name = play_record.track_name.to_string();
+        let release_name = play_record.release_name.as_ref().map(ToString::to_string);
+        let submission_client_agent = play_record
+            .submission_client_agent
+            .as_ref()
+            .map(ToString::to_string);
+        let music_service_base_domain = play_record
+            .music_service_base_domain
+            .as_ref()
+            .map(ToString::to_string);
 
         sqlx::query!(
             r#"
@@ -1298,15 +1488,15 @@ impl PlayIngestor {
             cid,
             did,
             rkey,
-            play_record.isrc, // Assuming ISRC is in play_record
+            isrc,
             play_record.duration.map(|d| d as i32),
-            play_record.track_name,
+            track_name,
             time_datetime,
             release_mbid_opt,
-            play_record.release_name,
+            release_name,
             recording_mbid_opt,
-            play_record.submission_client_agent,
-            play_record.music_service_base_domain,
+            submission_client_agent,
+            music_service_base_domain,
             artist_names_json,
             track_discriminant,
             release_discriminant
@@ -1314,18 +1504,25 @@ impl PlayIngestor {
         .execute(&self.sql)
         .await?;
 
+        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
+            .bind(uri)
+            .execute(&self.sql)
+            .await?;
+        sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
+            .execute(&self.sql)
+            .await?;
+
         // Insert plays into the extended join table (supports all artists)
         for (artist_id, artist_name) in &parsed_artists {
-            sqlx::query!(
+            sqlx::query(
                 r#"
                     INSERT INTO play_to_artists_extended (play_uri, artist_id, artist_name) VALUES
-                    ($1, $2, $3)
-                    ON CONFLICT (play_uri, artist_id) DO NOTHING;
+                    ($1, $2, $3);
                 "#,
-                uri,
-                artist_id,
-                artist_name
             )
+            .bind(uri)
+            .bind(artist_id)
+            .bind(artist_name)
             .execute(&self.sql)
             .await?;
         }
@@ -1373,6 +1570,10 @@ impl PlayIngestor {
     }
 
     async fn remove_play(&self, uri: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
+            .bind(uri)
+            .execute(&self.sql)
+            .await?;
         sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
             .execute(&self.sql)
             .await?;
@@ -1388,14 +1589,15 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let play_record = serde_json::from_value::<
-                    types::fm::teal::alpha::feed::play::RecordData,
-                >(record.clone())?;
+                let record: types::fm_teal::alpha::feed::play::Play =
+                    value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(
+                        record.clone(),
+                    )?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         // TODO: verify cid
                         self.insert_play(
-                            &play_record,
+                            &record,
                             &assemble_at_uri(&message.did, &commit.collection, &commit.rkey),
                             cid,
                             &message.did,
@@ -1405,12 +1607,171 @@ impl LexiconIngestor for PlayIngestor {
                     }
                 }
             } else {
-                println!("{}: Message {} deleted", message.did, commit.rkey);
-                self.remove_play(&message.did).await?;
+                let uri = assemble_at_uri(&message.did, &commit.collection, &commit.rkey);
+                tracing::info!("{}: Play {} deleted", message.did, uri);
+                self.remove_play(&uri).await?;
             }
         } else {
             return Err(anyhow!("Message has no commit"));
         }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use jacquard_common::types::value;
+    use rocketman::{
+        ingestion::LexiconIngestor,
+        types::event::{Commit, Event, Kind, Operation},
+    };
+    use serde_json::json;
+    use sqlx::PgPool;
+    use uuid::Uuid;
+
+    use super::PlayIngestor;
+
+    async fn test_pool() -> anyhow::Result<PgPool> {
+        let database_url = std::env::var("DATABASE_URL")?;
+        Ok(PgPool::connect(&database_url).await?)
+    }
+
+    fn play_record(
+        track_name: &str,
+        artist_name: &str,
+        release_mbid: Uuid,
+        recording_mbid: Uuid,
+    ) -> anyhow::Result<types::fm_teal::alpha::feed::play::Play> {
+        Ok(value::from_json_value::<
+            types::fm_teal::alpha::feed::play::Play,
+        >(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": track_name,
+            "recordingMbId": format!("mbid:{recording_mbid}"),
+            "releaseName": "Cadet Test Release",
+            "releaseMbId": format!("mbid:{release_mbid}"),
+            "duration": 181,
+            "artists": [{
+                "artistName": artist_name
+            }],
+            "musicServiceBaseDomain": "tests.teal.fm",
+            "submissionClientAgent": "cadet-test/1.0",
+            "playedTime": "2026-06-01T00:00:00Z"
+        }))?)
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn creates_updates_and_deletes_play() -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let ingestor = PlayIngestor::new(pool.clone());
+        let did = format!("did:plc:cadet-play-test-{}", Uuid::new_v4());
+        let rkey = "3k2akjdlkjsf";
+        let uri = format!("at://{did}/fm.teal.alpha.feed.play/{rkey}");
+        let release_mbid = Uuid::new_v4();
+        let recording_mbid = Uuid::new_v4();
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "First Cadet Test Track",
+                    "First Cadet Test Artist",
+                    release_mbid,
+                    recording_mbid,
+                )?,
+                &uri,
+                "bafyreicadetcreate",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let inserted = sqlx::query_as::<_, (String, Option<String>, Option<String>)>(
+            "SELECT track_name, release_name, music_service_base_domain FROM plays WHERE uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(inserted.0, "First Cadet Test Track");
+        assert_eq!(inserted.1.as_deref(), Some("Cadet Test Release"));
+        assert_eq!(inserted.2.as_deref(), Some("tests.teal.fm"));
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "Updated Cadet Test Track",
+                    "Updated Cadet Test Artist",
+                    release_mbid,
+                    recording_mbid,
+                )?,
+                &uri,
+                "bafyreicadetupdate",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let updated = sqlx::query_as::<_, (String, Option<serde_json::Value>)>(
+            "SELECT track_name, artist_names_raw FROM plays WHERE uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(updated.0, "Updated Cadet Test Track");
+        assert_eq!(
+            updated.1,
+            Some(json!(["Updated Cadet Test Artist"]))
+        );
+
+        let extended_artist_links = sqlx::query_as::<_, (i64, Option<String>)>(
+            "SELECT COUNT(*), MAX(artist_name) FROM play_to_artists_extended WHERE play_uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(extended_artist_links.0, 1);
+        assert_eq!(
+            extended_artist_links.1.as_deref(),
+            Some("Updated Cadet Test Artist")
+        );
+
+        ingestor
+            .ingest(Event {
+                did: did.clone(),
+                time_us: Some(1),
+                kind: Kind::Commit,
+                commit: Some(Commit {
+                    rev: "test-rev".to_string(),
+                    operation: Operation::Delete,
+                    collection: "fm.teal.alpha.feed.play".to_string(),
+                    rkey: rkey.to_string(),
+                    record: None,
+                    cid: None,
+                }),
+                identity: None,
+            })
+            .await?;
+
+        let remaining_plays =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plays WHERE uri = $1")
+                .bind(&uri)
+                .fetch_one(&pool)
+                .await?;
+        let remaining_legacy_links =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM play_to_artists WHERE play_uri = $1")
+                .bind(&uri)
+                .fetch_one(&pool)
+                .await?;
+        let remaining_extended_links =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM play_to_artists_extended WHERE play_uri = $1")
+                .bind(&uri)
+                .fetch_one(&pool)
+                .await?;
+
+        assert_eq!(remaining_plays, 0);
+        assert_eq!(remaining_legacy_links, 0);
+        assert_eq!(remaining_extended_links, 0);
+
         Ok(())
     }
 }

@@ -1,5 +1,8 @@
 {env.CLIENT_ADDRESS} {
+    handle /xrpc/* {
+        reverse_proxy aqua-api:3000
+    }
+
     try_files {path} /index.html
     file_server
 }
-

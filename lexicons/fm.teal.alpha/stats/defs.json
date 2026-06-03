@@ -4,11 +4,11 @@
   "defs": {
     "artistView": {
       "type": "object",
-      "required": ["mbid", "name", "playCount"],
       "properties": {
         "mbid": {
           "type": "string",
-          "description": "MusicBrainz artist ID"
+          "format": "uri",
+          "description": "MusicBrainz artist ID URI, formatted as mbid:<uuid>"
         },
         "name": {
           "type": "string",
@@ -22,11 +22,11 @@
     },
     "releaseView": {
       "type": "object",
-      "required": ["mbid", "name", "playCount"],
       "properties": {
         "mbid": {
           "type": "string",
-          "description": "MusicBrainz release ID"
+          "format": "uri",
+          "description": "MusicBrainz release ID URI, formatted as mbid:<uuid>"
         },
         "name": {
           "type": "string",
@@ -40,11 +40,11 @@
     },
     "recordingView": {
       "type": "object",
-      "required": ["mbid", "name", "playCount"],
       "properties": {
         "mbid": {
           "type": "string",
-          "description": "MusicBrainz recording ID"
+          "format": "uri",
+          "description": "MusicBrainz recording ID URI, formatted as mbid:<uuid>"
         },
         "name": {
           "type": "string",

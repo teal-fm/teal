@@ -5,10 +5,11 @@ use std::{
 
 use cursor::load_cursor;
 use metrics_exporter_prometheus::PrometheusBuilder;
-use tracing::error;
+use tracing::{error, info};
 
 use rocketman::{
     connection::JetstreamConnection,
+    endpoints::JetstreamEndpoints,
     handler,
     ingestion::{DefaultLexiconIngestor, LexiconIngestor},
     options::JetstreamOptions,
@@ -43,11 +44,30 @@ async fn main() {
     setup_tracing();
     setup_metrics();
 
+    let stream_mode =
+        std::env::var("CADET_STREAM_MODE").unwrap_or_else(|_| "jetstream".to_string());
+    let jetstream_url = std::env::var("JETSTREAM_URL")
+        .unwrap_or_else(|_| "wss://jetstream1.us-east.bsky.network/subscribe".to_string());
+
+    if stream_mode != "jetstream" {
+        error!(
+            "Unsupported CADET_STREAM_MODE={}. subscribeRepos is reserved for a later CBOR firehose adapter; use jetstream for now.",
+            stream_mode
+        );
+        std::process::exit(1);
+    }
+
+    info!(
+        "Starting Cadet in {} mode with Jetstream endpoint {}",
+        stream_mode, jetstream_url
+    );
+
     let pool = db::init_pool()
         .await
         .expect("Could not get PostgreSQL pool");
 
     let opts = JetstreamOptions::builder()
+        .ws_url(JetstreamEndpoints::Custom(jetstream_url.clone()))
         .wanted_collections(
             [
                 "fm.teal.alpha.feed.play",

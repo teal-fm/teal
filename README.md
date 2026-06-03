@@ -134,7 +134,7 @@ And that's it! You should have the full teal.fm stack running locally. Now if yo
 
 ### Lexicon Management
 
-We use AT Protocol lexicons with dual TypeScript/Rust codegen (lex-cli + esquema). Use the unified lexicon CLI for managing schema changes:
+We use AT Protocol lexicons with dual TypeScript/Rust codegen (lex-cli + jacquard-lexicon). Use the unified lexicon CLI for managing schema changes:
 
 ```bash
 # Generate all types from lexicons

@@ -83,28 +83,39 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
   console.log(pc.cyan("  🦀 Generating Rust types..."));
 
   try {
-    // Check if esquema-cli is available
+    // Check if jacquard-codegen is available
     try {
-      await execa("esquema-cli", ["--version"], { stdio: "pipe" });
+      await execa("jacquard-codegen", ["--version"], { stdio: "pipe" });
     } catch {
-      console.log(pc.yellow("    ⚠️  esquema-cli not found. Installing..."));
+      console.log(
+        pc.yellow("    ⚠️  jacquard-codegen not found. Installing..."),
+      );
       try {
-        await execa(
-          "cargo",
-          [
+        // Try cargo-binstall first for faster installation
+        try {
+          await execa("cargo", ["binstall", "--version"], { stdio: "pipe" });
+          await execa(
+            "cargo",
+            ["binstall", "-y", "jacquard-lexgen", "--version", "0.12.0-beta.2"],
+            {
+              stdio: "inherit",
+            },
+          );
+        } catch {
+          // Fallback to cargo install if binstall not available
+          await execa("cargo", [
             "install",
-            "esquema-cli",
-            "--git",
-            "https://github.com/fatfingers23/esquema.git",
-          ],
-          {
+            "jacquard-lexgen",
+            "--version",
+            "0.12.0-beta.2",
+          ], {
             stdio: "inherit",
-          },
-        );
-        console.log(pc.green("    ✓ esquema-cli installed successfully"));
+          });
+        }
+        console.log(pc.green("    ✓ jacquard-codegen installed successfully"));
       } catch (installError) {
         throw new Error(
-          "Failed to install esquema-cli. Please install manually: cargo install esquema-cli --git https://github.com/fatfingers23/esquema.git",
+          "Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version 0.12.0-beta.2",
         );
       }
     }
@@ -118,15 +129,8 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
     }
 
     await execa(
-      "esquema-cli",
-      [
-        "generate",
-        "local",
-        "--lexdir",
-        lexiconsPath,
-        "--outdir",
-        join(typesPath, "src"),
-      ],
+      "jacquard-codegen",
+      ["--input", lexiconsPath, "--output", join(typesPath, "src")],
       {
         cwd: typesPath,
         stdio: "inherit",

@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import ProgressDots from "@/components/onboarding/progressDots";
-import { Text } from "@/components/ui/text"; // Your UI components
-
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
+import { ArrowLeft, Check, Disc3, Music2, Sparkles } from "lucide-react-native";
 
 import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
 import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
@@ -32,15 +34,24 @@ export default function OnboardingPage() {
 
   const [submissionStep, setSubmissionStep] = useState(0);
 
-
   // Profile status hooks - must be at top level
-  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [profileStatus, setProfileStatus] =
+    useState<ProfileStatusRecord | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
   const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
-  const profile = useStore((store) => store.profiles);
+  const profiles = useStore((store) => store.profiles);
+  const profile = agent?.did ? profiles[agent.did] : undefined;
+
+  useEffect(() => {
+    if (!profile?.bsky) return;
+    setDisplayName((current) => current || profile.bsky?.displayName || "");
+    setDescription((current) => current || profile.bsky?.description || "");
+    setAvatarUri((current) => current || profile.bsky?.avatar || "");
+    setBannerUri((current) => current || profile.bsky?.banner || "");
+  }, [profile?.bsky]);
 
   // Check profile status
   React.useEffect(() => {
@@ -65,9 +76,12 @@ export default function OnboardingPage() {
     checkProfileStatus();
   }, [agent]);
 
-  const handleImageSelectionComplete = (avatar: string, banner: string) => {
-    setAvatarUri(avatar);
-    setBannerUri(banner);
+  const handleImageSelectionComplete = (
+    avatar: string | undefined,
+    banner: string | undefined,
+  ) => {
+    setAvatarUri(avatar ?? "");
+    setBannerUri(banner ?? "");
     onComplete({ displayName, description }, avatar, banner);
   };
 
@@ -83,12 +97,10 @@ export default function OnboardingPage() {
 
   const onComplete = async (
     updatedProfile: { displayName: any; description: any },
-    newAvatarUri: string,
-    newBannerUri: string,
+    newAvatarUri: string | undefined,
+    newBannerUri: string | undefined,
   ) => {
     if (!agent) return;
-    // Implement your save logic here (e.g., update your database or state)
-    console.log("Saving profile:", updatedProfile, newAvatarUri, newBannerUri);
 
     setSubmissionStep(1);
 
@@ -108,35 +120,28 @@ export default function OnboardingPage() {
     }
 
     // upload blobs if necessary
-    let newAvatarBlob = currentUser?.avatar ?? undefined;
-    let newBannerBlob = currentUser?.banner ?? undefined;
+    let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
+    let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
     if (newAvatarUri) {
-      console.log(newAvatarUri);
-      // if it is http/s url then do nothing
       if (!newAvatarUri.startsWith("http")) {
         setSubmissionStep(2);
-        console.log("Uploading avatar");
-        // its a b64 encoded data uri, decode it and get a blob
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
-        console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await agent.uploadBlob(blob)).data.blob;
+        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
+          .data.blob as unknown as ProfileRecord["avatar"];
       }
     }
     if (newBannerUri) {
       if (!newBannerUri.startsWith("http")) {
         setSubmissionStep(3);
-        console.log("Uploading banner");
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
-        console.log(fileType);
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await agent.uploadBlob(blob)).data.blob;
+        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
+          .data.blob as unknown as ProfileRecord["banner"];
       }
     }
-
-    console.log("done uploading");
 
     setSubmissionStep(4);
 
@@ -173,8 +178,6 @@ export default function OnboardingPage() {
         },
       );
     }
-
-    console.log(post);
 
     // Update profile status to mark onboarding as completed
     const profileStatusRecord: ProfileStatusRecord = {
@@ -223,32 +226,81 @@ export default function OnboardingPage() {
     }, 2000);
   };
 
-  if (!agent || !profile[agent?.did!]) {
-    return <div>Loading...</div>;
+  if (!agent) {
+    return (
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+        <View className="w-full max-w-md gap-4 rounded-lg border border-border bg-card p-6">
+          <Icon icon={Disc3} size={42} className="text-primary" />
+          <Text className="font-sans text-3xl font-black">
+            Create your Teal profile
+          </Text>
+          <Text className="text-muted-foreground">
+            Sign in with your ATProto account before setting up your music
+            identity.
+          </Text>
+          <Link href="/auth/login" asChild>
+            <Button>
+              <Text>Sign in</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <View className="min-h-screen flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   if (statusLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Checking profile status...</Text>
+      <View className="min-h-screen flex-1 items-center justify-center gap-3 bg-background">
+        <ActivityIndicator size="large" />
+        <Text className="text-muted-foreground">
+          Checking your Teal profile...
+        </Text>
       </View>
     );
   }
 
   if (profileStatus && profileStatus.completedOnboarding !== "none") {
     return (
-      <Text>
-        Onboarding already completed: {profileStatus.completedOnboarding}
-      </Text>
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+        <View className="w-full max-w-md items-start gap-4 rounded-lg border border-border bg-card p-6">
+          <Icon icon={Check} size={42} className="text-primary" />
+          <Text className="font-sans text-3xl font-black">
+            Your Teal profile is ready
+          </Text>
+          <Text className="text-muted-foreground">
+            Your music identity already exists. You can return to your profile
+            and keep listening.
+          </Text>
+          <Link href={`/profile/${agent.did}` as any} asChild>
+            <Button>
+              <Text>View profile</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (submissionStep) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{OnboardingSubmissionSteps[submissionStep]}</Text>
+      <View className="min-h-screen flex-1 items-center justify-center gap-4 bg-background">
+        <View className="h-20 w-20 items-center justify-center rounded-full border-8 border-primary/20 bg-primary/10">
+          <ActivityIndicator size="large" />
+        </View>
+        <Text className="font-sans text-3xl font-black">
+          {OnboardingSubmissionSteps[submissionStep]}
+        </Text>
+        <Text className="text-muted-foreground">
+          Publishing your profile to the Atmosphere.
+        </Text>
       </View>
     );
   }
@@ -277,6 +329,7 @@ export default function OnboardingPage() {
             onComplete={handleImageSelectionComplete}
             initialAvatar={avatarUri}
             initialBanner={bannerUri}
+            onBack={() => setStep(2)}
           />
         );
       default:
@@ -285,9 +338,54 @@ export default function OnboardingPage() {
   };
 
   return (
-    <SafeAreaView className="flex-1 p-5 pt-5">
-      <View className="flex h-full min-h-max flex-1">{renderPage()}</View>
-      <ProgressDots totalSteps={3} currentStep={step} />
+    <SafeAreaView className="min-h-screen flex-1 bg-background">
+      <View className="z-10 min-h-screen flex-1 flex-row">
+        <View className="hidden w-[20rem] justify-between border-r border-border bg-foreground p-8 lg:flex">
+          <Link href="/" asChild>
+            <Button variant="ghost" size="sm" className="self-start">
+              <Icon icon={ArrowLeft} size={18} className="text-background" />
+              <Text className="ml-2 text-background">Back to Teal</Text>
+            </Button>
+          </Link>
+          <View className="gap-5">
+            <View className="h-16 w-16 items-center justify-center rounded-full border-[7px] border-background">
+              <View className="h-5 w-5 rounded-full bg-secondary" />
+            </View>
+            <Text className="font-sans text-4xl font-black text-background">
+              Make it yours.
+            </Text>
+            <Text className="text-base leading-6 text-background/65">
+              A Teal profile lives in your ATProto repository and follows your
+              listening history across the Atmosphere.
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Icon icon={Music2} size={18} className="text-secondary" />
+            <Text className="font-mono text-xs text-background/55">
+              fm.teal.alpha.actor.profile
+            </Text>
+          </View>
+        </View>
+        <View className="min-h-screen flex-1 px-5 py-8 md:px-12">
+          <View className="mx-auto w-full max-w-2xl flex-1">
+            <View className="mb-8 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3">
+                <Icon icon={Sparkles} size={20} className="text-primary" />
+                <Text className="font-mono text-xs font-bold uppercase text-muted-foreground">
+                  Teal profile setup
+                </Text>
+              </View>
+              <Text className="font-mono text-xs text-muted-foreground">
+                0{step} / 03
+              </Text>
+            </View>
+            <View className="flex-1 rounded-lg border border-border bg-card p-6 md:p-10">
+              {renderPage()}
+            </View>
+            <ProgressDots totalSteps={3} currentStep={step} />
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
