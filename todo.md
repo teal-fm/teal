@@ -13,7 +13,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
-- Cadet has a TAP backfill consumer and `pnpm backfill` command. The command discovers Teal repos with `TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play`, filters delivered records with `TAP_COLLECTION_FILTERS=fm.teal.*`, and consumes TAP record events through the existing Teal ingestors. Full-network TAP backfill remains an explicit env override.
+- Cadet has a TAP backfill consumer and `pnpm backfill` command. The command runs TAP full-network backfill by default, filters delivered records with `TAP_COLLECTION_FILTERS=fm.teal.*`, and consumes TAP record events through the existing Teal ingestors. Signal-collection TAP backfill remains an explicit env override for narrower runs.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
@@ -64,7 +64,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Verify delete handling removes the play URI from `plays`, `play_to_artists`, and `play_to_artists_extended`.
 - [x] Add a `subscribeRepos` CBOR adapter only if relay-level firehose sync becomes necessary.
 - [x] Keep CAR import as a backfill path and add regression tests for it.
-- [x] Add TAP backfill setup for signal-collection `fm.teal.*` sync and a repeatable `pnpm backfill` command.
+- [x] Add TAP backfill setup for full-network `fm.teal.*` sync and a repeatable `pnpm backfill` command.
 
 ## Next: Aqua And Lexicons
 

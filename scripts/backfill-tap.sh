@@ -9,11 +9,10 @@ TAP_BASE_URL="${TAP_BASE_URL:-http://$TAP_HOST:$TAP_PORT}"
 TAP_CHANNEL_URL="${TAP_CHANNEL_URL:-ws://$TAP_HOST:$TAP_PORT/channel}"
 TAP_LOG="${TAP_LOG:-$TAP_DIR/tap.log}"
 
-# TAP uses this collection to discover repos worth backfilling. Record delivery
-# is still filtered separately so every fm.teal.* record from those repos flows
-# through Cadet.
-export TAP_FULL_NETWORK="${TAP_FULL_NETWORK:-false}"
-export TAP_SIGNAL_COLLECTION="${TAP_SIGNAL_COLLECTION:-fm.teal.alpha.feed.play}"
+# Full-network mode discovers every findable repo, then record delivery is
+# filtered separately so only fm.teal.* records flow through Cadet.
+export TAP_FULL_NETWORK="${TAP_FULL_NETWORK:-true}"
+export TAP_SIGNAL_COLLECTION="${TAP_SIGNAL_COLLECTION:-}"
 export TAP_COLLECTION_FILTERS="${TAP_COLLECTION_FILTERS:-fm.teal.*}"
 export TAP_DISABLE_ACKS="${TAP_DISABLE_ACKS:-true}"
 export TAP_CHANNEL_URL
