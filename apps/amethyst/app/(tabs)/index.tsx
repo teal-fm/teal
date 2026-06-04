@@ -152,6 +152,18 @@ export default function HomeScreen() {
           />
         </View>
       )}
+      {pdsAgent?.did && !currentStatus && (
+        <View className="mb-6 rounded-lg border border-border bg-card p-4">
+          <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+            Your current listening status
+          </Text>
+          <Text className="mt-1 font-bold">No active status</Text>
+          <Text className="text-sm text-muted-foreground">
+            Statuses expire automatically when their Teal record expires or no
+            current-listening record has been indexed yet.
+          </Text>
+        </View>
+      )}
       {socialPosts.length > 0 && (
         <View className="mb-8 gap-3">
           <SectionHeading

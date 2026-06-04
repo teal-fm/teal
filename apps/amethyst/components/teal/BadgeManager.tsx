@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Image, Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { RichText as AtprotoRichText } from "@atproto/api";
+import RichText from "@/components/teal/RichText";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -53,10 +55,13 @@ export default function BadgeManager({ onAssigned }: BadgeManagerProps) {
       const fileType = data.type || "image/png";
       const image = (await pdsAgent.uploadBlob(data, { encoding: fileType })).data
         .blob;
+      const rt = new AtprotoRichText({ text: description.trim() });
+      await rt.detectFacets(pdsAgent);
       const record = {
         $type: "fm.teal.alpha.feed.social.badge",
         name: name.trim(),
         description: description.trim(),
+        descriptionFacets: rt.facets,
         image,
         creator: pdsAgent.did,
         type: "achievement",
@@ -76,6 +81,7 @@ export default function BadgeManager({ onAssigned }: BadgeManagerProps) {
         cid: (res.data as { cid?: string }).cid || "",
         name: record.name,
         description: record.description,
+        descriptionFacets: record.descriptionFacets,
         imageCid: (image as any)?.ref?.$link || (image as any)?.ref?.toString?.() || "",
         creator: record.creator,
         badgeType: record.type,
@@ -201,6 +207,13 @@ export default function BadgeManager({ onAssigned }: BadgeManagerProps) {
                 }),
               }}
               className="h-12 w-12 rounded-lg"
+            />
+          )}
+          {selectedBadge && (
+            <RichText
+              text={selectedBadge.description}
+              facets={selectedBadge.descriptionFacets}
+              className="text-sm text-muted-foreground"
             />
           )}
           <Button disabled={busy || !selectedBadge} className="self-start" onPress={assignBadge}>

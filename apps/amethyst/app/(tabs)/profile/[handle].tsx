@@ -271,6 +271,18 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               )}
+              {!currentStatus && !isBlueskyFallback && (
+                <View className="mt-5 rounded-lg border border-border bg-muted p-4">
+                  <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                    Current listening
+                  </Text>
+                  <Text className="mt-1 font-bold">No active status</Text>
+                  <Text className="text-sm text-muted-foreground">
+                    This listener has no current-listening record indexed, or
+                    their last status has expired.
+                  </Text>
+                </View>
+              )}
               {badges.length > 0 && (
                 <View className="mt-5">
                   <Text className="mb-2 font-mono text-[10px] uppercase text-muted-foreground">

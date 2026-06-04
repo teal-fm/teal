@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View } from "react-native";
+import { RichText as AtprotoRichText } from "@atproto/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -33,9 +34,15 @@ export function PlaylistCreator({
         $type: "fm.teal.alpha.feed.social.playlist",
         name: name.trim(),
         description: description.trim() || undefined,
+        descriptionFacets: undefined as unknown[] | undefined,
         authors: [pdsAgent.did],
         createdAt: new Date().toISOString(),
       };
+      if (record.description) {
+        const rt = new AtprotoRichText({ text: record.description });
+        await rt.detectFacets(pdsAgent);
+        record.descriptionFacets = rt.facets;
+      }
       const res = await pdsAgent.call(
         "com.atproto.repo.createRecord",
         {},
@@ -51,6 +58,7 @@ export function PlaylistCreator({
         authorDid: pdsAgent.did,
         name: record.name,
         description: record.description,
+        descriptionFacets: record.descriptionFacets,
         authors: record.authors,
         createdAt: record.createdAt,
         itemCount: 0,

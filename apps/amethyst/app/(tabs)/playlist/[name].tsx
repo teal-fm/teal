@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { RichText as AtprotoRichText } from "@atproto/api";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { AddCurrentTrackButton } from "@/components/teal/PlaylistControls";
 import RichText from "@/components/teal/RichText";
@@ -123,6 +124,12 @@ export default function PlaylistDetailScreen() {
         cover = (await pdsAgent.uploadBlob(data, { encoding: fileType })).data
           .blob;
       }
+      let descriptionFacets: unknown[] | undefined;
+      if (description.trim()) {
+        const rt = new AtprotoRichText({ text: description.trim() });
+        await rt.detectFacets(pdsAgent);
+        descriptionFacets = rt.facets;
+      }
       await pdsAgent.call(
         "com.atproto.repo.putRecord",
         {},
@@ -134,6 +141,7 @@ export default function PlaylistDetailScreen() {
             $type: "fm.teal.alpha.feed.social.playlist",
             name: name.trim(),
             description: description.trim() || undefined,
+            descriptionFacets,
             authors,
             cover,
             createdAt: playlist.createdAt,
@@ -144,6 +152,7 @@ export default function PlaylistDetailScreen() {
         ...playlist,
         name: name.trim(),
         description: description.trim() || undefined,
+        descriptionFacets,
         authors,
       });
       setEditing(false);
