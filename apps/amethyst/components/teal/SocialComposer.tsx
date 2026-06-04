@@ -12,6 +12,13 @@ import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs"
 
 type SocialComposerProps = {
   track: PlayView;
+  replyTo?: Pick<
+    SocialPostView,
+    "uri" | "cid" | "replyRootUri" | "replyParentUri"
+    | "replyRootCid"
+    | "replyParentCid"
+  >;
+  compact?: boolean;
   onPublished: (post: SocialPostView) => void;
 };
 
@@ -29,6 +36,8 @@ function currentLangs() {
 
 export default function SocialComposer({
   track,
+  replyTo,
+  compact,
   onPublished,
 }: SocialComposerProps) {
   const pdsAgent = useStore((state) => state.pdsAgent);
@@ -49,6 +58,15 @@ export default function SocialComposer({
         $type: "fm.teal.alpha.feed.social.post",
         text,
         track: playViewToTrackView(track),
+        reply: replyTo
+          ? {
+              root: {
+                uri: replyTo.replyRootUri || replyTo.uri,
+                cid: replyTo.replyRootCid || replyTo.cid,
+              },
+              parent: { uri: replyTo.uri, cid: replyTo.cid },
+            }
+          : undefined,
         facets: rt.facets,
         tags,
         langs: currentLangs(),
@@ -71,6 +89,10 @@ export default function SocialComposer({
         authorDid: pdsAgent.did,
         text,
         track: record.track,
+        replyRootUri: record.reply?.root.uri,
+        replyRootCid: record.reply?.root.cid,
+        replyParentUri: record.reply?.parent.uri,
+        replyParentCid: record.reply?.parent.cid,
         facets: rt.facets,
         tags,
         langs: record.langs,
@@ -90,7 +112,9 @@ export default function SocialComposer({
   if (status !== "loggedIn") {
     return (
       <View className="rounded-lg border border-border bg-card p-4">
-        <Text className="font-bold">Sign in to post about what you hear.</Text>
+        <Text className="font-bold">
+          Sign in to {replyTo ? "reply" : "post"} about what you hear.
+        </Text>
         <Text className="mt-1 text-sm text-muted-foreground">
           Teal social posts attach a track and travel with your ATProto repo.
         </Text>
@@ -101,14 +125,14 @@ export default function SocialComposer({
   return (
     <View className="rounded-lg border border-border bg-card p-4">
       <Text className="font-mono text-[10px] uppercase text-primary">
-        Compose social post
+        {replyTo ? "Reply to post" : "Compose social post"}
       </Text>
       <Text className="mt-1 font-bold" numberOfLines={1}>
         Attached: {track.trackName}
       </Text>
       <Textarea
-        className="mt-3 min-h-24"
-        placeholder="Say something about this track..."
+        className={compact ? "mt-3 min-h-20" : "mt-3 min-h-24"}
+        placeholder={replyTo ? "Write a reply..." : "Say something about this track..."}
         value={text}
         onChangeText={setText}
       />
@@ -123,7 +147,7 @@ export default function SocialComposer({
         disabled={submitting || text.length > 3000}
         onPress={submit}
       >
-        <Text>{submitting ? "Publishing..." : "Publish post"}</Text>
+        <Text>{submitting ? "Publishing..." : replyTo ? "Publish reply" : "Publish post"}</Text>
       </Button>
     </View>
   );

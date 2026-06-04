@@ -7,6 +7,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { displayArtists, type SocialPostView } from "@/lib/teal/api";
 import { musicHref } from "@/components/teal/PlayFeedCard";
 import RichText from "@/components/teal/RichText";
+import SocialComposer from "@/components/teal/SocialComposer";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { timeAgo } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
@@ -29,6 +30,8 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   const play = useMemo(() => trackViewToPlayView(post.track), [post.track]);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [repostCount, setRepostCount] = useState(post.repostCount);
+  const [replyCount, setReplyCount] = useState(post.replyCount);
+  const [replyOpen, setReplyOpen] = useState(false);
   const [like, setLike] = useState<ActionState>({ active: false, busy: false });
   const [repost, setRepost] = useState<ActionState>({
     active: false,
@@ -156,9 +159,30 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
         </Button>
         <View className="flex-row items-center gap-2 rounded-md border border-border px-3 py-2">
           <Icon icon={MessageCircle} size={15} className="text-muted-foreground" />
-          <Text className="text-sm text-muted-foreground">{post.replyCount}</Text>
+          <Text className="text-sm text-muted-foreground">{replyCount}</Text>
         </View>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={status !== "loggedIn"}
+          onPress={() => setReplyOpen((open) => !open)}
+        >
+          <Text>{replyOpen ? "Close reply" : "Reply"}</Text>
+        </Button>
       </View>
+      {replyOpen && (
+        <View className="mt-4">
+          <SocialComposer
+            compact
+            track={play}
+            replyTo={post}
+            onPublished={() => {
+              setReplyCount((count) => count + 1);
+              setReplyOpen(false);
+            }}
+          />
+        </View>
+      )}
       {status !== "loggedIn" && (
         <Text className="mt-3 text-xs text-muted-foreground">
           Sign in to like or repost Teal social posts.

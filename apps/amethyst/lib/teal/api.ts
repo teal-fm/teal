@@ -54,7 +54,9 @@ export type SocialPostView = {
   text: string;
   track: unknown;
   replyRootUri?: string;
+  replyRootCid?: string;
   replyParentUri?: string;
+  replyParentCid?: string;
   facets?: unknown[];
   langs?: string[];
   tags?: string[];

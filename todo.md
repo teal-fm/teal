@@ -39,7 +39,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Update Aqua `getProfile`/`getProfiles` responses to include indexed actor status and profile onboarding status from the appview.
 - [x] Complete `fm.teal.alpha.stats.getUserTopArtists` and `getUserTopReleases` to honor `period`, `cursor`, handle-to-DID resolution, limit bounds, and lexicon response shapes.
 - [x] Add Aqua social read APIs or lexicons for post feeds, post detail, replies, likes, reposts, playlists, playlist items, badge catalogs, actor badges, and notifications.
-- [ ] Add Amethyst compose/publish flows for Teal social posts with `trackView`, replies, tags, langs, and `fm.teal.alpha.richtext.facet` mention/link rendering.
+- [x] Add Amethyst compose/publish flows for Teal social posts with `trackView`, replies, tags, langs, and `fm.teal.alpha.richtext.facet` mention/link rendering.
 - [x] Add Amethyst like and repost actions with optimistic viewer state, counts, undo/delete behavior, and signed-out affordances.
 - [ ] Add Amethyst playlist creation, playlist editing, playlist detail routes, ordered playlist item management, cover uploads, and collaborator-author handling.
 - [ ] Add Amethyst badge display on profiles plus badge definition and assignment management for authorized creators/admin flows.
