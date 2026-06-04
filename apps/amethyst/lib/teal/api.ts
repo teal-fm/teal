@@ -87,6 +87,29 @@ export type SocialBadgeAssignmentView = {
   createdAt: string;
 };
 
+export type SocialPlaylistView = {
+  uri: string;
+  cid: string;
+  authorDid: string;
+  author?: MiniProfileView;
+  name: string;
+  description?: string;
+  descriptionFacets?: unknown;
+  authors: string[];
+  coverCid?: string;
+  createdAt: string;
+  itemCount: number;
+};
+
+export type SocialPlaylistItemView = {
+  uri: string;
+  cid: string;
+  authorDid: string;
+  track: unknown;
+  order?: number;
+  createdAt: string;
+};
+
 async function getXrpc<T>(
   method: string,
   params: Record<string, string | number | undefined> = {},
@@ -213,6 +236,21 @@ export function getActorBadges(actor: string, limit = 20, cursor?: string) {
     "fm.teal.alpha.feed.social.getActorBadges",
     { actor, limit, cursor },
   );
+}
+
+export function getActorPlaylists(actor: string, limit = 20, cursor?: string) {
+  return getXrpc<{ items: SocialPlaylistView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getActorPlaylists",
+    { actor, limit, cursor },
+  );
+}
+
+export function getPlaylist(uri: string, limit = 100, cursor?: string) {
+  return getXrpc<{
+    playlist: SocialPlaylistView;
+    items: SocialPlaylistItemView[];
+    cursor?: string;
+  }>("fm.teal.alpha.feed.social.getPlaylist", { uri, limit, cursor });
 }
 
 export async function searchBlueskyUsers(q: string, limit = 8) {

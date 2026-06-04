@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import { PlaylistCreator } from "@/components/teal/PlaylistControls";
 import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, {
@@ -21,13 +22,16 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   getActorFeed,
   getActorBadges,
+  getActorPlaylists,
   getBlueskyProfile,
   getProfile,
   displayArtists,
   type SocialBadgeAssignmentView,
+  type SocialPlaylistView,
   XrpcError,
 } from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
+import { playlistHref } from "@/lib/teal/routes";
 import type { AppBskyActorDefs } from "@atproto/api";
 import { Info, UserRoundPlus } from "lucide-react-native";
 
@@ -63,6 +67,7 @@ export default function ProfileScreen() {
   const [did, setDid] = useState<string | null>(null);
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
   const [badges, setBadges] = useState<SocialBadgeAssignmentView[]>([]);
+  const [playlists, setPlaylists] = useState<SocialPlaylistView[]>([]);
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [loadingMore, setLoadingMore] = useState(false);
@@ -80,6 +85,7 @@ export default function ProfileScreen() {
         setDid(null);
         setProfile(null);
         setBadges([]);
+        setPlaylists([]);
         setPlays([]);
         setCursor(undefined);
         const resolved = actor.startsWith("did:")
@@ -89,6 +95,9 @@ export default function ProfileScreen() {
         setDid(resolved);
         const feedRes = await getActorFeed(resolved, 30);
         const badgeRes = await getActorBadges(resolved, 12).catch(() => ({
+          items: [],
+        }));
+        const playlistRes = await getActorPlaylists(resolved, 12).catch(() => ({
           items: [],
         }));
         let nextProfile: DisplayProfile | null = null;
@@ -113,6 +122,7 @@ export default function ProfileScreen() {
         if (!mounted) return;
         setProfile(nextProfile);
         setBadges(badgeRes.items);
+        setPlaylists(playlistRes.items);
         setIsBlueskyFallback(nextIsBlueskyFallback);
         setPlays(feedRes.plays);
         setCursor(feedRes.cursor);
@@ -288,6 +298,47 @@ export default function ProfileScreen() {
                 </Link>
               )}
             </View>
+          </View>
+          <View className="mb-8">
+            <SectionHeading eyebrow="Collections" title="Playlists" />
+            {isSelf && (
+              <View className="mb-4">
+                <PlaylistCreator
+                  onCreated={(playlist) =>
+                    setPlaylists((current) => [playlist, ...current])
+                  }
+                />
+              </View>
+            )}
+            {playlists.length === 0 ? (
+              <Text className="text-muted-foreground">
+                No indexed playlists yet.
+              </Text>
+            ) : (
+              <View className="gap-3">
+                {playlists.map((playlist) => (
+                  <Link
+                    key={playlist.uri}
+                    href={playlistHref(playlist.name, playlist.uri) as any}
+                    asChild
+                  >
+                    <Button
+                      variant="outline"
+                      className="h-auto items-start justify-start p-4"
+                    >
+                      <View className="min-w-0">
+                        <Text className="font-black" numberOfLines={1}>
+                          {playlist.name}
+                        </Text>
+                        <Text className="text-sm text-muted-foreground">
+                          {playlist.itemCount} tracks
+                        </Text>
+                      </View>
+                    </Button>
+                  </Link>
+                ))}
+              </View>
+            )}
           </View>
           <SectionHeading eyebrow="Listening history" title="Recent plays" />
           {plays.length === 0 ? (
