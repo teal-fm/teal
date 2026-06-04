@@ -136,6 +136,7 @@ pnpm lex:diff      # Show changes
 - **Message body**: Include WHY for non-obvious changes, reference issues with `#123`
 - **Breaking changes**: Mark with `BREAKING:` in commit body, update migration docs
 - **Checkpointing**: Create focused checkpoint commits after each meaningful, verified unit of work
+- **Push after commit**: After each checkpoint commit, push the current feature branch to its remote unless explicitly told not to
 - **Status hygiene**: Before committing, inspect `git status --short` and leave unrelated user files unstaged
 - **Handoff**: Report the commit hash after each checkpoint commit
 
