@@ -55,3 +55,11 @@ TAP_FULL_NETWORK=true TAP_SIGNAL_COLLECTION= pnpm backfill
 Keep Postgres running and migrated before starting the backfill. The command is
 intended to keep running after historical backfill so Teal continues to receive
 live TAP events.
+
+## Historical Record Compatibility
+
+Some older `fm.teal.alpha.feed.play` records used bare MusicBrainz UUIDs where
+the current lexicons expect `mbid:<uuid>` URI values. Cadet normalizes those
+bare UUIDs during ingest and drops empty optional MBID fields before parsing, so
+historical TAP backfills should not reject otherwise valid play records for
+missing legacy MBID metadata.

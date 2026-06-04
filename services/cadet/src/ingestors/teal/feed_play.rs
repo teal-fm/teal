@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
 use jacquard_common::{
+    deps::smol_str::SmolStr,
     types::{
         string::{Datetime, UriValue},
         value,
@@ -408,6 +409,21 @@ fn uri_mbid_value(mbid: &UriValue) -> &str {
     mbid_value(mbid.as_str())
 }
 
+fn normalized_mbid_text(mbid: &str) -> Option<String> {
+    let value = mbid_value(mbid).trim();
+    if value.is_empty() {
+        None
+    } else if Uuid::parse_str(value).is_ok() {
+        Some(format!("mbid:{value}"))
+    } else {
+        Some(mbid.to_string())
+    }
+}
+
+fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
+    normalized_mbid_text(mbid.as_str()).map(|value| UriValue::Any(SmolStr::new(value)))
+}
+
 fn clean(
     record: &types::fm_teal::alpha::feed::play::Play,
 ) -> types::fm_teal::alpha::feed::play::Play {
@@ -416,35 +432,36 @@ fn clean(
     // Clean artist MBIDs inside artists vector, if present
     if let Some(artists) = &mut cleaned.artists {
         for artist in artists.iter_mut() {
-            if let Some(mbid) = &artist.artist_mb_id {
-                if mbid.as_str().is_empty() {
-                    artist.artist_mb_id = None;
-                }
+            if let Some(mbid) = artist.artist_mb_id.as_ref() {
+                artist.artist_mb_id = normalize_mbid_uri(mbid);
             }
         }
     }
 
-    // // Clean artist_mb_ids vector, if present
-    // if let Some(mbids) = &mut cleaned.artist_mb_ids {
-    //     for mbid in mbids.iter_mut() {
-    //         if mbid.is_empty() {
-    //             *mbid = "";
-    //         }
-    //     }
-    // }
+    if let Some(mbids) = &cleaned.artist_mb_ids {
+        let normalized_mbids: Vec<SmolStr> = mbids
+            .iter()
+            .map(|mbid| SmolStr::new(normalized_mbid_text(mbid.as_ref()).unwrap_or_default()))
+            .collect();
+        cleaned.artist_mb_ids = if normalized_mbids.iter().all(|mbid| mbid.is_empty()) {
+            None
+        } else {
+            Some(normalized_mbids)
+        };
+    }
 
     // Clean release_mb_id
-    if let Some(release_mbid) = &cleaned.release_mb_id {
-        if release_mbid.as_str().is_empty() {
-            cleaned.release_mb_id = None;
-        }
+    if let Some(release_mbid) = cleaned.release_mb_id.as_ref() {
+        cleaned.release_mb_id = normalize_mbid_uri(release_mbid);
     }
 
     // Clean recording_mb_id
-    if let Some(recording_mbid) = &cleaned.recording_mb_id {
-        if recording_mbid.as_str().is_empty() {
-            cleaned.recording_mb_id = None;
-        }
+    if let Some(recording_mbid) = cleaned.recording_mb_id.as_ref() {
+        cleaned.recording_mb_id = normalize_mbid_uri(recording_mbid);
+    }
+
+    if let Some(track_mbid) = cleaned.track_mb_id.as_ref() {
+        cleaned.track_mb_id = normalize_mbid_uri(track_mbid);
     }
 
     cleaned.into_static()
@@ -1335,7 +1352,14 @@ impl PlayIngestor {
             for artist in artists {
                 let artist_name = artist.artist_name.clone();
                 artist_names_raw.push(artist_name.as_str().to_owned());
-                let artist_mbid = artist.artist_mb_id.as_ref().map(uri_mbid_value);
+                let artist_mbid = artist.artist_mb_id.as_ref().and_then(|mbid| {
+                    let value = uri_mbid_value(mbid);
+                    if value.is_empty() {
+                        None
+                    } else {
+                        Some(value)
+                    }
+                });
 
                 let artist_id = self
                     .find_or_create_artist_with_fuzzy_matching(
@@ -1352,7 +1376,10 @@ impl PlayIngestor {
                 artist_names_raw.push(artist_name.as_str().to_owned());
 
                 let artist_mbid_opt = if let Some(ref mbid_list) = play_record.artist_mb_ids {
-                    mbid_list.get(index).map(|s| s.as_str())
+                    mbid_list
+                        .get(index)
+                        .map(|s| mbid_value(s.as_str()).trim())
+                        .filter(|mbid| !mbid.is_empty())
                 } else {
                     None
                 };
@@ -1398,7 +1425,11 @@ impl PlayIngestor {
         };
 
         // Insert recording if missing
-        let recording_mbid_opt = if let Some(recording_mbid) = &play_record.recording_mb_id {
+        let recording_mbid = play_record
+            .recording_mb_id
+            .as_ref()
+            .or(play_record.track_mb_id.as_ref());
+        let recording_mbid_opt = if let Some(recording_mbid) = recording_mbid {
             let recording_name = play_record.track_name.clone();
             Some(
                 self.insert_recording(uri_mbid_value(recording_mbid), &recording_name)
@@ -1629,7 +1660,7 @@ mod tests {
     use sqlx::PgPool;
     use uuid::Uuid;
 
-    use super::PlayIngestor;
+    use super::{clean, PlayIngestor};
 
     async fn test_pool() -> anyhow::Result<PgPool> {
         let database_url = std::env::var("DATABASE_URL")?;
@@ -1658,6 +1689,120 @@ mod tests {
             "submissionClientAgent": "cadet-test/1.0",
             "playedTime": "2026-06-01T00:00:00Z"
         }))?)
+    }
+
+    #[test]
+    fn clean_drops_empty_optional_mbids_from_legacy_records() -> anyhow::Result<()> {
+        let record = value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Old Empty MBID Track",
+            "recordingMbId": "",
+            "releaseName": "Old Empty MBID Release",
+            "releaseMbId": "",
+            "trackMbId": "",
+            "artists": [{
+                "artistName": "Old Empty MBID Artist",
+                "artistMbId": ""
+            }],
+            "artistNames": ["Old Empty MBID Artist"],
+            "artistMbIds": [""]
+        }))?;
+
+        let cleaned = clean(&record);
+
+        assert!(cleaned.recording_mb_id.is_none());
+        assert!(cleaned.release_mb_id.is_none());
+        assert!(cleaned.track_mb_id.is_none());
+        assert!(cleaned.artist_mb_ids.is_none());
+        let artists = cleaned.artists.expect("artists preserved");
+        assert_eq!(artists[0].artist_name.as_str(), "Old Empty MBID Artist");
+        assert!(artists[0].artist_mb_id.is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn clean_prefixes_legacy_bare_musicbrainz_uuids() -> anyhow::Result<()> {
+        let recording_mbid = Uuid::new_v4();
+        let release_mbid = Uuid::new_v4();
+        let artist_mbid = Uuid::new_v4();
+        let track_mbid = Uuid::new_v4();
+        let record = value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Old Bare MBID Track",
+            "recordingMbId": recording_mbid.to_string(),
+            "releaseName": "Old Bare MBID Release",
+            "releaseMbId": release_mbid.to_string(),
+            "trackMbId": track_mbid.to_string(),
+            "artists": [{
+                "artistName": "Old Bare MBID Artist",
+                "artistMbId": artist_mbid.to_string()
+            }],
+            "artistNames": ["Old Bare MBID Artist"],
+            "artistMbIds": [artist_mbid.to_string()]
+        }))?;
+
+        let cleaned = clean(&record);
+
+        assert_eq!(
+            cleaned
+                .recording_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{recording_mbid}"))
+        );
+        assert_eq!(
+            cleaned
+                .release_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{release_mbid}"))
+        );
+        assert_eq!(
+            cleaned
+                .track_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{track_mbid}"))
+        );
+        let artists = cleaned.artists.expect("artists preserved");
+        assert_eq!(
+            artists[0]
+                .artist_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{artist_mbid}"))
+        );
+        assert_eq!(
+            cleaned
+                .artist_mb_ids
+                .as_ref()
+                .and_then(|mbids| mbids.first())
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{artist_mbid}"))
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn clean_preserves_deprecated_artist_mbid_alignment() -> anyhow::Result<()> {
+        let artist_mbid = Uuid::new_v4();
+        let record = value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Partially Tagged Track",
+            "artistNames": ["Untagged Artist", "Tagged Artist"],
+            "artistMbIds": ["", artist_mbid.to_string()]
+        }))?;
+
+        let cleaned = clean(&record);
+        let mbids = cleaned.artist_mb_ids.expect("partial MBIDs preserved");
+
+        assert_eq!(mbids.len(), 2);
+        assert_eq!(mbids[0].as_str(), "");
+        assert_eq!(mbids[1].as_str(), format!("mbid:{artist_mbid}"));
+
+        Ok(())
     }
 
     #[tokio::test]
