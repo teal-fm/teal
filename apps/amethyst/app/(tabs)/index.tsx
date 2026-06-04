@@ -8,6 +8,7 @@ import {
 import { Stack } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
+import SocialComposer from "@/components/teal/SocialComposer";
 import SocialPostCard from "@/components/teal/SocialPostCard";
 import TealShell, {
   SectionHeading,
@@ -131,16 +132,24 @@ export default function HomeScreen() {
         detail="LIVE INDEX"
       />
       {currentStatus && (
-        <View className="mb-6 rounded-lg border border-primary/25 bg-primary/10 p-4">
-          <Text className="font-mono text-[10px] uppercase text-primary">
-            Your current listening status
-          </Text>
-          <Text className="mt-1 font-sans text-2xl font-black">
-            {currentStatus.trackName}
-          </Text>
-          <Text className="text-sm font-bold text-muted-foreground">
-            {displayArtists(currentStatus) || "Unknown artist"}
-          </Text>
+        <View className="mb-6 gap-3">
+          <View className="rounded-lg border border-primary/25 bg-primary/10 p-4">
+            <Text className="font-mono text-[10px] uppercase text-primary">
+              Your current listening status
+            </Text>
+            <Text className="mt-1 font-sans text-2xl font-black">
+              {currentStatus.trackName}
+            </Text>
+            <Text className="text-sm font-bold text-muted-foreground">
+              {displayArtists(currentStatus) || "Unknown artist"}
+            </Text>
+          </View>
+          <SocialComposer
+            track={currentStatus}
+            onPublished={(post) =>
+              setSocialPosts((current) => [post, ...current])
+            }
+          />
         </View>
       )}
       {socialPosts.length > 0 && (
