@@ -12,6 +12,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst Home includes a Teal social composer entry point. Signed-in users can open a modal, attach a song from MusicBrainz search or their indexed recent plays, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
+- Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
