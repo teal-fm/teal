@@ -1,0 +1,38 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.social.playlistItem",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | A teal.fm playlist item.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record containing a playlist item for a teal.fm playlist.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "track", "createdAt"],
+        "properties": {
+          "subject": {
+            "type": "ref",
+            "ref": "com.atproto.repo.strongRef",
+            "description": "Strong reference to the playlist this item belongs to."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this playlist item was originally created."
+          },
+          "track": {
+            "type": "ref",
+            "ref": "fm.teal.alpha.feed.social.defs#trackView",
+            "description": "The track added to the playlist."
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The order of the track in the playlist."
+          }
+        }
+      }
+    }
+  }
+}

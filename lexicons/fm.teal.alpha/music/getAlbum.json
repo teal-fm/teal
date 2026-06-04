@@ -11,7 +11,8 @@
         "properties": {
           "mbid": {
             "type": "string",
-            "description": "MusicBrainz release ID URI or UUID"
+            "format": "uri",
+            "description": "MusicBrainz release ID URI, formatted as mbid:<uuid>"
           },
           "limit": {
             "type": "integer",
