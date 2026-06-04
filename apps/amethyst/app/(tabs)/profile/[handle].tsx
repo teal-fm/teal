@@ -20,9 +20,11 @@ import { resolveHandle } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   getActorFeed,
+  getActorBadges,
   getBlueskyProfile,
   getProfile,
   displayArtists,
+  type SocialBadgeAssignmentView,
   XrpcError,
 } from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
@@ -60,6 +62,7 @@ export default function ProfileScreen() {
   const actor = Array.isArray(handle) ? handle[0] : handle;
   const [did, setDid] = useState<string | null>(null);
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
+  const [badges, setBadges] = useState<SocialBadgeAssignmentView[]>([]);
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [loadingMore, setLoadingMore] = useState(false);
@@ -76,6 +79,7 @@ export default function ProfileScreen() {
         setError(null);
         setDid(null);
         setProfile(null);
+        setBadges([]);
         setPlays([]);
         setCursor(undefined);
         const resolved = actor.startsWith("did:")
@@ -84,6 +88,9 @@ export default function ProfileScreen() {
         if (!mounted) return;
         setDid(resolved);
         const feedRes = await getActorFeed(resolved, 30);
+        const badgeRes = await getActorBadges(resolved, 12).catch(() => ({
+          items: [],
+        }));
         let nextProfile: DisplayProfile | null = null;
         let nextIsBlueskyFallback = false;
 
@@ -105,6 +112,7 @@ export default function ProfileScreen() {
 
         if (!mounted) return;
         setProfile(nextProfile);
+        setBadges(badgeRes.items);
         setIsBlueskyFallback(nextIsBlueskyFallback);
         setPlays(feedRes.plays);
         setCursor(feedRes.cursor);
@@ -250,6 +258,25 @@ export default function ProfileScreen() {
                   <Text className="text-sm font-bold text-muted-foreground">
                     {displayArtists(currentStatus) || "Unknown artist"}
                   </Text>
+                </View>
+              )}
+              {badges.length > 0 && (
+                <View className="mt-5">
+                  <Text className="mb-2 font-mono text-[10px] uppercase text-muted-foreground">
+                    Badges
+                  </Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {badges.map((assignment) => (
+                      <View
+                        key={assignment.uri}
+                        className="rounded-full border border-border bg-muted px-3 py-1"
+                      >
+                        <Text className="text-xs font-bold">
+                          {assignment.badge.name}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               )}
               {isSelf && isBlueskyFallback && (

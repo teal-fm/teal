@@ -64,6 +64,27 @@ export type SocialPostView = {
   replyCount: number;
 };
 
+export type SocialBadgeView = {
+  uri: string;
+  cid: string;
+  name: string;
+  description: string;
+  descriptionFacets?: unknown;
+  imageCid: string;
+  creator: string;
+  badgeType: string;
+  createdAt: string;
+};
+
+export type SocialBadgeAssignmentView = {
+  uri: string;
+  cid: string;
+  badge: SocialBadgeView;
+  assignee: string;
+  assigner: string;
+  createdAt: string;
+};
+
 async function getXrpc<T>(
   method: string,
   params: Record<string, string | number | undefined> = {},
@@ -181,6 +202,13 @@ export function getSocialFeed(limit = 30, cursor?: string) {
 export function getNotifications(actor: string, limit = 30, cursor?: string) {
   return getXrpc<{ items: SocialNotificationView[]; cursor?: string }>(
     "fm.teal.alpha.feed.social.getNotifications",
+    { actor, limit, cursor },
+  );
+}
+
+export function getActorBadges(actor: string, limit = 20, cursor?: string) {
+  return getXrpc<{ items: SocialBadgeAssignmentView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getActorBadges",
     { actor, limit, cursor },
   );
 }
