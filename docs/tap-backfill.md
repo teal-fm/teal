@@ -11,9 +11,10 @@ The command:
 
 - installs `tap` with `go install github.com/bluesky-social/indigo/cmd/tap@latest`
   when `tap` is not already on `PATH`
-- starts TAP with `TAP_FULL_NETWORK=true`
-- filters TAP record delivery to `TAP_COLLECTION_FILTERS=fm.teal.*`, so only Teal
-  records reach Cadet after TAP enumerates repos
+- starts TAP with `TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play`
+- keeps full-network repo enumeration off by default with `TAP_FULL_NETWORK=false`
+- filters TAP record delivery to `TAP_COLLECTION_FILTERS=fm.teal.*`, so all Teal
+  records from discovered Teal repos reach Cadet
 - stores TAP state and logs under `.teal-tap/`
 - runs `cargo run -p cadet --bin tap-backfill`
 
@@ -37,18 +38,18 @@ DATABASE_URL=postgres://teal:teal@127.0.0.1:5432/teal
 TAP_HOST=127.0.0.1
 TAP_PORT=2480
 TAP_CHANNEL_URL=ws://127.0.0.1:2480/channel
-TAP_FULL_NETWORK=true
+TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play
 TAP_COLLECTION_FILTERS=fm.teal.*
 TEAL_TAP_DIR=.teal-tap
 ```
 
-Full-network mode is intentionally the default so Teal can discover records
-across every `fm.teal.*` lexicon, including repos that may not have a
-`fm.teal.alpha.feed.play` signal record. For a narrower run that only tracks
-repos with Teal play records, use TAP's signal-collection mode:
+TAP's signal collection controls which repos are backfilled. Teal defaults that
+boundary to repos with `fm.teal.alpha.feed.play` records, then applies
+`fm.teal.*` as the record-delivery filter. To enumerate every repo on the
+network instead, run:
 
 ```bash
-TAP_FULL_NETWORK=false TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play pnpm backfill
+TAP_FULL_NETWORK=true TAP_SIGNAL_COLLECTION= pnpm backfill
 ```
 
 Keep Postgres running and migrated before starting the backfill. The command is
