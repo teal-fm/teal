@@ -56,7 +56,9 @@ impl SocialRecordIngestor {
         match self.collection {
             SocialCollection::Post => insert_post(&mut tx, &uri, did, rkey, cid, record).await?,
             SocialCollection::Like => insert_like(&mut tx, &uri, did, rkey, cid, record).await?,
-            SocialCollection::Repost => insert_repost(&mut tx, &uri, did, rkey, cid, record).await?,
+            SocialCollection::Repost => {
+                insert_repost(&mut tx, &uri, did, rkey, cid, record).await?
+            }
             SocialCollection::Playlist => {
                 insert_playlist(&mut tx, &uri, did, rkey, cid, record).await?
             }
@@ -293,9 +295,7 @@ async fn insert_playlist_item(
     .bind(rkey)
     .bind(cid)
     .bind(&playlist_uri)
-    .bind(
-        ref_cid(record.get("subject")).ok_or_else(|| anyhow!("subject.cid is required"))?,
-    )
+    .bind(ref_cid(record.get("subject")).ok_or_else(|| anyhow!("subject.cid is required"))?)
     .bind(required_value(record, "track")?.clone())
     .bind(optional_i64(record, "order").map(|value| value as i32))
     .bind(required_datetime(record, "createdAt")?)
@@ -331,7 +331,10 @@ async fn insert_badge(
     .bind(required_str(record, "name")?)
     .bind(required_str(record, "description")?)
     .bind(record.get("descriptionFacets").cloned())
-    .bind(blob_cid(required_value(record, "image").ok()).ok_or_else(|| anyhow!("image CID is required"))?)
+    .bind(
+        blob_cid(required_value(record, "image").ok())
+            .ok_or_else(|| anyhow!("image CID is required"))?,
+    )
     .bind(required_str(record, "creator")?)
     .bind(required_str(record, "type")?)
     .bind(required_datetime(record, "createdAt")?)
@@ -670,4 +673,92 @@ fn notification_recipient(subject_uri: Option<&str>, record: &Value) -> Option<S
 fn did_from_at_uri(uri: &str) -> Option<String> {
     let rest = uri.strip_prefix("at://")?;
     rest.split('/').next().map(ToString::to_string)
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::{
+        blob_cid, did_from_at_uri, notification_recipient, ref_cid, ref_uri, required_datetime,
+        required_ref_uri, required_string_array, string_array,
+    };
+
+    #[test]
+    fn extracts_refs_and_blob_cids_from_social_records() {
+        let record = json!({
+            "subject": {
+                "uri": "at://did:plc:alice/fm.teal.alpha.feed.social.post/3k",
+                "cid": "bafy-post"
+            },
+            "image": {
+                "ref": { "$link": "bafy-image" }
+            },
+            "cover": {
+                "cid": "bafy-cover"
+            }
+        });
+
+        assert_eq!(
+            required_ref_uri(&record, "subject").unwrap(),
+            "at://did:plc:alice/fm.teal.alpha.feed.social.post/3k"
+        );
+        assert_eq!(
+            ref_uri(record.get("subject")).as_deref(),
+            Some("at://did:plc:alice/fm.teal.alpha.feed.social.post/3k")
+        );
+        assert_eq!(ref_cid(record.get("subject")).as_deref(), Some("bafy-post"));
+        assert_eq!(blob_cid(record.get("image")).as_deref(), Some("bafy-image"));
+        assert_eq!(blob_cid(record.get("cover")).as_deref(), Some("bafy-cover"));
+    }
+
+    #[test]
+    fn validates_string_arrays_and_datetimes() {
+        let record = json!({
+            "authors": ["did:plc:alice", "did:plc:bob"],
+            "langs": ["en", "es"],
+            "createdAt": "2026-06-04T12:34:56Z"
+        });
+
+        assert_eq!(
+            required_string_array(&record, "authors").unwrap(),
+            vec!["did:plc:alice".to_string(), "did:plc:bob".to_string()]
+        );
+        assert_eq!(
+            string_array(record.get("langs")).unwrap(),
+            Some(vec!["en".to_string(), "es".to_string()])
+        );
+        assert_eq!(
+            required_datetime(&record, "createdAt").unwrap().year(),
+            2026
+        );
+
+        let invalid = json!({ "authors": ["did:plc:alice", 42] });
+        assert!(required_string_array(&invalid, "authors").is_err());
+    }
+
+    #[test]
+    fn resolves_notification_recipients_from_assignees_or_subjects() {
+        let assignment = json!({ "assignee": "did:plc:badge-recipient" });
+        assert_eq!(
+            notification_recipient(None, &assignment).as_deref(),
+            Some("did:plc:badge-recipient")
+        );
+
+        let reaction = json!({});
+        assert_eq!(
+            notification_recipient(
+                Some("at://did:plc:post-author/fm.teal.alpha.feed.social.post/3k"),
+                &reaction,
+            )
+            .as_deref(),
+            Some("did:plc:post-author")
+        );
+        assert_eq!(
+            did_from_at_uri("at://did:plc:post-author/fm.teal.alpha.feed.social.post/3k")
+                .as_deref(),
+            Some("did:plc:post-author")
+        );
+        assert!(did_from_at_uri("https://example.com/not-at-uri").is_none());
+    }
 }
