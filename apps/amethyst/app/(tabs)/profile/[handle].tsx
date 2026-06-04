@@ -27,7 +27,9 @@ import {
   getActorPlaylists,
   getBlueskyProfile,
   getProfile,
+  coverArtUrl,
   displayArtists,
+  getRecordingCoverArtUrl,
   type SocialBadgeAssignmentView,
   type SocialPlaylistView,
   XrpcError,
@@ -65,6 +67,8 @@ export default function ProfileScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
+  const [statusRecordingArt, setStatusRecordingArt] = useState<string>();
+  const [statusArtFailed, setStatusArtFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loadingMoreRef = useRef(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
@@ -180,7 +184,30 @@ export default function ProfileScreen() {
     ? getProfileImageUrl(did, profile?.banner, "banner")
     : undefined;
   const currentStatus = profile?.status?.item;
+  const currentStatusReleaseArt = coverArtUrl(currentStatus?.releaseMbId, 100);
+  const currentStatusArt = statusArtFailed
+    ? undefined
+    : currentStatusReleaseArt || statusRecordingArt;
   const onboarding = profile?.profileStatus?.completedOnboarding;
+
+  useEffect(() => {
+    let mounted = true;
+    setStatusArtFailed(false);
+    if (
+      !currentStatus ||
+      currentStatusReleaseArt ||
+      !currentStatus.recordingMbId
+    ) {
+      setStatusRecordingArt(undefined);
+      return;
+    }
+    getRecordingCoverArtUrl(currentStatus.recordingMbId, 100).then((url) => {
+      if (mounted) setStatusRecordingArt(url);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [currentStatus, currentStatusReleaseArt]);
 
   return (
     <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
@@ -271,28 +298,32 @@ export default function ProfileScreen() {
                 </View>
               )}
               {currentStatus && (
-                <View className="mt-5 rounded-lg border border-primary/25 bg-primary/10 p-4">
-                  <Text className="font-mono text-[10px] uppercase text-primary">
-                    Current listening
-                  </Text>
-                  <Text className="mt-1 font-sans text-xl font-black">
-                    {currentStatus.trackName}
-                  </Text>
-                  <Text className="text-sm font-bold text-muted-foreground">
-                    {displayArtists(currentStatus) || "Unknown artist"}
-                  </Text>
-                </View>
-              )}
-              {!currentStatus && !isBlueskyFallback && (
-                <View className="mt-5 rounded-lg border border-border bg-muted p-4">
-                  <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-                    Current listening
-                  </Text>
-                  <Text className="mt-1 font-bold">No active status</Text>
-                  <Text className="text-sm text-muted-foreground">
-                    This listener has no current-listening record indexed, or
-                    their last status has expired.
-                  </Text>
+                <View className="mt-4 flex-row items-center gap-2 self-start">
+                  <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-muted">
+                    {currentStatusArt ? (
+                      <Image
+                        source={{ uri: currentStatusArt }}
+                        className="h-full w-full"
+                        onError={() => setStatusArtFailed(true)}
+                      />
+                    ) : (
+                      <View className="h-full w-full border border-border bg-muted" />
+                    )}
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      className="font-sans text-sm font-black leading-tight"
+                      numberOfLines={1}
+                    >
+                      Listening to: {currentStatus.trackName}
+                    </Text>
+                    <Text
+                      className="text-xs font-bold text-muted-foreground"
+                      numberOfLines={1}
+                    >
+                      {displayArtists(currentStatus) || "Unknown artist"}
+                    </Text>
+                  </View>
                 </View>
               )}
               {badges.length > 0 && (
