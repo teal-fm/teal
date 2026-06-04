@@ -47,7 +47,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Render profile status/current-listening surfaces in Home, Profile, and actor hover/profile cards, including expired and missing-status states.
 - [x] Normalize `feed.social.defs#trackView` into existing play/music UI models while preserving deprecated `artistMbIds` and new `artists` arrays.
 - [x] Add rich-text facet parsing/rendering shared by profile descriptions, social posts, playlist descriptions, and badge descriptions.
-- [ ] Regenerate and commit Rust and TypeScript lexicon bindings after the new implementation work, then run `pnpm lex:validate`.
+- [x] Regenerate and commit Rust and TypeScript lexicon bindings after the new implementation work, then run `pnpm lex:validate`.
 - [ ] Add Cadet ingestion tests, Aqua route/repository tests, Amethyst interaction tests, SQLx prepare updates, and final Chrome QA for the new social/profile-status flows.
 
 ## Next: Firehose Ingestion
