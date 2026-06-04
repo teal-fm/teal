@@ -79,14 +79,14 @@ fn normalize_limit(limit: Option<i32>) -> i64 {
     limit.unwrap_or(50).clamp(1, 100) as i64
 }
 
-fn decode_offset_cursor(cursor: Option<&str>) -> anyhow::Result<i64> {
+pub(crate) fn decode_offset_cursor(cursor: Option<&str>) -> anyhow::Result<i64> {
     Ok(cursor
         .map(|cursor| decode_cursor::<OffsetCursor>(cursor).map(|cursor| cursor.offset.max(0)))
         .transpose()?
         .unwrap_or(0))
 }
 
-fn encode_offset_cursor(offset: i64) -> anyhow::Result<String> {
+pub(crate) fn encode_offset_cursor(offset: i64) -> anyhow::Result<String> {
     encode_cursor(&OffsetCursor { offset })
 }
 

@@ -70,6 +70,7 @@ async fn main() -> Result<(), String> {
         .nest("/xrpc/", xrpc::feed::feed_routes())
         .nest("/xrpc/", xrpc::music::music_routes())
         .nest("/xrpc/", xrpc::search::search_routes())
+        .nest("/xrpc/", xrpc::social::social_routes())
         .nest("/xrpc/", xrpc::stats::stats_routes())
         .layer(Extension(ctx))
         .layer(cors);
