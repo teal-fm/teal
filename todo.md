@@ -28,6 +28,28 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [ ] Complete ATProto OAuth sign-in and callback QA through the stable public hostname.
 - [x] Document the stable tunnel token or named-tunnel setup without committing secrets.
 
+## Next: New Lexicon Implementation
+
+- [ ] Add Cadet Jetstream collection filters and ingestors for `fm.teal.alpha.actor.profileStatus`, `fm.teal.alpha.feed.social.post`, `like`, `repost`, `playlist`, `playlistItem`, `badge`, and `badgeAssignment`.
+- [ ] Extend CAR import/backfill to process the new profile-status and social record collections, including creates, updates, deletes, and validation failures.
+- [ ] Add database migrations for profile onboarding status, social posts, post reply refs, likes, reposts, playlists, playlist items, badge definitions, badge assignments, rich-text facets, blob CIDs, and derived count/index tables.
+- [ ] Implement delete handling for each new indexed record so primary rows, join rows, counters, and notification rows stay consistent.
+- [ ] Finish `fm.teal.alpha.actor.status` indexing semantics: pick the latest status per actor, respect `expiry` with the 10-minute default, omit expired statuses from profile responses, and add regression tests.
+- [ ] Index `fm.teal.alpha.actor.profileStatus` so onboarding state can be read from Aqua instead of only direct PDS `getRecord` calls.
+- [ ] Update Aqua `getProfile`/`getProfiles` responses to include indexed actor status and profile onboarding status from the appview.
+- [ ] Complete `fm.teal.alpha.stats.getUserTopArtists` and `getUserTopReleases` to honor `period`, `cursor`, handle-to-DID resolution, limit bounds, and lexicon response shapes.
+- [ ] Add Aqua social read APIs or lexicons for post feeds, post detail, replies, likes, reposts, playlists, playlist items, badge catalogs, actor badges, and notifications.
+- [ ] Add Amethyst compose/publish flows for Teal social posts with `trackView`, replies, tags, langs, and `fm.teal.alpha.richtext.facet` mention/link rendering.
+- [ ] Add Amethyst like and repost actions with optimistic viewer state, counts, undo/delete behavior, and signed-out affordances.
+- [ ] Add Amethyst playlist creation, playlist editing, playlist detail routes, ordered playlist item management, cover uploads, and collaborator-author handling.
+- [ ] Add Amethyst badge display on profiles plus badge definition and assignment management for authorized creators/admin flows.
+- [ ] Replace placeholder Notifications copy with real social notifications for likes, reposts, replies, badge assignments, playlist collaboration, and relevant status/profile events.
+- [ ] Render profile status/current-listening surfaces in Home, Profile, and actor hover/profile cards, including expired and missing-status states.
+- [ ] Normalize `feed.social.defs#trackView` into existing play/music UI models while preserving deprecated `artistMbIds` and new `artists` arrays.
+- [ ] Add rich-text facet parsing/rendering shared by profile descriptions, social posts, playlist descriptions, and badge descriptions.
+- [ ] Regenerate and commit Rust and TypeScript lexicon bindings after the new implementation work, then run `pnpm lex:validate`.
+- [ ] Add Cadet ingestion tests, Aqua route/repository tests, Amethyst interaction tests, SQLx prepare updates, and final Chrome QA for the new social/profile-status flows.
+
 ## Next: Firehose Ingestion
 
 - [x] Add Cadet create, update, and delete integration tests for `fm.teal.alpha.feed.play`.
