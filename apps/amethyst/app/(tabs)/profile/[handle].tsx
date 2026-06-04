@@ -258,9 +258,11 @@ export default function ProfileScreen() {
                   @{profile.handle}
                 </Text>
               )}
-              <Text className="font-mono text-sm text-muted-foreground">
-                {did}
-              </Text>
+              {!isSelf && (
+                <Text className="font-mono text-sm text-muted-foreground">
+                  {did}
+                </Text>
+              )}
               {isSelf && (
                 <Button
                   className="mt-5 flex-row gap-2 self-start"

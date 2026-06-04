@@ -9,7 +9,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, indexed search, artist discographies, and albums with track lists plus cursor-paginated listens.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
-- Amethyst Home includes a Teal social composer entry point. Signed-in users can open a modal, attach a song from MusicBrainz search or their indexed recent plays, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
+- Amethyst Home uses one inline Teal social composer. Signed-in users get their most recent indexed play attached automatically, can click the attached song to change it with recent plays or MusicBrainz search, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst profiles show a minimal current-listening row only when an active status exists, with album art resolved from release MBID and recording fallback.
