@@ -36,6 +36,34 @@ export class XrpcError extends Error {
   }
 }
 
+export type SocialNotificationView = {
+  id: number;
+  actorDid: string;
+  actor?: MiniProfileView;
+  reason: string;
+  recordUri: string;
+  subjectUri?: string;
+  createdAt: string;
+};
+
+export type SocialPostView = {
+  uri: string;
+  cid: string;
+  authorDid: string;
+  author?: MiniProfileView;
+  text: string;
+  track: unknown;
+  replyRootUri?: string;
+  replyParentUri?: string;
+  facets?: unknown[];
+  langs?: string[];
+  tags?: string[];
+  createdAt: string;
+  likeCount: number;
+  repostCount: number;
+  replyCount: number;
+};
+
 async function getXrpc<T>(
   method: string,
   params: Record<string, string | number | undefined> = {},
@@ -141,6 +169,20 @@ export function getSearchResults(q: string, limit = 8) {
     q,
     limit,
   });
+}
+
+export function getSocialFeed(limit = 30, cursor?: string) {
+  return getXrpc<{ items: SocialPostView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getFeed",
+    { limit, cursor },
+  );
+}
+
+export function getNotifications(actor: string, limit = 30, cursor?: string) {
+  return getXrpc<{ items: SocialNotificationView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getNotifications",
+    { actor, limit, cursor },
+  );
 }
 
 export async function searchBlueskyUsers(q: string, limit = 8) {

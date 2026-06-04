@@ -12,16 +12,19 @@ import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
-import { getLatestPlays } from "@/lib/teal/api";
+import { displayArtists, getLatestPlays, getProfile } from "@/lib/teal/api";
+import { useStore } from "@/stores/mainStore";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 export default function HomeScreen() {
   const [plays, setPlays] = useState<PlayView[] | null>(null);
+  const [currentStatus, setCurrentStatus] = useState<PlayView | null>(null);
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
+  const pdsAgent = useStore((state) => state.pdsAgent);
 
   useEffect(() => {
     let mounted = true;
@@ -41,6 +44,24 @@ export default function HomeScreen() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!pdsAgent?.did) {
+      setCurrentStatus(null);
+      return;
+    }
+    getProfile(pdsAgent.did)
+      .then((res) => {
+        if (mounted) setCurrentStatus(res.profile.status?.item || null);
+      })
+      .catch(() => {
+        if (mounted) setCurrentStatus(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [pdsAgent?.did]);
 
   const loadMore = useCallback(() => {
     if (!cursor || loadingMoreRef.current) return;
@@ -87,6 +108,19 @@ export default function HomeScreen() {
         title="Recently listened"
         detail="LIVE INDEX"
       />
+      {currentStatus && (
+        <View className="mb-6 rounded-lg border border-primary/25 bg-primary/10 p-4">
+          <Text className="font-mono text-[10px] uppercase text-primary">
+            Your current listening status
+          </Text>
+          <Text className="mt-1 font-sans text-2xl font-black">
+            {currentStatus.trackName}
+          </Text>
+          <Text className="text-sm font-bold text-muted-foreground">
+            {displayArtists(currentStatus) || "Unknown artist"}
+          </Text>
+        </View>
+      )}
       {!plays && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />

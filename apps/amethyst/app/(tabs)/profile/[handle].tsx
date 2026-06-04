@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, {
   SectionHeading,
@@ -21,6 +22,7 @@ import {
   getActorFeed,
   getBlueskyProfile,
   getProfile,
+  displayArtists,
   XrpcError,
 } from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
@@ -32,7 +34,13 @@ import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs"
 
 type DisplayProfile = Pick<
   ProfileView,
-  "displayName" | "description" | "avatar" | "banner"
+  | "displayName"
+  | "description"
+  | "descriptionFacets"
+  | "avatar"
+  | "banner"
+  | "profileStatus"
+  | "status"
 > & {
   handle?: string;
 };
@@ -150,6 +158,8 @@ export default function ProfileScreen() {
   const isSelf = did === pdsAgent?.did;
   const avatarUrl = did ? profileImageUrl(did, profile?.avatar) : undefined;
   const bannerUrl = did ? profileImageUrl(did, profile?.banner) : undefined;
+  const currentStatus = profile?.status?.item;
+  const onboarding = profile?.profileStatus?.completedOnboarding;
 
   return (
     <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
@@ -216,7 +226,31 @@ export default function ProfileScreen() {
                 </View>
               )}
               {profile?.description && (
-                <Text className="mt-4 text-lg">{profile.description}</Text>
+                <RichText
+                  text={profile.description}
+                  facets={profile.descriptionFacets}
+                  className="mt-4 text-lg"
+                />
+              )}
+              {onboarding && (
+                <View className="mt-4 self-start rounded-full border border-border bg-muted px-3 py-1">
+                  <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                    Onboarding: {onboarding}
+                  </Text>
+                </View>
+              )}
+              {currentStatus && (
+                <View className="mt-5 rounded-lg border border-primary/25 bg-primary/10 p-4">
+                  <Text className="font-mono text-[10px] uppercase text-primary">
+                    Current listening
+                  </Text>
+                  <Text className="mt-1 font-sans text-xl font-black">
+                    {currentStatus.trackName}
+                  </Text>
+                  <Text className="text-sm font-bold text-muted-foreground">
+                    {displayArtists(currentStatus) || "Unknown artist"}
+                  </Text>
+                </View>
               )}
               {isSelf && isBlueskyFallback && (
                 <Link href="/onboarding" asChild>
