@@ -1,25 +1,16 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use cursor::load_cursor;
+use cadet::{
+    cursor::{self, load_cursor},
+    db, ingestors, redis_client, teal_ingestors,
+};
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tracing::{error, info};
 
 use rocketman::{
-    connection::JetstreamConnection,
-    endpoints::JetstreamEndpoints,
-    handler,
-    ingestion::{DefaultLexiconIngestor, LexiconIngestor},
+    connection::JetstreamConnection, endpoints::JetstreamEndpoints, handler,
     options::JetstreamOptions,
 };
-
-mod cursor;
-mod db;
-mod ingestors;
-mod redis_client;
-mod resolve;
 
 fn setup_tracing() {
     tracing_subscriber::fmt()
@@ -91,82 +82,7 @@ async fn main() {
 
     let jetstream = JetstreamConnection::new(opts);
 
-    let mut ingestors: HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> = HashMap::new();
-
-    ingestors.insert(
-        "fm.teal.alpha.feed.play".to_string(),
-        Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
-    );
-
-    ingestors.insert(
-        "fm.teal.alpha.actor.profile".to_string(),
-        Box::new(ingestors::teal::actor_profile::ActorProfileIngestor::new(
-            pool.clone(),
-        )),
-    );
-
-    ingestors.insert(
-        "fm.teal.alpha.actor.status".to_string(),
-        Box::new(ingestors::teal::actor_status::ActorStatusIngestor::new(
-            pool.clone(),
-        )),
-    );
-
-    ingestors.insert(
-        "fm.teal.alpha.actor.profileStatus".to_string(),
-        Box::new(
-            ingestors::teal::actor_profile_status::ActorProfileStatusIngestor::new(pool.clone()),
-        ),
-    );
-
-    for (collection, kind) in [
-        (
-            "fm.teal.alpha.feed.social.post",
-            ingestors::teal::social::SocialCollection::Post,
-        ),
-        (
-            "fm.teal.alpha.feed.social.like",
-            ingestors::teal::social::SocialCollection::Like,
-        ),
-        (
-            "fm.teal.alpha.feed.social.repost",
-            ingestors::teal::social::SocialCollection::Repost,
-        ),
-        (
-            "fm.teal.alpha.feed.social.playlist",
-            ingestors::teal::social::SocialCollection::Playlist,
-        ),
-        (
-            "fm.teal.alpha.feed.social.playlistItem",
-            ingestors::teal::social::SocialCollection::PlaylistItem,
-        ),
-        (
-            "fm.teal.alpha.feed.social.badge",
-            ingestors::teal::social::SocialCollection::Badge,
-        ),
-        (
-            "fm.teal.alpha.feed.social.badgeAssignment",
-            ingestors::teal::social::SocialCollection::BadgeAssignment,
-        ),
-    ] {
-        ingestors.insert(
-            collection.to_string(),
-            Box::new(ingestors::teal::social::SocialRecordIngestor::new(
-                pool.clone(),
-                kind,
-            )),
-        );
-    }
-
-    ingestors.insert(
-        "com.atproto.repo.importRepo".to_string(),
-        Box::new(ingestors::car::CarImportIngestor::new(pool.clone())),
-    );
-
-    ingestors.insert(
-        "app.bsky.feed.post".to_string(),
-        Box::new(DefaultLexiconIngestor),
-    );
+    let ingestors = teal_ingestors::build_ingestors(pool.clone());
 
     // CAR import job worker
     let car_ingestor = ingestors::car::CarImportIngestor::new(pool.clone());

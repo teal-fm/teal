@@ -3,6 +3,9 @@ name = "cadet"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "tap-backfill"
+path = "src/bin/tap_backfill.rs"
 
 [dependencies]
 tokio.workspace = true

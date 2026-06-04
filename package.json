@@ -7,6 +7,7 @@
     "dev": "turbo dev",
     "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
     "build:rust": "turbo run build:rust",
+    "backfill": "./scripts/backfill-tap.sh",
     "typecheck": "pnpm -r --filter='!./vendor/*' exec tsc --noEmit",
     "test": "turbo run test test:rust",
     "rust:fmt": "pnpm rust:fmt:services && pnpm rust:fmt:apps",
