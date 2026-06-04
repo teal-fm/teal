@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { AddCurrentTrackButton } from "@/components/teal/PlaylistControls";
 import RichText from "@/components/teal/RichText";
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import {
   displayArtists,
   getPlaylist,
@@ -35,6 +37,8 @@ export default function PlaylistDetailScreen() {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [authorsText, setAuthorsText] = useState("");
+  const [coverUri, setCoverUri] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
@@ -48,6 +52,15 @@ export default function PlaylistDetailScreen() {
         setPlaylist(res.playlist);
         setName(res.playlist.name);
         setDescription(res.playlist.description || "");
+        setAuthorsText(res.playlist.authors.join("\n"));
+        setCoverUri(
+          res.playlist.coverCid
+            ? getImageCdnLink({
+                did: res.playlist.authorDid,
+                hash: res.playlist.coverCid,
+              })
+            : undefined,
+        );
         setItems(res.items);
       })
       .catch((e) => {
@@ -76,15 +89,40 @@ export default function PlaylistDetailScreen() {
     };
   }, [pdsAgent?.did]);
 
-  const canEdit = useMemo(
+  const canAddItems = useMemo(
     () => Boolean(pdsAgent?.did && playlist?.authors.includes(pdsAgent.did)),
     [pdsAgent?.did, playlist?.authors],
   );
+  const canManage = Boolean(pdsAgent?.did && playlist?.authorDid === pdsAgent.did);
 
   async function saveMetadata() {
     if (!playlist || !pdsAgent?.did || saving) return;
     setSaving(true);
     try {
+      const authors = Array.from(
+        new Set(
+          authorsText
+            .split(/[\n,]/)
+            .map((author) => author.trim())
+            .filter(Boolean),
+        ),
+      );
+      if (!authors.includes(playlist.authorDid)) authors.unshift(playlist.authorDid);
+      const current = await pdsAgent
+        .call("com.atproto.repo.getRecord", {
+          repo: playlist.authorDid,
+          collection: "fm.teal.alpha.feed.social.playlist",
+          rkey: rkeyFromUri(playlist.uri),
+        })
+        .then((res) => res.data.value as { cover?: unknown })
+        .catch(() => ({}));
+      let cover = current.cover;
+      if (coverUri && !coverUri.startsWith("http")) {
+        const data = await fetch(coverUri).then((response) => response.blob());
+        const fileType = data.type || "image/jpeg";
+        cover = (await pdsAgent.uploadBlob(data, { encoding: fileType })).data
+          .blob;
+      }
       await pdsAgent.call(
         "com.atproto.repo.putRecord",
         {},
@@ -96,7 +134,8 @@ export default function PlaylistDetailScreen() {
             $type: "fm.teal.alpha.feed.social.playlist",
             name: name.trim(),
             description: description.trim() || undefined,
-            authors: playlist.authors,
+            authors,
+            cover,
             createdAt: playlist.createdAt,
           },
         },
@@ -105,6 +144,7 @@ export default function PlaylistDetailScreen() {
         ...playlist,
         name: name.trim(),
         description: description.trim() || undefined,
+        authors,
       });
       setEditing(false);
     } catch (e) {
@@ -112,6 +152,16 @@ export default function PlaylistDetailScreen() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function pickCover() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.9,
+    });
+    if (!result.canceled) setCoverUri(result.assets[0].uri);
   }
 
   return (
@@ -133,9 +183,19 @@ export default function PlaylistDetailScreen() {
         <>
           <View className="mb-8 rounded-lg border border-border bg-card p-6">
             <View className="flex-row items-start gap-4">
-              <View className="h-14 w-14 items-center justify-center rounded-lg bg-accent">
-                <Icon icon={ListMusic} size={24} className="text-primary" />
-              </View>
+              <Pressable
+                disabled={!canManage || !editing}
+                onPress={pickCover}
+                className="h-14 w-14 overflow-hidden rounded-lg bg-accent"
+              >
+                {coverUri ? (
+                  <Image source={{ uri: coverUri }} className="h-full w-full" />
+                ) : (
+                  <View className="h-full w-full items-center justify-center">
+                    <Icon icon={ListMusic} size={24} className="text-primary" />
+                  </View>
+                )}
+              </Pressable>
               <View className="min-w-0 flex-1">
                 {editing ? (
                   <View className="gap-3">
@@ -144,6 +204,12 @@ export default function PlaylistDetailScreen() {
                       className="min-h-20"
                       value={description}
                       onChangeText={setDescription}
+                    />
+                    <Textarea
+                      className="min-h-20"
+                      value={authorsText}
+                      onChangeText={setAuthorsText}
+                      placeholder="Collaborator DIDs, one per line"
                     />
                     <View className="flex-row gap-2">
                       <Button disabled={saving} onPress={saveMetadata}>
@@ -174,11 +240,13 @@ export default function PlaylistDetailScreen() {
                 )}
               </View>
             </View>
-            {canEdit && !editing && (
+            {canAddItems && !editing && (
               <View className="mt-5 flex-row flex-wrap gap-2">
-                <Button variant="outline" onPress={() => setEditing(true)}>
-                  <Text>Edit playlist</Text>
-                </Button>
+                {canManage && (
+                  <Button variant="outline" onPress={() => setEditing(true)}>
+                    <Text>Edit playlist</Text>
+                  </Button>
+                )}
                 <AddCurrentTrackButton
                   playlist={playlist}
                   track={currentTrack}
