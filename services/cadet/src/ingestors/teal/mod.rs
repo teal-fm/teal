@@ -1,6 +1,8 @@
 pub mod actor_profile;
+pub mod actor_profile_status;
 pub mod actor_status;
 pub mod feed_play;
+pub mod social;
 
 /// Parses an AT uri into parts:
 /// did/handle, collection, rkey

@@ -73,6 +73,14 @@ async fn main() {
                 "fm.teal.alpha.feed.play",
                 "fm.teal.alpha.actor.profile",
                 "fm.teal.alpha.actor.status",
+                "fm.teal.alpha.actor.profileStatus",
+                "fm.teal.alpha.feed.social.post",
+                "fm.teal.alpha.feed.social.like",
+                "fm.teal.alpha.feed.social.repost",
+                "fm.teal.alpha.feed.social.playlist",
+                "fm.teal.alpha.feed.social.playlistItem",
+                "fm.teal.alpha.feed.social.badge",
+                "fm.teal.alpha.feed.social.badgeAssignment",
                 "com.atproto.repo.importRepo",
             ]
             .iter()
@@ -103,6 +111,52 @@ async fn main() {
             pool.clone(),
         )),
     );
+
+    ingestors.insert(
+        "fm.teal.alpha.actor.profileStatus".to_string(),
+        Box::new(
+            ingestors::teal::actor_profile_status::ActorProfileStatusIngestor::new(pool.clone()),
+        ),
+    );
+
+    for (collection, kind) in [
+        (
+            "fm.teal.alpha.feed.social.post",
+            ingestors::teal::social::SocialCollection::Post,
+        ),
+        (
+            "fm.teal.alpha.feed.social.like",
+            ingestors::teal::social::SocialCollection::Like,
+        ),
+        (
+            "fm.teal.alpha.feed.social.repost",
+            ingestors::teal::social::SocialCollection::Repost,
+        ),
+        (
+            "fm.teal.alpha.feed.social.playlist",
+            ingestors::teal::social::SocialCollection::Playlist,
+        ),
+        (
+            "fm.teal.alpha.feed.social.playlistItem",
+            ingestors::teal::social::SocialCollection::PlaylistItem,
+        ),
+        (
+            "fm.teal.alpha.feed.social.badge",
+            ingestors::teal::social::SocialCollection::Badge,
+        ),
+        (
+            "fm.teal.alpha.feed.social.badgeAssignment",
+            ingestors::teal::social::SocialCollection::BadgeAssignment,
+        ),
+    ] {
+        ingestors.insert(
+            collection.to_string(),
+            Box::new(ingestors::teal::social::SocialRecordIngestor::new(
+                pool.clone(),
+                kind,
+            )),
+        );
+    }
 
     ingestors.insert(
         "com.atproto.repo.importRepo".to_string(),

@@ -3,6 +3,7 @@ use jacquard_common::from_json_value;
 use serde_json::Value;
 use types::{
     app_bsky::richtext::facet::Facet,
+    fm_teal::alpha::actor::profile_status::ProfileStatus,
     fm_teal::alpha::actor::{ProfileView, StatusView},
 };
 
@@ -17,6 +18,7 @@ pub trait ActorProfileRepo {
     ) -> anyhow::Result<Vec<ProfileView>>;
 }
 
+#[derive(sqlx::FromRow)]
 pub struct PgProfileRepoRows {
     pub avatar: Option<String>,
     pub banner: Option<String>,
@@ -25,6 +27,7 @@ pub struct PgProfileRepoRows {
     pub description_facets: Option<Value>,
     pub did: Option<String>,
     pub display_name: Option<String>,
+    pub profile_status: Option<Value>,
     pub status: Option<Value>,
 }
 
@@ -44,6 +47,9 @@ impl From<PgProfileRepoRows> for ProfileView {
             did: row.did.map(Into::into),
             display_name: row.display_name.map(Into::into),
             featured_item: None,
+            profile_status: row
+                .profile_status
+                .and_then(|v| from_json_value::<ProfileStatus>(v).ok()),
             status: row
                 .status
                 .and_then(|v| from_json_value::<StatusView>(v).ok()),
@@ -74,8 +80,7 @@ impl ActorProfileRepo for PgDataSource {
             }
         }
 
-        let profiles = sqlx::query_as!(
-            PgProfileRepoRows,
+        let profiles = sqlx::query_as::<_, PgProfileRepoRows>(
             "SELECT
                 p.avatar,
                 p.banner,
@@ -84,14 +89,26 @@ impl ActorProfileRepo for PgDataSource {
                 p.description_facets,
                 p.did,
                 p.display_name,
+                ps.record as profile_status,
                 s.record as status
             FROM profiles p
-            LEFT JOIN statii s ON p.did = s.did AND s.rkey = 'self'
+            LEFT JOIN profile_statuses ps ON p.did = ps.did
+            LEFT JOIN LATERAL (
+                SELECT record
+                FROM statii
+                WHERE did = p.did
+                  AND COALESCE(
+                    (record->>'expiry')::timestamptz,
+                    (record->>'time')::timestamptz + INTERVAL '10 minutes'
+                  ) > NOW()
+                ORDER BY (record->>'time')::timestamptz DESC, indexed_at DESC
+                LIMIT 1
+            ) s ON TRUE
             WHERE (p.did = ANY($1))
             OR (p.handle = ANY($2))",
-            &dids,
-            &handles,
         )
+        .bind(&dids)
+        .bind(&handles)
         .fetch_all(&self.db)
         .await?;
         Ok(profiles.into_iter().map(|p| p.into()).collect())
