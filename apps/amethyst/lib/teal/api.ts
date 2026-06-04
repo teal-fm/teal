@@ -238,6 +238,13 @@ export function getActorBadges(actor: string, limit = 20, cursor?: string) {
   );
 }
 
+export function getBadgeCatalog(limit = 50, cursor?: string) {
+  return getXrpc<{ items: SocialBadgeView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getBadgeCatalog",
+    { limit, cursor },
+  );
+}
+
 export function getActorPlaylists(actor: string, limit = 20, cursor?: string) {
   return getXrpc<{ items: SocialPlaylistView[]; cursor?: string }>(
     "fm.teal.alpha.feed.social.getActorPlaylists",

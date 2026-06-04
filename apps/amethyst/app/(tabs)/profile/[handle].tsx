@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import BadgeManager from "@/components/teal/BadgeManager";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
 import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
@@ -340,6 +341,16 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
+          {isSelf && (
+            <View className="mb-8">
+              <SectionHeading eyebrow="Admin" title="Badge tools" />
+              <BadgeManager
+                onAssigned={(assignment) =>
+                  setBadges((current) => [assignment, ...current])
+                }
+              />
+            </View>
+          )}
           <SectionHeading eyebrow="Listening history" title="Recent plays" />
           {plays.length === 0 ? (
             <Text className="text-muted-foreground">No indexed plays yet.</Text>
