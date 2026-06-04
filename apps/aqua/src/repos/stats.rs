@@ -1,7 +1,10 @@
 use async_trait::async_trait;
+use anyhow::anyhow;
+use base64::Engine;
 use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
 use serde::{Deserialize, Serialize};
+use sqlx::types::Uuid;
 use types::fm_teal::alpha::feed::PlayView;
 use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
 
@@ -31,10 +34,75 @@ pub(crate) fn decode_latest_cursor(
 }
 
 pub(crate) fn encode_latest_cursor(cursor: &LatestPlaysCursor) -> anyhow::Result<String> {
-    Ok(base64::Engine::encode(
-        &base64::engine::general_purpose::URL_SAFE_NO_PAD,
-        serde_json::to_vec(cursor)?,
-    ))
+    encode_cursor(cursor)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StatsPeriod {
+    SevenDays,
+    ThirtyDays,
+}
+
+impl StatsPeriod {
+    fn parse(period: Option<&str>) -> anyhow::Result<Self> {
+        match period.unwrap_or("30days") {
+            "7days" => Ok(Self::SevenDays),
+            "30days" => Ok(Self::ThirtyDays),
+            other => Err(anyhow!("unsupported period: {other}")),
+        }
+    }
+
+    fn interval_sql(self) -> &'static str {
+        match self {
+            Self::SevenDays => "INTERVAL '7 days'",
+            Self::ThirtyDays => "INTERVAL '30 days'",
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub(crate) struct OffsetCursor {
+    pub offset: i64,
+}
+
+pub struct UserTopArtistsPage {
+    pub artists: Vec<ArtistView>,
+    pub cursor: Option<String>,
+}
+
+pub struct UserTopReleasesPage {
+    pub releases: Vec<ReleaseView>,
+    pub cursor: Option<String>,
+}
+
+fn normalize_limit(limit: Option<i32>) -> i64 {
+    limit.unwrap_or(50).clamp(1, 100) as i64
+}
+
+fn decode_offset_cursor(cursor: Option<&str>) -> anyhow::Result<i64> {
+    Ok(cursor
+        .map(|cursor| decode_cursor::<OffsetCursor>(cursor).map(|cursor| cursor.offset.max(0)))
+        .transpose()?
+        .unwrap_or(0))
+}
+
+fn encode_offset_cursor(offset: i64) -> anyhow::Result<String> {
+    encode_cursor(&OffsetCursor { offset })
+}
+
+fn decode_cursor<T>(cursor: &str) -> anyhow::Result<T>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(cursor)?;
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
+fn encode_cursor<T>(cursor: &T) -> anyhow::Result<String>
+where
+    T: Serialize,
+{
+    Ok(base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(serde_json::to_vec(cursor)?))
 }
 
 #[async_trait]
@@ -43,14 +111,18 @@ pub trait StatsRepo: Send + Sync {
     async fn get_top_releases(&self, limit: Option<i32>) -> anyhow::Result<Vec<ReleaseView>>;
     async fn get_user_top_artists(
         &self,
-        did: &str,
+        actor: &str,
+        period: Option<&str>,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ArtistView>>;
+        cursor: Option<&str>,
+    ) -> anyhow::Result<UserTopArtistsPage>;
     async fn get_user_top_releases(
         &self,
-        did: &str,
+        actor: &str,
+        period: Option<&str>,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ReleaseView>>;
+        cursor: Option<&str>,
+    ) -> anyhow::Result<UserTopReleasesPage>;
     async fn get_latest(
         &self,
         limit: Option<i32>,
@@ -133,85 +205,121 @@ impl StatsRepo for PgDataSource {
 
     async fn get_user_top_artists(
         &self,
-        did: &str,
+        actor: &str,
+        period: Option<&str>,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ArtistView>> {
-        let limit = limit.unwrap_or(50).min(100) as i64;
-
-        let rows = sqlx::query!(
+        cursor: Option<&str>,
+    ) -> anyhow::Result<UserTopArtistsPage> {
+        let did = self.resolve_actor_to_did(actor).await?;
+        let period = StatsPeriod::parse(period)?;
+        let limit = normalize_limit(limit);
+        let offset = decode_offset_cursor(cursor)?;
+        let query_limit = limit + 1;
+        let sql = format!(
             r#"
             SELECT
                 ae.mbid,
                 ptae.artist_name as name,
-                COUNT(*) as play_count
+                COUNT(*)::bigint as play_count
             FROM plays p
             INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri
             INNER JOIN artists_extended ae ON ptae.artist_id = ae.id
             WHERE p.did = $1
+              AND p.played_time >= NOW() - {}
               AND ptae.artist_name IS NOT NULL
             GROUP BY ae.mbid, ptae.artist_name
-            ORDER BY play_count DESC
-            LIMIT $2
+            ORDER BY play_count DESC, ptae.artist_name ASC, ae.mbid ASC
+            LIMIT $2 OFFSET $3
             "#,
-            did,
-            limit
-        )
+            period.interval_sql()
+        );
+
+        let rows = sqlx::query_as::<_, (Option<Uuid>, String, i64)>(&sql)
+            .bind(did)
+            .bind(query_limit)
+            .bind(offset)
         .fetch_all(&self.db)
         .await?;
 
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            result.push(ArtistView {
-                mbid: row.mbid.map(mbid_uri),
-                name: Some(row.name.into()),
-                play_count: Some(row.play_count.unwrap_or(0)),
+        let has_more = rows.len() > limit as usize;
+        let mut artists = Vec::with_capacity(rows.len().min(limit as usize));
+        for (mbid, name, play_count) in rows.into_iter().take(limit as usize) {
+            artists.push(ArtistView {
+                mbid: mbid.map(mbid_uri),
+                name: Some(name.into()),
+                play_count: Some(play_count),
                 extra_data: Default::default(),
             });
         }
 
-        Ok(result)
+        Ok(UserTopArtistsPage {
+            artists,
+            cursor: if has_more {
+                Some(encode_offset_cursor(offset + limit)?)
+            } else {
+                None
+            },
+        })
     }
 
     async fn get_user_top_releases(
         &self,
-        did: &str,
+        actor: &str,
+        period: Option<&str>,
         limit: Option<i32>,
-    ) -> anyhow::Result<Vec<ReleaseView>> {
-        let limit = limit.unwrap_or(50).min(100) as i64;
-
-        let rows = sqlx::query!(
+        cursor: Option<&str>,
+    ) -> anyhow::Result<UserTopReleasesPage> {
+        let did = self.resolve_actor_to_did(actor).await?;
+        let period = StatsPeriod::parse(period)?;
+        let limit = normalize_limit(limit);
+        let offset = decode_offset_cursor(cursor)?;
+        let query_limit = limit + 1;
+        let sql = format!(
             r#"
             SELECT
                 p.release_mbid as mbid,
                 p.release_name as name,
-                COUNT(*) as play_count
+                COUNT(*)::bigint as play_count
             FROM plays p
             WHERE p.did = $1
+              AND p.played_time >= NOW() - {}
               AND p.release_mbid IS NOT NULL
               AND p.release_name IS NOT NULL
             GROUP BY p.release_mbid, p.release_name
-            ORDER BY play_count DESC
-            LIMIT $2
+            ORDER BY play_count DESC, p.release_name ASC, p.release_mbid ASC
+            LIMIT $2 OFFSET $3
             "#,
-            did,
-            limit
-        )
+            period.interval_sql()
+        );
+
+        let rows = sqlx::query_as::<_, (Option<Uuid>, Option<String>, i64)>(&sql)
+            .bind(did)
+            .bind(query_limit)
+            .bind(offset)
         .fetch_all(&self.db)
         .await?;
 
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            if let (Some(mbid), Some(name)) = (row.mbid, row.name) {
-                result.push(ReleaseView {
+        let has_more = rows.len() > limit as usize;
+        let mut releases = Vec::with_capacity(rows.len().min(limit as usize));
+        for (mbid, name, play_count) in rows.into_iter().take(limit as usize) {
+            if let (Some(mbid), Some(name)) = (mbid, name) {
+                releases.push(ReleaseView {
                     mbid: Some(mbid_uri(mbid)),
                     name: Some(name.into()),
-                    play_count: Some(row.play_count.unwrap_or(0)),
+                    play_count: Some(play_count),
                     extra_data: Default::default(),
                 });
             }
         }
 
-        Ok(result)
+        Ok(UserTopReleasesPage {
+            releases,
+            cursor: if has_more {
+                Some(encode_offset_cursor(offset + limit)?)
+            } else {
+                None
+            },
+        })
     }
 
     async fn get_latest(
@@ -325,9 +433,41 @@ impl StatsRepo for PgDataSource {
     }
 }
 
+impl PgDataSource {
+    async fn resolve_actor_to_did(&self, actor: &str) -> anyhow::Result<String> {
+        if actor.starts_with("did:") {
+            return Ok(actor.to_string());
+        }
+
+        if let Some(row) = sqlx::query_as::<_, (String,)>(
+            "SELECT did FROM profiles WHERE LOWER(handle) = LOWER($1) LIMIT 1",
+        )
+        .bind(actor.trim_start_matches("at://"))
+        .fetch_optional(&self.db)
+        .await?
+        {
+            return Ok(row.0);
+        }
+
+        let url = format!(
+            "https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle={}",
+            url::form_urlencoded::byte_serialize(actor.as_bytes()).collect::<String>()
+        );
+        let response: serde_json::Value = reqwest::get(&url).await?.json().await?;
+        response
+            .get("did")
+            .and_then(|did| did.as_str())
+            .map(ToString::to_string)
+            .ok_or_else(|| anyhow!("could not resolve actor handle: {actor}"))
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{LatestPlaysCursor, decode_latest_cursor, encode_latest_cursor};
+    use super::{
+        LatestPlaysCursor, OffsetCursor, StatsPeriod, decode_latest_cursor, decode_offset_cursor,
+        encode_latest_cursor, encode_offset_cursor, normalize_limit,
+    };
 
     #[test]
     fn latest_cursor_round_trips() -> anyhow::Result<()> {
@@ -346,5 +486,37 @@ mod tests {
     #[test]
     fn latest_cursor_rejects_invalid_values() {
         assert!(decode_latest_cursor(Some("not-a-cursor")).is_err());
+    }
+
+    #[test]
+    fn offset_cursor_round_trips() -> anyhow::Result<()> {
+        let encoded = encode_offset_cursor(100)?;
+        assert_eq!(decode_offset_cursor(Some(&encoded))?, 100);
+        Ok(())
+    }
+
+    #[test]
+    fn offset_cursor_defaults_and_clamps_negative_values() -> anyhow::Result<()> {
+        assert_eq!(decode_offset_cursor(None)?, 0);
+        let encoded = super::encode_cursor(&OffsetCursor { offset: -10 })?;
+        assert_eq!(decode_offset_cursor(Some(&encoded))?, 0);
+        Ok(())
+    }
+
+    #[test]
+    fn stats_period_accepts_only_lexicon_values() {
+        assert_eq!(StatsPeriod::parse(None).unwrap(), StatsPeriod::ThirtyDays);
+        assert_eq!(
+            StatsPeriod::parse(Some("7days")).unwrap(),
+            StatsPeriod::SevenDays
+        );
+        assert!(StatsPeriod::parse(Some("all")).is_err());
+    }
+
+    #[test]
+    fn stats_limit_is_bounded() {
+        assert_eq!(normalize_limit(None), 50);
+        assert_eq!(normalize_limit(Some(-5)), 1);
+        assert_eq!(normalize_limit(Some(500)), 100);
     }
 }

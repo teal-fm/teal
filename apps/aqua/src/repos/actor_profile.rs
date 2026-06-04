@@ -97,11 +97,8 @@ impl ActorProfileRepo for PgDataSource {
                 SELECT record
                 FROM statii
                 WHERE did = p.did
-                  AND COALESCE(
-                    (record->>'expiry')::timestamptz,
-                    (record->>'time')::timestamptz + INTERVAL '10 minutes'
-                  ) > NOW()
-                ORDER BY (record->>'time')::timestamptz DESC, indexed_at DESC
+                  AND expires_at > NOW()
+                ORDER BY status_time DESC, indexed_at DESC
                 LIMIT 1
             ) s ON TRUE
             WHERE (p.did = ANY($1))
