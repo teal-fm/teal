@@ -6,6 +6,7 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Stack } from "expo-router";
+import CreateSocialPostModal from "@/components/teal/CreateSocialPostModal";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
 import SocialComposer from "@/components/teal/SocialComposer";
@@ -13,7 +14,9 @@ import SocialPostCard from "@/components/teal/SocialPostCard";
 import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   displayArtists,
   getLatestPlays,
@@ -22,6 +25,7 @@ import {
   type SocialPostView,
 } from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
+import { Plus } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
@@ -32,6 +36,7 @@ export default function HomeScreen() {
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [createPostOpen, setCreatePostOpen] = useState(false);
   const loadingMoreRef = useRef(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
 
@@ -130,6 +135,31 @@ export default function HomeScreen() {
         eyebrow="Global feed"
         title="Recently listened"
         detail="LIVE INDEX"
+      />
+      <View className="mb-6 rounded-lg border border-border bg-card p-4">
+        <View className="flex-row items-center justify-between gap-4">
+          <View className="min-w-0 flex-1">
+            <Text className="font-mono text-[10px] uppercase text-primary">
+              Teal social
+            </Text>
+            <Text className="mt-1 text-lg font-black">Post about any song</Text>
+            <Text className="text-sm text-muted-foreground">
+              Attach a MusicBrainz result or one of your indexed recent plays.
+            </Text>
+          </View>
+          <Button
+            className="shrink-0 flex-row gap-2"
+            onPress={() => setCreatePostOpen(true)}
+          >
+            <Icon icon={Plus} size={17} className="text-primary-foreground" />
+            <Text>Create post</Text>
+          </Button>
+        </View>
+      </View>
+      <CreateSocialPostModal
+        visible={createPostOpen}
+        onClose={() => setCreatePostOpen(false)}
+        onPublished={(post) => setSocialPosts((current) => [post, ...current])}
       />
       {currentStatus && (
         <View className="mb-6 gap-3">
