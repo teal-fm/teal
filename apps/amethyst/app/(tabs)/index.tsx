@@ -8,17 +8,25 @@ import {
 import { Stack } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
+import SocialPostCard from "@/components/teal/SocialPostCard";
 import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
-import { displayArtists, getLatestPlays, getProfile } from "@/lib/teal/api";
+import {
+  displayArtists,
+  getLatestPlays,
+  getProfile,
+  getSocialFeed,
+  type SocialPostView,
+} from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 export default function HomeScreen() {
   const [plays, setPlays] = useState<PlayView[] | null>(null);
+  const [socialPosts, setSocialPosts] = useState<SocialPostView[]>([]);
   const [currentStatus, setCurrentStatus] = useState<PlayView | null>(null);
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +47,20 @@ export default function HomeScreen() {
           setError(e instanceof Error ? e.message : String(e));
           setPlays([]);
         }
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    getSocialFeed(10)
+      .then((res) => {
+        if (mounted) setSocialPosts(res.items);
+      })
+      .catch(() => {
+        if (mounted) setSocialPosts([]);
       });
     return () => {
       mounted = false;
@@ -119,6 +141,18 @@ export default function HomeScreen() {
           <Text className="text-sm font-bold text-muted-foreground">
             {displayArtists(currentStatus) || "Unknown artist"}
           </Text>
+        </View>
+      )}
+      {socialPosts.length > 0 && (
+        <View className="mb-8 gap-3">
+          <SectionHeading
+            eyebrow="Social feed"
+            title="Posts with tracks"
+            detail="NEW LEXICONS"
+          />
+          {socialPosts.map((post) => (
+            <SocialPostCard key={post.uri} post={post} />
+          ))}
         </View>
       )}
       {!plays && (
