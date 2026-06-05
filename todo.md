@@ -16,6 +16,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
 - Cadet has a TAP backfill consumer and `pnpm backfill` command. The command discovers Teal repos with `TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play`, filters delivered records with `TAP_COLLECTION_FILTERS=fm.teal.*`, and consumes TAP record events through the existing Teal ingestors. Full-network TAP backfill remains an explicit env override.
 - Cadet normalizes historical play MBID fields during ingestion: empty optional MBIDs are treated as missing, and bare MusicBrainz UUIDs are canonicalized to `mbid:<uuid>` before storage.
+- Cadet indexes Jetstream identity handle changes into `profiles.handle`; Aqua includes that handle on profile responses, and Amethyst falls back to public Bluesky handles when an existing Teal profile row has not received an identity event yet.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
@@ -59,6 +60,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 
 ## Next: Firehose Ingestion
 
+- [ ] Handle Jetstream account lifecycle events in Cadet, including deletes, takedowns, suspensions, activations, and tombstones, and decide how each state should affect indexed profiles, social records, and plays.
 - [x] Add Cadet create, update, and delete integration tests for `fm.teal.alpha.feed.play`.
 - [x] Add profile create, update, and delete ingestion integration tests for `fm.teal.alpha.actor.profile`.
 - [x] Verify Jetstream filtering against `wantedCollections=fm.teal.alpha.feed.play` in a live environment.

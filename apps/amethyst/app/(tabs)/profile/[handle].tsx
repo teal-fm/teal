@@ -102,6 +102,17 @@ export default function ProfileScreen() {
 
         try {
           nextProfile = (await getProfile(resolved)).profile;
+          if (!nextProfile.handle) {
+            const bskyProfile = await getBlueskyProfile(resolved).catch(
+              () => null,
+            );
+            if (bskyProfile) {
+              nextProfile = {
+                ...nextProfile,
+                handle: bskyProfile.handle,
+              };
+            }
+          }
         } catch (profileError) {
           if (
             !(profileError instanceof XrpcError) ||

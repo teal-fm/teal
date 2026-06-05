@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use cadet::{
     cursor::{self, load_cursor},
-    db, ingestors, redis_client, teal_ingestors,
+    db, identity, ingestors, redis_client, teal_ingestors,
 };
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tracing::{error, info};
@@ -233,6 +233,11 @@ async fn main() {
     let c_cursor = cursor.clone();
     tokio::spawn(async move {
         while let Ok(message) = msg_rx.recv_async().await {
+            if let Ok(text) = message.to_text() {
+                if let Err(e) = identity::ingest_identity_event(&pool, text).await {
+                    error!("Error processing identity event: {}", e);
+                }
+            }
             if let Err(e) =
                 handler::handle_message(message, &ingestors, reconnect_tx.clone(), c_cursor.clone())
                     .await
