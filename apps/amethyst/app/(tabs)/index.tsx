@@ -55,8 +55,8 @@ function HomeFeedTabButton({
       <Text
         className={
           active
-            ? "text-sm font-black"
-            : "text-sm font-bold text-muted-foreground"
+            ? "text-sm font-semibold"
+            : "text-sm font-medium text-muted-foreground"
         }
       >
         {label}
@@ -175,7 +175,7 @@ export default function HomeScreen() {
           }}
         />
       </View>
-      <View className="mb-5 overflow-hidden rounded-lg border border-border bg-card">
+      <View className="mb-5 overflow-hidden rounded-lg border border-border bg-white/75">
         <View className="flex-row overflow-hidden">
           <HomeFeedTabButton
             active={activeFeed === "posts"}

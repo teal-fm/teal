@@ -130,7 +130,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   }
 
   return (
-    <View className="rounded-lg border border-border bg-card p-4">
+    <View className="rounded-lg border border-border bg-white/75 p-4">
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row gap-3">
           <Link href={`/profile/${authorHref}` as any} asChild>
@@ -150,7 +150,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
           <View className="min-w-0 flex-1">
             <Link href={`/profile/${authorHref}` as any} asChild>
               <Pressable>
-                <Text className="font-black" numberOfLines={1}>
+                <Text className="font-semibold" numberOfLines={1}>
                   {authorLabel}
                 </Text>
               </Pressable>
@@ -163,7 +163,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
                 @{authorHandle}
               </Text>
             )}
-            <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+            <Text className="text-xs font-light text-muted-foreground">
               posted {timeAgo(new Date(post.createdAt))}
             </Text>
           </View>
@@ -171,17 +171,21 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
       </View>
 
       {post.text ? (
-        <RichText text={post.text} facets={post.facets} className="mt-4 text-base" />
+        <RichText
+          text={post.text}
+          facets={post.facets}
+          className="mt-4 text-base"
+        />
       ) : null}
 
       <Link href={musicHref(play) as any} asChild>
-        <Pressable className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
+        <Pressable className="mt-4 rounded-lg border border-border bg-white/55 p-3">
           <View className="flex-row items-center gap-3">
-            <View className="h-10 w-10 items-center justify-center rounded-lg bg-background">
+            <View className="h-10 w-10 items-center justify-center rounded-lg bg-accent">
               <Icon icon={Music2} size={18} className="text-primary" />
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="font-black" numberOfLines={1}>
+              <Text className="font-semibold" numberOfLines={1}>
                 {play.trackName}
               </Text>
               <Text className="text-sm text-muted-foreground" numberOfLines={1}>

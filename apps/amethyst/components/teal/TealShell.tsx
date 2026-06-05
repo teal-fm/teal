@@ -29,15 +29,25 @@ type TealShellProps = {
   onScroll?: ScrollViewProps["onScroll"];
 };
 
+const landingBackgroundStyle = {
+  backgroundImage:
+    "radial-gradient(circle at 48% 24%, rgba(255,255,255,0.7) 0, rgba(255,255,255,0) 30rem), linear-gradient(135deg, #e9eef7 0%, #f4e8ff 48%, #dfe7f0 100%)",
+} as any;
+
 function RecordLogo() {
   return (
     <View className="flex-row items-center gap-3">
-      <View className="h-11 w-11 items-center justify-center rounded-full border-[5px] border-foreground">
-        <View className="h-3 w-3 rounded-full bg-secondary" />
+      <View className="h-11 w-11 items-center justify-center rounded-full bg-primary">
+        <Icon icon={Radio} size={23} className="text-foreground" />
       </View>
       <View>
-        <Text className="font-sans text-3xl font-black leading-8">Teal</Text>
-        <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+        <Text className="font-sans text-3xl font-semibold leading-8">
+          teal
+          <Text className="font-crimson-italic text-3xl font-semibold text-primary">
+            .fm
+          </Text>
+        </Text>
+        <Text className="text-[11px] font-light text-primary">
           listening network
         </Text>
       </View>
@@ -60,7 +70,7 @@ function NavItem({
     <Link href={href as any} asChild>
       <Pressable
         className={`flex-row items-center gap-3 rounded-lg px-3 py-3 web:transition-colors ${
-          active ? "bg-accent" : "web:hover:bg-accent/60"
+          active ? "bg-white/70" : "web:hover:bg-white/45"
         }`}
       >
         <Icon
@@ -70,7 +80,9 @@ function NavItem({
         />
         <Text
           className={
-            active ? "font-black text-foreground" : "font-bold text-foreground"
+            active
+              ? "font-semibold text-foreground"
+              : "font-medium text-foreground"
           }
         >
           {label}
@@ -101,7 +113,7 @@ function LeftRail() {
     : undefined;
 
   return (
-    <View className="hidden w-[16rem] shrink-0 border-r border-border bg-background/95 px-5 py-7 lg:flex">
+    <View className="hidden w-[16rem] shrink-0 border-r border-border bg-white/35 px-5 py-7 lg:flex">
       <RecordLogo />
       <View className="mt-12 gap-1">
         <NavItem href="/" icon={Home} label="Home" active={pathname === "/"} />
@@ -119,7 +131,7 @@ function LeftRail() {
         />
       </View>
       <View className="mt-auto border-t border-border pt-5">
-        <Text className="mb-3 font-mono text-[10px] uppercase text-muted-foreground">
+        <Text className="mb-3 text-xs font-light text-primary">
           ATProto appview
         </Text>
         <Link
@@ -130,7 +142,7 @@ function LeftRail() {
           }
           asChild
         >
-          <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card p-3 web:hover:border-primary/50">
+          <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-white/70 p-3 web:hover:border-primary/50">
             <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary">
               {status === "loggedIn" && avatar ? (
                 <Image source={{ uri: avatar }} className="h-full w-full" />
@@ -143,11 +155,11 @@ function LeftRail() {
               )}
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="text-sm font-black" numberOfLines={1}>
+              <Text className="text-sm font-semibold" numberOfLines={1}>
                 {status === "loggedIn" ? displayName : "Sign in"}
               </Text>
               <Text
-                className="font-mono text-[10px] text-muted-foreground"
+                className="text-xs font-light text-muted-foreground"
                 numberOfLines={1}
               >
                 {status === "loggedIn"
@@ -177,7 +189,7 @@ function MobileNav() {
     { href: "/auth/login", icon: CircleUserRound, active: false },
   ];
   return (
-    <View className="absolute bottom-4 left-4 right-4 z-30 flex-row items-center justify-around rounded-lg border border-border bg-background/95 p-2 shadow-lg lg:hidden">
+    <View className="absolute bottom-4 left-4 right-4 z-30 flex-row items-center justify-around rounded-lg border border-border bg-white/90 p-2 shadow-lg lg:hidden">
       {items.map((item) => (
         <Link key={item.href} href={item.href as any} asChild>
           <Pressable
@@ -210,14 +222,14 @@ export function SectionHeading({
     <View className="mb-4 flex-row items-end justify-between gap-4">
       <View className="min-w-0 flex-1">
         {eyebrow && (
-          <Text className="mb-1 font-mono text-[10px] uppercase text-primary">
+          <Text className="mb-1 text-xs font-light text-primary">
             {eyebrow}
           </Text>
         )}
-        <Text className="font-sans text-2xl font-black">{title}</Text>
+        <Text className="font-sans text-2xl font-semibold">{title}</Text>
       </View>
       {detail && (
-        <Text className="font-mono text-[10px] text-muted-foreground">
+        <Text className="text-xs font-light text-muted-foreground">
           {detail}
         </Text>
       )}
@@ -234,10 +246,13 @@ export default function TealShell({
   const isMobile = useIsMobile();
 
   return (
-    <View className="min-h-screen flex-1 bg-background">
-      <View className="z-20 flex-row items-center justify-center gap-2 border-b border-border bg-foreground px-3 py-2">
-        <Icon icon={Radio} size={13} className="text-secondary" />
-        <Text className="font-mono text-[10px] uppercase text-background">
+    <View
+      className="min-h-screen flex-1 bg-background"
+      style={landingBackgroundStyle}
+    >
+      <View className="z-20 flex-row items-center justify-center gap-2 border-b border-border bg-white/35 px-3 py-2">
+        <Icon icon={Radio} size={13} className="text-primary" />
+        <Text className="text-[11px] font-light text-primary">
           Live ATProto index · early preview
         </Text>
       </View>
@@ -251,7 +266,7 @@ export default function TealShell({
         >
           <View className="min-h-screen w-full max-w-[48rem] px-4 py-7 md:px-7 lg:px-8">
             {title && (
-              <Text className="mb-7 font-sans text-4xl font-black">
+              <Text className="mb-7 font-sans text-4xl font-semibold">
                 {title}
               </Text>
             )}
@@ -259,7 +274,7 @@ export default function TealShell({
           </View>
         </ScrollView>
         {!isMobile && rightRail && (
-          <View className="hidden w-[19rem] shrink-0 border-l border-border bg-foreground px-5 py-7 xl:flex">
+          <View className="hidden w-[19rem] shrink-0 border-l border-border bg-white/35 px-5 py-7 xl:flex">
             {rightRail}
           </View>
         )}
