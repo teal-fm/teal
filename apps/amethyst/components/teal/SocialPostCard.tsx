@@ -168,11 +168,6 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
             </Text>
           </View>
         </View>
-        <View className="rounded-full bg-accent px-2 py-1">
-          <Text className="font-mono text-[10px] uppercase text-primary">
-            Social
-          </Text>
-        </View>
       </View>
 
       {post.text ? (

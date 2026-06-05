@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   View,
@@ -22,21 +22,28 @@ import {
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
+type FeedPlayView = PlayView & {
+  createdAt?: string;
+};
+
 export default function HomeScreen() {
   const [plays, setPlays] = useState<PlayView[] | null>(null);
   const [socialPosts, setSocialPosts] = useState<SocialPostView[]>([]);
-  const [cursor, setCursor] = useState<string>();
+  const [playCursor, setPlayCursor] = useState<string>();
+  const [postCursor, setPostCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
-    getLatestPlays(30)
-      .then((res) => {
+    Promise.all([getLatestPlays(30), getSocialFeed(30)])
+      .then(([playRes, postRes]) => {
         if (!mounted) return;
-        setPlays(res.plays);
-        setCursor(res.cursor);
+        setPlays(playRes.plays);
+        setPlayCursor(playRes.cursor);
+        setSocialPosts(postRes.items);
+        setPostCursor(postRes.cursor);
       })
       .catch((e) => {
         if (mounted) {
@@ -49,36 +56,62 @@ export default function HomeScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    getSocialFeed(10)
-      .then((res) => {
-        if (mounted) setSocialPosts(res.items);
-      })
-      .catch(() => {
-        if (mounted) setSocialPosts([]);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const feedItems = useMemo(() => {
+    const playItems =
+      plays?.map((play, index) => ({
+        type: "play" as const,
+        key: play.uri || `${play.trackName}-${play.playedTime}-${index}`,
+        sortTime: feedDate(play.playedTime, (play as FeedPlayView).createdAt),
+        play,
+      })) || [];
+    const postItems = socialPosts.map((post) => ({
+      type: "post" as const,
+      key: post.uri,
+      sortTime: feedDate(post.createdAt),
+      post,
+    }));
+
+    return [...playItems, ...postItems].sort((a, b) => b.sortTime - a.sortTime);
+  }, [plays, socialPosts]);
 
   const loadMore = useCallback(() => {
-    if (!cursor || loadingMoreRef.current) return;
+    if ((!playCursor && !postCursor) || loadingMoreRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
-    getLatestPlays(30, cursor)
-      .then((res) => {
-        setPlays((current) => {
-          const knownUris = new Set(current?.map((play) => play.uri) || []);
-          return [
-            ...(current || []),
-            ...res.plays.filter(
-              (play) => !play.uri || !knownUris.has(play.uri),
-            ),
-          ];
-        });
-        setCursor(res.cursor);
+    Promise.all([
+      playCursor
+        ? getLatestPlays(30, playCursor)
+        : Promise.resolve({ plays: [] as PlayView[], cursor: undefined }),
+      postCursor
+        ? getSocialFeed(30, postCursor)
+        : Promise.resolve({
+            items: [] as SocialPostView[],
+            cursor: undefined,
+          }),
+    ])
+      .then(([playRes, postRes]) => {
+        if (playCursor) {
+          setPlays((current) => {
+            const knownUris = new Set(current?.map((play) => play.uri) || []);
+            return [
+              ...(current || []),
+              ...playRes.plays.filter(
+                (play) => !play.uri || !knownUris.has(play.uri),
+              ),
+            ];
+          });
+          setPlayCursor(playRes.cursor);
+        }
+        if (postCursor) {
+          setSocialPosts((current) => {
+            const knownUris = new Set(current.map((post) => post.uri));
+            return [
+              ...current,
+              ...postRes.items.filter((post) => !knownUris.has(post.uri)),
+            ];
+          });
+          setPostCursor(postRes.cursor);
+        }
       })
       .catch((e) => {
         setError(e instanceof Error ? e.message : String(e));
@@ -87,7 +120,7 @@ export default function HomeScreen() {
         loadingMoreRef.current = false;
         setLoadingMore(false);
       });
-  }, [cursor]);
+  }, [playCursor, postCursor]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -105,7 +138,7 @@ export default function HomeScreen() {
       <Stack.Screen options={{ title: "Teal", headerShown: false }} />
       <SectionHeading
         eyebrow="Global feed"
-        title="Recently listened"
+        title="New listens and posts"
         detail="LIVE INDEX"
       />
       <View className="mb-6">
@@ -116,18 +149,6 @@ export default function HomeScreen() {
           }
         />
       </View>
-      {socialPosts.length > 0 && (
-        <View className="mb-8 gap-3">
-          <SectionHeading
-            eyebrow="Social feed"
-            title="Posts with tracks"
-            detail="NEW LEXICONS"
-          />
-          {socialPosts.map((post) => (
-            <SocialPostCard key={post.uri} post={post} />
-          ))}
-        </View>
-      )}
       {!plays && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
@@ -140,32 +161,44 @@ export default function HomeScreen() {
           </Text>
         </View>
       )}
-      {plays?.length === 0 && !error && (
+      {plays && feedItems.length === 0 && !error && (
         <View className="min-h-[24rem] items-center justify-center rounded-lg border border-border bg-card p-8">
           <Text className="text-center text-2xl font-black">
-            No plays indexed yet.
+            No feed activity indexed yet.
           </Text>
           <Text className="mt-2 text-center text-muted-foreground">
-            Cadet will fill this feed as ATProto firehose records arrive.
+            Cadet will fill this feed as ATProto records arrive.
           </Text>
         </View>
       )}
-      {plays?.map((play, index) => (
-        <PlayFeedCard
-          key={play.uri || `${play.trackName}-${play.playedTime}-${index}`}
-          play={play}
-        />
-      ))}
+      {feedItems.map((item) =>
+        item.type === "play" ? (
+          <PlayFeedCard key={item.key} play={item.play} />
+        ) : (
+          <View key={item.key} className="mb-4">
+            <SocialPostCard post={item.post} />
+          </View>
+        ),
+      )}
       {loadingMore && (
         <View className="items-center justify-center py-5">
           <ActivityIndicator />
         </View>
       )}
-      {plays && plays.length > 0 && !cursor && (
+      {plays && feedItems.length > 0 && !playCursor && !postCursor && (
         <Text className="pb-6 text-center font-mono text-xs text-muted-foreground">
           You reached the beginning of the indexed feed.
         </Text>
       )}
     </TealShell>
   );
+}
+
+function feedDate(...dates: Array<string | undefined>) {
+  for (const date of dates) {
+    if (!date) continue;
+    const timestamp = new Date(date).getTime();
+    if (Number.isFinite(timestamp)) return timestamp;
+  }
+  return 0;
 }
