@@ -22,19 +22,18 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
 - Development Compose includes an optional Cloudflare Tunnel profile.
-- Current temporary UI preview: `https://performing-readily-peace-payment.trycloudflare.com`
-  - This is an account-less Cloudflare quick tunnel. It remains available while the local tunnel process is running and its hostname will change after restart.
-  - The preview serves the current Amethyst export through a local static/proxy server on port 8787 and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
-  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://performing-readily-peace-payment.trycloudflare.com` and `EXPO_PUBLIC_AQUA_URL=https://performing-readily-peace-payment.trycloudflare.com`; `/client-metadata.json` serves a matching OAuth redirect.
+- Current stable UI preview: `https://sigilyph.teal.fm`
+  - Cloudflare Tunnel `teal-dev-sigilyph` routes `sigilyph.teal.fm` to the Compose `amethyst:80` service.
+  - The ignored local `.env` has `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.
+  - Use `pnpm tunnel:up`, `pnpm tunnel:down`, `pnpm tunnel:status`, `pnpm tunnel:logs`, and `pnpm tunnel:verify` for the stable preview.
   - The preview API is pointed at the OrbStack/Docker Postgres and Garnet services so it serves the existing indexed play corpus.
-  - OAuth callback testing still requires the stable-host work below.
 
 ## Next: Public Demo And OAuth
 
-- [ ] Reserve a stable Cloudflare Tunnel hostname for development OAuth testing. Quick tunnels are useful for UI previews but their random hostnames change after restart.
-- [ ] Route the stable public hostname to Amethyst and expose Aqua through a public HTTPS origin or a same-origin reverse proxy.
-- [ ] Build Amethyst with `EXPO_PUBLIC_BASE_URL=https://<tunnel-host>` and `EXPO_PUBLIC_AQUA_URL=https://<public-aqua-host>`.
-- [ ] Serve `/client-metadata.json` with `redirect_uris=["https://<tunnel-host>/auth/callback"]`.
+- [x] Reserve a stable Cloudflare Tunnel hostname for development OAuth testing: `sigilyph.teal.fm`.
+- [x] Route the stable public hostname to Amethyst and expose Aqua through the same-origin Amethyst reverse proxy.
+- [x] Build Amethyst with `EXPO_PUBLIC_BASE_URL=https://sigilyph.teal.fm` and `EXPO_PUBLIC_AQUA_URL=https://sigilyph.teal.fm`.
+- [x] Serve `/client-metadata.json` with `redirect_uris=["https://sigilyph.teal.fm/auth/callback"]`.
 - [ ] Complete ATProto OAuth sign-in and callback QA through the stable public hostname.
 - [x] Document the stable tunnel token or named-tunnel setup without committing secrets.
 

@@ -25,7 +25,7 @@ done
 
 # Generate lexicons
 echo "Generating lexicons from: $lexicon_paths"
-node ../../node_modules/@atproto/lex-cli/dist/index.js gen-server ./src $lexicon_paths --yes
+pnpm exec lex gen-server ./src $lexicon_paths --yes
 
 mkdir -p ./src/types/app/bsky/richtext
 cat > ./src/types/app/bsky/richtext/facet.ts <<'EOF'
