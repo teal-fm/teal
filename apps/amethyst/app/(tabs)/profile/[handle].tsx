@@ -49,7 +49,6 @@ type DisplayProfile = Pick<
   | "descriptionFacets"
   | "avatar"
   | "banner"
-  | "profileStatus"
   | "status"
 > & {
   handle?: string;
@@ -199,7 +198,6 @@ export default function ProfileScreen() {
   const currentStatusArt = statusArtFailed
     ? undefined
     : currentStatusReleaseArt || statusRecordingArt;
-  const onboarding = profile?.profileStatus?.completedOnboarding;
 
   useEffect(() => {
     let mounted = true;
@@ -269,11 +267,6 @@ export default function ProfileScreen() {
                   @{profile.handle}
                 </Text>
               )}
-              {!isSelf && (
-                <Text className="font-mono text-sm text-muted-foreground">
-                  {did}
-                </Text>
-              )}
               {isSelf && (
                 <Button
                   className="mt-5 flex-row gap-2 self-start"
@@ -302,13 +295,6 @@ export default function ProfileScreen() {
                   facets={profile.descriptionFacets}
                   className="mt-4 text-lg"
                 />
-              )}
-              {onboarding && (
-                <View className="mt-4 self-start rounded-full border border-border bg-muted px-3 py-1">
-                  <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-                    Onboarding: {onboarding}
-                  </Text>
-                </View>
               )}
               {currentStatus && (
                 <View className="mt-4 flex-row items-center gap-2 self-start">
