@@ -100,29 +100,44 @@ impl ActorProfileRepo for PgDataSource {
         }
 
         let profiles = sqlx::query_as::<_, PgProfileRepoRows>(
-            "SELECT
+            "WITH actors AS (
+                SELECT p.did
+                FROM profiles p
+                WHERE (p.did = ANY($1))
+                OR (p.handle = ANY($2))
+                UNION
+                SELECT ps.did
+                FROM profile_statuses ps
+                WHERE ps.did = ANY($1)
+                UNION
+                SELECT s.did
+                FROM statii s
+                WHERE s.did = ANY($1)
+                  AND s.expires_at > NOW()
+            )
+            SELECT
                 p.avatar,
                 p.banner,
                 p.created_at,
                 p.description,
                 p.description_facets,
-                p.did,
+                actors.did,
                 p.display_name,
                 p.handle,
                 ps.record as profile_status,
                 s.record as status
-            FROM profiles p
-            LEFT JOIN profile_statuses ps ON p.did = ps.did
+            FROM actors
+            LEFT JOIN profiles p ON p.did = actors.did
+            LEFT JOIN profile_statuses ps ON actors.did = ps.did
             LEFT JOIN LATERAL (
                 SELECT record
                 FROM statii
-                WHERE did = p.did
+                WHERE did = actors.did
                   AND expires_at > NOW()
                 ORDER BY status_time DESC, indexed_at DESC
                 LIMIT 1
             ) s ON TRUE
-            WHERE (p.did = ANY($1))
-            OR (p.handle = ANY($2))",
+            ORDER BY actors.did",
         )
         .bind(&dids)
         .bind(&handles)

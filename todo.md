@@ -14,7 +14,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst profile headers show display name, handle, bio, images, and current listening only; protocol internals like DID and onboarding status are hidden from the public profile UI.
-- Amethyst profiles show a minimal current-listening row only when an active status exists, with album art resolved from release MBID and recording fallback.
+- Amethyst profiles show a minimal current-listening row only when an active status exists, including status-backed profiles that have no Teal profile record and render Bluesky identity as a fallback, with album art resolved from release MBID and recording fallback.
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
 - Cadet has a TAP backfill consumer and `pnpm backfill` command. The command discovers Teal repos with `TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play`, filters delivered records with `TAP_COLLECTION_FILTERS=fm.teal.*`, and consumes TAP record events through the existing Teal ingestors. Full-network TAP backfill remains an explicit env override.
 - Cadet normalizes historical play MBID fields during ingestion: empty optional MBIDs are treated as missing, and bare MusicBrainz UUIDs are canonicalized to `mbid:<uuid>` before storage.

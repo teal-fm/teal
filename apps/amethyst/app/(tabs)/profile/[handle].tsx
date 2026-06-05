@@ -54,6 +54,30 @@ type DisplayProfile = Pick<
   handle?: string;
 };
 
+function mergeBlueskyProfile(
+  tealProfile: DisplayProfile,
+  bskyProfile: AppBskyActorDefs.ProfileViewDetailed,
+): DisplayProfile {
+  return {
+    ...tealProfile,
+    avatar: tealProfile.avatar || bskyProfile.avatar,
+    banner: tealProfile.banner || bskyProfile.banner,
+    description: tealProfile.description || bskyProfile.description,
+    displayName: tealProfile.displayName || bskyProfile.displayName,
+    handle: tealProfile.handle || bskyProfile.handle,
+  };
+}
+
+function needsBlueskyFallback(profile: DisplayProfile) {
+  return (
+    !profile.avatar ||
+    !profile.banner ||
+    !profile.description ||
+    !profile.displayName ||
+    !profile.handle
+  );
+}
+
 export default function ProfileScreen() {
   const { handle } = useLocalSearchParams();
   const actor = Array.isArray(handle) ? handle[0] : handle;
@@ -101,15 +125,17 @@ export default function ProfileScreen() {
 
         try {
           nextProfile = (await getProfile(resolved)).profile;
-          if (!nextProfile.handle) {
+          if (needsBlueskyFallback(nextProfile)) {
             const bskyProfile = await getBlueskyProfile(resolved).catch(
               () => null,
             );
             if (bskyProfile) {
-              nextProfile = {
-                ...nextProfile,
-                handle: bskyProfile.handle,
-              };
+              nextIsBlueskyFallback =
+                !nextProfile.displayName &&
+                !nextProfile.description &&
+                !nextProfile.avatar &&
+                !nextProfile.banner;
+              nextProfile = mergeBlueskyProfile(nextProfile, bskyProfile);
             }
           }
         } catch (profileError) {
