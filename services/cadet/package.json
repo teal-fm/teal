@@ -9,5 +9,5 @@
     "test": "SQLX_OFFLINE=true cargo test -p cadet",
     "test:rust": "SQLX_OFFLINE=true cargo test -p cadet"
   },
-  "packageManager": "pnpm@10.18.0"
+  "packageManager": "pnpm@11.5.2"
 }
