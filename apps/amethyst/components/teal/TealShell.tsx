@@ -131,9 +131,6 @@ function LeftRail() {
         />
       </View>
       <View className="mt-auto border-t border-border pt-5">
-        <Text className="mb-3 text-xs font-light text-primary">
-          ATProto appview
-        </Text>
         <Link
           href={
             status === "loggedIn" && agent?.did
@@ -250,10 +247,11 @@ export default function TealShell({
       className="min-h-screen flex-1 bg-background"
       style={landingBackgroundStyle}
     >
-      <View className="z-20 flex-row items-center justify-center gap-2 border-b border-border bg-white/35 px-3 py-2">
-        <Icon icon={Radio} size={13} className="text-primary" />
+      <View className="z-20 flex-row items-center justify-center border-b border-border bg-white/35 px-3 py-2">
         <Text className="text-[11px] font-light text-primary">
-          Live ATProto index · early preview
+          {
+            "this is an early early work in progress!! 🚧 expect bugs, missing features, and regular database wipes"
+          }
         </Text>
       </View>
       <View className="z-10 flex-1 flex-row">

@@ -29,13 +29,11 @@ type HomeFeed = "posts" | "listens";
 
 function HomeFeedTabButton({
   active,
-  count,
   icon,
   label,
   onPress,
 }: {
   active: boolean;
-  count: number;
   icon: typeof Music2;
   label: string;
   onPress: () => void;
@@ -61,7 +59,6 @@ function HomeFeedTabButton({
       >
         {label}
       </Text>
-      <Text className="font-mono text-xs text-muted-foreground">{count}</Text>
     </Pressable>
   );
 }
@@ -164,7 +161,6 @@ export default function HomeScreen() {
       <SectionHeading
         eyebrow="Global feed"
         title="Posts and listens"
-        detail="LIVE INDEX"
       />
       <View className="mb-6">
         <SocialComposer
@@ -179,14 +175,12 @@ export default function HomeScreen() {
         <View className="flex-row overflow-hidden">
           <HomeFeedTabButton
             active={activeFeed === "posts"}
-            count={socialPosts.length}
             icon={MessageCircle}
             label="Posts"
             onPress={() => setActiveFeed("posts")}
           />
           <HomeFeedTabButton
             active={activeFeed === "listens"}
-            count={visiblePlays.length}
             icon={Music2}
             label="Listens"
             onPress={() => setActiveFeed("listens")}
