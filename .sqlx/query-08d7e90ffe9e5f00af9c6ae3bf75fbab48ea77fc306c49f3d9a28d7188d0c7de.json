@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,\n                p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,\n                p.submission_client_agent, p.music_service_base_domain, p.origin_url,\n                profile.did AS \"profile_did?\", profile.handle AS profile_handle,\n                profile.display_name AS profile_display_name, profile.avatar AS profile_avatar,\n                COALESCE(\n                  json_agg(\n                    json_build_object(\n                      'artistMbId', ae.mbid,\n                      'artistName', ptae.artist_name\n                    )\n                  ) FILTER (WHERE ptae.artist_name IS NOT NULL),\n                  '[]'\n                ) AS artists\n            FROM plays p\n            LEFT JOIN profiles profile ON p.did = profile.did\n            LEFT JOIN play_to_artists_extended as ptae ON p.uri = ptae.play_uri\n            LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id\n            WHERE ($1::timestamptz IS NULL OR (p.processed_time, p.uri) < ($1, $2))\n            GROUP BY p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,\n                     p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,\n                     p.submission_client_agent, p.music_service_base_domain, p.origin_url,\n                     profile.did, profile.handle, profile.display_name, profile.avatar\n            ORDER BY p.processed_time DESC\n            LIMIT $3\n            ",
+  "query": "\n            SELECT\n                p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,\n                p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,\n                p.submission_client_agent, p.music_service_base_domain, p.origin_url,\n                COALESCE(p.played_time, p.processed_time) AS \"sort_time?\",\n                profile.did AS \"profile_did?\", profile.handle AS profile_handle,\n                profile.display_name AS profile_display_name, profile.avatar AS profile_avatar,\n                COALESCE(\n                  json_agg(\n                    json_build_object(\n                      'artistMbId', ae.mbid,\n                      'artistName', ptae.artist_name\n                    )\n                  ) FILTER (WHERE ptae.artist_name IS NOT NULL),\n                  '[]'\n                ) AS artists\n            FROM plays p\n            LEFT JOIN profiles profile ON p.did = profile.did\n            LEFT JOIN play_to_artists_extended as ptae ON p.uri = ptae.play_uri\n            LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id\n            WHERE (\n                $1::timestamptz IS NULL\n                OR (COALESCE(p.played_time, p.processed_time), p.uri) < ($1, $2)\n            )\n            GROUP BY p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,\n                     p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,\n                     p.submission_client_agent, p.music_service_base_domain, p.origin_url,\n                     profile.did, profile.handle, profile.display_name, profile.avatar\n            ORDER BY COALESCE(p.played_time, p.processed_time) DESC, p.uri DESC\n            LIMIT $3\n            ",
   "describe": {
     "columns": [
       {
@@ -80,26 +80,31 @@
       },
       {
         "ordinal": 15,
+        "name": "sort_time?",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 16,
         "name": "profile_did?",
         "type_info": "Text"
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "profile_handle",
         "type_info": "Text"
       },
       {
-        "ordinal": 17,
+        "ordinal": 18,
         "name": "profile_display_name",
         "type_info": "Text"
       },
       {
-        "ordinal": 18,
+        "ordinal": 19,
         "name": "profile_avatar",
         "type_info": "Text"
       },
       {
-        "ordinal": 19,
+        "ordinal": 20,
         "name": "artists",
         "type_info": "Json"
       }
@@ -127,6 +132,7 @@
       true,
       true,
       true,
+      null,
       false,
       true,
       true,
@@ -134,5 +140,5 @@
       null
     ]
   },
-  "hash": "469181e5bef94d33e4275b012bc4cf8a82fb64449f15b5b512237bb63a15f38a"
+  "hash": "08d7e90ffe9e5f00af9c6ae3bf75fbab48ea77fc306c49f3d9a28d7188d0c7de"
 }

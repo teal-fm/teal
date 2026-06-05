@@ -4,6 +4,7 @@ ARG BUILDPLATFORM
 ARG TARGETARCH
 ARG TARGETOS
 
+FROM --platform=${BUILDPLATFORM} node:24-slim AS nodejs
 FROM --platform=${BUILDPLATFORM} rust:latest AS buildah
 
 # Create appuser
@@ -36,8 +37,8 @@ COPY ./ .
 RUN ./scripts/setup-lexicons.sh
 
 # Install Node.js and pnpm for lexicon generation
-RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm@11.5.2
+COPY --from=nodejs /usr/local /usr/local
+RUN corepack enable pnpm
 
 # Install dependencies and generate lexicons
 RUN pnpm install --ignore-scripts
