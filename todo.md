@@ -22,10 +22,11 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
 - Development Compose includes an optional Cloudflare Tunnel profile.
-- Current temporary UI preview: `https://architects-trips-sql-wildlife.trycloudflare.com`
+- Current temporary UI preview: `https://performing-readily-peace-payment.trycloudflare.com`
   - This is an account-less Cloudflare quick tunnel. It remains available while the local tunnel process is running and its hostname will change after restart.
-  - The preview serves the current Amethyst export and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
-  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://architects-trips-sql-wildlife.trycloudflare.com` and serves a matching `/client-metadata.json` OAuth redirect.
+  - The preview serves the current Amethyst export through a local static/proxy server on port 8787 and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
+  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://performing-readily-peace-payment.trycloudflare.com` and `EXPO_PUBLIC_AQUA_URL=https://performing-readily-peace-payment.trycloudflare.com`; `/client-metadata.json` serves a matching OAuth redirect.
+  - This run used local Postgres plus `cloudflared` directly because OrbStack/Docker was unavailable after an interrupted Docker image build.
   - OAuth callback testing still requires the stable-host work below.
 
 ## Next: Public Demo And OAuth
