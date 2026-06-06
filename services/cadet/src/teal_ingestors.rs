@@ -48,6 +48,10 @@ pub fn build_ingestors(pool: PgPool) -> HashMap<String, Box<dyn LexiconIngestor 
             ingestors::teal::social::SocialCollection::Repost,
         ),
         (
+            "fm.teal.alpha.graph.follow",
+            ingestors::teal::social::SocialCollection::Follow,
+        ),
+        (
             "fm.teal.alpha.feed.social.playlist",
             ingestors::teal::social::SocialCollection::Playlist,
         ),
@@ -102,6 +106,7 @@ fn build_ingestors_for_names() -> Vec<String> {
         "fm.teal.alpha.feed.social.post".to_string(),
         "fm.teal.alpha.feed.social.like".to_string(),
         "fm.teal.alpha.feed.social.repost".to_string(),
+        "fm.teal.alpha.graph.follow".to_string(),
         "fm.teal.alpha.feed.social.playlist".to_string(),
         "fm.teal.alpha.feed.social.playlistItem".to_string(),
         "fm.teal.alpha.feed.social.badge".to_string(),

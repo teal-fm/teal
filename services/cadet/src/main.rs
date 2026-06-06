@@ -68,6 +68,7 @@ async fn main() {
                 "fm.teal.alpha.feed.social.post",
                 "fm.teal.alpha.feed.social.like",
                 "fm.teal.alpha.feed.social.repost",
+                "fm.teal.alpha.graph.follow",
                 "fm.teal.alpha.feed.social.playlist",
                 "fm.teal.alpha.feed.social.playlistItem",
                 "fm.teal.alpha.feed.social.badge",

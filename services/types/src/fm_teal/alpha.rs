@@ -5,6 +5,7 @@
 
 pub mod actor;
 pub mod feed;
+pub mod graph;
 pub mod music;
 pub mod richtext;
 pub mod search;

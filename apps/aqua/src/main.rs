@@ -68,6 +68,7 @@ async fn main() -> Result<(), String> {
         )
         .nest("/xrpc/", xrpc::actor::actor_routes())
         .nest("/xrpc/", xrpc::feed::feed_routes())
+        .nest("/xrpc/", xrpc::graph::graph_routes())
         .nest("/xrpc/", xrpc::music::music_routes())
         .nest("/xrpc/", xrpc::search::search_routes())
         .nest("/xrpc/", xrpc::social::social_routes())
