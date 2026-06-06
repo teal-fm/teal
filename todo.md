@@ -41,6 +41,13 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [ ] Complete ATProto OAuth sign-in and callback QA through the stable public hostname.
 - [x] Document the stable tunnel token or named-tunnel setup without committing secrets.
 
+## Next: Current User-Reported Fixes
+
+- [ ] Use the signed-in viewer's Teal profile display name and images in the bottom-left desktop account control instead of the viewer's Bluesky profile data.
+- [ ] Add standalone permalink pages for Teal social posts so posts can be linked directly.
+- [ ] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
+- [ ] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
+
 ## Next: New Lexicon Implementation
 
 - [x] Add Cadet Jetstream collection filters and ingestors for `fm.teal.alpha.actor.profileStatus`, `fm.teal.alpha.feed.social.post`, `like`, `repost`, `playlist`, `playlistItem`, `badge`, and `badgeAssignment`.
