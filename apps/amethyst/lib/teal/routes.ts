@@ -67,12 +67,41 @@ type ParsedAtUri = {
   rkey?: string;
 };
 
+function decodePath(value: string) {
+  let decoded = value;
+  for (let i = 0; i < 2; i++) {
+    try {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    } catch {
+      break;
+    }
+  }
+  return decoded;
+}
+
 export function parseAtUri(uri?: string): ParsedAtUri | undefined {
   if (!uri?.startsWith("at://")) return undefined;
   const rest = uri.slice("at://".length);
   const [did, collection, rkey] = rest.split("/");
   if (!did) return undefined;
   return { did, collection, rkey };
+}
+
+export function atUriFromRoutePath(pathname?: string) {
+  if (!pathname) return undefined;
+  const path = decodePath(pathname);
+  if (path.startsWith("/at://")) {
+    return `at://${path.slice("/at://".length)}`;
+  }
+  if (path.startsWith("/at:/")) {
+    return `at://${path.slice("/at:/".length)}`;
+  }
+  if (path.startsWith("at://")) {
+    return path;
+  }
+  return undefined;
 }
 
 export function profileHrefFromAtUri(uri?: string) {

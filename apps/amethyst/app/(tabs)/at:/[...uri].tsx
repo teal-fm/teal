@@ -4,17 +4,12 @@ import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 import RightRail from "@/components/teal/RightRail";
 import TealShell from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
-import { hrefFromAtUri } from "@/lib/teal/routes";
+import { atUriFromRoutePath, hrefFromAtUri } from "@/lib/teal/routes";
 
 function atUriFromParams(param: string | string[] | undefined) {
   if (typeof window !== "undefined") {
-    const path = window.location.pathname;
-    if (path.startsWith("/at://")) {
-      return `at://${decodeURIComponent(path.slice("/at://".length))}`;
-    }
-    if (path.startsWith("/at:/")) {
-      return `at://${decodeURIComponent(path.slice("/at:/".length))}`;
-    }
+    const atUri = atUriFromRoutePath(window.location.pathname);
+    if (atUri) return atUri;
   }
 
   const parts = Array.isArray(param) ? param : param ? [param] : [];
