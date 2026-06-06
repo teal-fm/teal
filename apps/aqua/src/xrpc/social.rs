@@ -13,10 +13,7 @@ pub fn social_routes() -> axum::Router {
             "/fm.teal.alpha.feed.social.getActorPlaylists",
             get(get_actor_playlists),
         )
-        .route(
-            "/fm.teal.alpha.feed.social.getPlaylist",
-            get(get_playlist),
-        )
+        .route("/fm.teal.alpha.feed.social.getPlaylist", get(get_playlist))
         .route(
             "/fm.teal.alpha.feed.social.getBadgeCatalog",
             get(get_badge_catalog),
@@ -35,6 +32,7 @@ pub fn social_routes() -> axum::Router {
 pub struct PageQuery {
     pub limit: Option<i32>,
     pub cursor: Option<String>,
+    pub viewer: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -42,6 +40,7 @@ pub struct UriPageQuery {
     pub uri: String,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
+    pub viewer: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -83,7 +82,11 @@ pub async fn get_feed(
     axum::extract::Query(query): axum::extract::Query<PageQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     ctx.db
-        .get_social_feed(query.limit, query.cursor.as_deref())
+        .get_social_feed(
+            query.limit,
+            query.cursor.as_deref(),
+            query.viewer.as_deref(),
+        )
         .await
         .map(PageResponse::from)
         .map(axum::Json)
@@ -94,7 +97,7 @@ pub async fn get_post(
     Extension(ctx): Extension<Context>,
     axum::extract::Query(query): axum::extract::Query<UriPageQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match ctx.db.get_post(&query.uri).await {
+    match ctx.db.get_post(&query.uri, query.viewer.as_deref()).await {
         Ok(Some(post)) => Ok(axum::Json(PostResponse { post })),
         Ok(None) => Err((StatusCode::NOT_FOUND, "post not found".to_string())),
         Err(e) => Err(internal_error(e)),
@@ -106,7 +109,12 @@ pub async fn get_replies(
     axum::extract::Query(query): axum::extract::Query<UriPageQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     ctx.db
-        .get_post_replies(&query.uri, query.limit, query.cursor.as_deref())
+        .get_post_replies(
+            &query.uri,
+            query.limit,
+            query.cursor.as_deref(),
+            query.viewer.as_deref(),
+        )
         .await
         .map(PageResponse::from)
         .map(axum::Json)

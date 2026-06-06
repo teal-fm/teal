@@ -36,6 +36,23 @@ export function listenHref(authorDid?: string, rkey?: string) {
   return `/listen/${encodeURIComponent(authorDid)}/${encodeURIComponent(rkey)}`;
 }
 
+export function postHref(authorDid?: string, rkey?: string) {
+  if (!authorDid || !rkey) return undefined;
+  return `/post/${encodeURIComponent(authorDid)}/${encodeURIComponent(rkey)}`;
+}
+
+export function rkeyFromAtUri(uri?: string) {
+  return uri?.split("/").pop();
+}
+
+export function postHrefFromUri(uri?: string) {
+  if (!uri?.startsWith("at://")) return undefined;
+  const [, rest] = uri.split("at://");
+  const [did, collection, rkey] = rest.split("/");
+  if (collection !== "fm.teal.alpha.feed.social.post") return undefined;
+  return postHref(did, rkey);
+}
+
 export function playlistHref(name: string, uri: string) {
   return `/playlist/${routePart(name)}?uri=${encodeURIComponent(uri)}`;
 }

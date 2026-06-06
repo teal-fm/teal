@@ -21,6 +21,7 @@ import {
   getSocialFeed,
   type SocialPostView,
 } from "@/lib/teal/api";
+import { useStore } from "@/stores/mainStore";
 import { MessageCircle, Music2 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
@@ -72,10 +73,11 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
+  const viewerDid = useStore((state) => state.pdsAgent?.did);
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([getLatestPlays(30), getSocialFeed(30)])
+    Promise.all([getLatestPlays(30), getSocialFeed(30, undefined, viewerDid)])
       .then(([playRes, postRes]) => {
         if (!mounted) return;
         setPlays(playRes.plays);
@@ -92,7 +94,7 @@ export default function HomeScreen() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [viewerDid]);
 
   const visiblePlays = plays || [];
   const activeItemsCount =
@@ -106,7 +108,7 @@ export default function HomeScreen() {
     setLoadingMore(true);
     const request =
       activeFeed === "posts"
-        ? getSocialFeed(30, cursor)
+        ? getSocialFeed(30, cursor, viewerDid)
         : getLatestPlays(30, cursor);
     request
       .then((res) => {
@@ -142,7 +144,7 @@ export default function HomeScreen() {
         loadingMoreRef.current = false;
         setLoadingMore(false);
       });
-  }, [activeFeed, playCursor, postCursor]);
+  }, [activeFeed, playCursor, postCursor, viewerDid]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {

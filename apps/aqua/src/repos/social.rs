@@ -25,6 +25,8 @@ pub struct SocialPostView {
     pub like_count: i32,
     pub repost_count: i32,
     pub reply_count: i32,
+    pub viewer_like: Option<String>,
+    pub viewer_repost: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -128,6 +130,8 @@ struct PostRow {
     like_count: i32,
     repost_count: i32,
     reply_count: i32,
+    viewer_like: Option<String>,
+    viewer_repost: Option<String>,
 }
 
 fn normalize_limit(limit: Option<i32>) -> i64 {
@@ -160,13 +164,19 @@ pub trait SocialRepo {
         &self,
         limit: Option<i32>,
         cursor: Option<&str>,
+        viewer: Option<&str>,
     ) -> anyhow::Result<Page<SocialPostView>>;
-    async fn get_post(&self, uri: &str) -> anyhow::Result<Option<SocialPostView>>;
+    async fn get_post(
+        &self,
+        uri: &str,
+        viewer: Option<&str>,
+    ) -> anyhow::Result<Option<SocialPostView>>;
     async fn get_post_replies(
         &self,
         uri: &str,
         limit: Option<i32>,
         cursor: Option<&str>,
+        viewer: Option<&str>,
     ) -> anyhow::Result<Page<SocialPostView>>;
     async fn get_post_likes(
         &self,
@@ -217,6 +227,7 @@ impl SocialRepo for PgDataSource {
         &self,
         limit: Option<i32>,
         cursor: Option<&str>,
+        viewer: Option<&str>,
     ) -> anyhow::Result<Page<SocialPostView>> {
         let limit = normalize_limit(limit);
         let offset = decode_offset(cursor)?;
@@ -226,6 +237,7 @@ impl SocialRepo for PgDataSource {
             limit,
             offset,
             None,
+            viewer,
         )
         .await?;
         let cursor = page_cursor(&rows, limit, offset)?;
@@ -235,8 +247,12 @@ impl SocialRepo for PgDataSource {
         })
     }
 
-    async fn get_post(&self, uri: &str) -> anyhow::Result<Option<SocialPostView>> {
-        let rows = fetch_posts(self, "WHERE p.uri = $3 LIMIT 1", 1, 0, Some(uri)).await?;
+    async fn get_post(
+        &self,
+        uri: &str,
+        viewer: Option<&str>,
+    ) -> anyhow::Result<Option<SocialPostView>> {
+        let rows = fetch_posts(self, "WHERE p.uri = $3 LIMIT 1", 1, 0, Some(uri), viewer).await?;
         Ok(rows.into_iter().next())
     }
 
@@ -245,6 +261,7 @@ impl SocialRepo for PgDataSource {
         uri: &str,
         limit: Option<i32>,
         cursor: Option<&str>,
+        viewer: Option<&str>,
     ) -> anyhow::Result<Page<SocialPostView>> {
         let limit = normalize_limit(limit);
         let offset = decode_offset(cursor)?;
@@ -254,6 +271,7 @@ impl SocialRepo for PgDataSource {
             limit,
             offset,
             Some(uri),
+            viewer,
         )
         .await?;
         let cursor = page_cursor(&rows, limit, offset)?;
@@ -519,6 +537,7 @@ async fn fetch_posts(
     limit: i64,
     offset: i64,
     uri: Option<&str>,
+    viewer: Option<&str>,
 ) -> anyhow::Result<Vec<SocialPostView>> {
     let sql = format!(
         r#"
@@ -531,7 +550,19 @@ async fn fetch_posts(
                 profile.avatar AS profile_avatar,
                 COALESCE(c.like_count, 0) AS like_count,
                 COALESCE(c.repost_count, 0) AS repost_count,
-                COALESCE(c.reply_count, 0) AS reply_count
+                COALESCE(c.reply_count, 0) AS reply_count,
+                (
+                    SELECT l.uri
+                    FROM social_likes l
+                    WHERE l.subject_uri = p.uri AND l.did = $4
+                    LIMIT 1
+                ) AS viewer_like,
+                (
+                    SELECT r.uri
+                    FROM social_reposts r
+                    WHERE r.subject_uri = p.uri AND r.did = $4
+                    LIMIT 1
+                ) AS viewer_repost
             FROM social_posts p
             LEFT JOIN profiles profile ON p.did = profile.did
             LEFT JOIN social_subject_counts c ON p.uri = c.subject_uri
@@ -539,11 +570,12 @@ async fn fetch_posts(
         "#
     );
     let rows = sqlx::query_as::<_, PostRow>(&sql)
-    .bind(limit + 1)
-    .bind(offset)
-    .bind(uri)
-    .fetch_all(&repo.db)
-    .await?;
+        .bind(limit + 1)
+        .bind(offset)
+        .bind(uri)
+        .bind(viewer)
+        .fetch_all(&repo.db)
+        .await?;
 
     Ok(rows
         .into_iter()
@@ -570,6 +602,8 @@ async fn fetch_posts(
             like_count: row.like_count,
             repost_count: row.repost_count,
             reply_count: row.reply_count,
+            viewer_like: row.viewer_like,
+            viewer_repost: row.viewer_repost,
         })
         .collect())
 }

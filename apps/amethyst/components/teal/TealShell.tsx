@@ -98,12 +98,15 @@ function LeftRail() {
   const agent = useStore((state) => state.pdsAgent);
   const profiles = useStore((state) => state.profiles);
   const profile = agent?.did ? profiles[agent.did] : undefined;
+  const tealHandle = normalizeHandle(profile?.teal?.handle as string | undefined);
+  const bskyHandle = normalizeHandle(profile?.bsky?.handle);
   const displayName =
     profile?.teal?.displayName ||
     profile?.bsky?.displayName ||
-    normalizeHandle(profile?.bsky?.handle) ||
+    tealHandle ||
+    bskyHandle ||
     "Your profile";
-  const handle = normalizeHandle(profile?.bsky?.handle);
+  const handle = tealHandle || bskyHandle;
   const avatar = agent?.did
     ? getProfileImageUrl(
         agent.did,

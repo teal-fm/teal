@@ -43,10 +43,11 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 
 ## Next: Current User-Reported Fixes
 
-- [ ] Use the signed-in viewer's Teal profile display name and images in the bottom-left desktop account control instead of the viewer's Bluesky profile data.
-- [ ] Add standalone permalink pages for Teal social posts so posts can be linked directly.
-- [ ] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
-- [ ] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
+- [x] Use the signed-in viewer's Teal profile display name and images in the bottom-left desktop account control instead of the viewer's Bluesky profile data.
+- [x] Add standalone permalink pages for Teal social posts so posts can be linked directly.
+- [x] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
+- [x] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
+- [x] Prune Docker builder cache and redeploy the stable preview with rebuilt Aqua and Amethyst containers.
 
 ## Next: New Lexicon Implementation
 
