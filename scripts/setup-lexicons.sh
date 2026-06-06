@@ -13,8 +13,12 @@ if [ ! -f "package.json" ] || [ ! -d "lexicons" ]; then
 fi
 
 # Initialize submodules
-echo "Initializing submodules..."
-git submodule update --init --recursive
+if [ -d ".git" ]; then
+    echo "Initializing submodules..."
+    git submodule update --init --recursive
+else
+    echo "No .git directory found; assuming vendored lexicons are already present."
+fi
 
 # Check if vendor/atproto exists
 if [ ! -d "vendor/atproto" ]; then

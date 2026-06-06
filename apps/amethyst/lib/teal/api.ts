@@ -110,6 +110,12 @@ export type SocialPlaylistItemView = {
   createdAt: string;
 };
 
+export type GraphSummaryView = {
+  followersCount: number;
+  followsCount: number;
+  viewerFollowing?: string;
+};
+
 async function getXrpc<T>(
   method: string,
   params: Record<string, string | number | undefined> = {},
@@ -255,6 +261,27 @@ export function getBadgeCatalog(limit = 50, cursor?: string) {
 export function getActorPlaylists(actor: string, limit = 20, cursor?: string) {
   return getXrpc<{ items: SocialPlaylistView[]; cursor?: string }>(
     "fm.teal.alpha.feed.social.getActorPlaylists",
+    { actor, limit, cursor },
+  );
+}
+
+export function getGraphSummary(actor: string, viewer?: string) {
+  return getXrpc<GraphSummaryView>("fm.teal.alpha.graph.getSummary", {
+    actor,
+    viewer,
+  });
+}
+
+export function getGraphFollowers(actor: string, limit = 20, cursor?: string) {
+  return getXrpc<{ actors: MiniProfileView[]; cursor?: string }>(
+    "fm.teal.alpha.graph.getFollowers",
+    { actor, limit, cursor },
+  );
+}
+
+export function getGraphFollows(actor: string, limit = 20, cursor?: string) {
+  return getXrpc<{ actors: MiniProfileView[]; cursor?: string }>(
+    "fm.teal.alpha.graph.getFollows",
     { actor, limit, cursor },
   );
 }

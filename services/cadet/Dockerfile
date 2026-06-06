@@ -4,7 +4,6 @@ ARG BUILDPLATFORM
 ARG TARGETARCH
 ARG TARGETOS
 
-FROM --platform=${BUILDPLATFORM} node:24-slim AS nodejs
 FROM --platform=${BUILDPLATFORM} rust:latest AS buildah
 
 # Create appuser
@@ -36,14 +35,8 @@ COPY ./ .
 # Setup lexicons and install dependencies
 RUN ./scripts/setup-lexicons.sh
 
-# Install Node.js and pnpm for lexicon generation
-COPY --from=nodejs /usr/local /usr/local
-RUN corepack enable pnpm
-
-# Install dependencies and generate lexicons
-RUN pnpm install --ignore-scripts
-RUN cd tools/lexicon-cli && pnpm build
-RUN pnpm lex:gen --rust-only
+# Rust lexicon bindings are generated before commits and checked in under
+# services/types/src. Keep Docker builds focused on compiling the service.
 
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu

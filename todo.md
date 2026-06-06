@@ -15,6 +15,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst profile headers show display name, handle, bio, images, and current listening only; protocol internals like DID and onboarding status are hidden from the public profile UI.
+- Amethyst profile pages show Teal social graph counts, first-page followers/following lists, and signed-in follow/unfollow controls backed by `fm.teal.alpha.graph.follow` records.
 - Amethyst profiles show a minimal current-listening row only when an active status exists, including status-backed profiles that have no Teal profile record and render Bluesky identity as a fallback, with album art resolved from release MBID and recording fallback.
 - Amethyst listens have stable permalink pages at `/listen/:did/:rkey`; feed cards link their listen timestamps to the activity page while song titles still link to the music page.
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
@@ -54,6 +55,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Add Amethyst compose/publish flows for Teal social posts with `trackView`, replies, tags, langs, and `fm.teal.alpha.richtext.facet` mention/link rendering.
 - [x] Add Amethyst like and repost actions with optimistic viewer state, counts, undo/delete behavior, and signed-out affordances.
 - [x] Add Teal social graph follow lexicon, migration, Cadet ingestion, and Aqua graph summary/list APIs.
+- [x] Add Amethyst profile follow/unfollow controls plus followers/following list surfaces.
 - [x] Add Amethyst playlist creation, playlist editing, playlist detail routes, ordered playlist item management, cover uploads, and collaborator-author handling.
 - [x] Add Amethyst badge display on profiles plus badge definition and assignment management for authorized creators/admin flows.
 - [x] Replace placeholder Notifications copy with real social notifications for likes, reposts, replies, badge assignments, playlist collaboration, and relevant status/profile events.

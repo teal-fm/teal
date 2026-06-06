@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -20,16 +21,28 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { resolveHandle } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { getProfileImageUrl } from "@/lib/teal/actors";
+import {
+  actorAvatarUrl,
+  actorProfileHref,
+  displayActorName,
+  getCachedBlueskyProfile,
+  getProfileImageUrl,
+  normalizeHandle,
+  type DisplayActor,
+} from "@/lib/teal/actors";
 import {
   getActorFeed,
   getActorBadges,
   getActorPlaylists,
   getBlueskyProfile,
+  getGraphFollowers,
+  getGraphFollows,
+  getGraphSummary,
   getProfile,
   coverArtUrl,
   displayArtists,
   getRecordingCoverArtUrl,
+  type GraphSummaryView,
   type SocialBadgeAssignmentView,
   type SocialPlaylistView,
   XrpcError,
@@ -37,9 +50,19 @@ import {
 import { useStore } from "@/stores/mainStore";
 import { playlistHref } from "@/lib/teal/routes";
 import type { AppBskyActorDefs } from "@atproto/api";
-import { Info, Pencil, UserRoundPlus } from "lucide-react-native";
+import {
+  Info,
+  Pencil,
+  UserMinus,
+  UserPlus,
+  UserRoundPlus,
+  Users,
+} from "lucide-react-native";
 
-import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
+import type {
+  MiniProfileView,
+  ProfileView,
+} from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 type DisplayProfile = Pick<
@@ -78,6 +101,70 @@ function needsBlueskyFallback(profile: DisplayProfile) {
   );
 }
 
+function rkeyFromUri(uri?: string) {
+  return uri?.split("/").pop();
+}
+
+function GraphActorRow({ actor }: { actor: MiniProfileView }) {
+  const [blueskyActor, setBlueskyActor] = useState<DisplayActor>();
+  const indexedActor = actor as DisplayActor;
+  const did = indexedActor.did;
+  const mergedActor = {
+    ...blueskyActor,
+    ...indexedActor,
+    avatar: indexedActor.avatar || blueskyActor?.avatar,
+    displayName: indexedActor.displayName || blueskyActor?.displayName,
+    handle: indexedActor.handle || blueskyActor?.handle,
+  };
+  const href = actorProfileHref(mergedActor, did);
+  const name = displayActorName(mergedActor, did);
+  const handle = normalizeHandle(mergedActor.handle);
+  const avatar = actorAvatarUrl(mergedActor, did);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!did || (indexedActor.displayName && indexedActor.handle)) {
+      setBlueskyActor(undefined);
+      return;
+    }
+    getCachedBlueskyProfile(did).then((profile) => {
+      if (mounted) setBlueskyActor(profile);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [did, indexedActor.displayName, indexedActor.handle]);
+
+  return (
+    <Link href={`/profile/${href}` as any} asChild>
+      <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-white/65 p-3 web:transition-colors web:hover:border-primary/45">
+        <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary">
+          {avatar ? (
+            <Image source={{ uri: avatar }} className="h-full w-full" />
+          ) : (
+            <Text className="text-lg font-black text-primary-foreground">
+              {name.slice(0, 1).toUpperCase()}
+            </Text>
+          )}
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text className="font-semibold" numberOfLines={1}>
+            {name}
+          </Text>
+          {handle && (
+            <Text
+              className="font-mono text-xs text-muted-foreground"
+              numberOfLines={1}
+            >
+              @{handle}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
+
 export default function ProfileScreen() {
   const { handle } = useLocalSearchParams();
   const actor = Array.isArray(handle) ? handle[0] : handle;
@@ -85,9 +172,19 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
   const [badges, setBadges] = useState<SocialBadgeAssignmentView[]>([]);
   const [playlists, setPlaylists] = useState<SocialPlaylistView[]>([]);
+  const [graphSummary, setGraphSummary] = useState<GraphSummaryView>({
+    followersCount: 0,
+    followsCount: 0,
+  });
+  const [followers, setFollowers] = useState<MiniProfileView[]>([]);
+  const [follows, setFollows] = useState<MiniProfileView[]>([]);
+  const [graphTab, setGraphTab] = useState<"followers" | "following">(
+    "followers",
+  );
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [loadingMore, setLoadingMore] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
   const [statusRecordingArt, setStatusRecordingArt] = useState<string>();
@@ -95,6 +192,7 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string | null>(null);
   const loadingMoreRef = useRef(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
+  const authStatus = useStore((state) => state.status);
 
   useEffect(() => {
     let mounted = true;
@@ -106,6 +204,9 @@ export default function ProfileScreen() {
         setProfile(null);
         setBadges([]);
         setPlaylists([]);
+        setGraphSummary({ followersCount: 0, followsCount: 0 });
+        setFollowers([]);
+        setFollows([]);
         setPlays([]);
         setCursor(undefined);
         const resolved = actor.startsWith("did:")
@@ -119,6 +220,21 @@ export default function ProfileScreen() {
         }));
         const playlistRes = await getActorPlaylists(resolved, 12).catch(() => ({
           items: [],
+        }));
+        const graphSummaryRes = await getGraphSummary(
+          resolved,
+          pdsAgent?.did,
+        ).catch(() => ({
+          followersCount: 0,
+          followsCount: 0,
+        }));
+        const followersRes = await getGraphFollowers(resolved, 12).catch(
+          () => ({
+            actors: [],
+          }),
+        );
+        const followsRes = await getGraphFollows(resolved, 12).catch(() => ({
+          actors: [],
         }));
         let nextProfile: DisplayProfile | null = null;
         let nextIsBlueskyFallback = false;
@@ -162,6 +278,9 @@ export default function ProfileScreen() {
         setProfile(nextProfile);
         setBadges(badgeRes.items);
         setPlaylists(playlistRes.items);
+        setGraphSummary(graphSummaryRes);
+        setFollowers(followersRes.actors);
+        setFollows(followsRes.actors);
         setIsBlueskyFallback(nextIsBlueskyFallback);
         setPlays(feedRes.plays);
         setCursor(feedRes.cursor);
@@ -173,7 +292,7 @@ export default function ProfileScreen() {
     return () => {
       mounted = false;
     };
-  }, [actor]);
+  }, [actor, pdsAgent?.did]);
 
   const loadMore = useCallback(() => {
     if (!did || !cursor || loadingMoreRef.current) return;
@@ -213,6 +332,56 @@ export default function ProfileScreen() {
   );
 
   const isSelf = did === pdsAgent?.did;
+  const viewerFollowing = graphSummary.viewerFollowing;
+  const canFollow = authStatus === "loggedIn" && !!pdsAgent?.did && !!did;
+  async function toggleFollow() {
+    if (!canFollow || !pdsAgent?.did || !did || isSelf || followBusy) return;
+    setFollowBusy(true);
+    try {
+      if (viewerFollowing) {
+        const rkey = rkeyFromUri(viewerFollowing);
+        if (!rkey) throw new Error("Could not resolve follow rkey");
+        await pdsAgent.call(
+          "com.atproto.repo.deleteRecord",
+          {},
+          {
+            repo: pdsAgent.did,
+            collection: "fm.teal.alpha.graph.follow",
+            rkey,
+          },
+        );
+        setGraphSummary((current) => ({
+          ...current,
+          followersCount: Math.max(0, current.followersCount - 1),
+          viewerFollowing: undefined,
+        }));
+        return;
+      }
+
+      const res = await pdsAgent.call(
+        "com.atproto.repo.createRecord",
+        {},
+        {
+          repo: pdsAgent.did,
+          collection: "fm.teal.alpha.graph.follow",
+          record: {
+            $type: "fm.teal.alpha.graph.follow",
+            subject: did,
+            createdAt: new Date().toISOString(),
+          },
+        },
+      );
+      setGraphSummary((current) => ({
+        ...current,
+        followersCount: current.followersCount + 1,
+        viewerFollowing: (res.data as { uri?: string }).uri,
+      }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setFollowBusy(false);
+    }
+  }
   const avatarUrl = did
     ? getProfileImageUrl(did, profile?.avatar, "avatar")
     : undefined;
@@ -293,16 +462,49 @@ export default function ProfileScreen() {
                   @{profile.handle}
                 </Text>
               )}
-              {isSelf && (
-                <Button
-                  className="mt-5 flex-row gap-2 self-start"
-                  variant="outline"
-                  onPress={() => setEditProfileOpen(true)}
-                >
-                  <Icon icon={Pencil} size={16} />
-                  <Text>Edit profile</Text>
-                </Button>
-              )}
+              <View className="mt-4 flex-row flex-wrap items-center gap-3">
+                <View className="flex-row gap-4 rounded-lg border border-border bg-white/55 px-4 py-2">
+                  <Pressable onPress={() => setGraphTab("followers")}>
+                    <Text className="font-sans text-lg font-black">
+                      {graphSummary.followersCount}
+                    </Text>
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Followers
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={() => setGraphTab("following")}>
+                    <Text className="font-sans text-lg font-black">
+                      {graphSummary.followsCount}
+                    </Text>
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Following
+                    </Text>
+                  </Pressable>
+                </View>
+                {isSelf ? (
+                  <Button
+                    className="flex-row gap-2 self-start"
+                    variant="outline"
+                    onPress={() => setEditProfileOpen(true)}
+                  >
+                    <Icon icon={Pencil} size={16} />
+                    <Text>Edit profile</Text>
+                  </Button>
+                ) : (
+                  <Button
+                    className="flex-row gap-2 self-start"
+                    variant={viewerFollowing ? "outline" : "default"}
+                    disabled={!canFollow || followBusy}
+                    onPress={toggleFollow}
+                  >
+                    <Icon
+                      icon={viewerFollowing ? UserMinus : UserPlus}
+                      size={16}
+                    />
+                    <Text>{viewerFollowing ? "Following" : "Follow"}</Text>
+                  </Button>
+                )}
+              </View>
               {isBlueskyFallback && (
                 <View className="mt-4 flex-row gap-3 rounded-lg border border-bsky/30 bg-bsky/10 p-3">
                   <Icon icon={Info} size={18} className="mt-0.5 text-bsky" />
@@ -395,6 +597,50 @@ export default function ProfileScreen() {
               }}
             />
           )}
+          <View className="mb-8">
+            <SectionHeading
+              eyebrow="Social graph"
+              title={graphTab === "followers" ? "Followers" : "Following"}
+            />
+            <View className="mb-4 flex-row gap-2">
+              <Button
+                size="sm"
+                variant={graphTab === "followers" ? "default" : "outline"}
+                className="flex-row gap-2"
+                onPress={() => setGraphTab("followers")}
+              >
+                <Icon icon={Users} size={15} />
+                <Text>Followers</Text>
+              </Button>
+              <Button
+                size="sm"
+                variant={graphTab === "following" ? "default" : "outline"}
+                className="flex-row gap-2"
+                onPress={() => setGraphTab("following")}
+              >
+                <Icon icon={UserPlus} size={15} />
+                <Text>Following</Text>
+              </Button>
+            </View>
+            {(graphTab === "followers" ? followers : follows).length === 0 ? (
+              <Text className="text-muted-foreground">
+                {graphTab === "followers"
+                  ? "No indexed followers yet."
+                  : "No indexed follows yet."}
+              </Text>
+            ) : (
+              <View className="gap-3">
+                {(graphTab === "followers" ? followers : follows).map(
+                  (actor) => (
+                    <GraphActorRow
+                      key={actor.did || actor.handle || actor.displayName}
+                      actor={actor}
+                    />
+                  ),
+                )}
+              </View>
+            )}
+          </View>
           <View className="mb-8">
             <SectionHeading eyebrow="Collections" title="Playlists" />
             {isSelf && (
