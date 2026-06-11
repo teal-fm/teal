@@ -13,6 +13,7 @@ import type {
 import type { SongResult } from "@teal/lexicons/src/types/fm/teal/alpha/search/defs";
 import type {
   ArtistView,
+  RecordingView,
   ReleaseView,
 } from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
 
@@ -120,6 +121,13 @@ export type GraphSummaryView = {
 };
 
 export type ArtistListenerPeriod = "all" | "30days" | "7days";
+export type StatsPeriod =
+  | "7days"
+  | "30days"
+  | "90days"
+  | "180days"
+  | "365days"
+  | "all";
 
 async function getXrpc<T>(
   method: string,
@@ -237,6 +245,42 @@ export function getTopReleases(limit = 5) {
   return getXrpc<{ releases: ReleaseView[] }>(
     "fm.teal.alpha.stats.getTopReleases",
     { limit },
+  );
+}
+
+export function getUserTopArtists(
+  actor: string,
+  period: StatsPeriod = "90days",
+  limit = 50,
+  cursor?: string,
+) {
+  return getXrpc<{ artists: ArtistView[]; cursor?: string }>(
+    "fm.teal.alpha.stats.getUserTopArtists",
+    { actor, period, limit, cursor },
+  );
+}
+
+export function getUserTopReleases(
+  actor: string,
+  period: StatsPeriod = "90days",
+  limit = 50,
+  cursor?: string,
+) {
+  return getXrpc<{ releases: ReleaseView[]; cursor?: string }>(
+    "fm.teal.alpha.stats.getUserTopReleases",
+    { actor, period, limit, cursor },
+  );
+}
+
+export function getUserTopRecordings(
+  actor: string,
+  period: StatsPeriod = "90days",
+  limit = 50,
+  cursor?: string,
+) {
+  return getXrpc<{ recordings: RecordingView[]; cursor?: string }>(
+    "fm.teal.alpha.stats.getUserTopRecordings",
+    { actor, period, limit, cursor },
   );
 }
 

@@ -1,17 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   Pressable,
   View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import BadgeManager from "@/components/teal/BadgeManager";
 import EditProfileModal from "@/components/teal/EditProfileModal";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
+import { ProfileStatsSections } from "@/components/teal/ProfileStats";
 import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, {
@@ -73,6 +72,7 @@ type DisplayProfile = Pick<
   | "avatar"
   | "banner"
   | "status"
+  | "statsDefaultPeriod"
 > & {
   handle?: string;
 };
@@ -182,15 +182,12 @@ export default function ProfileScreen() {
     "followers",
   );
   const [plays, setPlays] = useState<PlayView[]>([]);
-  const [cursor, setCursor] = useState<string>();
-  const [loadingMore, setLoadingMore] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
   const [statusRecordingArt, setStatusRecordingArt] = useState<string>();
   const [statusArtFailed, setStatusArtFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const loadingMoreRef = useRef(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
   const authStatus = useStore((state) => state.status);
 
@@ -208,13 +205,12 @@ export default function ProfileScreen() {
         setFollowers([]);
         setFollows([]);
         setPlays([]);
-        setCursor(undefined);
         const resolved = actor.startsWith("did:")
           ? actor
           : await resolveHandle(actor);
         if (!mounted) return;
         setDid(resolved);
-        const feedRes = await getActorFeed(resolved, 30);
+        const feedRes = await getActorFeed(resolved, 10);
         const badgeRes = await getActorBadges(resolved, 12).catch(() => ({
           items: [],
         }));
@@ -283,7 +279,6 @@ export default function ProfileScreen() {
         setFollows(followsRes.actors);
         setIsBlueskyFallback(nextIsBlueskyFallback);
         setPlays(feedRes.plays);
-        setCursor(feedRes.cursor);
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
       }
@@ -293,43 +288,6 @@ export default function ProfileScreen() {
       mounted = false;
     };
   }, [actor, pdsAgent?.did]);
-
-  const loadMore = useCallback(() => {
-    if (!did || !cursor || loadingMoreRef.current) return;
-    loadingMoreRef.current = true;
-    setLoadingMore(true);
-    getActorFeed(did, 30, cursor)
-      .then((feedRes) => {
-        setPlays((current) => {
-          const knownUris = new Set(current.map((play) => play.uri));
-          return [
-            ...current,
-            ...feedRes.plays.filter(
-              (play) => !play.uri || !knownUris.has(play.uri),
-            ),
-          ];
-        });
-        setCursor(feedRes.cursor);
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e.message : String(e));
-      })
-      .finally(() => {
-        loadingMoreRef.current = false;
-        setLoadingMore(false);
-      });
-  }, [cursor, did]);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } =
-        event.nativeEvent;
-      const remaining =
-        contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      if (remaining < 800) loadMore();
-    },
-    [loadMore],
-  );
 
   const isSelf = did === pdsAgent?.did;
   const viewerFollowing = graphSummary.viewerFollowing;
@@ -414,7 +372,7 @@ export default function ProfileScreen() {
   }, [currentStatus, currentStatusReleaseArt]);
 
   return (
-    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{ title: actor || "Profile", headerShown: false }}
       />
@@ -598,6 +556,25 @@ export default function ProfileScreen() {
             />
           )}
           <View className="mb-8">
+            <SectionHeading eyebrow="Listening history" title="Recent plays" />
+            {plays.length === 0 ? (
+              <Text className="text-muted-foreground">
+                No indexed plays yet.
+              </Text>
+            ) : (
+              plays.slice(0, 10).map((play, index) => (
+                <PlayFeedCard
+                  key={play.uri || `${play.trackName}-${index}`}
+                  play={play}
+                />
+              ))
+            )}
+          </View>
+          <ProfileStatsSections
+            actor={did}
+            defaultPeriod={profile?.statsDefaultPeriod}
+          />
+          <View className="mb-8">
             <SectionHeading
               eyebrow="Social graph"
               title={graphTab === "followers" ? "Followers" : "Following"}
@@ -691,27 +668,6 @@ export default function ProfileScreen() {
                 }
               />
             </View>
-          )}
-          <SectionHeading eyebrow="Listening history" title="Recent plays" />
-          {plays.length === 0 ? (
-            <Text className="text-muted-foreground">No indexed plays yet.</Text>
-          ) : (
-            plays.map((play, index) => (
-              <PlayFeedCard
-                key={play.uri || `${play.trackName}-${index}`}
-                play={play}
-              />
-            ))
-          )}
-          {loadingMore && (
-            <View className="items-center justify-center py-5">
-              <ActivityIndicator />
-            </View>
-          )}
-          {plays.length > 0 && !cursor && (
-            <Text className="pb-6 text-center font-mono text-xs text-muted-foreground">
-              You reached the beginning of this listener's indexed plays.
-            </Text>
           )}
         </>
       )}

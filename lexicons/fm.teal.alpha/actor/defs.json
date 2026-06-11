@@ -43,6 +43,11 @@
           "description": "The actor's Teal onboarding state as indexed by the appview.",
           "ref": "fm.teal.alpha.actor.profileStatus"
         },
+        "statsDefaultPeriod": {
+          "type": "string",
+          "enum": ["7days", "30days", "90days", "180days", "365days", "all"],
+          "description": "Default time period for profile listening statistics."
+        },
         "createdAt": { "type": "string", "format": "datetime" }
       }
     },

@@ -9,6 +9,7 @@ pub mod get_latest;
 pub mod get_top_artists;
 pub mod get_top_releases;
 pub mod get_user_top_artists;
+pub mod get_user_top_recordings;
 pub mod get_user_top_releases;
 
 

@@ -16,6 +16,8 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst profile headers show display name, handle, bio, images, and current listening only; protocol internals like DID and onboarding status are hidden from the public profile UI.
+- Amethyst profile pages show a 10-play recent listening snapshot followed by Last.fm-style Top Artists, Top Albums, and Top Tracks stats with 7/30/90/180/365/all-time period controls and dedicated full-list pages.
+- Teal profile records can configure `statsDefaultPeriod`; Cadet indexes it into Postgres and Aqua returns it on profile views, with Amethyst falling back to 90 days when absent.
 - Amethyst profile pages show Teal social graph counts, first-page followers/following lists, and signed-in follow/unfollow controls backed by `fm.teal.alpha.graph.follow` records.
 - Amethyst profiles show a minimal current-listening row only when an active status exists, including status-backed profiles that have no Teal profile record and render Bluesky identity as a fallback, with album art resolved from release MBID and recording fallback.
 - Amethyst listens have stable permalink pages at `/listen/:did/:rkey`; feed cards link their listen timestamps to the activity page while song titles still link to the music page.
@@ -53,6 +55,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Prune Docker builder cache and redeploy the stable preview with rebuilt Aqua and Amethyst containers.
 - [x] Add artist listener leaderboards to Aqua and Amethyst artist pages.
 - [x] Redeploy the stable preview and QA artist listener leaderboards against live indexed data.
+- [x] Add profile listening stats for top artists, albums, and tracks with configurable default period and dedicated More pages.
 
 ## Next: New Lexicon Implementation
 

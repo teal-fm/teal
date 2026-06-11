@@ -35,6 +35,7 @@ pub struct PgProfileRepoRows {
     pub display_name: Option<String>,
     pub handle: Option<String>,
     pub profile_status: Option<Value>,
+    pub stats_default_period: Option<String>,
     pub status: Option<Value>,
 }
 
@@ -65,6 +66,7 @@ impl From<PgProfileRepoRows> for ProfileView {
             profile_status: row
                 .profile_status
                 .and_then(|v| from_json_value::<ProfileStatus>(v).ok()),
+            stats_default_period: row.stats_default_period.map(Into::into),
             status: row
                 .status
                 .and_then(|v| from_json_value::<StatusView>(v).ok()),
@@ -125,6 +127,7 @@ impl ActorProfileRepo for PgDataSource {
                 p.display_name,
                 p.handle,
                 ps.record as profile_status,
+                p.stats_default_period,
                 s.record as status
             FROM actors
             LEFT JOIN profiles p ON p.did = actors.did

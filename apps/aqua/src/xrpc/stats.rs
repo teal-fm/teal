@@ -3,7 +3,7 @@ use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
 use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
+use types::fm_teal::alpha::stats::{ArtistView, RecordingView, ReleaseView};
 
 // mount stats routes
 pub fn stats_routes() -> axum::Router {
@@ -17,6 +17,10 @@ pub fn stats_routes() -> axum::Router {
         .route(
             "/fm.teal.alpha.stats.getUserTopReleases",
             get(get_user_top_releases),
+        )
+        .route(
+            "/fm.teal.alpha.stats.getUserTopRecordings",
+            get(get_user_top_recordings),
         )
         .route("/fm.teal.alpha.stats.getLatest", get(get_latest))
 }
@@ -70,6 +74,50 @@ pub async fn get_top_releases(
 }
 
 #[derive(Deserialize)]
+pub struct GetUserTopRecordingsQuery {
+    pub actor: String,
+    pub period: Option<String>,
+    pub limit: Option<i32>,
+    pub cursor: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct GetUserTopRecordingsResponse {
+    recordings: Vec<RecordingView>,
+    cursor: Option<String>,
+}
+
+pub async fn get_user_top_recordings(
+    Extension(ctx): Extension<Context>,
+    axum::extract::Query(query): axum::extract::Query<GetUserTopRecordingsQuery>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let repo = &ctx.db;
+
+    if query.actor.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
+    }
+
+    match repo
+        .get_user_top_recordings(
+            &query.actor,
+            query.period.as_deref(),
+            query.limit,
+            query.cursor.as_deref(),
+        )
+        .await
+    {
+        Ok(page) => Ok(axum::Json(GetUserTopRecordingsResponse {
+            recordings: page.recordings.into_static(),
+            cursor: page.cursor,
+        })),
+        Err(e) if e.to_string().starts_with("unsupported period:") => {
+            Err((StatusCode::BAD_REQUEST, e.to_string()))
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+#[derive(Deserialize)]
 pub struct GetUserTopArtistsQuery {
     pub actor: String,
     pub period: Option<String>,
@@ -106,6 +154,9 @@ pub async fn get_user_top_artists(
             artists: page.artists.into_static(),
             cursor: page.cursor,
         })),
+        Err(e) if e.to_string().starts_with("unsupported period:") => {
+            Err((StatusCode::BAD_REQUEST, e.to_string()))
+        }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
@@ -147,6 +198,9 @@ pub async fn get_user_top_releases(
             releases: page.releases.into_static(),
             cursor: page.cursor,
         })),
+        Err(e) if e.to_string().starts_with("unsupported period:") => {
+            Err((StatusCode::BAD_REQUEST, e.to_string()))
+        }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

@@ -28,7 +28,7 @@ pub struct GetUserTopReleases<S: BosStr = DefaultStr> {
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
-    ///Defaults to `"30days"`.
+    ///Defaults to `"90days"`.
     #[serde(default = "_default_period")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub period: Option<S>,
@@ -75,7 +75,7 @@ fn _default_limit() -> Option<i64> {
 }
 
 fn _default_period<S: jacquard_common::FromStaticStr>() -> Option<S> {
-    Some(S::from_static("30days"))
+    Some(S::from_static("90days"))
 }
 
 pub mod get_user_top_releases_state {

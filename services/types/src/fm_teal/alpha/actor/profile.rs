@@ -71,6 +71,9 @@ pub struct Profile<S: BosStr = DefaultStr> {
     ///The user's most recent item featured on their profile.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub featured_item: Option<profile::FeaturedItem<S>>,
+    ///Default time period for profile listening statistics.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stats_default_period: Option<S>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
@@ -523,6 +526,17 @@ fn lexicon_doc_fm_teal_alpha_actor_profile() -> LexiconDoc<'static> {
                                     ..Default::default()
                                 }),
                             );
+                            map.insert(
+                                SmolStr::new_static("statsDefaultPeriod"),
+                                LexObjectProperty::String(LexString {
+                                    description: Some(
+                                        CowStr::new_static(
+                                            "Default time period for profile listening statistics.",
+                                        ),
+                                    ),
+                                    ..Default::default()
+                                }),
+                            );
                             map
                         },
                         ..Default::default()
@@ -566,6 +580,7 @@ pub struct ProfileBuilder<S: BosStr, St: profile_state::State> {
         Option<Vec<Facet<S>>>,
         Option<S>,
         Option<profile::FeaturedItem<S>>,
+        Option<S>,
     ),
     _type: PhantomData<fn() -> S>,
 }
@@ -582,7 +597,7 @@ impl<S: BosStr> ProfileBuilder<S, profile_state::Empty> {
     pub fn new() -> Self {
         ProfileBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -688,6 +703,19 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
+impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+    /// Set the `statsDefaultPeriod` field (optional)
+    pub fn stats_default_period(mut self, value: impl Into<Option<S>>) -> Self {
+        self._fields.7 = value.into();
+        self
+    }
+    /// Set the `statsDefaultPeriod` field to an Option value (optional)
+    pub fn maybe_stats_default_period(mut self, value: Option<S>) -> Self {
+        self._fields.7 = value;
+        self
+    }
+}
+
 impl<S: BosStr, St> ProfileBuilder<S, St>
 where
     St: profile_state::State,
@@ -702,6 +730,7 @@ where
             description_facets: self._fields.4,
             display_name: self._fields.5,
             featured_item: self._fields.6,
+            stats_default_period: self._fields.7,
             extra_data: Default::default(),
         }
     }
@@ -715,6 +744,7 @@ where
             description_facets: self._fields.4,
             display_name: self._fields.5,
             featured_item: self._fields.6,
+            stats_default_period: self._fields.7,
             extra_data: Some(extra_data),
         }
     }

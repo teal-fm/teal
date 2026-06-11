@@ -13,7 +13,7 @@ export interface QueryParams {
   /** The user's DID or handle */
   actor: string
   /** Time period for top artists */
-  period: '30days' | '7days'
+  period: '7days' | '30days' | '90days' | '180days' | '365days' | 'all'
   /** Number of artists to return */
   limit: number
   /** Pagination cursor */

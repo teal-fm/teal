@@ -18,6 +18,14 @@ export interface Record {
   avatar?: BlobRef
   /** Larger horizontal image to display behind profile view. */
   banner?: BlobRef
+  /** Default time period for profile listening statistics. */
+  statsDefaultPeriod?:
+    | '7days'
+    | '30days'
+    | '90days'
+    | '180days'
+    | '365days'
+    | 'all'
   createdAt?: string
   [k: string]: unknown
 }

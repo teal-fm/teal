@@ -63,10 +63,14 @@ impl ActorProfileIngestor {
         let banner = profile.banner.as_ref().map(get_blob_ref);
         let display_name = profile.display_name.as_ref().map(ToString::to_string);
         let description = profile.description.as_ref().map(ToString::to_string);
-        sqlx::query!(
+        let stats_default_period = profile
+            .stats_default_period
+            .as_ref()
+            .map(ToString::to_string);
+        sqlx::query(
             r#"
-                INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, stats_default_period, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 ON CONFLICT (did) DO UPDATE SET
                     handle = EXCLUDED.handle,
                     display_name = EXCLUDED.display_name,
@@ -74,17 +78,19 @@ impl ActorProfileIngestor {
                     description_facets = EXCLUDED.description_facets,
                     avatar = EXCLUDED.avatar,
                     banner = EXCLUDED.banner,
+                    stats_default_period = EXCLUDED.stats_default_period,
                     created_at = EXCLUDED.created_at;
             "#,
-            did,
-            handle,
-            display_name,
-            description,
-            serde_json::to_value(profile.description_facets.clone())?,
-            avatar,
-            banner,
-            time_datetime
         )
+        .bind(did)
+        .bind(handle)
+        .bind(display_name)
+        .bind(description)
+        .bind(serde_json::to_value(profile.description_facets.clone())?)
+        .bind(avatar)
+        .bind(banner)
+        .bind(stats_default_period)
+        .bind(time_datetime)
         .execute(&self.sql)
         .await?;
 
@@ -154,6 +160,7 @@ mod tests {
             "$type": "fm.teal.alpha.actor.profile",
             "displayName": display_name,
             "description": description,
+            "statsDefaultPeriod": "90days",
             "avatar": {
                 "$type": "blob",
                 "ref": {
@@ -188,9 +195,10 @@ mod tests {
                 Option<String>,
                 Option<String>,
                 Option<String>,
+                Option<String>,
             ),
         >(
-            "SELECT handle, display_name, description, avatar FROM profiles WHERE did = $1",
+            "SELECT handle, display_name, description, avatar, stats_default_period FROM profiles WHERE did = $1",
         )
         .bind(&did)
         .fetch_one(&pool)
@@ -202,6 +210,7 @@ mod tests {
             inserted.3.as_deref(),
             Some("bafyreih4g7bvo6hdq2juolev5bfzpbo4ewkxh5mzxwgvkjp3kitc6hqkha")
         );
+        assert_eq!(inserted.4.as_deref(), Some("90days"));
 
         ingestor
             .upsert_profile(
@@ -218,9 +227,10 @@ mod tests {
                 Option<String>,
                 Option<String>,
                 Option<String>,
+                Option<String>,
             ),
         >(
-            "SELECT handle, display_name, description, avatar FROM profiles WHERE did = $1",
+            "SELECT handle, display_name, description, avatar, stats_default_period FROM profiles WHERE did = $1",
         )
         .bind(&did)
         .fetch_one(&pool)
@@ -232,6 +242,7 @@ mod tests {
             updated.3.as_deref(),
             Some("bafyreih4g7bvo6hdq2juolev5bfzpbo4ewkxh5mzxwgvkjp3kitc6hqkha")
         );
+        assert_eq!(updated.4.as_deref(), Some("90days"));
 
         ingestor
             .ingest(Event {

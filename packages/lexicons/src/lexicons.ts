@@ -55,6 +55,12 @@ export const schemaDict = {
               "The actor's Teal onboarding state as indexed by the appview.",
             ref: 'lex:fm.teal.alpha.actor.profileStatus',
           },
+          statsDefaultPeriod: {
+            type: 'string',
+            enum: ['7days', '30days', '90days', '180days', '365days', 'all'],
+            description:
+              'Default time period for profile listening statistics.',
+          },
           createdAt: {
             type: 'string',
             format: 'datetime',
@@ -230,6 +236,12 @@ export const schemaDict = {
                 'Larger horizontal image to display behind profile view.',
               accept: ['image/png', 'image/jpeg'],
               maxSize: 1000000,
+            },
+            statsDefaultPeriod: {
+              type: 'string',
+              enum: ['7days', '30days', '90days', '180days', '365days', 'all'],
+              description:
+                'Default time period for profile listening statistics.',
             },
             createdAt: {
               type: 'string',
@@ -2013,8 +2025,8 @@ export const schemaDict = {
             },
             period: {
               type: 'string',
-              enum: ['30days', '7days'],
-              default: '30days',
+              enum: ['7days', '30days', '90days', '180days', '365days', 'all'],
+              default: '90days',
               description: 'Time period for top artists',
             },
             limit: {
@@ -2053,6 +2065,64 @@ export const schemaDict = {
       },
     },
   },
+  FmTealAlphaStatsGetUserTopRecordings: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.stats.getUserTopRecordings',
+    description: "Get a user's top recordings/tracks by play count",
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actor'],
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+              description: "The user's DID or handle",
+            },
+            period: {
+              type: 'string',
+              enum: ['7days', '30days', '90days', '180days', '365days', 'all'],
+              default: '90days',
+              description: 'Time period for top recordings',
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 50,
+              description: 'Number of recordings to return',
+            },
+            cursor: {
+              type: 'string',
+              description: 'Pagination cursor',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['recordings'],
+            properties: {
+              recordings: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.stats.defs#recordingView',
+                },
+              },
+              cursor: {
+                type: 'string',
+                description: 'Next page cursor',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   FmTealAlphaStatsGetUserTopReleases: {
     lexicon: 1,
     id: 'fm.teal.alpha.stats.getUserTopReleases',
@@ -2071,8 +2141,8 @@ export const schemaDict = {
             },
             period: {
               type: 'string',
-              enum: ['30days', '7days'],
-              default: '30days',
+              enum: ['7days', '30days', '90days', '180days', '365days', 'all'],
+              default: '90days',
               description: 'Time period for top releases',
             },
             limit: {
@@ -2233,6 +2303,8 @@ export const ids = {
   FmTealAlphaStatsGetTopArtists: 'fm.teal.alpha.stats.getTopArtists',
   FmTealAlphaStatsGetTopReleases: 'fm.teal.alpha.stats.getTopReleases',
   FmTealAlphaStatsGetUserTopArtists: 'fm.teal.alpha.stats.getUserTopArtists',
+  FmTealAlphaStatsGetUserTopRecordings:
+    'fm.teal.alpha.stats.getUserTopRecordings',
   FmTealAlphaStatsGetUserTopReleases: 'fm.teal.alpha.stats.getUserTopReleases',
   AppBskyRichtextFacet: 'app.bsky.richtext.facet',
 }
