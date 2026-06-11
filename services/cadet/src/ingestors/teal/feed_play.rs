@@ -15,13 +15,6 @@ use unicode_normalization::UnicodeNormalization;
 
 use super::assemble_at_uri;
 
-#[derive(Debug, Clone)]
-struct FuzzyMatchCandidate {
-    artist_id: i32,
-    name: String,
-    confidence: f64,
-}
-
 struct MusicBrainzCleaner;
 
 impl MusicBrainzCleaner {
@@ -1070,133 +1063,22 @@ impl PlayIngestor {
         (word_similarity * 0.5) + (char_similarity * 0.3) + (length_factor * 0.2)
     }
 
-    /// Find existing artists that fuzzy match the given name
-    async fn find_fuzzy_artist_matches(
-        &self,
-        artist_name: &str,
-        _track_name: &str,
-        _album_name: Option<&str>,
-    ) -> anyhow::Result<Vec<FuzzyMatchCandidate>> {
-        let normalized_name = Self::normalize_text(artist_name, true);
-
-        // Search for artists with similar names using trigram similarity
-        let candidates = sqlx::query!(
-            r#"
-            SELECT
-                ae.id,
-                ae.name
-            FROM artists_extended ae
-            WHERE ae.mbid_type = 'musicbrainz'
-            AND (
-                LOWER(TRIM(ae.name)) = $1
-                OR LOWER(TRIM(ae.name)) LIKE '%' || $1 || '%'
-                OR $1 LIKE '%' || LOWER(TRIM(ae.name)) || '%'
-                OR similarity(LOWER(TRIM(ae.name)), $1) > 0.6
-            )
-            ORDER BY similarity(LOWER(TRIM(ae.name)), $1) DESC
-            LIMIT 10
-            "#,
-            normalized_name
-        )
-        .fetch_all(&self.sql)
-        .await
-        .unwrap_or_default();
-
-        let mut matches = Vec::new();
-
-        for candidate in candidates {
-            let name_similarity = Self::calculate_similarity(artist_name, &candidate.name, true);
-
-            // Base confidence from name similarity
-            let mut confidence = name_similarity;
-
-            // Boost confidence for exact matches after normalization
-            if Self::normalize_text(artist_name, true)
-                == Self::normalize_text(&candidate.name, true)
-            {
-                confidence = confidence.max(0.95);
-            }
-
-            // Additional boost for cleaned matches
-            let cleaned_input = MusicBrainzCleaner::clean_artist_name(artist_name);
-            let cleaned_candidate = MusicBrainzCleaner::clean_artist_name(&candidate.name);
-            if MusicBrainzCleaner::normalize_for_comparison(&cleaned_input)
-                == MusicBrainzCleaner::normalize_for_comparison(&cleaned_candidate)
-            {
-                confidence = confidence.max(0.9);
-            }
-
-            // Lower threshold since we have better cleaning now
-            if confidence >= 0.8 {
-                matches.push(FuzzyMatchCandidate {
-                    artist_id: candidate.id,
-                    name: candidate.name,
-                    confidence,
-                });
-            }
-        }
-
-        // Sort by confidence descending
-        matches.sort_by(|a, b| {
-            b.confidence
-                .partial_cmp(&a.confidence)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-
-        Ok(matches)
-    }
-
-    /// Try to match an artist to existing MusicBrainz data using fuzzy matching
-    async fn find_or_create_artist_with_fuzzy_matching(
+    /// Find or create the artist identity asserted by the source record.
+    async fn find_or_create_artist_from_record(
         &self,
         artist_name: &str,
         mbid: Option<&str>,
-        track_name: &str,
-        album_name: Option<&str>,
+        _track_name: &str,
+        _album_name: Option<&str>,
     ) -> anyhow::Result<i32> {
         // If we already have an MBID, use it directly
         if let Some(mbid) = mbid {
             return self.insert_artist_extended(Some(mbid), artist_name).await;
         }
 
-        // Try fuzzy matching against existing MusicBrainz artists
-        let matches = self
-            .find_fuzzy_artist_matches(artist_name, track_name, album_name)
-            .await?;
-
-        if let Some(best_match) = matches.first() {
-            // Use high confidence threshold for automatic matching
-            if best_match.confidence >= 0.92 {
-                tracing::info!(
-                    "🔗 Fuzzy matched '{}' to existing artist '{}' (confidence: {:.2})",
-                    artist_name,
-                    best_match.name,
-                    best_match.confidence
-                );
-
-                // Update the existing artist name if the new one seems more complete
-                if artist_name.len() > best_match.name.len() && best_match.confidence >= 0.95 {
-                    sqlx::query!(
-                        "UPDATE artists_extended SET name = $1, updated_at = NOW() WHERE id = $2",
-                        artist_name,
-                        best_match.artist_id
-                    )
-                    .execute(&self.sql)
-                    .await?;
-                }
-
-                return Ok(best_match.artist_id);
-            } else if best_match.confidence >= 0.85 {
-                tracing::debug!(
-                    "🤔 Potential match for '{}' -> '{}' (confidence: {:.2}) but below auto-match threshold",
-                    artist_name,
-                    best_match.name,
-                    best_match.confidence
-                );
-            }
-        }
-
-        // No good match found, create synthetic artist
+        // A name-only artist should not inherit a MusicBrainz identity just
+        // because the display name matches. Keep those records synthetic until
+        // the source record explicitly supplies an artist MBID.
         self.insert_artist_extended(None, artist_name).await
     }
 
@@ -1362,7 +1244,7 @@ impl PlayIngestor {
                 });
 
                 let artist_id = self
-                    .find_or_create_artist_with_fuzzy_matching(
+                    .find_or_create_artist_from_record(
                         &artist_name,
                         artist_mbid,
                         &play_record.track_name,
@@ -1385,7 +1267,7 @@ impl PlayIngestor {
                 };
 
                 let artist_id = self
-                    .find_or_create_artist_with_fuzzy_matching(
+                    .find_or_create_artist_from_record(
                         artist_name,
                         artist_mbid_opt,
                         &play_record.track_name,
@@ -1400,7 +1282,7 @@ impl PlayIngestor {
             artist_names_raw.push(fallback_artist_name.clone());
 
             let artist_id = self
-                .find_or_create_artist_with_fuzzy_matching(
+                .find_or_create_artist_from_record(
                     &fallback_artist_name,
                     None,
                     &play_record.track_name,

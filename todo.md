@@ -58,8 +58,11 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Add profile listening stats for top artists, albums, and tracks with configurable default period and dedicated More pages.
 - [x] Recover cadet jetstream cursor after Garnet restarts: initialise `Some(now_us)` on a fresh start so `rocketman::handler` can advance it, mirror to a persistent file in `/var/lib/cadet`, and clamp stale stored cursors so we don't try to replay history jetstream no longer retains.
 - [x] Record the manually applied `20241220000014_deduplicate_plays` migration in `_sqlx_migrations` so future `pnpm db:migrate` runs do not re-create the existing `uq_plays_did_cid` constraint.
+- [x] Deduplicate logical play duplicates created by users running multiple scrobblers (same did + played_time + track_name, different CIDs): removed 5,709 duplicate `plays` rows and 5,989 extended artist joins from the preview Postgres on 2026-06-11.
+- [x] Repair the Leroy artist over-attribution on the preview database: moved 2,192 name-only `leroy` joins for `did:plc:tas6hj2xjrqben5653v5kohk` from MusicBrainz MBID `4c3cebc5-ee75-4934-92f2-66bd5e05d392` to a synthetic artist row, leaving the exact-MBID page at 24 total plays and 1 play for `matt.evil.gay`.
+- [x] Prevent future name-only artist records from being auto-matched onto MusicBrainz artists by name alone in Cadet ingestion.
 - [ ] Drain the in-flight CAR import backfill queue for users with stale ingestion (93 jobs enqueued after the 6/7\u20136/10 cadet outage). Track via Redis `LLEN car_import_jobs` and cadet logs.
-- [ ] Deduplicate logical play duplicates created by users running multiple scrobblers (same did + played_time + track_name, different CIDs); roughly 5,475 such rows remained after the `(did, cid)` dedup.
+- [ ] Backfill the 381 current `fm.teal.alpha.feed.play` records present in `did:plc:tas6hj2xjrqben5653v5kohk`'s PDS repo but missing from the preview Postgres index; URI-set comparison on 2026-06-11 showed 10,193 repo records, 9,812 indexed DB rows, and no stale extra DB URIs.
 
 ## Next: New Lexicon Implementation
 
