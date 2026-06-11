@@ -1490,6 +1490,29 @@ impl PlayIngestor {
             .as_ref()
             .map(ToString::to_string);
 
+        // Check if we already have this play content (CID) for this user (DID)
+        // This prevents duplicates when the same content is published under different rkeys
+        let existing_uri = sqlx::query_scalar!(
+            "SELECT uri FROM plays WHERE did = $1 AND cid = $2 LIMIT 1",
+            did,
+            cid
+        )
+        .fetch_optional(&self.sql)
+        .await?;
+
+        if let Some(existing) = existing_uri {
+            if existing != uri {
+                tracing::debug!(
+                    "Skipping duplicate play for did={} cid={} (existing uri={}, new uri={})",
+                    did,
+                    cid,
+                    existing,
+                    uri
+                );
+            }
+            return Ok(());
+        }
+
         sqlx::query!(
             r#"
                 INSERT INTO plays (
