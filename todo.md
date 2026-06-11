@@ -56,6 +56,10 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Add artist listener leaderboards to Aqua and Amethyst artist pages.
 - [x] Redeploy the stable preview and QA artist listener leaderboards against live indexed data.
 - [x] Add profile listening stats for top artists, albums, and tracks with configurable default period and dedicated More pages.
+- [x] Recover cadet jetstream cursor after Garnet restarts: initialise `Some(now_us)` on a fresh start so `rocketman::handler` can advance it, mirror to a persistent file in `/var/lib/cadet`, and clamp stale stored cursors so we don't try to replay history jetstream no longer retains.
+- [x] Record the manually applied `20241220000014_deduplicate_plays` migration in `_sqlx_migrations` so future `pnpm db:migrate` runs do not re-create the existing `uq_plays_did_cid` constraint.
+- [ ] Drain the in-flight CAR import backfill queue for users with stale ingestion (93 jobs enqueued after the 6/7\u20136/10 cadet outage). Track via Redis `LLEN car_import_jobs` and cadet logs.
+- [ ] Deduplicate logical play duplicates created by users running multiple scrobblers (same did + played_time + track_name, different CIDs); roughly 5,475 such rows remained after the `(did, cid)` dedup.
 
 ## Next: New Lexicon Implementation
 
