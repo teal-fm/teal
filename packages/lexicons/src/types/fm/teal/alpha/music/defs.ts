@@ -5,6 +5,7 @@ import { ValidationResult, BlobRef } from '@atproto/lexicon'
 import { lexicons } from '../../../../../lexicons'
 import { isObj, hasProp } from '../../../../../util'
 import { CID } from 'multiformats/cid'
+import * as FmTealAlphaActorDefs from '../actor/defs'
 
 export interface ArtistView {
   /** MusicBrainz artist ID URI, formatted as mbid:<uuid> */
@@ -27,6 +28,25 @@ export function isArtistView(v: unknown): v is ArtistView {
 
 export function validateArtistView(v: unknown): ValidationResult {
   return lexicons.validate('fm.teal.alpha.music.defs#artistView', v)
+}
+
+export interface ArtistListenerView {
+  actor: FmTealAlphaActorDefs.MiniProfileView
+  /** Number of indexed listens by this actor for the artist */
+  playCount: number
+  [k: string]: unknown
+}
+
+export function isArtistListenerView(v: unknown): v is ArtistListenerView {
+  return (
+    isObj(v) &&
+    hasProp(v, '$type') &&
+    v.$type === 'fm.teal.alpha.music.defs#artistListenerView'
+  )
+}
+
+export function validateArtistListenerView(v: unknown): ValidationResult {
+  return lexicons.validate('fm.teal.alpha.music.defs#artistListenerView', v)
 }
 
 export interface AlbumView {

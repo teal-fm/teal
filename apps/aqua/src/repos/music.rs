@@ -6,16 +6,52 @@ use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
 use serde::Deserialize;
 use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::music::{AlbumSummary, AlbumView, ArtistView, TrackSummary};
+use types::fm_teal::alpha::music::{
+    AlbumSummary, AlbumView, ArtistListenerView, ArtistView, TrackSummary,
+};
 use uuid::Uuid;
 
-use super::stats::{LatestPlaysCursor, decode_latest_cursor, encode_latest_cursor};
+use super::stats::{
+    LatestPlaysCursor, decode_latest_cursor, decode_offset_cursor, encode_latest_cursor,
+    encode_offset_cursor,
+};
 use super::{mbid_uri, mini_profile, pg::PgDataSource, utc_to_atrium_datetime};
 
 pub struct AlbumPage {
     pub album: AlbumView,
     pub plays: Vec<PlayView>,
     pub cursor: Option<String>,
+}
+
+pub struct ArtistListenersPage {
+    pub listeners: Vec<ArtistListenerView>,
+    pub cursor: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArtistListenersPeriod {
+    All,
+    ThirtyDays,
+    SevenDays,
+}
+
+impl ArtistListenersPeriod {
+    fn parse(period: Option<&str>) -> anyhow::Result<Self> {
+        match period.unwrap_or("all") {
+            "all" => Ok(Self::All),
+            "30days" => Ok(Self::ThirtyDays),
+            "7days" => Ok(Self::SevenDays),
+            other => anyhow::bail!("unsupported period: {other}"),
+        }
+    }
+
+    fn condition_sql(self) -> &'static str {
+        match self {
+            Self::All => "",
+            Self::ThirtyDays => "AND p.played_time >= NOW() - INTERVAL '30 days'",
+            Self::SevenDays => "AND p.played_time >= NOW() - INTERVAL '7 days'",
+        }
+    }
 }
 
 #[async_trait]
@@ -25,6 +61,14 @@ pub trait MusicRepo: Send + Sync {
         mbid: Option<&str>,
         name: Option<&str>,
     ) -> anyhow::Result<ArtistView>;
+    async fn get_artist_listeners(
+        &self,
+        mbid: Option<&str>,
+        name: Option<&str>,
+        period: Option<&str>,
+        limit: Option<i32>,
+        cursor: Option<&str>,
+    ) -> anyhow::Result<ArtistListenersPage>;
     async fn get_album(
         &self,
         mbid: &str,
@@ -213,6 +257,95 @@ impl MusicRepo for PgDataSource {
             name: artist_name.into(),
             play_count: artist.play_count.unwrap_or(0),
             extra_data: Default::default(),
+        })
+    }
+
+    async fn get_artist_listeners(
+        &self,
+        mbid: Option<&str>,
+        name: Option<&str>,
+        period: Option<&str>,
+        limit: Option<i32>,
+        cursor: Option<&str>,
+    ) -> anyhow::Result<ArtistListenersPage> {
+        let mbid = mbid.map(parse_mbid).transpose()?;
+        if mbid.is_none() && name.is_none_or(str::is_empty) {
+            anyhow::bail!("mbid or name is required");
+        }
+
+        let artist_id = sqlx::query_as::<_, (i32,)>(
+            r#"
+            SELECT ae.id
+            FROM artists_extended ae
+            LEFT JOIN play_to_artists_extended ptae ON ae.id = ptae.artist_id
+            WHERE ($1::uuid IS NOT NULL AND ae.mbid = $1)
+               OR ($1::uuid IS NULL AND LOWER(ae.name) = LOWER($2))
+            GROUP BY ae.id
+            ORDER BY COUNT(DISTINCT ptae.play_uri) DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(mbid)
+        .bind(name)
+        .fetch_optional(&self.db)
+        .await?
+        .ok_or_else(|| anyhow::anyhow!("artist not found"))?
+        .0;
+
+        let period = ArtistListenersPeriod::parse(period)?;
+        let limit = limit.unwrap_or(50).clamp(1, 100) as i64;
+        let offset = decode_offset_cursor(cursor)?;
+        let query_limit = limit + 1;
+        let sql = format!(
+            r#"
+            SELECT
+                p.did,
+                prof.handle,
+                prof.display_name,
+                prof.avatar,
+                COUNT(DISTINCT p.uri)::bigint AS play_count
+            FROM plays p
+            INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri
+            LEFT JOIN profiles prof ON prof.did = p.did
+            WHERE ptae.artist_id = $1
+              {}
+            GROUP BY p.did, prof.handle, prof.display_name, prof.avatar
+            ORDER BY play_count DESC, p.did ASC
+            LIMIT $2 OFFSET $3
+            "#,
+            period.condition_sql()
+        );
+
+        let rows =
+            sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>, i64)>(
+                &sql,
+            )
+            .bind(artist_id)
+            .bind(query_limit)
+            .bind(offset)
+            .fetch_all(&self.db)
+            .await?;
+
+        let has_more = rows.len() > limit as usize;
+        let mut listeners = Vec::with_capacity(rows.len().min(limit as usize));
+        for (did, handle, display_name, avatar, play_count) in rows.into_iter().take(limit as usize)
+        {
+            if let Some(actor) = mini_profile(Some(did), handle, display_name, avatar) {
+                listeners.push(ArtistListenerView {
+                    actor,
+                    play_count,
+                    extra_data: Default::default(),
+                });
+            }
+        }
+
+        Ok(ArtistListenersPage {
+            listeners,
+            cursor: if has_more {
+                Some(encode_offset_cursor(offset + limit)?)
+            } else {
+                None
+            },
         })
     }
 
@@ -434,7 +567,10 @@ impl MusicRepo for PgDataSource {
 
 #[cfg(test)]
 mod tests {
-    use super::{MusicBrainzTrackOrder, ObservedAlbumTrack, sort_tracks_by_release_order};
+    use super::{
+        ArtistListenersPeriod, MusicBrainzTrackOrder, ObservedAlbumTrack,
+        sort_tracks_by_release_order,
+    };
     use uuid::Uuid;
 
     fn observed_track(name: &str, recording_mbid: Option<Uuid>) -> ObservedAlbumTrack {
@@ -492,5 +628,26 @@ mod tests {
 
         assert_eq!(tracks[0].name, "Alpha");
         assert_eq!(tracks[1].name, "Zulu");
+    }
+
+    #[test]
+    fn artist_listeners_period_accepts_lexicon_values() {
+        assert_eq!(
+            ArtistListenersPeriod::parse(None).unwrap(),
+            ArtistListenersPeriod::All
+        );
+        assert_eq!(
+            ArtistListenersPeriod::parse(Some("all")).unwrap(),
+            ArtistListenersPeriod::All
+        );
+        assert_eq!(
+            ArtistListenersPeriod::parse(Some("30days")).unwrap(),
+            ArtistListenersPeriod::ThirtyDays
+        );
+        assert_eq!(
+            ArtistListenersPeriod::parse(Some("7days")).unwrap(),
+            ArtistListenersPeriod::SevenDays
+        );
+        assert!(ArtistListenersPeriod::parse(Some("90days")).is_err());
     }
 }

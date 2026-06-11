@@ -1392,6 +1392,22 @@ export const schemaDict = {
           },
         },
       },
+      artistListenerView: {
+        type: 'object',
+        required: ['actor', 'playCount'],
+        properties: {
+          actor: {
+            type: 'ref',
+            ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+            description: 'The listener ranked on this artist leaderboard',
+          },
+          playCount: {
+            type: 'integer',
+            description:
+              'Number of indexed listens by this actor for the artist',
+          },
+        },
+      },
       albumView: {
         type: 'object',
         required: ['mbid', 'name', 'artistName', 'playCount', 'tracks'],
@@ -1566,6 +1582,70 @@ export const schemaDict = {
               artist: {
                 type: 'ref',
                 ref: 'lex:fm.teal.alpha.music.defs#artistView',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaMusicGetArtistListeners: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.music.getArtistListeners',
+    defs: {
+      main: {
+        type: 'query',
+        description:
+          'Get listeners ranked by indexed listen count for an artist',
+        parameters: {
+          type: 'params',
+          properties: {
+            mbid: {
+              type: 'string',
+              format: 'uri',
+              description:
+                'MusicBrainz artist ID URI, formatted as mbid:<uuid>',
+            },
+            name: {
+              type: 'string',
+              description:
+                'Artist name fallback when no MusicBrainz ID is available',
+            },
+            period: {
+              type: 'string',
+              enum: ['all', '30days', '7days'],
+              default: 'all',
+              description: 'Time period for the leaderboard',
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 50,
+              description: 'Number of listeners to return',
+            },
+            cursor: {
+              type: 'string',
+              description: 'Pagination cursor',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['listeners'],
+            properties: {
+              listeners: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.music.defs#artistListenerView',
+                },
+              },
+              cursor: {
+                type: 'string',
+                description: 'Next page cursor',
               },
             },
           },
@@ -2144,6 +2224,7 @@ export const ids = {
   FmTealAlphaMusicDefs: 'fm.teal.alpha.music.defs',
   FmTealAlphaMusicGetAlbum: 'fm.teal.alpha.music.getAlbum',
   FmTealAlphaMusicGetArtist: 'fm.teal.alpha.music.getArtist',
+  FmTealAlphaMusicGetArtistListeners: 'fm.teal.alpha.music.getArtistListeners',
   FmTealAlphaRichtextFacet: 'fm.teal.alpha.richtext.facet',
   FmTealAlphaSearchDefs: 'fm.teal.alpha.search.defs',
   FmTealAlphaSearchGetResults: 'fm.teal.alpha.search.getResults',

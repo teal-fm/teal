@@ -7,6 +7,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst has a Teal-branded Teal-native shell with desktop navigation, mobile navigation, Home, searchable Explore, Notifications, Profile, and music detail views.
 - Amethyst uses the teal.fm landing-page brand system: DM Sans body type, serif `.fm` accent type, neutral `#262626` text, `#14b8a6` teal accents, pale lavender/ice-blue gradient chrome, and translucent white surfaces across the main shell and feed.
 - Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, indexed search, artist discographies, and albums with track lists plus cursor-paginated listens.
+- Aqua exposes an artist listener leaderboard XRPC, and Amethyst artist pages show top listeners with all-time, 30-day, and 7-day views plus a full paginated listener leaderboard route.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
 - Amethyst Home uses one inline Teal social composer. Signed-in users get their most recent indexed play attached automatically, can click the attached song to change it with recent plays or MusicBrainz search, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
@@ -50,6 +51,8 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
 - [x] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
 - [x] Prune Docker builder cache and redeploy the stable preview with rebuilt Aqua and Amethyst containers.
+- [x] Add artist listener leaderboards to Aqua and Amethyst artist pages.
+- [ ] Redeploy the stable preview and QA artist listener leaderboards against live indexed data.
 
 ## Next: New Lexicon Implementation
 

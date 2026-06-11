@@ -7,6 +7,7 @@
 
 pub mod get_album;
 pub mod get_artist;
+pub mod get_artist_listeners;
 
 
 #[allow(unused_imports)]
@@ -28,6 +29,7 @@ use jacquard_lexicon::schema::LexiconSchema;
 #[allow(unused_imports)]
 use jacquard_lexicon::validation::{ConstraintError, ValidationPath};
 use serde::{Serialize, Deserialize};
+use crate::fm_teal::alpha::actor::MiniProfileView;
 use crate::fm_teal::alpha::music;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
@@ -59,6 +61,18 @@ pub struct AlbumView<S: BosStr = DefaultStr> {
     ///Total indexed listens for tracks on this release
     pub play_count: i64,
     pub tracks: Vec<music::TrackSummary<S>>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct ArtistListenerView<S: BosStr = DefaultStr> {
+    ///The listener ranked on this artist leaderboard
+    pub actor: MiniProfileView<S>,
+    ///Number of indexed listens by this actor for the artist
+    pub play_count: i64,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
@@ -115,6 +129,21 @@ impl<S: BosStr> LexiconSchema for AlbumView<S> {
     }
     fn def_name() -> &'static str {
         "albumView"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_fm_teal_alpha_music_defs()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        Ok(())
+    }
+}
+
+impl<S: BosStr> LexiconSchema for ArtistListenerView<S> {
+    fn nsid() -> &'static str {
+        "fm.teal.alpha.music.defs"
+    }
+    fn def_name() -> &'static str {
+        "artistListenerView"
     }
     fn lexicon_doc() -> LexiconDoc<'static> {
         lexicon_doc_fm_teal_alpha_music_defs()

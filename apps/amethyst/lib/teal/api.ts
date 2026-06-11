@@ -7,6 +7,7 @@ import type {
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 import type {
   AlbumView,
+  ArtistListenerView,
   ArtistView as MusicArtistView,
 } from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
 import type { SongResult } from "@teal/lexicons/src/types/fm/teal/alpha/search/defs";
@@ -118,6 +119,8 @@ export type GraphSummaryView = {
   viewerFollowing?: string;
 };
 
+export type ArtistListenerPeriod = "all" | "30days" | "7days";
+
 async function getXrpc<T>(
   method: string,
   params: Record<string, string | number | undefined> = {},
@@ -173,6 +176,25 @@ export function getArtist(mbid?: string, name?: string) {
     mbid,
     name,
   });
+}
+
+export function getArtistListeners(
+  mbid?: string,
+  name?: string,
+  period: ArtistListenerPeriod = "all",
+  limit = 50,
+  cursor?: string,
+) {
+  return getXrpc<{ listeners: ArtistListenerView[]; cursor?: string }>(
+    "fm.teal.alpha.music.getArtistListeners",
+    {
+      mbid,
+      name,
+      period,
+      limit,
+      cursor,
+    },
+  );
 }
 
 export function getAlbum(mbid: string, limit = 30, cursor?: string) {
