@@ -49,6 +49,7 @@ use tracing::{info, warn};
 pub struct ExtractedRecord {
     pub collection: String,
     pub rkey: String,
+    pub cid: String,
     pub data: serde_json::Value,
 }
 
@@ -170,6 +171,7 @@ impl CarImportIngestor {
                                     records.push(ExtractedRecord {
                                         collection,
                                         rkey,
+                                        cid: record_cid.to_string(),
                                         data,
                                     });
                                 }
@@ -251,7 +253,7 @@ impl CarImportIngestor {
             "fm.teal.alpha.feed.play" => {
                 info!("   📀 Processing play record...");
                 let result = self
-                    .process_play_record(&record.data, did, &record.rkey)
+                    .process_play_record(&record.data, did, &record.rkey, &record.cid)
                     .await;
                 if result.is_ok() {
                     info!("   ✅ Successfully processed play record");
@@ -275,7 +277,7 @@ impl CarImportIngestor {
             "fm.teal.alpha.actor.status" => {
                 info!("   📢 Processing status record...");
                 let result = self
-                    .process_status_record(&record.data, did, &record.rkey)
+                    .process_status_record(&record.data, did, &record.rkey, &record.cid)
                     .await;
                 if result.is_ok() {
                     info!("   ✅ Successfully processed status record");
@@ -287,7 +289,7 @@ impl CarImportIngestor {
             "fm.teal.alpha.actor.profileStatus" => {
                 info!("   🧭 Processing profile status record...");
                 let result = self
-                    .process_profile_status_record(&record.data, did, &record.rkey)
+                    .process_profile_status_record(&record.data, did, &record.rkey, &record.cid)
                     .await;
                 if result.is_ok() {
                     info!("   ✅ Successfully processed profile status record");
@@ -309,7 +311,13 @@ impl CarImportIngestor {
             | "fm.teal.alpha.feed.social.badgeAssignment" => {
                 info!("   💬 Processing social record...");
                 let result = self
-                    .process_social_record(&record.collection, &record.data, did, &record.rkey)
+                    .process_social_record(
+                        &record.collection,
+                        &record.data,
+                        did,
+                        &record.rkey,
+                        &record.cid,
+                    )
                     .await;
                 if result.is_ok() {
                     info!("   ✅ Successfully processed social record");
@@ -342,21 +350,22 @@ impl CarImportIngestor {
     }
 
     /// Process a play record using the existing PlayIngestor
-    async fn process_play_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
+    async fn process_play_record(
+        &self,
+        data: &Value,
+        did: &str,
+        rkey: &str,
+        cid: &str,
+    ) -> Result<()> {
+        let data = Self::normalize_play_record_json(data.clone());
         let play_record: types::fm_teal::alpha::feed::play::Play =
-            value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(data.clone())?;
+            value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(data)?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
         let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
 
         play_ingestor
-            .insert_play(
-                &play_record,
-                &uri,
-                &format!("car-import-{}", uuid::Uuid::new_v4()),
-                did,
-                rkey,
-            )
+            .insert_play(&play_record, &uri, cid, did, rkey)
             .await?;
 
         info!(
@@ -364,6 +373,22 @@ impl CarImportIngestor {
             play_record.track_name, play_record.artist_names
         );
         Ok(())
+    }
+
+    fn normalize_play_record_json(mut data: Value) -> Value {
+        let Some(duration) = data.get_mut("duration") else {
+            return data;
+        };
+
+        let Some(float_duration) = duration.as_f64() else {
+            return data;
+        };
+
+        if duration.as_i64().is_none() && float_duration.is_finite() {
+            *duration = Value::Number((float_duration.round() as i64).into());
+        }
+
+        data
     }
 
     /// Process a profile record using the existing ActorProfileIngestor
@@ -385,7 +410,13 @@ impl CarImportIngestor {
     }
 
     /// Process a status record using the existing ActorStatusIngestor
-    async fn process_status_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
+    async fn process_status_record(
+        &self,
+        data: &Value,
+        did: &str,
+        rkey: &str,
+        cid: &str,
+    ) -> Result<()> {
         let status_record: types::fm_teal::alpha::actor::status::Status =
             value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(data.clone())?;
 
@@ -393,12 +424,7 @@ impl CarImportIngestor {
             super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
 
         status_ingestor
-            .insert_status(
-                did,
-                rkey,
-                &format!("car-import-{}", uuid::Uuid::new_v4()),
-                &status_record,
-            )
+            .insert_status(did, rkey, cid, &status_record)
             .await?;
 
         info!("Successfully stored status record from CAR import");
@@ -411,6 +437,7 @@ impl CarImportIngestor {
         data: &Value,
         did: &str,
         rkey: &str,
+        cid: &str,
     ) -> Result<()> {
         let profile_status_record: types::fm_teal::alpha::actor::profile_status::ProfileStatus =
             value::from_json_value::<types::fm_teal::alpha::actor::profile_status::ProfileStatus>(
@@ -423,12 +450,7 @@ impl CarImportIngestor {
             );
 
         profile_status_ingestor
-            .insert_profile_status(
-                did,
-                rkey,
-                &format!("car-import-{}", uuid::Uuid::new_v4()),
-                &profile_status_record,
-            )
+            .insert_profile_status(did, rkey, cid, &profile_status_record)
             .await?;
 
         info!("Successfully stored profile status record from CAR import");
@@ -442,6 +464,7 @@ impl CarImportIngestor {
         data: &Value,
         did: &str,
         rkey: &str,
+        cid: &str,
     ) -> Result<()> {
         let kind = match collection {
             "fm.teal.alpha.feed.social.post" => super::super::teal::social::SocialCollection::Post,
@@ -466,14 +489,7 @@ impl CarImportIngestor {
         };
         let social_ingestor =
             super::super::teal::social::SocialRecordIngestor::new(self.sql.clone(), kind);
-        social_ingestor
-            .insert_record(
-                did,
-                rkey,
-                &format!("car-import-{}", uuid::Uuid::new_v4()),
-                data,
-            )
-            .await
+        social_ingestor.insert_record(did, rkey, cid, data).await
     }
 
     /// Fetch and process a CAR file from a PDS for a given identity

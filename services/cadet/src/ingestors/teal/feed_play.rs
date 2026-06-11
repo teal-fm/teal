@@ -1463,19 +1463,20 @@ impl PlayIngestor {
             .await?;
         }
 
-        // Refresh materialized views concurrently (if needed, consider if this should be done less frequently)
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_artist_play_counts;")
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_release_play_counts;")
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_recording_play_counts;")
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_global_play_count;")
-            .execute(&self.sql)
-            .await?;
+        if std::env::var("CADET_DEFER_MATERIALIZED_VIEW_REFRESH").as_deref() != Ok("1") {
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_artist_play_counts;")
+                .execute(&self.sql)
+                .await?;
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_release_play_counts;")
+                .execute(&self.sql)
+                .await?;
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_recording_play_counts;")
+                .execute(&self.sql)
+                .await?;
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_global_play_count;")
+                .execute(&self.sql)
+                .await?;
+        }
 
         // // Optionally check materialised views (consider removing in production for performance)
         // // For debugging purposes, can keep for now
