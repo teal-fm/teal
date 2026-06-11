@@ -32,6 +32,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
   - The ignored local `.env` has `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.
   - Use `pnpm tunnel:up`, `pnpm tunnel:down`, `pnpm tunnel:status`, `pnpm tunnel:logs`, and `pnpm tunnel:verify` for the stable preview.
   - The preview API is pointed at the OrbStack/Docker Postgres and Garnet services so it serves the existing indexed play corpus.
+  - Restored on 2026-06-10 by clearing Docker builder cache, building `aqua-api` and `cadet` sequentially to avoid Docker disk exhaustion, starting the named Cloudflare Tunnel stack, and verifying metadata plus latest-play XRPC.
 
 ## Next: Public Demo And OAuth
 
