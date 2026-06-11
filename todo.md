@@ -52,7 +52,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
 - [x] Prune Docker builder cache and redeploy the stable preview with rebuilt Aqua and Amethyst containers.
 - [x] Add artist listener leaderboards to Aqua and Amethyst artist pages.
-- [ ] Redeploy the stable preview and QA artist listener leaderboards against live indexed data.
+- [x] Redeploy the stable preview and QA artist listener leaderboards against live indexed data.
 
 ## Next: New Lexicon Implementation
 
