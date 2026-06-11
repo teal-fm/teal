@@ -70,11 +70,17 @@ RUN echo "DEBUG Before target.sh: TARGETPLATFORM=$TARGETPLATFORM TARGETARCH=$TAR
     cargo build --release --target $RUST_TARGET --package cadet && \
     cp target/$RUST_TARGET/release/cadet target/cadet
 
+# Stage a state directory owned by the runtime user so the cursor file mount
+# point is writable when Docker copies it onto the named volume.
+RUN mkdir -p /buildah/runtime-state/var/lib/cadet && \
+    chown -R ${UID}:${UID} /buildah/runtime-state/var/lib/cadet
+
 FROM --platform=${TARGETARCH:-$BUILDPLATFORM} gcr.io/distroless/cc
 
 # Import from builder.
 COPY --from=buildah /etc/passwd /etc/passwd
 COPY --from=buildah /etc/group /etc/group
+COPY --from=buildah --chown=10001:10001 /buildah/runtime-state/var/lib/cadet /var/lib/cadet
 
 WORKDIR /app
 
