@@ -3,3 +3,11 @@ packages:
   - "packages/*"
   - "tools/*"
   - "services/*"
+onlyBuiltDependencies:
+  - better-sqlite3
+  - cbor-extract
+  - core-js
+  - core-js-pure
+  - esbuild
+  - msgpackr-extract
+  - unrs-resolver
