@@ -156,49 +156,49 @@ pub mod app_password_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Password;
         type Name;
+        type Password;
         type CreatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Password = Unset;
         type Name = Unset;
+        type Password = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `password` field to Set
-    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPassword<St> {}
-    impl<St: State> State for SetPassword<St> {
-        type Password = Set<members::password>;
-        type Name = St::Name;
-        type CreatedAt = St::CreatedAt;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetName<St> {}
     impl<St: State> State for SetName<St> {
-        type Password = St::Password;
         type Name = Set<members::name>;
+        type Password = St::Password;
+        type CreatedAt = St::CreatedAt;
+    }
+    ///State transition - sets the `password` field to Set
+    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPassword<St> {}
+    impl<St: State> State for SetPassword<St> {
+        type Name = St::Name;
+        type Password = Set<members::password>;
         type CreatedAt = St::CreatedAt;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Password = St::Password;
         type Name = St::Name;
+        type Password = St::Password;
         type CreatedAt = Set<members::created_at>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `password` field
-        pub struct password(());
         ///Marker type for the `name` field
         pub struct name(());
+        ///Marker type for the `password` field
+        pub struct password(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
     }
@@ -302,8 +302,8 @@ impl<S: BosStr, St: app_password_state::State> AppPasswordBuilder<S, St> {
 impl<S: BosStr, St> AppPasswordBuilder<S, St>
 where
     St: app_password_state::State,
-    St::Password: app_password_state::IsSet,
     St::Name: app_password_state::IsSet,
+    St::Password: app_password_state::IsSet,
     St::CreatedAt: app_password_state::IsSet,
 {
     /// Build the final struct.

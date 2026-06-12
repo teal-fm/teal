@@ -286,37 +286,37 @@ pub mod featured_item_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Mbid;
         type Type;
+        type Mbid;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Mbid = Unset;
         type Type = Unset;
-    }
-    ///State transition - sets the `mbid` field to Set
-    pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMbid<St> {}
-    impl<St: State> State for SetMbid<St> {
-        type Mbid = Set<members::mbid>;
-        type Type = St::Type;
+        type Mbid = Unset;
     }
     ///State transition - sets the `type` field to Set
     pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetType<St> {}
     impl<St: State> State for SetType<St> {
-        type Mbid = St::Mbid;
         type Type = Set<members::r#type>;
+        type Mbid = St::Mbid;
+    }
+    ///State transition - sets the `mbid` field to Set
+    pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMbid<St> {}
+    impl<St: State> State for SetMbid<St> {
+        type Type = St::Type;
+        type Mbid = Set<members::mbid>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `mbid` field
-        pub struct mbid(());
         ///Marker type for the `type` field
         pub struct r#type(());
+        ///Marker type for the `mbid` field
+        pub struct mbid(());
     }
 }
 
@@ -386,8 +386,8 @@ where
 impl<S: BosStr, St> FeaturedItemBuilder<S, St>
 where
     St: featured_item_state::State,
-    St::Mbid: featured_item_state::IsSet,
     St::Type: featured_item_state::IsSet,
+    St::Mbid: featured_item_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> FeaturedItem<S> {

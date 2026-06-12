@@ -76,37 +76,37 @@ pub mod put_activity_subscription_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type ActivitySubscription;
         type Subject;
+        type ActivitySubscription;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type ActivitySubscription = Unset;
         type Subject = Unset;
-    }
-    ///State transition - sets the `activity_subscription` field to Set
-    pub struct SetActivitySubscription<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetActivitySubscription<St> {}
-    impl<St: State> State for SetActivitySubscription<St> {
-        type ActivitySubscription = Set<members::activity_subscription>;
-        type Subject = St::Subject;
+        type ActivitySubscription = Unset;
     }
     ///State transition - sets the `subject` field to Set
     pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSubject<St> {}
     impl<St: State> State for SetSubject<St> {
-        type ActivitySubscription = St::ActivitySubscription;
         type Subject = Set<members::subject>;
+        type ActivitySubscription = St::ActivitySubscription;
+    }
+    ///State transition - sets the `activity_subscription` field to Set
+    pub struct SetActivitySubscription<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetActivitySubscription<St> {}
+    impl<St: State> State for SetActivitySubscription<St> {
+        type Subject = St::Subject;
+        type ActivitySubscription = Set<members::activity_subscription>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `activity_subscription` field
-        pub struct activity_subscription(());
         ///Marker type for the `subject` field
         pub struct subject(());
+        ///Marker type for the `activity_subscription` field
+        pub struct activity_subscription(());
     }
 }
 
@@ -190,8 +190,8 @@ where
 impl<S: BosStr, St> PutActivitySubscriptionBuilder<S, St>
 where
     St: put_activity_subscription_state::State,
-    St::ActivitySubscription: put_activity_subscription_state::IsSet,
     St::Subject: put_activity_subscription_state::IsSet,
+    St::ActivitySubscription: put_activity_subscription_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> PutActivitySubscription<S> {

@@ -73,37 +73,37 @@ pub mod facet_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Features;
         type Index;
+        type Features;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Features = Unset;
         type Index = Unset;
-    }
-    ///State transition - sets the `features` field to Set
-    pub struct SetFeatures<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetFeatures<St> {}
-    impl<St: State> State for SetFeatures<St> {
-        type Features = Set<members::features>;
-        type Index = St::Index;
+        type Features = Unset;
     }
     ///State transition - sets the `index` field to Set
     pub struct SetIndex<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetIndex<St> {}
     impl<St: State> State for SetIndex<St> {
-        type Features = St::Features;
         type Index = Set<members::index>;
+        type Features = St::Features;
+    }
+    ///State transition - sets the `features` field to Set
+    pub struct SetFeatures<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetFeatures<St> {}
+    impl<St: State> State for SetFeatures<St> {
+        type Index = St::Index;
+        type Features = Set<members::features>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `features` field
-        pub struct features(());
         ///Marker type for the `index` field
         pub struct index(());
+        ///Marker type for the `features` field
+        pub struct features(());
     }
 }
 
@@ -173,8 +173,8 @@ where
 impl<S: BosStr, St> FacetBuilder<S, St>
 where
     St: facet_state::State,
-    St::Features: facet_state::IsSet,
     St::Index: facet_state::IsSet,
+    St::Features: facet_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Facet<S> {

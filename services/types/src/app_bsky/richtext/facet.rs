@@ -219,37 +219,37 @@ pub mod byte_slice_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type ByteEnd;
         type ByteStart;
+        type ByteEnd;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type ByteEnd = Unset;
         type ByteStart = Unset;
-    }
-    ///State transition - sets the `byte_end` field to Set
-    pub struct SetByteEnd<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetByteEnd<St> {}
-    impl<St: State> State for SetByteEnd<St> {
-        type ByteEnd = Set<members::byte_end>;
-        type ByteStart = St::ByteStart;
+        type ByteEnd = Unset;
     }
     ///State transition - sets the `byte_start` field to Set
     pub struct SetByteStart<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetByteStart<St> {}
     impl<St: State> State for SetByteStart<St> {
-        type ByteEnd = St::ByteEnd;
         type ByteStart = Set<members::byte_start>;
+        type ByteEnd = St::ByteEnd;
+    }
+    ///State transition - sets the `byte_end` field to Set
+    pub struct SetByteEnd<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetByteEnd<St> {}
+    impl<St: State> State for SetByteEnd<St> {
+        type ByteStart = St::ByteStart;
+        type ByteEnd = Set<members::byte_end>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `byte_end` field
-        pub struct byte_end(());
         ///Marker type for the `byte_start` field
         pub struct byte_start(());
+        ///Marker type for the `byte_end` field
+        pub struct byte_end(());
     }
 }
 
@@ -319,8 +319,8 @@ where
 impl<S: BosStr, St> ByteSliceBuilder<S, St>
 where
     St: byte_slice_state::State,
-    St::ByteEnd: byte_slice_state::IsSet,
     St::ByteStart: byte_slice_state::IsSet,
+    St::ByteEnd: byte_slice_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ByteSlice<S> {

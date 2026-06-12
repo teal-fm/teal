@@ -240,104 +240,104 @@ pub mod badge_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type Name;
-        type Image;
+        type Type;
         type Creator;
         type CreatedAt;
+        type Image;
         type Description;
-        type Type;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type Name = Unset;
-        type Image = Unset;
+        type Type = Unset;
         type Creator = Unset;
         type CreatedAt = Unset;
+        type Image = Unset;
         type Description = Unset;
-        type Type = Unset;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetName<St> {}
     impl<St: State> State for SetName<St> {
         type Name = Set<members::name>;
-        type Image = St::Image;
+        type Type = St::Type;
         type Creator = St::Creator;
         type CreatedAt = St::CreatedAt;
-        type Description = St::Description;
-        type Type = St::Type;
-    }
-    ///State transition - sets the `image` field to Set
-    pub struct SetImage<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetImage<St> {}
-    impl<St: State> State for SetImage<St> {
-        type Name = St::Name;
-        type Image = Set<members::image>;
-        type Creator = St::Creator;
-        type CreatedAt = St::CreatedAt;
-        type Description = St::Description;
-        type Type = St::Type;
-    }
-    ///State transition - sets the `creator` field to Set
-    pub struct SetCreator<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCreator<St> {}
-    impl<St: State> State for SetCreator<St> {
-        type Name = St::Name;
         type Image = St::Image;
-        type Creator = Set<members::creator>;
-        type CreatedAt = St::CreatedAt;
         type Description = St::Description;
-        type Type = St::Type;
-    }
-    ///State transition - sets the `created_at` field to Set
-    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
-    impl<St: State> State for SetCreatedAt<St> {
-        type Name = St::Name;
-        type Image = St::Image;
-        type Creator = St::Creator;
-        type CreatedAt = Set<members::created_at>;
-        type Description = St::Description;
-        type Type = St::Type;
-    }
-    ///State transition - sets the `description` field to Set
-    pub struct SetDescription<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDescription<St> {}
-    impl<St: State> State for SetDescription<St> {
-        type Name = St::Name;
-        type Image = St::Image;
-        type Creator = St::Creator;
-        type CreatedAt = St::CreatedAt;
-        type Description = Set<members::description>;
-        type Type = St::Type;
     }
     ///State transition - sets the `type` field to Set
     pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetType<St> {}
     impl<St: State> State for SetType<St> {
         type Name = St::Name;
-        type Image = St::Image;
+        type Type = Set<members::r#type>;
         type Creator = St::Creator;
         type CreatedAt = St::CreatedAt;
+        type Image = St::Image;
         type Description = St::Description;
-        type Type = Set<members::r#type>;
+    }
+    ///State transition - sets the `creator` field to Set
+    pub struct SetCreator<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCreator<St> {}
+    impl<St: State> State for SetCreator<St> {
+        type Name = St::Name;
+        type Type = St::Type;
+        type Creator = Set<members::creator>;
+        type CreatedAt = St::CreatedAt;
+        type Image = St::Image;
+        type Description = St::Description;
+    }
+    ///State transition - sets the `created_at` field to Set
+    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
+    impl<St: State> State for SetCreatedAt<St> {
+        type Name = St::Name;
+        type Type = St::Type;
+        type Creator = St::Creator;
+        type CreatedAt = Set<members::created_at>;
+        type Image = St::Image;
+        type Description = St::Description;
+    }
+    ///State transition - sets the `image` field to Set
+    pub struct SetImage<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetImage<St> {}
+    impl<St: State> State for SetImage<St> {
+        type Name = St::Name;
+        type Type = St::Type;
+        type Creator = St::Creator;
+        type CreatedAt = St::CreatedAt;
+        type Image = Set<members::image>;
+        type Description = St::Description;
+    }
+    ///State transition - sets the `description` field to Set
+    pub struct SetDescription<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDescription<St> {}
+    impl<St: State> State for SetDescription<St> {
+        type Name = St::Name;
+        type Type = St::Type;
+        type Creator = St::Creator;
+        type CreatedAt = St::CreatedAt;
+        type Image = St::Image;
+        type Description = Set<members::description>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `name` field
         pub struct name(());
-        ///Marker type for the `image` field
-        pub struct image(());
+        ///Marker type for the `type` field
+        pub struct r#type(());
         ///Marker type for the `creator` field
         pub struct creator(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `image` field
+        pub struct image(());
         ///Marker type for the `description` field
         pub struct description(());
-        ///Marker type for the `type` field
-        pub struct r#type(());
     }
 }
 
@@ -508,11 +508,11 @@ impl<S: BosStr, St> BadgeBuilder<S, St>
 where
     St: badge_state::State,
     St::Name: badge_state::IsSet,
-    St::Image: badge_state::IsSet,
+    St::Type: badge_state::IsSet,
     St::Creator: badge_state::IsSet,
     St::CreatedAt: badge_state::IsSet,
+    St::Image: badge_state::IsSet,
     St::Description: badge_state::IsSet,
-    St::Type: badge_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Badge<S> {

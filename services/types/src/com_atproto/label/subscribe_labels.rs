@@ -375,37 +375,37 @@ pub mod labels_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Labels;
         type Seq;
+        type Labels;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Labels = Unset;
         type Seq = Unset;
-    }
-    ///State transition - sets the `labels` field to Set
-    pub struct SetLabels<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetLabels<St> {}
-    impl<St: State> State for SetLabels<St> {
-        type Labels = Set<members::labels>;
-        type Seq = St::Seq;
+        type Labels = Unset;
     }
     ///State transition - sets the `seq` field to Set
     pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSeq<St> {}
     impl<St: State> State for SetSeq<St> {
-        type Labels = St::Labels;
         type Seq = Set<members::seq>;
+        type Labels = St::Labels;
+    }
+    ///State transition - sets the `labels` field to Set
+    pub struct SetLabels<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetLabels<St> {}
+    impl<St: State> State for SetLabels<St> {
+        type Seq = St::Seq;
+        type Labels = Set<members::labels>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `labels` field
-        pub struct labels(());
         ///Marker type for the `seq` field
         pub struct seq(());
+        ///Marker type for the `labels` field
+        pub struct labels(());
     }
 }
 
@@ -475,8 +475,8 @@ where
 impl<S: BosStr, St> LabelsBuilder<S, St>
 where
     St: labels_state::State,
-    St::Labels: labels_state::IsSet,
     St::Seq: labels_state::IsSet,
+    St::Labels: labels_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Labels<S> {

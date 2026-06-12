@@ -25,7 +25,7 @@
     "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
     "hooks:install": "./scripts/install-git-hooks.sh",
     "hooks:install-precommit": "pre-commit install",
-    "postinstall": "pnpm lex:gen-server",
+    "postinstall": "node scripts/postinstall.mjs",
     "nuke": "rimraf node_modules */*/node_modules",
     "lex:gen-server": "turbo lex:gen-server",
     "format": "prettier --write .",

@@ -679,37 +679,37 @@ pub mod view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Playlist;
         type Cid;
+        type Playlist;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Playlist = Unset;
         type Cid = Unset;
-    }
-    ///State transition - sets the `playlist` field to Set
-    pub struct SetPlaylist<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPlaylist<St> {}
-    impl<St: State> State for SetPlaylist<St> {
-        type Playlist = Set<members::playlist>;
-        type Cid = St::Cid;
+        type Playlist = Unset;
     }
     ///State transition - sets the `cid` field to Set
     pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCid<St> {}
     impl<St: State> State for SetCid<St> {
-        type Playlist = St::Playlist;
         type Cid = Set<members::cid>;
+        type Playlist = St::Playlist;
+    }
+    ///State transition - sets the `playlist` field to Set
+    pub struct SetPlaylist<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPlaylist<St> {}
+    impl<St: State> State for SetPlaylist<St> {
+        type Cid = St::Cid;
+        type Playlist = Set<members::playlist>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `playlist` field
-        pub struct playlist(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `playlist` field
+        pub struct playlist(());
     }
 }
 
@@ -824,8 +824,8 @@ impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
 impl<S: BosStr, St> ViewBuilder<S, St>
 where
     St: view_state::State,
-    St::Playlist: view_state::IsSet,
     St::Cid: view_state::IsSet,
+    St::Playlist: view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> View<S> {

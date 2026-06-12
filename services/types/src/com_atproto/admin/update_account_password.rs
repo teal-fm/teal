@@ -64,37 +64,37 @@ pub mod update_account_password_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Password;
         type Did;
+        type Password;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Password = Unset;
         type Did = Unset;
-    }
-    ///State transition - sets the `password` field to Set
-    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPassword<St> {}
-    impl<St: State> State for SetPassword<St> {
-        type Password = Set<members::password>;
-        type Did = St::Did;
+        type Password = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type Password = St::Password;
         type Did = Set<members::did>;
+        type Password = St::Password;
+    }
+    ///State transition - sets the `password` field to Set
+    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPassword<St> {}
+    impl<St: State> State for SetPassword<St> {
+        type Did = St::Did;
+        type Password = Set<members::password>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `password` field
-        pub struct password(());
         ///Marker type for the `did` field
         pub struct did(());
+        ///Marker type for the `password` field
+        pub struct password(());
     }
 }
 
@@ -173,8 +173,8 @@ where
 impl<S: BosStr, St> UpdateAccountPasswordBuilder<S, St>
 where
     St: update_account_password_state::State,
-    St::Password: update_account_password_state::IsSet,
     St::Did: update_account_password_state::IsSet,
+    St::Password: update_account_password_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> UpdateAccountPassword<S> {

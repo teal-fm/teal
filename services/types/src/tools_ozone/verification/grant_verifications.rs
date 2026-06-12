@@ -144,37 +144,37 @@ pub mod grant_error_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Subject;
         type Error;
+        type Subject;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Subject = Unset;
         type Error = Unset;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type Subject = Set<members::subject>;
-        type Error = St::Error;
+        type Subject = Unset;
     }
     ///State transition - sets the `error` field to Set
     pub struct SetError<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetError<St> {}
     impl<St: State> State for SetError<St> {
-        type Subject = St::Subject;
         type Error = Set<members::error>;
+        type Subject = St::Subject;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type Error = St::Error;
+        type Subject = Set<members::subject>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `subject` field
-        pub struct subject(());
         ///Marker type for the `error` field
         pub struct error(());
+        ///Marker type for the `subject` field
+        pub struct subject(());
     }
 }
 
@@ -244,8 +244,8 @@ where
 impl<S: BosStr, St> GrantErrorBuilder<S, St>
 where
     St: grant_error_state::State,
-    St::Subject: grant_error_state::IsSet,
     St::Error: grant_error_state::IsSet,
+    St::Subject: grant_error_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> GrantError<S> {
@@ -534,51 +534,51 @@ pub mod verification_input_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type Handle;
         type Subject;
         type DisplayName;
-        type Handle;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type Handle = Unset;
         type Subject = Unset;
         type DisplayName = Unset;
-        type Handle = Unset;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type Subject = Set<members::subject>;
-        type DisplayName = St::DisplayName;
-        type Handle = St::Handle;
-    }
-    ///State transition - sets the `display_name` field to Set
-    pub struct SetDisplayName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDisplayName<St> {}
-    impl<St: State> State for SetDisplayName<St> {
-        type Subject = St::Subject;
-        type DisplayName = Set<members::display_name>;
-        type Handle = St::Handle;
     }
     ///State transition - sets the `handle` field to Set
     pub struct SetHandle<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetHandle<St> {}
     impl<St: State> State for SetHandle<St> {
+        type Handle = Set<members::handle>;
         type Subject = St::Subject;
         type DisplayName = St::DisplayName;
-        type Handle = Set<members::handle>;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type Handle = St::Handle;
+        type Subject = Set<members::subject>;
+        type DisplayName = St::DisplayName;
+    }
+    ///State transition - sets the `display_name` field to Set
+    pub struct SetDisplayName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDisplayName<St> {}
+    impl<St: State> State for SetDisplayName<St> {
+        type Handle = St::Handle;
+        type Subject = St::Subject;
+        type DisplayName = Set<members::display_name>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `handle` field
+        pub struct handle(());
         ///Marker type for the `subject` field
         pub struct subject(());
         ///Marker type for the `display_name` field
         pub struct display_name(());
-        ///Marker type for the `handle` field
-        pub struct handle(());
     }
 }
 
@@ -680,9 +680,9 @@ where
 impl<S: BosStr, St> VerificationInputBuilder<S, St>
 where
     St: verification_input_state::State,
+    St::Handle: verification_input_state::IsSet,
     St::Subject: verification_input_state::IsSet,
     St::DisplayName: verification_input_state::IsSet,
-    St::Handle: verification_input_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> VerificationInput<S> {

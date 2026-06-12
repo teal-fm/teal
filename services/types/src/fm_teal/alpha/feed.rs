@@ -510,37 +510,37 @@ pub mod play_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Artists;
         type TrackName;
+        type Artists;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Artists = Unset;
         type TrackName = Unset;
-    }
-    ///State transition - sets the `artists` field to Set
-    pub struct SetArtists<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetArtists<St> {}
-    impl<St: State> State for SetArtists<St> {
-        type Artists = Set<members::artists>;
-        type TrackName = St::TrackName;
+        type Artists = Unset;
     }
     ///State transition - sets the `track_name` field to Set
     pub struct SetTrackName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTrackName<St> {}
     impl<St: State> State for SetTrackName<St> {
-        type Artists = St::Artists;
         type TrackName = Set<members::track_name>;
+        type Artists = St::Artists;
+    }
+    ///State transition - sets the `artists` field to Set
+    pub struct SetArtists<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetArtists<St> {}
+    impl<St: State> State for SetArtists<St> {
+        type TrackName = St::TrackName;
+        type Artists = Set<members::artists>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `artists` field
-        pub struct artists(());
         ///Marker type for the `track_name` field
         pub struct track_name(());
+        ///Marker type for the `artists` field
+        pub struct artists(());
     }
 }
 
@@ -841,8 +841,8 @@ impl<S: BosStr, St: play_view_state::State> PlayViewBuilder<S, St> {
 impl<S: BosStr, St> PlayViewBuilder<S, St>
 where
     St: play_view_state::State,
-    St::Artists: play_view_state::IsSet,
     St::TrackName: play_view_state::IsSet,
+    St::Artists: play_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> PlayView<S> {

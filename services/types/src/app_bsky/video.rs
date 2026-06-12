@@ -173,49 +173,49 @@ pub mod job_status_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Did;
         type State;
+        type Did;
         type JobId;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Did = Unset;
         type State = Unset;
+        type Did = Unset;
         type JobId = Unset;
-    }
-    ///State transition - sets the `did` field to Set
-    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDid<St> {}
-    impl<St: State> State for SetDid<St> {
-        type Did = Set<members::did>;
-        type State = St::State;
-        type JobId = St::JobId;
     }
     ///State transition - sets the `state` field to Set
     pub struct SetState<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetState<St> {}
     impl<St: State> State for SetState<St> {
-        type Did = St::Did;
         type State = Set<members::state>;
+        type Did = St::Did;
+        type JobId = St::JobId;
+    }
+    ///State transition - sets the `did` field to Set
+    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDid<St> {}
+    impl<St: State> State for SetDid<St> {
+        type State = St::State;
+        type Did = Set<members::did>;
         type JobId = St::JobId;
     }
     ///State transition - sets the `job_id` field to Set
     pub struct SetJobId<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetJobId<St> {}
     impl<St: State> State for SetJobId<St> {
-        type Did = St::Did;
         type State = St::State;
+        type Did = St::Did;
         type JobId = Set<members::job_id>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `did` field
-        pub struct did(());
         ///Marker type for the `state` field
         pub struct state(());
+        ///Marker type for the `did` field
+        pub struct did(());
         ///Marker type for the `job_id` field
         pub struct job_id(());
     }
@@ -366,8 +366,8 @@ where
 impl<S: BosStr, St> JobStatusBuilder<S, St>
 where
     St: job_status_state::State,
-    St::Did: job_status_state::IsSet,
     St::State: job_status_state::IsSet,
+    St::Did: job_status_state::IsSet,
     St::JobId: job_status_state::IsSet,
 {
     /// Build the final struct.
