@@ -115,51 +115,51 @@ pub mod like_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type Actor;
         type CreatedAt;
         type IndexedAt;
-        type Actor;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type Actor = Unset;
         type CreatedAt = Unset;
         type IndexedAt = Unset;
-        type Actor = Unset;
-    }
-    ///State transition - sets the `created_at` field to Set
-    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
-    impl<St: State> State for SetCreatedAt<St> {
-        type CreatedAt = Set<members::created_at>;
-        type IndexedAt = St::IndexedAt;
-        type Actor = St::Actor;
-    }
-    ///State transition - sets the `indexed_at` field to Set
-    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
-    impl<St: State> State for SetIndexedAt<St> {
-        type CreatedAt = St::CreatedAt;
-        type IndexedAt = Set<members::indexed_at>;
-        type Actor = St::Actor;
     }
     ///State transition - sets the `actor` field to Set
     pub struct SetActor<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetActor<St> {}
     impl<St: State> State for SetActor<St> {
+        type Actor = Set<members::actor>;
         type CreatedAt = St::CreatedAt;
         type IndexedAt = St::IndexedAt;
-        type Actor = Set<members::actor>;
+    }
+    ///State transition - sets the `created_at` field to Set
+    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
+    impl<St: State> State for SetCreatedAt<St> {
+        type Actor = St::Actor;
+        type CreatedAt = Set<members::created_at>;
+        type IndexedAt = St::IndexedAt;
+    }
+    ///State transition - sets the `indexed_at` field to Set
+    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
+    impl<St: State> State for SetIndexedAt<St> {
+        type Actor = St::Actor;
+        type CreatedAt = St::CreatedAt;
+        type IndexedAt = Set<members::indexed_at>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `actor` field
+        pub struct actor(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
         ///Marker type for the `indexed_at` field
         pub struct indexed_at(());
-        ///Marker type for the `actor` field
-        pub struct actor(());
     }
 }
 
@@ -248,9 +248,9 @@ where
 impl<S: BosStr, St> LikeBuilder<S, St>
 where
     St: like_state::State,
+    St::Actor: like_state::IsSet,
     St::CreatedAt: like_state::IsSet,
     St::IndexedAt: like_state::IsSet,
-    St::Actor: like_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Like<S> {

@@ -665,66 +665,66 @@ pub mod account_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type Active;
-        type Time;
         type Did;
         type Seq;
+        type Time;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type Active = Unset;
-        type Time = Unset;
         type Did = Unset;
         type Seq = Unset;
+        type Time = Unset;
     }
     ///State transition - sets the `active` field to Set
     pub struct SetActive<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetActive<St> {}
     impl<St: State> State for SetActive<St> {
         type Active = Set<members::active>;
+        type Did = St::Did;
+        type Seq = St::Seq;
         type Time = St::Time;
-        type Did = St::Did;
-        type Seq = St::Seq;
-    }
-    ///State transition - sets the `time` field to Set
-    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTime<St> {}
-    impl<St: State> State for SetTime<St> {
-        type Active = St::Active;
-        type Time = Set<members::time>;
-        type Did = St::Did;
-        type Seq = St::Seq;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
         type Active = St::Active;
-        type Time = St::Time;
         type Did = Set<members::did>;
         type Seq = St::Seq;
+        type Time = St::Time;
     }
     ///State transition - sets the `seq` field to Set
     pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSeq<St> {}
     impl<St: State> State for SetSeq<St> {
         type Active = St::Active;
-        type Time = St::Time;
         type Did = St::Did;
         type Seq = Set<members::seq>;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `time` field to Set
+    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTime<St> {}
+    impl<St: State> State for SetTime<St> {
+        type Active = St::Active;
+        type Did = St::Did;
+        type Seq = St::Seq;
+        type Time = Set<members::time>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `active` field
         pub struct active(());
-        ///Marker type for the `time` field
-        pub struct time(());
         ///Marker type for the `did` field
         pub struct did(());
         ///Marker type for the `seq` field
         pub struct seq(());
+        ///Marker type for the `time` field
+        pub struct time(());
     }
 }
 
@@ -852,9 +852,9 @@ impl<S: BosStr, St> AccountBuilder<S, St>
 where
     St: account_state::State,
     St::Active: account_state::IsSet,
-    St::Time: account_state::IsSet,
     St::Did: account_state::IsSet,
     St::Seq: account_state::IsSet,
+    St::Time: account_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Account<S> {
@@ -1305,203 +1305,203 @@ pub mod commit_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Repo;
-        type Rev;
-        type Time;
-        type Ops;
         type Blobs;
-        type Seq;
         type Blocks;
         type Commit;
+        type Ops;
         type Rebase;
+        type Repo;
+        type Rev;
+        type Seq;
+        type Time;
         type TooBig;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Repo = Unset;
-        type Rev = Unset;
-        type Time = Unset;
-        type Ops = Unset;
         type Blobs = Unset;
-        type Seq = Unset;
         type Blocks = Unset;
         type Commit = Unset;
+        type Ops = Unset;
         type Rebase = Unset;
+        type Repo = Unset;
+        type Rev = Unset;
+        type Seq = Unset;
+        type Time = Unset;
         type TooBig = Unset;
-    }
-    ///State transition - sets the `repo` field to Set
-    pub struct SetRepo<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRepo<St> {}
-    impl<St: State> State for SetRepo<St> {
-        type Repo = Set<members::repo>;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Ops = St::Ops;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-        type Commit = St::Commit;
-        type Rebase = St::Rebase;
-        type TooBig = St::TooBig;
-    }
-    ///State transition - sets the `rev` field to Set
-    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRev<St> {}
-    impl<St: State> State for SetRev<St> {
-        type Repo = St::Repo;
-        type Rev = Set<members::rev>;
-        type Time = St::Time;
-        type Ops = St::Ops;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-        type Commit = St::Commit;
-        type Rebase = St::Rebase;
-        type TooBig = St::TooBig;
-    }
-    ///State transition - sets the `time` field to Set
-    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTime<St> {}
-    impl<St: State> State for SetTime<St> {
-        type Repo = St::Repo;
-        type Rev = St::Rev;
-        type Time = Set<members::time>;
-        type Ops = St::Ops;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-        type Commit = St::Commit;
-        type Rebase = St::Rebase;
-        type TooBig = St::TooBig;
-    }
-    ///State transition - sets the `ops` field to Set
-    pub struct SetOps<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetOps<St> {}
-    impl<St: State> State for SetOps<St> {
-        type Repo = St::Repo;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Ops = Set<members::ops>;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-        type Commit = St::Commit;
-        type Rebase = St::Rebase;
-        type TooBig = St::TooBig;
     }
     ///State transition - sets the `blobs` field to Set
     pub struct SetBlobs<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetBlobs<St> {}
     impl<St: State> State for SetBlobs<St> {
-        type Repo = St::Repo;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Ops = St::Ops;
         type Blobs = Set<members::blobs>;
-        type Seq = St::Seq;
         type Blocks = St::Blocks;
         type Commit = St::Commit;
+        type Ops = St::Ops;
         type Rebase = St::Rebase;
-        type TooBig = St::TooBig;
-    }
-    ///State transition - sets the `seq` field to Set
-    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSeq<St> {}
-    impl<St: State> State for SetSeq<St> {
         type Repo = St::Repo;
         type Rev = St::Rev;
+        type Seq = St::Seq;
         type Time = St::Time;
-        type Ops = St::Ops;
-        type Blobs = St::Blobs;
-        type Seq = Set<members::seq>;
-        type Blocks = St::Blocks;
-        type Commit = St::Commit;
-        type Rebase = St::Rebase;
         type TooBig = St::TooBig;
     }
     ///State transition - sets the `blocks` field to Set
     pub struct SetBlocks<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetBlocks<St> {}
     impl<St: State> State for SetBlocks<St> {
-        type Repo = St::Repo;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Ops = St::Ops;
         type Blobs = St::Blobs;
-        type Seq = St::Seq;
         type Blocks = Set<members::blocks>;
         type Commit = St::Commit;
+        type Ops = St::Ops;
         type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
         type TooBig = St::TooBig;
     }
     ///State transition - sets the `commit` field to Set
     pub struct SetCommit<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCommit<St> {}
     impl<St: State> State for SetCommit<St> {
-        type Repo = St::Repo;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Ops = St::Ops;
         type Blobs = St::Blobs;
-        type Seq = St::Seq;
         type Blocks = St::Blocks;
         type Commit = Set<members::commit>;
+        type Ops = St::Ops;
         type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `ops` field to Set
+    pub struct SetOps<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetOps<St> {}
+    impl<St: State> State for SetOps<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = Set<members::ops>;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
         type TooBig = St::TooBig;
     }
     ///State transition - sets the `rebase` field to Set
     pub struct SetRebase<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetRebase<St> {}
     impl<St: State> State for SetRebase<St> {
-        type Repo = St::Repo;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Ops = St::Ops;
         type Blobs = St::Blobs;
-        type Seq = St::Seq;
         type Blocks = St::Blocks;
         type Commit = St::Commit;
+        type Ops = St::Ops;
         type Rebase = Set<members::rebase>;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `repo` field to Set
+    pub struct SetRepo<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRepo<St> {}
+    impl<St: State> State for SetRepo<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = Set<members::repo>;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `rev` field to Set
+    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRev<St> {}
+    impl<St: State> State for SetRev<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = Set<members::rev>;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `seq` field to Set
+    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSeq<St> {}
+    impl<St: State> State for SetSeq<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = Set<members::seq>;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `time` field to Set
+    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTime<St> {}
+    impl<St: State> State for SetTime<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = Set<members::time>;
         type TooBig = St::TooBig;
     }
     ///State transition - sets the `too_big` field to Set
     pub struct SetTooBig<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTooBig<St> {}
     impl<St: State> State for SetTooBig<St> {
-        type Repo = St::Repo;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Ops = St::Ops;
         type Blobs = St::Blobs;
-        type Seq = St::Seq;
         type Blocks = St::Blocks;
         type Commit = St::Commit;
+        type Ops = St::Ops;
         type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
         type TooBig = Set<members::too_big>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `repo` field
-        pub struct repo(());
-        ///Marker type for the `rev` field
-        pub struct rev(());
-        ///Marker type for the `time` field
-        pub struct time(());
-        ///Marker type for the `ops` field
-        pub struct ops(());
         ///Marker type for the `blobs` field
         pub struct blobs(());
-        ///Marker type for the `seq` field
-        pub struct seq(());
         ///Marker type for the `blocks` field
         pub struct blocks(());
         ///Marker type for the `commit` field
         pub struct commit(());
+        ///Marker type for the `ops` field
+        pub struct ops(());
         ///Marker type for the `rebase` field
         pub struct rebase(());
+        ///Marker type for the `repo` field
+        pub struct repo(());
+        ///Marker type for the `rev` field
+        pub struct rev(());
+        ///Marker type for the `seq` field
+        pub struct seq(());
+        ///Marker type for the `time` field
+        pub struct time(());
         ///Marker type for the `too_big` field
         pub struct too_big(());
     }
@@ -1777,15 +1777,15 @@ where
 impl<S: BosStr, St> CommitBuilder<S, St>
 where
     St: commit_state::State,
-    St::Repo: commit_state::IsSet,
-    St::Rev: commit_state::IsSet,
-    St::Time: commit_state::IsSet,
-    St::Ops: commit_state::IsSet,
     St::Blobs: commit_state::IsSet,
-    St::Seq: commit_state::IsSet,
     St::Blocks: commit_state::IsSet,
     St::Commit: commit_state::IsSet,
+    St::Ops: commit_state::IsSet,
     St::Rebase: commit_state::IsSet,
+    St::Repo: commit_state::IsSet,
+    St::Rev: commit_state::IsSet,
+    St::Seq: commit_state::IsSet,
+    St::Time: commit_state::IsSet,
     St::TooBig: commit_state::IsSet,
 {
     /// Build the final struct.
@@ -1836,49 +1836,49 @@ pub mod identity_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Seq;
         type Did;
+        type Seq;
         type Time;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Seq = Unset;
         type Did = Unset;
+        type Seq = Unset;
         type Time = Unset;
-    }
-    ///State transition - sets the `seq` field to Set
-    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSeq<St> {}
-    impl<St: State> State for SetSeq<St> {
-        type Seq = Set<members::seq>;
-        type Did = St::Did;
-        type Time = St::Time;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type Seq = St::Seq;
         type Did = Set<members::did>;
+        type Seq = St::Seq;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `seq` field to Set
+    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSeq<St> {}
+    impl<St: State> State for SetSeq<St> {
+        type Did = St::Did;
+        type Seq = Set<members::seq>;
         type Time = St::Time;
     }
     ///State transition - sets the `time` field to Set
     pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTime<St> {}
     impl<St: State> State for SetTime<St> {
-        type Seq = St::Seq;
         type Did = St::Did;
+        type Seq = St::Seq;
         type Time = Set<members::time>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `seq` field
-        pub struct seq(());
         ///Marker type for the `did` field
         pub struct did(());
+        ///Marker type for the `seq` field
+        pub struct seq(());
         ///Marker type for the `time` field
         pub struct time(());
     }
@@ -1982,8 +1982,8 @@ where
 impl<S: BosStr, St> IdentityBuilder<S, St>
 where
     St: identity_state::State,
-    St::Seq: identity_state::IsSet,
     St::Did: identity_state::IsSet,
+    St::Seq: identity_state::IsSet,
     St::Time: identity_state::IsSet,
 {
     /// Build the final struct.
@@ -2085,37 +2085,37 @@ pub mod repo_op_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Path;
         type Action;
+        type Path;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Path = Unset;
         type Action = Unset;
-    }
-    ///State transition - sets the `path` field to Set
-    pub struct SetPath<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPath<St> {}
-    impl<St: State> State for SetPath<St> {
-        type Path = Set<members::path>;
-        type Action = St::Action;
+        type Path = Unset;
     }
     ///State transition - sets the `action` field to Set
     pub struct SetAction<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAction<St> {}
     impl<St: State> State for SetAction<St> {
-        type Path = St::Path;
         type Action = Set<members::action>;
+        type Path = St::Path;
+    }
+    ///State transition - sets the `path` field to Set
+    pub struct SetPath<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPath<St> {}
+    impl<St: State> State for SetPath<St> {
+        type Action = St::Action;
+        type Path = Set<members::path>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `path` field
-        pub struct path(());
         ///Marker type for the `action` field
         pub struct action(());
+        ///Marker type for the `path` field
+        pub struct path(());
     }
 }
 
@@ -2216,8 +2216,8 @@ impl<S: BosStr, St: repo_op_state::State> RepoOpBuilder<S, St> {
 impl<S: BosStr, St> RepoOpBuilder<S, St>
 where
     St: repo_op_state::State,
-    St::Path: repo_op_state::IsSet,
     St::Action: repo_op_state::IsSet,
+    St::Path: repo_op_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RepoOp<S> {
@@ -2251,85 +2251,85 @@ pub mod sync_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Rev;
-        type Did;
-        type Time;
         type Blocks;
+        type Did;
+        type Rev;
         type Seq;
+        type Time;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Rev = Unset;
-        type Did = Unset;
-        type Time = Unset;
         type Blocks = Unset;
+        type Did = Unset;
+        type Rev = Unset;
         type Seq = Unset;
-    }
-    ///State transition - sets the `rev` field to Set
-    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRev<St> {}
-    impl<St: State> State for SetRev<St> {
-        type Rev = Set<members::rev>;
-        type Did = St::Did;
-        type Time = St::Time;
-        type Blocks = St::Blocks;
-        type Seq = St::Seq;
-    }
-    ///State transition - sets the `did` field to Set
-    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDid<St> {}
-    impl<St: State> State for SetDid<St> {
-        type Rev = St::Rev;
-        type Did = Set<members::did>;
-        type Time = St::Time;
-        type Blocks = St::Blocks;
-        type Seq = St::Seq;
-    }
-    ///State transition - sets the `time` field to Set
-    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTime<St> {}
-    impl<St: State> State for SetTime<St> {
-        type Rev = St::Rev;
-        type Did = St::Did;
-        type Time = Set<members::time>;
-        type Blocks = St::Blocks;
-        type Seq = St::Seq;
+        type Time = Unset;
     }
     ///State transition - sets the `blocks` field to Set
     pub struct SetBlocks<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetBlocks<St> {}
     impl<St: State> State for SetBlocks<St> {
-        type Rev = St::Rev;
-        type Did = St::Did;
-        type Time = St::Time;
         type Blocks = Set<members::blocks>;
+        type Did = St::Did;
+        type Rev = St::Rev;
         type Seq = St::Seq;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `did` field to Set
+    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDid<St> {}
+    impl<St: State> State for SetDid<St> {
+        type Blocks = St::Blocks;
+        type Did = Set<members::did>;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `rev` field to Set
+    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRev<St> {}
+    impl<St: State> State for SetRev<St> {
+        type Blocks = St::Blocks;
+        type Did = St::Did;
+        type Rev = Set<members::rev>;
+        type Seq = St::Seq;
+        type Time = St::Time;
     }
     ///State transition - sets the `seq` field to Set
     pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSeq<St> {}
     impl<St: State> State for SetSeq<St> {
-        type Rev = St::Rev;
-        type Did = St::Did;
-        type Time = St::Time;
         type Blocks = St::Blocks;
+        type Did = St::Did;
+        type Rev = St::Rev;
         type Seq = Set<members::seq>;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `time` field to Set
+    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTime<St> {}
+    impl<St: State> State for SetTime<St> {
+        type Blocks = St::Blocks;
+        type Did = St::Did;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = Set<members::time>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `rev` field
-        pub struct rev(());
-        ///Marker type for the `did` field
-        pub struct did(());
-        ///Marker type for the `time` field
-        pub struct time(());
         ///Marker type for the `blocks` field
         pub struct blocks(());
+        ///Marker type for the `did` field
+        pub struct did(());
+        ///Marker type for the `rev` field
+        pub struct rev(());
         ///Marker type for the `seq` field
         pub struct seq(());
+        ///Marker type for the `time` field
+        pub struct time(());
     }
 }
 
@@ -2453,11 +2453,11 @@ where
 impl<S: BosStr, St> SyncBuilder<S, St>
 where
     St: sync_state::State,
-    St::Rev: sync_state::IsSet,
-    St::Did: sync_state::IsSet,
-    St::Time: sync_state::IsSet,
     St::Blocks: sync_state::IsSet,
+    St::Did: sync_state::IsSet,
+    St::Rev: sync_state::IsSet,
     St::Seq: sync_state::IsSet,
+    St::Time: sync_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Sync<S> {

@@ -111,37 +111,37 @@ pub mod account_codes_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Codes;
         type Account;
+        type Codes;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Codes = Unset;
         type Account = Unset;
-    }
-    ///State transition - sets the `codes` field to Set
-    pub struct SetCodes<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCodes<St> {}
-    impl<St: State> State for SetCodes<St> {
-        type Codes = Set<members::codes>;
-        type Account = St::Account;
+        type Codes = Unset;
     }
     ///State transition - sets the `account` field to Set
     pub struct SetAccount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAccount<St> {}
     impl<St: State> State for SetAccount<St> {
-        type Codes = St::Codes;
         type Account = Set<members::account>;
+        type Codes = St::Codes;
+    }
+    ///State transition - sets the `codes` field to Set
+    pub struct SetCodes<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCodes<St> {}
+    impl<St: State> State for SetCodes<St> {
+        type Account = St::Account;
+        type Codes = Set<members::codes>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `codes` field
-        pub struct codes(());
         ///Marker type for the `account` field
         pub struct account(());
+        ///Marker type for the `codes` field
+        pub struct codes(());
     }
 }
 
@@ -211,8 +211,8 @@ where
 impl<S: BosStr, St> AccountCodesBuilder<S, St>
 where
     St: account_codes_state::State,
-    St::Codes: account_codes_state::IsSet,
     St::Account: account_codes_state::IsSet,
+    St::Codes: account_codes_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AccountCodes<S> {

@@ -68,37 +68,37 @@ pub mod get_play_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Rkey;
         type AuthorDid;
+        type Rkey;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Rkey = Unset;
         type AuthorDid = Unset;
-    }
-    ///State transition - sets the `rkey` field to Set
-    pub struct SetRkey<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRkey<St> {}
-    impl<St: State> State for SetRkey<St> {
-        type Rkey = Set<members::rkey>;
-        type AuthorDid = St::AuthorDid;
+        type Rkey = Unset;
     }
     ///State transition - sets the `author_did` field to Set
     pub struct SetAuthorDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAuthorDid<St> {}
     impl<St: State> State for SetAuthorDid<St> {
-        type Rkey = St::Rkey;
         type AuthorDid = Set<members::author_did>;
+        type Rkey = St::Rkey;
+    }
+    ///State transition - sets the `rkey` field to Set
+    pub struct SetRkey<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRkey<St> {}
+    impl<St: State> State for SetRkey<St> {
+        type AuthorDid = St::AuthorDid;
+        type Rkey = Set<members::rkey>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `rkey` field
-        pub struct rkey(());
         ///Marker type for the `author_did` field
         pub struct author_did(());
+        ///Marker type for the `rkey` field
+        pub struct rkey(());
     }
 }
 
@@ -168,8 +168,8 @@ where
 impl<S: BosStr, St> GetPlayBuilder<S, St>
 where
     St: get_play_state::State,
-    St::Rkey: get_play_state::IsSet,
     St::AuthorDid: get_play_state::IsSet,
+    St::Rkey: get_play_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> GetPlay<S> {

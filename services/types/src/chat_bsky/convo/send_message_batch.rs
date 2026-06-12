@@ -107,37 +107,37 @@ pub mod batch_item_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Message;
         type ConvoId;
+        type Message;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Message = Unset;
         type ConvoId = Unset;
-    }
-    ///State transition - sets the `message` field to Set
-    pub struct SetMessage<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMessage<St> {}
-    impl<St: State> State for SetMessage<St> {
-        type Message = Set<members::message>;
-        type ConvoId = St::ConvoId;
+        type Message = Unset;
     }
     ///State transition - sets the `convo_id` field to Set
     pub struct SetConvoId<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetConvoId<St> {}
     impl<St: State> State for SetConvoId<St> {
-        type Message = St::Message;
         type ConvoId = Set<members::convo_id>;
+        type Message = St::Message;
+    }
+    ///State transition - sets the `message` field to Set
+    pub struct SetMessage<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMessage<St> {}
+    impl<St: State> State for SetMessage<St> {
+        type ConvoId = St::ConvoId;
+        type Message = Set<members::message>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `message` field
-        pub struct message(());
         ///Marker type for the `convo_id` field
         pub struct convo_id(());
+        ///Marker type for the `message` field
+        pub struct message(());
     }
 }
 
@@ -207,8 +207,8 @@ where
 impl<S: BosStr, St> BatchItemBuilder<S, St>
 where
     St: batch_item_state::State,
-    St::Message: batch_item_state::IsSet,
     St::ConvoId: batch_item_state::IsSet,
+    St::Message: batch_item_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> BatchItem<S> {

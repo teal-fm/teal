@@ -259,37 +259,37 @@ pub mod caption_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Lang;
         type File;
+        type Lang;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Lang = Unset;
         type File = Unset;
-    }
-    ///State transition - sets the `lang` field to Set
-    pub struct SetLang<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetLang<St> {}
-    impl<St: State> State for SetLang<St> {
-        type Lang = Set<members::lang>;
-        type File = St::File;
+        type Lang = Unset;
     }
     ///State transition - sets the `file` field to Set
     pub struct SetFile<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetFile<St> {}
     impl<St: State> State for SetFile<St> {
-        type Lang = St::Lang;
         type File = Set<members::file>;
+        type Lang = St::Lang;
+    }
+    ///State transition - sets the `lang` field to Set
+    pub struct SetLang<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetLang<St> {}
+    impl<St: State> State for SetLang<St> {
+        type File = St::File;
+        type Lang = Set<members::lang>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `lang` field
-        pub struct lang(());
         ///Marker type for the `file` field
         pub struct file(());
+        ///Marker type for the `lang` field
+        pub struct lang(());
     }
 }
 
@@ -359,8 +359,8 @@ where
 impl<S: BosStr, St> CaptionBuilder<S, St>
 where
     St: caption_state::State,
-    St::Lang: caption_state::IsSet,
     St::File: caption_state::IsSet,
+    St::Lang: caption_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Caption<S> {

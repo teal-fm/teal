@@ -1261,301 +1261,301 @@ pub mod preferences_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Quote;
-        type RepostViaRepost;
-        type Follow;
-        type Unverified;
-        type Verified;
-        type Like;
         type Chat;
-        type Reply;
-        type Repost;
-        type StarterpackJoined;
-        type SubscribedPost;
+        type Follow;
+        type Like;
         type LikeViaRepost;
         type Mention;
+        type Quote;
+        type Reply;
+        type Repost;
+        type RepostViaRepost;
+        type StarterpackJoined;
+        type SubscribedPost;
+        type Unverified;
+        type Verified;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Quote = Unset;
-        type RepostViaRepost = Unset;
-        type Follow = Unset;
-        type Unverified = Unset;
-        type Verified = Unset;
-        type Like = Unset;
         type Chat = Unset;
-        type Reply = Unset;
-        type Repost = Unset;
-        type StarterpackJoined = Unset;
-        type SubscribedPost = Unset;
+        type Follow = Unset;
+        type Like = Unset;
         type LikeViaRepost = Unset;
         type Mention = Unset;
-    }
-    ///State transition - sets the `quote` field to Set
-    pub struct SetQuote<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetQuote<St> {}
-    impl<St: State> State for SetQuote<St> {
-        type Quote = Set<members::quote>;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
-        type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `repost_via_repost` field to Set
-    pub struct SetRepostViaRepost<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRepostViaRepost<St> {}
-    impl<St: State> State for SetRepostViaRepost<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = Set<members::repost_via_repost>;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
-        type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `follow` field to Set
-    pub struct SetFollow<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetFollow<St> {}
-    impl<St: State> State for SetFollow<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = Set<members::follow>;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
-        type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `unverified` field to Set
-    pub struct SetUnverified<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUnverified<St> {}
-    impl<St: State> State for SetUnverified<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = Set<members::unverified>;
-        type Verified = St::Verified;
-        type Like = St::Like;
-        type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `verified` field to Set
-    pub struct SetVerified<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetVerified<St> {}
-    impl<St: State> State for SetVerified<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = Set<members::verified>;
-        type Like = St::Like;
-        type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `like` field to Set
-    pub struct SetLike<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetLike<St> {}
-    impl<St: State> State for SetLike<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = Set<members::like>;
-        type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
+        type Quote = Unset;
+        type Reply = Unset;
+        type Repost = Unset;
+        type RepostViaRepost = Unset;
+        type StarterpackJoined = Unset;
+        type SubscribedPost = Unset;
+        type Unverified = Unset;
+        type Verified = Unset;
     }
     ///State transition - sets the `chat` field to Set
     pub struct SetChat<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetChat<St> {}
     impl<St: State> State for SetChat<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
         type Chat = Set<members::chat>;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
         type Reply = St::Reply;
         type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
         type StarterpackJoined = St::StarterpackJoined;
         type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `reply` field to Set
-    pub struct SetReply<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetReply<St> {}
-    impl<St: State> State for SetReply<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
         type Unverified = St::Unverified;
         type Verified = St::Verified;
-        type Like = St::Like;
+    }
+    ///State transition - sets the `follow` field to Set
+    pub struct SetFollow<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetFollow<St> {}
+    impl<St: State> State for SetFollow<St> {
         type Chat = St::Chat;
-        type Reply = Set<members::reply>;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
+        type Follow = Set<members::follow>;
+        type Like = St::Like;
         type LikeViaRepost = St::LikeViaRepost;
         type Mention = St::Mention;
-    }
-    ///State transition - sets the `repost` field to Set
-    pub struct SetRepost<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRepost<St> {}
-    impl<St: State> State for SetRepost<St> {
         type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
-        type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = Set<members::repost>;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `starterpack_joined` field to Set
-    pub struct SetStarterpackJoined<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetStarterpackJoined<St> {}
-    impl<St: State> State for SetStarterpackJoined<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
-        type Chat = St::Chat;
         type Reply = St::Reply;
         type Repost = St::Repost;
-        type StarterpackJoined = Set<members::starterpack_joined>;
-        type SubscribedPost = St::SubscribedPost;
-        type LikeViaRepost = St::LikeViaRepost;
-        type Mention = St::Mention;
-    }
-    ///State transition - sets the `subscribed_post` field to Set
-    pub struct SetSubscribedPost<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubscribedPost<St> {}
-    impl<St: State> State for SetSubscribedPost<St> {
-        type Quote = St::Quote;
         type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
         type Unverified = St::Unverified;
         type Verified = St::Verified;
-        type Like = St::Like;
+    }
+    ///State transition - sets the `like` field to Set
+    pub struct SetLike<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetLike<St> {}
+    impl<St: State> State for SetLike<St> {
         type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = Set<members::subscribed_post>;
+        type Follow = St::Follow;
+        type Like = Set<members::like>;
         type LikeViaRepost = St::LikeViaRepost;
         type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
     }
     ///State transition - sets the `like_via_repost` field to Set
     pub struct SetLikeViaRepost<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetLikeViaRepost<St> {}
     impl<St: State> State for SetLikeViaRepost<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
         type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
+        type Follow = St::Follow;
+        type Like = St::Like;
         type LikeViaRepost = Set<members::like_via_repost>;
         type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
     }
     ///State transition - sets the `mention` field to Set
     pub struct SetMention<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMention<St> {}
     impl<St: State> State for SetMention<St> {
-        type Quote = St::Quote;
-        type RepostViaRepost = St::RepostViaRepost;
-        type Follow = St::Follow;
-        type Unverified = St::Unverified;
-        type Verified = St::Verified;
-        type Like = St::Like;
         type Chat = St::Chat;
-        type Reply = St::Reply;
-        type Repost = St::Repost;
-        type StarterpackJoined = St::StarterpackJoined;
-        type SubscribedPost = St::SubscribedPost;
+        type Follow = St::Follow;
+        type Like = St::Like;
         type LikeViaRepost = St::LikeViaRepost;
         type Mention = Set<members::mention>;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `quote` field to Set
+    pub struct SetQuote<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetQuote<St> {}
+    impl<St: State> State for SetQuote<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = Set<members::quote>;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `reply` field to Set
+    pub struct SetReply<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetReply<St> {}
+    impl<St: State> State for SetReply<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = Set<members::reply>;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `repost` field to Set
+    pub struct SetRepost<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRepost<St> {}
+    impl<St: State> State for SetRepost<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = Set<members::repost>;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `repost_via_repost` field to Set
+    pub struct SetRepostViaRepost<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRepostViaRepost<St> {}
+    impl<St: State> State for SetRepostViaRepost<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = Set<members::repost_via_repost>;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `starterpack_joined` field to Set
+    pub struct SetStarterpackJoined<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetStarterpackJoined<St> {}
+    impl<St: State> State for SetStarterpackJoined<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = Set<members::starterpack_joined>;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `subscribed_post` field to Set
+    pub struct SetSubscribedPost<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubscribedPost<St> {}
+    impl<St: State> State for SetSubscribedPost<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = Set<members::subscribed_post>;
+        type Unverified = St::Unverified;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `unverified` field to Set
+    pub struct SetUnverified<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUnverified<St> {}
+    impl<St: State> State for SetUnverified<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = Set<members::unverified>;
+        type Verified = St::Verified;
+    }
+    ///State transition - sets the `verified` field to Set
+    pub struct SetVerified<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetVerified<St> {}
+    impl<St: State> State for SetVerified<St> {
+        type Chat = St::Chat;
+        type Follow = St::Follow;
+        type Like = St::Like;
+        type LikeViaRepost = St::LikeViaRepost;
+        type Mention = St::Mention;
+        type Quote = St::Quote;
+        type Reply = St::Reply;
+        type Repost = St::Repost;
+        type RepostViaRepost = St::RepostViaRepost;
+        type StarterpackJoined = St::StarterpackJoined;
+        type SubscribedPost = St::SubscribedPost;
+        type Unverified = St::Unverified;
+        type Verified = Set<members::verified>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `quote` field
-        pub struct quote(());
-        ///Marker type for the `repost_via_repost` field
-        pub struct repost_via_repost(());
-        ///Marker type for the `follow` field
-        pub struct follow(());
-        ///Marker type for the `unverified` field
-        pub struct unverified(());
-        ///Marker type for the `verified` field
-        pub struct verified(());
-        ///Marker type for the `like` field
-        pub struct like(());
         ///Marker type for the `chat` field
         pub struct chat(());
-        ///Marker type for the `reply` field
-        pub struct reply(());
-        ///Marker type for the `repost` field
-        pub struct repost(());
-        ///Marker type for the `starterpack_joined` field
-        pub struct starterpack_joined(());
-        ///Marker type for the `subscribed_post` field
-        pub struct subscribed_post(());
+        ///Marker type for the `follow` field
+        pub struct follow(());
+        ///Marker type for the `like` field
+        pub struct like(());
         ///Marker type for the `like_via_repost` field
         pub struct like_via_repost(());
         ///Marker type for the `mention` field
         pub struct mention(());
+        ///Marker type for the `quote` field
+        pub struct quote(());
+        ///Marker type for the `reply` field
+        pub struct reply(());
+        ///Marker type for the `repost` field
+        pub struct repost(());
+        ///Marker type for the `repost_via_repost` field
+        pub struct repost_via_repost(());
+        ///Marker type for the `starterpack_joined` field
+        pub struct starterpack_joined(());
+        ///Marker type for the `subscribed_post` field
+        pub struct subscribed_post(());
+        ///Marker type for the `unverified` field
+        pub struct unverified(());
+        ///Marker type for the `verified` field
+        pub struct verified(());
     }
 }
 
@@ -1862,19 +1862,19 @@ where
 impl<S: BosStr, St> PreferencesBuilder<S, St>
 where
     St: preferences_state::State,
-    St::Quote: preferences_state::IsSet,
-    St::RepostViaRepost: preferences_state::IsSet,
-    St::Follow: preferences_state::IsSet,
-    St::Unverified: preferences_state::IsSet,
-    St::Verified: preferences_state::IsSet,
-    St::Like: preferences_state::IsSet,
     St::Chat: preferences_state::IsSet,
-    St::Reply: preferences_state::IsSet,
-    St::Repost: preferences_state::IsSet,
-    St::StarterpackJoined: preferences_state::IsSet,
-    St::SubscribedPost: preferences_state::IsSet,
+    St::Follow: preferences_state::IsSet,
+    St::Like: preferences_state::IsSet,
     St::LikeViaRepost: preferences_state::IsSet,
     St::Mention: preferences_state::IsSet,
+    St::Quote: preferences_state::IsSet,
+    St::Reply: preferences_state::IsSet,
+    St::Repost: preferences_state::IsSet,
+    St::RepostViaRepost: preferences_state::IsSet,
+    St::StarterpackJoined: preferences_state::IsSet,
+    St::SubscribedPost: preferences_state::IsSet,
+    St::Unverified: preferences_state::IsSet,
+    St::Verified: preferences_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Preferences<S> {
@@ -1929,37 +1929,37 @@ pub mod subject_activity_subscription_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Subject;
         type ActivitySubscription;
+        type Subject;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Subject = Unset;
         type ActivitySubscription = Unset;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type Subject = Set<members::subject>;
-        type ActivitySubscription = St::ActivitySubscription;
+        type Subject = Unset;
     }
     ///State transition - sets the `activity_subscription` field to Set
     pub struct SetActivitySubscription<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetActivitySubscription<St> {}
     impl<St: State> State for SetActivitySubscription<St> {
-        type Subject = St::Subject;
         type ActivitySubscription = Set<members::activity_subscription>;
+        type Subject = St::Subject;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type ActivitySubscription = St::ActivitySubscription;
+        type Subject = Set<members::subject>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `subject` field
-        pub struct subject(());
         ///Marker type for the `activity_subscription` field
         pub struct activity_subscription(());
+        ///Marker type for the `subject` field
+        pub struct subject(());
     }
 }
 
@@ -2043,8 +2043,8 @@ where
 impl<S: BosStr, St> SubjectActivitySubscriptionBuilder<S, St>
 where
     St: subject_activity_subscription_state::State,
-    St::Subject: subject_activity_subscription_state::IsSet,
     St::ActivitySubscription: subject_activity_subscription_state::IsSet,
+    St::Subject: subject_activity_subscription_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> SubjectActivitySubscription<S> {

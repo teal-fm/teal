@@ -119,67 +119,67 @@ pub mod badge_assignment_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Badge;
-        type Assigner;
-        type CreatedAt;
         type Assignee;
+        type Assigner;
+        type Badge;
+        type CreatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Badge = Unset;
-        type Assigner = Unset;
-        type CreatedAt = Unset;
         type Assignee = Unset;
-    }
-    ///State transition - sets the `badge` field to Set
-    pub struct SetBadge<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetBadge<St> {}
-    impl<St: State> State for SetBadge<St> {
-        type Badge = Set<members::badge>;
-        type Assigner = St::Assigner;
-        type CreatedAt = St::CreatedAt;
-        type Assignee = St::Assignee;
-    }
-    ///State transition - sets the `assigner` field to Set
-    pub struct SetAssigner<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetAssigner<St> {}
-    impl<St: State> State for SetAssigner<St> {
-        type Badge = St::Badge;
-        type Assigner = Set<members::assigner>;
-        type CreatedAt = St::CreatedAt;
-        type Assignee = St::Assignee;
-    }
-    ///State transition - sets the `created_at` field to Set
-    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
-    impl<St: State> State for SetCreatedAt<St> {
-        type Badge = St::Badge;
-        type Assigner = St::Assigner;
-        type CreatedAt = Set<members::created_at>;
-        type Assignee = St::Assignee;
+        type Assigner = Unset;
+        type Badge = Unset;
+        type CreatedAt = Unset;
     }
     ///State transition - sets the `assignee` field to Set
     pub struct SetAssignee<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAssignee<St> {}
     impl<St: State> State for SetAssignee<St> {
-        type Badge = St::Badge;
-        type Assigner = St::Assigner;
-        type CreatedAt = St::CreatedAt;
         type Assignee = Set<members::assignee>;
+        type Assigner = St::Assigner;
+        type Badge = St::Badge;
+        type CreatedAt = St::CreatedAt;
+    }
+    ///State transition - sets the `assigner` field to Set
+    pub struct SetAssigner<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetAssigner<St> {}
+    impl<St: State> State for SetAssigner<St> {
+        type Assignee = St::Assignee;
+        type Assigner = Set<members::assigner>;
+        type Badge = St::Badge;
+        type CreatedAt = St::CreatedAt;
+    }
+    ///State transition - sets the `badge` field to Set
+    pub struct SetBadge<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetBadge<St> {}
+    impl<St: State> State for SetBadge<St> {
+        type Assignee = St::Assignee;
+        type Assigner = St::Assigner;
+        type Badge = Set<members::badge>;
+        type CreatedAt = St::CreatedAt;
+    }
+    ///State transition - sets the `created_at` field to Set
+    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
+    impl<St: State> State for SetCreatedAt<St> {
+        type Assignee = St::Assignee;
+        type Assigner = St::Assigner;
+        type Badge = St::Badge;
+        type CreatedAt = Set<members::created_at>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `badge` field
-        pub struct badge(());
-        ///Marker type for the `assigner` field
-        pub struct assigner(());
-        ///Marker type for the `created_at` field
-        pub struct created_at(());
         ///Marker type for the `assignee` field
         pub struct assignee(());
+        ///Marker type for the `assigner` field
+        pub struct assigner(());
+        ///Marker type for the `badge` field
+        pub struct badge(());
+        ///Marker type for the `created_at` field
+        pub struct created_at(());
     }
 }
 
@@ -287,10 +287,10 @@ where
 impl<S: BosStr, St> BadgeAssignmentBuilder<S, St>
 where
     St: badge_assignment_state::State,
-    St::Badge: badge_assignment_state::IsSet,
-    St::Assigner: badge_assignment_state::IsSet,
-    St::CreatedAt: badge_assignment_state::IsSet,
     St::Assignee: badge_assignment_state::IsSet,
+    St::Assigner: badge_assignment_state::IsSet,
+    St::Badge: badge_assignment_state::IsSet,
+    St::CreatedAt: badge_assignment_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> BadgeAssignment<S> {

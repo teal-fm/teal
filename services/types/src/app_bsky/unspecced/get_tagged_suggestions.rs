@@ -178,49 +178,49 @@ pub mod suggestion_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type SubjectType;
         type Subject;
+        type SubjectType;
         type Tag;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type SubjectType = Unset;
         type Subject = Unset;
+        type SubjectType = Unset;
         type Tag = Unset;
-    }
-    ///State transition - sets the `subject_type` field to Set
-    pub struct SetSubjectType<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubjectType<St> {}
-    impl<St: State> State for SetSubjectType<St> {
-        type SubjectType = Set<members::subject_type>;
-        type Subject = St::Subject;
-        type Tag = St::Tag;
     }
     ///State transition - sets the `subject` field to Set
     pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSubject<St> {}
     impl<St: State> State for SetSubject<St> {
-        type SubjectType = St::SubjectType;
         type Subject = Set<members::subject>;
+        type SubjectType = St::SubjectType;
+        type Tag = St::Tag;
+    }
+    ///State transition - sets the `subject_type` field to Set
+    pub struct SetSubjectType<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubjectType<St> {}
+    impl<St: State> State for SetSubjectType<St> {
+        type Subject = St::Subject;
+        type SubjectType = Set<members::subject_type>;
         type Tag = St::Tag;
     }
     ///State transition - sets the `tag` field to Set
     pub struct SetTag<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTag<St> {}
     impl<St: State> State for SetTag<St> {
-        type SubjectType = St::SubjectType;
         type Subject = St::Subject;
+        type SubjectType = St::SubjectType;
         type Tag = Set<members::tag>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `subject_type` field
-        pub struct subject_type(());
         ///Marker type for the `subject` field
         pub struct subject(());
+        ///Marker type for the `subject_type` field
+        pub struct subject_type(());
         ///Marker type for the `tag` field
         pub struct tag(());
     }
@@ -311,8 +311,8 @@ where
 impl<S: BosStr, St> SuggestionBuilder<S, St>
 where
     St: suggestion_state::State,
-    St::SubjectType: suggestion_state::IsSet,
     St::Subject: suggestion_state::IsSet,
+    St::SubjectType: suggestion_state::IsSet,
     St::Tag: suggestion_state::IsSet,
 {
     /// Build the final struct.

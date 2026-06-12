@@ -596,65 +596,65 @@ pub mod labeler_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type IndexedAt;
-        type Creator;
         type Cid;
+        type Creator;
+        type IndexedAt;
         type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type IndexedAt = Unset;
-        type Creator = Unset;
         type Cid = Unset;
+        type Creator = Unset;
+        type IndexedAt = Unset;
         type Uri = Unset;
     }
-    ///State transition - sets the `indexed_at` field to Set
-    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
-    impl<St: State> State for SetIndexedAt<St> {
-        type IndexedAt = Set<members::indexed_at>;
+    ///State transition - sets the `cid` field to Set
+    pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCid<St> {}
+    impl<St: State> State for SetCid<St> {
+        type Cid = Set<members::cid>;
         type Creator = St::Creator;
-        type Cid = St::Cid;
+        type IndexedAt = St::IndexedAt;
         type Uri = St::Uri;
     }
     ///State transition - sets the `creator` field to Set
     pub struct SetCreator<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreator<St> {}
     impl<St: State> State for SetCreator<St> {
-        type IndexedAt = St::IndexedAt;
-        type Creator = Set<members::creator>;
         type Cid = St::Cid;
+        type Creator = Set<members::creator>;
+        type IndexedAt = St::IndexedAt;
         type Uri = St::Uri;
     }
-    ///State transition - sets the `cid` field to Set
-    pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCid<St> {}
-    impl<St: State> State for SetCid<St> {
-        type IndexedAt = St::IndexedAt;
+    ///State transition - sets the `indexed_at` field to Set
+    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
+    impl<St: State> State for SetIndexedAt<St> {
+        type Cid = St::Cid;
         type Creator = St::Creator;
-        type Cid = Set<members::cid>;
+        type IndexedAt = Set<members::indexed_at>;
         type Uri = St::Uri;
     }
     ///State transition - sets the `uri` field to Set
     pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetUri<St> {}
     impl<St: State> State for SetUri<St> {
-        type IndexedAt = St::IndexedAt;
-        type Creator = St::Creator;
         type Cid = St::Cid;
+        type Creator = St::Creator;
+        type IndexedAt = St::IndexedAt;
         type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `indexed_at` field
-        pub struct indexed_at(());
-        ///Marker type for the `creator` field
-        pub struct creator(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `creator` field
+        pub struct creator(());
+        ///Marker type for the `indexed_at` field
+        pub struct indexed_at(());
         ///Marker type for the `uri` field
         pub struct uri(());
     }
@@ -817,9 +817,9 @@ impl<S: BosStr, St: labeler_view_state::State> LabelerViewBuilder<S, St> {
 impl<S: BosStr, St> LabelerViewBuilder<S, St>
 where
     St: labeler_view_state::State,
-    St::IndexedAt: labeler_view_state::IsSet,
-    St::Creator: labeler_view_state::IsSet,
     St::Cid: labeler_view_state::IsSet,
+    St::Creator: labeler_view_state::IsSet,
+    St::IndexedAt: labeler_view_state::IsSet,
     St::Uri: labeler_view_state::IsSet,
 {
     /// Build the final struct.
@@ -863,9 +863,9 @@ pub mod labeler_view_detailed_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type IndexedAt;
-        type Creator;
         type Cid;
+        type Creator;
+        type IndexedAt;
         type Policies;
         type Uri;
     }
@@ -873,19 +873,19 @@ pub mod labeler_view_detailed_state {
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type IndexedAt = Unset;
-        type Creator = Unset;
         type Cid = Unset;
+        type Creator = Unset;
+        type IndexedAt = Unset;
         type Policies = Unset;
         type Uri = Unset;
     }
-    ///State transition - sets the `indexed_at` field to Set
-    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
-    impl<St: State> State for SetIndexedAt<St> {
-        type IndexedAt = Set<members::indexed_at>;
+    ///State transition - sets the `cid` field to Set
+    pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCid<St> {}
+    impl<St: State> State for SetCid<St> {
+        type Cid = Set<members::cid>;
         type Creator = St::Creator;
-        type Cid = St::Cid;
+        type IndexedAt = St::IndexedAt;
         type Policies = St::Policies;
         type Uri = St::Uri;
     }
@@ -893,19 +893,19 @@ pub mod labeler_view_detailed_state {
     pub struct SetCreator<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreator<St> {}
     impl<St: State> State for SetCreator<St> {
-        type IndexedAt = St::IndexedAt;
-        type Creator = Set<members::creator>;
         type Cid = St::Cid;
+        type Creator = Set<members::creator>;
+        type IndexedAt = St::IndexedAt;
         type Policies = St::Policies;
         type Uri = St::Uri;
     }
-    ///State transition - sets the `cid` field to Set
-    pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCid<St> {}
-    impl<St: State> State for SetCid<St> {
-        type IndexedAt = St::IndexedAt;
+    ///State transition - sets the `indexed_at` field to Set
+    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
+    impl<St: State> State for SetIndexedAt<St> {
+        type Cid = St::Cid;
         type Creator = St::Creator;
-        type Cid = Set<members::cid>;
+        type IndexedAt = Set<members::indexed_at>;
         type Policies = St::Policies;
         type Uri = St::Uri;
     }
@@ -913,9 +913,9 @@ pub mod labeler_view_detailed_state {
     pub struct SetPolicies<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPolicies<St> {}
     impl<St: State> State for SetPolicies<St> {
-        type IndexedAt = St::IndexedAt;
-        type Creator = St::Creator;
         type Cid = St::Cid;
+        type Creator = St::Creator;
+        type IndexedAt = St::IndexedAt;
         type Policies = Set<members::policies>;
         type Uri = St::Uri;
     }
@@ -923,21 +923,21 @@ pub mod labeler_view_detailed_state {
     pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetUri<St> {}
     impl<St: State> State for SetUri<St> {
-        type IndexedAt = St::IndexedAt;
-        type Creator = St::Creator;
         type Cid = St::Cid;
+        type Creator = St::Creator;
+        type IndexedAt = St::IndexedAt;
         type Policies = St::Policies;
         type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `indexed_at` field
-        pub struct indexed_at(());
-        ///Marker type for the `creator` field
-        pub struct creator(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `creator` field
+        pub struct creator(());
+        ///Marker type for the `indexed_at` field
+        pub struct indexed_at(());
         ///Marker type for the `policies` field
         pub struct policies(());
         ///Marker type for the `uri` field
@@ -1191,9 +1191,9 @@ impl<
 impl<S: BosStr, St> LabelerViewDetailedBuilder<S, St>
 where
     St: labeler_view_detailed_state::State,
-    St::IndexedAt: labeler_view_detailed_state::IsSet,
-    St::Creator: labeler_view_detailed_state::IsSet,
     St::Cid: labeler_view_detailed_state::IsSet,
+    St::Creator: labeler_view_detailed_state::IsSet,
+    St::IndexedAt: labeler_view_detailed_state::IsSet,
     St::Policies: labeler_view_detailed_state::IsSet,
     St::Uri: labeler_view_detailed_state::IsSet,
 {

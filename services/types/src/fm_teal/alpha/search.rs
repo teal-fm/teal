@@ -74,67 +74,67 @@ pub mod song_result_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Uri;
         type ArtistName;
-        type TrackName;
         type PlayCount;
+        type TrackName;
+        type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Uri = Unset;
         type ArtistName = Unset;
-        type TrackName = Unset;
         type PlayCount = Unset;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type Uri = Set<members::uri>;
-        type ArtistName = St::ArtistName;
-        type TrackName = St::TrackName;
-        type PlayCount = St::PlayCount;
+        type TrackName = Unset;
+        type Uri = Unset;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetArtistName<St> {}
     impl<St: State> State for SetArtistName<St> {
-        type Uri = St::Uri;
         type ArtistName = Set<members::artist_name>;
+        type PlayCount = St::PlayCount;
         type TrackName = St::TrackName;
-        type PlayCount = St::PlayCount;
-    }
-    ///State transition - sets the `track_name` field to Set
-    pub struct SetTrackName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTrackName<St> {}
-    impl<St: State> State for SetTrackName<St> {
         type Uri = St::Uri;
-        type ArtistName = St::ArtistName;
-        type TrackName = Set<members::track_name>;
-        type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `play_count` field to Set
     pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPlayCount<St> {}
     impl<St: State> State for SetPlayCount<St> {
-        type Uri = St::Uri;
         type ArtistName = St::ArtistName;
-        type TrackName = St::TrackName;
         type PlayCount = Set<members::play_count>;
+        type TrackName = St::TrackName;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `track_name` field to Set
+    pub struct SetTrackName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTrackName<St> {}
+    impl<St: State> State for SetTrackName<St> {
+        type ArtistName = St::ArtistName;
+        type PlayCount = St::PlayCount;
+        type TrackName = Set<members::track_name>;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type ArtistName = St::ArtistName;
+        type PlayCount = St::PlayCount;
+        type TrackName = St::TrackName;
+        type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `uri` field
-        pub struct uri(());
         ///Marker type for the `artist_name` field
         pub struct artist_name(());
-        ///Marker type for the `track_name` field
-        pub struct track_name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
+        ///Marker type for the `track_name` field
+        pub struct track_name(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
     }
 }
 
@@ -275,10 +275,10 @@ where
 impl<S: BosStr, St> SongResultBuilder<S, St>
 where
     St: song_result_state::State,
-    St::Uri: song_result_state::IsSet,
     St::ArtistName: song_result_state::IsSet,
-    St::TrackName: song_result_state::IsSet,
     St::PlayCount: song_result_state::IsSet,
+    St::TrackName: song_result_state::IsSet,
+    St::Uri: song_result_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> SongResult<S> {
