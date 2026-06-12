@@ -14,6 +14,7 @@ use tokio::time::sleep;
 const DEFAULT_LIGHTRAIL_URL: &str = "https://lightrail.microcosm.blue";
 const DEFAULT_COLLECTION: &str = "fm.teal.alpha.feed.play";
 const DEFAULT_STATE_FILE: &str = ".teal-lightrail-backfill-done.txt";
+const DEFAULT_FAILED_FILE: &str = ".teal-lightrail-backfill-failed.txt";
 
 #[derive(Debug, Deserialize)]
 struct LightrailRepo {
@@ -63,9 +64,45 @@ fn load_completed(path: &PathBuf) -> anyhow::Result<HashSet<String>> {
     }
 }
 
+fn load_did_list(path: &PathBuf) -> anyhow::Result<Vec<String>> {
+    match fs::read_to_string(path) {
+        Ok(contents) => {
+            let mut dids = contents
+                .lines()
+                .map(str::trim)
+                .filter(|line| !line.is_empty())
+                .map(ToString::to_string)
+                .collect::<Vec<_>>();
+            dids.sort();
+            dids.dedup();
+            Ok(dids)
+        }
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
+        Err(err) => Err(err.into()),
+    }
+}
+
 fn record_completed(path: &PathBuf, did: &str) -> anyhow::Result<()> {
     let mut file = OpenOptions::new().create(true).append(true).open(path)?;
     writeln!(file, "{did}")?;
+    file.flush()?;
+    Ok(())
+}
+
+fn write_failed(path: &PathBuf, failed: &[(String, String)]) -> anyhow::Result<()> {
+    if failed.is_empty() {
+        let _ = fs::remove_file(path);
+        return Ok(());
+    }
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(path)?;
+    for (did, _) in failed {
+        writeln!(file, "{did}")?;
+    }
     file.flush()?;
     Ok(())
 }
@@ -149,14 +186,27 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("LIGHTRAIL_BACKFILL_STATE_FILE")
             .unwrap_or_else(|_| DEFAULT_STATE_FILE.to_string()),
     );
+    let failed_file = PathBuf::from(
+        std::env::var("LIGHTRAIL_BACKFILL_FAILED_FILE")
+            .unwrap_or_else(|_| DEFAULT_FAILED_FILE.to_string()),
+    );
+    let retry_failed = std::env::var("LIGHTRAIL_BACKFILL_RETRY_FAILED").as_deref() == Ok("1");
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(120))
         .user_agent("teal-cadet-lightrail-backfill/0.1")
         .build()?;
 
-    eprintln!("Discovering repos with {collection} via {lightrail_url}");
-    let mut repos = discover_repos(&client, &lightrail_url, &collection, page_limit).await?;
+    let mut repos = if retry_failed {
+        eprintln!(
+            "Retrying failed repos from {}",
+            failed_file.to_string_lossy()
+        );
+        load_did_list(&failed_file)?
+    } else {
+        eprintln!("Discovering repos with {collection} via {lightrail_url}");
+        discover_repos(&client, &lightrail_url, &collection, page_limit).await?
+    };
     if repos.len() > max_repos {
         repos.truncate(max_repos);
     }
@@ -211,6 +261,8 @@ async fn main() -> anyhow::Result<()> {
             failed.push((did, err.to_string()));
         }
     }
+
+    write_failed(&failed_file, &failed)?;
 
     eprintln!("Refreshing materialized play views");
     refresh_materialized_views(&pool).await?;

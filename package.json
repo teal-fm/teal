@@ -9,6 +9,7 @@
     "build:rust": "turbo run build:rust",
     "backfill": "./scripts/backfill-tap.sh",
     "backfill:lightrail": "SQLX_OFFLINE=true cargo run -p cadet --bin lightrail-backfill",
+    "backfill:lightrail:retry": "LIGHTRAIL_BACKFILL_RETRY_FAILED=1 SQLX_OFFLINE=true cargo run -p cadet --bin lightrail-backfill",
     "tunnel:up": "./scripts/dev-tunnel.sh up",
     "tunnel:down": "./scripts/dev-tunnel.sh down",
     "tunnel:status": "./scripts/dev-tunnel.sh status",

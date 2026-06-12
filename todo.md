@@ -24,6 +24,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst resolves Teal AT-URI deep links from `/at://...` to canonical profile, listen, and post pages.
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
 - Cadet has a TAP backfill consumer and `pnpm backfill` command. The command discovers Teal repos with `TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play`, filters delivered records with `TAP_COLLECTION_FILTERS=fm.teal.*`, and consumes TAP record events through the existing Teal ingestors. Full-network TAP backfill remains an explicit env override.
+- Cadet's Lightrail CAR backfill resolves `did:web` PDS endpoints from the DID document at `https://<host>/.well-known/did.json` and records most-recent failed repo DIDs for quick retry with `pnpm backfill:lightrail:retry`.
 - Cadet normalizes historical play MBID fields during ingestion: empty optional MBIDs are treated as missing, and bare MusicBrainz UUIDs are canonicalized to `mbid:<uuid>` before storage.
 - Cadet indexes Jetstream identity handle changes into `profiles.handle`; Aqua includes that handle on profile responses, and Amethyst falls back to public Bluesky handles when an existing Teal profile row has not received an identity event yet.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.

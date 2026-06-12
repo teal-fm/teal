@@ -63,3 +63,33 @@ the current lexicons expect `mbid:<uuid>` URI values. Cadet normalizes those
 bare UUIDs during ingest and drops empty optional MBID fields before parsing, so
 historical TAP backfills should not reject otherwise valid play records for
 missing legacy MBID metadata.
+
+## Lightrail CAR Backfill
+
+Lightrail backfill discovers repos with `fm.teal.alpha.feed.play` through
+`com.atproto.sync.listReposByCollection`, fetches each repo CAR from the repo's
+PDS, and stores completed DIDs in `.teal-lightrail-backfill-done.txt`.
+
+```bash
+pnpm backfill:lightrail
+```
+
+Failed repo DIDs from the most recent run are written to
+`.teal-lightrail-backfill-failed.txt`. To retry only that failed set:
+
+```bash
+pnpm backfill:lightrail:retry
+```
+
+Useful environment overrides:
+
+```bash
+LIGHTRAIL_BACKFILL_STATE_FILE=.teal-lightrail-backfill-done.txt
+LIGHTRAIL_BACKFILL_FAILED_FILE=.teal-lightrail-backfill-failed.txt
+LIGHTRAIL_BACKFILL_RETRY_FAILED=1
+LIGHTRAIL_BACKFILL_RESET=1
+```
+
+PDS resolution supports both `did:plc` and `did:web`. For `did:web:example.com`,
+Cadet resolves the DID document from
+`https://example.com/.well-known/did.json` and uses its `#atproto_pds` service.

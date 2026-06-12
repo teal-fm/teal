@@ -533,10 +533,43 @@ impl CarImportIngestor {
             .ok_or_else(|| anyhow!("Failed to resolve handle to DID"))
     }
 
+    fn did_web_document_url(did: &str) -> Result<String> {
+        let parts: Vec<&str> = did.split(':').collect();
+        if parts.len() < 3 || parts[0] != "did" || parts[1] != "web" || parts[2].is_empty() {
+            return Err(anyhow!("Invalid did:web DID: {}", did));
+        }
+
+        let host = parts[2];
+        if host.contains('/') || host.contains('?') || host.contains('#') {
+            return Err(anyhow!("Invalid did:web host in DID: {}", did));
+        }
+
+        let path = if parts.len() == 3 {
+            ".well-known/did.json".to_string()
+        } else {
+            format!("{}/did.json", parts[3..].join("/"))
+        };
+        Ok(format!("https://{host}/{path}"))
+    }
+
+    async fn fetch_did_document(&self, did: &str) -> Result<Value> {
+        let url = if did.starts_with("did:plc:") {
+            format!("https://plc.directory/{did}")
+        } else if did.starts_with("did:web:") {
+            Self::did_web_document_url(did)?
+        } else {
+            return Err(anyhow!(
+                "Unsupported DID method for PDS resolution: {}",
+                did
+            ));
+        };
+
+        Ok(reqwest::get(&url).await?.error_for_status()?.json().await?)
+    }
+
     /// Resolve DID to PDS URL
     async fn resolve_did_to_pds(&self, did: &str) -> Result<String> {
-        let url = format!("https://plc.directory/{}", did);
-        let response: Value = reqwest::get(&url).await?.json().await?;
+        let response = self.fetch_did_document(did).await?;
 
         if let Some(services) = response["service"].as_array() {
             for service in services {
@@ -848,6 +881,19 @@ mod tests {
         assert_eq!(json["$type"], "fm.teal.alpha.feed.play");
         assert_eq!(json["track_name"], "Test Song");
         assert_eq!(json["duration"], 180000);
+    }
+
+    #[test]
+    fn test_did_web_document_url() {
+        assert_eq!(
+            CarImportIngestor::did_web_document_url("did:web:example.com").unwrap(),
+            "https://example.com/.well-known/did.json"
+        );
+        assert_eq!(
+            CarImportIngestor::did_web_document_url("did:web:example.com:users:alice").unwrap(),
+            "https://example.com/users/alice/did.json"
+        );
+        assert!(CarImportIngestor::did_web_document_url("did:web:").is_err());
     }
 
     #[tokio::test]
