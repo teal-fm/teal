@@ -423,11 +423,26 @@ impl StatsRepo for PgDataSource {
 
         let rows = sqlx::query!(
             r#"
+            WITH page AS (
+                SELECT
+                    p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name,
+                    p.played_time, p.processed_time, p.release_mbid, p.release_name,
+                    p.recording_mbid, p.submission_client_agent,
+                    p.music_service_base_domain, p.origin_url,
+                    COALESCE(p.played_time, p.processed_time) AS sort_time
+                FROM plays p
+                WHERE (
+                    $1::timestamptz IS NULL
+                    OR (COALESCE(p.played_time, p.processed_time), p.uri) < ($1, $2)
+                )
+                ORDER BY COALESCE(p.played_time, p.processed_time) DESC, p.uri DESC
+                LIMIT $3
+            )
             SELECT
                 p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,
                 p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,
                 p.submission_client_agent, p.music_service_base_domain, p.origin_url,
-                COALESCE(p.played_time, p.processed_time) AS "sort_time?",
+                p.sort_time AS "sort_time?",
                 profile.did AS "profile_did?", profile.handle AS profile_handle,
                 profile.display_name AS profile_display_name, profile.avatar AS profile_avatar,
                 COALESCE(
@@ -439,20 +454,15 @@ impl StatsRepo for PgDataSource {
                   ) FILTER (WHERE ptae.artist_name IS NOT NULL),
                   '[]'
                 ) AS artists
-            FROM plays p
+            FROM page p
             LEFT JOIN profiles profile ON p.did = profile.did
             LEFT JOIN play_to_artists_extended as ptae ON p.uri = ptae.play_uri
             LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id
-            WHERE (
-                $1::timestamptz IS NULL
-                OR (COALESCE(p.played_time, p.processed_time), p.uri) < ($1, $2)
-            )
             GROUP BY p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,
                      p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,
                      p.submission_client_agent, p.music_service_base_domain, p.origin_url,
-                     profile.did, profile.handle, profile.display_name, profile.avatar
-            ORDER BY COALESCE(p.played_time, p.processed_time) DESC, p.uri DESC
-            LIMIT $3
+                     p.sort_time, profile.did, profile.handle, profile.display_name, profile.avatar
+            ORDER BY p.sort_time DESC, p.uri DESC
             "#,
             cursor_time,
             cursor.as_ref().map(|cursor| cursor.uri.as_str()),
