@@ -13,7 +13,8 @@
     "build:ios": "expo export --output-dir ./build --platform ios --clear",
     "test": "CI=1 jest --config jest.lib.config.ts --runInBand --watchAll=false",
     "lexgen": "lex gen-server ./lexicons/generated/server/ ./lexicons/src/",
-    "install": "CI=1 EXPO_NO_TELEMETRY=1 expo prebuild --no-install"
+    "prebuild:native": "CI=1 EXPO_NO_TELEMETRY=1 expo prebuild --no-install",
+    "install": ":"
   },
   "jest": {
     "preset": "jest-expo",
