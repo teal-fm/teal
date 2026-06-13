@@ -298,10 +298,15 @@ export function getSearchResults(q: string, limit = 8) {
   });
 }
 
-export function getSocialFeed(limit = 30, cursor?: string, viewer?: string) {
+export function getSocialFeed(
+  limit = 30,
+  cursor?: string,
+  viewer?: string,
+  actor?: string,
+) {
   return getXrpc<{ items: SocialPostView[]; cursor?: string }>(
     "fm.teal.alpha.feed.social.getFeed",
-    { limit, cursor, viewer },
+    { limit, cursor, viewer, actor },
   );
 }
 

@@ -13,6 +13,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst Home uses one inline Teal social composer. Signed-in users get their most recent indexed play attached automatically, can click the attached song to change it with recent plays or MusicBrainz search, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
 - Teal has a native social graph lexicon, `fm.teal.alpha.graph.follow`, plus Aqua graph summary/followers/follows read APIs and Cadet ingestion for live, CAR, and TAP follow records.
 - Amethyst Home has a single inline social composer followed by a Posts/Listens feed toggle without count badges. Posts show only Teal social posts, Listens show only indexed plays, and each tab paginates its own cursor. The global shell top bar shows the early-WIP/database-wipes warning.
+- Amethyst profile pages show each actor's recent top-level Teal social posts above recent listening history, with viewer like/repost state hydrated when signed in.
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst profile headers show display name, handle, bio, images, and current listening only; protocol internals like DID and onboarding status are hidden from the public profile UI.

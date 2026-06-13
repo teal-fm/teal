@@ -33,6 +33,7 @@ pub struct PageQuery {
     pub limit: Option<i32>,
     pub cursor: Option<String>,
     pub viewer: Option<String>,
+    pub actor: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -86,6 +87,7 @@ pub async fn get_feed(
             query.limit,
             query.cursor.as_deref(),
             query.viewer.as_deref(),
+            query.actor.as_deref(),
         )
         .await
         .map(PageResponse::from)
