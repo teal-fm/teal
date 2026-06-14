@@ -2,7 +2,7 @@
 
 Working handoff for Teal. Keep this file focused on active work only; implementation history belongs in commits and PRs.
 
-Last synced with GitHub issues: 2026-06-14.
+Last synced with GitHub and Linear issues: 2026-06-14.
 
 ## Current State
 
@@ -19,19 +19,24 @@ Last synced with GitHub issues: 2026-06-14.
 - [ ] Backfill the 381 current `fm.teal.alpha.feed.play` records present in `did:plc:tas6hj2xjrqben5653v5kohk`'s PDS repo but missing from the preview Postgres index. URI-set comparison on 2026-06-11 showed 10,193 repo records, 9,812 indexed DB rows, and no stale extra DB URIs.
 - [ ] Handle Jetstream account lifecycle events in Cadet, including deletes, takedowns, suspensions, activations, and tombstones. Decide how each state should affect indexed profiles, social records, and plays.
 
-## GitHub Issues
+## Tracker Issues
 
-- [ ] [#86 Log unique tracks and albums to Popfeed](https://github.com/teal-fm/teal/issues/86)
+- [ ] [#86](https://github.com/teal-fm/teal/issues/86) / [TEAL-31](https://linear.app/tealfm/issue/TEAL-31/log-unique-tracks-and-albums-to-popfeed) Log unique tracks and albums to Popfeed
+  - Linear: `Backlog`, no priority
   - Create Popfeed records when a listener plays a track or album for the first time.
   - Consider follow-on flows for completing Popfeed reviews of songs and albums from Teal.
-- [ ] [#57 top albums around profile pic](https://github.com/teal-fm/teal/issues/57)
+- [ ] [#57](https://github.com/teal-fm/teal/issues/57) / [TEAL-30](https://linear.app/tealfm/issue/TEAL-30/top-albums-around-profile-pic) top albums around profile pic
+  - Linear: `In Progress`, low priority
   - Labels: `API`, `Frontend`, `Legacy Songish Feature`
   - Assignee: `mmattbtw`
-- [ ] [#29 mass editing scrobbles](https://github.com/teal-fm/teal/issues/29)
+- [ ] [#29](https://github.com/teal-fm/teal/issues/29) / [TEAL-21](https://linear.app/tealfm/issue/TEAL-21/mass-editing-scrobbles) mass editing scrobbles
+  - Linear: `Backlog`, low priority
   - Labels: `Improvement`, `API`
-- [ ] [#28 editing scrobbles](https://github.com/teal-fm/teal/issues/28)
+- [ ] [#28](https://github.com/teal-fm/teal/issues/28) / [TEAL-20](https://linear.app/tealfm/issue/TEAL-20/editing-scrobbles) editing scrobbles
+  - Linear: `Todo`, medium priority
   - Labels: `Feature`, `API`
-- [ ] [#16 Live Scrobble View](https://github.com/teal-fm/teal/issues/16)
+- [ ] [#16](https://github.com/teal-fm/teal/issues/16) / [TEAL-16](https://linear.app/tealfm/issue/TEAL-16/live-scrobble-view) Live Scrobble View
+  - Linear: `Todo`, low priority
   - Labels: `Frontend`
   - Assignee: `mmattbtw`
   - Build a live feed of scrobbles from everyone.
