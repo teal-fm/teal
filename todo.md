@@ -26,7 +26,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
   - Linear: `Backlog`, no priority
   - Create Popfeed records when a listener plays a track or album for the first time.
   - Consider follow-on flows for completing Popfeed reviews of songs and albums from Teal.
-  - Blocked locally: GitHub discussion says this should be a user-enabled sync, potentially with a later history backfill, but no Popfeed NSID, lexicon, service endpoint, auth flow, or record schema are present in this repo yet. Web search on 2026-06-15 did not find an authoritative public Popfeed record schema to implement against.
+  - Blocked locally: GitHub discussion says this should be a user-enabled sync, potentially with a later history backfill. Fresh lookup on 2026-06-15 found public usage of `social.popfeed.feed.listItem` and `social.popfeed.feed.list`, but `com.atproto.lexicon.resolveLexicon` is not implemented on the public appview and `popfeed.social`'s PDS has no `com.atproto.lexicon.schema` records for those NSIDs. Example records show fields like `title`, `mainCredit`, `mainCreditRole`, `creativeWorkType`, `identifiers`, `listUri`, `addedAt`, `posterUrl`, and `releaseDate`, but Teal still needs an authoritative Popfeed schema/auth contract before writing user records.
 - [x] [#57](https://github.com/teal-fm/teal/issues/57) / [TEAL-30](https://linear.app/tealfm/issue/TEAL-30/top-albums-around-profile-pic) top albums around profile pic
   - Linear: `In Progress`, low priority
   - Labels: `API`, `Frontend`, `Legacy Songish Feature`
