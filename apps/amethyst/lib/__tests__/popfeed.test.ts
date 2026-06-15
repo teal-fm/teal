@@ -1,14 +1,15 @@
+import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+
 import {
   createPopfeedListRecord,
-  popfeedItemsFromPlay,
   POPFEED_LIST_COLLECTION,
   POPFEED_LIST_ITEM_COLLECTION,
-  syncPlayToPopfeed,
+  popfeedItemsFromPlay,
+  syncActorFeedToPopfeed,
   syncPlaysToPopfeed,
+  syncPlayToPopfeed,
   TEAL_POPFEED_LIST_NAME,
 } from "../popfeed";
-
-import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
 
 describe("Popfeed sync mapping", () => {
   const play: PlayRecord = {
@@ -207,5 +208,129 @@ describe("Popfeed sync mapping", () => {
           `com.atproto.repo.listRecords:${POPFEED_LIST_ITEM_COLLECTION}`,
       ),
     ).toHaveLength(1);
+  });
+
+  it("syncs paginated indexed plays and skips items created by earlier pages", async () => {
+    const createdItems: Record<string, unknown>[] = [];
+    const fakeAgent = {
+      did: "did:plc:viewer",
+      call: jest.fn(
+        async (
+          method: string,
+          params?: Record<string, unknown>,
+          data?: Record<string, unknown>,
+        ) => {
+          if (method === "com.atproto.repo.listRecords") {
+            if (params?.collection === POPFEED_LIST_COLLECTION) {
+              return {
+                data: {
+                  records: [
+                    {
+                      uri: "at://did:plc:viewer/social.popfeed.feed.list/abc",
+                      value: createPopfeedListRecord(),
+                    },
+                  ],
+                },
+              };
+            }
+            if (params?.collection === POPFEED_LIST_ITEM_COLLECTION) {
+              return {
+                data: {
+                  records: createdItems.map((value, index) => ({
+                    uri: `at://did:plc:viewer/social.popfeed.feed.listItem/${index}`,
+                    value,
+                  })),
+                },
+              };
+            }
+          }
+
+          if (method === "com.atproto.repo.createRecord") {
+            createdItems.push(data?.record as Record<string, unknown>);
+            return {
+              data: {
+                uri: `at://did:plc:viewer/${data?.collection as string}/created`,
+              },
+            };
+          }
+
+          throw new Error(`Unexpected method ${method}`);
+        },
+      ),
+    };
+    const fetchPage = jest.fn(async (_limit: number, cursor?: string) => ({
+      cursor: cursor ? undefined : "next",
+      plays: [play],
+    }));
+
+    const result = await syncActorFeedToPopfeed(fakeAgent, fetchPage, {
+      maxPlays: 10,
+      pageLimit: 1,
+    });
+
+    expect(fetchPage).toHaveBeenNthCalledWith(1, 1, undefined);
+    expect(fetchPage).toHaveBeenNthCalledWith(2, 1, "next");
+    expect(result).toEqual({
+      capReached: false,
+      created: 2,
+      indexedPlays: 2,
+      listUri: "at://did:plc:viewer/social.popfeed.feed.list/abc",
+      skipped: 2,
+    });
+    expect(createdItems).toHaveLength(2);
+  });
+
+  it("stops paginated Popfeed backfill at the play cap", async () => {
+    const fakeAgent = {
+      did: "did:plc:viewer",
+      call: jest.fn(
+        async (
+          method: string,
+          params?: Record<string, unknown>,
+          data?: Record<string, unknown>,
+        ) => {
+          if (method === "com.atproto.repo.listRecords") {
+            return {
+              data: {
+                records:
+                  params?.collection === POPFEED_LIST_COLLECTION
+                    ? [
+                        {
+                          uri: "at://did:plc:viewer/social.popfeed.feed.list/abc",
+                          value: createPopfeedListRecord(),
+                        },
+                      ]
+                    : [],
+              },
+            };
+          }
+          if (method === "com.atproto.repo.createRecord") {
+            return {
+              data: {
+                uri: `at://did:plc:viewer/${data?.collection as string}/created`,
+              },
+            };
+          }
+          throw new Error(`Unexpected method ${method}`);
+        },
+      ),
+    };
+    const fetchPage = jest.fn(async () => ({
+      cursor: "next",
+      plays: [play],
+    }));
+
+    const result = await syncActorFeedToPopfeed(fakeAgent, fetchPage, {
+      maxPlays: 1,
+      pageLimit: 1,
+    });
+
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({
+      capReached: true,
+      created: 2,
+      indexedPlays: 1,
+      skipped: 0,
+    });
   });
 });

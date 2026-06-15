@@ -2,21 +2,16 @@ import React, { useState } from "react";
 import { Switch, View } from "react-native";
 import { Link, Stack } from "expo-router";
 import RightRail from "@/components/teal/RightRail";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { syncPlaysToPopfeed } from "@/lib/popfeed";
+import { syncActorFeedToPopfeed } from "@/lib/popfeed";
 import { getActorFeed } from "@/lib/teal/api";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { cn } from "@/lib/utils";
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
-
-const POPFEED_BACKFILL_PAGE_LIMIT = 100;
-const POPFEED_BACKFILL_MAX_PLAYS = 1000;
 
 export default function Settings() {
   const { colorScheme, setColorScheme } = useColorScheme();
@@ -78,32 +73,13 @@ export default function Settings() {
               setPopfeedBackfillStatus("syncing");
               setPopfeedBackfillMessage("");
               try {
-                let cursor: string | undefined;
-                let created = 0;
-                let skipped = 0;
-                let indexedPlays = 0;
-                do {
-                  const page = await getActorFeed(
-                    viewerDid,
-                    POPFEED_BACKFILL_PAGE_LIMIT,
-                    cursor,
-                  );
-                  indexedPlays += page.plays.length;
-                  const result = await syncPlaysToPopfeed(
-                    pdsAgent,
-                    page.plays.map((play) => ({ play })),
-                  );
-                  created += result.created;
-                  skipped += result.skipped;
-                  cursor = page.cursor;
-                } while (cursor && indexedPlays < POPFEED_BACKFILL_MAX_PLAYS);
-
-                const capReached = Boolean(
-                  cursor && indexedPlays >= POPFEED_BACKFILL_MAX_PLAYS,
+                const result = await syncActorFeedToPopfeed(
+                  pdsAgent,
+                  (limit, cursor) => getActorFeed(viewerDid, limit, cursor),
                 );
                 setPopfeedBackfillStatus("done");
                 setPopfeedBackfillMessage(
-                  `Synced ${created} Popfeed items from ${indexedPlays} indexed plays. Skipped ${skipped}.${capReached ? " Run again later to continue." : ""}`,
+                  `Synced ${result.created} Popfeed items from ${result.indexedPlays} indexed plays. Skipped ${result.skipped}.${result.capReached ? " Run again later to continue." : ""}`,
                 );
               } catch (error) {
                 console.error("Failed to sync recent plays to Popfeed:", error);
@@ -181,11 +157,7 @@ function ToggleSwitch({
   return (
     <View className="flex-row items-center justify-between">
       <Text className="text-lg">{text}</Text>
-      <Switch
-        className="ml-4"
-        value={isEnabled}
-        onValueChange={setIsEnabled}
-      />
+      <Switch className="ml-4" value={isEnabled} onValueChange={setIsEnabled} />
     </View>
   );
 }

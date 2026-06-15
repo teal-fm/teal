@@ -5,6 +5,8 @@ export const POPFEED_LIST_COLLECTION = "social.popfeed.feed.list";
 export const POPFEED_LIST_ITEM_COLLECTION = "social.popfeed.feed.listItem";
 export const TEAL_POPFEED_LIST_NAME = "Teal listens";
 export const TEAL_POPFEED_LIST_TYPE = "default";
+export const POPFEED_BACKFILL_PAGE_LIMIT = 100;
+export const POPFEED_BACKFILL_MAX_PLAYS = 1000;
 
 type PopfeedIdentifiers = {
   mbId?: string;
@@ -71,6 +73,21 @@ export type PopfeedSyncResult = {
   skipped: number;
   listUri?: string;
 };
+
+export type PopfeedBackfillResult = PopfeedSyncResult & {
+  capReached: boolean;
+  indexedPlays: number;
+};
+
+type PopfeedFeedPage = {
+  cursor?: string;
+  plays: PopfeedSyncInput["play"][];
+};
+
+type PopfeedFeedFetcher = (
+  limit: number,
+  cursor?: string,
+) => Promise<PopfeedFeedPage>;
 
 function stripMbidPrefix(value?: string) {
   return value?.replace(/^mbid:/, "");
@@ -207,7 +224,10 @@ function popfeedItemExists(
     ) {
       return true;
     }
-    return identifierMatches(existing.identifiers.mbId, nextItem.identifiers.mbId);
+    return identifierMatches(
+      existing.identifiers.mbId,
+      nextItem.identifiers.mbId,
+    );
   });
 }
 
@@ -315,4 +335,43 @@ export async function syncPlaysToPopfeed(
   }
 
   return { created, skipped, listUri };
+}
+
+export async function syncActorFeedToPopfeed(
+  agent: PopfeedAgent,
+  fetchPage: PopfeedFeedFetcher,
+  {
+    maxPlays = POPFEED_BACKFILL_MAX_PLAYS,
+    pageLimit = POPFEED_BACKFILL_PAGE_LIMIT,
+  }: {
+    maxPlays?: number;
+    pageLimit?: number;
+  } = {},
+): Promise<PopfeedBackfillResult> {
+  let cursor: string | undefined;
+  let created = 0;
+  let skipped = 0;
+  let indexedPlays = 0;
+  let listUri: string | undefined;
+
+  do {
+    const page = await fetchPage(pageLimit, cursor);
+    indexedPlays += page.plays.length;
+    const result = await syncPlaysToPopfeed(
+      agent,
+      page.plays.map((play) => ({ play })),
+    );
+    created += result.created;
+    skipped += result.skipped;
+    listUri = result.listUri || listUri;
+    cursor = page.cursor;
+  } while (cursor && indexedPlays < maxPlays);
+
+  return {
+    capReached: Boolean(cursor && indexedPlays >= maxPlays),
+    created,
+    indexedPlays,
+    listUri,
+    skipped,
+  };
 }
