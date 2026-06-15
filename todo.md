@@ -62,5 +62,5 @@ Additional Amethyst verification for scrobble editing:
 
 ```bash
 EXPO_PUBLIC_AQUA_URL=https://sigilyph.teal.fm pnpm --filter=@teal/amethyst build:web
-pnpm --filter=@teal/amethyst exec tsc --noEmit # currently blocked by existing playlist cover and generated profileStatus.Main type errors
+pnpm --filter=@teal/amethyst exec tsc --noEmit
 ```

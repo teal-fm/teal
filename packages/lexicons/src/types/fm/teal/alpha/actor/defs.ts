@@ -24,7 +24,7 @@ export interface ProfileView {
   /** IPLD of the banner image */
   banner?: string
   status?: StatusView
-  profileStatus?: FmTealAlphaActorProfileStatus.Main
+  profileStatus?: FmTealAlphaActorProfileStatus.Record
   /** Default time period for profile listening statistics. */
   statsDefaultPeriod?:
     | '7days'
