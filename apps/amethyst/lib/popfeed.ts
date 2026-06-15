@@ -52,7 +52,16 @@ type PopfeedAgent = {
 };
 
 export type PopfeedSyncInput = {
-  play: PlayRecord;
+  play: Pick<
+    PlayRecord,
+    | "artists"
+    | "playedTime"
+    | "recordingMbId"
+    | "releaseMbId"
+    | "releaseName"
+    | "trackMbId"
+    | "trackName"
+  >;
   releaseDate?: string;
   releaseGroupType?: string;
 };
@@ -259,6 +268,13 @@ export async function syncPlayToPopfeed(
   agent: PopfeedAgent,
   input: PopfeedSyncInput,
 ): Promise<PopfeedSyncResult> {
+  return syncPlaysToPopfeed(agent, [input]);
+}
+
+export async function syncPlaysToPopfeed(
+  agent: PopfeedAgent,
+  inputs: PopfeedSyncInput[],
+): Promise<PopfeedSyncResult> {
   if (!agent.did) {
     throw new Error("Cannot sync to Popfeed without an authenticated DID.");
   }
@@ -270,10 +286,12 @@ export async function syncPlayToPopfeed(
     .map((record) => record.value)
     .filter(isPopfeedListItemRecord);
 
-  const nextItems = popfeedItemsFromPlay(input).map((item) => ({
-    ...item,
-    listUri,
-  }));
+  const nextItems = inputs.flatMap((input) =>
+    popfeedItemsFromPlay(input).map((item) => ({
+      ...item,
+      listUri,
+    })),
+  );
   let created = 0;
   let skipped = 0;
 

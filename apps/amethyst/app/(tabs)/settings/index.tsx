@@ -8,6 +8,8 @@ import TealShell, {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { syncPlaysToPopfeed } from "@/lib/popfeed";
+import { getActorFeed } from "@/lib/teal/api";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { cn } from "@/lib/utils";
 import pkg from "@/package.json";
@@ -15,12 +17,18 @@ import { useStore } from "@/stores/mainStore";
 
 export default function Settings() {
   const { colorScheme, setColorScheme } = useColorScheme();
+  const authStatus = useStore((state) => state.status);
+  const pdsAgent = useStore((state) => state.pdsAgent);
   const appviewDid = useStore((state) => state.tealDid);
   const setAppviewDid = useStore((state) => state.setTealDid);
   const popfeedSyncEnabled = useStore((state) => state.popfeedSyncEnabled);
   const setPopfeedSyncEnabled = useStore(
     (state) => state.setPopfeedSyncEnabled,
   );
+  const [popfeedBackfillStatus, setPopfeedBackfillStatus] = useState<
+    "idle" | "syncing" | "done" | "error"
+  >("idle");
+  const [popfeedBackfillMessage, setPopfeedBackfillMessage] = useState("");
 
   const colorSchemeOptions = [
     { label: "Light", value: "light" },
@@ -56,6 +64,34 @@ export default function Settings() {
           isEnabled={popfeedSyncEnabled}
           setIsEnabled={setPopfeedSyncEnabled}
         />
+        {popfeedSyncEnabled && authStatus === "loggedIn" && pdsAgent?.did && (
+          <PopfeedBackfillRow
+            disabled={popfeedBackfillStatus === "syncing"}
+            message={popfeedBackfillMessage}
+            status={popfeedBackfillStatus}
+            onPress={async () => {
+              const viewerDid = pdsAgent.did;
+              if (!viewerDid) return;
+              setPopfeedBackfillStatus("syncing");
+              setPopfeedBackfillMessage("");
+              try {
+                const { plays } = await getActorFeed(viewerDid, 100);
+                const result = await syncPlaysToPopfeed(
+                  pdsAgent,
+                  plays.map((play) => ({ play })),
+                );
+                setPopfeedBackfillStatus("done");
+                setPopfeedBackfillMessage(
+                  `Synced ${result.created} Popfeed items. Skipped ${result.skipped}.`,
+                );
+              } catch (error) {
+                console.error("Failed to sync recent plays to Popfeed:", error);
+                setPopfeedBackfillStatus("error");
+                setPopfeedBackfillMessage("Could not sync recent plays.");
+              }
+            }}
+          />
+        )}
         <Link href="/auth/logoutModal" asChild>
           <Button variant="destructive" size="sm" className="w-max pb-1">
             <Text>Sign out</Text>
@@ -77,6 +113,38 @@ export default function Settings() {
         </View>
       </View>
     </TealShell>
+  );
+}
+
+function PopfeedBackfillRow({
+  disabled,
+  message,
+  onPress,
+  status,
+}: {
+  disabled: boolean;
+  message: string;
+  onPress: () => void;
+  status: "idle" | "syncing" | "done" | "error";
+}) {
+  return (
+    <View className="items-start gap-2 pt-2">
+      <Button disabled={disabled} onPress={onPress} size="sm">
+        <Text>
+          {status === "syncing" ? "Syncing Popfeed..." : "Sync recent plays"}
+        </Text>
+      </Button>
+      {message && (
+        <Text
+          className={cn(
+            "text-sm text-muted-foreground",
+            status === "error" ? "text-destructive" : "",
+          )}
+        >
+          {message}
+        </Text>
+      )}
+    </View>
   );
 }
 

@@ -4,6 +4,7 @@ import {
   POPFEED_LIST_COLLECTION,
   POPFEED_LIST_ITEM_COLLECTION,
   syncPlayToPopfeed,
+  syncPlaysToPopfeed,
   TEAL_POPFEED_LIST_NAME,
 } from "../popfeed";
 
@@ -152,5 +153,59 @@ describe("Popfeed sync mapping", () => {
       },
       listUri: "at://did:plc:viewer/social.popfeed.feed.list/abc",
     });
+  });
+
+  it("syncs a batch of indexed plays with one list/item read", async () => {
+    const calls: string[] = [];
+    const fakeAgent = {
+      did: "did:plc:viewer",
+      call: jest.fn(
+        async (
+          method: string,
+          params?: Record<string, unknown>,
+          data?: Record<string, unknown>,
+        ) => {
+          calls.push(`${method}:${params?.collection || data?.collection}`);
+          if (method === "com.atproto.repo.listRecords") {
+            return {
+              data: {
+                records:
+                  params?.collection === POPFEED_LIST_COLLECTION
+                    ? [
+                        {
+                          uri: "at://did:plc:viewer/social.popfeed.feed.list/abc",
+                          value: createPopfeedListRecord(),
+                        },
+                      ]
+                    : [],
+              },
+            };
+          }
+          if (method === "com.atproto.repo.createRecord") {
+            return {
+              data: {
+                uri: `at://did:plc:viewer/${data?.collection as string}/created`,
+              },
+            };
+          }
+          throw new Error(`Unexpected method ${method}`);
+        },
+      ),
+    };
+
+    const result = await syncPlaysToPopfeed(fakeAgent, [{ play }, { play }]);
+
+    expect(result).toEqual({
+      created: 2,
+      skipped: 2,
+      listUri: "at://did:plc:viewer/social.popfeed.feed.list/abc",
+    });
+    expect(
+      calls.filter(
+        (call) =>
+          call ===
+          `com.atproto.repo.listRecords:${POPFEED_LIST_ITEM_COLLECTION}`,
+      ),
+    ).toHaveLength(1);
   });
 });
