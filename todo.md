@@ -22,11 +22,6 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 
 ## Tracker Issues
 
-- [ ] [#86](https://github.com/teal-fm/teal/issues/86) / [TEAL-31](https://linear.app/tealfm/issue/TEAL-31/log-unique-tracks-and-albums-to-popfeed) Log unique tracks and albums to Popfeed
-  - Linear: `Backlog`, no priority
-  - Create Popfeed records when a listener plays a track or album for the first time.
-  - Consider follow-on flows for completing Popfeed reviews of songs and albums from Teal.
-  - Blocked locally: GitHub discussion says this should be a user-enabled sync, potentially with a later history backfill, but no Popfeed NSID, lexicon, service endpoint, auth flow, or record schema are present in this repo yet. Web search on 2026-06-15 did not find an authoritative public Popfeed record schema to implement against.
 - [x] [#57](https://github.com/teal-fm/teal/issues/57) / [TEAL-30](https://linear.app/tealfm/issue/TEAL-30/top-albums-around-profile-pic) top albums around profile pic
   - Linear: `In Progress`, low priority
   - Labels: `API`, `Frontend`, `Legacy Songish Feature`
