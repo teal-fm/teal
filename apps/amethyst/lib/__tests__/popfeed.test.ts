@@ -317,19 +317,42 @@ describe("Popfeed sync mapping", () => {
     };
     const fetchPage = jest.fn(async () => ({
       cursor: "next",
-      plays: [play],
+      plays: [play, play],
     }));
 
     const result = await syncActorFeedToPopfeed(fakeAgent, fetchPage, {
       maxPlays: 1,
-      pageLimit: 1,
+      pageLimit: 10,
     });
 
     expect(fetchPage).toHaveBeenCalledTimes(1);
+    expect(fetchPage).toHaveBeenCalledWith(1, undefined);
     expect(result).toMatchObject({
       capReached: true,
       created: 2,
       indexedPlays: 1,
+      skipped: 0,
+    });
+  });
+
+  it("does not fetch or write when the Popfeed backfill cap is zero", async () => {
+    const fakeAgent = {
+      did: "did:plc:viewer",
+      call: jest.fn(),
+    };
+    const fetchPage = jest.fn();
+
+    const result = await syncActorFeedToPopfeed(fakeAgent, fetchPage, {
+      maxPlays: 0,
+      pageLimit: 10,
+    });
+
+    expect(fetchPage).not.toHaveBeenCalled();
+    expect(fakeAgent.call).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      capReached: false,
+      created: 0,
+      indexedPlays: 0,
       skipped: 0,
     });
   });

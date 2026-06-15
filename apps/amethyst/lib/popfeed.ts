@@ -348,24 +348,37 @@ export async function syncActorFeedToPopfeed(
     pageLimit?: number;
   } = {},
 ): Promise<PopfeedBackfillResult> {
+  if (maxPlays <= 0) {
+    return {
+      capReached: false,
+      created: 0,
+      indexedPlays: 0,
+      skipped: 0,
+    };
+  }
+
   let cursor: string | undefined;
   let created = 0;
   let skipped = 0;
   let indexedPlays = 0;
   let listUri: string | undefined;
+  let lastPagePlayCount = 0;
 
   do {
-    const page = await fetchPage(pageLimit, cursor);
-    indexedPlays += page.plays.length;
+    const remaining = maxPlays - indexedPlays;
+    const page = await fetchPage(Math.min(pageLimit, remaining), cursor);
+    const plays = page.plays.slice(0, remaining);
+    lastPagePlayCount = plays.length;
+    indexedPlays += plays.length;
     const result = await syncPlaysToPopfeed(
       agent,
-      page.plays.map((play) => ({ play })),
+      plays.map((play) => ({ play })),
     );
     created += result.created;
     skipped += result.skipped;
     listUri = result.listUri || listUri;
     cursor = page.cursor;
-  } while (cursor && indexedPlays < maxPlays);
+  } while (cursor && lastPagePlayCount > 0 && indexedPlays < maxPlays);
 
   return {
     capReached: Boolean(cursor && indexedPlays >= maxPlays),
