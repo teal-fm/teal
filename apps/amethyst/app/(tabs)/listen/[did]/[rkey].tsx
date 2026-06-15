@@ -5,6 +5,7 @@ import PlayFeedCard, { musicHref } from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
@@ -19,8 +20,25 @@ import {
   getCachedBlueskyProfile,
   type DisplayActor,
 } from "@/lib/teal/actors";
+import {
+  applyEditableFields,
+  artistTextFromRecord,
+  deletePlayRecord,
+  loadPlayRecord,
+  putPlayRecord,
+  type EditablePlayRecord,
+} from "@/lib/teal/playRecords";
 import { timeAgo } from "@/lib/utils";
-import { Disc3, ExternalLink, UserRound } from "lucide-react-native";
+import { useStore } from "@/stores/mainStore";
+import {
+  Disc3,
+  ExternalLink,
+  Pencil,
+  Save,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
@@ -33,6 +51,19 @@ export default function ListenDetail() {
   const [recordingArt, setRecordingArt] = useState<string>();
   const [artFailed, setArtFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleted, setDeleted] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [sourceRecord, setSourceRecord] = useState<EditablePlayRecord | null>(
+    null,
+  );
+  const [swapRecord, setSwapRecord] = useState<string>();
+  const [trackName, setTrackName] = useState("");
+  const [artistsText, setArtistsText] = useState("");
+  const [releaseName, setReleaseName] = useState("");
+  const [playedTime, setPlayedTime] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  const agent = useStore((state) => state.pdsAgent);
 
   useEffect(() => {
     let mounted = true;
@@ -40,6 +71,7 @@ export default function ListenDetail() {
       if (!did || !rkey) return;
       try {
         setError(null);
+        setDeleted(false);
         const response = await getPlayByAuthorRkey(did, rkey);
         if (mounted) setPlay(response.play);
       } catch (e) {
@@ -72,6 +104,85 @@ export default function ListenDetail() {
     : play
       ? "recently"
       : "";
+  const canManage = !!agent?.did && !!did && agent.did === did && !!rkey;
+
+  async function openEditor() {
+    if (!agent || !did || !rkey || !play) return;
+    setEditBusy(true);
+    setError(null);
+    try {
+      const loaded = await loadPlayRecord(agent, did, rkey, play);
+      setSourceRecord(loaded.record);
+      setSwapRecord(loaded.swapRecord);
+      setTrackName(loaded.record.trackName);
+      setArtistsText(artistTextFromRecord(loaded.record));
+      setReleaseName(loaded.record.releaseName || "");
+      setPlayedTime(
+        loaded.record.playedTime
+          ? loaded.record.playedTime.slice(0, 16)
+          : "",
+      );
+      setDeleteArmed(false);
+      setEditOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
+  async function saveEdit() {
+    if (!agent || !did || !rkey || !sourceRecord) return;
+    setEditBusy(true);
+    setError(null);
+    try {
+      const record = applyEditableFields(sourceRecord, {
+        trackName,
+        artistsText,
+        releaseName,
+        playedTime,
+      });
+      await putPlayRecord(agent, did, rkey, record, swapRecord);
+      setSourceRecord(record);
+      setSwapRecord(undefined);
+      setPlay((current) =>
+        current
+          ? {
+              ...current,
+              trackName: record.trackName,
+              artists: record.artists || [],
+              releaseName: record.releaseName,
+              playedTime: record.playedTime,
+            }
+          : current,
+      );
+      setEditOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
+  async function deleteListen() {
+    if (!agent || !did || !rkey) return;
+    if (!deleteArmed) {
+      setDeleteArmed(true);
+      return;
+    }
+    setEditBusy(true);
+    setError(null);
+    try {
+      await deletePlayRecord(agent, did, rkey);
+      setPlay(null);
+      setDeleted(true);
+      setEditOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEditBusy(false);
+    }
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -109,9 +220,20 @@ export default function ListenDetail() {
       <Stack.Screen
         options={{ title: play?.trackName || "Listen", headerShown: false }}
       />
-      {!play && !error && (
+      {!play && !error && !deleted && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
+        </View>
+      )}
+      {deleted && (
+        <View className="rounded-lg border border-border bg-card p-6">
+          <Text className="font-sans text-2xl font-black">
+            Listen deleted.
+          </Text>
+          <Text className="mt-2 text-muted-foreground">
+            Cadet will remove it from public feeds after the PDS update is
+            indexed.
+          </Text>
         </View>
       )}
       {error && (
@@ -182,12 +304,107 @@ export default function ListenDetail() {
                     <Text>Song page</Text>
                   </Button>
                 </Link>
+                {canManage && (
+                  <Button
+                    variant="outline"
+                    className="flex-row gap-2"
+                    disabled={editBusy}
+                    onPress={openEditor}
+                  >
+                    <Icon icon={Pencil} size={16} />
+                    <Text>Edit listen</Text>
+                  </Button>
+                )}
               </View>
 
               <Text className="mt-4 text-sm text-muted-foreground">
                 {authorName} listened {when}
                 {play.releaseName ? ` from ${play.releaseName}` : ""}.
               </Text>
+
+              {editOpen && canManage && (
+                <View className="mt-5 gap-3 rounded-lg border border-border bg-background p-4">
+                  <View className="flex-row items-start justify-between gap-3">
+                    <View className="min-w-0 flex-1">
+                      <Text className="font-mono text-xs uppercase text-muted-foreground">
+                        Edit record
+                      </Text>
+                      <Text className="font-bold">
+                        Changes are written to your PDS and reindexed by Cadet.
+                      </Text>
+                    </View>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={editBusy}
+                      onPress={() => setEditOpen(false)}
+                    >
+                      <Icon icon={X} size={18} />
+                    </Button>
+                  </View>
+                  <View className="gap-2">
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Track
+                    </Text>
+                    <Input
+                      value={trackName}
+                      onChangeText={setTrackName}
+                      editable={!editBusy}
+                    />
+                  </View>
+                  <View className="gap-2">
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Artists
+                    </Text>
+                    <Input
+                      value={artistsText}
+                      onChangeText={setArtistsText}
+                      editable={!editBusy}
+                    />
+                  </View>
+                  <View className="gap-2">
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Release
+                    </Text>
+                    <Input
+                      value={releaseName}
+                      onChangeText={setReleaseName}
+                      editable={!editBusy}
+                    />
+                  </View>
+                  <View className="gap-2">
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Played time
+                    </Text>
+                    <Input
+                      value={playedTime}
+                      onChangeText={setPlayedTime}
+                      editable={!editBusy}
+                      inputMode="text"
+                      placeholder="2026-06-15T12:30"
+                    />
+                  </View>
+                  <View className="flex-row flex-wrap gap-2">
+                    <Button
+                      className="flex-row gap-2"
+                      disabled={editBusy}
+                      onPress={saveEdit}
+                    >
+                      <Icon icon={Save} size={16} />
+                      <Text>Save listen</Text>
+                    </Button>
+                    <Button
+                      variant={deleteArmed ? "destructive" : "outline"}
+                      className="flex-row gap-2"
+                      disabled={editBusy}
+                      onPress={deleteListen}
+                    >
+                      <Icon icon={Trash2} size={16} />
+                      <Text>{deleteArmed ? "Confirm delete" : "Delete"}</Text>
+                    </Button>
+                  </View>
+                </View>
+              )}
             </View>
           </View>
 

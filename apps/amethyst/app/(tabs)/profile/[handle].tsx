@@ -18,6 +18,7 @@ import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { resolveHandle } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -51,13 +52,23 @@ import {
   type StatsPeriod,
   XrpcError,
 } from "@/lib/teal/api";
+import {
+  artistsFromText,
+  deletePlayRecord,
+  loadPlayRecord,
+  putPlayRecord,
+} from "@/lib/teal/playRecords";
 import { useStore } from "@/stores/mainStore";
 import { musicAlbumHref, playlistHref } from "@/lib/teal/routes";
 import type { AppBskyActorDefs } from "@atproto/api";
 import {
+  CheckSquare,
   Disc3,
   Info,
   Pencil,
+  Save,
+  Square,
+  Trash2,
   UserMinus,
   UserPlus,
   UserRoundPlus,
@@ -287,6 +298,14 @@ export default function ProfileScreen() {
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [followBusy, setFollowBusy] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [selectedPlayRkeys, setSelectedPlayRkeys] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [bulkArtistsText, setBulkArtistsText] = useState("");
+  const [bulkReleaseName, setBulkReleaseName] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteArmed, setBulkDeleteArmed] = useState(false);
   const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
   const [statusRecordingArt, setStatusRecordingArt] = useState<string>();
   const [statusArtFailed, setStatusArtFailed] = useState(false);
@@ -310,6 +329,11 @@ export default function ProfileScreen() {
         setFollows([]);
         setPosts([]);
         setPlays([]);
+        setSelectedPlayRkeys(new Set());
+        setBulkEditOpen(false);
+        setBulkDeleteArmed(false);
+        setBulkArtistsText("");
+        setBulkReleaseName("");
         const resolved = actor.startsWith("did:")
           ? actor
           : await resolveHandle(actor);
@@ -413,6 +437,7 @@ export default function ProfileScreen() {
   }, [actor, pdsAgent?.did]);
 
   const isSelf = did === pdsAgent?.did;
+  const selectedPlayCount = selectedPlayRkeys.size;
   const viewerFollowing = graphSummary.viewerFollowing;
   const canFollow = authStatus === "loggedIn" && !!pdsAgent?.did && !!did;
   async function toggleFollow() {
@@ -461,6 +486,110 @@ export default function ProfileScreen() {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setFollowBusy(false);
+    }
+  }
+
+  function toggleBulkEdit() {
+    setBulkEditOpen((current) => !current);
+    setSelectedPlayRkeys(new Set());
+    setBulkDeleteArmed(false);
+    setBulkArtistsText("");
+    setBulkReleaseName("");
+  }
+
+  function togglePlaySelection(rkey?: string) {
+    if (!rkey || bulkBusy) return;
+    setBulkDeleteArmed(false);
+    setSelectedPlayRkeys((current) => {
+      const next = new Set(current);
+      if (next.has(rkey)) {
+        next.delete(rkey);
+      } else {
+        next.add(rkey);
+      }
+      return next;
+    });
+  }
+
+  function selectVisiblePlays() {
+    setBulkDeleteArmed(false);
+    const visibleRkeys = plays
+      .slice(0, 10)
+      .map((play) => play.rkey)
+      .filter((rkey): rkey is string => !!rkey);
+    setSelectedPlayRkeys(new Set(visibleRkeys));
+  }
+
+  async function deleteSelectedPlays() {
+    if (!pdsAgent?.did || !did || selectedPlayCount === 0 || bulkBusy) return;
+    if (!bulkDeleteArmed) {
+      setBulkDeleteArmed(true);
+      return;
+    }
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const rkeys = Array.from(selectedPlayRkeys);
+      for (const selectedRkey of rkeys) {
+        await deletePlayRecord(pdsAgent, did, selectedRkey);
+      }
+      setPlays((current) =>
+        current.filter((play) => !play.rkey || !selectedPlayRkeys.has(play.rkey)),
+      );
+      setSelectedPlayRkeys(new Set());
+      setBulkDeleteArmed(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function updateSelectedPlays() {
+    if (!pdsAgent?.did || !did || selectedPlayCount === 0 || bulkBusy) return;
+    const nextArtists = bulkArtistsText.trim();
+    const nextRelease = bulkReleaseName.trim();
+    if (!nextArtists && !nextRelease) {
+      setError("Enter artists or release text before applying a bulk edit.");
+      return;
+    }
+
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const selected = new Set(selectedPlayRkeys);
+      for (const selectedRkey of selected) {
+        const loaded = await loadPlayRecord(pdsAgent, did, selectedRkey);
+        await putPlayRecord(
+          pdsAgent,
+          did,
+          selectedRkey,
+          {
+            ...loaded.record,
+            ...(nextArtists ? { artists: artistsFromText(nextArtists) } : {}),
+            ...(nextRelease ? { releaseName: nextRelease } : {}),
+          },
+          loaded.swapRecord,
+        );
+      }
+      setPlays((current) =>
+        current.map((play) => {
+          if (!play.rkey || !selected.has(play.rkey)) return play;
+          return {
+            ...play,
+            ...(nextArtists ? { artists: artistsFromText(nextArtists) } : {}),
+            ...(nextRelease ? { releaseName: nextRelease } : {}),
+          };
+        }),
+      );
+      setSelectedPlayRkeys(new Set());
+      setBulkArtistsText("");
+      setBulkReleaseName("");
+      setBulkDeleteArmed(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBulkBusy(false);
     }
   }
   const avatarUrl = did
@@ -686,17 +815,134 @@ export default function ProfileScreen() {
             )}
           </View>
           <View className="mb-8">
-            <SectionHeading eyebrow="Listening history" title="Recent plays" />
+            <View className="mb-3 flex-row flex-wrap items-center justify-between gap-3">
+              <SectionHeading
+                eyebrow="Listening history"
+                title="Recent plays"
+              />
+              {isSelf && plays.length > 0 && (
+                <Button
+                  variant={bulkEditOpen ? "default" : "outline"}
+                  className="flex-row gap-2 self-start"
+                  disabled={bulkBusy}
+                  onPress={toggleBulkEdit}
+                >
+                  <Icon
+                    icon={bulkEditOpen ? CheckSquare : Square}
+                    size={16}
+                  />
+                  <Text>{bulkEditOpen ? "Done selecting" : "Select plays"}</Text>
+                </Button>
+              )}
+            </View>
+            {bulkEditOpen && isSelf && (
+              <View className="mb-4 gap-3 rounded-lg border border-border bg-white/70 p-4">
+                <View className="flex-row flex-wrap items-center justify-between gap-3">
+                  <View>
+                    <Text className="font-bold">
+                      {selectedPlayCount} selected
+                    </Text>
+                    <Text className="text-sm text-muted-foreground">
+                      Bulk actions write directly to your PDS.
+                    </Text>
+                  </View>
+                  <View className="flex-row flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={bulkBusy}
+                      onPress={selectVisiblePlays}
+                    >
+                      <Text>Select visible</Text>
+                    </Button>
+                    <Button
+                      variant={bulkDeleteArmed ? "destructive" : "outline"}
+                      size="sm"
+                      className="flex-row gap-2"
+                      disabled={bulkBusy || selectedPlayCount === 0}
+                      onPress={deleteSelectedPlays}
+                    >
+                      <Icon icon={Trash2} size={15} />
+                      <Text>
+                        {bulkDeleteArmed ? "Confirm delete" : "Delete selected"}
+                      </Text>
+                    </Button>
+                  </View>
+                </View>
+                <View className="grid-cols-1 gap-3 md:grid md:grid-cols-2">
+                  <View className="gap-2">
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Set artists
+                    </Text>
+                    <Input
+                      value={bulkArtistsText}
+                      onChangeText={setBulkArtistsText}
+                      editable={!bulkBusy}
+                      placeholder="Artist, Featured artist"
+                    />
+                  </View>
+                  <View className="gap-2">
+                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                      Set release
+                    </Text>
+                    <Input
+                      value={bulkReleaseName}
+                      onChangeText={setBulkReleaseName}
+                      editable={!bulkBusy}
+                      placeholder="Album or single"
+                    />
+                  </View>
+                </View>
+                <Button
+                  className="flex-row gap-2 self-start"
+                  disabled={
+                    bulkBusy ||
+                    selectedPlayCount === 0 ||
+                    (!bulkArtistsText.trim() && !bulkReleaseName.trim())
+                  }
+                  onPress={updateSelectedPlays}
+                >
+                  <Icon icon={Save} size={15} />
+                  <Text>Apply to selected</Text>
+                </Button>
+              </View>
+            )}
             {plays.length === 0 ? (
               <Text className="text-muted-foreground">
                 No indexed plays yet.
               </Text>
             ) : (
               plays.slice(0, 10).map((play, index) => (
-                <PlayFeedCard
+                <View
                   key={play.uri || `${play.trackName}-${index}`}
-                  play={play}
-                />
+                  className={bulkEditOpen ? "flex-row gap-3" : undefined}
+                >
+                  {bulkEditOpen && (
+                    <Button
+                      variant={
+                        play.rkey && selectedPlayRkeys.has(play.rkey)
+                          ? "default"
+                          : "outline"
+                      }
+                      size="icon"
+                      className="mt-4"
+                      disabled={!play.rkey || bulkBusy}
+                      onPress={() => togglePlaySelection(play.rkey)}
+                    >
+                      <Icon
+                        icon={
+                          play.rkey && selectedPlayRkeys.has(play.rkey)
+                            ? CheckSquare
+                            : Square
+                        }
+                        size={18}
+                      />
+                    </Button>
+                  )}
+                  <View className="min-w-0 flex-1">
+                    <PlayFeedCard play={play} />
+                  </View>
+                </View>
               ))
             )}
           </View>
