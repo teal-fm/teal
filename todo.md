@@ -11,6 +11,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 - The ignored local `.env` should keep `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.
 - Use `pnpm tunnel:up`, `pnpm tunnel:down`, `pnpm tunnel:status`, `pnpm tunnel:logs`, and `pnpm tunnel:verify` for the stable preview.
 - The public Amethyst feed must use only live Aqua XRPC data. Do not add seeded, mocked, demo, or backup play data.
+- Public preview refreshed on 2026-06-15 by rebuilding Amethyst, Aqua, and Cadet images, recreating the Compose preview stack, and verifying `https://sigilyph.teal.fm/client-metadata.json` plus latest plays XRPC.
 
 ## Local Open Work
 
