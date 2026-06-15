@@ -50,6 +50,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 
 ```bash
 pnpm lex:gen-server
+pnpm typecheck
 SQLX_OFFLINE=true cargo check -p aqua -p cadet
 SQLX_OFFLINE=true cargo test -p cadet stores_and_loads_cursor_from_file_when_redis_is_unavailable
 pnpm --filter=@teal/amethyst build:web
