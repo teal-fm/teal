@@ -17,6 +17,10 @@ export default function Settings() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const appviewDid = useStore((state) => state.tealDid);
   const setAppviewDid = useStore((state) => state.setTealDid);
+  const popfeedSyncEnabled = useStore((state) => state.popfeedSyncEnabled);
+  const setPopfeedSyncEnabled = useStore(
+    (state) => state.setPopfeedSyncEnabled,
+  );
 
   const colorSchemeOptions = [
     { label: "Light", value: "light" },
@@ -46,6 +50,11 @@ export default function Settings() {
           initialValue={appviewDid || ""} // Ensure currentValue is a string
           onSubmit={(e) => setAppviewDid(e)}
           placeholder="Enter your Appview DID (e.g., did:web:...)"
+        />
+        <ToggleSwitch
+          text="Sync first listens to Popfeed"
+          isEnabled={popfeedSyncEnabled}
+          setIsEnabled={setPopfeedSyncEnabled}
         />
         <Link href="/auth/logoutModal" asChild>
           <Button variant="destructive" size="sm" className="w-max pb-1">
@@ -78,15 +87,16 @@ function ToggleSwitch({
 }: {
   text: string;
   isEnabled: boolean;
-  setIsEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsEnabled: (enabled: boolean) => void;
 }) {
-  const toggleSwitch = () =>
-    setIsEnabled((previousState: boolean) => !previousState);
-
   return (
     <View className="flex-row items-center justify-between">
       <Text className="text-lg">{text}</Text>
-      <Switch className="ml-4" value={isEnabled} onValueChange={toggleSwitch} />
+      <Switch
+        className="ml-4"
+        value={isEnabled}
+        onValueChange={setIsEnabled}
+      />
     </View>
   );
 }

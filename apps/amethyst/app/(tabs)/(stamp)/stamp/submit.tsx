@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
+import { syncPlayToPopfeed } from "@/lib/popfeed";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import {
@@ -160,6 +161,7 @@ const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
 export default function Submit() {
   const router = useRouter();
   const agent = useStore((state) => state.pdsAgent);
+  const popfeedSyncEnabled = useStore((state) => state.popfeedSyncEnabled);
   const ctx = useContext(StampContext);
   const { state, setState } = ctx as StampContextValue;
 
@@ -261,6 +263,20 @@ powered by @teal.fm`;
         playRecord: record,
         blueskyPostUrl: null,
       };
+      if (popfeedSyncEnabled && agent) {
+        try {
+          await syncPlayToPopfeed(agent, {
+            play: record,
+            releaseDate: selectedTrack.selectedRelease?.date,
+            releaseGroupType:
+              selectedTrack.selectedRelease?.["release-group"]?.[
+                "primary-type"
+              ],
+          });
+        } catch (error) {
+          console.error("Failed to sync play to Popfeed:", error);
+        }
+      }
       if (shareWithBluesky && agent) {
         // lol this type
         const rt = new RichText({
