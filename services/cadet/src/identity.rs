@@ -16,6 +16,10 @@ struct IdentityEnvelope {
 }
 
 pub async fn ingest_identity_event(pool: &PgPool, text: &str) -> anyhow::Result<bool> {
+    if text.trim().is_empty() {
+        return Ok(false);
+    }
+
     let envelope: IdentityEnvelope = serde_json::from_str(text)?;
     if !matches!(&envelope.kind, Kind::Identity) {
         return Ok(false);

@@ -1,3 +1,4 @@
+pub mod account;
 pub mod cursor;
 pub mod db;
 pub mod identity;
