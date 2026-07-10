@@ -1,31 +1,35 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import express from 'express'
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
-import { HandlerAuth, HandlerPipeThrough } from '@atproto/xrpc-server'
-import * as FmTealAlphaFeedDefs from '../feed/defs'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
+import type * as FmTealAlphaFeedDefs from '../feed/defs'
 
-export interface QueryParams {
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.stats.getLatest'
+
+export type QueryParams = {
   /** Number of latest plays to return */
   limit: number
   /** Opaque cursor for the next page of plays */
   cursor?: string
 }
-
 export type InputSchema = undefined
 
 export interface OutputSchema {
   plays: FmTealAlphaFeedDefs.PlayView[]
   /** Opaque cursor for the next page of plays */
   cursor?: string
-  [k: string]: unknown
 }
 
-export type HandlerInput = undefined
+export type HandlerInput = void
 
 export interface HandlerSuccess {
   encoding: 'application/json'
@@ -38,15 +42,4 @@ export interface HandlerError {
   message?: string
 }
 
-export type HandlerOutput = HandlerError | HandlerSuccess | HandlerPipeThrough
-export type HandlerReqCtx<HA extends HandlerAuth = never> = {
-  auth: HA
-  params: QueryParams
-  input: HandlerInput
-  req: express.Request
-  res: express.Response
-  resetRouteRateLimits: () => Promise<void>
-}
-export type Handler<HA extends HandlerAuth = never> = (
-  ctx: HandlerReqCtx<HA>,
-) => Promise<HandlerOutput> | HandlerOutput
+export type HandlerOutput = HandlerError | HandlerSuccess

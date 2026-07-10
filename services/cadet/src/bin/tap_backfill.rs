@@ -142,7 +142,7 @@ async fn main() -> anyhow::Result<()> {
             Ok(event) => match ingestor.ingest(event).await {
                 Ok(()) => {
                     processed += 1;
-                    if processed % 100 == 0 {
+                    if processed.is_multiple_of(100) {
                         info!(
                             "Processed {} TAP Teal records (skipped {})",
                             processed, skipped
