@@ -1,13 +1,22 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
-import * as FmTealAlphaFeedDefs from '../feed/defs'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
+import type * as FmTealAlphaFeedDefs from '../feed/defs'
 
-export interface Record {
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.actor.status'
+
+export interface Main {
+  $type: 'fm.teal.alpha.actor.status'
   /** The RFC 3339 formatted time of when the item was recorded */
   time: string
   /** The RFC 3339 formatted time of the expiry time of the item. If unavailable, default to 10 minutes past the start time. */
@@ -16,15 +25,18 @@ export interface Record {
   [k: string]: unknown
 }
 
-export function isRecord(v: unknown): v is Record {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    (v.$type === 'fm.teal.alpha.actor.status#main' ||
-      v.$type === 'fm.teal.alpha.actor.status')
-  )
+const hashMain = 'main'
+
+export function isMain<V>(v: V) {
+  return is$typed(v, id, hashMain)
 }
 
-export function validateRecord(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.actor.status#main', v)
+export function validateMain<V>(v: V) {
+  return validate<Main & V>(v, id, hashMain, true)
+}
+
+export {
+  type Main as Record,
+  isMain as isRecord,
+  validateMain as validateRecord,
 }
