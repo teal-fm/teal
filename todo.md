@@ -12,6 +12,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 - Use `pnpm tunnel:up`, `pnpm tunnel:down`, `pnpm tunnel:status`, `pnpm tunnel:logs`, and `pnpm tunnel:verify` for the stable preview.
 - The public Amethyst feed must use only live Aqua XRPC data. Do not add seeded, mocked, demo, or backup play data.
 - Public preview refreshed on 2026-06-15 by rebuilding Amethyst, Aqua, and Cadet images, recreating the Compose preview stack, and verifying `https://sigilyph.teal.fm/client-metadata.json` plus latest plays XRPC.
+- Focused code-health pass (2026-07-10): fixed `did:web` path resolution and resolver error handling in Cadet, avoided 10-second Postgres connection churn in Aqua/Cadet/Satellite, returned proper 404s for missing feed plays, and preserved delimiter-containing artist names in Satellite's latest-play response. Verified with targeted Rust checks and Cadet resolver tests.
 
 ## Local Open Work
 
