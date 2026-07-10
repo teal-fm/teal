@@ -1,13 +1,22 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
-import * as AppBskyRichtextFacet from '../../../../app/bsky/richtext/facet'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
+import type * as AppBskyRichtextFacet from '../../../../app/bsky/richtext/facet'
 
-export interface Record {
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.actor.profile'
+
+export interface Main {
+  $type: 'fm.teal.alpha.actor.profile'
   displayName?: string
   /** Free-form profile description text. */
   description?: string
@@ -20,45 +29,41 @@ export interface Record {
   banner?: BlobRef
   /** Default time period for profile listening statistics. */
   statsDefaultPeriod?:
-    | '7days'
-    | '30days'
-    | '90days'
-    | '180days'
-    | '365days'
-    | 'all'
+    '7days' | '30days' | '90days' | '180days' | '365days' | 'all'
   createdAt?: string
   [k: string]: unknown
 }
 
-export function isRecord(v: unknown): v is Record {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    (v.$type === 'fm.teal.alpha.actor.profile#main' ||
-      v.$type === 'fm.teal.alpha.actor.profile')
-  )
+const hashMain = 'main'
+
+export function isMain<V>(v: V) {
+  return is$typed(v, id, hashMain)
 }
 
-export function validateRecord(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.actor.profile#main', v)
+export function validateMain<V>(v: V) {
+  return validate<Main & V>(v, id, hashMain, true)
+}
+
+export {
+  type Main as Record,
+  isMain as isRecord,
+  validateMain as validateRecord,
 }
 
 export interface FeaturedItem {
+  $type?: 'fm.teal.alpha.actor.profile#featuredItem'
   /** The MusicBrainz ID URI of the item, formatted as mbid:<uuid> */
   mbid: string
   /** The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc. */
   type: string
-  [k: string]: unknown
 }
 
-export function isFeaturedItem(v: unknown): v is FeaturedItem {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.actor.profile#featuredItem'
-  )
+const hashFeaturedItem = 'featuredItem'
+
+export function isFeaturedItem<V>(v: V) {
+  return is$typed(v, id, hashFeaturedItem)
 }
 
-export function validateFeaturedItem(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.actor.profile#featuredItem', v)
+export function validateFeaturedItem<V>(v: V) {
+  return validate<FeaturedItem & V>(v, id, hashFeaturedItem)
 }

@@ -27,6 +27,11 @@ done
 echo "Generating lexicons from: $lexicon_paths"
 pnpm exec lex gen-server ./src $lexicon_paths --yes
 
+# lex-cli emits Node ESM `.js` suffixes for generated TypeScript imports.
+# Metro resolves source files by extension and cannot follow those paths before
+# TypeScript is compiled, so keep internal generated imports extensionless.
+find ./src -type f -name "*.ts" -exec perl -pi -e "s{(from ['\"](?:\./|\.\./)[^'\"]*)\.js(['\"])}{\$1\$2}g" {} +
+
 perl -0pi -e 's/profileStatus\?: FmTealAlphaActorProfileStatus\.Main/profileStatus?: FmTealAlphaActorProfileStatus.Record/' \
   ./src/types/fm/teal/alpha/actor/defs.ts
 

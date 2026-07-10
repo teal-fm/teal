@@ -1,13 +1,22 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
-import * as FmTealAlphaActorDefs from '../actor/defs'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
+import type * as FmTealAlphaActorDefs from '../actor/defs'
+
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.feed.defs'
 
 export interface PlayView {
+  $type?: 'fm.teal.alpha.feed.defs#playView'
   /** The AT URI for this play record */
   uri?: string
   /** The CID for this play record */
@@ -41,37 +50,32 @@ export interface PlayView {
   submissionClientAgent?: string
   /** The unix timestamp of when the track was played */
   playedTime?: string
-  [k: string]: unknown
 }
 
-export function isPlayView(v: unknown): v is PlayView {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.feed.defs#playView'
-  )
+const hashPlayView = 'playView'
+
+export function isPlayView<V>(v: V) {
+  return is$typed(v, id, hashPlayView)
 }
 
-export function validatePlayView(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.feed.defs#playView', v)
+export function validatePlayView<V>(v: V) {
+  return validate<PlayView & V>(v, id, hashPlayView)
 }
 
 export interface Artist {
+  $type?: 'fm.teal.alpha.feed.defs#artist'
   /** The name of the artist */
   artistName: string
   /** The MusicBrainz artist ID URI, formatted as mbid:<uuid> */
   artistMbId?: string
-  [k: string]: unknown
 }
 
-export function isArtist(v: unknown): v is Artist {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.feed.defs#artist'
-  )
+const hashArtist = 'artist'
+
+export function isArtist<V>(v: V) {
+  return is$typed(v, id, hashArtist)
 }
 
-export function validateArtist(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.feed.defs#artist', v)
+export function validateArtist<V>(v: V) {
+  return validate<Artist & V>(v, id, hashArtist)
 }
