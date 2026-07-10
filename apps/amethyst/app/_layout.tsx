@@ -20,7 +20,6 @@ import { GlobalTextClassContext } from "../components/ui/text";
 
 import "../global.css";
 
-import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
@@ -95,10 +94,11 @@ export default function RootLayout() {
 function useTheme() {
   const { colorScheme, setColorScheme } = useColorScheme();
 
-  // what??? how does this not break something
-  setColorScheme(colorScheme || "system");
-
-  console.log("Current scheme is", colorScheme);
+  useEffect(() => {
+    if (!colorScheme) {
+      setColorScheme("system");
+    }
+  }, [colorScheme, setColorScheme]);
 
   return colorScheme === "dark" ? DARK_THEME : LIGHT_THEME;
 }

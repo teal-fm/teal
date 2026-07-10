@@ -13,6 +13,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 - The public Amethyst feed must use only live Aqua XRPC data. Do not add seeded, mocked, demo, or backup play data.
 - Public preview refreshed on 2026-06-15 by rebuilding Amethyst, Aqua, and Cadet images, recreating the Compose preview stack, and verifying `https://sigilyph.teal.fm/client-metadata.json` plus latest plays XRPC.
 - Focused code-health pass (2026-07-10): fixed `did:web` path resolution and resolver error handling in Cadet, avoided 10-second Postgres connection churn in Aqua/Cadet/Satellite, returned proper 404s for missing feed plays, and preserved delimiter-containing artist names in Satellite's latest-play response. Verified with targeted Rust checks and Cadet resolver tests.
+- Focused Amethyst code-health pass (2026-07-10): moved color-scheme initialization out of render, made Escape handling safe on native clients, kept independent home and right-rail requests visible when a sibling request fails, and migrated linting to ESLint 9 flat config while ignoring generated Expo output. Verified with TypeScript, focused lint, Jest, and a web export built against `https://sigilyph.teal.fm`.
 
 ## Local Open Work
 
