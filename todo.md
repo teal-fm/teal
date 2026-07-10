@@ -7,6 +7,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 ## Current State
 
 - Stable UI preview: `https://sigilyph.teal.fm`
+- Marketing website: first private Sites release is in progress from `apps/marketing`; publish URL pending deployment.
 - Cloudflare Tunnel `teal-dev-sigilyph` routes `sigilyph.teal.fm` to the Compose `amethyst:80` service.
 - The ignored local `.env` should keep `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.
 - Use `pnpm tunnel:up`, `pnpm tunnel:down`, `pnpm tunnel:status`, `pnpm tunnel:logs`, and `pnpm tunnel:verify` for the stable preview.
