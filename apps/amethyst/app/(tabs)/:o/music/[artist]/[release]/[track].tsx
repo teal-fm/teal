@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import SocialPostCard from "@/components/teal/SocialPostCard";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, {
   SectionHeading,
@@ -15,15 +16,32 @@ import {
   getPlayByUri,
   getRecordingCoverArtUrl,
   getSearchResults,
+  getSocialPost,
 } from "@/lib/teal/api";
 import { musicAlbumHref, musicArtistHref, routePart } from "@/lib/teal/routes";
 import { Disc3 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { SocialPostView } from "@/lib/teal/api";
+
+function sameTrack(candidate: PlayView, selected: PlayView) {
+  if (candidate.recordingMbId && selected.recordingMbId) {
+    return candidate.recordingMbId === selected.recordingMbId;
+  }
+
+  return (
+    routePart(candidate.trackName) === routePart(selected.trackName) &&
+    routePart(displayArtists(candidate)) === routePart(displayArtists(selected)) &&
+    routePart(candidate.releaseName) === routePart(selected.releaseName)
+  );
+}
 
 export default function MusicDetail() {
   const params = useLocalSearchParams();
   const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri;
+  const postUri = Array.isArray(params.postUri)
+    ? params.postUri[0]
+    : params.postUri;
   const artistSlug = Array.isArray(params.artist)
     ? params.artist[0]
     : params.artist;
@@ -33,6 +51,7 @@ export default function MusicDetail() {
   const trackSlug = Array.isArray(params.track) ? params.track[0] : params.track;
   const [play, setPlay] = useState<PlayView | null>(null);
   const [related, setRelated] = useState<PlayView[]>([]);
+  const [sourcePost, setSourcePost] = useState<SocialPostView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [artFailed, setArtFailed] = useState(false);
   const [recordingArt, setRecordingArt] = useState<string>();
@@ -66,17 +85,14 @@ export default function MusicDetail() {
         const selected = uri
           ? (await getPlayByUri(uri)).play
           : await resolvePlayFromSlugs();
-        const latest = await getLatestPlays(20);
+        const [latest, postResult] = await Promise.all([
+          getLatestPlays(50),
+          postUri ? getSocialPost(postUri) : Promise.resolve(null),
+        ]);
         if (!mounted) return;
         setPlay(selected);
-        setRelated(
-          latest.plays.filter((candidate) =>
-            selected?.trackName
-              ? candidate.trackName === selected.trackName ||
-                candidate.releaseMbId === selected.releaseMbId
-              : false,
-          ),
-        );
+        setRelated(latest.plays.filter((candidate) => sameTrack(candidate, selected)));
+        setSourcePost(postResult?.post || null);
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
       }
@@ -85,7 +101,7 @@ export default function MusicDetail() {
     return () => {
       mounted = false;
     };
-  }, [artistSlug, releaseSlug, trackSlug, uri]);
+  }, [artistSlug, postUri, releaseSlug, trackSlug, uri]);
 
   const releaseArt = coverArtUrl(play?.releaseMbId, 500);
   const art = artFailed ? undefined : releaseArt || recordingArt;
@@ -211,6 +227,12 @@ export default function MusicDetail() {
               play={item}
             />
           ))}
+          {sourcePost && (
+            <View className="mt-8">
+              <SectionHeading eyebrow="Conversation" title="Posts" />
+              <SocialPostCard post={sourcePost} />
+            </View>
+          )}
         </>
       )}
     </TealShell>

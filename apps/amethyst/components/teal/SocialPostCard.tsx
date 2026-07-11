@@ -18,10 +18,13 @@ import {
   normalizeHandle,
   type DisplayActor,
 } from "@/lib/teal/actors";
-import { musicHref } from "@/components/teal/PlayFeedCard";
 import RichText from "@/components/teal/RichText";
 import SocialComposer from "@/components/teal/SocialComposer";
-import { postHrefFromUri, rkeyFromAtUri } from "@/lib/teal/routes";
+import {
+  musicTrackHref,
+  postHrefFromUri,
+  rkeyFromAtUri,
+} from "@/lib/teal/routes";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { timeAgo } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
@@ -78,6 +81,13 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   const releaseArt = coverArtUrl(play.releaseMbId);
   const art = !releaseArtFailed && releaseArt ? releaseArt : recordingArt;
   const postHref = postHrefFromUri(post.uri);
+  const trackHref = musicTrackHref(
+    displayArtists(play),
+    play.releaseName,
+    play.trackName,
+    undefined,
+    post.uri,
+  );
 
   useEffect(() => {
     setLikeCount(post.likeCount);
@@ -241,7 +251,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
         />
       ) : null}
 
-      <Link href={musicHref(play) as any} asChild>
+      <Link href={trackHref as any} asChild>
         <Pressable className="mt-4 rounded-lg border border-border bg-white/55 p-3">
           <View className="flex-row items-center gap-3">
             <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-accent">
