@@ -9,7 +9,6 @@ import {
   is$typed as _is$typed,
   type OmitKey,
 } from '../../../../../../util'
-import type * as FmTealAlphaFeedSocialDefs from './defs'
 import type * as FmTealAlphaRichtextFacet from '../../richtext/facet'
 import type * as ComAtprotoRepoStrongRef from '../../../../../com/atproto/repo/strongRef'
 
@@ -21,7 +20,24 @@ export interface Main {
   $type: 'fm.teal.alpha.feed.social.post'
   /** The primary post content. May be an empty string, if there are embeds. */
   text: string
-  track: FmTealAlphaFeedSocialDefs.TrackView
+  /** The name of the track */
+  trackName?: string
+  /** The Musicbrainz ID of the track */
+  trackMbId?: string
+  /** The Musicbrainz recording ID of the track */
+  recordingMbId?: string
+  /** The duration of the track in seconds */
+  duration?: number
+  /** The names of the artists */
+  artistNames?: string[]
+  /** The Musicbrainz IDs of the artists */
+  artistMbIds?: string[]
+  /** The name of the release/album */
+  releaseName?: string
+  /** The Musicbrainz ID of the release/album */
+  releaseMbId?: string
+  /** The ISRC code associated with the recording */
+  isrc?: string
   reply?: ReplyRef
   /** Rich text facets, which may include mentions, links, and other features. */
   facets?: FmTealAlphaRichtextFacet.Main[]

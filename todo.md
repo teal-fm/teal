@@ -70,3 +70,4 @@ Additional Amethyst verification for scrobble editing:
 EXPO_PUBLIC_AQUA_URL=https://sigilyph.teal.fm pnpm --filter=@teal/amethyst build:web
 pnpm --filter=@teal/amethyst exec tsc --noEmit
 ```
+- Lexicon tooling migration (2026-07-16): `@atproto/lex` now validates Teal schemas on every TypeScript generation, and the old custom CLI no longer depends on `@atproto/lex-cli`. The legacy `gen-server` compatibility output remains isolated in `packages/lexicons` pending Aqua's XRPC binding migration.

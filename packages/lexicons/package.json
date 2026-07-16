@@ -4,6 +4,7 @@
   "main": "./index.ts",
   "dependencies": {
     "@atproto/api": "^0.20.27",
+    "@atproto/lex": "^0.2.3",
     "@atproto/lex-cli": "^0.10.5",
     "@atproto/lexicon": "^0.7.6",
     "@atproto/xrpc-server": "^0.11.8",
@@ -12,6 +13,7 @@
     "multiformats": "^14.0.4"
   },
   "scripts": {
+    "lex:validate": "bash ./lex-validate.sh",
     "lex:gen-server": "bash ./lex-gen.sh"
   }
 }

@@ -815,118 +815,6 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedSocialBadge: {
-    lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.badge',
-    description:
-      'This lexicon is in a not officially released state. It is subject to change. | A teal.fm badge definition.',
-    defs: {
-      main: {
-        type: 'record',
-        description:
-          'Record containing badge metadata that can be assigned to actors.',
-        key: 'tid',
-        record: {
-          type: 'object',
-          required: [
-            'name',
-            'description',
-            'image',
-            'creator',
-            'type',
-            'createdAt',
-          ],
-          properties: {
-            name: {
-              type: 'string',
-              description: 'Display name for the badge.',
-              minLength: 1,
-              maxLength: 100,
-              maxGraphemes: 100,
-            },
-            description: {
-              type: 'string',
-              description: 'Description of what the badge represents.',
-              minLength: 1,
-              maxLength: 5000,
-              maxGraphemes: 500,
-            },
-            descriptionFacets: {
-              type: 'array',
-              description: 'Annotations of text in the badge description.',
-              items: {
-                type: 'ref',
-                ref: 'lex:fm.teal.alpha.richtext.facet',
-              },
-            },
-            image: {
-              type: 'blob',
-              description: 'Image displayed for the badge.',
-              accept: ['image/png', 'image/jpeg'],
-              maxSize: 1000000,
-            },
-            creator: {
-              type: 'string',
-              format: 'did',
-              description:
-                'DID of the actor who created this badge definition.',
-            },
-            type: {
-              type: 'ref',
-              ref: 'lex:fm.teal.alpha.feed.social.defs#badgeType',
-            },
-            createdAt: {
-              type: 'string',
-              format: 'datetime',
-              description:
-                'Client-declared timestamp when this badge was originally created.',
-            },
-          },
-        },
-      },
-    },
-  },
-  FmTealAlphaFeedSocialBadgeAssignment: {
-    lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.badgeAssignment',
-    description:
-      'This lexicon is in a not officially released state. It is subject to change. | A teal.fm badge assignment.',
-    defs: {
-      main: {
-        type: 'record',
-        description: 'Record assigning a badge to an actor.',
-        key: 'tid',
-        record: {
-          type: 'object',
-          required: ['badge', 'assignee', 'assigner', 'createdAt'],
-          properties: {
-            badge: {
-              type: 'ref',
-              ref: 'lex:com.atproto.repo.strongRef',
-              description:
-                'Strong reference to the badge definition being assigned.',
-            },
-            assignee: {
-              type: 'string',
-              format: 'did',
-              description: 'DID of the actor receiving the badge.',
-            },
-            assigner: {
-              type: 'string',
-              format: 'did',
-              description: 'DID of the actor assigning the badge.',
-            },
-            createdAt: {
-              type: 'string',
-              format: 'datetime',
-              description:
-                'Client-declared timestamp when this badge assignment was originally created.',
-            },
-          },
-        },
-      },
-    },
-  },
   FmTealAlphaFeedSocialDefs: {
     lexicon: 1,
     id: 'fm.teal.alpha.feed.social.defs',
@@ -1023,11 +911,6 @@ export const schemaDict = {
           },
         },
       },
-      badgeType: {
-        type: 'string',
-        description: 'The category of badge.',
-        knownValues: ['verification', 'listeningParty', 'achievement'],
-      },
     },
   },
   FmTealAlphaFeedSocialLike: {
@@ -1047,13 +930,12 @@ export const schemaDict = {
             subject: {
               type: 'ref',
               ref: 'lex:com.atproto.repo.strongRef',
-              description: 'Strong reference to the record being liked.',
             },
             createdAt: {
               type: 'string',
               format: 'datetime',
               description:
-                'Client-declared timestamp when this like was originally created.',
+                'Client-declared timestamp when this post was originally created.',
             },
           },
         },
@@ -1072,45 +954,17 @@ export const schemaDict = {
         key: 'tid',
         record: {
           type: 'object',
-          required: ['name', 'authors', 'createdAt'],
+          required: ['name', 'createdAt'],
           properties: {
             name: {
               type: 'string',
               description: 'Display name for the playlist, required.',
               minLength: 1,
-              maxLength: 100,
-              maxGraphemes: 100,
+              maxLength: 50,
             },
             description: {
               type: 'string',
-              description: 'Free-form playlist description text.',
               maxLength: 5000,
-              maxGraphemes: 500,
-            },
-            descriptionFacets: {
-              type: 'array',
-              description: 'Annotations of text in the playlist description.',
-              items: {
-                type: 'ref',
-                ref: 'lex:fm.teal.alpha.richtext.facet',
-              },
-            },
-            authors: {
-              type: 'array',
-              description:
-                "DIDs of actors who can author playlist items for this playlist. Include the playlist record author. Appviews may attribute playlist items to this playlist when the item's repo author appears in this list.",
-              minLength: 1,
-              maxLength: 100,
-              items: {
-                type: 'string',
-                format: 'did',
-              },
-            },
-            cover: {
-              type: 'blob',
-              description: 'Optional image displayed for the playlist.',
-              accept: ['image/png', 'image/jpeg'],
-              maxSize: 1000000,
             },
             createdAt: {
               type: 'string',
@@ -1136,29 +990,25 @@ export const schemaDict = {
         key: 'tid',
         record: {
           type: 'object',
-          required: ['subject', 'track', 'createdAt'],
+          required: ['subject', 'createdAt', 'track'],
           properties: {
             subject: {
               type: 'ref',
               ref: 'lex:com.atproto.repo.strongRef',
-              description:
-                'Strong reference to the playlist this item belongs to.',
             },
             createdAt: {
               type: 'string',
               format: 'datetime',
               description:
-                'Client-declared timestamp when this playlist item was originally created.',
+                'Client-declared timestamp when this post was originally created.',
             },
             track: {
               type: 'ref',
               ref: 'lex:fm.teal.alpha.feed.social.defs#trackView',
-              description: 'The track added to the playlist.',
             },
             order: {
               type: 'integer',
-              minimum: 0,
-              description: 'The order of the track in the playlist.',
+              description: 'The order of the track in the playlist',
             },
           },
         },
@@ -1177,7 +1027,7 @@ export const schemaDict = {
         key: 'tid',
         record: {
           type: 'object',
-          required: ['text', 'track', 'createdAt'],
+          required: ['text', 'createdAt'],
           properties: {
             text: {
               type: 'string',
@@ -1186,10 +1036,55 @@ export const schemaDict = {
               description:
                 'The primary post content. May be an empty string, if there are embeds.',
             },
-            track: {
-              type: 'ref',
-              ref: 'lex:fm.teal.alpha.feed.social.defs#trackView',
-              description: 'The track associated with this post.',
+            trackName: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 256,
+              maxGraphemes: 2560,
+              description: 'The name of the track',
+            },
+            trackMbId: {
+              type: 'string',
+              description: 'The Musicbrainz ID of the track',
+            },
+            recordingMbId: {
+              type: 'string',
+              description: 'The Musicbrainz recording ID of the track',
+            },
+            duration: {
+              type: 'integer',
+              description: 'The duration of the track in seconds',
+            },
+            artistNames: {
+              type: 'array',
+              items: {
+                type: 'string',
+                minLength: 1,
+                maxLength: 256,
+                maxGraphemes: 2560,
+              },
+              description: 'The names of the artists',
+            },
+            artistMbIds: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'The Musicbrainz IDs of the artists',
+            },
+            releaseName: {
+              type: 'string',
+              maxLength: 256,
+              maxGraphemes: 2560,
+              description: 'The name of the release/album',
+            },
+            releaseMbId: {
+              type: 'string',
+              description: 'The Musicbrainz ID of the release/album',
+            },
+            isrc: {
+              type: 'string',
+              description: 'The ISRC code associated with the recording',
             },
             reply: {
               type: 'ref',
@@ -1267,13 +1162,12 @@ export const schemaDict = {
             subject: {
               type: 'ref',
               ref: 'lex:com.atproto.repo.strongRef',
-              description: 'Strong reference to the record being reposted.',
             },
             createdAt: {
               type: 'string',
               format: 'datetime',
               description:
-                'Client-declared timestamp when this repost was originally created.',
+                'Client-declared timestamp when this post was originally created.',
             },
           },
         },
@@ -1563,6 +1457,10 @@ export const schemaDict = {
           },
           playCount: {
             type: 'integer',
+          },
+          releaseType: {
+            type: 'string',
+            knownValues: ['album', 'single', 'ep', 'other'],
           },
         },
       },
@@ -2313,9 +2211,6 @@ export const ids = {
   FmTealAlphaFeedGetActorFeed: 'fm.teal.alpha.feed.getActorFeed',
   FmTealAlphaFeedGetPlay: 'fm.teal.alpha.feed.getPlay',
   FmTealAlphaFeedPlay: 'fm.teal.alpha.feed.play',
-  FmTealAlphaFeedSocialBadge: 'fm.teal.alpha.feed.social.badge',
-  FmTealAlphaFeedSocialBadgeAssignment:
-    'fm.teal.alpha.feed.social.badgeAssignment',
   FmTealAlphaFeedSocialDefs: 'fm.teal.alpha.feed.social.defs',
   FmTealAlphaFeedSocialLike: 'fm.teal.alpha.feed.social.like',
   FmTealAlphaFeedSocialPlaylist: 'fm.teal.alpha.feed.social.playlist',

@@ -19,10 +19,10 @@ const id = 'fm.teal.alpha.feed.social.playlistItem'
 export interface Main {
   $type: 'fm.teal.alpha.feed.social.playlistItem'
   subject: ComAtprotoRepoStrongRef.Main
-  /** Client-declared timestamp when this playlist item was originally created. */
+  /** Client-declared timestamp when this post was originally created. */
   createdAt: string
   track: FmTealAlphaFeedSocialDefs.TrackView
-  /** The order of the track in the playlist. */
+  /** The order of the track in the playlist */
   order?: number
   [k: string]: unknown
 }
