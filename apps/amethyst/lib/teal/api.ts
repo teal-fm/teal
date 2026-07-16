@@ -70,6 +70,27 @@ export type SocialPostView = {
   viewerRepost?: string;
 };
 
+export type SocialBadgeView = {
+  uri: string;
+  cid: string;
+  name: string;
+  description: string;
+  descriptionFacets?: unknown;
+  imageCid: string;
+  creator: string;
+  badgeType: string;
+  createdAt: string;
+};
+
+export type SocialBadgeAssignmentView = {
+  uri: string;
+  cid: string;
+  badge: SocialBadgeView;
+  assignee: string;
+  assigner: string;
+  createdAt: string;
+};
+
 export type SocialPlaylistView = {
   uri: string;
   cid: string;
@@ -312,6 +333,20 @@ export function getNotifications(actor: string, limit = 30, cursor?: string) {
   return getXrpc<{ items: SocialNotificationView[]; cursor?: string }>(
     "fm.teal.alpha.feed.social.getNotifications",
     { actor, limit, cursor },
+  );
+}
+
+export function getActorBadges(actor: string, limit = 20, cursor?: string) {
+  return getXrpc<{ items: SocialBadgeAssignmentView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getActorBadges",
+    { actor, limit, cursor },
+  );
+}
+
+export function getBadgeCatalog(limit = 50, cursor?: string) {
+  return getXrpc<{ items: SocialBadgeView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getBadgeCatalog",
+    { limit, cursor },
   );
 }
 

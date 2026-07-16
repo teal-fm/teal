@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import BadgeManager from "@/components/teal/BadgeManager";
 import EditProfileModal from "@/components/teal/EditProfileModal";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
 import { ProfileStatsSections } from "@/components/teal/ProfileStats";
@@ -32,6 +33,7 @@ import {
 } from "@/lib/teal/actors";
 import {
   getActorFeed,
+  getActorBadges,
   getActorPlaylists,
   getBlueskyProfile,
   getGraphFollowers,
@@ -44,6 +46,7 @@ import {
   displayArtists,
   getRecordingCoverArtUrl,
   type GraphSummaryView,
+  type SocialBadgeAssignmentView,
   type SocialPostView,
   type SocialPlaylistView,
   type StatsPeriod,
@@ -279,6 +282,7 @@ export default function ProfileScreen() {
   const actor = Array.isArray(handle) ? handle[0] : handle;
   const [did, setDid] = useState<string | null>(null);
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
+  const [badges, setBadges] = useState<SocialBadgeAssignmentView[]>([]);
   const [playlists, setPlaylists] = useState<SocialPlaylistView[]>([]);
   const [topReleases, setTopReleases] = useState<ReleaseView[]>([]);
   const [graphSummary, setGraphSummary] = useState<GraphSummaryView>({
@@ -317,6 +321,7 @@ export default function ProfileScreen() {
         setError(null);
         setDid(null);
         setProfile(null);
+        setBadges([]);
         setPlaylists([]);
         setTopReleases([]);
         setGraphSummary({ followersCount: 0, followsCount: 0 });
@@ -341,6 +346,9 @@ export default function ProfileScreen() {
           pdsAgent?.did,
           resolved,
         ).catch(() => ({
+          items: [],
+        }));
+        const badgeRes = await getActorBadges(resolved, 12).catch(() => ({
           items: [],
         }));
         const playlistRes = await getActorPlaylists(resolved, 12).catch(() => ({
@@ -409,6 +417,7 @@ export default function ProfileScreen() {
         }));
         if (!mounted) return;
         setProfile(nextProfile);
+        setBadges(badgeRes.items);
         setPlaylists(playlistRes.items);
         setTopReleases(topReleaseRes.releases);
         setGraphSummary(graphSummaryRes);
@@ -747,6 +756,25 @@ export default function ProfileScreen() {
                   </View>
                 </View>
               )}
+              {badges.length > 0 && (
+                <View className="mt-5">
+                  <Text className="mb-2 font-mono text-[10px] uppercase text-muted-foreground">
+                    Badges
+                  </Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {badges.map((assignment) => (
+                      <View
+                        key={assignment.uri}
+                        className="rounded-full border border-border bg-muted px-3 py-1"
+                      >
+                        <Text className="text-xs font-bold">
+                          {assignment.badge.name}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
               {isSelf && isBlueskyFallback && (
                 <Link href="/onboarding" asChild>
                   <Button className="mt-5 flex-row gap-2 self-start">
@@ -1007,6 +1035,16 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
+          {isSelf && (
+            <View className="mb-8">
+              <SectionHeading eyebrow="Admin" title="Badge tools" />
+              <BadgeManager
+                onAssigned={(assignment) =>
+                  setBadges((current) => [assignment, ...current])
+                }
+              />
+            </View>
+          )}
         </>
       )}
     </TealShell>

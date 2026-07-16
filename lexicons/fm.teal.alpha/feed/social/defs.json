@@ -82,6 +82,11 @@
           "description": "The URL associated with this track."
         }
       }
+    },
+    "badgeType": {
+      "type": "string",
+      "description": "The category of badge.",
+      "knownValues": ["verification", "listeningParty", "achievement"]
     }
   }
 }
