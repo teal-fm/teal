@@ -18,7 +18,7 @@ import {
 } from "@/lib/teal/api";
 import { timeAgo } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
-import { BadgeCheck, Bell, Heart, MessageCircle, Repeat2 } from "lucide-react-native";
+import { Bell, Heart, MessageCircle, Repeat2 } from "lucide-react-native";
 
 function reasonLabel(reason: string) {
   switch (reason) {
@@ -28,8 +28,6 @@ function reasonLabel(reason: string) {
       return "reposted your post";
     case "reply":
       return "replied to your post";
-    case "badgeAssignment":
-      return "assigned you a badge";
     default:
       return reason;
   }
@@ -43,8 +41,6 @@ function reasonIcon(reason: string) {
       return Repeat2;
     case "reply":
       return MessageCircle;
-    case "badgeAssignment":
-      return BadgeCheck;
     default:
       return Bell;
   }
@@ -162,7 +158,7 @@ export default function Notifications() {
             Sign in to view notifications.
           </Text>
           <Text className="max-w-sm text-center text-sm leading-5 text-muted-foreground">
-            Likes, reposts, replies, badge assignments, and playlist collaboration
+            Likes, reposts, replies, and playlist collaboration
             activity will appear here.
           </Text>
           <Link href="/auth/login" asChild>
