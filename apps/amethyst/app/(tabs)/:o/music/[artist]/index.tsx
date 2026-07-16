@@ -155,18 +155,29 @@ export default function ArtistDetail() {
     ? [
         {
           title: "Albums",
-          releases: artist.albums.filter(
-            (release) => release.releaseType !== "single",
-          ),
+          releases: artist.albums.filter((release) => release.releaseType === "album"),
+        },
+        {
+          title: "EPs",
+          releases: artist.albums.filter((release) => release.releaseType === "ep"),
         },
         {
           title: "Singles",
+          releases: artist.albums.filter((release) => release.releaseType === "single"),
+        },
+        {
+          title: "Other releases",
           releases: artist.albums.filter(
-            (release) => release.releaseType === "single",
+            (release) =>
+              release.releaseType !== "album" &&
+              release.releaseType !== "ep" &&
+              release.releaseType !== "single",
           ),
         },
       ]
     : [];
+  const albumCount =
+    artist?.albums.filter((release) => release.releaseType === "album").length ?? 0;
 
   return (
     <TealShell rightRail={<RightRail />}>
@@ -284,7 +295,7 @@ export default function ArtistDetail() {
           <SectionHeading
             eyebrow="Catalog"
             title="Discography"
-            detail={`${artist.albums.length} RELEASES`}
+            detail={`${albumCount} ALBUMS`}
           />
           {discographyGroups.map(({ title, releases }) =>
             releases.length > 0 ? (

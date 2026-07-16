@@ -119,6 +119,10 @@ struct MusicBrainzArtist {
 
 #[derive(Debug, Deserialize)]
 struct MusicBrainzArtistReleases {
+    #[serde(rename = "release-count", default)]
+    release_count: usize,
+    #[serde(rename = "release-offset", default)]
+    release_offset: usize,
     #[serde(default)]
     releases: Vec<MusicBrainzArtistRelease>,
 }
@@ -166,6 +170,15 @@ struct ObservedAlbumTrack {
 
 fn normalize_track_title(title: &str) -> String {
     title.trim().to_lowercase()
+}
+
+fn normalize_release_type(primary_type: Option<&str>) -> &'static str {
+    match primary_type {
+        Some("Album") => "album",
+        Some("Single") => "single",
+        Some("EP") => "ep",
+        _ => "other",
+    }
 }
 
 async fn fetch_musicbrainz_track_order(
@@ -221,37 +234,54 @@ async fn fetch_musicbrainz_track_order(
 }
 
 async fn fetch_artist_release_types(artist_mbid: Uuid) -> anyhow::Result<HashMap<Uuid, String>> {
-    let url = format!(
-        "https://musicbrainz.org/ws/2/release?artist={artist_mbid}&inc=release-groups&fmt=json&limit=100"
-    );
-    let releases = reqwest::Client::builder()
+    const PAGE_SIZE: usize = 100;
+
+    let client = reqwest::Client::builder()
         .timeout(StdDuration::from_secs(3))
         .user_agent("teal-aqua/0.1 (https://teal.fm)")
-        .build()?
-        .get(url)
-        .send()
-        .await?
-        .error_for_status()?
-        .json::<MusicBrainzArtistReleases>()
-        .await?;
+        .build()?;
 
-    Ok(releases
-        .releases
-        .into_iter()
-        .map(|release| {
-            let release_type = match release
-                .release_group
-                .and_then(|group| group.primary_type)
-                .as_deref()
-            {
-                Some("Album") => "album",
-                Some("Single") => "single",
-                Some("EP") => "ep",
-                _ => "other",
-            };
-            (release.id, release_type.to_string())
-        })
-        .collect())
+    let mut release_types = HashMap::new();
+    let mut offset = 0;
+
+    loop {
+        let url = format!(
+            "https://musicbrainz.org/ws/2/release?artist={artist_mbid}&inc=release-groups&fmt=json&limit={PAGE_SIZE}&offset={offset}"
+        );
+        let page = client
+            .get(url)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<MusicBrainzArtistReleases>()
+            .await?;
+        let page_len = page.releases.len();
+
+        release_types.extend(page.releases.into_iter().map(|release| {
+            (
+                release.id,
+                normalize_release_type(
+                    release
+                        .release_group
+                        .and_then(|group| group.primary_type)
+                        .as_deref(),
+                )
+                .to_string(),
+            )
+        }));
+
+        if page_len == 0 {
+            break;
+        }
+
+        let next_offset = page.release_offset + page_len;
+        if page_len < PAGE_SIZE || (page.release_count > 0 && next_offset >= page.release_count) {
+            break;
+        }
+        offset = next_offset;
+    }
+
+    Ok(release_types)
 }
 
 fn sort_tracks_by_release_order(tracks: &mut [ObservedAlbumTrack], order: &MusicBrainzTrackOrder) {
@@ -704,9 +734,10 @@ impl MusicRepo for PgDataSource {
 #[cfg(test)]
 mod tests {
     use super::{
-        ArtistListenersPeriod, MusicBrainzTrackOrder, ObservedAlbumTrack,
-        sort_tracks_by_release_order,
+        ArtistListenersPeriod, MusicBrainzArtistReleases, MusicBrainzTrackOrder,
+        ObservedAlbumTrack, normalize_release_type, sort_tracks_by_release_order,
     };
+    use serde_json::json;
     use uuid::Uuid;
 
     fn observed_track(name: &str, recording_mbid: Option<Uuid>) -> ObservedAlbumTrack {
@@ -785,5 +816,31 @@ mod tests {
             ArtistListenersPeriod::SevenDays
         );
         assert!(ArtistListenersPeriod::parse(Some("90days")).is_err());
+    }
+
+    #[test]
+    fn maps_musicbrainz_release_group_types_without_treating_unknowns_as_albums() {
+        assert_eq!(normalize_release_type(Some("Album")), "album");
+        assert_eq!(normalize_release_type(Some("Single")), "single");
+        assert_eq!(normalize_release_type(Some("EP")), "ep");
+        assert_eq!(normalize_release_type(Some("Other")), "other");
+        assert_eq!(normalize_release_type(None), "other");
+    }
+
+    #[test]
+    fn deserializes_musicbrainz_release_pagination_metadata() {
+        let page: MusicBrainzArtistReleases = serde_json::from_value(json!({
+            "release-count": 222,
+            "release-offset": 200,
+            "releases": [{
+                "id": "260b6184-8828-48eb-945c-bc4cb6fc34ca",
+                "release-group": {"primary-type": "Album"}
+            }]
+        }))
+        .unwrap();
+
+        assert_eq!(page.release_count, 222);
+        assert_eq!(page.release_offset, 200);
+        assert_eq!(page.releases.len(), 1);
     }
 }
