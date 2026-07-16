@@ -86,6 +86,29 @@ async fn main() {
 
     let ingestors = teal_ingestors::build_ingestors(pool.clone());
 
+    // Keep the indexed catalog normalized as new clients introduce alternate
+    // release/recording IDs for the same artist and title.
+    let consolidation_interval_secs = std::env::var("CADET_CONSOLIDATION_INTERVAL_SECS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(6 * 60 * 60);
+    let consolidation_pool = pool.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(
+            consolidation_interval_secs,
+        ));
+        interval.tick().await;
+
+        loop {
+            let ingestor = ingestors::teal::feed_play::PlayIngestor::new(consolidation_pool.clone());
+            if let Err(error) = ingestor.run_full_consolidation().await {
+                error!("Automatic catalog consolidation failed: {}", error);
+            }
+            interval.tick().await;
+        }
+    });
+
     // CAR import job worker
     let car_ingestor = ingestors::car::CarImportIngestor::new(pool.clone());
     let redis_url =

@@ -1,9 +1,11 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::Duration as StdDuration;
 
 use async_trait::async_trait;
+use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::from_json_value;
-use jacquard_common::types::string::{AtUri, Did};
+use jacquard_common::types::string::{AtprotoStr, AtUri, Did};
+use jacquard_common::types::value::Data;
 use serde::Deserialize;
 use types::fm_teal::alpha::feed::PlayView;
 use types::fm_teal::alpha::music::{
@@ -116,6 +118,25 @@ struct MusicBrainzArtist {
 }
 
 #[derive(Debug, Deserialize)]
+struct MusicBrainzArtistReleases {
+    #[serde(default)]
+    releases: Vec<MusicBrainzArtistRelease>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MusicBrainzArtistRelease {
+    id: Uuid,
+    #[serde(rename = "release-group")]
+    release_group: Option<MusicBrainzReleaseGroup>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MusicBrainzReleaseGroup {
+    #[serde(rename = "primary-type")]
+    primary_type: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 struct MusicBrainzMedium {
     position: Option<i32>,
     #[serde(default)]
@@ -197,6 +218,40 @@ async fn fetch_musicbrainz_track_order(
         .map(|credit| (credit.artist.id, credit.artist.name.clone()));
 
     Ok((order, artist))
+}
+
+async fn fetch_artist_release_types(artist_mbid: Uuid) -> anyhow::Result<HashMap<Uuid, String>> {
+    let url = format!(
+        "https://musicbrainz.org/ws/2/release?artist={artist_mbid}&inc=release-groups&fmt=json&limit=100"
+    );
+    let releases = reqwest::Client::builder()
+        .timeout(StdDuration::from_secs(3))
+        .user_agent("teal-aqua/0.1 (https://teal.fm)")
+        .build()?
+        .get(url)
+        .send()
+        .await?
+        .error_for_status()?
+        .json::<MusicBrainzArtistReleases>()
+        .await?;
+
+    Ok(releases
+        .releases
+        .into_iter()
+        .map(|release| {
+            let release_type = match release
+                .release_group
+                .and_then(|group| group.primary_type)
+                .as_deref()
+            {
+                Some("Album") => "album",
+                Some("Single") => "single",
+                Some("EP") => "ep",
+                _ => "other",
+            };
+            (release.id, release_type.to_string())
+        })
+        .collect())
 }
 
 fn sort_tracks_by_release_order(tracks: &mut [ObservedAlbumTrack], order: &MusicBrainzTrackOrder) {
@@ -291,6 +346,12 @@ impl MusicRepo for PgDataSource {
         .await?;
 
         let artist_name = artist.name;
+        let release_types = match artist.mbid {
+            Some(artist_mbid) => fetch_artist_release_types(artist_mbid)
+                .await
+                .unwrap_or_default(),
+            None => HashMap::new(),
+        };
         let artist_mbid = artist.mbid.map(mbid_uri);
         let albums = rows
             .into_iter()
@@ -300,7 +361,15 @@ impl MusicRepo for PgDataSource {
                 mbid: mbid_uri(row.mbid),
                 name: row.name.into(),
                 play_count: row.play_count,
-                extra_data: Default::default(),
+                extra_data: Some(BTreeMap::from([(
+                    SmolStr::new_static("releaseType"),
+                    Data::String(AtprotoStr::new(SmolStr::new(
+                        release_types
+                            .get(&row.mbid)
+                            .map(String::as_str)
+                            .unwrap_or("other"),
+                    ))),
+                )])),
             })
             .collect();
 

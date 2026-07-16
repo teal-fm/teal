@@ -98,6 +98,10 @@
         },
         "playCount": {
           "type": "integer"
+        },
+        "releaseType": {
+          "type": "string",
+          "knownValues": ["album", "single", "ep", "other"]
         }
       }
     },

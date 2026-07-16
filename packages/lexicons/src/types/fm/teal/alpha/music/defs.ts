@@ -85,6 +85,7 @@ export interface AlbumSummary {
   artistMbid?: string
   artistName: string
   playCount: number
+  releaseType?: 'album' | 'single' | 'ep' | 'other' | (string & {})
 }
 
 const hashAlbumSummary = 'albumSummary'
