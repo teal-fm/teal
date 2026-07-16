@@ -28,8 +28,12 @@ import type { ArtistListenerView } from "@teal/lexicons/src/types/fm/teal/alpha/
 
 export default function ArtistDetail() {
   const params = useLocalSearchParams();
+  const artistSlug = Array.isArray(params.artist)
+    ? params.artist[0]
+    : params.artist;
   const mbid = Array.isArray(params.mbid) ? params.mbid[0] : params.mbid;
   const name = Array.isArray(params.name) ? params.name[0] : params.name;
+  const artistLookup = name || artistSlug;
   const initialPeriod = Array.isArray(params.period)
     ? params.period[0]
     : params.period;
@@ -46,7 +50,7 @@ export default function ArtistDetail() {
 
   useEffect(() => {
     let mounted = true;
-    getArtist(mbid, name)
+    getArtist(mbid, artistLookup)
       .then(({ artist }) => {
         if (mounted) setArtist(artist);
       })
@@ -60,13 +64,13 @@ export default function ArtistDetail() {
     return () => {
       mounted = false;
     };
-  }, [mbid, name]);
+  }, [artistLookup, mbid]);
 
   useEffect(() => {
     let mounted = true;
     setListenersLoading(true);
     setListenerError(undefined);
-    getArtistListeners(mbid, name, listenerPeriod, 5)
+    getArtistListeners(mbid, artistLookup, listenerPeriod, 5)
       .then(({ listeners }) => {
         if (mounted) setListeners(listeners);
       })
@@ -84,7 +88,7 @@ export default function ArtistDetail() {
     return () => {
       mounted = false;
     };
-  }, [mbid, name, listenerPeriod]);
+  }, [artistLookup, mbid, listenerPeriod]);
 
   useEffect(() => {
     let mounted = true;

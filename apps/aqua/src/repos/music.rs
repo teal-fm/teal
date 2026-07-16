@@ -318,7 +318,13 @@ impl MusicRepo for PgDataSource {
             FROM artists_extended ae
             LEFT JOIN play_to_artists_extended ptae ON ae.id = ptae.artist_id
             WHERE ($1::uuid IS NOT NULL AND ae.mbid = $1)
-               OR ($1::uuid IS NULL AND LOWER(ae.name) = LOWER($2))
+               OR (
+                   $1::uuid IS NULL
+                   AND (
+                       LOWER(ae.name) = LOWER($2)
+                       OR TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER(ae.name), '[^a-z0-9]+', '-', 'g')) = LOWER($2)
+                   )
+               )
             GROUP BY ae.id, ae.mbid, ae.name
             ORDER BY play_count DESC
             LIMIT 1
@@ -431,7 +437,13 @@ impl MusicRepo for PgDataSource {
             FROM artists_extended ae
             LEFT JOIN play_to_artists_extended ptae ON ae.id = ptae.artist_id
             WHERE ($1::uuid IS NOT NULL AND ae.mbid = $1)
-               OR ($1::uuid IS NULL AND LOWER(ae.name) = LOWER($2))
+               OR (
+                   $1::uuid IS NULL
+                   AND (
+                       LOWER(ae.name) = LOWER($2)
+                       OR TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER(ae.name), '[^a-z0-9]+', '-', 'g')) = LOWER($2)
+                   )
+               )
             GROUP BY ae.id
             ORDER BY COUNT(DISTINCT ptae.play_uri) DESC
             LIMIT 1
