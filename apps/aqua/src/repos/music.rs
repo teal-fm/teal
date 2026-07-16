@@ -247,17 +247,43 @@ impl MusicRepo for PgDataSource {
 
         let rows = sqlx::query!(
             r#"
-            SELECT
-                p.release_mbid AS "mbid!",
-                MAX(p.release_name) AS "name!",
-                COUNT(DISTINCT p.uri) AS "play_count!"
-            FROM plays p
-            INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri
-            WHERE ptae.artist_id = $1
-              AND p.release_mbid IS NOT NULL
-              AND p.release_name IS NOT NULL
-            GROUP BY p.release_mbid
-            ORDER BY MAX(p.played_time) DESC NULLS LAST, MAX(p.release_name)
+            WITH release_variants AS (
+                SELECT
+                    LOWER(p.release_name) AS normalized_name,
+                    p.release_mbid AS mbid,
+                    MAX(p.release_name) AS name,
+                    COUNT(DISTINCT p.uri) AS play_count,
+                    MAX(p.played_time) AS last_played
+                FROM plays p
+                INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri
+                WHERE ptae.artist_id = $1
+                  AND p.release_mbid IS NOT NULL
+                  AND p.release_name IS NOT NULL
+                GROUP BY LOWER(p.release_name), p.release_mbid
+            )
+            ,release_usage AS (
+                SELECT
+                    release_variants.*,
+                    COUNT(*) OVER (PARTITION BY mbid) AS release_name_count
+                FROM release_variants
+            )
+            ,selected_releases AS (
+                SELECT DISTINCT ON (normalized_name)
+                    normalized_name,
+                    mbid,
+                    name,
+                    SUM(play_count) OVER (PARTITION BY normalized_name)::bigint AS play_count,
+                    MAX(last_played) OVER (PARTITION BY normalized_name) AS last_played
+                FROM release_usage
+                ORDER BY normalized_name,
+                    (release_name_count = 1) DESC,
+                    release_usage.play_count DESC,
+                    last_played DESC NULLS LAST,
+                    mbid
+            )
+            SELECT mbid AS "mbid!", name AS "name!", play_count AS "play_count!"
+            FROM selected_releases
+            ORDER BY last_played DESC NULLS LAST, name
             "#,
             artist.id
         )
