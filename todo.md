@@ -19,6 +19,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 - Music detail social-link fix (2026-07-11): social-post track links now carry the source post URI instead of an empty play URI, track pages match listens by recording identity with a metadata fallback, and the originating post renders on the track page.
 - Music album metadata/dedup fix (2026-07-16): album pages use MusicBrainz release artist metadata, collapse case/recording-ID variants into one track row, preserve canonical release recording IDs, and sum merged listen counts; artist pages now merge duplicate release titles and avoid cross-title MBID collisions.
 - Automatic catalog cleanup/discography split (2026-07-16): Cadet now runs catalog consolidation on a six-hour interval, artist responses expose MusicBrainz release-group types, and Amethyst separates Albums from Singles. Audited the top 12 artists in the preview; none had duplicate album titles after normalization.
+- Notification post navigation (2026-07-16): like and repost notifications now navigate to their original post through the indexed subject URI while preserving actor profile links.
 
 ## Local Open Work
 
