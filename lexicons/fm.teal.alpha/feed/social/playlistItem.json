@@ -9,27 +9,21 @@
       "key": "tid",
       "record": {
         "type": "object",
-        "required": ["subject", "track", "createdAt"],
+        "required": ["subject", "createdAt", "trackName"],
         "properties": {
-          "subject": {
-            "type": "ref",
-            "ref": "com.atproto.repo.strongRef",
-            "description": "Strong reference to the playlist this item belongs to."
-          },
+          "subject": { "type": "record", "ref": "com.atproto.repo.strongRef" },
           "createdAt": {
             "type": "string",
             "format": "datetime",
-            "description": "Client-declared timestamp when this playlist item was originally created."
+            "description": "Client-declared timestamp when this post was originally created."
           },
           "track": {
             "type": "ref",
-            "ref": "fm.teal.alpha.feed.social.defs#trackView",
-            "description": "The track added to the playlist."
+            "ref": "fm.teal.alpha.feed.social.defs#trackView"
           },
           "order": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The order of the track in the playlist."
+            "description": "The order of the track in the playlist"
           }
         }
       }
