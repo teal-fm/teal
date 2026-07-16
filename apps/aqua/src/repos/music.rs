@@ -85,6 +85,7 @@ fn parse_mbid(mbid: &str) -> anyhow::Result<Uuid> {
 struct MusicBrainzTrackOrder {
     by_recording_mbid: HashMap<Uuid, (i32, i32)>,
     by_title: HashMap<String, (i32, i32)>,
+    canonical_recording_by_title: HashMap<String, Uuid>,
 }
 
 impl MusicBrainzTrackOrder {
@@ -97,8 +98,21 @@ impl MusicBrainzTrackOrder {
 
 #[derive(Debug, Deserialize)]
 struct MusicBrainzRelease {
+    #[serde(rename = "artist-credit", default)]
+    artist_credit: Vec<MusicBrainzArtistCredit>,
     #[serde(default)]
     media: Vec<MusicBrainzMedium>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MusicBrainzArtistCredit {
+    artist: MusicBrainzArtist,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+struct MusicBrainzArtist {
+    id: Uuid,
+    name: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -135,9 +149,11 @@ fn normalize_track_title(title: &str) -> String {
 
 async fn fetch_musicbrainz_track_order(
     release_mbid: Uuid,
-) -> anyhow::Result<MusicBrainzTrackOrder> {
+) -> anyhow::Result<(MusicBrainzTrackOrder, Option<(Uuid, String)>)> {
     let url =
-        format!("https://musicbrainz.org/ws/2/release/{release_mbid}?inc=recordings&fmt=json");
+        format!(
+            "https://musicbrainz.org/ws/2/release/{release_mbid}?inc=artist-credits+recordings&fmt=json"
+        );
     let release = reqwest::Client::builder()
         .timeout(StdDuration::from_secs(3))
         .user_agent("teal-aqua/0.1 (https://teal.fm)")
@@ -159,6 +175,12 @@ async fn fetch_musicbrainz_track_order(
                     .by_recording_mbid
                     .entry(recording_mbid)
                     .or_insert((medium_position, track_position));
+                if let Some(title) = track.title.as_deref() {
+                    order
+                        .canonical_recording_by_title
+                        .entry(normalize_track_title(title))
+                        .or_insert(recording_mbid);
+                }
             }
             if let Some(title) = track.title {
                 order
@@ -169,7 +191,12 @@ async fn fetch_musicbrainz_track_order(
         }
     }
 
-    Ok(order)
+    let artist = release
+        .artist_credit
+        .first()
+        .map(|credit| (credit.artist.id, credit.artist.name.clone()));
+
+    Ok((order, artist))
 }
 
 fn sort_tracks_by_release_order(tracks: &mut [ObservedAlbumTrack], order: &MusicBrainzTrackOrder) {
@@ -411,16 +438,16 @@ impl MusicRepo for PgDataSource {
                 WHERE p.release_mbid = $1
                 GROUP BY p.uri, p.recording_mbid, p.track_name, p.processed_time
             )
-            SELECT DISTINCT ON (COALESCE(recording_mbid::text, LOWER(track_name)))
+            SELECT DISTINCT ON (LOWER(track_name))
                 uri,
                 recording_mbid,
                 track_name,
                 artist_name,
                 COUNT(*) OVER (
-                    PARTITION BY COALESCE(recording_mbid::text, LOWER(track_name))
+                    PARTITION BY LOWER(track_name)
                 ) AS "play_count!"
             FROM track_plays
-            ORDER BY COALESCE(recording_mbid::text, LOWER(track_name)), processed_time DESC, uri
+            ORDER BY LOWER(track_name), processed_time DESC, uri
             "#,
             mbid
         )
@@ -439,9 +466,17 @@ impl MusicRepo for PgDataSource {
                 })
             })
             .collect::<Vec<_>>();
-        let track_order = fetch_musicbrainz_track_order(mbid)
+        let (track_order, musicbrainz_artist_name) = fetch_musicbrainz_track_order(mbid)
             .await
             .unwrap_or_default();
+        for track in &mut observed_tracks {
+            if let Some(recording_mbid) = track_order
+                .canonical_recording_by_title
+                .get(&normalize_track_title(&track.name))
+            {
+                track.recording_mbid = Some(*recording_mbid);
+            }
+        }
         sort_tracks_by_release_order(&mut observed_tracks, &track_order);
         let tracks = observed_tracks
             .into_iter()
@@ -547,8 +582,14 @@ impl MusicRepo for PgDataSource {
 
         Ok(AlbumPage {
             album: AlbumView {
-                artist_mbid: album_row.artist_mbid.map(mbid_uri),
-                artist_name: album_row.artist_name.into(),
+                artist_mbid: musicbrainz_artist_name
+                    .as_ref()
+                    .map(|(artist_mbid, _)| mbid_uri(*artist_mbid))
+                    .or_else(|| album_row.artist_mbid.map(mbid_uri)),
+                artist_name: musicbrainz_artist_name
+                    .map(|(_, artist_name)| artist_name)
+                    .unwrap_or(album_row.artist_name)
+                    .into(),
                 mbid: mbid_uri(album_row.mbid),
                 name: album_row.name.into(),
                 play_count: album_row.play_count,

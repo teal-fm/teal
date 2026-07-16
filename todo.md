@@ -17,6 +17,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 - Dependency refresh (2026-07-10): updated the Rust lockfile, root and standalone lexicon CLI pnpm locks, Expo SDK 57/RN 0.86, AT Protocol clients and lexicon generator, plus current compatible workspace tooling. Regenerated lexicons now normalize TypeScript relative imports for Metro; Amethyst record creation supplies required `$type` fields. Verified with offline Rust tests/checks, TypeScript, Jest, and full workspace builds.
 - Cadet live-ingestion recovery (2026-07-11): the preview consumer was repeatedly stalling because every incoming play synchronously refreshed four materialized views. The Compose Cadet service now enables its existing deferred-refresh mode so Jetstream events can drain without blocking for several seconds per play. Follow-up: add a periodic materialized-view refresh path before relying on live aggregate counts.
 - Music detail social-link fix (2026-07-11): social-post track links now carry the source post URI instead of an empty play URI, track pages match listens by recording identity with a metadata fallback, and the originating post renders on the track page.
+- Music album metadata/dedup fix (2026-07-16): album pages use MusicBrainz release artist metadata, collapse case/recording-ID variants into one track row, preserve canonical release recording IDs, and sum merged listen counts.
 
 ## Local Open Work
 
