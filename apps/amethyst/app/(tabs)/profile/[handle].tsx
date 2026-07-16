@@ -7,7 +7,6 @@ import {
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
-import BadgeManager from "@/components/teal/BadgeManager";
 import EditProfileModal from "@/components/teal/EditProfileModal";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
 import { ProfileStatsSections } from "@/components/teal/ProfileStats";
@@ -1035,16 +1034,6 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-          {isSelf && (
-            <View className="mb-8">
-              <SectionHeading eyebrow="Admin" title="Badge tools" />
-              <BadgeManager
-                onAssigned={(assignment) =>
-                  setBadges((current) => [assignment, ...current])
-                }
-              />
-            </View>
-          )}
         </>
       )}
     </TealShell>
