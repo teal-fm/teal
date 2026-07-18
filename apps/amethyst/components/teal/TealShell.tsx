@@ -14,6 +14,7 @@ import { useStore } from "@/stores/mainStore";
 import {
   Bell,
   CircleUserRound,
+  Disc3,
   Home,
   LogIn,
   Radio,
@@ -128,6 +129,14 @@ function LeftRail() {
           label="Explore"
           active={pathname.includes("search")}
         />
+        {status === "loggedIn" && (
+          <NavItem
+            href="/manual-listens"
+            icon={Disc3}
+            label="Add listens"
+            active={pathname.startsWith("/manual-listens")}
+          />
+        )}
         <NavItem
           href="/notifications"
           icon={Bell}
@@ -180,9 +189,13 @@ function LeftRail() {
 
 function MobileNav() {
   const pathname = usePathname();
+  const status = useStore((state) => state.status);
   const items = [
     { href: "/", icon: Home, active: pathname === "/" },
     { href: "/search", icon: Search, active: pathname.includes("search") },
+    ...(status === "loggedIn"
+      ? [{ href: "/manual-listens", icon: Disc3, active: pathname.startsWith("/manual-listens") }]
+      : []),
     {
       href: "/notifications",
       icon: Bell,
