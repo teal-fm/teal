@@ -247,7 +247,6 @@ export default function ManualListensPage() {
       <SectionHeading
         eyebrow="MANUAL LISTENING"
         title="Add an album"
-        detail="VINYL · CD · OFFLINE"
       />
       <View className="mb-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <View className="border-b border-border bg-primary px-5 py-4">
@@ -259,7 +258,7 @@ export default function ManualListensPage() {
               <Text className="font-mono text-[10px] font-bold uppercase tracking-[2px] text-primary-foreground/70">
                 A listening record
               </Text>
-              <Text className="mt-1 font-serif text-xl font-semibold text-primary-foreground">
+              <Text className="mt-1 font-sans text-xl font-black text-primary-foreground">
                 Put the needle down. We’ll place the tracks in time.
               </Text>
             </View>
@@ -355,7 +354,7 @@ export default function ManualListensPage() {
               />
               <View className="min-w-0 flex-1 justify-center">
                 <Text className="font-mono text-[10px] font-bold uppercase tracking-[2px] text-primary">Selected release</Text>
-                <Text className="mt-1 font-serif text-2xl font-semibold" numberOfLines={2}>{selectedRelease.title}</Text>
+                <Text className="mt-1 font-sans text-2xl font-black" numberOfLines={2}>{selectedRelease.title}</Text>
                 <Text className="text-sm text-muted-foreground" numberOfLines={1}>{releaseArtist(selectedRelease)}</Text>
                 <Text className="font-mono text-[10px] uppercase text-muted-foreground">{releaseDetails(selectedRelease)} · {tracks.length} tracks</Text>
               </View>
@@ -445,7 +444,7 @@ export default function ManualListensPage() {
 
       {submittedCount !== undefined && (
         <View className="mt-5 gap-3 rounded-xl border border-primary/30 bg-accent p-5">
-          <Text className="font-serif text-2xl font-semibold">Listening history updated.</Text>
+          <Text className="font-sans text-2xl font-black">Listening history updated.</Text>
           <Text className="text-sm text-muted-foreground">Added {submittedCount} listen{submittedCount === 1 ? "" : "s"} as one atomic repository update.</Text>
           <View className="flex-row gap-3">
             <Link href={`/profile/${agent.did}` as any} asChild>
