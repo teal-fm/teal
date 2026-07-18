@@ -8,6 +8,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 
 - Stable UI preview: `https://sigilyph.teal.fm`
 - Cloudflare Tunnel `teal-dev-sigilyph` routes `sigilyph.teal.fm` to the Compose `amethyst:80` service.
+- Manual listening feature preview: `https://mimikyu.teal.fm` via Cloudflare Tunnel `teal-dev-mimikyu`; the preview container runs alongside the stable stack and routes to the current `codex/manual-listens` build.
 - The ignored local `.env` should keep `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.
 - Use `pnpm tunnel:up`, `pnpm tunnel:down`, `pnpm tunnel:status`, `pnpm tunnel:logs`, and `pnpm tunnel:verify` for the stable preview.
 - The public Amethyst feed must use only live Aqua XRPC data. Do not add seeded, mocked, demo, or backup play data.
