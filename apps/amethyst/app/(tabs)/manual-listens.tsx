@@ -255,9 +255,6 @@ export default function ManualListensPage() {
               <Icon icon={Disc3} size={22} className="text-primary" />
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="font-mono text-[10px] font-bold uppercase tracking-[2px] text-primary-foreground/70">
-                A listening record
-              </Text>
               <Text className="mt-1 font-sans text-xl font-black text-primary-foreground">
                 Put the needle down. We’ll place the tracks in time.
               </Text>
