@@ -392,8 +392,8 @@ export default function ManualListensPage() {
             <View className="mb-4 flex-row items-center gap-3">
               <CalendarClock size={20} className="text-primary" />
               <View>
-                <Text className="font-semibold">Place the listening in time</Text>
-                <Text className="text-sm text-muted-foreground">Each track gets its own start time in your listening history.</Text>
+                <Text className="font-semibold">When did you listen?</Text>
+                <Text className="text-sm text-muted-foreground">Choose how to place the selected tracks in your listening history.</Text>
               </View>
             </View>
             <View className="mb-4 flex-row gap-2">
@@ -403,19 +403,23 @@ export default function ManualListensPage() {
                   onPress={() => setTimestampMode(mode)}
                   className={`flex-1 rounded-md border px-3 py-3 ${timestampMode === mode ? "border-primary bg-accent" : "border-border bg-background"}`}
                 >
-                  <Text className={timestampMode === mode ? "font-bold text-primary" : "font-semibold"}>{mode === "now" ? "Most recent" : "Choose a start"}</Text>
-                  <Text className="mt-1 text-xs text-muted-foreground">{mode === "now" ? "Last track starts now" : "First track starts here"}</Text>
+                  <Text className={timestampMode === mode ? "font-bold text-primary" : "font-semibold"}>{mode === "now" ? "Use current time" : "Choose a time"}</Text>
+                  <Text className="mt-1 text-xs text-muted-foreground">{mode === "now" ? "Newest selected track starts now" : "First selected track starts at this time"}</Text>
                 </Pressable>
               ))}
             </View>
             {timestampMode === "custom" && (
-              <Input
-                accessibilityLabel="Listening start date and time"
-                placeholder="YYYY-MM-DDTHH:mm"
-                value={customStart}
-                onChangeText={setCustomStart}
-                inputMode="text"
-              />
+              <View className="gap-1">
+                <Text className="text-sm font-semibold">First track start time</Text>
+                <Text className="text-xs text-muted-foreground">Use your local date and time.</Text>
+                <Input
+                  accessibilityLabel="First track start date and time"
+                  placeholder="e.g. 2026-07-18T20:30"
+                  value={customStart}
+                  onChangeText={setCustomStart}
+                  inputMode="text"
+                />
+              </View>
             )}
             {preview.length > 0 && (
               <View className="mt-4 rounded-lg border border-border bg-muted/30 p-3">

@@ -26,7 +26,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 - Notification post navigation (2026-07-16): like and repost notifications now navigate to their original post through the indexed subject URI while preserving actor profile links.
 - Notification context refinement (2026-07-16): Amethyst notifications now group same-post likes/reposts, stack linked actor avatars, use compact relative timestamps, and load the referenced post text plus track preview; follow and badge activity remain lightweight rows.
 - Playlist track lookup (2026-07-16): playlist editors can search their own indexed listening history or MusicBrainz and add matching tracks directly to a playlist.
-- Manual album listening entry (2026-07-18): Amethyst now has a protected `/manual-listens` page in the desktop/mobile navigation, MusicBrainz release and track selection, duration-aware timestamp previews, atomic `applyWrites` submission, and a fresh-origin logged-out redirect. The hero copy is kept focused on the album action without the extra listening-record label. TypeScript, Amethyst tests, Biome, and the web export pass; authenticated preview QA remains.
+- Manual album listening entry (2026-07-18): Amethyst now has a protected `/manual-listens` page in the desktop/mobile navigation, MusicBrainz release and track selection, duration-aware timestamp previews, atomic `applyWrites` submission, and a fresh-origin logged-out redirect. The hero copy is kept focused on the album action without the extra listening-record label, and timestamp choices explain their effect using plain language and local-time guidance. TypeScript, Amethyst tests, Biome, and the web export pass; authenticated preview QA remains.
 
 ## Local Open Work
 
