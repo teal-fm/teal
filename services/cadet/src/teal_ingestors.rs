@@ -3,15 +3,26 @@ use std::collections::HashMap;
 use rocketman::ingestion::{DefaultLexiconIngestor, LexiconIngestor};
 use sqlx::PgPool;
 
-use crate::ingestors;
+use crate::{
+    ingestion_retry::{DurableRetryPlayIngestor, IngestionRetryStore},
+    ingestors,
+};
 
 pub fn build_ingestors(pool: PgPool) -> HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> {
+    build_ingestors_with_retry(pool, None)
+}
+
+pub fn build_ingestors_with_retry(
+    pool: PgPool,
+    retry_store: Option<IngestionRetryStore>,
+) -> HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> {
     let mut ingestors: HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> = HashMap::new();
 
-    ingestors.insert(
-        "fm.teal.alpha.feed.play".to_string(),
-        Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
-    );
+    let play_ingestor: Box<dyn LexiconIngestor + Send + Sync> = match retry_store {
+        Some(retry_store) => Box::new(DurableRetryPlayIngestor::new(pool.clone(), retry_store)),
+        None => Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
+    };
+    ingestors.insert("fm.teal.alpha.feed.play".to_string(), play_ingestor);
 
     ingestors.insert(
         "fm.teal.alpha.actor.profile".to_string(),
