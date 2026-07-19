@@ -115,6 +115,14 @@ function RootLayoutNav() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen
+                name="auth/login"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "fade",
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
                 name="auth/logoutModal"
                 options={{
                   presentation: "transparentModal",
