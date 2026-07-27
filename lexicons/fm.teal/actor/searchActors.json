@@ -1,29 +1,29 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.stats.getTopReleases",
-  "description": "Get top releases/albums by play count",
+  "id": "fm.teal.actor.searchActors",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Searches for actors based on profile contents.",
   "defs": {
     "main": {
       "type": "query",
       "parameters": {
         "type": "params",
+        "required": ["q"],
         "properties": {
-          "period": {
+          "q": {
             "type": "string",
-            "enum": ["all", "30days", "7days"],
-            "default": "all",
-            "description": "Time period for top releases"
+            "description": "The search query",
+            "maxGraphemes": 128,
+            "maxLength": 640
           },
           "limit": {
             "type": "integer",
+            "description": "The maximum number of actors to return",
             "minimum": 1,
-            "maximum": 100,
-            "default": 50,
-            "description": "Number of releases to return"
+            "maximum": 25
           },
           "cursor": {
             "type": "string",
-            "description": "Pagination cursor"
+            "description": "Cursor for pagination"
           }
         }
       },
@@ -31,18 +31,18 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["releases"],
+          "required": ["actors"],
           "properties": {
-            "releases": {
+            "actors": {
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "fm.teal.alpha.stats.defs#releaseView"
+                "ref": "fm.teal.actor.defs#miniProfileView"
               }
             },
             "cursor": {
               "type": "string",
-              "description": "Next page cursor"
+              "description": "Cursor for pagination"
             }
           }
         }

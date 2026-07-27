@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.feed.getPlay",
+  "id": "fm.teal.feed.getPlay",
   "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.",
   "defs": {
     "main": {
@@ -28,7 +28,7 @@
           "properties": {
             "play": {
               "type": "ref",
-              "ref": "fm.teal.alpha.feed.defs#playView"
+              "ref": "fm.teal.feed.defs#playView"
             }
           }
         }

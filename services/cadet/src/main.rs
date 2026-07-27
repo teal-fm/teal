@@ -50,9 +50,9 @@ async fn main() {
     let opts = JetstreamOptions::builder()
         .wanted_collections(
             [
-                "fm.teal.alpha.feed.play",
-                "fm.teal.alpha.actor.profile",
-                "fm.teal.alpha.actor.status",
+                "fm.teal.feed.play",
+                "fm.teal.actor.profile",
+                "fm.teal.actor.status",
                 "com.atproto.repo.importRepo",
             ]
             .iter()
@@ -66,19 +66,19 @@ async fn main() {
     let mut ingestors: HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> = HashMap::new();
 
     ingestors.insert(
-        "fm.teal.alpha.feed.play".to_string(),
+        "fm.teal.feed.play".to_string(),
         Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
     );
 
     ingestors.insert(
-        "fm.teal.alpha.actor.profile".to_string(),
+        "fm.teal.actor.profile".to_string(),
         Box::new(ingestors::teal::actor_profile::ActorProfileIngestor::new(
             pool.clone(),
         )),
     );
 
     ingestors.insert(
-        "fm.teal.alpha.actor.status".to_string(),
+        "fm.teal.actor.status".to_string(),
         Box::new(ingestors::teal::actor_status::ActorStatusIngestor::new(
             pool.clone(),
         )),

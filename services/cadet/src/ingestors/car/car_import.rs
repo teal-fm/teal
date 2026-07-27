@@ -248,7 +248,7 @@ impl CarImportIngestor {
             record.collection, record.rkey
         );
         match record.collection.as_str() {
-            "fm.teal.alpha.feed.play" => {
+            "fm.teal.feed.play" => {
                 info!("   📀 Processing play record...");
                 let result = self
                     .process_play_record(&record.data, did, &record.rkey)
@@ -260,7 +260,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.profile" => {
+            "fm.teal.actor.profile" => {
                 info!("   👤 Processing profile record...");
                 let result = self
                     .process_profile_record(&record.data, did, &record.rkey)
@@ -272,7 +272,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.status" => {
+            "fm.teal.actor.status" => {
                 info!("   📢 Processing status record...");
                 let result = self
                     .process_status_record(&record.data, did, &record.rkey)
@@ -293,7 +293,7 @@ impl CarImportIngestor {
 
     /// Check if a key represents a Teal record
     fn is_teal_record_key(&self, key: &str) -> bool {
-        key.starts_with("fm.teal.alpha.") && key.contains("/")
+        key.starts_with("fm.teal.") && key.contains("/")
     }
 
     /// Parse a Teal MST key to extract collection and rkey
@@ -309,11 +309,11 @@ impl CarImportIngestor {
 
     /// Process a play record using the existing PlayIngestor
     async fn process_play_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        let play_record: types::fm_teal::alpha::feed::play::Play =
-            value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(data.clone())?;
+        let play_record: types::fm_teal::feed::play::Play =
+            value::from_json_value::<types::fm_teal::feed::play::Play>(data.clone())?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
-        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
+        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.feed.play", rkey);
 
         play_ingestor
             .insert_play(
@@ -334,8 +334,8 @@ impl CarImportIngestor {
 
     /// Process a profile record using the existing ActorProfileIngestor
     async fn process_profile_record(&self, data: &Value, did: &str, _rkey: &str) -> Result<()> {
-        let profile_record: types::fm_teal::alpha::actor::profile::Profile =
-            value::from_json_value::<types::fm_teal::alpha::actor::profile::Profile>(data.clone())?;
+        let profile_record: types::fm_teal::actor::profile::Profile =
+            value::from_json_value::<types::fm_teal::actor::profile::Profile>(data.clone())?;
 
         let profile_ingestor =
             super::super::teal::actor_profile::ActorProfileIngestor::new(self.sql.clone());
@@ -353,8 +353,8 @@ impl CarImportIngestor {
 
     /// Process a status record using the existing ActorStatusIngestor
     async fn process_status_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        let status_record: types::fm_teal::alpha::actor::status::Status =
-            value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(data.clone())?;
+        let status_record: types::fm_teal::actor::status::Status =
+            value::from_json_value::<types::fm_teal::actor::status::Status>(data.clone())?;
 
         let status_ingestor =
             super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
@@ -593,7 +593,7 @@ mod tests {
         let mut record = BTreeMap::new();
         record.insert(
             "$type".to_string(),
-            Ipld::String("fm.teal.alpha.feed.play".to_string()),
+            Ipld::String("fm.teal.feed.play".to_string()),
         );
         record.insert(
             "track_name".to_string(),
@@ -615,7 +615,7 @@ mod tests {
         let mut record = BTreeMap::new();
         record.insert(
             "$type".to_string(),
-            Ipld::String("fm.teal.alpha.actor.profile".to_string()),
+            Ipld::String("fm.teal.actor.profile".to_string()),
         );
         record.insert(
             "display_name".to_string(),
@@ -653,14 +653,14 @@ mod tests {
     #[test]
     fn test_parse_teal_key() {
         // This test doesn't need a database connection or async
-        let key = "fm.teal.alpha.feed.play/3k2akjdlkjsf";
+        let key = "fm.teal.feed.play/3k2akjdlkjsf";
 
         // Test the parsing logic directly
         if let Some(slash_pos) = key.rfind('/') {
             let collection = key[..slash_pos].to_string();
             let rkey = key[slash_pos + 1..].to_string();
 
-            assert_eq!(collection, "fm.teal.alpha.feed.play");
+            assert_eq!(collection, "fm.teal.feed.play");
             assert_eq!(rkey, "3k2akjdlkjsf");
         } else {
             panic!("Should have found slash in key");
@@ -671,13 +671,13 @@ mod tests {
     fn test_is_teal_record_key() {
         // Test the logic directly without needing an ingestor instance
         fn is_teal_record_key(key: &str) -> bool {
-            key.starts_with("fm.teal.alpha.") && key.contains("/")
+            key.starts_with("fm.teal.") && key.contains("/")
         }
 
-        assert!(is_teal_record_key("fm.teal.alpha.feed.play/abc123"));
-        assert!(is_teal_record_key("fm.teal.alpha.profile/def456"));
+        assert!(is_teal_record_key("fm.teal.feed.play/abc123"));
+        assert!(is_teal_record_key("fm.teal.actor.profile/def456"));
         assert!(!is_teal_record_key("app.bsky.feed.post/xyz789"));
-        assert!(!is_teal_record_key("fm.teal.alpha.feed.play")); // No rkey
+        assert!(!is_teal_record_key("fm.teal.feed.play")); // No rkey
     }
 
     #[test]
@@ -689,7 +689,7 @@ mod tests {
         let mut record = BTreeMap::new();
         record.insert(
             "$type".to_string(),
-            Ipld::String("fm.teal.alpha.feed.play".to_string()),
+            Ipld::String("fm.teal.feed.play".to_string()),
         );
         record.insert(
             "track_name".to_string(),
@@ -725,7 +725,7 @@ mod tests {
         let json_result = ipld_to_json(&play_record);
         assert!(json_result.is_ok());
         let json = json_result.unwrap();
-        assert_eq!(json["$type"], "fm.teal.alpha.feed.play");
+        assert_eq!(json["$type"], "fm.teal.feed.play");
         assert_eq!(json["track_name"], "Test Song");
         assert_eq!(json["duration"], 180000);
     }
@@ -746,7 +746,7 @@ mod tests {
         for cid in importer.cids() {
             if let Ok(Ipld::Map(map)) = importer.decode_cbor(&cid) {
                 if let Some(Ipld::String(record_type)) = map.get("$type") {
-                    assert!(record_type.starts_with("fm.teal.alpha."));
+                    assert!(record_type.starts_with("fm.teal."));
                     println!("Found Teal record: {}", record_type);
                 }
             }

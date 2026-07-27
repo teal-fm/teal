@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.actor.status",
+  "id": "fm.teal.actor.status",
   "defs": {
     "main": {
       "type": "record",
@@ -22,7 +22,7 @@
           },
           "item": {
             "type": "ref",
-            "ref": "fm.teal.alpha.feed.defs#playView"
+            "ref": "fm.teal.feed.defs#playView"
           }
         }
       }

@@ -409,8 +409,8 @@ fn uri_mbid_value(mbid: &UriValue) -> &str {
 }
 
 fn clean(
-    record: &types::fm_teal::alpha::feed::play::Play,
-) -> types::fm_teal::alpha::feed::play::Play {
+    record: &types::fm_teal::feed::play::Play,
+) -> types::fm_teal::feed::play::Play {
     let mut cleaned = record.clone();
 
     // Clean artist MBIDs inside artists vector, if present
@@ -1325,7 +1325,7 @@ impl PlayIngestor {
 
     pub async fn insert_play(
         &self,
-        play_record: &types::fm_teal::alpha::feed::play::Play,
+        play_record: &types::fm_teal::feed::play::Play,
         uri: &str,
         cid: &str,
         did: &str,
@@ -1591,8 +1591,8 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::alpha::feed::play::Play =
-                    value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(
+                let record: types::fm_teal::feed::play::Play =
+                    value::from_json_value::<types::fm_teal::feed::play::Play>(
                         record.clone(),
                     )?;
                 if let Some(ref commit) = message.commit {

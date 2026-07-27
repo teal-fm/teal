@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use jacquard_common::from_json_value;
-use types::fm_teal::alpha::feed::{Artist, PlayView};
+use types::fm_teal::feed::{Artist, PlayView};
 
 use super::{mbid_uri, pg::PgDataSource, utc_to_atrium_datetime};
 

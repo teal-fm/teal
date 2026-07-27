@@ -2,13 +2,13 @@ use crate::ctx::Context;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm_teal::alpha::feed::PlayView;
+use types::fm_teal::feed::PlayView;
 
 // mount feed routes
 pub fn feed_routes() -> axum::Router {
     axum::Router::new()
-        .route("/fm.teal.alpha.feed.getPlay", get(get_feed_play))
-        .route("/fm.teal.alpha.feed.getPlays", get(get_feed_plays))
+        .route("/fm.teal.feed.getPlay", get(get_feed_play))
+        .route("/fm.teal.feed.getPlays", get(get_feed_plays))
 }
 
 #[derive(Deserialize)]

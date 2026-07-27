@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.stats.getLatest",
+  "id": "fm.teal.stats.getLatest",
   "defs": {
     "main": {
       "type": "query",
@@ -27,7 +27,7 @@
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "fm.teal.alpha.feed.defs#playView"
+                "ref": "fm.teal.feed.defs#playView"
               }
             }
           }

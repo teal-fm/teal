@@ -7,8 +7,8 @@ import { Text } from "@/components/ui/text"; // Your UI components
 
 import { useStore } from "@/stores/mainStore";
 
-import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
-import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
+import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/actor/profileStatus";
 
 import DescriptionPage from "./descriptionPage";
 import DisplayNamePage from "./displayNamePage";
@@ -50,7 +50,7 @@ export default function OnboardingPage() {
       try {
         const res = await agent.call("com.atproto.repo.getRecord", {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
+          collection: "fm.teal.actor.profileStatus",
           rkey: "self",
         });
         setProfileStatus(res.data.value as ProfileStatusRecord);
@@ -96,7 +96,7 @@ export default function OnboardingPage() {
     try {
       const res = await agent.call("com.atproto.repo.getRecord", {
         repo: agent.did,
-        collection: "fm.teal.alpha.actor.profile",
+        collection: "fm.teal.actor.profile",
         rkey: "self",
       });
       currentUser = res.data.value;
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
           swapRecord: cid,
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
         },
@@ -176,7 +176,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
+          collection: "fm.teal.actor.profileStatus",
           rkey: "self",
           record: profileStatusRecord,
         },
@@ -189,7 +189,7 @@ export default function OnboardingPage() {
           {},
           {
             repo: agent.did,
-            collection: "fm.teal.alpha.actor.profileStatus",
+            collection: "fm.teal.actor.profileStatus",
             rkey: "self",
             record: {
               ...profileStatusRecord,

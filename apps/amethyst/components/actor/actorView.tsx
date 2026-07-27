@@ -10,8 +10,8 @@ import { useStore } from "@/stores/mainStore";
 import { Agent } from "@atproto/api";
 import { MoreHorizontal, Pen, Plus } from "lucide-react-native";
 
-import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile";
-import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
+import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/actor/getProfile";
+import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
 
 import { CardTitle } from "../../components/ui/card";
 import EditProfileModal from "./editProfileView";
@@ -41,7 +41,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
       }
       try {
         let res = await pdsAgent.call(
-          "fm.teal.alpha.actor.getProfile",
+          "fm.teal.actor.getProfile",
           { actor: actorDid },
           {},
           { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
@@ -86,7 +86,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     try {
       const res = await pdsAgent.call("com.atproto.repo.getRecord", {
         repo: pdsAgent.did,
-        collection: "fm.teal.alpha.actor.profile",
+        collection: "fm.teal.actor.profile",
         rkey: "self",
       });
       currentUser = res.data.value;
@@ -131,7 +131,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
           swapRecord: cid,
@@ -143,7 +143,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
         },

@@ -3,7 +3,7 @@ use jacquard_common::from_json_value;
 use serde_json::Value;
 use types::{
     app_bsky::richtext::facet::Facet,
-    fm_teal::alpha::actor::{ProfileView, StatusView},
+    fm_teal::actor::{ProfileView, StatusView},
 };
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};

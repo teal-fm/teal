@@ -20,9 +20,9 @@ impl ActorStatusIngestor {
         did: &str,
         rkey: &str,
         cid: &str,
-        status: &types::fm_teal::alpha::actor::status::Status,
+        status: &types::fm_teal::actor::status::Status,
     ) -> anyhow::Result<()> {
-        let uri = assemble_at_uri(did, "fm.teal.alpha.actor.status", rkey);
+        let uri = assemble_at_uri(did, "fm.teal.actor.status", rkey);
 
         let record_json = serde_json::to_value(status)?;
 
@@ -48,7 +48,7 @@ impl ActorStatusIngestor {
     }
 
     pub async fn remove_status(&self, did: &str, rkey: &str) -> anyhow::Result<()> {
-        let uri = assemble_at_uri(did, "fm.teal.alpha.actor.status", rkey);
+        let uri = assemble_at_uri(did, "fm.teal.actor.status", rkey);
 
         sqlx::query!(
             r#"
@@ -68,8 +68,8 @@ impl LexiconIngestor for ActorStatusIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::alpha::actor::status::Status =
-                    value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(
+                let record: types::fm_teal::actor::status::Status =
+                    value::from_json_value::<types::fm_teal::actor::status::Status>(
                         record.clone(),
                     )?;
 

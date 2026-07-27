@@ -5,7 +5,7 @@ import { Redirect, Stack, useRouter } from "expo-router";
 import ActorView from "@/components/actor/actorView";
 import { useStore } from "@/stores/mainStore";
 
-import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/actor/profileStatus";
 
 import AuthOptions from "../auth/options";
 
@@ -28,7 +28,7 @@ export default function Screen() {
 
         const res = await agent.call("com.atproto.repo.getRecord", {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
+          collection: "fm.teal.actor.profileStatus",
           rkey: "self",
         });
 

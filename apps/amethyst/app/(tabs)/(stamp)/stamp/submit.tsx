@@ -16,11 +16,11 @@ import {
   RichText,
 } from "@atproto/api";
 
-import { Artist } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import { Artist } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 import {
   Record as PlayRecord,
   validateRecord,
-} from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+} from "@teal/lexicons/src/types/fm/teal/feed/play";
 
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 
@@ -246,7 +246,7 @@ powered by @teal.fm`;
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.feed.play",
+          collection: "fm.teal.feed.play",
           rkey: undefined,
           record,
         },

@@ -7,8 +7,8 @@ import { Text } from "@/components/ui/text";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { useStore } from "@/stores/mainStore";
 
-import { MiniProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
-import { OutputSchema as SearchActorsOutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/searchActors";
+import { MiniProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
+import { OutputSchema as SearchActorsOutputSchema } from "@teal/lexicons/src/types/fm/teal/actor/searchActors";
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -28,7 +28,7 @@ export default function Search() {
       }
       try {
         let res = await agent.call(
-          "fm.teal.alpha.actor.searchActors",
+          "fm.teal.actor.searchActors",
           { q: searchQuery },
           {},
           { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },

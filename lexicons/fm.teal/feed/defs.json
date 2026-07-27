@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.feed.defs",
+  "id": "fm.teal.feed.defs",
   "description": "This lexicon is in a not officially released state. It is subject to change. | Misc. items related to feeds.",
   "defs": {
     "playView": {

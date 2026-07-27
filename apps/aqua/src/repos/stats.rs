@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use jacquard_common::from_json_value;
-use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
+use types::fm_teal::feed::PlayView;
+use types::fm_teal::stats::{ArtistView, ReleaseView};
 
 use super::{mbid_uri, pg::PgDataSource, utc_to_atrium_datetime};
 
@@ -216,7 +216,7 @@ impl StatsRepo for PgDataSource {
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
             let artists = match row.artists {
-                Some(value) => from_json_value::<Vec<types::fm_teal::alpha::feed::Artist>>(value)
+                Some(value) => from_json_value::<Vec<types::fm_teal::feed::Artist>>(value)
                     .unwrap_or_default(),
                 None => vec![],
             };

@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.actor.getProfile",
+  "id": "fm.teal.actor.getProfile",
   "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.",
   "defs": {
     "main": {
@@ -24,7 +24,7 @@
           "properties": {
             "actor": {
               "type": "ref",
-              "ref": "fm.teal.alpha.actor.defs#profileView"
+              "ref": "fm.teal.actor.defs#profileView"
             }
           }
         }

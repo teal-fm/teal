@@ -22,7 +22,7 @@ impl ActorProfileIngestor {
     pub async fn insert_profile(
         &self,
         provided_did: &str,
-        profile: &types::fm_teal::alpha::actor::profile::Profile,
+        profile: &types::fm_teal::actor::profile::Profile,
     ) -> anyhow::Result<()> {
         dbg!(&profile);
         // TODO: cache the doc for like 8 hours or something
@@ -86,8 +86,8 @@ impl LexiconIngestor for ActorProfileIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::alpha::actor::profile::Profile =
-                    value::from_json_value::<types::fm_teal::alpha::actor::profile::Profile>(
+                let record: types::fm_teal::actor::profile::Profile =
+                    value::from_json_value::<types::fm_teal::actor::profile::Profile>(
                         record.clone(),
                     )?;
                 if let Some(ref commit) = message.commit {

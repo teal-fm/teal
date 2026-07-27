@@ -69,9 +69,9 @@ let import_id = ingestor.fetch_and_process_identity_car("user.bsky.social").awai
 
 The CAR importer automatically detects and processes these Teal record types:
 
-- **`fm.teal.alpha.feed.play`** - Music play records
-- **`fm.teal.alpha.profile`** - User profile data  
-- **`fm.teal.alpha.status`** - User status updates
+- **`fm.teal.feed.play`** - Music play records
+- **`fm.teal.actor.profile`** - User profile data
+- **`fm.teal.actor.status`** - User status updates
 
 Records are processed using the same logic as real-time Jetstream ingestion, ensuring data consistency.
 
