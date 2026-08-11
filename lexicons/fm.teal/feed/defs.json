@@ -70,7 +70,7 @@
         "playedTime": {
           "type": "string",
           "format": "datetime",
-          "description": "The unix timestamp of when the track was played"
+          "description": "The datetime at which playback began."
         }
       }
     },
