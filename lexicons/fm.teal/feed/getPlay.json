@@ -16,6 +16,7 @@
           },
           "rkey": {
             "type": "string",
+            "format": "record-key",
             "description": "The record key of the play"
           }
         }
