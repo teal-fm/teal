@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Link, usePathname } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
+import ToggleTheme from "@/components/toggleTheme";
 import { buildInfo } from "@/lib/buildInfo";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { getProfileImageUrl, normalizeHandle } from "@/lib/teal/actors";
@@ -122,6 +123,7 @@ function LeftRail() {
   return (
     <View className="hidden w-[16rem] shrink-0 border-r border-border bg-background/55 px-5 py-7 lg:flex">
       <RecordLogo />
+      <ToggleTheme />
       <View className="mt-12 gap-1">
         <NavItem href="/" icon={Home} label="Home" active={pathname === "/"} />
         <NavItem
@@ -278,12 +280,15 @@ export default function TealShell({
       className="min-h-screen flex-1 bg-background"
       style={landingBackgroundStyle}
     >
-      <View className="z-20 flex-row items-center justify-center border-b border-border bg-background/55 px-3 py-2">
-        <Text className="text-[11px] font-light text-primary">
+      <View className="z-20 flex-row items-center border-b border-border bg-background/55 px-3 py-2">
+        <Text className="flex-1 text-center text-[11px] font-light text-primary">
           {
             "this is an early early work in progress!! 🚧 expect bugs, missing features, and regular database wipes"
           }
         </Text>
+        <View className="ml-3 lg:hidden">
+          <ToggleTheme compact />
+        </View>
       </View>
       <View className="z-10 flex-1 flex-row">
         <LeftRail />
