@@ -16,7 +16,7 @@ export default function PlayView({
   return (
     <View className="flex max-w-full flex-row gap-2">
       <Image
-        className="h-16 w-16 rounded-lg bg-gray-500/50"
+        className="h-16 w-16 rounded-lg bg-muted"
         source={{
           uri:
             releaseMbid &&

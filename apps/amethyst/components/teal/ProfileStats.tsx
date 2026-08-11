@@ -184,7 +184,7 @@ function StatPreviewCard({
 }) {
   const href = itemHref(item);
   const content = (
-    <Pressable className="h-full rounded-lg border border-border bg-white/65 p-3 web:transition-colors web:hover:border-primary/45">
+    <Pressable className="h-full rounded-lg border border-border bg-card/75 p-3 web:transition-colors web:hover:border-primary/45">
       <StatArtwork item={item} />
       <Text className="mt-3 font-sans text-base font-black" numberOfLines={2}>
         {item.name}
@@ -322,7 +322,7 @@ function StatsPreviewSection({
         </Link>
       </View>
       {loading ? (
-        <View className="h-36 items-center justify-center rounded-lg border border-border bg-white/55">
+        <View className="h-36 items-center justify-center rounded-lg border border-border bg-card/60">
           <ActivityIndicator />
         </View>
       ) : error ? (
@@ -330,7 +330,7 @@ function StatsPreviewSection({
           <Text className="font-bold text-destructive">{error}</Text>
         </View>
       ) : items.length === 0 ? (
-        <View className="rounded-lg border border-border bg-white/55 p-4">
+        <View className="rounded-lg border border-border bg-card/60 p-4">
           <Text className="text-muted-foreground">No plays in this period yet.</Text>
         </View>
       ) : (
@@ -361,7 +361,7 @@ export function ProfileStatsSections({
 
   return (
     <View className="mb-2">
-      <View className="mb-5 gap-3 rounded-lg border border-border bg-white/55 p-4">
+      <View className="mb-5 gap-3 rounded-lg border border-border bg-card/60 p-4">
         <View className="flex-row items-center gap-2">
           <Icon icon={ListMusic} size={18} className="text-primary" />
           <Text className="font-mono text-[10px] uppercase text-muted-foreground">
@@ -450,7 +450,7 @@ export function ProfileStatsMorePage({
           <Text className="font-bold text-destructive">{error}</Text>
         </View>
       ) : items.length === 0 ? (
-        <View className="rounded-lg border border-border bg-white/55 p-4">
+        <View className="rounded-lg border border-border bg-card/60 p-4">
           <Text className="text-muted-foreground">No plays in this period yet.</Text>
         </View>
       ) : (

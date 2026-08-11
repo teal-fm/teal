@@ -350,7 +350,7 @@ export default function SocialComposer({
 
   if (status !== "loggedIn") {
     return (
-      <View className="rounded-lg border border-border bg-white/75 p-4">
+      <View className="rounded-lg border border-border bg-card/80 p-4">
         <Text className="font-semibold">
           Sign in to {replyTo ? "reply" : "post"} about what you hear.
         </Text>
@@ -362,7 +362,7 @@ export default function SocialComposer({
   }
 
   return (
-    <View className="rounded-lg border border-border bg-white/75 p-4">
+    <View className="rounded-lg border border-border bg-card/80 p-4">
       <Text className="text-xs font-light text-primary">
         {replyTo ? "Reply to post" : "Create post"}
       </Text>
@@ -370,7 +370,7 @@ export default function SocialComposer({
         <Pressable
           disabled={!canChangeTrack}
           onPress={() => setPickerOpen((open) => !open)}
-          className={`mt-2 flex-row items-center gap-3 rounded-lg border border-border bg-white/55 p-2 ${
+          className={`mt-2 flex-row items-center gap-3 rounded-lg border border-border bg-accent/45 p-2 ${
             canChangeTrack ? "web:hover:border-primary/50" : ""
           }`}
         >
@@ -393,7 +393,7 @@ export default function SocialComposer({
         <Pressable
           disabled={!canChangeTrack}
           onPress={() => setPickerOpen(true)}
-          className="mt-2 rounded-lg border border-dashed border-border bg-white/55 p-3"
+          className="mt-2 rounded-lg border border-dashed border-border bg-accent/45 p-3"
         >
           <Text className="font-semibold">
             {loadingRecent ? "Finding your latest listen..." : "Choose a song"}
@@ -404,7 +404,7 @@ export default function SocialComposer({
         </Pressable>
       )}
       {pickerOpen && canChangeTrack && (
-        <View className="mt-3 gap-3 rounded-lg border border-border bg-white/55 p-3">
+        <View className="mt-3 gap-3 rounded-lg border border-border bg-accent/45 p-3">
           <View className="gap-2 md:flex-row">
             <Input
               className="md:flex-1"

@@ -79,7 +79,7 @@ export default function PostDetail() {
           </View>
           <SectionHeading eyebrow="Conversation" title="Replies" />
           {replies.length === 0 ? (
-            <View className="rounded-lg border border-border bg-white/75 p-6">
+            <View className="rounded-lg border border-border bg-card/80 p-6">
               <Text className="text-muted-foreground">
                 No indexed replies yet.
               </Text>

@@ -331,7 +331,7 @@ powered by @teal.fm`;
               .join(", ")}
             releaseTitle={selectedTrack?.selectedRelease?.title}
           />
-          <Text className="mt-4 text-center text-sm text-gray-500">
+          <Text className="mt-4 text-center text-sm text-muted-foreground">
             Any missing info?{" "}
             <ExternalLink
               className="text-blue-600 dark:text-blue-400"
@@ -385,7 +385,7 @@ powered by @teal.fm`;
                 className={cn(
                   "absolute bottom-1 right-2 text-center text-sm text-muted-foreground",
                   blueskyPostText.length > 150
-                    ? "text-gray-600 dark:text-gray-300"
+                  ? "text-foreground"
                     : "",
                   blueskyPostText.length > 290 ? "text-red-500" : "",
                 )}

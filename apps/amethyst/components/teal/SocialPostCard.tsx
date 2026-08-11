@@ -193,7 +193,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   }
 
   return (
-    <View className="rounded-lg border border-border bg-white/75 p-4">
+    <View className="rounded-lg border border-border bg-card/80 p-4">
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row gap-3">
           <Link href={`/profile/${authorHref}` as any} asChild>
@@ -252,7 +252,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
       ) : null}
 
       <Link href={trackHref as any} asChild>
-        <Pressable className="mt-4 rounded-lg border border-border bg-white/55 p-3">
+        <Pressable className="mt-4 rounded-lg border border-border bg-accent/45 p-3">
           <View className="flex-row items-center gap-3">
             <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-accent">
               {art ? (
