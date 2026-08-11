@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
-use sqlx::{PgPool, Row};
+use sqlx::{PgPool, Postgres, Row, Transaction};
 use time::{Duration, OffsetDateTime};
 use tokio::time::{sleep, Duration as TokioDuration};
 use tracing::{error, info, warn};
@@ -26,6 +26,26 @@ struct RetryJob {
     attempts: i32,
     event_time_us: i64,
     event_rev: String,
+}
+
+/// Serializes all ingestion paths for one logical record.
+///
+/// The transaction must stay open until the caller has finished ingesting the
+/// event. A transaction-scoped advisory lock is used instead of locking the
+/// retry row because successful live ingestion removes that row.
+struct RecordLock {
+    transaction: Option<Transaction<'static, Postgres>>,
+}
+
+impl RecordLock {
+    async fn commit(mut self) -> Result<()> {
+        self.transaction
+            .take()
+            .context("record lock transaction already closed")?
+            .commit()
+            .await
+            .context("release record ingestion lock")
+    }
 }
 
 struct RetryEnvelope {
@@ -61,6 +81,19 @@ impl RetryEnvelope {
 impl IngestionRetryStore {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
+    }
+
+    async fn lock_record(&self, event_key: &str) -> Result<RecordLock> {
+        let mut transaction = self.pool.begin().await?;
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+            .bind(event_key)
+            .execute(&mut *transaction)
+            .await
+            .context("acquire record ingestion lock")?;
+
+        Ok(RecordLock {
+            transaction: Some(transaction),
+        })
     }
 
     async fn enqueue(&self, retry: &RetryEnvelope, error: &anyhow::Error) -> Result<()> {
@@ -292,11 +325,24 @@ impl DurableRetryPlayIngestor {
 impl LexiconIngestor for DurableRetryPlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> Result<()> {
         let retry_event = RetryEnvelope::from_message(&message).ok();
+
+        // Keep the record lock through ingestion and retry-queue cleanup. The
+        // worker acquires this same lock before rechecking freshness, so a
+        // newer live commit cannot be overtaken by an old replay.
+        let record_lock = match retry_event.as_ref() {
+            Some(retry_event) => Some(self.retry_store.lock_record(&retry_event.event_key).await?),
+            None => None,
+        };
         let result = self.inner.ingest(message).await;
         if let Err(error) = result {
             if let Some(retry_event) = retry_event {
                 if let Err(queue_error) = self.retry_store.enqueue(&retry_event, &error).await {
                     error!("Could not persist failed ingestion event: {queue_error}");
+                }
+            }
+            if let Some(record_lock) = record_lock {
+                if let Err(lock_error) = record_lock.commit().await {
+                    error!("Could not release record ingestion lock: {lock_error}");
                 }
             }
             return Err(error);
@@ -305,6 +351,9 @@ impl LexiconIngestor for DurableRetryPlayIngestor {
             if let Err(error) = self.retry_store.clear_superseded(&retry_event).await {
                 error!("Could not remove superseded ingestion retry: {error}");
             }
+        }
+        if let Some(record_lock) = record_lock {
+            record_lock.commit().await?;
         }
         Ok(())
     }
@@ -316,22 +365,34 @@ pub async fn run_worker(retry_store: IngestionRetryStore, play_ingestor: PlayIng
     loop {
         match retry_store.claim_due().await {
             Ok(Some(job)) => {
-                if !retry_store.is_current(&job).await.unwrap_or(false) {
-                    continue;
-                }
+                // Claiming a retry only reserves the queue row. Acquire the
+                // logical-record lock before checking freshness so the check
+                // and the subsequent ingest are one serialized operation with
+                // live updates and deletes.
+                let record_lock = match retry_store.lock_record(&job.event_key).await {
+                    Ok(record_lock) => record_lock,
+                    Err(error) => {
+                        error!(job.id, "Could not acquire retry record lock: {error}");
+                        continue;
+                    }
+                };
 
                 let result = async {
+                    if !retry_store.is_current(&job).await? {
+                        return Ok::<Option<()>, anyhow::Error>(None);
+                    }
                     let event = serde_json::from_value::<Event<Value>>(job.event.clone())?;
                     let event_text = serde_json::to_string(&event)?;
                     if !account::should_ingest_commit(&retry_store.pool, &event_text).await? {
-                        return Ok::<(), anyhow::Error>(());
+                        return Ok(None);
                     }
-                    play_ingestor.ingest(event).await
+                    play_ingestor.ingest(event).await.map(|()| Some(()))
                 }
                 .await;
 
                 match result {
-                    Ok(()) => {
+                    Ok(None) => {}
+                    Ok(Some(())) => {
                         if let Err(error) = retry_store.complete(&job).await {
                             error!(
                                 job.id,
@@ -348,6 +409,10 @@ pub async fn run_worker(retry_store: IngestionRetryStore, play_ingestor: PlayIng
                             );
                         }
                     }
+                }
+
+                if let Err(error) = record_lock.commit().await {
+                    error!(job.id, "Could not release retry record lock: {error}");
                 }
             }
             Ok(None) => sleep(TokioDuration::from_secs(RETRY_POLL_SECONDS)).await,
@@ -448,6 +513,29 @@ mod tests {
         assert_eq!(retry_delay_seconds(2), 10);
         assert_eq!(retry_delay_seconds(3), 20);
         assert_eq!(retry_delay_seconds(25), 3600);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at Postgres"]
+    async fn record_lock_serializes_same_logical_record() -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let store = IngestionRetryStore::new(pool.clone());
+        let first_lock = store.lock_record("cadet-test-record-lock").await?;
+        let second_store = store.clone();
+        let second_lock = tokio::spawn(async move {
+            let lock = second_store.lock_record("cadet-test-record-lock").await?;
+            lock.commit().await
+        });
+
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        assert!(!second_lock.is_finished());
+
+        first_lock.commit().await?;
+        let second_result =
+            tokio::time::timeout(std::time::Duration::from_secs(2), second_lock).await?;
+        second_result??;
+        pool.close().await;
+        Ok(())
     }
 
     #[tokio::test]
