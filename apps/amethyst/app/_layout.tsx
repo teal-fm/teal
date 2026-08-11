@@ -14,9 +14,10 @@ import { PortalHost } from "@rn-primitives/portal";
 import "react-native-reanimated";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, verifyInstallation } from "nativewind";
+import { verifyInstallation } from "nativewind";
 
 import { GlobalTextClassContext } from "../components/ui/text";
+import { useColorScheme } from "../lib/useColorScheme";
 
 import "../global.css";
 
@@ -92,13 +93,7 @@ export default function RootLayout() {
 }
 
 function useTheme() {
-  const { colorScheme, setColorScheme } = useColorScheme();
-
-  useEffect(() => {
-    if (!colorScheme) {
-      setColorScheme("system");
-    }
-  }, [colorScheme, setColorScheme]);
+  const { colorScheme } = useColorScheme();
 
   return colorScheme === "dark" ? DARK_THEME : LIGHT_THEME;
 }
@@ -114,6 +109,14 @@ function RootLayoutNav() {
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="auth/login"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "fade",
+                  headerShown: false,
+                }}
+              />
               <Stack.Screen
                 name="auth/logoutModal"
                 options={{

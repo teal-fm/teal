@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"; // Added useCallback, useRef
-import { Platform, TextInput, View } from "react-native";
+import { Platform, Pressable, TextInput, View } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedKeyboard,
@@ -18,7 +18,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { capFirstLetter, cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
+import { AlertCircle, AtSign, Check, ChevronRight, X } from "lucide-react-native";
 
 type Url = URL;
 
@@ -219,8 +219,16 @@ const LoginScreen = () => {
     }
   };
 
+  const closeLogin = () => {
+    if (Platform.OS === "web") {
+      window.history.back();
+      return;
+    }
+    router.dismiss();
+  };
+
   return (
-    <SafeAreaView className="flex w-full flex-1 items-center justify-center bg-muted px-5">
+    <SafeAreaView className="flex w-full flex-1 bg-black/45 px-4">
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -228,135 +236,155 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <Animated.View
-        className="align-center w-full max-w-md justify-center gap-5 rounded-lg border border-border bg-background p-7 shadow-sm md:p-8"
-        style={containerAnimatedStyle}
-      >
-        <View className="flex items-center">
-          <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
-            <Icon
-              icon={AtSign}
-              className="text-primary-foreground"
-              name="at"
-              size={24}
-            />
-          </View>
-        </View>
-        <Text className="text-center font-sans text-3xl font-black text-foreground">
-          Sign in to Teal
-        </Text>
-        <Text className="text-center text-sm leading-5 text-muted-foreground">
-          Use the handle for your ATProto account. Teal will resolve your PDS
-          before continuing.
-        </Text>
-        <View className="gap-2">
-          <Text className="text-sm font-bold text-foreground">Handle</Text>
-          <Input
-            ref={handleInputRef}
-            className={cn(
-              "h-12 rounded-lg",
-              (err || pdsResolutionError) && `border-red-500`,
-            )}
-            placeholder="alice.bsky.social or did:plc:..."
-            value={handle}
-            onChangeText={handleTextChange}
-            onFocus={(e) => setIsSelected(true)}
-            onBlur={(e) => setIsSelected(false)}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onKeyPress={(e) => {
-              if (e.nativeEvent.key === "Enter") {
-                handleLogin();
-              }
-            }}
-          />
-
-          <Animated.View style={messageContainerAnimatedStyle}>
-            <View
-              className={cn(
-                "-mt-7 rounded-lg border border-border p-2 transition-all duration-300",
-                isSelected ? "pt-9" : "pt-8",
-                pdsUrl !== null
-                  ? pdsUrl.hostname.includes("bsky.network")
-                    ? "bg-sky-400 dark:bg-sky-800"
-                    : "bg-teal-400 dark:bg-teal-800"
-                  : pdsResolutionError && "bg-red-300 dark:bg-red-800",
-              )}
-            >
-              {pdsUrl !== null ? (
-                <View className="flex flex-row items-center gap-1">
-                  <Text>PDS:</Text>
-                  {pdsUrl.hostname.includes("bsky.network") && (
-                    <View className="flex flex-row justify-center gap-0.5 pr-0.5">
-                      <Icon
-                        icon={FontAwesome6}
-                        className="color-bsky"
-                        name="bluesky"
-                        size={16}
-                      />
-                    </View>
-                  )}
-                  <Text>
-                    {pdsUrl.hostname.includes("bsky.network")
-                      ? "Bluesky (" +
-                        capFirstLetter(
-                          pdsUrl.hostname.split(".").shift() || "",
-                        ) +
-                        ")"
-                      : pdsUrl.hostname}
-                  </Text>
-                </View>
-              ) : pdsResolutionError ? (
-                <View className="flex flex-row">
+      <Pressable className="absolute inset-0" onPress={closeLogin} />
+      <View className="flex flex-1 items-center justify-center">
+        <View className="w-full max-w-md">
+          <Animated.View
+            className="w-full"
+            style={containerAnimatedStyle}
+          >
+            <View className="align-center w-full justify-center gap-5 rounded-2xl border border-border bg-background p-7 shadow-2xl md:p-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                accessibilityLabel="Close sign in"
+                className="absolute right-4 top-4 z-10 h-9 w-9 items-center justify-center rounded-full bg-muted"
+                onPress={closeLogin}
+              >
+                <Icon
+                  icon={X}
+                  className="pointer-events-none text-muted-foreground"
+                  size={18}
+                />
+              </Button>
+              <View className="flex items-center">
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
                   <Icon
-                    icon={AlertCircle}
-                    className="mr-1 inline text-foreground"
-                    size={18}
+                    icon={AtSign}
+                    className="text-primary-foreground"
+                    name="at"
+                    size={24}
                   />
-                  <Text className="justify-baseline flex">
-                    {pdsResolutionError}
-                  </Text>
                 </View>
-              ) : (
-                <Text className="px-1 text-muted-foreground">
-                  Resolving PDS...
-                </Text>
-              )}
+              </View>
+              <Text className="text-center font-sans text-3xl font-black text-foreground">
+                Sign in to Teal
+              </Text>
+              <Text className="text-center text-sm leading-5 text-muted-foreground">
+                Use the handle for your ATProto account. Teal will resolve your PDS
+                before continuing.
+              </Text>
+              <View className="gap-2">
+                <Text className="text-sm font-bold text-foreground">Handle</Text>
+                <Input
+                  ref={handleInputRef}
+                  className={cn(
+                    "h-12 rounded-lg",
+                    (err || pdsResolutionError) && `border-red-500`,
+                  )}
+                  placeholder="alice.bsky.social or did:plc:..."
+                  value={handle}
+                  onChangeText={handleTextChange}
+                  onFocus={(e) => setIsSelected(true)}
+                  onBlur={(e) => setIsSelected(false)}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onKeyPress={(e) => {
+                    if (e.nativeEvent.key === "Enter") {
+                      handleLogin();
+                    }
+                  }}
+                />
+
+                <Animated.View style={messageContainerAnimatedStyle}>
+                  <View
+                    className={cn(
+                      "-mt-7 rounded-lg border border-border p-2 transition-all duration-300",
+                      isSelected ? "pt-9" : "pt-8",
+                      pdsUrl !== null
+                        ? pdsUrl.hostname.includes("bsky.network")
+                          ? "bg-sky-400 dark:bg-sky-800"
+                          : "bg-teal-400 dark:bg-teal-800"
+                        : pdsResolutionError && "bg-red-300 dark:bg-red-800",
+                    )}
+                  >
+                    {pdsUrl !== null ? (
+                      <View className="flex flex-row items-center gap-1">
+                        <Text>PDS:</Text>
+                        {pdsUrl.hostname.includes("bsky.network") && (
+                          <View className="flex flex-row justify-center gap-0.5 pr-0.5">
+                            <Icon
+                              icon={FontAwesome6}
+                              className="color-bsky"
+                              name="bluesky"
+                              size={16}
+                            />
+                          </View>
+                        )}
+                        <Text>
+                          {pdsUrl.hostname.includes("bsky.network")
+                            ? "Bluesky (" +
+                              capFirstLetter(
+                                pdsUrl.hostname.split(".").shift() || "",
+                              ) +
+                              ")"
+                            : pdsUrl.hostname}
+                        </Text>
+                      </View>
+                    ) : pdsResolutionError ? (
+                      <View className="flex flex-row">
+                        <Icon
+                          icon={AlertCircle}
+                          className="mr-1 inline text-foreground"
+                          size={18}
+                        />
+                        <Text className="justify-baseline flex">
+                          {pdsResolutionError}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text className="px-1 text-muted-foreground">
+                        Resolving PDS...
+                      </Text>
+                    )}
+                  </View>
+                </Animated.View>
+              </View>
+              <View className="mt-2 flex flex-row items-center justify-between gap-3">
+                <Link href="https://bsky.app/signup" asChild>
+                  <Button variant="link" className="p-0">
+                    <Text className="text-md text-secondary">
+                      Sign up for Bluesky
+                    </Text>
+                  </Button>
+                </Link>
+                <Button
+                  className={cn(
+                    "flex flex-row justify-end gap-1",
+                    isRedirecting ? "bg-primary" : "bg-primary",
+                  )}
+                  onPress={handleLogin}
+                  disabled={!pdsUrl}
+                >
+                  {isRedirecting ? (
+                    <>
+                      <Text>Redirecting</Text>
+                      <Icon icon={Check} />
+                    </>
+                  ) : isLoading ? (
+                    <Text>Signing in...</Text>
+                  ) : (
+                    <>
+                      <Text>Sign in</Text>
+                      <Icon icon={ChevronRight} />
+                    </>
+                  )}
+                </Button>
+              </View>
             </View>
           </Animated.View>
         </View>
-        <View className="mt-2 flex flex-row items-center justify-between gap-3">
-          <Link href="https://bsky.app/signup" asChild>
-            <Button variant="link" className="p-0">
-              <Text className="text-md text-secondary">
-                Sign up for Bluesky
-              </Text>
-            </Button>
-          </Link>
-          <Button
-            className={cn(
-              "flex flex-row justify-end gap-1",
-              isRedirecting ? "bg-primary" : "bg-primary",
-            )}
-            onPress={handleLogin}
-            disabled={!pdsUrl}
-          >
-            {isRedirecting ? (
-              <>
-                <Text>Redirecting</Text>
-                <Icon icon={Check} />
-              </>
-            ) : isLoading ? (
-              <Text>Signing in...</Text>
-            ) : (
-              <>
-                <Text>Sign in</Text>
-                <Icon icon={ChevronRight} />
-              </>
-            )}
-          </Button>
-        </View>
-      </Animated.View>
+      </View>
     </SafeAreaView>
   );
 };
