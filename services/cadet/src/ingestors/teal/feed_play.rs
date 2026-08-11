@@ -11,9 +11,11 @@ use jacquard_common::{
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::{types::Uuid, PgPool};
+use tracing::info;
 use unicode_normalization::UnicodeNormalization;
 
 use super::assemble_at_uri;
+use crate::account;
 
 struct MusicBrainzCleaner;
 
@@ -1372,14 +1374,21 @@ impl PlayIngestor {
             .as_ref()
             .map(ToString::to_string);
 
+        // Keep the account lock through the final play write and relationship
+        // updates. Account deactivation uses the same lock while it marks the
+        // DID inactive and purges indexed data, so a replay cannot republish a
+        // play after the purge commits.
+        let mut tx = self.sql.begin().await?;
+        account::lock_account(&mut tx, did).await?;
+
         // Check if we already have this play content (CID) for this user (DID)
         // This prevents duplicates when the same content is published under different rkeys
-        let existing_uri = sqlx::query_scalar!(
+        let existing_uri = sqlx::query_scalar::<_, String>(
             "SELECT uri FROM plays WHERE did = $1 AND cid = $2 LIMIT 1",
-            did,
-            cid
         )
-        .fetch_optional(&self.sql)
+        .bind(did)
+        .bind(cid)
+        .fetch_optional(&mut *tx)
         .await?;
 
         if let Some(existing) = existing_uri {
@@ -1391,21 +1400,26 @@ impl PlayIngestor {
                     existing,
                     uri
                 );
+                tx.rollback().await?;
                 return Ok(());
             }
         }
 
-        sqlx::query!(
+        let inserted = sqlx::query(
             r#"
                 INSERT INTO plays (
                     uri, cid, did, rkey, isrc, duration, track_name, played_time,
                     processed_time, release_mbid, release_name, recording_mbid,
                     submission_client_agent, music_service_base_domain, artist_names_raw,
                     track_discriminant, release_discriminant
-                ) VALUES (
-                    $1, $2, $3, $4, $5, $6, $7, $8,
+                )
+                SELECT $1, $2, $3, $4, $5, $6, $7, $8,
                     NOW(), $9, $10, $11, $12, $13, $14, $15, $16
-                ) ON CONFLICT(uri) DO UPDATE SET
+                WHERE COALESCE(
+                    (SELECT active FROM account_states WHERE did = $3),
+                    TRUE
+                )
+                ON CONFLICT(uri) DO UPDATE SET
                     isrc = EXCLUDED.isrc,
                     duration = EXCLUDED.duration,
                     track_name = EXCLUDED.track_name,
@@ -1418,34 +1432,41 @@ impl PlayIngestor {
                     music_service_base_domain = EXCLUDED.music_service_base_domain,
                     artist_names_raw = EXCLUDED.artist_names_raw,
                     track_discriminant = EXCLUDED.track_discriminant,
-                    release_discriminant = EXCLUDED.release_discriminant;
+                    release_discriminant = EXCLUDED.release_discriminant
             "#,
-            uri,
-            cid,
-            did,
-            rkey,
-            isrc,
-            play_record.duration.map(|d| d as i32),
-            track_name,
-            time_datetime,
-            release_mbid_opt,
-            release_name,
-            recording_mbid_opt,
-            submission_client_agent,
-            music_service_base_domain,
-            artist_names_json,
-            track_discriminant,
-            release_discriminant
         )
-        .execute(&self.sql)
-        .await?;
+        .bind(uri)
+        .bind(cid)
+        .bind(did)
+        .bind(rkey)
+        .bind(isrc)
+        .bind(play_record.duration.map(|d| d as i32))
+        .bind(track_name)
+        .bind(time_datetime)
+        .bind(release_mbid_opt)
+        .bind(release_name)
+        .bind(recording_mbid_opt)
+        .bind(submission_client_agent)
+        .bind(music_service_base_domain)
+        .bind(artist_names_json)
+        .bind(track_discriminant)
+        .bind(release_discriminant)
+        .execute(&mut *tx)
+        .await?
+        .rows_affected();
+
+        if inserted == 0 {
+            info!(did, "Skipping play write for inactive account");
+            tx.commit().await?;
+            return Ok(());
+        }
 
         sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
             .bind(uri)
-            .execute(&self.sql)
+            .execute(&mut *tx)
             .await?;
         sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
-            .execute(&self.sql)
+            .execute(&mut *tx)
             .await?;
 
         // Insert plays into the extended join table (supports all artists)
@@ -1459,9 +1480,11 @@ impl PlayIngestor {
             .bind(uri)
             .bind(artist_id)
             .bind(artist_name)
-            .execute(&self.sql)
+            .execute(&mut *tx)
             .await?;
         }
+
+        tx.commit().await?;
 
         if std::env::var("CADET_DEFER_MATERIALIZED_VIEW_REFRESH").as_deref() != Ok("1") {
             sqlx::query!("REFRESH MATERIALIZED VIEW mv_artist_play_counts;")
@@ -1821,6 +1844,51 @@ mod tests {
         assert_eq!(remaining_plays, 0);
         assert_eq!(remaining_legacy_links, 0);
         assert_eq!(remaining_extended_links, 0);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn inactive_account_cannot_republish_a_play() -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let ingestor = PlayIngestor::new(pool.clone());
+        let did = format!("did:plc:cadet-inactive-play-test-{}", Uuid::new_v4());
+        let rkey = "3k2akjdlkjsf";
+        let uri = format!("at://{did}/fm.teal.alpha.feed.play/{rkey}");
+
+        sqlx::query(
+            "INSERT INTO account_states (did, active) VALUES ($1, FALSE) ON CONFLICT (did) DO UPDATE SET active = FALSE",
+        )
+        .bind(&did)
+        .execute(&pool)
+        .await?;
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "Inactive Cadet Test Track",
+                    "Inactive Cadet Test Artist",
+                    Uuid::new_v4(),
+                    Uuid::new_v4(),
+                )?,
+                &uri,
+                "bafyreicadetinactive",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let play_count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plays WHERE uri = $1")
+            .bind(&uri)
+            .fetch_one(&pool)
+            .await?;
+        assert_eq!(play_count, 0);
+
+        sqlx::query("DELETE FROM account_states WHERE did = $1")
+            .bind(&did)
+            .execute(&pool)
+            .await?;
 
         Ok(())
     }
