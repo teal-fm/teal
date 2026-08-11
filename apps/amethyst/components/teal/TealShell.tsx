@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Link, usePathname } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
+import { buildInfo } from "@/lib/buildInfo";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { getProfileImageUrl, normalizeHandle } from "@/lib/teal/actors";
 import { useStore } from "@/stores/mainStore";
@@ -182,6 +183,18 @@ function LeftRail() {
             </View>
           </Pressable>
         </Link>
+        <View className="mt-5 gap-1 px-1">
+          <Text className="font-mono text-[10px] uppercase tracking-[1.5px] text-muted-foreground">
+            Running build
+          </Text>
+          <Text
+            className="font-mono text-[11px] leading-4 text-foreground"
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {buildInfo.branch} · {buildInfo.commit.slice(0, 12)}
+          </Text>
+        </View>
       </View>
     </View>
   );
