@@ -15,7 +15,7 @@
               "type": "string",
               "format": "at-identifier"
             },
-            "description": "Array of actor DIDs"
+            "description": "Array of actor DIDs or handles"
           }
         }
       },
