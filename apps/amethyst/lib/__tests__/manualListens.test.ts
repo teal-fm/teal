@@ -67,7 +67,7 @@ describe("manual listen timeline", () => {
     const timeline = buildListenTimeline([first, second], "now", undefined, now);
 
     expect(timeline.map((item) => item.playedTime)).toEqual([
-      "2026-07-18T11:56:00.000Z",
+      "2026-07-18T11:58:00.000Z",
       "2026-07-18T12:00:00.000Z",
     ]);
   });

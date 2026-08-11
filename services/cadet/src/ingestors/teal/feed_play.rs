@@ -1391,8 +1391,8 @@ impl PlayIngestor {
                     existing,
                     uri
                 );
+                return Ok(());
             }
-            return Ok(());
         }
 
         sqlx::query!(

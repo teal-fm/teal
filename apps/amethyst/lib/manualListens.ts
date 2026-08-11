@@ -306,7 +306,9 @@ export function buildListenTimeline(
     let cursor = now.getTime();
     for (let index = tracks.length - 1; index >= 0; index -= 1) {
       timestamps[index] = new Date(cursor);
-      cursor -= effectiveDurationSeconds(tracks[index]) * 1000;
+      if (index > 0) {
+        cursor -= effectiveDurationSeconds(tracks[index - 1]) * 1000;
+      }
     }
   } else {
     if (!customStart || Number.isNaN(customStart.getTime())) {

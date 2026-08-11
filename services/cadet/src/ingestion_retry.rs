@@ -7,6 +7,7 @@ use time::{Duration, OffsetDateTime};
 use tokio::time::{sleep, Duration as TokioDuration};
 use tracing::{error, info, warn};
 
+use crate::account;
 use crate::ingestors::teal::feed_play::PlayIngestor;
 
 const MAX_ATTEMPTS: i32 = 25;
@@ -20,8 +21,11 @@ pub struct IngestionRetryStore {
 
 struct RetryJob {
     id: i64,
+    event_key: String,
     event: Value,
     attempts: i32,
+    event_time_us: i64,
+    event_rev: String,
 }
 
 struct RetryEnvelope {
@@ -30,6 +34,8 @@ struct RetryEnvelope {
     did: String,
     collection: String,
     rkey: String,
+    event_time_us: i64,
+    event_rev: String,
 }
 
 impl RetryEnvelope {
@@ -41,15 +47,13 @@ impl RetryEnvelope {
 
         Ok(Self {
             event: serde_json::to_value(message).context("serialize failed ingestion event")?,
-            event_key: event_key(
-                &message.did,
-                &commit.collection,
-                &commit.rkey,
-                commit.cid.as_deref(),
-            ),
+            event_key: event_key(&message.did, &commit.collection, &commit.rkey),
             did: message.did.clone(),
             collection: commit.collection.clone(),
             rkey: commit.rkey.clone(),
+            event_time_us: i64::try_from(message.time_us.unwrap_or_default())
+                .context("event time does not fit in an i64")?,
+            event_rev: commit.rev.clone(),
         })
     }
 }
@@ -63,14 +67,19 @@ impl IngestionRetryStore {
         sqlx::query(
             r#"
             INSERT INTO ingestion_retry_events (
-                event_key, did, collection, rkey, event, last_error, next_attempt_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                event_key, did, collection, rkey, event, event_time_us, event_rev,
+                last_error, next_attempt_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
             ON CONFLICT (event_key) DO UPDATE SET
                 event = EXCLUDED.event,
+                event_time_us = EXCLUDED.event_time_us,
+                event_rev = EXCLUDED.event_rev,
                 last_error = EXCLUDED.last_error,
                 next_attempt_at = NOW(),
                 dead_lettered_at = NULL,
                 updated_at = NOW()
+            WHERE (EXCLUDED.event_time_us, EXCLUDED.event_rev) >=
+                  (ingestion_retry_events.event_time_us, ingestion_retry_events.event_rev)
             "#,
         )
         .bind(&retry.event_key)
@@ -78,6 +87,8 @@ impl IngestionRetryStore {
         .bind(&retry.collection)
         .bind(&retry.rkey)
         .bind(&retry.event)
+        .bind(retry.event_time_us)
+        .bind(&retry.event_rev)
         .bind(error.to_string())
         .execute(&self.pool)
         .await
@@ -91,6 +102,7 @@ impl IngestionRetryStore {
         let row = sqlx::query(
             r#"
             SELECT id, event, attempts
+                 , event_key, event_time_us, event_rev
             FROM ingestion_retry_events
             WHERE dead_lettered_at IS NULL
               AND next_attempt_at <= NOW()
@@ -109,6 +121,9 @@ impl IngestionRetryStore {
 
         let id: i64 = row.try_get("id")?;
         let event: Value = row.try_get("event")?;
+        let event_key: String = row.try_get("event_key")?;
+        let event_time_us: i64 = row.try_get("event_time_us")?;
+        let event_rev: String = row.try_get("event_rev")?;
         let attempts: i32 = row.try_get::<i32, _>("attempts")? + 1;
         let next_attempt_at =
             OffsetDateTime::now_utc() + Duration::seconds(retry_delay_seconds(attempts));
@@ -129,46 +144,114 @@ impl IngestionRetryStore {
 
         Ok(Some(RetryJob {
             id,
+            event_key,
             event,
             attempts,
+            event_time_us,
+            event_rev,
         }))
     }
 
-    async fn complete(&self, id: i64) -> Result<()> {
-        sqlx::query("DELETE FROM ingestion_retry_events WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    async fn is_current(&self, job: &RetryJob) -> Result<bool> {
+        sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM ingestion_retry_events
+                WHERE id = $1
+                  AND event_key = $2
+                  AND event_time_us = $3
+                  AND event_rev = $4
+            )
+            "#,
+        )
+        .bind(job.id)
+        .bind(&job.event_key)
+        .bind(job.event_time_us)
+        .bind(&job.event_rev)
+        .fetch_one(&self.pool)
+        .await
+        .context("check retry freshness")
+    }
+
+    async fn complete(&self, job: &RetryJob) -> Result<()> {
+        sqlx::query(
+            r#"
+            DELETE FROM ingestion_retry_events
+            WHERE id = $1
+              AND event_key = $2
+              AND event_time_us = $3
+              AND event_rev = $4
+            "#,
+        )
+        .bind(job.id)
+        .bind(&job.event_key)
+        .bind(job.event_time_us)
+        .bind(&job.event_rev)
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 
-    async fn fail(&self, id: i64, attempts: i32, error: &anyhow::Error) -> Result<()> {
-        if attempts >= MAX_ATTEMPTS {
+    async fn clear_superseded(&self, retry: &RetryEnvelope) -> Result<()> {
+        sqlx::query(
+            r#"
+            DELETE FROM ingestion_retry_events
+            WHERE event_key = $1
+              AND (event_time_us, event_rev) <= ($2, $3)
+            "#,
+        )
+        .bind(&retry.event_key)
+        .bind(retry.event_time_us)
+        .bind(&retry.event_rev)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    async fn fail(&self, job: &RetryJob, error: &anyhow::Error) -> Result<()> {
+        if job.attempts >= MAX_ATTEMPTS {
             sqlx::query(
                 r#"
                 UPDATE ingestion_retry_events
                 SET last_error = $2, dead_lettered_at = NOW(), updated_at = NOW()
                 WHERE id = $1
+                  AND event_key = $3
+                  AND event_time_us = $4
+                  AND event_rev = $5
                 "#,
             )
-            .bind(id)
+            .bind(job.id)
             .bind(error.to_string())
+            .bind(&job.event_key)
+            .bind(job.event_time_us)
+            .bind(&job.event_rev)
             .execute(&self.pool)
             .await?;
-            warn!(id, attempts, "Dead-lettered ingestion retry: {error}");
+            warn!(
+                id = job.id,
+                attempts = job.attempts,
+                "Dead-lettered ingestion retry: {error}"
+            );
         } else {
             let next_attempt_at =
-                OffsetDateTime::now_utc() + Duration::seconds(retry_delay_seconds(attempts));
+                OffsetDateTime::now_utc() + Duration::seconds(retry_delay_seconds(job.attempts));
             sqlx::query(
                 r#"
                 UPDATE ingestion_retry_events
                 SET last_error = $2, next_attempt_at = $3, updated_at = NOW()
                 WHERE id = $1
+                  AND event_key = $4
+                  AND event_time_us = $5
+                  AND event_rev = $6
                 "#,
             )
-            .bind(id)
+            .bind(job.id)
             .bind(error.to_string())
             .bind(next_attempt_at)
+            .bind(&job.event_key)
+            .bind(job.event_time_us)
+            .bind(&job.event_rev)
             .execute(&self.pool)
             .await?;
         }
@@ -176,8 +259,8 @@ impl IngestionRetryStore {
     }
 }
 
-pub fn event_key(did: &str, collection: &str, rkey: &str, cid: Option<&str>) -> String {
-    format!("{did}:{collection}:{rkey}:{}", cid.unwrap_or("delete"))
+pub fn event_key(did: &str, collection: &str, rkey: &str) -> String {
+    format!("{did}:{collection}:{rkey}")
 }
 
 pub fn retry_delay_seconds(attempts: i32) -> i64 {
@@ -212,6 +295,11 @@ impl LexiconIngestor for DurableRetryPlayIngestor {
             }
             return Err(error);
         }
+        if let Some(retry_event) = retry_event {
+            if let Err(error) = self.retry_store.clear_superseded(&retry_event).await {
+                error!("Could not remove superseded ingestion retry: {error}");
+            }
+        }
         Ok(())
     }
 }
@@ -222,14 +310,23 @@ pub async fn run_worker(retry_store: IngestionRetryStore, play_ingestor: PlayIng
     loop {
         match retry_store.claim_due().await {
             Ok(Some(job)) => {
-                let result = match serde_json::from_value::<Event<Value>>(job.event) {
-                    Ok(event) => play_ingestor.ingest(event).await,
-                    Err(error) => Err(error.into()),
-                };
+                if !retry_store.is_current(&job).await.unwrap_or(false) {
+                    continue;
+                }
+
+                let result = async {
+                    let event = serde_json::from_value::<Event<Value>>(job.event.clone())?;
+                    let event_text = serde_json::to_string(&event)?;
+                    if !account::should_ingest_commit(&retry_store.pool, &event_text).await? {
+                        return Ok::<(), anyhow::Error>(());
+                    }
+                    play_ingestor.ingest(event).await
+                }
+                .await;
 
                 match result {
                     Ok(()) => {
-                        if let Err(error) = retry_store.complete(job.id).await {
+                        if let Err(error) = retry_store.complete(&job).await {
                             error!(
                                 job.id,
                                 "Could not remove completed ingestion retry: {error}"
@@ -238,9 +335,7 @@ pub async fn run_worker(retry_store: IngestionRetryStore, play_ingestor: PlayIng
                     }
                     Err(error) => {
                         error!(job.id, job.attempts, "Ingestion retry failed: {error}");
-                        if let Err(update_error) =
-                            retry_store.fail(job.id, job.attempts, &error).await
-                        {
+                        if let Err(update_error) = retry_store.fail(&job, &error).await {
                             error!(
                                 job.id,
                                 "Could not reschedule ingestion retry: {update_error}"
@@ -287,40 +382,14 @@ mod tests {
             serde_json::from_value(retry.event).expect("event should deserialize");
 
         assert_eq!(restored.did, message.did);
-        assert_eq!(
-            retry.event_key,
-            "did:plc:test:fm.teal.alpha.feed.play:abc:cid-1"
-        );
+        assert_eq!(retry.event_key, "did:plc:test:fm.teal.alpha.feed.play:abc");
     }
 
     #[test]
-    fn event_key_distinguishes_versions_and_deletes() {
+    fn event_key_is_scoped_to_the_logical_record() {
         assert_eq!(
-            event_key(
-                "did:plc:test",
-                "fm.teal.alpha.feed.play",
-                "abc",
-                Some("cid-1")
-            ),
-            "did:plc:test:fm.teal.alpha.feed.play:abc:cid-1"
-        );
-        assert_ne!(
-            event_key(
-                "did:plc:test",
-                "fm.teal.alpha.feed.play",
-                "abc",
-                Some("cid-1")
-            ),
-            event_key(
-                "did:plc:test",
-                "fm.teal.alpha.feed.play",
-                "abc",
-                Some("cid-2")
-            )
-        );
-        assert_eq!(
-            event_key("did:plc:test", "fm.teal.alpha.feed.play", "abc", None),
-            "did:plc:test:fm.teal.alpha.feed.play:abc:delete"
+            event_key("did:plc:test", "fm.teal.alpha.feed.play", "abc"),
+            "did:plc:test:fm.teal.alpha.feed.play:abc"
         );
     }
 
