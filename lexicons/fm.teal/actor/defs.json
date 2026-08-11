@@ -54,7 +54,8 @@
           "type": "string"
         },
         "handle": {
-          "type": "string"
+          "type": "string",
+          "format": "handle"
         },
         "avatar": {
           "type": "string",
