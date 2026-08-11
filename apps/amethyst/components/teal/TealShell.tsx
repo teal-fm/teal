@@ -33,7 +33,7 @@ type TealShellProps = {
 
 const landingBackgroundStyle = {
   backgroundImage:
-    "radial-gradient(circle at 48% 24%, rgba(255,255,255,0.7) 0, rgba(255,255,255,0) 30rem), linear-gradient(135deg, #e9eef7 0%, #f4e8ff 48%, #dfe7f0 100%)",
+    "radial-gradient(circle at 48% 24%, hsl(var(--popover) / 0.78) 0, hsl(var(--popover) / 0) 30rem), linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--accent) / 0.48) 48%, hsl(var(--background)) 100%)",
 } as any;
 
 function RecordLogo() {
@@ -72,7 +72,7 @@ function NavItem({
     <Link href={href as any} asChild>
       <Pressable
         className={`flex-row items-center gap-3 rounded-lg px-3 py-3 web:transition-colors ${
-          active ? "bg-white/70" : "web:hover:bg-white/45"
+          active ? "bg-accent/70" : "web:hover:bg-accent/45"
         }`}
       >
         <Icon
@@ -120,7 +120,7 @@ function LeftRail() {
     : undefined;
 
   return (
-    <View className="hidden w-[16rem] shrink-0 border-r border-border bg-white/35 px-5 py-7 lg:flex">
+    <View className="hidden w-[16rem] shrink-0 border-r border-border bg-background/55 px-5 py-7 lg:flex">
       <RecordLogo />
       <View className="mt-12 gap-1">
         <NavItem href="/" icon={Home} label="Home" active={pathname === "/"} />
@@ -154,7 +154,7 @@ function LeftRail() {
           }
           asChild
         >
-          <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-white/70 p-3 web:hover:border-primary/50">
+          <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card/75 p-3 web:hover:border-primary/50">
             <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary">
               {status === "loggedIn" && avatar ? (
                 <Image source={{ uri: avatar }} className="h-full w-full" />
@@ -217,7 +217,7 @@ function MobileNav() {
     { href: "/auth/login", icon: CircleUserRound, active: false },
   ];
   return (
-    <View className="absolute bottom-4 left-4 right-4 z-30 flex-row items-center justify-around rounded-lg border border-border bg-white/90 p-2 shadow-lg lg:hidden">
+    <View className="absolute bottom-4 left-4 right-4 z-30 flex-row items-center justify-around rounded-lg border border-border bg-popover/95 p-2 shadow-lg lg:hidden">
       {items.map((item) => (
         <Link key={item.href} href={item.href as any} asChild>
           <Pressable
@@ -278,7 +278,7 @@ export default function TealShell({
       className="min-h-screen flex-1 bg-background"
       style={landingBackgroundStyle}
     >
-      <View className="z-20 flex-row items-center justify-center border-b border-border bg-white/35 px-3 py-2">
+      <View className="z-20 flex-row items-center justify-center border-b border-border bg-background/55 px-3 py-2">
         <Text className="text-[11px] font-light text-primary">
           {
             "this is an early early work in progress!! 🚧 expect bugs, missing features, and regular database wipes"
@@ -303,7 +303,7 @@ export default function TealShell({
           </View>
         </ScrollView>
         {!isMobile && rightRail && (
-          <View className="hidden w-[19rem] shrink-0 border-l border-border bg-white/35 px-5 py-7 xl:flex">
+          <View className="hidden w-[19rem] shrink-0 border-l border-border bg-background/55 px-5 py-7 xl:flex">
             {rightRail}
           </View>
         )}

@@ -246,7 +246,7 @@ function GraphActorRow({ actor }: { actor: MiniProfileView }) {
 
   return (
     <Link href={`/profile/${href}` as any} asChild>
-      <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-white/65 p-3 web:transition-colors web:hover:border-primary/45">
+      <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card/75 p-3 web:transition-colors web:hover:border-primary/45">
         <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary">
           {avatar ? (
             <Image source={{ uri: avatar }} className="h-full w-full" />
@@ -657,7 +657,7 @@ export default function ProfileScreen() {
                 </Text>
               )}
               <View className="mt-4 flex-row flex-wrap items-center gap-3">
-                <View className="flex-row gap-4 rounded-lg border border-border bg-white/55 px-4 py-2">
+                <View className="flex-row gap-4 rounded-lg border border-border bg-card/60 px-4 py-2">
                   <Pressable onPress={() => setGraphTab("followers")}>
                     <Text className="font-sans text-lg font-black">
                       {graphSummary.followersCount}
@@ -808,7 +808,7 @@ export default function ProfileScreen() {
               )}
             </View>
             {bulkEditOpen && isSelf && (
-              <View className="mb-4 gap-3 rounded-lg border border-border bg-white/70 p-4">
+              <View className="mb-4 gap-3 rounded-lg border border-border bg-card/75 p-4">
                 <View className="flex-row flex-wrap items-center justify-between gap-3">
                   <View>
                     <Text className="font-bold">

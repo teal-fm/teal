@@ -145,7 +145,7 @@ export default function EditProfileModal({
                 Display Name
               </Text>
               <Input
-                className="mb-4 rounded border border-gray-300 px-3 py-2"
+                className="mb-4 rounded border border-input bg-background px-3 py-2 text-foreground"
                 placeholder="Display Name"
                 value={editedProfile.displayName}
                 onChangeText={(text) =>
@@ -156,7 +156,7 @@ export default function EditProfileModal({
                 Description
               </Text>
               <Textarea
-                className="mb-4 rounded border border-gray-300 px-3 py-2"
+                className="mb-4 rounded border border-input bg-background px-3 py-2 text-foreground"
                 placeholder="Description"
                 multiline
                 value={editedProfile.description}

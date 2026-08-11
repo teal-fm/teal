@@ -98,7 +98,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
   return (
     <View
       className={cn(
-        "mb-4 w-full rounded-lg border border-border bg-white/75 p-4 web:transition-colors web:hover:border-primary/45",
+        "mb-4 w-full rounded-lg border border-border bg-card/80 p-4 web:transition-colors web:hover:border-primary/45",
         compact ? "max-w-[34rem]" : "w-full",
       )}
     >
