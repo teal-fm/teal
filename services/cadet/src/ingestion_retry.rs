@@ -74,6 +74,12 @@ impl IngestionRetryStore {
                 event = EXCLUDED.event,
                 event_time_us = EXCLUDED.event_time_us,
                 event_rev = EXCLUDED.event_rev,
+                attempts = CASE
+                    WHEN (EXCLUDED.event_time_us, EXCLUDED.event_rev) >
+                         (ingestion_retry_events.event_time_us, ingestion_retry_events.event_rev)
+                    THEN 0
+                    ELSE ingestion_retry_events.attempts
+                END,
                 last_error = EXCLUDED.last_error,
                 next_attempt_at = NOW(),
                 dead_lettered_at = NULL,
@@ -355,10 +361,53 @@ pub async fn run_worker(retry_store: IngestionRetryStore, play_ingestor: PlayIng
 
 #[cfg(test)]
 mod tests {
+    use anyhow::anyhow;
     use rocketman::types::event::{Commit, Event, Kind, Operation};
     use serde_json::json;
+    use sqlx::{PgPool, Row};
+    use uuid::Uuid;
 
-    use super::{event_key, retry_delay_seconds, RetryEnvelope};
+    use super::{event_key, retry_delay_seconds, IngestionRetryStore, RetryEnvelope};
+
+    async fn test_pool() -> anyhow::Result<PgPool> {
+        let database_url = std::env::var("DATABASE_URL")?;
+        Ok(PgPool::connect(&database_url).await?)
+    }
+
+    fn retry_envelope(event_key: String, event_time_us: i64, event_rev: &str) -> RetryEnvelope {
+        RetryEnvelope {
+            event: json!({"event_rev": event_rev}),
+            event_key,
+            did: "did:plc:retry-version-test".to_string(),
+            collection: "fm.teal.alpha.feed.play".to_string(),
+            rkey: "test-rkey".to_string(),
+            event_time_us,
+            event_rev: event_rev.to_string(),
+        }
+    }
+
+    async fn retry_state(
+        pool: &PgPool,
+        event_key: &str,
+    ) -> anyhow::Result<(i32, bool, i64, String)> {
+        let row = sqlx::query(
+            r#"
+            SELECT attempts, dead_lettered_at IS NULL AS is_active, event_time_us, event_rev
+            FROM ingestion_retry_events
+            WHERE event_key = $1
+            "#,
+        )
+        .bind(event_key)
+        .fetch_one(pool)
+        .await?;
+
+        Ok((
+            row.try_get("attempts")?,
+            row.try_get("is_active")?,
+            row.try_get("event_time_us")?,
+            row.try_get("event_rev")?,
+        ))
+    }
 
     #[test]
     fn retry_envelope_round_trips_a_commit_event() {
@@ -399,5 +448,71 @@ mod tests {
         assert_eq!(retry_delay_seconds(2), 10);
         assert_eq!(retry_delay_seconds(3), 20);
         assert_eq!(retry_delay_seconds(25), 3600);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn newer_retry_revision_resets_attempts_but_duplicate_and_older_events_do_not(
+    ) -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let store = IngestionRetryStore::new(pool.clone());
+        let rkey = Uuid::new_v4().to_string();
+        let event_key = format!(
+            "{}:{}",
+            event_key("did:plc:test", "collection", &rkey),
+            Uuid::new_v4()
+        );
+
+        sqlx::query(
+            r#"
+            INSERT INTO ingestion_retry_events (
+                event_key, did, collection, rkey, event, attempts,
+                event_time_us, event_rev, last_error, dead_lettered_at
+            ) VALUES ($1, $2, $3, $4, $5, 24, $6, $7, 'old failure', NOW())
+            "#,
+        )
+        .bind(&event_key)
+        .bind("did:plc:retry-version-test")
+        .bind("fm.teal.alpha.feed.play")
+        .bind("test-rkey")
+        .bind(json!({"event_rev": "3k"}))
+        .bind(100_i64)
+        .bind("3k")
+        .execute(&pool)
+        .await?;
+
+        let newer = retry_envelope(event_key.clone(), 101, "3l");
+        store.enqueue(&newer, &anyhow!("newer failure")).await?;
+        assert_eq!(
+            retry_state(&pool, &event_key).await?,
+            (0, true, 101, "3l".to_string())
+        );
+
+        sqlx::query(
+            "UPDATE ingestion_retry_events SET attempts = 7, dead_lettered_at = NOW() WHERE event_key = $1",
+        )
+        .bind(&event_key)
+        .execute(&pool)
+        .await?;
+
+        store.enqueue(&newer, &anyhow!("duplicate failure")).await?;
+        assert_eq!(
+            retry_state(&pool, &event_key).await?,
+            (7, true, 101, "3l".to_string())
+        );
+
+        let older = retry_envelope(event_key.clone(), 100, "3m");
+        store.enqueue(&older, &anyhow!("older failure")).await?;
+        assert_eq!(
+            retry_state(&pool, &event_key).await?,
+            (7, true, 101, "3l".to_string())
+        );
+
+        sqlx::query("DELETE FROM ingestion_retry_events WHERE event_key = $1")
+            .bind(&event_key)
+            .execute(&pool)
+            .await?;
+
+        Ok(())
     }
 }
