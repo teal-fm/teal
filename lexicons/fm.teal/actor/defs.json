@@ -29,10 +29,12 @@
         },
         "avatar": {
           "type": "string",
+          "format": "cid",
           "description": "IPLD of the avatar"
         },
         "banner": {
           "type": "string",
+          "format": "cid",
           "description": "IPLD of the banner image"
         },
         "status": {
@@ -59,6 +61,7 @@
         },
         "avatar": {
           "type": "string",
+          "format": "cid",
           "description": "IPLD of the avatar"
         }
       }
