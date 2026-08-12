@@ -204,6 +204,10 @@ export default function SocialComposer({
 }: SocialComposerProps) {
   const pdsAgent = useStore((state) => state.pdsAgent);
   const status = useStore((state) => state.status);
+  const tealProfile = useStore((state) => {
+    const did = state.pdsAgent?.did;
+    return did ? state.profiles[did]?.teal : undefined;
+  });
   const [selectedTrack, setSelectedTrack] = useState<PlayView | null>(
     track || null,
   );
@@ -321,10 +325,19 @@ export default function SocialComposer({
       );
       const uri = (res.data as { uri?: string }).uri || "";
       const cid = (res.data as { cid?: string }).cid || "";
+      const tealAuthor = tealProfile
+        ? {
+            did: tealProfile.did || pdsAgent.did,
+            displayName: tealProfile.displayName,
+            handle: (tealProfile as { handle?: string }).handle,
+            avatar: tealProfile.avatar,
+          }
+        : undefined;
       onPublished({
         uri,
         cid,
         authorDid: pdsAgent.did,
+        author: tealAuthor,
         text: postText,
         track: record.track,
         replyRootUri: record.reply?.root.uri,

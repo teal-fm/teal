@@ -49,6 +49,10 @@ function actionStateFromUri(uri?: string): ActionState {
 export default function SocialPostCard({ post }: { post: SocialPostView }) {
   const pdsAgent = useStore((state) => state.pdsAgent);
   const status = useStore((state) => state.status);
+  const tealProfile = useStore((state) => {
+    if (state.pdsAgent?.did !== post.authorDid) return undefined;
+    return state.profiles[post.authorDid]?.teal;
+  });
   const play = useMemo(() => trackViewToPlayView(post.track), [post.track]);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [repostCount, setRepostCount] = useState(post.repostCount);
@@ -64,15 +68,28 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   const [releaseArtFailed, setReleaseArtFailed] = useState(false);
   const [recordingArt, setRecordingArt] = useState<string>();
   const indexedAuthor = post.author as DisplayActor | undefined;
-  const authorProfile = indexedAuthor
+  const isViewerAuthor = pdsAgent?.did === post.authorDid;
+  const tealAuthor = tealProfile
+    ? {
+        did: tealProfile.did || post.authorDid,
+        displayName: tealProfile.displayName,
+        handle: (tealProfile as { handle?: string }).handle,
+        avatar: tealProfile.avatar,
+      }
+    : undefined;
+  const preferredAuthor = isViewerAuthor ? tealAuthor : indexedAuthor;
+  const authorProfile = preferredAuthor
     ? {
         ...blueskyAuthor,
-        ...indexedAuthor,
-        avatar: indexedAuthor.avatar || blueskyAuthor?.avatar,
-        displayName: indexedAuthor.displayName || blueskyAuthor?.displayName,
-        handle: indexedAuthor.handle || blueskyAuthor?.handle,
+        ...preferredAuthor,
+        avatar: preferredAuthor.avatar || blueskyAuthor?.avatar,
+        displayName:
+          preferredAuthor.displayName || blueskyAuthor?.displayName,
+        handle: preferredAuthor.handle || blueskyAuthor?.handle,
       }
-    : blueskyAuthor;
+    : isViewerAuthor
+      ? undefined
+      : blueskyAuthor;
   const authorDid = authorProfile?.did || post.authorDid;
   const authorHandle = normalizeHandle(authorProfile?.handle);
   const authorLabel = displayActorName(authorProfile, authorDid);
@@ -107,7 +124,8 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   useEffect(() => {
     let mounted = true;
     const needsBlueskyFallback =
-      !indexedAuthor?.displayName || !indexedAuthor?.handle;
+      !isViewerAuthor &&
+      (!indexedAuthor?.displayName || !indexedAuthor?.handle);
     if (!authorDid || !needsBlueskyFallback) {
       setBlueskyAuthor(undefined);
       return;
@@ -118,7 +136,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
     return () => {
       mounted = false;
     };
-  }, [authorDid, indexedAuthor]);
+  }, [authorDid, indexedAuthor, isViewerAuthor]);
 
   useEffect(() => {
     let mounted = true;
