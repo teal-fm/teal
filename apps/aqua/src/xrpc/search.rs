@@ -1,4 +1,5 @@
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use jacquard_common::types::string::Did;
 use jacquard_common::IntoStatic;
 use serde::Deserialize;
 use types::fm_teal::alpha::search::get_results::GetResultsOutput;
@@ -13,6 +14,7 @@ pub fn search_routes() -> axum::Router {
 pub struct GetResultsQuery {
     pub q: String,
     pub limit: Option<i32>,
+    pub actor: Option<String>,
 }
 
 pub async fn get_results(
@@ -23,8 +25,28 @@ pub async fn get_results(
     if query_text.is_empty() {
         return Err((StatusCode::BAD_REQUEST, "q is required".to_string()));
     }
+    if query_text.len() > 640 || query_text.chars().count() > 128 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "q exceeds the maximum length".to_string(),
+        ));
+    }
 
-    match ctx.db.search(query_text, query.limit).await {
+    let actor = query
+        .actor
+        .as_deref()
+        .map(|actor| {
+            Did::<String>::new_owned(actor)
+                .map(|did| did.to_string())
+                .map_err(|_| (StatusCode::BAD_REQUEST, "actor must be a valid DID".to_string()))
+        })
+        .transpose()?;
+
+    match ctx
+        .db
+        .search(query_text, query.limit, actor.as_deref())
+        .await
+    {
         Ok(results) => Ok(axum::Json(
             GetResultsOutput {
                 users: results.users,

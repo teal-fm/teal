@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { RichText as AtprotoRichText } from "@atproto/api";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
-import { AddCurrentTrackButton } from "@/components/teal/PlaylistControls";
+import { musicHref } from "@/components/teal/PlayFeedCard";
+import {
+  AddCurrentTrackButton,
+  PlaylistTrackPicker,
+} from "@/components/teal/PlaylistControls";
 import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
@@ -11,8 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
-import { Icon } from "@/lib/icons/iconWithClassName";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   displayArtists,
   getPlaylist,
@@ -20,9 +23,9 @@ import {
   type SocialPlaylistItemView,
   type SocialPlaylistView,
 } from "@/lib/teal/api";
-import { musicHref } from "@/components/teal/PlayFeedCard";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { useStore } from "@/stores/mainStore";
+import { RichText as AtprotoRichText } from "@atproto/api";
 import { ListMusic, Music2 } from "lucide-react-native";
 
 function rkeyFromUri(uri: string) {
@@ -42,6 +45,7 @@ export default function PlaylistDetailScreen() {
   const [coverUri, setCoverUri] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [addingItem, setAddingItem] = useState(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
 
   useEffect(() => {
@@ -74,8 +78,8 @@ export default function PlaylistDetailScreen() {
 
   useEffect(() => {
     let mounted = true;
+    setCurrentTrack(null);
     if (!pdsAgent?.did) {
-      setCurrentTrack(null);
       return;
     }
     getProfile(pdsAgent.did)
@@ -90,11 +94,19 @@ export default function PlaylistDetailScreen() {
     };
   }, [pdsAgent?.did]);
 
-  const canAddItems = useMemo(
-    () => Boolean(pdsAgent?.did && playlist?.authors.includes(pdsAgent.did)),
-    [pdsAgent?.did, playlist?.authors],
+  const canAddItems = Boolean(
+    pdsAgent?.did && playlist?.authors.includes(pdsAgent.did),
   );
-  const canManage = Boolean(pdsAgent?.did && playlist?.authorDid === pdsAgent.did);
+  const canManage = Boolean(
+    pdsAgent?.did && playlist?.authorDid === pdsAgent.did,
+  );
+
+  function appendItem(item: SocialPlaylistItemView) {
+    setItems((current) => [...current, item]);
+    setPlaylist((current) =>
+      current ? { ...current, itemCount: current.itemCount + 1 } : current,
+    );
+  }
 
   async function saveMetadata() {
     if (!playlist || !pdsAgent?.did || saving) return;
@@ -108,7 +120,8 @@ export default function PlaylistDetailScreen() {
             .filter(Boolean),
         ),
       );
-      if (!authors.includes(playlist.authorDid)) authors.unshift(playlist.authorDid);
+      if (!authors.includes(playlist.authorDid))
+        authors.unshift(playlist.authorDid);
       const current: { cover?: unknown } = await pdsAgent
         .call("com.atproto.repo.getRecord", {
           repo: playlist.authorDid,
@@ -242,7 +255,8 @@ export default function PlaylistDetailScreen() {
                       />
                     )}
                     <Text className="mt-2 font-mono text-[10px] uppercase text-muted-foreground">
-                      {items.length} indexed tracks · {playlist.authors.length} author
+                      {items.length} indexed tracks · {playlist.authors.length}{" "}
+                      author
                       {playlist.authors.length === 1 ? "" : "s"}
                     </Text>
                   </>
@@ -259,10 +273,22 @@ export default function PlaylistDetailScreen() {
                 <AddCurrentTrackButton
                   playlist={playlist}
                   track={currentTrack}
-                  order={items.length}
-                  onAdded={(item) => setItems((current) => [...current, item])}
+                  order={playlist.itemCount}
+                  onAdded={appendItem}
+                  disabled={addingItem}
+                  onBusyChange={setAddingItem}
                 />
               </View>
+            )}
+            {canAddItems && !editing && (
+              <PlaylistTrackPicker
+                playlist={playlist}
+                items={items}
+                order={playlist.itemCount}
+                onAdded={appendItem}
+                disabled={addingItem}
+                onBusyChange={setAddingItem}
+              />
             )}
           </View>
 
@@ -283,13 +309,20 @@ export default function PlaylistDetailScreen() {
                           {String(index + 1).padStart(2, "0")}
                         </Text>
                         <View className="h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                          <Icon icon={Music2} size={18} className="text-primary" />
+                          <Icon
+                            icon={Music2}
+                            size={18}
+                            className="text-primary"
+                          />
                         </View>
                         <View className="min-w-0 flex-1">
                           <Text className="font-black" numberOfLines={1}>
                             {play.trackName}
                           </Text>
-                          <Text className="text-sm text-muted-foreground" numberOfLines={1}>
+                          <Text
+                            className="text-sm text-muted-foreground"
+                            numberOfLines={1}
+                          >
                             {displayArtists(play) || "Unknown artist"}
                           </Text>
                         </View>

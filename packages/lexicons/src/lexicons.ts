@@ -1707,6 +1707,12 @@ export const schemaDict = {
             format: 'uri',
             description: 'MusicBrainz release ID URI, formatted as mbid:<uuid>',
           },
+          recordingMbId: {
+            type: 'string',
+            format: 'uri',
+            description:
+              'MusicBrainz recording ID URI, formatted as mbid:<uuid>',
+          },
           playCount: {
             type: 'integer',
             description: 'Number of indexed plays for this song',
@@ -1738,6 +1744,11 @@ export const schemaDict = {
               minimum: 1,
               maximum: 25,
               default: 8,
+            },
+            actor: {
+              type: 'string',
+              format: 'did',
+              description: 'Only return music listened to by this actor',
             },
           },
         },

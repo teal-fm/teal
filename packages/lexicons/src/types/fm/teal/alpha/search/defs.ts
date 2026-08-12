@@ -26,6 +26,8 @@ export interface SongResult {
   releaseName?: string
   /** MusicBrainz release ID URI, formatted as mbid:<uuid> */
   releaseMbId?: string
+  /** MusicBrainz recording ID URI, formatted as mbid:<uuid> */
+  recordingMbId?: string
   /** Number of indexed plays for this song */
   playCount: number
 }

@@ -586,8 +586,23 @@ impl CarImportIngestor {
 
     /// Fetch CAR file from PDS
     async fn fetch_car_from_pds(&self, pds_url: &str, did: &str) -> Result<Vec<u8>> {
-        let url = format!("{}/xrpc/com.atproto.sync.getRepo?did={}", pds_url, did);
-        let response = reqwest::get(&url).await?;
+        const MAX_CAR_BYTES: u64 = 256 * 1024 * 1024;
+        let base_url = url::Url::parse(pds_url)?;
+        if base_url.scheme() != "https" {
+            return Err(anyhow!("PDS endpoint must use HTTPS"));
+        }
+        let host = base_url
+            .host_str()
+            .ok_or_else(|| anyhow!("PDS endpoint has no host"))?;
+        validate_public_host(host).await?;
+
+        let mut url = base_url.join("/xrpc/com.atproto.sync.getRepo")?;
+        url.query_pairs_mut().append_pair("did", did);
+        let client = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(std::time::Duration::from_secs(60))
+            .build()?;
+        let response = client.get(url).send().await?;
 
         if !response.status().is_success() {
             return Err(anyhow!(
@@ -596,7 +611,22 @@ impl CarImportIngestor {
             ));
         }
 
-        let car_data = response.bytes().await?.to_vec();
+        if response
+            .content_length()
+            .is_some_and(|length| length > MAX_CAR_BYTES)
+        {
+            return Err(anyhow!("CAR file exceeds the {} byte limit", MAX_CAR_BYTES));
+        }
+
+        let mut car_data = Vec::new();
+        let mut stream = response.bytes_stream();
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk?;
+            if car_data.len() as u64 + chunk.len() as u64 > MAX_CAR_BYTES {
+                return Err(anyhow!("CAR file exceeds the {} byte limit", MAX_CAR_BYTES));
+            }
+            car_data.extend_from_slice(&chunk);
+        }
         info!("Fetched CAR file: {} bytes", car_data.len());
 
         Ok(car_data)
@@ -641,6 +671,45 @@ impl CarImportIngestor {
                 Ok(Value::Object(json_map))
             }
             Ipld::Link(cid) => Ok(Value::String(cid.to_string())),
+        }
+    }
+}
+
+async fn validate_public_host(host: &str) -> Result<()> {
+    if host.eq_ignore_ascii_case("localhost") || host.ends_with(".localhost") {
+        return Err(anyhow!("PDS host is not publicly routable"));
+    }
+
+    let addresses = tokio::net::lookup_host((host, 443)).await?;
+    let mut found = false;
+    for address in addresses {
+        found = true;
+        if is_private_ip(address.ip()) {
+            return Err(anyhow!("PDS host resolves to a private address"));
+        }
+    }
+    if !found {
+        return Err(anyhow!("PDS host did not resolve to an address"));
+    }
+    Ok(())
+}
+
+fn is_private_ip(ip: std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(ip) => {
+            ip.is_private()
+                || ip.is_loopback()
+                || ip.is_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
+                || ip.is_broadcast()
+        }
+        std::net::IpAddr::V6(ip) => {
+            ip.is_loopback()
+                || ip.is_unique_local()
+                || ip.is_unicast_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
         }
     }
 }

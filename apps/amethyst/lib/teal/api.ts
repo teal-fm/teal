@@ -270,10 +270,11 @@ export type SearchResults = {
   albums: ReleaseView[];
 };
 
-export function getSearchResults(q: string, limit = 8) {
+export function getSearchResults(q: string, limit = 8, actor?: string) {
   return getXrpc<SearchResults>("fm.teal.alpha.search.getResults", {
     q,
     limit,
+    actor,
   });
 }
 

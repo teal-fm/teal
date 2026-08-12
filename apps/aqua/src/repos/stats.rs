@@ -157,7 +157,7 @@ pub trait StatsRepo: Send + Sync {
 #[async_trait]
 impl StatsRepo for PgDataSource {
     async fn get_top_artists(&self, limit: Option<i32>) -> anyhow::Result<Vec<ArtistView>> {
-        let limit = limit.unwrap_or(50).min(100) as i64;
+        let limit = normalize_limit(limit);
 
         let rows = sqlx::query!(
             r#"
@@ -192,7 +192,7 @@ impl StatsRepo for PgDataSource {
     }
 
     async fn get_top_releases(&self, limit: Option<i32>) -> anyhow::Result<Vec<ReleaseView>> {
-        let limit = limit.unwrap_or(50).min(100) as i64;
+        let limit = normalize_limit(limit);
 
         let rows = sqlx::query!(
             r#"
@@ -408,7 +408,7 @@ impl StatsRepo for PgDataSource {
         limit: Option<i32>,
         cursor: Option<&str>,
     ) -> anyhow::Result<LatestPlaysPage> {
-        let limit = limit.unwrap_or(50).min(100) as i64;
+        let limit = normalize_limit(limit);
         let query_limit = limit + 1;
         let cursor = decode_latest_cursor(cursor)?;
         let cursor_time = cursor

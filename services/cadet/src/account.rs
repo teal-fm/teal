@@ -48,8 +48,8 @@ pub async fn ingest_account_event(pool: &PgPool, text: &str) -> anyhow::Result<b
 
     let mut tx = pool.begin().await?;
     lock_account(&mut tx, &envelope.did).await?;
-    upsert_account_state(&mut tx, &envelope.did, &account).await?;
-    if !account.active {
+    let applied = upsert_account_state(&mut tx, &envelope.did, &account).await?;
+    if applied && !account.active {
         purge_indexed_account_data(&mut tx, &envelope.did).await?;
     }
     tx.commit().await?;
@@ -104,8 +104,8 @@ async fn upsert_account_state(
     tx: &mut Transaction<'_, Postgres>,
     did: &str,
     account: &AccountDetails,
-) -> anyhow::Result<()> {
-    sqlx::query(
+) -> anyhow::Result<bool> {
+    let applied = sqlx::query_scalar::<_, bool>(
         r#"
             INSERT INTO account_states (did, active, status, event_time, seq)
             VALUES ($1, $2, $3, $4::timestamptz, $5)
@@ -115,6 +115,19 @@ async fn upsert_account_state(
                 event_time = EXCLUDED.event_time,
                 seq = EXCLUDED.seq,
                 updated_at = NOW()
+            WHERE (
+                EXCLUDED.seq IS NOT NULL
+                AND (account_states.seq IS NULL OR EXCLUDED.seq > account_states.seq)
+            ) OR (
+                EXCLUDED.seq IS NULL
+                AND account_states.seq IS NULL
+                AND (
+                    account_states.event_time IS NULL
+                    OR EXCLUDED.event_time IS NULL
+                    OR EXCLUDED.event_time > account_states.event_time
+                )
+            )
+            RETURNING TRUE
         "#,
     )
     .bind(did)
@@ -122,10 +135,10 @@ async fn upsert_account_state(
     .bind(account.status.as_deref())
     .bind(account.time.as_deref())
     .bind(account.seq)
-    .execute(&mut **tx)
+    .fetch_optional(&mut **tx)
     .await?;
 
-    Ok(())
+    Ok(applied.is_some())
 }
 
 async fn purge_indexed_account_data(

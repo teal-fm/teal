@@ -127,7 +127,7 @@ impl<S: BosStr> LexiconSchema for Playlist<S> {
         {
             let value = &self.authors;
             #[allow(unused_comparisons)]
-            if value.len() < 1usize {
+            if value.is_empty() {
                 return Err(ConstraintError::MinLength {
                     path: ValidationPath::from_field("authors"),
                     min: 1usize,

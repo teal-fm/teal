@@ -28,6 +28,11 @@
           "format": "uri",
           "description": "MusicBrainz release ID URI, formatted as mbid:<uuid>"
         },
+        "recordingMbId": {
+          "type": "string",
+          "format": "uri",
+          "description": "MusicBrainz recording ID URI, formatted as mbid:<uuid>"
+        },
         "playCount": {
           "type": "integer",
           "description": "Number of indexed plays for this song"
