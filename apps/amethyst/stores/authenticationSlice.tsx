@@ -7,6 +7,7 @@ import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/d
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { pdsHostFromOAuthIssuer } from "../lib/atp/oauthIssuer";
+import { getProfile } from "../lib/teal/api";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {
@@ -200,22 +201,12 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           });
         // get teal did
         try {
-          const tealDid = get().tealDid;
-          const tealProfile = await agent
-            .call(
-              "fm.teal.alpha.actor.getProfile",
-              { actor: agent?.did },
-              {},
-              { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
-            )
-            .then((profile) => {
-              console.log(profile);
-              const data = profile.data as {
-                actor?: ProfileView;
-                profile?: ProfileView;
-              };
-              return data.profile || data.actor || null;
-            });
+          // Aqua is the source of truth for Teal identity data. Fetching it
+          // directly avoids depending on the user's PDS proxy configuration,
+          // which can otherwise leave the shell showing stale Bluesky data.
+          const tealProfile = await getProfile(agent.did).then(
+            ({ profile }) => profile,
+          );
 
           set({
             profiles: {
