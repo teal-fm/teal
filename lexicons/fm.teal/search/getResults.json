@@ -21,6 +21,11 @@
             "minimum": 1,
             "maximum": 25,
             "default": 8
+          },
+          "actor": {
+            "type": "string",
+            "format": "did",
+            "description": "Only return music listened to by this actor"
           }
         }
       },

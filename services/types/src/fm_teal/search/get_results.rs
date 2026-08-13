@@ -12,6 +12,7 @@ use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
 use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
+use jacquard_common::types::string::Did;
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use serde::{Serialize, Deserialize};
@@ -23,6 +24,8 @@ use crate::fm_teal::stats::ReleaseView;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetResults<S: BosStr = DefaultStr> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub actor: Option<Did<S>>,
     ///Defaults to `8`. Min: 1. Max: 25.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -105,7 +108,7 @@ pub mod get_results_state {
 /// Builder for constructing an instance of this type.
 pub struct GetResultsBuilder<S: BosStr, St: get_results_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<i64>, Option<S>),
+    _fields: (Option<Did<S>>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -121,21 +124,34 @@ impl<S: BosStr> GetResultsBuilder<S, get_results_state::Empty> {
     pub fn new() -> Self {
         GetResultsBuilder {
             _state: PhantomData,
-            _fields: (None, None),
+            _fields: (None, None, None),
             _type: PhantomData,
         }
     }
 }
 
 impl<S: BosStr, St: get_results_state::State> GetResultsBuilder<S, St> {
+    /// Set the `actor` field (optional)
+    pub fn actor(mut self, value: impl Into<Option<Did<S>>>) -> Self {
+        self._fields.0 = value.into();
+        self
+    }
+    /// Set the `actor` field to an Option value (optional)
+    pub fn maybe_actor(mut self, value: Option<Did<S>>) -> Self {
+        self._fields.0 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: get_results_state::State> GetResultsBuilder<S, St> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
-        self._fields.0 = value.into();
+        self._fields.1 = value.into();
         self
     }
     /// Set the `limit` field to an Option value (optional)
     pub fn maybe_limit(mut self, value: Option<i64>) -> Self {
-        self._fields.0 = value;
+        self._fields.1 = value;
         self
     }
 }
@@ -150,7 +166,7 @@ where
         mut self,
         value: impl Into<S>,
     ) -> GetResultsBuilder<S, get_results_state::SetQ<St>> {
-        self._fields.1 = Option::Some(value.into());
+        self._fields.2 = Option::Some(value.into());
         GetResultsBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -167,8 +183,9 @@ where
     /// Build the final struct.
     pub fn build(self) -> GetResults<S> {
         GetResults {
-            limit: self._fields.0,
-            q: self._fields.1.unwrap(),
+            actor: self._fields.0,
+            limit: self._fields.1,
+            q: self._fields.2.unwrap(),
         }
     }
 }

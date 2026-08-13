@@ -22,6 +22,8 @@ export type QueryParams = {
   q: string
   /** Maximum results per category */
   limit: number
+  /** Only return music listened to by this actor */
+  actor?: string
 }
 export type InputSchema = undefined
 

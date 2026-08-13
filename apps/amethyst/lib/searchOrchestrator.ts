@@ -77,6 +77,7 @@ function exactResultsSufficient(
  */
 export async function searchMusicbrainz(
   searchParams: SearchParams,
+  options: { throwOnError?: boolean } = {},
 ): Promise<MusicBrainzRecording[]> {
   if (!searchParams.track && !searchParams.artist && !searchParams.release) {
     return [];
@@ -239,6 +240,9 @@ export async function searchMusicbrainz(
       console.error("Failed to fetch MusicBrainz data:", error.message);
     } else {
       console.error("Failed to fetch MusicBrainz data:", error);
+    }
+    if (options.throwOnError) {
+      throw error instanceof Error ? error : new Error(String(error));
     }
     return [];
   }

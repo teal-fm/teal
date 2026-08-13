@@ -35,6 +35,9 @@ pub struct SongResult<S: BosStr = DefaultStr> {
     pub artist_name: S,
     ///Number of indexed plays for this song
     pub play_count: i64,
+    ///MusicBrainz recording ID URI, formatted as mbid:<uuid>
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recording_mb_id: Option<UriValue<S>>,
     ///MusicBrainz release ID URI, formatted as mbid:<uuid>
     #[serde(skip_serializing_if = "Option::is_none")]
     pub release_mb_id: Option<UriValue<S>>,
@@ -145,6 +148,7 @@ pub struct SongResultBuilder<S: BosStr, St: song_result_state::State> {
         Option<S>,
         Option<i64>,
         Option<UriValue<S>>,
+        Option<UriValue<S>>,
         Option<S>,
         Option<S>,
         Option<AtUri<S>>,
@@ -164,7 +168,7 @@ impl<S: BosStr> SongResultBuilder<S, song_result_state::Empty> {
     pub fn new() -> Self {
         SongResultBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -209,14 +213,27 @@ where
 }
 
 impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
+    /// Set the `recordingMbId` field (optional)
+    pub fn recording_mb_id(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
+        self._fields.2 = value.into();
+        self
+    }
+    /// Set the `recordingMbId` field to an Option value (optional)
+    pub fn maybe_recording_mb_id(mut self, value: Option<UriValue<S>>) -> Self {
+        self._fields.2 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
     /// Set the `releaseMbId` field (optional)
     pub fn release_mb_id(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
-        self._fields.2 = value.into();
+        self._fields.3 = value.into();
         self
     }
     /// Set the `releaseMbId` field to an Option value (optional)
     pub fn maybe_release_mb_id(mut self, value: Option<UriValue<S>>) -> Self {
-        self._fields.2 = value;
+        self._fields.3 = value;
         self
     }
 }
@@ -224,12 +241,12 @@ impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
 impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
     /// Set the `releaseName` field (optional)
     pub fn release_name(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.3 = value.into();
+        self._fields.4 = value.into();
         self
     }
     /// Set the `releaseName` field to an Option value (optional)
     pub fn maybe_release_name(mut self, value: Option<S>) -> Self {
-        self._fields.3 = value;
+        self._fields.4 = value;
         self
     }
 }
@@ -244,7 +261,7 @@ where
         mut self,
         value: impl Into<S>,
     ) -> SongResultBuilder<S, song_result_state::SetTrackName<St>> {
-        self._fields.4 = Option::Some(value.into());
+        self._fields.5 = Option::Some(value.into());
         SongResultBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -263,7 +280,7 @@ where
         mut self,
         value: impl Into<AtUri<S>>,
     ) -> SongResultBuilder<S, song_result_state::SetUri<St>> {
-        self._fields.5 = Option::Some(value.into());
+        self._fields.6 = Option::Some(value.into());
         SongResultBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -285,10 +302,11 @@ where
         SongResult {
             artist_name: self._fields.0.unwrap(),
             play_count: self._fields.1.unwrap(),
-            release_mb_id: self._fields.2,
-            release_name: self._fields.3,
-            track_name: self._fields.4.unwrap(),
-            uri: self._fields.5.unwrap(),
+            recording_mb_id: self._fields.2,
+            release_mb_id: self._fields.3,
+            release_name: self._fields.4,
+            track_name: self._fields.5.unwrap(),
+            uri: self._fields.6.unwrap(),
             extra_data: Default::default(),
         }
     }
@@ -300,10 +318,11 @@ where
         SongResult {
             artist_name: self._fields.0.unwrap(),
             play_count: self._fields.1.unwrap(),
-            release_mb_id: self._fields.2,
-            release_name: self._fields.3,
-            track_name: self._fields.4.unwrap(),
-            uri: self._fields.5.unwrap(),
+            recording_mb_id: self._fields.2,
+            release_mb_id: self._fields.3,
+            release_name: self._fields.4,
+            track_name: self._fields.5.unwrap(),
+            uri: self._fields.6.unwrap(),
             extra_data: Some(extra_data),
         }
     }
@@ -344,6 +363,18 @@ fn lexicon_doc_fm_teal_search_defs() -> LexiconDoc<'static> {
                         map.insert(
                             SmolStr::new_static("playCount"),
                             LexObjectProperty::Integer(LexInteger {
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("recordingMbId"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "MusicBrainz recording ID URI, formatted as mbid:<uuid>",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::Uri),
                                 ..Default::default()
                             }),
                         );
