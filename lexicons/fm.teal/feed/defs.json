@@ -51,13 +51,15 @@
           "type": "string",
           "description": "The ISRC code associated with the recording"
         },
-        "originUrl": {
+        "originUri": {
           "type": "string",
-          "description": "The URL associated with this track"
+          "format": "uri",
+          "description": "The exact URI where the listening event originated."
         },
-        "musicServiceBaseDomain": {
+        "musicServiceUri": {
           "type": "string",
-          "description": "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if not provided."
+          "format": "uri",
+          "description": "The canonical URI identifying the listening surface or music service."
         },
         "submissionClientAgent": {
           "type": "string",
@@ -68,7 +70,7 @@
         "playedTime": {
           "type": "string",
           "format": "datetime",
-          "description": "The unix timestamp of when the track was played"
+          "description": "The datetime at which playback began."
         }
       }
     },

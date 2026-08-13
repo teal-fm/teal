@@ -7,6 +7,7 @@
       "properties": {
         "did": {
           "type": "string",
+          "format": "did",
           "description": "The decentralized identifier of the actor"
         },
         "displayName": {
@@ -28,10 +29,12 @@
         },
         "avatar": {
           "type": "string",
+          "format": "cid",
           "description": "IPLD of the avatar"
         },
         "banner": {
           "type": "string",
+          "format": "cid",
           "description": "IPLD of the banner image"
         },
         "status": {
@@ -46,16 +49,19 @@
       "properties": {
         "did": {
           "type": "string",
+          "format": "did",
           "description": "The decentralized identifier of the actor"
         },
         "displayName": {
           "type": "string"
         },
         "handle": {
-          "type": "string"
+          "type": "string",
+          "format": "handle"
         },
         "avatar": {
           "type": "string",
+          "format": "cid",
           "description": "IPLD of the avatar"
         }
       }
@@ -67,12 +73,12 @@
         "time": {
           "type": "string",
           "format": "datetime",
-          "description": "The unix timestamp of when the item was recorded"
+          "description": "The datetime at which the status was recorded."
         },
         "expiry": {
           "type": "string",
           "format": "datetime",
-          "description": "The unix timestamp of the expiry time of the item. If unavailable, default to 10 minutes past the start time."
+          "description": "The datetime after which the status is no longer current."
         },
         "item": {
           "type": "ref",

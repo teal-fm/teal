@@ -11,7 +11,7 @@
         "properties": {
           "authorDID": {
             "type": "string",
-            "format": "at-identifier",
+            "format": "did",
             "description": "The author's DID for the play"
           },
           "cursor": {
