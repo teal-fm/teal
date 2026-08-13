@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use jacquard_common::from_json_value;
 use types::fm_teal::feed::{Artist, PlayView};
 
-use super::{mbid_uri, pg::PgDataSource, utc_to_atrium_datetime};
+use super::{mbid_uri, pg::PgDataSource, uri_value, utc_to_atrium_datetime};
 
 #[async_trait]
 pub trait FeedPlayRepo: Send + Sync {
@@ -58,8 +58,8 @@ impl FeedPlayRepo for PgDataSource {
             release_name: row.release_name.clone().map(|s| s.into()),
             release_mb_id: row.release_mbid.map(mbid_uri),
             isrc: row.isrc.map(|s| s.into()),
-            origin_url: row.origin_url.map(|s| s.into()),
-            music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+            origin_uri: row.origin_url.map(uri_value),
+            music_service_uri: row.music_service_base_domain.map(uri_value),
             submission_client_agent: row.submission_client_agent.map(|s| s.into()),
             played_time: row
                 .played_time
@@ -117,8 +117,8 @@ impl FeedPlayRepo for PgDataSource {
                 release_name: row.release_name.clone().map(|s| s.into()),
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
-                origin_url: row.origin_url.map(|s| s.into()),
-                music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+                origin_uri: row.origin_url.map(uri_value),
+                music_service_uri: row.music_service_base_domain.map(uri_value),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time

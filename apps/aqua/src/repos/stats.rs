@@ -230,8 +230,8 @@ impl StatsRepo for PgDataSource {
                 release_name: row.release_name.map(|s| s.into()),
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
-                origin_url: row.origin_url.map(|s| s.into()),
-                music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+                origin_uri: row.origin_url.map(crate::repos::uri_value),
+                music_service_uri: row.music_service_base_domain.map(crate::repos::uri_value),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time

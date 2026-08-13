@@ -1468,9 +1468,9 @@ impl PlayIngestor {
             .as_ref()
             .map(ToString::to_string);
         let music_service_base_domain = play_record
-            .music_service_base_domain
+            .music_service_uri
             .as_ref()
-            .map(ToString::to_string);
+            .map(|uri| uri.as_str().to_string());
 
         sqlx::query!(
             r#"
