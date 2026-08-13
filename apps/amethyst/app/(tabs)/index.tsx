@@ -3,9 +3,14 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
 import { Redirect, Stack, useRouter } from "expo-router";
 import ActorView from "@/components/actor/actorView";
+import {
+  LEGACY_PROFILE_STATUS_COLLECTION,
+  readRepoRecordWithLegacyFallback,
+  STABLE_PROFILE_STATUS_COLLECTION,
+} from "@/lib/atp/onboardingRecords";
 import { useStore } from "@/stores/mainStore";
 
-import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/actor/profileStatus";
 
 import AuthOptions from "../auth/options";
 
@@ -16,7 +21,8 @@ export default function Screen() {
   const agent = useStore((state) => state.pdsAgent);
   const profile = useStore((state) => state.profiles[agent?.did ?? ""]);
   const tealDid = useStore((state) => state.tealDid);
-  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [profileStatus, setProfileStatus] =
+    useState<ProfileStatusRecord | null>(null);
   const [statusLoading, setStatusLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -26,14 +32,15 @@ export default function Screen() {
       try {
         if (!agent) return;
 
-        const res = await agent.call("com.atproto.repo.getRecord", {
-          repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
-          rkey: "self",
-        });
+        const result =
+          await readRepoRecordWithLegacyFallback<ProfileStatusRecord>(
+            agent,
+            STABLE_PROFILE_STATUS_COLLECTION,
+            LEGACY_PROFILE_STATUS_COLLECTION,
+          );
 
         if (isMounted) {
-          setProfileStatus(res.data.value as ProfileStatusRecord);
+          setProfileStatus(result?.record ?? null);
         }
       } catch (error) {
         if (isMounted) {
@@ -65,7 +72,10 @@ export default function Screen() {
     return <AuthOptions />;
   }
 
-  if (!statusLoading && (!profileStatus || profileStatus.completedOnboarding === "none")) {
+  if (
+    !statusLoading &&
+    (!profileStatus || profileStatus.completedOnboarding === "none")
+  ) {
     return (
       <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
         <Redirect href="/onboarding" />

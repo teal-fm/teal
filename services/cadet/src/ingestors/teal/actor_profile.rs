@@ -4,6 +4,7 @@ use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::PgPool;
 
+use crate::ingestors::teal::normalize_legacy_record_type;
 use crate::resolve::resolve_identity;
 
 pub struct ActorProfileIngestor {
@@ -22,7 +23,7 @@ impl ActorProfileIngestor {
     pub async fn insert_profile(
         &self,
         provided_did: &str,
-        profile: &types::fm_teal::alpha::actor::profile::Profile,
+        profile: &types::fm_teal::actor::profile::Profile,
     ) -> anyhow::Result<()> {
         dbg!(&profile);
         // TODO: cache the doc for like 8 hours or something
@@ -86,10 +87,7 @@ impl LexiconIngestor for ActorProfileIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::alpha::actor::profile::Profile =
-                    value::from_json_value::<types::fm_teal::alpha::actor::profile::Profile>(
-                        record.clone(),
-                    )?;
+                let record = parse_profile_record(record)?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref _cid) = commit.cid {
                         // TODO: verify cid
@@ -104,5 +102,54 @@ impl LexiconIngestor for ActorProfileIngestor {
             return Err(anyhow::anyhow!("Message has no commit"));
         }
         Ok(())
+    }
+}
+
+/// Normalize legacy namespace tags before deserializing the generated record type.
+fn parse_profile_record(record: &Value) -> anyhow::Result<types::fm_teal::actor::profile::Profile> {
+    Ok(value::from_json_value::<
+        types::fm_teal::actor::profile::Profile,
+    >(normalize_legacy_record_type(record))?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_profile_record;
+    use crate::ingestors::teal::{ALPHA_ACTOR_PROFILE, STABLE_ACTOR_PROFILE};
+    use rocketman::types::event::Event;
+    use serde_json::{json, Value};
+
+    fn direct_record(operation: &str, collection: &str) -> Value {
+        let event: Event<Value> = serde_json::from_value(json!({
+            "did": "did:plc:test",
+            "kind": "commit",
+            "commit": {
+                "rev": "3ltest",
+                "operation": operation,
+                "collection": collection,
+                "rkey": "self",
+                "record": {"$type": collection, "displayName": "Test User"},
+                "cid": "bafytest"
+            }
+        }))
+        .expect("valid direct event");
+
+        event.commit.expect("commit event").record.expect("record")
+    }
+
+    #[test]
+    fn direct_create_and_update_records_accept_stable_and_legacy_types() {
+        for operation in ["create", "update"] {
+            for record_type in [STABLE_ACTOR_PROFILE, ALPHA_ACTOR_PROFILE] {
+                let record = direct_record(operation, record_type);
+                let parsed = parse_profile_record(&record)
+                    .unwrap_or_else(|error| panic!("{operation} record should parse: {error}"));
+
+                assert_eq!(
+                    parsed.display_name.as_ref().map(|name| name.as_str()),
+                    Some("Test User")
+                );
+            }
+        }
     }
 }

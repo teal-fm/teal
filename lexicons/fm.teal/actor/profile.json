@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.actor.profile",
+  "id": "fm.teal.actor.profile",
   "defs": {
     "main": {
       "type": "record",
@@ -57,7 +57,8 @@
         },
         "type": {
           "type": "string",
-          "description": "The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc."
+          "knownValues": ["artist", "release", "recording"],
+          "description": "The MusicBrainz entity type of the item."
         }
       }
     }

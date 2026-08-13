@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.stats.defs",
+  "id": "fm.teal.stats.defs",
   "defs": {
     "artistView": {
       "type": "object",

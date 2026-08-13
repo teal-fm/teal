@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.actor.getProfile",
-  "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.",
+  "id": "fm.teal.actor.getProfile",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves a profile for an actor DID or handle.",
   "defs": {
     "main": {
       "type": "query",
@@ -12,7 +12,7 @@
           "actor": {
             "type": "string",
             "format": "at-identifier",
-            "description": "The author's DID"
+            "description": "The actor's DID or handle"
           }
         }
       },
@@ -24,7 +24,7 @@
           "properties": {
             "actor": {
               "type": "ref",
-              "ref": "fm.teal.alpha.actor.defs#profileView"
+              "ref": "fm.teal.actor.defs#profileView"
             }
           }
         }

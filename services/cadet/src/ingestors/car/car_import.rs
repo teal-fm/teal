@@ -31,6 +31,7 @@
 //! and use the original rkey from the AT Protocol MST structure.
 
 use crate::ingestors::car::jobs::{queue_keys, CarImportJob};
+use crate::ingestors::teal::normalize_legacy_record_type;
 use crate::redis_client::RedisClient;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -50,6 +51,83 @@ pub struct ExtractedRecord {
     pub collection: String,
     pub rkey: String,
     pub data: serde_json::Value,
+}
+
+const STABLE_PLAY_COLLECTION: &str = "fm.teal.feed.play";
+const STABLE_PROFILE_COLLECTION: &str = "fm.teal.actor.profile";
+const STABLE_STATUS_COLLECTION: &str = "fm.teal.actor.status";
+const LEGACY_PLAY_COLLECTION: &str = "fm.teal.alpha.feed.play";
+const LEGACY_PROFILE_COLLECTION: &str = "fm.teal.alpha.actor.profile";
+const LEGACY_STATUS_COLLECTION: &str = "fm.teal.alpha.actor.status";
+
+/// Return the stable collection handled by the existing Teal ingestor.
+///
+/// Historical CAR files contain records under the alpha namespace. Their
+/// records have the same shape as the stable records, so they can be passed
+/// through the stable ingestors after the collection is normalized.
+fn stable_collection_for(collection: &str) -> Option<&'static str> {
+    match collection {
+        STABLE_PLAY_COLLECTION | LEGACY_PLAY_COLLECTION => Some(STABLE_PLAY_COLLECTION),
+        STABLE_PROFILE_COLLECTION | LEGACY_PROFILE_COLLECTION => Some(STABLE_PROFILE_COLLECTION),
+        STABLE_STATUS_COLLECTION | LEGACY_STATUS_COLLECTION => Some(STABLE_STATUS_COLLECTION),
+        _ => None,
+    }
+}
+
+fn is_teal_record_key(key: &str) -> bool {
+    let Some((collection, rkey)) = key.rsplit_once('/') else {
+        return false;
+    };
+
+    !rkey.is_empty() && stable_collection_for(collection).is_some()
+}
+
+fn parse_teal_key(key: &str) -> Option<(String, String)> {
+    if !is_teal_record_key(key) {
+        return None;
+    }
+
+    let (collection, rkey) = key.rsplit_once('/')?;
+    Some((collection.to_string(), rkey.to_string()))
+}
+
+fn is_legacy_collection(collection: &str) -> bool {
+    matches!(
+        collection,
+        LEGACY_PLAY_COLLECTION | LEGACY_PROFILE_COLLECTION | LEGACY_STATUS_COLLECTION
+    )
+}
+
+/// Drop duplicate stable/alpha records from a repository snapshot.
+///
+/// The namespace is part of a record's `$type`, so compare records after only
+/// normalizing that root NSID. Records with the same canonical collection,
+/// exact rkey, and exact normalized JSON are the same logical record. Prefer
+/// the stable collection when both namespace variants are present.
+fn deduplicate_records(records: Vec<ExtractedRecord>) -> Vec<ExtractedRecord> {
+    let mut deduplicated: Vec<ExtractedRecord> = Vec::with_capacity(records.len());
+
+    for record in records {
+        let canonical_collection = stable_collection_for(&record.collection);
+        let normalized_data = normalize_legacy_record_type(&record.data);
+        let duplicate_index = deduplicated.iter().position(|existing| {
+            stable_collection_for(&existing.collection) == canonical_collection
+                && existing.rkey == record.rkey
+                && normalize_legacy_record_type(&existing.data) == normalized_data
+        });
+
+        if let Some(index) = duplicate_index {
+            if is_legacy_collection(&deduplicated[index].collection)
+                && !is_legacy_collection(&record.collection)
+            {
+                deduplicated[index] = record;
+            }
+        } else {
+            deduplicated.push(record);
+        }
+    }
+
+    deduplicated
 }
 
 /// CAR Import Ingestor handles importing Teal records from CAR files using atmst
@@ -115,8 +193,14 @@ impl CarImportIngestor {
         let records = self
             .extract_records_from_mst(&mst, &data_importer, did)
             .await?;
+        let extracted_count = records.len();
+        let records = deduplicate_records(records);
 
-        info!("Extracted {} records from MST", records.len());
+        info!(
+            "Extracted {} records from MST ({} after namespace deduplication)",
+            extracted_count,
+            records.len()
+        );
 
         // Process each record through the appropriate ingestor
         let mut processed_count = 0;
@@ -159,9 +243,9 @@ impl CarImportIngestor {
             match result {
                 Ok((key, record_cid)) => {
                     // Check if this is a Teal record based on the key pattern
-                    if self.is_teal_record_key(&key) {
+                    if is_teal_record_key(&key) {
                         info!("🎵 Found Teal record: {} -> {}", key, record_cid);
-                        if let Some((collection, rkey)) = self.parse_teal_key(&key) {
+                        if let Some((collection, rkey)) = parse_teal_key(&key) {
                             info!("   Collection: {}, rkey: {}", collection, rkey);
                             // Get the actual record data using the CID
                             match self.get_record_data(&record_cid, car_importer).await {
@@ -247,8 +331,8 @@ impl CarImportIngestor {
             "🔄 Processing {} record: {}",
             record.collection, record.rkey
         );
-        match record.collection.as_str() {
-            "fm.teal.alpha.feed.play" => {
+        match stable_collection_for(&record.collection) {
+            Some(STABLE_PLAY_COLLECTION) => {
                 info!("   📀 Processing play record...");
                 let result = self
                     .process_play_record(&record.data, did, &record.rkey)
@@ -260,7 +344,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.profile" => {
+            Some(STABLE_PROFILE_COLLECTION) => {
                 info!("   👤 Processing profile record...");
                 let result = self
                     .process_profile_record(&record.data, did, &record.rkey)
@@ -272,7 +356,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.status" => {
+            Some(STABLE_STATUS_COLLECTION) => {
                 info!("   📢 Processing status record...");
                 let result = self
                     .process_status_record(&record.data, did, &record.rkey)
@@ -291,29 +375,14 @@ impl CarImportIngestor {
         }
     }
 
-    /// Check if a key represents a Teal record
-    fn is_teal_record_key(&self, key: &str) -> bool {
-        key.starts_with("fm.teal.alpha.") && key.contains("/")
-    }
-
-    /// Parse a Teal MST key to extract collection and rkey
-    fn parse_teal_key(&self, key: &str) -> Option<(String, String)> {
-        if let Some(slash_pos) = key.rfind('/') {
-            let collection = key[..slash_pos].to_string();
-            let rkey = key[slash_pos + 1..].to_string();
-            Some((collection, rkey))
-        } else {
-            None
-        }
-    }
-
     /// Process a play record using the existing PlayIngestor
     async fn process_play_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        let play_record: types::fm_teal::alpha::feed::play::Play =
-            value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(data.clone())?;
+        let data = normalize_legacy_record_type(data);
+        let play_record: types::fm_teal::feed::play::Play =
+            value::from_json_value::<types::fm_teal::feed::play::Play>(data)?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
-        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
+        let uri = super::super::teal::assemble_at_uri(did, STABLE_PLAY_COLLECTION, rkey);
 
         play_ingestor
             .insert_play(
@@ -334,8 +403,9 @@ impl CarImportIngestor {
 
     /// Process a profile record using the existing ActorProfileIngestor
     async fn process_profile_record(&self, data: &Value, did: &str, _rkey: &str) -> Result<()> {
-        let profile_record: types::fm_teal::alpha::actor::profile::Profile =
-            value::from_json_value::<types::fm_teal::alpha::actor::profile::Profile>(data.clone())?;
+        let data = normalize_legacy_record_type(data);
+        let profile_record: types::fm_teal::actor::profile::Profile =
+            value::from_json_value::<types::fm_teal::actor::profile::Profile>(data)?;
 
         let profile_ingestor =
             super::super::teal::actor_profile::ActorProfileIngestor::new(self.sql.clone());
@@ -353,8 +423,9 @@ impl CarImportIngestor {
 
     /// Process a status record using the existing ActorStatusIngestor
     async fn process_status_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
-        let status_record: types::fm_teal::alpha::actor::status::Status =
-            value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(data.clone())?;
+        let data = normalize_legacy_record_type(data);
+        let status_record: types::fm_teal::actor::status::Status =
+            value::from_json_value::<types::fm_teal::actor::status::Status>(data)?;
 
         let status_ingestor =
             super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
@@ -593,7 +664,7 @@ mod tests {
         let mut record = BTreeMap::new();
         record.insert(
             "$type".to_string(),
-            Ipld::String("fm.teal.alpha.feed.play".to_string()),
+            Ipld::String("fm.teal.feed.play".to_string()),
         );
         record.insert(
             "track_name".to_string(),
@@ -615,7 +686,7 @@ mod tests {
         let mut record = BTreeMap::new();
         record.insert(
             "$type".to_string(),
-            Ipld::String("fm.teal.alpha.actor.profile".to_string()),
+            Ipld::String("fm.teal.actor.profile".to_string()),
         );
         record.insert(
             "display_name".to_string(),
@@ -652,32 +723,132 @@ mod tests {
 
     #[test]
     fn test_parse_teal_key() {
-        // This test doesn't need a database connection or async
-        let key = "fm.teal.alpha.feed.play/3k2akjdlkjsf";
+        for collection in [STABLE_PLAY_COLLECTION, LEGACY_PLAY_COLLECTION] {
+            let key = format!("{collection}/3k2akjdlkjsf");
+            let (parsed_collection, rkey) = parse_teal_key(&key).expect("valid Teal key");
 
-        // Test the parsing logic directly
-        if let Some(slash_pos) = key.rfind('/') {
-            let collection = key[..slash_pos].to_string();
-            let rkey = key[slash_pos + 1..].to_string();
-
-            assert_eq!(collection, "fm.teal.alpha.feed.play");
+            assert_eq!(parsed_collection, collection);
             assert_eq!(rkey, "3k2akjdlkjsf");
-        } else {
-            panic!("Should have found slash in key");
         }
     }
 
     #[test]
     fn test_is_teal_record_key() {
-        // Test the logic directly without needing an ingestor instance
-        fn is_teal_record_key(key: &str) -> bool {
-            key.starts_with("fm.teal.alpha.") && key.contains("/")
-        }
-
+        assert!(is_teal_record_key("fm.teal.feed.play/abc123"));
+        assert!(is_teal_record_key("fm.teal.actor.profile/def456"));
         assert!(is_teal_record_key("fm.teal.alpha.feed.play/abc123"));
-        assert!(is_teal_record_key("fm.teal.alpha.profile/def456"));
+        assert!(is_teal_record_key("fm.teal.alpha.actor.profile/def456"));
+        assert!(is_teal_record_key("fm.teal.alpha.actor.status/ghi789"));
         assert!(!is_teal_record_key("app.bsky.feed.post/xyz789"));
-        assert!(!is_teal_record_key("fm.teal.alpha.feed.play")); // No rkey
+        assert!(!is_teal_record_key("fm.teal.feed.play")); // No rkey
+        assert!(!is_teal_record_key("fm.teal.feed.play/")); // Empty rkey
+    }
+
+    #[test]
+    fn test_legacy_collections_route_to_stable_ingestors() {
+        let collections = [
+            (
+                LEGACY_PLAY_COLLECTION,
+                STABLE_PLAY_COLLECTION,
+                "3k2akjdlkjsf",
+            ),
+            (LEGACY_PROFILE_COLLECTION, STABLE_PROFILE_COLLECTION, "self"),
+            (LEGACY_STATUS_COLLECTION, STABLE_STATUS_COLLECTION, "self"),
+        ];
+
+        for (legacy_collection, stable_collection, rkey) in collections {
+            let key = format!("{legacy_collection}/{rkey}");
+            let (parsed_collection, parsed_rkey) =
+                parse_teal_key(&key).expect("legacy Teal record should be retained");
+
+            assert_eq!(parsed_collection, legacy_collection);
+            assert_eq!(parsed_rkey, rkey);
+            assert_eq!(
+                stable_collection_for(&parsed_collection),
+                Some(stable_collection)
+            );
+            assert_eq!(
+                crate::ingestors::teal::assemble_at_uri(
+                    "did:plc:historical",
+                    stable_collection_for(&parsed_collection).unwrap(),
+                    &parsed_rkey,
+                ),
+                format!("at://did:plc:historical/{stable_collection}/{rkey}"),
+            );
+        }
+    }
+
+    #[test]
+    fn test_normalize_legacy_record_type() {
+        let data = serde_json::json!({
+            "$type": "fm.teal.alpha.actor.status",
+            "time": "2024-01-01T00:00:00Z"
+        });
+
+        let normalized = normalize_legacy_record_type(&data);
+        assert_eq!(normalized["$type"], "fm.teal.actor.status");
+    }
+
+    #[test]
+    fn test_deduplicate_identical_alpha_and_stable_records_prefers_stable() {
+        let record_fields = serde_json::json!({
+            "trackName": "Same recording",
+            "playedTime": "2024-01-01T00:00:00Z"
+        });
+        let mut legacy_data = record_fields.clone();
+        legacy_data["$type"] = serde_json::json!(LEGACY_PLAY_COLLECTION);
+        let mut stable_data = record_fields;
+        stable_data["$type"] = serde_json::json!(STABLE_PLAY_COLLECTION);
+
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: LEGACY_PLAY_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: legacy_data,
+            },
+            ExtractedRecord {
+                collection: STABLE_PLAY_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: stable_data,
+            },
+        ]);
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].collection, STABLE_PLAY_COLLECTION);
+        assert_eq!(records[0].rkey, "same-rkey");
+        assert_eq!(records[0].data["$type"], STABLE_PLAY_COLLECTION);
+    }
+
+    #[test]
+    fn test_deduplicate_keeps_different_content_or_rkeys() {
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: LEGACY_STATUS_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: serde_json::json!({
+                    "$type": LEGACY_STATUS_COLLECTION,
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: STABLE_STATUS_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: serde_json::json!({
+                    "$type": STABLE_STATUS_COLLECTION,
+                    "time": "2024-01-01T00:01:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: STABLE_STATUS_COLLECTION.to_string(),
+                rkey: "different-rkey".to_string(),
+                data: serde_json::json!({
+                    "$type": STABLE_STATUS_COLLECTION,
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+        ]);
+
+        assert_eq!(records.len(), 3);
     }
 
     #[test]
@@ -689,7 +860,7 @@ mod tests {
         let mut record = BTreeMap::new();
         record.insert(
             "$type".to_string(),
-            Ipld::String("fm.teal.alpha.feed.play".to_string()),
+            Ipld::String("fm.teal.feed.play".to_string()),
         );
         record.insert(
             "track_name".to_string(),
@@ -725,7 +896,7 @@ mod tests {
         let json_result = ipld_to_json(&play_record);
         assert!(json_result.is_ok());
         let json = json_result.unwrap();
-        assert_eq!(json["$type"], "fm.teal.alpha.feed.play");
+        assert_eq!(json["$type"], "fm.teal.feed.play");
         assert_eq!(json["track_name"], "Test Song");
         assert_eq!(json["duration"], 180000);
     }
@@ -746,7 +917,7 @@ mod tests {
         for cid in importer.cids() {
             if let Ok(Ipld::Map(map)) = importer.decode_cbor(&cid) {
                 if let Some(Ipld::String(record_type)) = map.get("$type") {
-                    assert!(record_type.starts_with("fm.teal.alpha."));
+                    assert!(record_type.starts_with("fm.teal."));
                     println!("Found Teal record: {}", record_type);
                 }
             }

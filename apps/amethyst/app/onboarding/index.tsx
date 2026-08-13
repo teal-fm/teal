@@ -4,11 +4,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import ProgressDots from "@/components/onboarding/progressDots";
 import { Text } from "@/components/ui/text"; // Your UI components
-
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
+import {
+  getBlobHash,
+  LEGACY_PROFILE_COLLECTION,
+  LEGACY_PROFILE_STATUS_COLLECTION,
+  readRepoRecordWithLegacyFallback,
+  STABLE_PROFILE_COLLECTION,
+  STABLE_PROFILE_STATUS_COLLECTION,
+} from "@/lib/atp/onboardingRecords";
 import { useStore } from "@/stores/mainStore";
 
-import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
-import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
+import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/actor/profileStatus";
 
 import DescriptionPage from "./descriptionPage";
 import DisplayNamePage from "./displayNamePage";
@@ -32,30 +40,33 @@ export default function OnboardingPage() {
 
   const [submissionStep, setSubmissionStep] = useState(0);
 
-
   // Profile status hooks - must be at top level
-  const [profileStatus, setProfileStatus] = useState<ProfileStatusRecord | null>(null);
+  const [profileStatus, setProfileStatus] =
+    useState<ProfileStatusRecord | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
   const profile = useStore((store) => store.profiles);
 
-  // Check profile status
+  // Read both records with a legacy fallback so an existing user is never
+  // treated as a new user just because the namespace changed.
   React.useEffect(() => {
     const checkProfileStatus = async () => {
       if (!agent) return;
 
       try {
-        const res = await agent.call("com.atproto.repo.getRecord", {
-          repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
-          rkey: "self",
-        });
-        setProfileStatus(res.data.value as ProfileStatusRecord);
-      } catch {
-        // If no record exists, user hasn't completed onboarding
+        const result =
+          await readRepoRecordWithLegacyFallback<ProfileStatusRecord>(
+            agent,
+            STABLE_PROFILE_STATUS_COLLECTION,
+            LEGACY_PROFILE_STATUS_COLLECTION,
+          );
+        setProfileStatus(result?.record ?? null);
+      } catch (error) {
+        console.error("Error fetching profile status:", error);
         setProfileStatus(null);
       } finally {
         setStatusLoading(false);
@@ -65,7 +76,47 @@ export default function OnboardingPage() {
     checkProfileStatus();
   }, [agent]);
 
-  const handleImageSelectionComplete = (avatar: string | undefined, banner: string | undefined) => {
+  React.useEffect(() => {
+    const loadProfile = async () => {
+      if (!agent) return;
+
+      try {
+        const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
+          agent,
+          STABLE_PROFILE_COLLECTION,
+          LEGACY_PROFILE_COLLECTION,
+        );
+        if (result) {
+          setDisplayName(result.record.displayName ?? "");
+          setDescription(result.record.description ?? "");
+
+          const avatarHash = getBlobHash(result.record.avatar);
+          const bannerHash = getBlobHash(result.record.banner);
+          setAvatarUri(
+            avatarHash
+              ? (getImageCdnLink({ did: agent.did!, hash: avatarHash }) ?? "")
+              : "",
+          );
+          setBannerUri(
+            bannerHash
+              ? (getImageCdnLink({ did: agent.did!, hash: bannerHash }) ?? "")
+              : "",
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [agent]);
+
+  const handleImageSelectionComplete = (
+    avatar: string | undefined,
+    banner: string | undefined,
+  ) => {
     setAvatarUri(avatar ?? "");
     setBannerUri(banner ?? "");
     onComplete({ displayName, description }, avatar, banner);
@@ -94,13 +145,18 @@ export default function OnboardingPage() {
     let currentUser: ProfileRecord | undefined;
     let cid: string | undefined;
     try {
-      const res = await agent.call("com.atproto.repo.getRecord", {
-        repo: agent.did,
-        collection: "fm.teal.alpha.actor.profile",
-        rkey: "self",
-      });
-      currentUser = res.data.value;
-      cid = res.data.cid;
+      const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
+        agent,
+        STABLE_PROFILE_COLLECTION,
+        LEGACY_PROFILE_COLLECTION,
+      );
+      currentUser = result?.record;
+      // A legacy record must be copied into the stable collection, not
+      // updated in place. Its blob refs are retained below.
+      cid =
+        result?.collection === STABLE_PROFILE_COLLECTION
+          ? result.cid
+          : undefined;
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
@@ -114,7 +170,8 @@ export default function OnboardingPage() {
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["avatar"];
+        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
+          .data.blob as unknown as ProfileRecord["avatar"];
       }
     }
     if (newBannerUri) {
@@ -123,40 +180,41 @@ export default function OnboardingPage() {
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["banner"];
+        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
+          .data.blob as unknown as ProfileRecord["banner"];
       }
     }
 
     setSubmissionStep(4);
 
-    let record: ProfileRecord = {
+    const record: ProfileRecord = {
+      ...currentUser,
+      $type: STABLE_PROFILE_COLLECTION,
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
       avatar: newAvatarBlob,
       banner: newBannerBlob,
     };
 
-    let post;
-
     if (cid) {
-      post = await agent.call(
+      await agent.call(
         "com.atproto.repo.putRecord",
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: STABLE_PROFILE_COLLECTION,
           rkey: "self",
           record,
           swapRecord: cid,
         },
       );
     } else {
-      post = await agent.call(
+      await agent.call(
         "com.atproto.repo.createRecord",
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: STABLE_PROFILE_COLLECTION,
           rkey: "self",
           record,
         },
@@ -165,6 +223,7 @@ export default function OnboardingPage() {
 
     // Update profile status to mark onboarding as completed
     const profileStatusRecord: ProfileStatusRecord = {
+      $type: STABLE_PROFILE_STATUS_COLLECTION,
       completedOnboarding: "profileOnboarding",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -176,7 +235,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
+          collection: STABLE_PROFILE_STATUS_COLLECTION,
           rkey: "self",
           record: profileStatusRecord,
         },
@@ -189,7 +248,7 @@ export default function OnboardingPage() {
           {},
           {
             repo: agent.did,
-            collection: "fm.teal.alpha.actor.profileStatus",
+            collection: STABLE_PROFILE_STATUS_COLLECTION,
             rkey: "self",
             record: {
               ...profileStatusRecord,
@@ -214,7 +273,7 @@ export default function OnboardingPage() {
     return <div>Loading...</div>;
   }
 
-  if (statusLoading) {
+  if (statusLoading || profileLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#0000ff" />

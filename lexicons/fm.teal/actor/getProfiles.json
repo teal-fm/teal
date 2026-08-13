@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.actor.getProfiles",
+  "id": "fm.teal.actor.getProfiles",
   "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves the associated profile.",
   "defs": {
     "main": {
@@ -15,7 +15,7 @@
               "type": "string",
               "format": "at-identifier"
             },
-            "description": "Array of actor DIDs"
+            "description": "Array of actor DIDs or handles"
           }
         }
       },
@@ -29,7 +29,7 @@
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "fm.teal.alpha.actor.defs#miniProfileView"
+                "ref": "fm.teal.actor.defs#miniProfileView"
               }
             }
           }

@@ -35,3 +35,7 @@ pub fn time_to_chrono_utc(dt: time::OffsetDateTime) -> chrono::DateTime<chrono::
 pub fn mbid_uri(mbid: Uuid) -> UriValue {
     UriValue::Any(SmolStr::new(format!("mbid:{mbid}")))
 }
+
+pub fn uri_value(value: String) -> UriValue {
+    UriValue::Any(SmolStr::new(value))
+}

@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.actor.profileStatus",
+  "id": "fm.teal.actor.profileStatus",
   "defs": {
     "main": {
       "type": "record",

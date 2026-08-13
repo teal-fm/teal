@@ -48,41 +48,46 @@ async fn main() {
         .expect("Could not get PostgreSQL pool");
 
     let opts = JetstreamOptions::builder()
-        .wanted_collections(
-            [
-                "fm.teal.alpha.feed.play",
-                "fm.teal.alpha.actor.profile",
-                "fm.teal.alpha.actor.status",
-                "com.atproto.repo.importRepo",
-            ]
-            .iter()
-            .map(|collection| collection.to_string())
-            .collect(),
-        )
+        .wanted_collections(ingestors::teal::wanted_collections())
         .build();
 
     let jetstream = JetstreamConnection::new(opts);
 
     let mut ingestors: HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> = HashMap::new();
 
-    ingestors.insert(
-        "fm.teal.alpha.feed.play".to_string(),
-        Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
-    );
+    for collection in [
+        ingestors::teal::STABLE_FEED_PLAY,
+        ingestors::teal::ALPHA_FEED_PLAY,
+    ] {
+        ingestors.insert(
+            collection.to_string(),
+            Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
+        );
+    }
 
-    ingestors.insert(
-        "fm.teal.alpha.actor.profile".to_string(),
-        Box::new(ingestors::teal::actor_profile::ActorProfileIngestor::new(
-            pool.clone(),
-        )),
-    );
+    for collection in [
+        ingestors::teal::STABLE_ACTOR_PROFILE,
+        ingestors::teal::ALPHA_ACTOR_PROFILE,
+    ] {
+        ingestors.insert(
+            collection.to_string(),
+            Box::new(ingestors::teal::actor_profile::ActorProfileIngestor::new(
+                pool.clone(),
+            )),
+        );
+    }
 
-    ingestors.insert(
-        "fm.teal.alpha.actor.status".to_string(),
-        Box::new(ingestors::teal::actor_status::ActorStatusIngestor::new(
-            pool.clone(),
-        )),
-    );
+    for collection in [
+        ingestors::teal::STABLE_ACTOR_STATUS,
+        ingestors::teal::ALPHA_ACTOR_STATUS,
+    ] {
+        ingestors.insert(
+            collection.to_string(),
+            Box::new(ingestors::teal::actor_status::ActorStatusIngestor::new(
+                pool.clone(),
+            )),
+        );
+    }
 
     ingestors.insert(
         "com.atproto.repo.importRepo".to_string(),

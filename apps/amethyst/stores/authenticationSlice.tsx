@@ -3,7 +3,7 @@ import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
 import * as Lexicons from "@teal/lexicons/src/lexicons";
-import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile";
+import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/actor/getProfile";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { StateCreator } from "./mainStore";
@@ -185,14 +185,14 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           let tealDid = get().tealDid;
           let tealProfile = await agent
             .call(
-              "fm.teal.alpha.actor.getProfile",
+              "fm.teal.actor.getProfile",
               { actor: agent?.did },
               {},
               { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
             )
             .then((profile) => {
               console.log(profile);
-              return profile.data.agent || null;
+              return profile.data.actor || null;
             });
 
           set({

@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.feed.getActorFeed",
+  "id": "fm.teal.feed.getActorFeed",
   "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves multiple plays from the index or via an author's DID.",
   "defs": {
     "main": {
@@ -11,7 +11,7 @@
         "properties": {
           "authorDID": {
             "type": "string",
-            "format": "at-identifier",
+            "format": "did",
             "description": "The author's DID for the play"
           },
           "cursor": {
@@ -34,7 +34,7 @@
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "fm.teal.alpha.feed.defs#playView"
+                "ref": "fm.teal.feed.defs#playView"
               }
             }
           }
