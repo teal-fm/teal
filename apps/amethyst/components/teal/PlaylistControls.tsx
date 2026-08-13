@@ -18,8 +18,8 @@ import { useStore } from "@/stores/mainStore";
 import { RichText as AtprotoRichText } from "@atproto/api";
 import { Music2, Search } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
-import type { SongResult } from "@teal/lexicons/src/types/fm/teal/alpha/search/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
+import type { SongResult } from "@teal/lexicons/src/types/fm/teal/search/defs";
 
 type SearchSource = "history" | "musicbrainz";
 
@@ -104,7 +104,7 @@ function toTrackRecord(track: TrackViewLike) {
     releaseName: track.releaseName,
     releaseMbId: track.releaseMbId,
     isrc: track.isrc,
-    originUrl: track.originUrl,
+    originUri: track.originUri,
   };
 }
 
@@ -125,7 +125,7 @@ export function PlaylistCreator({
     setError(null);
     try {
       const record = {
-        $type: "fm.teal.alpha.feed.social.playlist",
+        $type: "fm.teal.feed.social.playlist",
         name: name.trim(),
         description: description.trim() || undefined,
         descriptionFacets: undefined as unknown[] | undefined,
@@ -142,7 +142,7 @@ export function PlaylistCreator({
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.feed.social.playlist",
+          collection: "fm.teal.feed.social.playlist",
           record,
         },
       );
@@ -252,7 +252,7 @@ export function AddTrackButton({
     try {
       const trackToAdd = resolveTrack ? await resolveTrack() : track;
       const record = {
-        $type: "fm.teal.alpha.feed.social.playlistItem",
+        $type: "fm.teal.feed.social.playlistItem",
         subject: { uri: playlist.uri, cid: playlist.cid },
         track: toTrackRecord(trackToAdd),
         order,
@@ -263,7 +263,7 @@ export function AddTrackButton({
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.feed.social.playlistItem",
+          collection: "fm.teal.feed.social.playlistItem",
           record,
         },
       );

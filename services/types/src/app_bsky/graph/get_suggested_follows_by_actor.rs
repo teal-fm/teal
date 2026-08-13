@@ -10,7 +10,7 @@ use alloc::collections::BTreeMap;
 
 #[allow(unused_imports)]
 use core::marker::PhantomData;
-use jacquard_common::{BosStr, DefaultStr, FromStaticStr};
+use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::ident::AtIdentifier;
 use jacquard_common::types::value::Data;
@@ -28,13 +28,16 @@ pub struct GetSuggestedFollowsByActor<S: BosStr = DefaultStr> {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetSuggestedFollowsByActorOutput<S: BosStr = DefaultStr> {
-    ///If true, response has fallen-back to generic results, and is not scoped using relativeToDid  Defaults to `false`.
+    ///DEPRECATED, unused. Previously: if true, response has fallen-back to generic results, and is not scoped using relativeToDid  Defaults to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default = "_default_get_suggested_follows_by_actor_output_is_fallback")]
     pub is_fallback: Option<bool>,
-    ///Snowflake for this recommendation, use when submitting recommendation events.
+    ///DEPRECATED: use recIdStr instead.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rec_id: Option<i64>,
+    ///Snowflake for this recommendation, use when submitting recommendation events.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rec_id_str: Option<S>,
     pub suggestions: Vec<ProfileView<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,

@@ -1,4 +1,4 @@
-import { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+import { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
 
 // Re-export searchMusicbrainz from the orchestrator module.
 // This keeps backward compatibility for existing imports.

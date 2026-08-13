@@ -21,7 +21,7 @@ import {
 import { musicAlbumHref, musicArtistHref, routePart } from "@/lib/teal/routes";
 import { Disc3 } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 import type { SocialPostView } from "@/lib/teal/api";
 
 function sameTrack(candidate: PlayView, selected: PlayView) {

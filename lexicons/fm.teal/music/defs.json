@@ -1,0 +1,133 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.music.defs",
+  "defs": {
+    "artistView": {
+      "type": "object",
+      "required": ["name", "playCount", "albums"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "format": "uri",
+          "description": "MusicBrainz artist ID URI, formatted as mbid:<uuid>"
+        },
+        "name": {
+          "type": "string",
+          "description": "Artist name"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Total indexed listens for this artist"
+        },
+        "albums": {
+          "type": "array",
+          "items": {
+            "type": "ref",
+            "ref": "#albumSummary"
+          }
+        }
+      }
+    },
+    "artistListenerView": {
+      "type": "object",
+      "required": ["actor", "playCount"],
+      "properties": {
+        "actor": {
+          "type": "ref",
+          "ref": "fm.teal.actor.defs#miniProfileView",
+          "description": "The listener ranked on this artist leaderboard"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Number of indexed listens by this actor for the artist"
+        }
+      }
+    },
+    "albumView": {
+      "type": "object",
+      "required": ["mbid", "name", "artistName", "playCount", "tracks"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "format": "uri",
+          "description": "MusicBrainz release ID URI, formatted as mbid:<uuid>"
+        },
+        "name": {
+          "type": "string",
+          "description": "Release title"
+        },
+        "artistMbid": {
+          "type": "string",
+          "format": "uri",
+          "description": "MusicBrainz ID URI for a representative release artist"
+        },
+        "artistName": {
+          "type": "string",
+          "description": "Display name for the release artist"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Total indexed listens for tracks on this release"
+        },
+        "tracks": {
+          "type": "array",
+          "items": {
+            "type": "ref",
+            "ref": "#trackSummary"
+          }
+        }
+      }
+    },
+    "albumSummary": {
+      "type": "object",
+      "required": ["mbid", "name", "artistName", "playCount"],
+      "properties": {
+        "mbid": {
+          "type": "string",
+          "format": "uri"
+        },
+        "name": {
+          "type": "string"
+        },
+        "artistMbid": {
+          "type": "string",
+          "format": "uri"
+        },
+        "artistName": {
+          "type": "string"
+        },
+        "playCount": {
+          "type": "integer"
+        },
+        "releaseType": {
+          "type": "string",
+          "knownValues": ["album", "single", "ep", "other"]
+        }
+      }
+    },
+    "trackSummary": {
+      "type": "object",
+      "required": ["uri", "name", "artistName", "playCount"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "Representative listen URI for opening the track page"
+        },
+        "recordingMbid": {
+          "type": "string",
+          "format": "uri"
+        },
+        "name": {
+          "type": "string"
+        },
+        "artistName": {
+          "type": "string"
+        },
+        "playCount": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

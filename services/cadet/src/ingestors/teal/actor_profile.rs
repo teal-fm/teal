@@ -5,7 +5,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use tracing::info;
 
-use crate::resolve::resolve_identity;
+use crate::{ingestors::teal::normalize_legacy_record_type, resolve::resolve_identity};
 
 pub struct ActorProfileIngestor {
     sql: PgPool,
@@ -17,9 +17,11 @@ fn get_blob_ref(blob_ref: &BlobRef) -> String {
 
 pub(crate) fn deserialize_profile(
     value: &Value,
-) -> anyhow::Result<types::fm_teal::alpha::actor::profile::Profile> {
+) -> anyhow::Result<types::fm_teal::actor::profile::Profile> {
     // Jacquard's CID link visitor needs borrowed JSON keys for blob refs.
-    Ok(serde_json::from_str(&serde_json::to_string(value)?)?)
+    Ok(serde_json::from_str(&serde_json::to_string(
+        &normalize_legacy_record_type(value),
+    )?)?)
 }
 
 impl ActorProfileIngestor {
@@ -30,7 +32,7 @@ impl ActorProfileIngestor {
     pub async fn insert_profile(
         &self,
         provided_did: &str,
-        profile: &types::fm_teal::alpha::actor::profile::Profile,
+        profile: &types::fm_teal::actor::profile::Profile,
     ) -> anyhow::Result<()> {
         // TODO: cache the doc for like 8 hours or something
         let did = resolve_identity(provided_did, "https://public.api.bsky.app").await?;
@@ -49,7 +51,7 @@ impl ActorProfileIngestor {
         &self,
         did: &str,
         handle: Option<&str>,
-        profile: &types::fm_teal::alpha::actor::profile::Profile,
+        profile: &types::fm_teal::actor::profile::Profile,
     ) -> anyhow::Result<()> {
         let created_time = profile
             .created_at
@@ -155,7 +157,7 @@ mod tests {
     fn profile(
         display_name: &str,
         description: &str,
-    ) -> anyhow::Result<types::fm_teal::alpha::actor::profile::Profile> {
+    ) -> anyhow::Result<types::fm_teal::actor::profile::Profile> {
         deserialize_profile(&json!({
             "$type": "fm.teal.alpha.actor.profile",
             "displayName": display_name,

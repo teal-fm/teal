@@ -215,10 +215,10 @@ impl<S: BosStr> LexiconSchema for Threadgate<S> {
         }
         if let Some(ref value) = self.hidden_replies {
             #[allow(unused_comparisons)]
-            if value.len() > 50usize {
+            if value.len() > 300usize {
                 return Err(ConstraintError::MaxLength {
                     path: ValidationPath::from_field("hidden_replies"),
-                    max: 50usize,
+                    max: 300usize,
                     actual: value.len(),
                 });
             }
@@ -359,7 +359,7 @@ fn lexicon_doc_app_bsky_feed_threadgate() -> LexiconDoc<'static> {
                                         format: Some(LexStringFormat::AtUri),
                                         ..Default::default()
                                     }),
-                                    max_length: Some(50usize),
+                                    max_length: Some(300usize),
                                     ..Default::default()
                                 }),
                             );

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde::Serialize;
 use serde_json::Value;
-use types::fm_teal::alpha::actor::MiniProfileView;
+use types::fm_teal::actor::MiniProfileView;
 
 use super::{mini_profile, pg::PgDataSource, time_to_chrono_utc, utc_to_atrium_datetime};
 

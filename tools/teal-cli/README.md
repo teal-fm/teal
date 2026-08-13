@@ -123,7 +123,7 @@ teal rotate --name repo --backup-dir ./backups
 
 The CAR explorer can analyze AT Protocol archives and identify:
 
-- **Teal Records**: Music plays (`fm.teal.alpha.feed.play`), profiles (`fm.teal.alpha.actor.profile`), and status updates
+- **Teal Records**: Music plays (`fm.teal.feed.play`), profiles (`fm.teal.actor.profile`), and status updates
 - **AT Protocol Records**: BlueSky posts, likes, follows, and other social data
 - **Commit Operations**: Repository changes and metadata
 - **IPLD Structure**: Content addressing and linking
@@ -142,15 +142,15 @@ The CAR explorer can analyze AT Protocol archives and identify:
 📋 Record Types:
    app.bsky.feed.like: 11034
    app.bsky.feed.post: 7510  
-   fm.teal.alpha.feed.play: 2605
-   fm.teal.alpha.actor.profile: 1
+   fm.teal.feed.play: 2605
+   fm.teal.actor.profile: 1
 
 🎵 Teal Records Found:
-   fm.teal.alpha.feed.play: 2605
-   fm.teal.alpha.actor.profile: 1
+   fm.teal.feed.play: 2605
+   fm.teal.actor.profile: 1
 
 🔍 Sample Teal Records:
-   1. fm.teal.alpha.feed.play (bafyreigmu...)
+   1. fm.teal.feed.play (bafyreigmu...)
       🎵 Track: Bohemian Rhapsody
       🎤 Artists: Queen
       ⏱️  Duration: 355000ms
@@ -163,7 +163,7 @@ The CAR explorer can analyze AT Protocol archives and identify:
   {
     "cid": "bafyreigmuwliezhxczoxgxq5hjtsdzaj3jl54kg...",
     "data": {
-      "$type": "fm.teal.alpha.feed.play",
+      "$type": "fm.teal.feed.play",
       "track_name": "Bohemian Rhapsody",
       "artist_names": ["Queen"],
       "duration": 355000,
@@ -225,7 +225,7 @@ teal car search --file nat.car --query "bohemian rhapsody"
 teal car export --file nat.car --output ./music_data
 
 # View exported play records
-cat ./music_data/fm_teal_alpha_feed_play.json | jq '.[0]'
+cat ./music_data/fm_teal_feed_play.json | jq '.[0]'
 ```
 
 ### Quick setup

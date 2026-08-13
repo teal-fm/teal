@@ -24,10 +24,12 @@ use jacquard_lexicon::schema::LexiconSchema;
 use jacquard_lexicon::validation::{ConstraintError, ValidationPath};
 use serde::{Serialize, Deserialize};
 use crate::app_bsky::embed::external::ExternalRecord;
+use crate::app_bsky::embed::gallery::Gallery;
 use crate::app_bsky::embed::images::Images;
 use crate::app_bsky::embed::record::Record;
 use crate::app_bsky::embed::video::Video;
 use crate::app_bsky::embed::external;
+use crate::app_bsky::embed::gallery;
 use crate::app_bsky::embed::images;
 use crate::app_bsky::embed::record;
 use crate::app_bsky::embed::video;
@@ -50,6 +52,8 @@ pub enum RecordWithMediaMedia<S: BosStr = DefaultStr> {
     Images(Box<Images<S>>),
     #[serde(rename = "app.bsky.embed.video")]
     Video(Box<Video<S>>),
+    #[serde(rename = "app.bsky.embed.gallery")]
+    Gallery(Box<Gallery<S>>),
     #[serde(rename = "app.bsky.embed.external")]
     External(Box<ExternalRecord<S>>),
 }
@@ -73,6 +77,8 @@ pub enum ViewMedia<S: BosStr = DefaultStr> {
     ImagesView(Box<images::View<S>>),
     #[serde(rename = "app.bsky.embed.video#view")]
     VideoView(Box<video::View<S>>),
+    #[serde(rename = "app.bsky.embed.gallery#view")]
+    GalleryView(Box<gallery::View<S>>),
     #[serde(rename = "app.bsky.embed.external#view")]
     ExternalView(Box<external::View<S>>),
 }
@@ -117,37 +123,37 @@ pub mod record_with_media_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Media;
         type Record;
+        type Media;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Media = Unset;
         type Record = Unset;
-    }
-    ///State transition - sets the `media` field to Set
-    pub struct SetMedia<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMedia<St> {}
-    impl<St: State> State for SetMedia<St> {
-        type Media = Set<members::media>;
-        type Record = St::Record;
+        type Media = Unset;
     }
     ///State transition - sets the `record` field to Set
     pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetRecord<St> {}
     impl<St: State> State for SetRecord<St> {
-        type Media = St::Media;
         type Record = Set<members::record>;
+        type Media = St::Media;
+    }
+    ///State transition - sets the `media` field to Set
+    pub struct SetMedia<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMedia<St> {}
+    impl<St: State> State for SetMedia<St> {
+        type Record = St::Record;
+        type Media = Set<members::media>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `media` field
-        pub struct media(());
         ///Marker type for the `record` field
         pub struct record(());
+        ///Marker type for the `media` field
+        pub struct media(());
     }
 }
 
@@ -217,8 +223,8 @@ where
 impl<S: BosStr, St> RecordWithMediaBuilder<S, St>
 where
     St: record_with_media_state::State,
-    St::Media: record_with_media_state::IsSet,
     St::Record: record_with_media_state::IsSet,
+    St::Media: record_with_media_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RecordWithMedia<S> {
@@ -266,6 +272,7 @@ fn lexicon_doc_app_bsky_embed_recordWithMedia() -> LexiconDoc<'static> {
                                 refs: vec![
                                     CowStr::new_static("app.bsky.embed.images"),
                                     CowStr::new_static("app.bsky.embed.video"),
+                                    CowStr::new_static("app.bsky.embed.gallery"),
                                     CowStr::new_static("app.bsky.embed.external")
                                 ],
                                 ..Default::default()
@@ -298,6 +305,7 @@ fn lexicon_doc_app_bsky_embed_recordWithMedia() -> LexiconDoc<'static> {
                                 refs: vec![
                                     CowStr::new_static("app.bsky.embed.images#view"),
                                     CowStr::new_static("app.bsky.embed.video#view"),
+                                    CowStr::new_static("app.bsky.embed.gallery#view"),
                                     CowStr::new_static("app.bsky.embed.external#view")
                                 ],
                                 ..Default::default()
@@ -331,37 +339,37 @@ pub mod view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Media;
         type Record;
+        type Media;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Media = Unset;
         type Record = Unset;
-    }
-    ///State transition - sets the `media` field to Set
-    pub struct SetMedia<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMedia<St> {}
-    impl<St: State> State for SetMedia<St> {
-        type Media = Set<members::media>;
-        type Record = St::Record;
+        type Media = Unset;
     }
     ///State transition - sets the `record` field to Set
     pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetRecord<St> {}
     impl<St: State> State for SetRecord<St> {
-        type Media = St::Media;
         type Record = Set<members::record>;
+        type Media = St::Media;
+    }
+    ///State transition - sets the `media` field to Set
+    pub struct SetMedia<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMedia<St> {}
+    impl<St: State> State for SetMedia<St> {
+        type Record = St::Record;
+        type Media = Set<members::media>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `media` field
-        pub struct media(());
         ///Marker type for the `record` field
         pub struct record(());
+        ///Marker type for the `media` field
+        pub struct media(());
     }
 }
 
@@ -431,8 +439,8 @@ where
 impl<S: BosStr, St> ViewBuilder<S, St>
 where
     St: view_state::State,
-    St::Media: view_state::IsSet,
     St::Record: view_state::IsSet,
+    St::Media: view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> View<S> {

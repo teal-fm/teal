@@ -20,7 +20,7 @@ teal/
 │   ├── satellite/         # Processing service
 │   ├── types/             # Shared types
 │   └── migrations/        # SQLx migrations
-├── lexicons/fm.teal.alpha/ # AT Protocol schemas
+├── lexicons/fm.teal/ # AT Protocol schemas
 │   ├── feed/              # Music play types
 │   ├── actor/             # Profile types
 │   └── stats/             # Analytics
@@ -53,7 +53,7 @@ profiles (did TEXT, display_name TEXT, description TEXT, avatar BLOB, banner BLO
 ```
 
 ## AT Protocol Integration
-### Music Play Schema (`fm.teal.alpha.feed.play`)
+### Music Play Schema (`fm.teal.feed.play`)
 ```json
 {
   "trackName": "string (required)",
@@ -66,7 +66,7 @@ profiles (did TEXT, display_name TEXT, description TEXT, avatar BLOB, banner BLO
 }
 ```
 
-### Profile Schema (`fm.teal.alpha.actor.profile`)
+### Profile Schema (`fm.teal.actor.profile`)
 ```json
 {
   "displayName": "string", "description": "string",
@@ -175,7 +175,7 @@ For public-preview changes, also verify:
 
 ```bash
 curl --fail https://<tunnel-host>/client-metadata.json
-curl --fail "https://<tunnel-host>/xrpc/fm.teal.alpha.stats.getLatest?limit=5"
+curl --fail "https://<tunnel-host>/xrpc/fm.teal.stats.getLatest?limit=5"
 ```
 
 ## Deployment

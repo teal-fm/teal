@@ -1,13 +1,13 @@
-use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use axum::{extract::Query, http::StatusCode, response::IntoResponse, routing::get, Extension};
 use jacquard_common::types::string::Did;
 use jacquard_common::IntoStatic;
 use serde::Deserialize;
-use types::fm_teal::alpha::search::get_results::GetResultsOutput;
+use types::fm_teal::search::get_results::GetResultsOutput;
 
 use crate::ctx::Context;
 
 pub fn search_routes() -> axum::Router {
-    axum::Router::new().route("/fm.teal.alpha.search.getResults", get(get_results))
+    axum::Router::new().route("/fm.teal.search.getResults", get(get_results))
 }
 
 #[derive(Deserialize)]
@@ -19,7 +19,7 @@ pub struct GetResultsQuery {
 
 pub async fn get_results(
     Extension(ctx): Extension<Context>,
-    axum::extract::Query(query): axum::extract::Query<GetResultsQuery>,
+    Query(query): Query<GetResultsQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let query_text = query.q.trim();
     if query_text.is_empty() {
@@ -38,7 +38,12 @@ pub async fn get_results(
         .map(|actor| {
             Did::<String>::new_owned(actor)
                 .map(|did| did.to_string())
-                .map_err(|_| (StatusCode::BAD_REQUEST, "actor must be a valid DID".to_string()))
+                .map_err(|_| {
+                    (
+                        StatusCode::BAD_REQUEST,
+                        "actor must be a valid DID".to_string(),
+                    )
+                })
         })
         .transpose()?;
 

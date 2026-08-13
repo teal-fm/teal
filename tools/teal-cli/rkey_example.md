@@ -19,7 +19,7 @@ Repository Structure:
 
 ```json
 {
-  "$type": "fm.teal.alpha.feed.play",
+  "$type": "fm.teal.feed.play",
   "track_name": "Bohemian Rhapsody",
   "artist_names": ["Queen"],
   "duration": 355000,
@@ -36,12 +36,12 @@ Repository Structure:
   "ops": [
     {
       "action": "create",
-      "path": "fm.teal.alpha.feed.play/3k2akjdlkjsf",  // ← collection/rkey
+      "path": "fm.teal.feed.play/3k2akjdlkjsf",  // ← collection/rkey
       "cid": "bafyrei123..."  // ← points to the record above
     },
     {
       "action": "create", 
-      "path": "fm.teal.alpha.actor.profile/self",
+      "path": "fm.teal.actor.profile/self",
       "cid": "bafyrei456..."
     }
   ],
@@ -78,14 +78,14 @@ fn extract_rkeys_from_commits(commits: &[CommitInfo]) -> HashMap<String, String>
 
 1. **Find commit blocks** in CAR file
 2. **Extract operations** from commit IPLD
-3. **Parse paths** like `"fm.teal.alpha.feed.play/3k2akjdlkjsf"`
+3. **Parse paths** like `"fm.teal.feed.play/3k2akjdlkjsf"`
 4. **Map CID → rkey**: `bafyrei123... → 3k2akjdlkjsf`
 5. **Use rkey** when processing records
 
 ## Why This Matters
 
 The rkey is essential for:
-- **AT URI construction**: `at://did:plc:user123/fm.teal.alpha.feed.play/3k2akjdlkjsf`
+- **AT URI construction**: `at://did:plc:user123/fm.teal.feed.play/3k2akjdlkjsf`
 - **Record identity**: Uniquely identifies the record within the collection
 - **Data integrity**: Maintains proper AT Protocol addressing
 

@@ -35,9 +35,12 @@ pub struct GetSuggestionsOutput<S: BosStr = DefaultStr> {
     pub actors: Vec<ProfileView<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Snowflake for this recommendation, use when submitting recommendation events.
+    ///DEPRECATED: use recIdStr instead.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rec_id: Option<i64>,
+    ///Snowflake for this recommendation, use when submitting recommendation events.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rec_id_str: Option<S>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }

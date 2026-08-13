@@ -163,37 +163,37 @@ pub mod get_blocks_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Cids;
         type Did;
+        type Cids;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Cids = Unset;
         type Did = Unset;
-    }
-    ///State transition - sets the `cids` field to Set
-    pub struct SetCids<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCids<St> {}
-    impl<St: State> State for SetCids<St> {
-        type Cids = Set<members::cids>;
-        type Did = St::Did;
+        type Cids = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type Cids = St::Cids;
         type Did = Set<members::did>;
+        type Cids = St::Cids;
+    }
+    ///State transition - sets the `cids` field to Set
+    pub struct SetCids<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCids<St> {}
+    impl<St: State> State for SetCids<St> {
+        type Did = St::Did;
+        type Cids = Set<members::cids>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `cids` field
-        pub struct cids(());
         ///Marker type for the `did` field
         pub struct did(());
+        ///Marker type for the `cids` field
+        pub struct cids(());
     }
 }
 
@@ -263,8 +263,8 @@ where
 impl<S: BosStr, St> GetBlocksBuilder<S, St>
 where
     St: get_blocks_state::State,
-    St::Cids: get_blocks_state::IsSet,
     St::Did: get_blocks_state::IsSet,
+    St::Cids: get_blocks_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> GetBlocks<S> {

@@ -1,28 +1,28 @@
 use crate::ctx::Context;
-use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::stats::{ArtistView, RecordingView, ReleaseView};
+use types::fm_teal::feed::PlayView;
+use types::fm_teal::stats::{ArtistView, RecordingView, ReleaseView};
 
 // mount stats routes
 pub fn stats_routes() -> axum::Router {
     axum::Router::new()
-        .route("/fm.teal.alpha.stats.getTopArtists", get(get_top_artists))
-        .route("/fm.teal.alpha.stats.getTopReleases", get(get_top_releases))
+        .route("/fm.teal.stats.getTopArtists", get(get_top_artists))
+        .route("/fm.teal.stats.getTopReleases", get(get_top_releases))
         .route(
-            "/fm.teal.alpha.stats.getUserTopArtists",
+            "/fm.teal.stats.getUserTopArtists",
             get(get_user_top_artists),
         )
         .route(
-            "/fm.teal.alpha.stats.getUserTopReleases",
+            "/fm.teal.stats.getUserTopReleases",
             get(get_user_top_releases),
         )
         .route(
-            "/fm.teal.alpha.stats.getUserTopRecordings",
+            "/fm.teal.stats.getUserTopRecordings",
             get(get_user_top_recordings),
         )
-        .route("/fm.teal.alpha.stats.getLatest", get(get_latest))
+        .route("/fm.teal.stats.getLatest", get(get_latest))
 }
 
 #[derive(Deserialize)]

@@ -40,7 +40,7 @@ import {
   X,
 } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 
 export default function ListenDetail() {
   const params = useLocalSearchParams();

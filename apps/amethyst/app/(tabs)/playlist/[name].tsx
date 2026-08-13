@@ -125,7 +125,7 @@ export default function PlaylistDetailScreen() {
       const current: { cover?: unknown } = await pdsAgent
         .call("com.atproto.repo.getRecord", {
           repo: playlist.authorDid,
-          collection: "fm.teal.alpha.feed.social.playlist",
+          collection: "fm.teal.feed.social.playlist",
           rkey: rkeyFromUri(playlist.uri),
         })
         .then((res) => res.data.value as { cover?: unknown })
@@ -148,10 +148,10 @@ export default function PlaylistDetailScreen() {
         {},
         {
           repo: playlist.authorDid,
-          collection: "fm.teal.alpha.feed.social.playlist",
+          collection: "fm.teal.feed.social.playlist",
           rkey: rkeyFromUri(playlist.uri),
           record: {
-            $type: "fm.teal.alpha.feed.social.playlist",
+            $type: "fm.teal.feed.social.playlist",
             name: name.trim(),
             description: description.trim() || undefined,
             descriptionFacets,

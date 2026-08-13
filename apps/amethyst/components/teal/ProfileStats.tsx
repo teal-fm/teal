@@ -21,7 +21,7 @@ import type {
   ArtistView,
   RecordingView,
   ReleaseView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
+} from "@teal/lexicons/src/types/fm/teal/stats/defs";
 
 export type ProfileStatsKind = "artists" | "albums" | "tracks";
 

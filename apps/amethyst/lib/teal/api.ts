@@ -3,19 +3,19 @@ import type { AppBskyActorDefs } from "@atproto/api";
 import type {
   MiniProfileView,
   ProfileView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+} from "@teal/lexicons/src/types/fm/teal/actor/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 import type {
   AlbumView,
   ArtistListenerView,
   ArtistView as MusicArtistView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
-import type { SongResult } from "@teal/lexicons/src/types/fm/teal/alpha/search/defs";
+} from "@teal/lexicons/src/types/fm/teal/music/defs";
+import type { SongResult } from "@teal/lexicons/src/types/fm/teal/search/defs";
 import type {
   ArtistView,
   RecordingView,
   ReleaseView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
+} from "@teal/lexicons/src/types/fm/teal/stats/defs";
 
 const rawBase =
   process.env.EXPO_PUBLIC_AQUA_URL || process.env.EXPO_PUBLIC_APPVIEW_URL || "";
@@ -128,7 +128,7 @@ async function getXrpc<T>(
 
 export function getLatestPlays(limit = 50, cursor?: string) {
   return getXrpc<{ plays: PlayView[]; cursor?: string }>(
-    "fm.teal.alpha.stats.getLatest",
+    "fm.teal.stats.getLatest",
     {
       limit,
       cursor,
@@ -138,7 +138,7 @@ export function getLatestPlays(limit = 50, cursor?: string) {
 
 export function getActorFeed(authorDID: string, limit = 30, cursor?: string) {
   return getXrpc<{ plays: PlayView[]; cursor?: string }>(
-    "fm.teal.alpha.feed.getActorFeed",
+    "fm.teal.feed.getActorFeed",
     {
       authorDID,
       limit,
@@ -148,18 +148,18 @@ export function getActorFeed(authorDID: string, limit = 30, cursor?: string) {
 }
 
 export function getPlayByUri(uri: string) {
-  return getXrpc<{ play: PlayView }>("fm.teal.alpha.feed.getPlay", { uri });
+  return getXrpc<{ play: PlayView }>("fm.teal.feed.getPlay", { uri });
 }
 
 export function getPlayByAuthorRkey(authorDID: string, rkey: string) {
-  return getXrpc<{ play: PlayView }>("fm.teal.alpha.feed.getPlay", {
+  return getXrpc<{ play: PlayView }>("fm.teal.feed.getPlay", {
     authorDID,
     rkey,
   });
 }
 
 export function getArtist(mbid?: string, name?: string) {
-  return getXrpc<{ artist: MusicArtistView }>("fm.teal.alpha.music.getArtist", {
+  return getXrpc<{ artist: MusicArtistView }>("fm.teal.music.getArtist", {
     mbid,
     name,
   });
@@ -173,7 +173,7 @@ export function getArtistListeners(
   cursor?: string,
 ) {
   return getXrpc<{ listeners: ArtistListenerView[]; cursor?: string }>(
-    "fm.teal.alpha.music.getArtistListeners",
+    "fm.teal.music.getArtistListeners",
     {
       mbid,
       name,
@@ -186,13 +186,13 @@ export function getArtistListeners(
 
 export function getAlbum(mbid: string, limit = 30, cursor?: string) {
   return getXrpc<{ album: AlbumView; plays: PlayView[]; cursor?: string }>(
-    "fm.teal.alpha.music.getAlbum",
+    "fm.teal.music.getAlbum",
     { mbid, limit, cursor },
   );
 }
 
 export function getProfile(actor: string) {
-  return getXrpc<{ profile: ProfileView }>("fm.teal.alpha.actor.getProfile", {
+  return getXrpc<{ profile: ProfileView }>("fm.teal.actor.getProfile", {
     actor,
   });
 }
@@ -213,7 +213,7 @@ export async function getBlueskyProfile(actor: string) {
 
 export function getTopArtists(limit = 5) {
   return getXrpc<{ artists: ArtistView[] }>(
-    "fm.teal.alpha.stats.getTopArtists",
+    "fm.teal.stats.getTopArtists",
     {
       limit,
     },
@@ -222,7 +222,7 @@ export function getTopArtists(limit = 5) {
 
 export function getTopReleases(limit = 5) {
   return getXrpc<{ releases: ReleaseView[] }>(
-    "fm.teal.alpha.stats.getTopReleases",
+    "fm.teal.stats.getTopReleases",
     { limit },
   );
 }
@@ -234,7 +234,7 @@ export function getUserTopArtists(
   cursor?: string,
 ) {
   return getXrpc<{ artists: ArtistView[]; cursor?: string }>(
-    "fm.teal.alpha.stats.getUserTopArtists",
+    "fm.teal.stats.getUserTopArtists",
     { actor, period, limit, cursor },
   );
 }
@@ -246,7 +246,7 @@ export function getUserTopReleases(
   cursor?: string,
 ) {
   return getXrpc<{ releases: ReleaseView[]; cursor?: string }>(
-    "fm.teal.alpha.stats.getUserTopReleases",
+    "fm.teal.stats.getUserTopReleases",
     { actor, period, limit, cursor },
   );
 }
@@ -258,7 +258,7 @@ export function getUserTopRecordings(
   cursor?: string,
 ) {
   return getXrpc<{ recordings: RecordingView[]; cursor?: string }>(
-    "fm.teal.alpha.stats.getUserTopRecordings",
+    "fm.teal.stats.getUserTopRecordings",
     { actor, period, limit, cursor },
   );
 }
@@ -271,7 +271,7 @@ export type SearchResults = {
 };
 
 export function getSearchResults(q: string, limit = 8, actor?: string) {
-  return getXrpc<SearchResults>("fm.teal.alpha.search.getResults", {
+  return getXrpc<SearchResults>("fm.teal.search.getResults", {
     q,
     limit,
     actor,
@@ -285,13 +285,13 @@ export function getSocialFeed(
   actor?: string,
 ) {
   return getXrpc<{ items: SocialPostView[]; cursor?: string }>(
-    "fm.teal.alpha.feed.social.getFeed",
+    "fm.teal.feed.social.getFeed",
     { limit, cursor, viewer, actor },
   );
 }
 
 export function getSocialPost(uri: string, viewer?: string) {
-  return getXrpc<{ post: SocialPostView }>("fm.teal.alpha.feed.social.getPost", {
+  return getXrpc<{ post: SocialPostView }>("fm.teal.feed.social.getPost", {
     uri,
     viewer,
   });
@@ -304,27 +304,27 @@ export function getSocialPostReplies(
   viewer?: string,
 ) {
   return getXrpc<{ items: SocialPostView[]; cursor?: string }>(
-    "fm.teal.alpha.feed.social.getReplies",
+    "fm.teal.feed.social.getReplies",
     { uri, limit, cursor, viewer },
   );
 }
 
 export function getNotifications(actor: string, limit = 30, cursor?: string) {
   return getXrpc<{ items: SocialNotificationView[]; cursor?: string }>(
-    "fm.teal.alpha.feed.social.getNotifications",
+    "fm.teal.feed.social.getNotifications",
     { actor, limit, cursor },
   );
 }
 
 export function getActorPlaylists(actor: string, limit = 20, cursor?: string) {
   return getXrpc<{ items: SocialPlaylistView[]; cursor?: string }>(
-    "fm.teal.alpha.feed.social.getActorPlaylists",
+    "fm.teal.feed.social.getActorPlaylists",
     { actor, limit, cursor },
   );
 }
 
 export function getGraphSummary(actor: string, viewer?: string) {
-  return getXrpc<GraphSummaryView>("fm.teal.alpha.graph.getSummary", {
+  return getXrpc<GraphSummaryView>("fm.teal.graph.getSummary", {
     actor,
     viewer,
   });
@@ -332,14 +332,14 @@ export function getGraphSummary(actor: string, viewer?: string) {
 
 export function getGraphFollowers(actor: string, limit = 20, cursor?: string) {
   return getXrpc<{ actors: MiniProfileView[]; cursor?: string }>(
-    "fm.teal.alpha.graph.getFollowers",
+    "fm.teal.graph.getFollowers",
     { actor, limit, cursor },
   );
 }
 
 export function getGraphFollows(actor: string, limit = 20, cursor?: string) {
   return getXrpc<{ actors: MiniProfileView[]; cursor?: string }>(
-    "fm.teal.alpha.graph.getFollows",
+    "fm.teal.graph.getFollows",
     { actor, limit, cursor },
   );
 }
@@ -349,7 +349,7 @@ export function getPlaylist(uri: string, limit = 100, cursor?: string) {
     playlist: SocialPlaylistView;
     items: SocialPlaylistItemView[];
     cursor?: string;
-  }>("fm.teal.alpha.feed.social.getPlaylist", { uri, limit, cursor });
+  }>("fm.teal.feed.social.getPlaylist", { uri, limit, cursor });
 }
 
 export async function searchBlueskyUsers(q: string, limit = 8) {

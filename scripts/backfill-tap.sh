@@ -13,7 +13,7 @@ TAP_LOG="${TAP_LOG:-$TAP_DIR/tap.log}"
 # is still filtered separately so every fm.teal.* record from those repos flows
 # through Cadet.
 export TAP_FULL_NETWORK="${TAP_FULL_NETWORK:-false}"
-export TAP_SIGNAL_COLLECTION="${TAP_SIGNAL_COLLECTION:-fm.teal.alpha.feed.play}"
+export TAP_SIGNAL_COLLECTION="${TAP_SIGNAL_COLLECTION:-fm.teal.feed.play}"
 export TAP_COLLECTION_FILTERS="${TAP_COLLECTION_FILTERS:-fm.teal.*}"
 export TAP_DISABLE_ACKS="${TAP_DISABLE_ACKS:-true}"
 export TAP_CHANNEL_URL

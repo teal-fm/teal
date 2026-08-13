@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use jacquard_common::types::string::AtUri;
-use types::fm_teal::alpha::{
+use types::fm_teal::{
     actor::MiniProfileView,
     search::SongResult,
     stats::{ArtistView, ReleaseView},

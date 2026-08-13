@@ -14,7 +14,7 @@ import { useStore } from "@/stores/mainStore";
 
 function postUri(did?: string, rkey?: string) {
   if (!did || !rkey) return undefined;
-  return `at://${did}/fm.teal.alpha.feed.social.post/${rkey}`;
+  return `at://${did}/fm.teal.feed.social.post/${rkey}`;
 }
 
 export default function PostDetail() {

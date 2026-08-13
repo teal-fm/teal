@@ -108,7 +108,7 @@ describe("manual listen record mapping", () => {
       releaseMbId: "mbid:22222222-2222-4222-8222-222222222222",
       duration: 120,
       isrc: "US-TEST-00-00001",
-      musicServiceBaseDomain: "local",
+      musicServiceUri: "local",
       playedTime: "2026-07-18T12:00:00.000Z",
     });
     expect(records[0].artists).toEqual([
@@ -161,7 +161,7 @@ describe("atomic repository submission", () => {
       writes: [
         {
           $type: "com.atproto.repo.applyWrites#create",
-          collection: "fm.teal.alpha.feed.play",
+          collection: "fm.teal.feed.play",
           value: records[0],
         },
       ],

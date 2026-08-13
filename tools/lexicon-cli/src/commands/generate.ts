@@ -97,7 +97,7 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
           await execa("cargo", ["binstall", "--version"], { stdio: "pipe" });
           await execa(
             "cargo",
-            ["binstall", "-y", "jacquard-lexgen", "--version", "0.12.0-beta.2"],
+            ["binstall", "-y", "jacquard-lexgen", "--version", "0.12.1"],
             {
               stdio: "inherit",
             },
@@ -108,7 +108,7 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
             "install",
             "jacquard-lexgen",
             "--version",
-            "0.12.0-beta.2",
+            "0.12.1",
           ], {
             stdio: "inherit",
           });
@@ -116,7 +116,7 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
         console.log(pc.green("    ✓ jacquard-codegen installed successfully"));
       } catch (installError) {
         throw new Error(
-          "Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version 0.12.0-beta.2",
+          "Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version 0.12.1",
         );
       }
     }

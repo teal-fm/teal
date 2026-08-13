@@ -23,6 +23,7 @@ use crate::app_bsky::notification::Preferences;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct PutPreferencesV2<S: BosStr = DefaultStr> {
+    ///Deprecated: use chat.bsky.notification preferences instead. Setting this won't stick and the default values will be returned.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chat: Option<ChatPreference<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
