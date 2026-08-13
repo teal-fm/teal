@@ -3,7 +3,7 @@ use jacquard_common::from_json_value;
 use serde_json::Value;
 use types::{
     app_bsky::richtext::facet::Facet,
-    fm_teal::actor::{ProfileView, StatusView},
+    fm_teal::actor::{MiniProfileView, ProfileView, StatusView},
 };
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};
@@ -15,6 +15,16 @@ pub trait ActorProfileRepo {
         &self,
         identities: &[String],
     ) -> anyhow::Result<Vec<ProfileView>>;
+    async fn get_multiple_actor_mini_profiles(
+        &self,
+        identities: &[String],
+    ) -> anyhow::Result<Vec<MiniProfileView>>;
+    async fn search_actor_profiles(
+        &self,
+        query: &str,
+        limit: i64,
+        offset: i64,
+    ) -> anyhow::Result<Vec<MiniProfileView>>;
 }
 
 pub struct PgProfileRepoRows {
@@ -26,6 +36,25 @@ pub struct PgProfileRepoRows {
     pub did: Option<String>,
     pub display_name: Option<String>,
     pub status: Option<Value>,
+}
+
+pub struct PgMiniProfileRepoRows {
+    pub avatar: Option<String>,
+    pub did: Option<String>,
+    pub display_name: Option<String>,
+    pub handle: Option<String>,
+}
+
+impl From<PgMiniProfileRepoRows> for MiniProfileView {
+    fn from(row: PgMiniProfileRepoRows) -> Self {
+        Self {
+            avatar: row.avatar.map(Into::into),
+            did: row.did.map(Into::into),
+            display_name: row.display_name.map(Into::into),
+            handle: row.handle.map(Into::into),
+            extra_data: Default::default(),
+        }
+    }
 }
 
 impl From<PgProfileRepoRows> for ProfileView {
@@ -96,4 +125,68 @@ impl ActorProfileRepo for PgDataSource {
         .await?;
         Ok(profiles.into_iter().map(|p| p.into()).collect())
     }
+
+    async fn get_multiple_actor_mini_profiles(
+        &self,
+        identities: &[String],
+    ) -> anyhow::Result<Vec<MiniProfileView>> {
+        let (dids, handles) = split_identities(identities);
+        let profiles = sqlx::query_as!(
+            PgMiniProfileRepoRows,
+            "SELECT p.avatar, p.did, p.display_name, p.handle
+             FROM profiles p
+             WHERE (p.did = ANY($1)) OR (p.handle = ANY($2))
+             ORDER BY p.display_name NULLS LAST, p.did",
+            &dids,
+            &handles,
+        )
+        .fetch_all(&self.db)
+        .await?;
+
+        Ok(profiles.into_iter().map(Into::into).collect())
+    }
+
+    async fn search_actor_profiles(
+        &self,
+        query: &str,
+        limit: i64,
+        offset: i64,
+    ) -> anyhow::Result<Vec<MiniProfileView>> {
+        let query = query
+            .replace('!', "!!")
+            .replace('%', "!%")
+            .replace('_', "!_");
+        let profiles = sqlx::query_as!(
+            PgMiniProfileRepoRows,
+            r#"
+            SELECT avatar, did, display_name, handle
+            FROM profiles
+            WHERE display_name ILIKE '%' || $1 || '%' ESCAPE '!'
+               OR description ILIKE '%' || $1 || '%' ESCAPE '!'
+               OR handle ILIKE '%' || $1 || '%' ESCAPE '!'
+            ORDER BY display_name NULLS LAST, did
+            LIMIT $2 OFFSET $3
+            "#,
+            query,
+            limit,
+            offset,
+        )
+        .fetch_all(&self.db)
+        .await?;
+
+        Ok(profiles.into_iter().map(Into::into).collect())
+    }
+}
+
+fn split_identities(identities: &[String]) -> (Vec<String>, Vec<String>) {
+    let mut dids = Vec::new();
+    let mut handles = Vec::new();
+    for identity in identities {
+        if identity.starts_with("did:") {
+            dids.push(identity.clone());
+        } else {
+            handles.push(identity.clone());
+        }
+    }
+    (dids, handles)
 }

@@ -46,7 +46,7 @@ async function validateTypeScriptGeneration(workspaceRoot: string) {
   const sourceFiles = await glob('**/*.json', { cwd: lexiconsPath });
   
   for (const sourceFile of sourceFiles) {
-    const namespace = sourceFile
+    const namespace: string = sourceFile
       .replace(/\.json$/, '')
       .split('/')
       .flatMap((segment) => segment.split('.'))

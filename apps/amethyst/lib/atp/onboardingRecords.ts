@@ -33,11 +33,14 @@ export async function readRepoRecordWithLegacyFallback<T>(
     try {
       return await readRepoRecord<T>(agent, legacyCollection);
     } catch (legacyError) {
-      if (isRecordNotFound(stableError) || isRecordNotFound(legacyError)) {
+      const stableNotFound = isRecordNotFound(stableError);
+      const legacyNotFound = isRecordNotFound(legacyError);
+
+      if (stableNotFound && legacyNotFound) {
         return null;
       }
 
-      throw stableError;
+      throw stableNotFound ? legacyError : stableError;
     }
   }
 }

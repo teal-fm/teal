@@ -12,7 +12,7 @@ use serde_json::Value;
 use sqlx::{types::Uuid, PgPool};
 use unicode_normalization::UnicodeNormalization;
 
-use super::assemble_at_uri;
+use super::{assemble_at_uri, normalize_legacy_record_type};
 
 #[derive(Debug, Clone)]
 struct FuzzyMatchCandidate {
@@ -1591,10 +1591,7 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::feed::play::Play =
-                    value::from_json_value::<types::fm_teal::feed::play::Play>(
-                        record.clone(),
-                    )?;
+                let record = parse_play_record(record)?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         // TODO: verify cid
@@ -1625,5 +1622,51 @@ impl LexiconIngestor for PlayIngestor {
             return Err(anyhow!("Message has no commit"));
         }
         Ok(())
+    }
+}
+
+/// Normalize legacy namespace tags before deserializing the generated record type.
+fn parse_play_record(record: &Value) -> anyhow::Result<types::fm_teal::feed::play::Play> {
+    Ok(value::from_json_value::<types::fm_teal::feed::play::Play>(
+        normalize_legacy_record_type(record),
+    )?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_play_record;
+    use crate::ingestors::teal::{ALPHA_FEED_PLAY, STABLE_FEED_PLAY};
+    use rocketman::types::event::Event;
+    use serde_json::{json, Value};
+
+    fn direct_record(operation: &str, collection: &str) -> Value {
+        let event: Event<Value> = serde_json::from_value(json!({
+            "did": "did:plc:test",
+            "kind": "commit",
+            "commit": {
+                "rev": "3ltest",
+                "operation": operation,
+                "collection": collection,
+                "rkey": "3ltest",
+                "record": {"$type": collection, "trackName": "Test Song"},
+                "cid": "bafytest"
+            }
+        }))
+        .expect("valid direct event");
+
+        event.commit.expect("commit event").record.expect("record")
+    }
+
+    #[test]
+    fn direct_create_and_update_records_accept_stable_and_legacy_types() {
+        for operation in ["create", "update"] {
+            for record_type in [STABLE_FEED_PLAY, ALPHA_FEED_PLAY] {
+                let record = direct_record(operation, record_type);
+                let parsed = parse_play_record(&record)
+                    .unwrap_or_else(|error| panic!("{operation} record should parse: {error}"));
+
+                assert_eq!(parsed.track_name.as_str(), "Test Song");
+            }
+        }
     }
 }

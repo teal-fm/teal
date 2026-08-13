@@ -72,6 +72,46 @@ describe("readRepoRecordWithLegacyFallback", () => {
       ),
     ).resolves.toBeNull();
   });
+
+  it("propagates a legacy read failure when the stable record is missing", async () => {
+    const legacyError = {
+      error: "NetworkError",
+      message: "legacy read failed",
+    };
+    const call = jest
+      .fn()
+      .mockRejectedValueOnce({ error: "RecordNotFound", message: "missing" })
+      .mockRejectedValueOnce(legacyError);
+    const agent = { call, did: "did:plc:test" };
+
+    await expect(
+      readRepoRecordWithLegacyFallback(
+        agent as never,
+        STABLE_PROFILE_COLLECTION,
+        LEGACY_PROFILE_COLLECTION,
+      ),
+    ).rejects.toBe(legacyError);
+  });
+
+  it("propagates a stable read failure when the legacy record is missing", async () => {
+    const stableError = {
+      error: "NetworkError",
+      message: "stable read failed",
+    };
+    const call = jest
+      .fn()
+      .mockRejectedValueOnce(stableError)
+      .mockRejectedValueOnce({ error: "RecordNotFound", message: "missing" });
+    const agent = { call, did: "did:plc:test" };
+
+    await expect(
+      readRepoRecordWithLegacyFallback(
+        agent as never,
+        STABLE_PROFILE_COLLECTION,
+        LEGACY_PROFILE_COLLECTION,
+      ),
+    ).rejects.toBe(stableError);
+  });
 });
 
 describe("getBlobHash", () => {

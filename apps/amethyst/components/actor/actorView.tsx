@@ -52,7 +52,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
           { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
         );
         if (isMounted) {
-          setProfile(res.data["actor"] as GetProfileOutputSchema["actor"]);
+          setProfile(res.data.actor as GetProfileOutputSchema["actor"]);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);

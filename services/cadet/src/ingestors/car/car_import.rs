@@ -31,6 +31,7 @@
 //! and use the original rkey from the AT Protocol MST structure.
 
 use crate::ingestors::car::jobs::{queue_keys, CarImportJob};
+use crate::ingestors::teal::normalize_legacy_record_type;
 use crate::redis_client::RedisClient;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -88,21 +89,6 @@ fn parse_teal_key(key: &str) -> Option<(String, String)> {
 
     let (collection, rkey) = key.rsplit_once('/')?;
     Some((collection.to_string(), rkey.to_string()))
-}
-
-fn normalize_legacy_record_type(data: &Value) -> Value {
-    let Value::Object(object) = data else {
-        return data.clone();
-    };
-
-    let mut normalized = object.clone();
-    if let Some(Value::String(record_type)) = normalized.get_mut("$type") {
-        if let Some(stable_type) = record_type.strip_prefix("fm.teal.alpha.") {
-            *record_type = format!("fm.teal.{stable_type}");
-        }
-    }
-
-    Value::Object(normalized)
 }
 
 fn is_legacy_collection(collection: &str) -> bool {

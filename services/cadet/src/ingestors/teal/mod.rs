@@ -2,6 +2,8 @@ pub mod actor_profile;
 pub mod actor_status;
 pub mod feed_play;
 
+use serde_json::Value;
+
 pub const STABLE_FEED_PLAY: &str = "fm.teal.feed.play";
 pub const STABLE_ACTOR_PROFILE: &str = "fm.teal.actor.profile";
 pub const STABLE_ACTOR_STATUS: &str = "fm.teal.actor.status";
@@ -9,6 +11,22 @@ pub const STABLE_ACTOR_STATUS: &str = "fm.teal.actor.status";
 pub const ALPHA_FEED_PLAY: &str = "fm.teal.alpha.feed.play";
 pub const ALPHA_ACTOR_PROFILE: &str = "fm.teal.alpha.actor.profile";
 pub const ALPHA_ACTOR_STATUS: &str = "fm.teal.alpha.actor.status";
+
+/// Normalize the root record namespace used by historical Teal records.
+pub fn normalize_legacy_record_type(data: &Value) -> Value {
+    let Value::Object(object) = data else {
+        return data.clone();
+    };
+
+    let mut normalized = object.clone();
+    if let Some(Value::String(record_type)) = normalized.get_mut("$type") {
+        if let Some(stable_type) = record_type.strip_prefix("fm.teal.alpha.") {
+            *record_type = format!("fm.teal.{stable_type}");
+        }
+    }
+
+    Value::Object(normalized)
+}
 
 const COLLECTION_ALIASES: [(&str, &str); 3] = [
     (ALPHA_FEED_PLAY, STABLE_FEED_PLAY),
