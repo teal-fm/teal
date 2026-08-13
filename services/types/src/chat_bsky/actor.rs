@@ -8,6 +8,7 @@
 pub mod declaration;
 pub mod delete_account;
 pub mod export_account_data;
+pub mod get_status;
 
 
 #[allow(unused_imports)]
@@ -20,9 +21,9 @@ use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 #[allow(unused_imports)]
 use jacquard_common::deps::codegen::unicode_segmentation::UnicodeSegmentation;
 use jacquard_common::deps::smol_str::SmolStr;
-use jacquard_common::types::string::{Did, Handle, UriValue};
+use jacquard_common::types::string::{Did, Handle, Datetime, UriValue};
 use jacquard_common::types::value::Data;
-use jacquard_derive::IntoStatic;
+use jacquard_derive::{IntoStatic, open_union};
 use jacquard_lexicon::lexicon::LexiconDoc;
 use jacquard_lexicon::schema::LexiconSchema;
 
@@ -33,6 +34,110 @@ use crate::app_bsky::actor::ProfileAssociated;
 use crate::app_bsky::actor::VerificationState;
 use crate::app_bsky::actor::ViewerState;
 use crate::com_atproto::label::Label;
+use crate::chat_bsky::actor;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct DirectConvoMember<S: BosStr = DefaultStr> {
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+/// A current group convo member.
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct GroupConvoMember<S: BosStr = DefaultStr> {
+    ///Who added this member. Only present if the member was added (instead of joining via link).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub added_by: Option<actor::ProfileViewBasic<S>>,
+    ///The member's role within this conversation. Only present in group conversation member lists.
+    pub role: actor::MemberRole<S>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum MemberRole<S: BosStr = DefaultStr> {
+    Owner,
+    Standard,
+    Other(S),
+}
+
+impl<S: BosStr> MemberRole<S> {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Owner => "owner",
+            Self::Standard => "standard",
+            Self::Other(s) => s.as_ref(),
+        }
+    }
+    /// Construct from a string-like value, matching known values.
+    pub fn from_value(s: S) -> Self {
+        match s.as_ref() {
+            "owner" => Self::Owner,
+            "standard" => Self::Standard,
+            _ => Self::Other(s),
+        }
+    }
+}
+
+impl<S: BosStr> AsRef<str> for MemberRole<S> {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl<S: BosStr> core::fmt::Display for MemberRole<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl<S: BosStr> Serialize for MemberRole<S> {
+    fn serialize<Ser>(&self, serializer: Ser) -> Result<Ser::Ok, Ser::Error>
+    where
+        Ser: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de, S: Deserialize<'de> + BosStr> Deserialize<'de> for MemberRole<S> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = S::deserialize(deserializer)?;
+        Ok(Self::from_value(s))
+    }
+}
+
+impl<S: BosStr> jacquard_common::IntoStatic for MemberRole<S>
+where
+    S: BosStr + jacquard_common::IntoStatic,
+    S::Output: BosStr,
+{
+    type Output = MemberRole<S::Output>;
+    fn into_static(self) -> Self::Output {
+        match self {
+            MemberRole::Owner => MemberRole::Owner,
+            MemberRole::Standard => MemberRole::Standard,
+            MemberRole::Other(v) => MemberRole::Other(v.into_static()),
+        }
+    }
+}
+
+/// A past group convo member.
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct PastGroupConvoMember<S: BosStr = DefaultStr> {
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
@@ -44,10 +149,15 @@ pub struct ProfileViewBasic<S: BosStr = DefaultStr> {
     ///Set to true when the actor cannot actively participate in conversations
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chat_disabled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<Datetime>,
     pub did: Did<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_name: Option<S>,
     pub handle: Handle<S>,
+    ///Union field that has data specific to different kinds of convos.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<ProfileViewBasicKind<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub labels: Option<Vec<Label<S>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -56,6 +166,64 @@ pub struct ProfileViewBasic<S: BosStr = DefaultStr> {
     pub viewer: Option<ViewerState<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+
+#[open_union]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
+#[serde(tag = "$type", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub enum ProfileViewBasicKind<S: BosStr = DefaultStr> {
+    #[serde(rename = "chat.bsky.actor.defs#directConvoMember")]
+    DirectConvoMember(Box<actor::DirectConvoMember<S>>),
+    #[serde(rename = "chat.bsky.actor.defs#groupConvoMember")]
+    GroupConvoMember(Box<actor::GroupConvoMember<S>>),
+    #[serde(rename = "chat.bsky.actor.defs#pastGroupConvoMember")]
+    PastGroupConvoMember(Box<actor::PastGroupConvoMember<S>>),
+}
+
+impl<S: BosStr> LexiconSchema for DirectConvoMember<S> {
+    fn nsid() -> &'static str {
+        "chat.bsky.actor.defs"
+    }
+    fn def_name() -> &'static str {
+        "directConvoMember"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_chat_bsky_actor_defs()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        Ok(())
+    }
+}
+
+impl<S: BosStr> LexiconSchema for GroupConvoMember<S> {
+    fn nsid() -> &'static str {
+        "chat.bsky.actor.defs"
+    }
+    fn def_name() -> &'static str {
+        "groupConvoMember"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_chat_bsky_actor_defs()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        Ok(())
+    }
+}
+
+impl<S: BosStr> LexiconSchema for PastGroupConvoMember<S> {
+    fn nsid() -> &'static str {
+        "chat.bsky.actor.defs"
+    }
+    fn def_name() -> &'static str {
+        "pastGroupConvoMember"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_chat_bsky_actor_defs()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        Ok(())
+    }
 }
 
 impl<S: BosStr> LexiconSchema for ProfileViewBasic<S> {
@@ -92,6 +260,306 @@ impl<S: BosStr> LexiconSchema for ProfileViewBasic<S> {
             }
         }
         Ok(())
+    }
+}
+
+fn lexicon_doc_chat_bsky_actor_defs() -> LexiconDoc<'static> {
+    #[allow(unused_imports)]
+    use jacquard_common::{CowStr, deps::smol_str::SmolStr, types::blob::MimeType};
+    use jacquard_lexicon::lexicon::*;
+    use alloc::collections::BTreeMap;
+    LexiconDoc {
+        lexicon: Lexicon::Lexicon1,
+        id: CowStr::new_static("chat.bsky.actor.defs"),
+        defs: {
+            let mut map = BTreeMap::new();
+            map.insert(
+                SmolStr::new_static("directConvoMember"),
+                LexUserType::Object(LexObject {
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map.insert(
+                SmolStr::new_static("groupConvoMember"),
+                LexUserType::Object(LexObject {
+                    description: Some(
+                        CowStr::new_static("A current group convo member."),
+                    ),
+                    required: Some(vec![SmolStr::new_static("role")]),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("addedBy"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#profileViewBasic"),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("role"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#memberRole"),
+                                ..Default::default()
+                            }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map.insert(
+                SmolStr::new_static("memberRole"),
+                LexUserType::String(LexString { ..Default::default() }),
+            );
+            map.insert(
+                SmolStr::new_static("pastGroupConvoMember"),
+                LexUserType::Object(LexObject {
+                    description: Some(CowStr::new_static("A past group convo member.")),
+                    required: Some(vec![]),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map.insert(
+                SmolStr::new_static("profileViewBasic"),
+                LexUserType::Object(LexObject {
+                    required: Some(
+                        vec![SmolStr::new_static("did"), SmolStr::new_static("handle")],
+                    ),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("associated"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static(
+                                    "app.bsky.actor.defs#profileAssociated",
+                                ),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("avatar"),
+                            LexObjectProperty::String(LexString {
+                                format: Some(LexStringFormat::Uri),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("chatDisabled"),
+                            LexObjectProperty::Boolean(LexBoolean {
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("createdAt"),
+                            LexObjectProperty::String(LexString {
+                                format: Some(LexStringFormat::Datetime),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("did"),
+                            LexObjectProperty::String(LexString {
+                                format: Some(LexStringFormat::Did),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("displayName"),
+                            LexObjectProperty::String(LexString {
+                                max_length: Some(640usize),
+                                max_graphemes: Some(64usize),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("handle"),
+                            LexObjectProperty::String(LexString {
+                                format: Some(LexStringFormat::Handle),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("kind"),
+                            LexObjectProperty::Union(LexRefUnion {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "Union field that has data specific to different kinds of convos.",
+                                    ),
+                                ),
+                                refs: vec![
+                                    CowStr::new_static("#directConvoMember"),
+                                    CowStr::new_static("#groupConvoMember"),
+                                    CowStr::new_static("#pastGroupConvoMember")
+                                ],
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("labels"),
+                            LexObjectProperty::Array(LexArray {
+                                items: LexArrayItem::Ref(LexRef {
+                                    r#ref: CowStr::new_static("com.atproto.label.defs#label"),
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("verification"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static(
+                                    "app.bsky.actor.defs#verificationState",
+                                ),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("viewer"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static(
+                                    "app.bsky.actor.defs#viewerState",
+                                ),
+                                ..Default::default()
+                            }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map
+        },
+        ..Default::default()
+    }
+}
+
+pub mod group_convo_member_state {
+
+    pub use crate::builder_types::{Set, Unset, IsSet, IsUnset};
+    #[allow(unused)]
+    use ::core::marker::PhantomData;
+    mod sealed {
+        pub trait Sealed {}
+    }
+    /// State trait tracking which required fields have been set
+    pub trait State: sealed::Sealed {
+        type Role;
+    }
+    /// Empty state - all required fields are unset
+    pub struct Empty(());
+    impl sealed::Sealed for Empty {}
+    impl State for Empty {
+        type Role = Unset;
+    }
+    ///State transition - sets the `role` field to Set
+    pub struct SetRole<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRole<St> {}
+    impl<St: State> State for SetRole<St> {
+        type Role = Set<members::role>;
+    }
+    /// Marker types for field names
+    #[allow(non_camel_case_types)]
+    pub mod members {
+        ///Marker type for the `role` field
+        pub struct role(());
+    }
+}
+
+/// Builder for constructing an instance of this type.
+pub struct GroupConvoMemberBuilder<S: BosStr, St: group_convo_member_state::State> {
+    _state: PhantomData<fn() -> St>,
+    _fields: (Option<actor::ProfileViewBasic<S>>, Option<actor::MemberRole<S>>),
+    _type: PhantomData<fn() -> S>,
+}
+
+impl<S: BosStr> GroupConvoMember<S> {
+    /// Create a new builder for this type.
+    pub fn new() -> GroupConvoMemberBuilder<S, group_convo_member_state::Empty> {
+        GroupConvoMemberBuilder::new()
+    }
+}
+
+impl<S: BosStr> GroupConvoMemberBuilder<S, group_convo_member_state::Empty> {
+    /// Create a new builder with all fields unset.
+    pub fn new() -> Self {
+        GroupConvoMemberBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St: group_convo_member_state::State> GroupConvoMemberBuilder<S, St> {
+    /// Set the `addedBy` field (optional)
+    pub fn added_by(
+        mut self,
+        value: impl Into<Option<actor::ProfileViewBasic<S>>>,
+    ) -> Self {
+        self._fields.0 = value.into();
+        self
+    }
+    /// Set the `addedBy` field to an Option value (optional)
+    pub fn maybe_added_by(mut self, value: Option<actor::ProfileViewBasic<S>>) -> Self {
+        self._fields.0 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St> GroupConvoMemberBuilder<S, St>
+where
+    St: group_convo_member_state::State,
+    St::Role: group_convo_member_state::IsUnset,
+{
+    /// Set the `role` field (required)
+    pub fn role(
+        mut self,
+        value: impl Into<actor::MemberRole<S>>,
+    ) -> GroupConvoMemberBuilder<S, group_convo_member_state::SetRole<St>> {
+        self._fields.1 = Option::Some(value.into());
+        GroupConvoMemberBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St> GroupConvoMemberBuilder<S, St>
+where
+    St: group_convo_member_state::State,
+    St::Role: group_convo_member_state::IsSet,
+{
+    /// Build the final struct.
+    pub fn build(self) -> GroupConvoMember<S> {
+        GroupConvoMember {
+            added_by: self._fields.0,
+            role: self._fields.1.unwrap(),
+            extra_data: Default::default(),
+        }
+    }
+    /// Build the final struct with custom extra_data.
+    pub fn build_with_data(
+        self,
+        extra_data: BTreeMap<SmolStr, Data<S>>,
+    ) -> GroupConvoMember<S> {
+        GroupConvoMember {
+            added_by: self._fields.0,
+            role: self._fields.1.unwrap(),
+            extra_data: Some(extra_data),
+        }
     }
 }
 
@@ -146,9 +614,11 @@ pub struct ProfileViewBasicBuilder<S: BosStr, St: profile_view_basic_state::Stat
         Option<ProfileAssociated<S>>,
         Option<UriValue<S>>,
         Option<bool>,
+        Option<Datetime>,
         Option<Did<S>>,
         Option<S>,
         Option<Handle<S>>,
+        Option<ProfileViewBasicKind<S>>,
         Option<Vec<Label<S>>>,
         Option<VerificationState<S>>,
         Option<ViewerState<S>>,
@@ -168,7 +638,7 @@ impl<S: BosStr> ProfileViewBasicBuilder<S, profile_view_basic_state::Empty> {
     pub fn new() -> Self {
         ProfileViewBasicBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -213,6 +683,19 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
+impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+    /// Set the `createdAt` field (optional)
+    pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
+        self._fields.3 = value.into();
+        self
+    }
+    /// Set the `createdAt` field to an Option value (optional)
+    pub fn maybe_created_at(mut self, value: Option<Datetime>) -> Self {
+        self._fields.3 = value;
+        self
+    }
+}
+
 impl<S: BosStr, St> ProfileViewBasicBuilder<S, St>
 where
     St: profile_view_basic_state::State,
@@ -223,7 +706,7 @@ where
         mut self,
         value: impl Into<Did<S>>,
     ) -> ProfileViewBasicBuilder<S, profile_view_basic_state::SetDid<St>> {
-        self._fields.3 = Option::Some(value.into());
+        self._fields.4 = Option::Some(value.into());
         ProfileViewBasicBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -235,12 +718,12 @@ where
 impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
     /// Set the `displayName` field (optional)
     pub fn display_name(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.4 = value.into();
+        self._fields.5 = value.into();
         self
     }
     /// Set the `displayName` field to an Option value (optional)
     pub fn maybe_display_name(mut self, value: Option<S>) -> Self {
-        self._fields.4 = value;
+        self._fields.5 = value;
         self
     }
 }
@@ -255,7 +738,7 @@ where
         mut self,
         value: impl Into<Handle<S>>,
     ) -> ProfileViewBasicBuilder<S, profile_view_basic_state::SetHandle<St>> {
-        self._fields.5 = Option::Some(value.into());
+        self._fields.6 = Option::Some(value.into());
         ProfileViewBasicBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -265,14 +748,27 @@ where
 }
 
 impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+    /// Set the `kind` field (optional)
+    pub fn kind(mut self, value: impl Into<Option<ProfileViewBasicKind<S>>>) -> Self {
+        self._fields.7 = value.into();
+        self
+    }
+    /// Set the `kind` field to an Option value (optional)
+    pub fn maybe_kind(mut self, value: Option<ProfileViewBasicKind<S>>) -> Self {
+        self._fields.7 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<Vec<Label<S>>>>) -> Self {
-        self._fields.6 = value.into();
+        self._fields.8 = value.into();
         self
     }
     /// Set the `labels` field to an Option value (optional)
     pub fn maybe_labels(mut self, value: Option<Vec<Label<S>>>) -> Self {
-        self._fields.6 = value;
+        self._fields.8 = value;
         self
     }
 }
@@ -283,12 +779,12 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
         mut self,
         value: impl Into<Option<VerificationState<S>>>,
     ) -> Self {
-        self._fields.7 = value.into();
+        self._fields.9 = value.into();
         self
     }
     /// Set the `verification` field to an Option value (optional)
     pub fn maybe_verification(mut self, value: Option<VerificationState<S>>) -> Self {
-        self._fields.7 = value;
+        self._fields.9 = value;
         self
     }
 }
@@ -296,12 +792,12 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
 impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<ViewerState<S>>>) -> Self {
-        self._fields.8 = value.into();
+        self._fields.10 = value.into();
         self
     }
     /// Set the `viewer` field to an Option value (optional)
     pub fn maybe_viewer(mut self, value: Option<ViewerState<S>>) -> Self {
-        self._fields.8 = value;
+        self._fields.10 = value;
         self
     }
 }
@@ -318,12 +814,14 @@ where
             associated: self._fields.0,
             avatar: self._fields.1,
             chat_disabled: self._fields.2,
-            did: self._fields.3.unwrap(),
-            display_name: self._fields.4,
-            handle: self._fields.5.unwrap(),
-            labels: self._fields.6,
-            verification: self._fields.7,
-            viewer: self._fields.8,
+            created_at: self._fields.3,
+            did: self._fields.4.unwrap(),
+            display_name: self._fields.5,
+            handle: self._fields.6.unwrap(),
+            kind: self._fields.7,
+            labels: self._fields.8,
+            verification: self._fields.9,
+            viewer: self._fields.10,
             extra_data: Default::default(),
         }
     }
@@ -336,115 +834,15 @@ where
             associated: self._fields.0,
             avatar: self._fields.1,
             chat_disabled: self._fields.2,
-            did: self._fields.3.unwrap(),
-            display_name: self._fields.4,
-            handle: self._fields.5.unwrap(),
-            labels: self._fields.6,
-            verification: self._fields.7,
-            viewer: self._fields.8,
+            created_at: self._fields.3,
+            did: self._fields.4.unwrap(),
+            display_name: self._fields.5,
+            handle: self._fields.6.unwrap(),
+            kind: self._fields.7,
+            labels: self._fields.8,
+            verification: self._fields.9,
+            viewer: self._fields.10,
             extra_data: Some(extra_data),
         }
-    }
-}
-
-fn lexicon_doc_chat_bsky_actor_defs() -> LexiconDoc<'static> {
-    #[allow(unused_imports)]
-    use jacquard_common::{CowStr, deps::smol_str::SmolStr, types::blob::MimeType};
-    use jacquard_lexicon::lexicon::*;
-    use alloc::collections::BTreeMap;
-    LexiconDoc {
-        lexicon: Lexicon::Lexicon1,
-        id: CowStr::new_static("chat.bsky.actor.defs"),
-        defs: {
-            let mut map = BTreeMap::new();
-            map.insert(
-                SmolStr::new_static("profileViewBasic"),
-                LexUserType::Object(LexObject {
-                    required: Some(
-                        vec![SmolStr::new_static("did"), SmolStr::new_static("handle")],
-                    ),
-                    properties: {
-                        #[allow(unused_mut)]
-                        let mut map = BTreeMap::new();
-                        map.insert(
-                            SmolStr::new_static("associated"),
-                            LexObjectProperty::Ref(LexRef {
-                                r#ref: CowStr::new_static(
-                                    "app.bsky.actor.defs#profileAssociated",
-                                ),
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("avatar"),
-                            LexObjectProperty::String(LexString {
-                                format: Some(LexStringFormat::Uri),
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("chatDisabled"),
-                            LexObjectProperty::Boolean(LexBoolean {
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("did"),
-                            LexObjectProperty::String(LexString {
-                                format: Some(LexStringFormat::Did),
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("displayName"),
-                            LexObjectProperty::String(LexString {
-                                max_length: Some(640usize),
-                                max_graphemes: Some(64usize),
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("handle"),
-                            LexObjectProperty::String(LexString {
-                                format: Some(LexStringFormat::Handle),
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("labels"),
-                            LexObjectProperty::Array(LexArray {
-                                items: LexArrayItem::Ref(LexRef {
-                                    r#ref: CowStr::new_static("com.atproto.label.defs#label"),
-                                    ..Default::default()
-                                }),
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("verification"),
-                            LexObjectProperty::Ref(LexRef {
-                                r#ref: CowStr::new_static(
-                                    "app.bsky.actor.defs#verificationState",
-                                ),
-                                ..Default::default()
-                            }),
-                        );
-                        map.insert(
-                            SmolStr::new_static("viewer"),
-                            LexObjectProperty::Ref(LexRef {
-                                r#ref: CowStr::new_static(
-                                    "app.bsky.actor.defs#viewerState",
-                                ),
-                                ..Default::default()
-                            }),
-                        );
-                        map
-                    },
-                    ..Default::default()
-                }),
-            );
-            map
-        },
-        ..Default::default()
     }
 }

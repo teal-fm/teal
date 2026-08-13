@@ -15,8 +15,10 @@ use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
 use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
+use crate::chat_bsky::actor::ProfileViewBasic;
 use crate::chat_bsky::convo::DeletedMessageView;
 use crate::chat_bsky::convo::MessageView;
+use crate::chat_bsky::convo::SystemMessageView;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
@@ -37,6 +39,9 @@ pub struct GetMessagesOutput<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
     pub messages: Vec<GetMessagesOutputMessagesItem<S>>,
+    ///Set of all members who authored or reacted to the returned messages. Members referred to by system messages are also included.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub related_profiles: Option<Vec<ProfileViewBasic<S>>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
@@ -50,6 +55,50 @@ pub enum GetMessagesOutputMessagesItem<S: BosStr = DefaultStr> {
     MessageView(Box<MessageView<S>>),
     #[serde(rename = "chat.bsky.convo.defs#deletedMessageView")]
     DeletedMessageView(Box<DeletedMessageView<S>>),
+    #[serde(rename = "chat.bsky.convo.defs#systemMessageView")]
+    SystemMessageView(Box<SystemMessageView<S>>),
+}
+
+
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    thiserror::Error,
+    miette::Diagnostic
+)]
+
+#[serde(tag = "error", content = "message")]
+pub enum GetMessagesError {
+    #[serde(rename = "InvalidConvo")]
+    InvalidConvo(Option<SmolStr>),
+    /// Catch-all for unknown error codes.
+    #[serde(untagged)]
+    Other { error: SmolStr, message: Option<SmolStr> },
+}
+
+impl core::fmt::Display for GetMessagesError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::InvalidConvo(msg) => {
+                write!(f, "InvalidConvo")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::Other { error, message } => {
+                write!(f, "{}", error)?;
+                if let Some(msg) = message {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+        }
+    }
 }
 
 /// Response type for chat.bsky.convo.getMessages
@@ -58,7 +107,7 @@ impl jacquard_common::xrpc::XrpcResp for GetMessagesResponse {
     const NSID: &'static str = "chat.bsky.convo.getMessages";
     const ENCODING: &'static str = "application/json";
     type Output<S: BosStr> = GetMessagesOutput<S>;
-    type Err = jacquard_common::xrpc::GenericError;
+    type Err = GetMessagesError;
 }
 
 impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetMessages<S> {

@@ -283,67 +283,67 @@ pub mod album_summary_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Mbid;
+        type ArtistName;
         type Name;
         type PlayCount;
-        type ArtistName;
+        type Mbid;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Mbid = Unset;
+        type ArtistName = Unset;
         type Name = Unset;
         type PlayCount = Unset;
-        type ArtistName = Unset;
-    }
-    ///State transition - sets the `mbid` field to Set
-    pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMbid<St> {}
-    impl<St: State> State for SetMbid<St> {
-        type Mbid = Set<members::mbid>;
-        type Name = St::Name;
-        type PlayCount = St::PlayCount;
-        type ArtistName = St::ArtistName;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type Mbid = St::Mbid;
-        type Name = Set<members::name>;
-        type PlayCount = St::PlayCount;
-        type ArtistName = St::ArtistName;
-    }
-    ///State transition - sets the `play_count` field to Set
-    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
-    impl<St: State> State for SetPlayCount<St> {
-        type Mbid = St::Mbid;
-        type Name = St::Name;
-        type PlayCount = Set<members::play_count>;
-        type ArtistName = St::ArtistName;
+        type Mbid = Unset;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetArtistName<St> {}
     impl<St: State> State for SetArtistName<St> {
-        type Mbid = St::Mbid;
+        type ArtistName = Set<members::artist_name>;
         type Name = St::Name;
         type PlayCount = St::PlayCount;
-        type ArtistName = Set<members::artist_name>;
+        type Mbid = St::Mbid;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type ArtistName = St::ArtistName;
+        type Name = Set<members::name>;
+        type PlayCount = St::PlayCount;
+        type Mbid = St::Mbid;
+    }
+    ///State transition - sets the `play_count` field to Set
+    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
+    impl<St: State> State for SetPlayCount<St> {
+        type ArtistName = St::ArtistName;
+        type Name = St::Name;
+        type PlayCount = Set<members::play_count>;
+        type Mbid = St::Mbid;
+    }
+    ///State transition - sets the `mbid` field to Set
+    pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMbid<St> {}
+    impl<St: State> State for SetMbid<St> {
+        type ArtistName = St::ArtistName;
+        type Name = St::Name;
+        type PlayCount = St::PlayCount;
+        type Mbid = Set<members::mbid>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `mbid` field
-        pub struct mbid(());
+        ///Marker type for the `artist_name` field
+        pub struct artist_name(());
         ///Marker type for the `name` field
         pub struct name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
-        ///Marker type for the `artist_name` field
-        pub struct artist_name(());
+        ///Marker type for the `mbid` field
+        pub struct mbid(());
     }
 }
 
@@ -490,10 +490,10 @@ impl<S: BosStr, St: album_summary_state::State> AlbumSummaryBuilder<S, St> {
 impl<S: BosStr, St> AlbumSummaryBuilder<S, St>
 where
     St: album_summary_state::State,
-    St::Mbid: album_summary_state::IsSet,
+    St::ArtistName: album_summary_state::IsSet,
     St::Name: album_summary_state::IsSet,
     St::PlayCount: album_summary_state::IsSet,
-    St::ArtistName: album_summary_state::IsSet,
+    St::Mbid: album_summary_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AlbumSummary<S> {
@@ -812,84 +812,84 @@ pub mod album_view_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type Tracks;
-        type PlayCount;
         type Name;
         type Mbid;
         type ArtistName;
+        type PlayCount;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type Tracks = Unset;
-        type PlayCount = Unset;
         type Name = Unset;
         type Mbid = Unset;
         type ArtistName = Unset;
+        type PlayCount = Unset;
     }
     ///State transition - sets the `tracks` field to Set
     pub struct SetTracks<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTracks<St> {}
     impl<St: State> State for SetTracks<St> {
         type Tracks = Set<members::tracks>;
+        type Name = St::Name;
+        type Mbid = St::Mbid;
+        type ArtistName = St::ArtistName;
         type PlayCount = St::PlayCount;
-        type Name = St::Name;
-        type Mbid = St::Mbid;
-        type ArtistName = St::ArtistName;
-    }
-    ///State transition - sets the `play_count` field to Set
-    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
-    impl<St: State> State for SetPlayCount<St> {
-        type Tracks = St::Tracks;
-        type PlayCount = Set<members::play_count>;
-        type Name = St::Name;
-        type Mbid = St::Mbid;
-        type ArtistName = St::ArtistName;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetName<St> {}
     impl<St: State> State for SetName<St> {
         type Tracks = St::Tracks;
-        type PlayCount = St::PlayCount;
         type Name = Set<members::name>;
         type Mbid = St::Mbid;
         type ArtistName = St::ArtistName;
+        type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `mbid` field to Set
     pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMbid<St> {}
     impl<St: State> State for SetMbid<St> {
         type Tracks = St::Tracks;
-        type PlayCount = St::PlayCount;
         type Name = St::Name;
         type Mbid = Set<members::mbid>;
         type ArtistName = St::ArtistName;
+        type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetArtistName<St> {}
     impl<St: State> State for SetArtistName<St> {
         type Tracks = St::Tracks;
-        type PlayCount = St::PlayCount;
         type Name = St::Name;
         type Mbid = St::Mbid;
         type ArtistName = Set<members::artist_name>;
+        type PlayCount = St::PlayCount;
+    }
+    ///State transition - sets the `play_count` field to Set
+    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
+    impl<St: State> State for SetPlayCount<St> {
+        type Tracks = St::Tracks;
+        type Name = St::Name;
+        type Mbid = St::Mbid;
+        type ArtistName = St::ArtistName;
+        type PlayCount = Set<members::play_count>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `tracks` field
         pub struct tracks(());
-        ///Marker type for the `play_count` field
-        pub struct play_count(());
         ///Marker type for the `name` field
         pub struct name(());
         ///Marker type for the `mbid` field
         pub struct mbid(());
         ///Marker type for the `artist_name` field
         pub struct artist_name(());
+        ///Marker type for the `play_count` field
+        pub struct play_count(());
     }
 }
 
@@ -1037,10 +1037,10 @@ impl<S: BosStr, St> AlbumViewBuilder<S, St>
 where
     St: album_view_state::State,
     St::Tracks: album_view_state::IsSet,
-    St::PlayCount: album_view_state::IsSet,
     St::Name: album_view_state::IsSet,
     St::Mbid: album_view_state::IsSet,
     St::ArtistName: album_view_state::IsSet,
+    St::PlayCount: album_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AlbumView<S> {
@@ -1081,37 +1081,37 @@ pub mod artist_listener_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type PlayCount;
         type Actor;
+        type PlayCount;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type PlayCount = Unset;
         type Actor = Unset;
-    }
-    ///State transition - sets the `play_count` field to Set
-    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
-    impl<St: State> State for SetPlayCount<St> {
-        type PlayCount = Set<members::play_count>;
-        type Actor = St::Actor;
+        type PlayCount = Unset;
     }
     ///State transition - sets the `actor` field to Set
     pub struct SetActor<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetActor<St> {}
     impl<St: State> State for SetActor<St> {
-        type PlayCount = St::PlayCount;
         type Actor = Set<members::actor>;
+        type PlayCount = St::PlayCount;
+    }
+    ///State transition - sets the `play_count` field to Set
+    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
+    impl<St: State> State for SetPlayCount<St> {
+        type Actor = St::Actor;
+        type PlayCount = Set<members::play_count>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `play_count` field
-        pub struct play_count(());
         ///Marker type for the `actor` field
         pub struct actor(());
+        ///Marker type for the `play_count` field
+        pub struct play_count(());
     }
 }
 
@@ -1181,8 +1181,8 @@ where
 impl<S: BosStr, St> ArtistListenerViewBuilder<S, St>
 where
     St: artist_listener_view_state::State,
-    St::PlayCount: artist_listener_view_state::IsSet,
     St::Actor: artist_listener_view_state::IsSet,
+    St::PlayCount: artist_listener_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ArtistListenerView<S> {
@@ -1215,49 +1215,49 @@ pub mod artist_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Albums;
         type Name;
+        type Albums;
         type PlayCount;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Albums = Unset;
         type Name = Unset;
+        type Albums = Unset;
         type PlayCount = Unset;
-    }
-    ///State transition - sets the `albums` field to Set
-    pub struct SetAlbums<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetAlbums<St> {}
-    impl<St: State> State for SetAlbums<St> {
-        type Albums = Set<members::albums>;
-        type Name = St::Name;
-        type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetName<St> {}
     impl<St: State> State for SetName<St> {
-        type Albums = St::Albums;
         type Name = Set<members::name>;
+        type Albums = St::Albums;
+        type PlayCount = St::PlayCount;
+    }
+    ///State transition - sets the `albums` field to Set
+    pub struct SetAlbums<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetAlbums<St> {}
+    impl<St: State> State for SetAlbums<St> {
+        type Name = St::Name;
+        type Albums = Set<members::albums>;
         type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `play_count` field to Set
     pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPlayCount<St> {}
     impl<St: State> State for SetPlayCount<St> {
-        type Albums = St::Albums;
         type Name = St::Name;
+        type Albums = St::Albums;
         type PlayCount = Set<members::play_count>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `albums` field
-        pub struct albums(());
         ///Marker type for the `name` field
         pub struct name(());
+        ///Marker type for the `albums` field
+        pub struct albums(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
     }
@@ -1366,8 +1366,8 @@ where
 impl<S: BosStr, St> ArtistViewBuilder<S, St>
 where
     St: artist_view_state::State,
-    St::Albums: artist_view_state::IsSet,
     St::Name: artist_view_state::IsSet,
+    St::Albums: artist_view_state::IsSet,
     St::PlayCount: artist_view_state::IsSet,
 {
     /// Build the final struct.
@@ -1407,8 +1407,8 @@ pub mod track_summary_state {
     pub trait State: sealed::Sealed {
         type Name;
         type ArtistName;
-        type PlayCount;
         type Uri;
+        type PlayCount;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
@@ -1416,8 +1416,8 @@ pub mod track_summary_state {
     impl State for Empty {
         type Name = Unset;
         type ArtistName = Unset;
-        type PlayCount = Unset;
         type Uri = Unset;
+        type PlayCount = Unset;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
@@ -1425,8 +1425,8 @@ pub mod track_summary_state {
     impl<St: State> State for SetName<St> {
         type Name = Set<members::name>;
         type ArtistName = St::ArtistName;
-        type PlayCount = St::PlayCount;
         type Uri = St::Uri;
+        type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
@@ -1434,17 +1434,8 @@ pub mod track_summary_state {
     impl<St: State> State for SetArtistName<St> {
         type Name = St::Name;
         type ArtistName = Set<members::artist_name>;
+        type Uri = St::Uri;
         type PlayCount = St::PlayCount;
-        type Uri = St::Uri;
-    }
-    ///State transition - sets the `play_count` field to Set
-    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
-    impl<St: State> State for SetPlayCount<St> {
-        type Name = St::Name;
-        type ArtistName = St::ArtistName;
-        type PlayCount = Set<members::play_count>;
-        type Uri = St::Uri;
     }
     ///State transition - sets the `uri` field to Set
     pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
@@ -1452,8 +1443,17 @@ pub mod track_summary_state {
     impl<St: State> State for SetUri<St> {
         type Name = St::Name;
         type ArtistName = St::ArtistName;
-        type PlayCount = St::PlayCount;
         type Uri = Set<members::uri>;
+        type PlayCount = St::PlayCount;
+    }
+    ///State transition - sets the `play_count` field to Set
+    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
+    impl<St: State> State for SetPlayCount<St> {
+        type Name = St::Name;
+        type ArtistName = St::ArtistName;
+        type Uri = St::Uri;
+        type PlayCount = Set<members::play_count>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
@@ -1462,10 +1462,10 @@ pub mod track_summary_state {
         pub struct name(());
         ///Marker type for the `artist_name` field
         pub struct artist_name(());
-        ///Marker type for the `play_count` field
-        pub struct play_count(());
         ///Marker type for the `uri` field
         pub struct uri(());
+        ///Marker type for the `play_count` field
+        pub struct play_count(());
     }
 }
 
@@ -1588,8 +1588,8 @@ where
     St: track_summary_state::State,
     St::Name: track_summary_state::IsSet,
     St::ArtistName: track_summary_state::IsSet,
-    St::PlayCount: track_summary_state::IsSet,
     St::Uri: track_summary_state::IsSet,
+    St::PlayCount: track_summary_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> TrackSummary<S> {

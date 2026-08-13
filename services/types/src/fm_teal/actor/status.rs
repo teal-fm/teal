@@ -117,37 +117,37 @@ pub mod status_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Item;
         type Time;
+        type Item;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Item = Unset;
         type Time = Unset;
-    }
-    ///State transition - sets the `item` field to Set
-    pub struct SetItem<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetItem<St> {}
-    impl<St: State> State for SetItem<St> {
-        type Item = Set<members::item>;
-        type Time = St::Time;
+        type Item = Unset;
     }
     ///State transition - sets the `time` field to Set
     pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTime<St> {}
     impl<St: State> State for SetTime<St> {
-        type Item = St::Item;
         type Time = Set<members::time>;
+        type Item = St::Item;
+    }
+    ///State transition - sets the `item` field to Set
+    pub struct SetItem<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetItem<St> {}
+    impl<St: State> State for SetItem<St> {
+        type Time = St::Time;
+        type Item = Set<members::item>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `item` field
-        pub struct item(());
         ///Marker type for the `time` field
         pub struct time(());
+        ///Marker type for the `item` field
+        pub struct item(());
     }
 }
 
@@ -230,8 +230,8 @@ where
 impl<S: BosStr, St> StatusBuilder<S, St>
 where
     St: status_state::State,
-    St::Item: status_state::IsSet,
     St::Time: status_state::IsSet,
+    St::Item: status_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Status<S> {

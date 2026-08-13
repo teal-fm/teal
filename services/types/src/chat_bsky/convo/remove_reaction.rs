@@ -50,6 +50,11 @@ pub struct RemoveReactionOutput<S: BosStr = DefaultStr> {
 
 #[serde(tag = "error", content = "message")]
 pub enum RemoveReactionError {
+    #[serde(rename = "InvalidConvo")]
+    InvalidConvo(Option<SmolStr>),
+    /// Indicates that reactions are not allowed on this message, e.g. because it is a system message.
+    #[serde(rename = "ReactionNotAllowed")]
+    ReactionNotAllowed(Option<SmolStr>),
     /// Indicates that the message has been deleted and reactions can no longer be added/removed.
     #[serde(rename = "ReactionMessageDeleted")]
     ReactionMessageDeleted(Option<SmolStr>),
@@ -64,6 +69,20 @@ pub enum RemoveReactionError {
 impl core::fmt::Display for RemoveReactionError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
+            Self::InvalidConvo(msg) => {
+                write!(f, "InvalidConvo")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::ReactionNotAllowed(msg) => {
+                write!(f, "ReactionNotAllowed")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
             Self::ReactionMessageDeleted(msg) => {
                 write!(f, "ReactionMessageDeleted")?;
                 if let Some(msg) = msg {

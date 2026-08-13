@@ -127,37 +127,37 @@ pub mod service_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type CreatedAt;
         type Policies;
+        type CreatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type CreatedAt = Unset;
         type Policies = Unset;
-    }
-    ///State transition - sets the `created_at` field to Set
-    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
-    impl<St: State> State for SetCreatedAt<St> {
-        type CreatedAt = Set<members::created_at>;
-        type Policies = St::Policies;
+        type CreatedAt = Unset;
     }
     ///State transition - sets the `policies` field to Set
     pub struct SetPolicies<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPolicies<St> {}
     impl<St: State> State for SetPolicies<St> {
-        type CreatedAt = St::CreatedAt;
         type Policies = Set<members::policies>;
+        type CreatedAt = St::CreatedAt;
+    }
+    ///State transition - sets the `created_at` field to Set
+    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
+    impl<St: State> State for SetCreatedAt<St> {
+        type Policies = St::Policies;
+        type CreatedAt = Set<members::created_at>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `created_at` field
-        pub struct created_at(());
         ///Marker type for the `policies` field
         pub struct policies(());
+        ///Marker type for the `created_at` field
+        pub struct created_at(());
     }
 }
 
@@ -292,8 +292,8 @@ impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
 impl<S: BosStr, St> ServiceBuilder<S, St>
 where
     St: service_state::State,
-    St::CreatedAt: service_state::IsSet,
     St::Policies: service_state::IsSet,
+    St::CreatedAt: service_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Service<S> {

@@ -40,9 +40,12 @@ pub struct GetSuggestionsSkeletonOutput<S: BosStr = DefaultStr> {
     pub actors: Vec<SkeletonSearchActor<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Snowflake for this recommendation, use when submitting recommendation events.
+    ///DEPRECATED: use recIdStr instead.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rec_id: Option<i64>,
+    ///Snowflake for this recommendation, use when submitting recommendation events.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rec_id_str: Option<S>,
     ///DID of the account these suggestions are relative to. If this is returned undefined, suggestions are based on the viewer.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub relative_to_did: Option<Did<S>>,

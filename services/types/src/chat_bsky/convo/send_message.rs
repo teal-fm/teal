@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
-use jacquard_derive::IntoStatic;
+use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
 use crate::chat_bsky::convo::MessageInput;
 use crate::chat_bsky::convo::MessageView;
@@ -37,13 +37,73 @@ pub struct SendMessageOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
+
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    thiserror::Error,
+    miette::Diagnostic
+)]
+
+#[serde(tag = "error", content = "message")]
+pub enum SendMessageError {
+    #[serde(rename = "ConvoLocked")]
+    ConvoLocked(Option<SmolStr>),
+    #[serde(rename = "InvalidConvo")]
+    InvalidConvo(Option<SmolStr>),
+    #[serde(rename = "ReplyTargetNotFound")]
+    ReplyTargetNotFound(Option<SmolStr>),
+    /// Catch-all for unknown error codes.
+    #[serde(untagged)]
+    Other { error: SmolStr, message: Option<SmolStr> },
+}
+
+impl core::fmt::Display for SendMessageError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::ConvoLocked(msg) => {
+                write!(f, "ConvoLocked")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::InvalidConvo(msg) => {
+                write!(f, "InvalidConvo")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::ReplyTargetNotFound(msg) => {
+                write!(f, "ReplyTargetNotFound")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::Other { error, message } => {
+                write!(f, "{}", error)?;
+                if let Some(msg) = message {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
 /// Response type for chat.bsky.convo.sendMessage
 pub struct SendMessageResponse;
 impl jacquard_common::xrpc::XrpcResp for SendMessageResponse {
     const NSID: &'static str = "chat.bsky.convo.sendMessage";
     const ENCODING: &'static str = "application/json";
     type Output<S: BosStr> = SendMessageOutput<S>;
-    type Err = jacquard_common::xrpc::GenericError;
+    type Err = SendMessageError;
 }
 
 impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SendMessage<S> {

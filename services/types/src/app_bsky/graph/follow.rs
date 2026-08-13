@@ -27,6 +27,7 @@ use jacquard_lexicon::schema::LexiconSchema;
 #[allow(unused_imports)]
 use jacquard_lexicon::validation::{ConstraintError, ValidationPath};
 use serde::{Serialize, Deserialize};
+use crate::com_atproto::repo::strong_ref::StrongRef;
 /// Record declaring a social 'follow' relationship of another account. Duplicate follows will be ignored by the AppView.
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
@@ -39,6 +40,8 @@ use serde::{Serialize, Deserialize};
 pub struct Follow<S: BosStr = DefaultStr> {
     pub created_at: Datetime,
     pub subject: Did<S>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub via: Option<StrongRef<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
@@ -149,7 +152,7 @@ pub mod follow_state {
 /// Builder for constructing an instance of this type.
 pub struct FollowBuilder<S: BosStr, St: follow_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<Datetime>, Option<Did<S>>),
+    _fields: (Option<Datetime>, Option<Did<S>>, Option<StrongRef<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -165,7 +168,7 @@ impl<S: BosStr> FollowBuilder<S, follow_state::Empty> {
     pub fn new() -> Self {
         FollowBuilder {
             _state: PhantomData,
-            _fields: (None, None),
+            _fields: (None, None, None),
             _type: PhantomData,
         }
     }
@@ -209,6 +212,19 @@ where
     }
 }
 
+impl<S: BosStr, St: follow_state::State> FollowBuilder<S, St> {
+    /// Set the `via` field (optional)
+    pub fn via(mut self, value: impl Into<Option<StrongRef<S>>>) -> Self {
+        self._fields.2 = value.into();
+        self
+    }
+    /// Set the `via` field to an Option value (optional)
+    pub fn maybe_via(mut self, value: Option<StrongRef<S>>) -> Self {
+        self._fields.2 = value;
+        self
+    }
+}
+
 impl<S: BosStr, St> FollowBuilder<S, St>
 where
     St: follow_state::State,
@@ -220,6 +236,7 @@ where
         Follow {
             created_at: self._fields.0.unwrap(),
             subject: self._fields.1.unwrap(),
+            via: self._fields.2,
             extra_data: Default::default(),
         }
     }
@@ -228,6 +245,7 @@ where
         Follow {
             created_at: self._fields.0.unwrap(),
             subject: self._fields.1.unwrap(),
+            via: self._fields.2,
             extra_data: Some(extra_data),
         }
     }
@@ -273,6 +291,13 @@ fn lexicon_doc_app_bsky_graph_follow() -> LexiconDoc<'static> {
                                 SmolStr::new_static("subject"),
                                 LexObjectProperty::String(LexString {
                                     format: Some(LexStringFormat::Did),
+                                    ..Default::default()
+                                }),
+                            );
+                            map.insert(
+                                SmolStr::new_static("via"),
+                                LexObjectProperty::Ref(LexRef {
+                                    r#ref: CowStr::new_static("com.atproto.repo.strongRef"),
                                     ..Default::default()
                                 }),
                             );

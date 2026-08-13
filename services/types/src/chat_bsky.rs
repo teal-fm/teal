@@ -4,5 +4,9 @@
 // Any manual changes will be overwritten on the next regeneration.
 
 pub mod actor;
+pub mod auth_full_chat_client;
 pub mod convo;
+pub mod embed;
+pub mod group;
 pub mod moderation;
+pub mod notification;

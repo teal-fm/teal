@@ -64,20 +64,20 @@ pub enum MemberRole<S: BosStr = DefaultStr> {
 impl<S: BosStr> MemberRole<S> {
     pub fn as_str(&self) -> &str {
         match self {
-            Self::RoleAdmin => "#roleAdmin",
-            Self::RoleModerator => "#roleModerator",
-            Self::RoleTriage => "#roleTriage",
-            Self::RoleVerifier => "#roleVerifier",
+            Self::RoleAdmin => "tools.ozone.team.defs#roleAdmin",
+            Self::RoleModerator => "tools.ozone.team.defs#roleModerator",
+            Self::RoleTriage => "tools.ozone.team.defs#roleTriage",
+            Self::RoleVerifier => "tools.ozone.team.defs#roleVerifier",
             Self::Other(s) => s.as_ref(),
         }
     }
     /// Construct from a string-like value, matching known values.
     pub fn from_value(s: S) -> Self {
         match s.as_ref() {
-            "#roleAdmin" => Self::RoleAdmin,
-            "#roleModerator" => Self::RoleModerator,
-            "#roleTriage" => Self::RoleTriage,
-            "#roleVerifier" => Self::RoleVerifier,
+            "tools.ozone.team.defs#roleAdmin" => Self::RoleAdmin,
+            "tools.ozone.team.defs#roleModerator" => Self::RoleModerator,
+            "tools.ozone.team.defs#roleTriage" => Self::RoleTriage,
+            "tools.ozone.team.defs#roleVerifier" => Self::RoleVerifier,
             _ => Self::Other(s),
         }
     }
@@ -202,37 +202,37 @@ pub mod member_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Did;
         type Role;
+        type Did;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Did = Unset;
         type Role = Unset;
-    }
-    ///State transition - sets the `did` field to Set
-    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDid<St> {}
-    impl<St: State> State for SetDid<St> {
-        type Did = Set<members::did>;
-        type Role = St::Role;
+        type Did = Unset;
     }
     ///State transition - sets the `role` field to Set
     pub struct SetRole<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetRole<St> {}
     impl<St: State> State for SetRole<St> {
-        type Did = St::Did;
         type Role = Set<members::role>;
+        type Did = St::Did;
+    }
+    ///State transition - sets the `did` field to Set
+    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDid<St> {}
+    impl<St: State> State for SetDid<St> {
+        type Role = St::Role;
+        type Did = Set<members::did>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `did` field
-        pub struct did(());
         ///Marker type for the `role` field
         pub struct role(());
+        ///Marker type for the `did` field
+        pub struct did(());
     }
 }
 
@@ -375,8 +375,8 @@ impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
 impl<S: BosStr, St> MemberBuilder<S, St>
 where
     St: member_state::State,
-    St::Did: member_state::IsSet,
     St::Role: member_state::IsSet,
+    St::Did: member_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Member<S> {
