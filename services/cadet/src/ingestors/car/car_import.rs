@@ -43,6 +43,7 @@ use redis::AsyncCommands;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::PgPool;
+use std::collections::HashMap;
 use tracing::{info, warn};
 
 /// Helper struct for extracted records
@@ -86,6 +87,49 @@ fn stable_collection_for(collection: &str) -> Option<&'static str> {
         }
         _ => None,
     }
+}
+
+fn is_legacy_collection(collection: &str) -> bool {
+    collection.starts_with("fm.teal.alpha.")
+}
+
+/// Drop duplicate stable/alpha records from a repository snapshot.
+///
+/// Records are duplicates when their canonical collection, rkey, and
+/// normalized JSON are identical. Stable records win when both namespace
+/// variants are present.
+fn deduplicate_records(records: Vec<ExtractedRecord>) -> Vec<ExtractedRecord> {
+    let mut deduplicated: Vec<(ExtractedRecord, Value)> = Vec::with_capacity(records.len());
+    let mut positions_by_key: HashMap<(&'static str, String), Vec<usize>> = HashMap::new();
+
+    for record in records {
+        let normalized_data = normalize_legacy_record_type(&record.data);
+        let Some(canonical_collection) = stable_collection_for(&record.collection) else {
+            deduplicated.push((record, normalized_data));
+            continue;
+        };
+        let key = (canonical_collection, record.rkey.clone());
+        let duplicate_index = positions_by_key.get(&key).and_then(|positions| {
+            positions
+                .iter()
+                .copied()
+                .find(|&index| deduplicated[index].1 == normalized_data)
+        });
+
+        if let Some(index) = duplicate_index {
+            if is_legacy_collection(&deduplicated[index].0.collection)
+                && !is_legacy_collection(&record.collection)
+            {
+                deduplicated[index] = (record, normalized_data);
+            }
+        } else {
+            let index = deduplicated.len();
+            deduplicated.push((record, normalized_data));
+            positions_by_key.entry(key).or_default().push(index);
+        }
+    }
+
+    deduplicated.into_iter().map(|(record, _)| record).collect()
 }
 
 /// CAR Import Ingestor handles importing Teal records from CAR files using atmst
@@ -151,8 +195,14 @@ impl CarImportIngestor {
         let records = self
             .extract_records_from_mst(&mst, &data_importer, did)
             .await?;
+        let extracted_count = records.len();
+        let records = deduplicate_records(records);
 
-        info!("Extracted {} records from MST", records.len());
+        info!(
+            "Extracted {} records from MST ({} after namespace deduplication)",
+            extracted_count,
+            records.len()
+        );
 
         // Process each record through the appropriate ingestor
         let mut processed_count = 0_usize;
@@ -877,6 +927,72 @@ mod tests {
         assert!(is_teal_record_key("fm.teal.alpha.profile/def456"));
         assert!(!is_teal_record_key("app.bsky.feed.post/xyz789"));
         assert!(!is_teal_record_key("fm.teal.alpha.feed.play")); // No rkey
+    }
+
+    #[test]
+    fn test_deduplicate_identical_alpha_and_stable_records_prefers_stable() {
+        let record_fields = serde_json::json!({
+            "trackName": "Same recording",
+            "playedTime": "2024-01-01T00:00:00Z"
+        });
+        let mut legacy_data = record_fields.clone();
+        legacy_data["$type"] = serde_json::json!("fm.teal.alpha.feed.play");
+        let mut stable_data = record_fields;
+        stable_data["$type"] = serde_json::json!("fm.teal.feed.play");
+
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: "fm.teal.alpha.feed.play".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "legacy-cid".to_string(),
+                data: legacy_data,
+            },
+            ExtractedRecord {
+                collection: "fm.teal.feed.play".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "stable-cid".to_string(),
+                data: stable_data,
+            },
+        ]);
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].collection, "fm.teal.feed.play");
+        assert_eq!(records[0].cid, "stable-cid");
+    }
+
+    #[test]
+    fn test_deduplicate_compares_only_matching_collection_and_rkey() {
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: "fm.teal.alpha.actor.status".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "status-cid".to_string(),
+                data: serde_json::json!({
+                    "$type": "fm.teal.alpha.actor.status",
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: "fm.teal.feed.play".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "play-cid".to_string(),
+                data: serde_json::json!({
+                    "$type": "fm.teal.feed.play",
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: "fm.teal.actor.status".to_string(),
+                rkey: "different-rkey".to_string(),
+                cid: "other-status-cid".to_string(),
+                data: serde_json::json!({
+                    "$type": "fm.teal.actor.status",
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+        ]);
+
+        assert_eq!(records.len(), 3);
     }
 
     #[test]
