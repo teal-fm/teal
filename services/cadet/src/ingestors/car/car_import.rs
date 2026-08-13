@@ -105,6 +105,45 @@ fn normalize_legacy_record_type(data: &Value) -> Value {
     Value::Object(normalized)
 }
 
+fn is_legacy_collection(collection: &str) -> bool {
+    matches!(
+        collection,
+        LEGACY_PLAY_COLLECTION | LEGACY_PROFILE_COLLECTION | LEGACY_STATUS_COLLECTION
+    )
+}
+
+/// Drop duplicate stable/alpha records from a repository snapshot.
+///
+/// The namespace is part of a record's `$type`, so compare records after only
+/// normalizing that root NSID. Records with the same canonical collection,
+/// exact rkey, and exact normalized JSON are the same logical record. Prefer
+/// the stable collection when both namespace variants are present.
+fn deduplicate_records(records: Vec<ExtractedRecord>) -> Vec<ExtractedRecord> {
+    let mut deduplicated: Vec<ExtractedRecord> = Vec::with_capacity(records.len());
+
+    for record in records {
+        let canonical_collection = stable_collection_for(&record.collection);
+        let normalized_data = normalize_legacy_record_type(&record.data);
+        let duplicate_index = deduplicated.iter().position(|existing| {
+            stable_collection_for(&existing.collection) == canonical_collection
+                && existing.rkey == record.rkey
+                && normalize_legacy_record_type(&existing.data) == normalized_data
+        });
+
+        if let Some(index) = duplicate_index {
+            if is_legacy_collection(&deduplicated[index].collection)
+                && !is_legacy_collection(&record.collection)
+            {
+                deduplicated[index] = record;
+            }
+        } else {
+            deduplicated.push(record);
+        }
+    }
+
+    deduplicated
+}
+
 /// CAR Import Ingestor handles importing Teal records from CAR files using atmst
 pub struct CarImportIngestor {
     sql: PgPool,
@@ -168,8 +207,14 @@ impl CarImportIngestor {
         let records = self
             .extract_records_from_mst(&mst, &data_importer, did)
             .await?;
+        let extracted_count = records.len();
+        let records = deduplicate_records(records);
 
-        info!("Extracted {} records from MST", records.len());
+        info!(
+            "Extracted {} records from MST ({} after namespace deduplication)",
+            extracted_count,
+            records.len()
+        );
 
         // Process each record through the appropriate ingestor
         let mut processed_count = 0;
@@ -756,6 +801,68 @@ mod tests {
 
         let normalized = normalize_legacy_record_type(&data);
         assert_eq!(normalized["$type"], "fm.teal.actor.status");
+    }
+
+    #[test]
+    fn test_deduplicate_identical_alpha_and_stable_records_prefers_stable() {
+        let record_fields = serde_json::json!({
+            "trackName": "Same recording",
+            "playedTime": "2024-01-01T00:00:00Z"
+        });
+        let mut legacy_data = record_fields.clone();
+        legacy_data["$type"] = serde_json::json!(LEGACY_PLAY_COLLECTION);
+        let mut stable_data = record_fields;
+        stable_data["$type"] = serde_json::json!(STABLE_PLAY_COLLECTION);
+
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: LEGACY_PLAY_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: legacy_data,
+            },
+            ExtractedRecord {
+                collection: STABLE_PLAY_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: stable_data,
+            },
+        ]);
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].collection, STABLE_PLAY_COLLECTION);
+        assert_eq!(records[0].rkey, "same-rkey");
+        assert_eq!(records[0].data["$type"], STABLE_PLAY_COLLECTION);
+    }
+
+    #[test]
+    fn test_deduplicate_keeps_different_content_or_rkeys() {
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: LEGACY_STATUS_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: serde_json::json!({
+                    "$type": LEGACY_STATUS_COLLECTION,
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: STABLE_STATUS_COLLECTION.to_string(),
+                rkey: "same-rkey".to_string(),
+                data: serde_json::json!({
+                    "$type": STABLE_STATUS_COLLECTION,
+                    "time": "2024-01-01T00:01:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: STABLE_STATUS_COLLECTION.to_string(),
+                rkey: "different-rkey".to_string(),
+                data: serde_json::json!({
+                    "$type": STABLE_STATUS_COLLECTION,
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+        ]);
+
+        assert_eq!(records.len(), 3);
     }
 
     #[test]
