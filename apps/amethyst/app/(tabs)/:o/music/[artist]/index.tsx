@@ -23,8 +23,8 @@ import {
 import { musicAlbumHref, musicArtistListenersHref } from "@/lib/teal/routes";
 import { ChevronRight, Disc3, Mic2, Trophy } from "lucide-react-native";
 
-import type { ArtistView } from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
-import type { ArtistListenerView } from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
+import type { ArtistView } from "@teal/lexicons/src/types/fm/teal/music/defs";
+import type { ArtistListenerView } from "@teal/lexicons/src/types/fm/teal/music/defs";
 
 export default function ArtistDetail() {
   const params = useLocalSearchParams();

@@ -1,12 +1,12 @@
-use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
 use jacquard_common::IntoStatic;
 use serde::Deserialize;
-use types::fm_teal::alpha::search::get_results::GetResultsOutput;
+use types::fm_teal::search::get_results::GetResultsOutput;
 
 use crate::ctx::Context;
 
 pub fn search_routes() -> axum::Router {
-    axum::Router::new().route("/fm.teal.alpha.search.getResults", get(get_results))
+    axum::Router::new().route("/fm.teal.search.getResults", get(get_results))
 }
 
 #[derive(Deserialize)]

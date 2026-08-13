@@ -5,10 +5,10 @@ use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
-use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::stats::{ArtistView, RecordingView, ReleaseView};
+use types::fm_teal::feed::PlayView;
+use types::fm_teal::stats::{ArtistView, RecordingView, ReleaseView};
 
-use super::{mbid_uri, mini_profile, pg::PgDataSource, utc_to_atrium_datetime};
+use super::{mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime};
 
 pub struct LatestPlaysPage {
     pub plays: Vec<PlayView>,
@@ -484,8 +484,9 @@ impl StatsRepo for PgDataSource {
                 uri: row.uri.clone(),
             });
             let artists = match row.artists {
-                Some(value) => from_json_value::<Vec<types::fm_teal::alpha::feed::Artist>>(value)
-                    .unwrap_or_default(),
+                Some(value) => {
+                    from_json_value::<Vec<types::fm_teal::feed::Artist>>(value).unwrap_or_default()
+                }
                 None => vec![],
             };
 
@@ -508,8 +509,8 @@ impl StatsRepo for PgDataSource {
                 release_name: row.release_name.map(|s| s.into()),
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
-                origin_url: row.origin_url.map(|s| s.into()),
-                music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+                origin_uri: row.origin_url.map(uri_value),
+                music_service_uri: row.music_service_base_domain.map(uri_value),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time
@@ -561,15 +562,15 @@ impl PgDataSource {
 #[cfg(test)]
 mod tests {
     use super::{
-        LatestPlaysCursor, OffsetCursor, StatsPeriod, decode_latest_cursor, decode_offset_cursor,
-        encode_latest_cursor, encode_offset_cursor, normalize_limit,
+        decode_latest_cursor, decode_offset_cursor, encode_latest_cursor, encode_offset_cursor,
+        normalize_limit, LatestPlaysCursor, OffsetCursor, StatsPeriod,
     };
 
     #[test]
     fn latest_cursor_round_trips() -> anyhow::Result<()> {
         let cursor = LatestPlaysCursor {
             processed_time: "2026-05-31T22:53:52Z".to_string(),
-            uri: "at://did:plc:listener/fm.teal.alpha.feed.play/3example".to_string(),
+            uri: "at://did:plc:listener/fm.teal.feed.play/3example".to_string(),
         };
         let encoded = encode_latest_cursor(&cursor)?;
         let decoded = decode_latest_cursor(Some(&encoded))?.expect("cursor should decode");

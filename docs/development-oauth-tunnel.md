@@ -58,7 +58,7 @@ Confirm the OAuth client metadata is served from the stable host:
 
 ```bash
 curl https://$TUNNEL_HOST/client-metadata.json
-curl "https://$TUNNEL_HOST/xrpc/fm.teal.alpha.stats.getLatest?limit=1"
+curl "https://$TUNNEL_HOST/xrpc/fm.teal.stats.getLatest?limit=1"
 ```
 
 The metadata must include:

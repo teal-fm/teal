@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS car_blocks (
     import_id TEXT NOT NULL REFERENCES car_import_requests(import_id),
     block_data BYTEA NOT NULL,
     decoded_successfully BOOLEAN DEFAULT FALSE,
-    collection_type TEXT, -- e.g., 'fm.teal.alpha.feed.play', 'commit', etc.
+    collection_type TEXT, -- e.g., 'fm.teal.feed.play', 'commit', etc.
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

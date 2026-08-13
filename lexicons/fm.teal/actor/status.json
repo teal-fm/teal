@@ -1,0 +1,31 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.actor.status",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "This lexicon is in a not officially released state. It is subject to change. | A declaration of the status of the actor. Only one can be shown at a time. If there are multiple, the latest record should be picked and earlier records should be deleted or tombstoned.",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "required": ["time", "item"],
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "datetime",
+            "description": "The datetime at which the status was recorded."
+          },
+          "expiry": {
+            "type": "string",
+            "format": "datetime",
+            "description": "The datetime after which the status is no longer current. If unavailable, default to 10 minutes after the start time."
+          },
+          "item": {
+            "type": "ref",
+            "ref": "fm.teal.feed.defs#playView"
+          }
+        }
+      }
+    }
+  }
+}

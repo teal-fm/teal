@@ -2,9 +2,9 @@ import type {
   MusicBrainzArtistCredit,
   MusicBrainzRecording,
 } from "./oldStamp";
-import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
 
-export const PLAY_COLLECTION = "fm.teal.alpha.feed.play";
+export const PLAY_COLLECTION = "fm.teal.feed.play";
 export const FALLBACK_DURATION_SECONDS = 180;
 export const SUBMISSION_CLIENT_AGENT = "teal.amethyst/1.0.0";
 
@@ -343,7 +343,7 @@ export function createPlayRecordFromRecording(
     releaseName: release?.title,
     releaseMbId: normalizeMbid(release?.id),
     isrc: recording.isrcs?.[0],
-    musicServiceBaseDomain: "local",
+    musicServiceUri: "local",
     submissionClientAgent: SUBMISSION_CLIENT_AGENT,
     playedTime,
   };
@@ -372,7 +372,7 @@ export function createPlayRecordFromAlbumTrack(
     releaseName: release.title,
     releaseMbId: normalizeMbid(release.id),
     isrc: recording.isrcs?.[0],
-    musicServiceBaseDomain: "local",
+    musicServiceUri: "local",
     submissionClientAgent: SUBMISSION_CLIENT_AGENT,
     playedTime,
   };

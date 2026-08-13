@@ -1,0 +1,38 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.search.defs",
+  "defs": {
+    "songResult": {
+      "type": "object",
+      "required": ["uri", "trackName", "artistName", "playCount"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "Representative indexed play URI for this song"
+        },
+        "trackName": {
+          "type": "string",
+          "description": "Track name"
+        },
+        "artistName": {
+          "type": "string",
+          "description": "Display-ready artist credit"
+        },
+        "releaseName": {
+          "type": "string",
+          "description": "Release or album name"
+        },
+        "releaseMbId": {
+          "type": "string",
+          "format": "uri",
+          "description": "MusicBrainz release ID URI, formatted as mbid:<uuid>"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Number of indexed plays for this song"
+        }
+      }
+    }
+  }
+}

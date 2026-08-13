@@ -24,7 +24,7 @@ import {
 import { useStore } from "@/stores/mainStore";
 import { MessageCircle, Music2 } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 
 type HomeFeed = "posts" | "listens";
 

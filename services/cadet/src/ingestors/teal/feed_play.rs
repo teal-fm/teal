@@ -14,7 +14,7 @@ use sqlx::{types::Uuid, PgPool};
 use tracing::info;
 use unicode_normalization::UnicodeNormalization;
 
-use super::assemble_at_uri;
+use super::{assemble_at_uri, canonical_collection, normalize_legacy_record_type};
 use crate::account;
 
 struct MusicBrainzCleaner;
@@ -419,9 +419,7 @@ fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
     normalized_mbid_text(mbid.as_str()).map(|value| UriValue::Any(SmolStr::new(value)))
 }
 
-fn clean(
-    record: &types::fm_teal::alpha::feed::play::Play,
-) -> types::fm_teal::alpha::feed::play::Play {
+fn clean(record: &types::fm_teal::feed::play::Play) -> types::fm_teal::feed::play::Play {
     let mut cleaned = record.clone();
 
     // Clean artist MBIDs inside artists vector, if present
@@ -1222,7 +1220,7 @@ impl PlayIngestor {
 
     pub async fn insert_play(
         &self,
-        play_record: &types::fm_teal::alpha::feed::play::Play,
+        play_record: &types::fm_teal::feed::play::Play,
         uri: &str,
         cid: &str,
         did: &str,
@@ -1370,9 +1368,9 @@ impl PlayIngestor {
             .as_ref()
             .map(ToString::to_string);
         let music_service_base_domain = play_record
-            .music_service_base_domain
+            .music_service_uri
             .as_ref()
-            .map(ToString::to_string);
+            .map(|uri| uri.as_str().to_string());
 
         // Keep the account lock through the final play write and relationship
         // updates. Account deactivation uses the same lock while it marks the
@@ -1549,16 +1547,20 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::alpha::feed::play::Play =
-                    value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(
-                        record.clone(),
+                let record: types::fm_teal::feed::play::Play =
+                    value::from_json_value::<types::fm_teal::feed::play::Play>(
+                        normalize_legacy_record_type(record),
                     )?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         // TODO: verify cid
                         self.insert_play(
                             &record,
-                            &assemble_at_uri(&message.did, &commit.collection, &commit.rkey),
+                            &assemble_at_uri(
+                                &message.did,
+                                canonical_collection(&commit.collection),
+                                &commit.rkey,
+                            ),
                             cid,
                             &message.did,
                             &commit.rkey,
@@ -1567,7 +1569,11 @@ impl LexiconIngestor for PlayIngestor {
                     }
                 }
             } else {
-                let uri = assemble_at_uri(&message.did, &commit.collection, &commit.rkey);
+                let uri = assemble_at_uri(
+                    &message.did,
+                    canonical_collection(&commit.collection),
+                    &commit.rkey,
+                );
                 tracing::info!("{}: Play {} deleted", message.did, uri);
                 self.remove_play(&uri).await?;
             }
@@ -1601,28 +1607,28 @@ mod tests {
         artist_name: &str,
         release_mbid: Uuid,
         recording_mbid: Uuid,
-    ) -> anyhow::Result<types::fm_teal::alpha::feed::play::Play> {
-        Ok(value::from_json_value::<
-            types::fm_teal::alpha::feed::play::Play,
-        >(json!({
-            "$type": "fm.teal.alpha.feed.play",
-            "trackName": track_name,
-            "recordingMbId": format!("mbid:{recording_mbid}"),
-            "releaseName": "Cadet Test Release",
-            "releaseMbId": format!("mbid:{release_mbid}"),
-            "duration": 181,
-            "artists": [{
-                "artistName": artist_name
-            }],
-            "musicServiceBaseDomain": "tests.teal.fm",
-            "submissionClientAgent": "cadet-test/1.0",
-            "playedTime": "2026-06-01T00:00:00Z"
-        }))?)
+    ) -> anyhow::Result<types::fm_teal::feed::play::Play> {
+        Ok(value::from_json_value::<types::fm_teal::feed::play::Play>(
+            json!({
+                "$type": "fm.teal.alpha.feed.play",
+                "trackName": track_name,
+                "recordingMbId": format!("mbid:{recording_mbid}"),
+                "releaseName": "Cadet Test Release",
+                "releaseMbId": format!("mbid:{release_mbid}"),
+                "duration": 181,
+                "artists": [{
+                    "artistName": artist_name
+                }],
+                "musicServiceUri": "https://tests.teal.fm",
+                "submissionClientAgent": "cadet-test/1.0",
+                "playedTime": "2026-06-01T00:00:00Z"
+            }),
+        )?)
     }
 
     #[test]
     fn clean_drops_empty_optional_mbids_from_legacy_records() -> anyhow::Result<()> {
-        let record = value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(json!({
+        let record = value::from_json_value::<types::fm_teal::feed::play::Play>(json!({
             "$type": "fm.teal.alpha.feed.play",
             "trackName": "Old Empty MBID Track",
             "recordingMbId": "",
@@ -1656,7 +1662,7 @@ mod tests {
         let release_mbid = Uuid::new_v4();
         let artist_mbid = Uuid::new_v4();
         let track_mbid = Uuid::new_v4();
-        let record = value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(json!({
+        let record = value::from_json_value::<types::fm_teal::feed::play::Play>(json!({
             "$type": "fm.teal.alpha.feed.play",
             "trackName": "Old Bare MBID Track",
             "recordingMbId": recording_mbid.to_string(),
@@ -1717,7 +1723,7 @@ mod tests {
     #[test]
     fn clean_preserves_deprecated_artist_mbid_alignment() -> anyhow::Result<()> {
         let artist_mbid = Uuid::new_v4();
-        let record = value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(json!({
+        let record = value::from_json_value::<types::fm_teal::feed::play::Play>(json!({
             "$type": "fm.teal.alpha.feed.play",
             "trackName": "Partially Tagged Track",
             "artistNames": ["Untagged Artist", "Tagged Artist"],

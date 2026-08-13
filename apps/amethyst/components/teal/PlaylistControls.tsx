@@ -12,7 +12,7 @@ import type {
   SocialPlaylistItemView,
   SocialPlaylistView,
 } from "@/lib/teal/api";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 
 export function PlaylistCreator({
   onCreated,
@@ -31,7 +31,7 @@ export function PlaylistCreator({
     setError(null);
     try {
       const record = {
-        $type: "fm.teal.alpha.feed.social.playlist",
+        $type: "fm.teal.feed.social.playlist",
         name: name.trim(),
         description: description.trim() || undefined,
         descriptionFacets: undefined as unknown[] | undefined,
@@ -48,7 +48,7 @@ export function PlaylistCreator({
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.feed.social.playlist",
+          collection: "fm.teal.feed.social.playlist",
           record,
         },
       );
@@ -116,7 +116,7 @@ export function AddCurrentTrackButton({
     setBusy(true);
     try {
       const record = {
-        $type: "fm.teal.alpha.feed.social.playlistItem",
+        $type: "fm.teal.feed.social.playlistItem",
         subject: { uri: playlist.uri, cid: playlist.cid },
         track: playViewToTrackView(track),
         order,
@@ -127,7 +127,7 @@ export function AddCurrentTrackButton({
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.feed.social.playlistItem",
+          collection: "fm.teal.feed.social.playlistItem",
           record,
         },
       );

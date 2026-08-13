@@ -4,7 +4,7 @@ import { Text } from "@/components/ui/text";
 import { useStore } from "@/stores/mainStore";
 import { Agent } from "@atproto/api";
 
-import { OutputSchema as ActorFeedResponse } from "@teal/lexicons/src/types/fm/teal/alpha/feed/getActorFeed";
+import { OutputSchema as ActorFeedResponse } from "@teal/lexicons/src/types/fm/teal/feed/getActorFeed";
 
 import PlayView from "./playView";
 
@@ -20,7 +20,7 @@ const ActorPlaysView = ({ repo, pdsAgent }: ActorPlaysViewProps) => {
     if (pdsAgent) {
       pdsAgent
         .call(
-          "fm.teal.alpha.feed.getActorFeed",
+          "fm.teal.feed.getActorFeed",
           { authorDID: repo },
           {},
           { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },

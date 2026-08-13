@@ -19,8 +19,8 @@ import { coverArtUrl, getAlbum } from "@/lib/teal/api";
 import { musicArtistHref, musicTrackHref } from "@/lib/teal/routes";
 import { ChevronRight, Disc3, Music2 } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
-import type { AlbumView } from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
+import type { AlbumView } from "@teal/lexicons/src/types/fm/teal/music/defs";
 
 export default function AlbumDetail() {
   const params = useLocalSearchParams();

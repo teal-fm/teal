@@ -1,29 +1,26 @@
 use crate::{ctx::Context, repos::social::Page};
-use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
 use serde::{Deserialize, Serialize};
 
 pub fn social_routes() -> axum::Router {
     axum::Router::new()
-        .route("/fm.teal.alpha.feed.social.getFeed", get(get_feed))
-        .route("/fm.teal.alpha.feed.social.getPost", get(get_post))
-        .route("/fm.teal.alpha.feed.social.getReplies", get(get_replies))
-        .route("/fm.teal.alpha.feed.social.getLikes", get(get_likes))
-        .route("/fm.teal.alpha.feed.social.getReposts", get(get_reposts))
+        .route("/fm.teal.feed.social.getFeed", get(get_feed))
+        .route("/fm.teal.feed.social.getPost", get(get_post))
+        .route("/fm.teal.feed.social.getReplies", get(get_replies))
+        .route("/fm.teal.feed.social.getLikes", get(get_likes))
+        .route("/fm.teal.feed.social.getReposts", get(get_reposts))
         .route(
-            "/fm.teal.alpha.feed.social.getActorPlaylists",
+            "/fm.teal.feed.social.getActorPlaylists",
             get(get_actor_playlists),
         )
-        .route("/fm.teal.alpha.feed.social.getPlaylist", get(get_playlist))
+        .route("/fm.teal.feed.social.getPlaylist", get(get_playlist))
         .route(
-            "/fm.teal.alpha.feed.social.getBadgeCatalog",
+            "/fm.teal.feed.social.getBadgeCatalog",
             get(get_badge_catalog),
         )
+        .route("/fm.teal.feed.social.getActorBadges", get(get_actor_badges))
         .route(
-            "/fm.teal.alpha.feed.social.getActorBadges",
-            get(get_actor_badges),
-        )
-        .route(
-            "/fm.teal.alpha.feed.social.getNotifications",
+            "/fm.teal.feed.social.getNotifications",
             get(get_notifications),
         )
 }

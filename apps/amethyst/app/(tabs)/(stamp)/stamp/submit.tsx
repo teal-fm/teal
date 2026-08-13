@@ -16,7 +16,7 @@ import {
   RichText,
 } from "@atproto/api";
 
-import { validateRecord } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+import { validateRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
 
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 import { createPlayRecordFromRecording } from "@/lib/manualListens";
@@ -215,7 +215,7 @@ powered by @teal.fm`;
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.feed.play",
+          collection: "fm.teal.feed.play",
           rkey: undefined,
           record,
         },

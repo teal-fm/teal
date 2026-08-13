@@ -75,9 +75,9 @@ import {
 import type {
   MiniProfileView,
   ProfileView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
-import type { ReleaseView } from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
+} from "@teal/lexicons/src/types/fm/teal/actor/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
+import type { ReleaseView } from "@teal/lexicons/src/types/fm/teal/stats/defs";
 
 type DisplayProfile = Pick<
   ProfileView,
@@ -443,7 +443,7 @@ export default function ProfileScreen() {
           {},
           {
             repo: pdsAgent.did,
-            collection: "fm.teal.alpha.graph.follow",
+            collection: "fm.teal.graph.follow",
             rkey,
           },
         );
@@ -460,9 +460,9 @@ export default function ProfileScreen() {
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.graph.follow",
+          collection: "fm.teal.graph.follow",
           record: {
-            $type: "fm.teal.alpha.graph.follow",
+            $type: "fm.teal.graph.follow",
             subject: did,
             createdAt: new Date().toISOString(),
           },

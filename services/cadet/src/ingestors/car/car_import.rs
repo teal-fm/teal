@@ -31,6 +31,7 @@
 //! and use the original rkey from the AT Protocol MST structure.
 
 use crate::ingestors::car::jobs::{queue_keys, CarImportJob};
+use crate::ingestors::teal::normalize_legacy_record_type;
 use crate::redis_client::RedisClient;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -51,6 +52,40 @@ pub struct ExtractedRecord {
     pub rkey: String,
     pub cid: String,
     pub data: serde_json::Value,
+}
+
+fn stable_collection_for(collection: &str) -> Option<&'static str> {
+    match collection {
+        "fm.teal.feed.play" | "fm.teal.alpha.feed.play" => Some("fm.teal.feed.play"),
+        "fm.teal.actor.profile" | "fm.teal.alpha.actor.profile" => Some("fm.teal.actor.profile"),
+        "fm.teal.actor.status" | "fm.teal.alpha.actor.status" => Some("fm.teal.actor.status"),
+        "fm.teal.actor.profileStatus" | "fm.teal.alpha.actor.profileStatus" => {
+            Some("fm.teal.actor.profileStatus")
+        }
+        "fm.teal.feed.social.post" | "fm.teal.alpha.feed.social.post" => {
+            Some("fm.teal.feed.social.post")
+        }
+        "fm.teal.feed.social.like" | "fm.teal.alpha.feed.social.like" => {
+            Some("fm.teal.feed.social.like")
+        }
+        "fm.teal.feed.social.repost" | "fm.teal.alpha.feed.social.repost" => {
+            Some("fm.teal.feed.social.repost")
+        }
+        "fm.teal.graph.follow" | "fm.teal.alpha.graph.follow" => Some("fm.teal.graph.follow"),
+        "fm.teal.feed.social.playlist" | "fm.teal.alpha.feed.social.playlist" => {
+            Some("fm.teal.feed.social.playlist")
+        }
+        "fm.teal.feed.social.playlistItem" | "fm.teal.alpha.feed.social.playlistItem" => {
+            Some("fm.teal.feed.social.playlistItem")
+        }
+        "fm.teal.feed.social.badge" | "fm.teal.alpha.feed.social.badge" => {
+            Some("fm.teal.feed.social.badge")
+        }
+        "fm.teal.feed.social.badgeAssignment" | "fm.teal.alpha.feed.social.badgeAssignment" => {
+            Some("fm.teal.feed.social.badgeAssignment")
+        }
+        _ => None,
+    }
 }
 
 /// CAR Import Ingestor handles importing Teal records from CAR files using atmst
@@ -249,8 +284,8 @@ impl CarImportIngestor {
             "🔄 Processing {} record: {}",
             record.collection, record.rkey
         );
-        match record.collection.as_str() {
-            "fm.teal.alpha.feed.play" => {
+        match stable_collection_for(&record.collection) {
+            Some("fm.teal.feed.play") => {
                 info!("   📀 Processing play record...");
                 let result = self
                     .process_play_record(&record.data, did, &record.rkey, &record.cid)
@@ -262,7 +297,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.profile" => {
+            Some("fm.teal.actor.profile") => {
                 info!("   👤 Processing profile record...");
                 let result = self
                     .process_profile_record(&record.data, did, &record.rkey)
@@ -274,7 +309,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.status" => {
+            Some("fm.teal.actor.status") => {
                 info!("   📢 Processing status record...");
                 let result = self
                     .process_status_record(&record.data, did, &record.rkey, &record.cid)
@@ -286,7 +321,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.profileStatus" => {
+            Some("fm.teal.actor.profileStatus") => {
                 info!("   🧭 Processing profile status record...");
                 let result = self
                     .process_profile_status_record(&record.data, did, &record.rkey, &record.cid)
@@ -301,14 +336,14 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.feed.social.post"
-            | "fm.teal.alpha.feed.social.like"
-            | "fm.teal.alpha.feed.social.repost"
-            | "fm.teal.alpha.graph.follow"
-            | "fm.teal.alpha.feed.social.playlist"
-            | "fm.teal.alpha.feed.social.playlistItem"
-            | "fm.teal.alpha.feed.social.badge"
-            | "fm.teal.alpha.feed.social.badgeAssignment" => {
+            Some("fm.teal.feed.social.post")
+            | Some("fm.teal.feed.social.like")
+            | Some("fm.teal.feed.social.repost")
+            | Some("fm.teal.graph.follow")
+            | Some("fm.teal.feed.social.playlist")
+            | Some("fm.teal.feed.social.playlistItem")
+            | Some("fm.teal.feed.social.badge")
+            | Some("fm.teal.feed.social.badgeAssignment") => {
                 info!("   💬 Processing social record...");
                 let result = self
                     .process_social_record(
@@ -335,7 +370,10 @@ impl CarImportIngestor {
 
     /// Check if a key represents a Teal record
     fn is_teal_record_key(&self, key: &str) -> bool {
-        key.starts_with("fm.teal.alpha.") && key.contains("/")
+        let Some((collection, rkey)) = key.rsplit_once('/') else {
+            return false;
+        };
+        !rkey.is_empty() && stable_collection_for(collection).is_some()
     }
 
     /// Parse a Teal MST key to extract collection and rkey
@@ -357,12 +395,12 @@ impl CarImportIngestor {
         rkey: &str,
         cid: &str,
     ) -> Result<()> {
-        let data = Self::normalize_play_record_json(data.clone());
-        let play_record: types::fm_teal::alpha::feed::play::Play =
-            value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(data)?;
+        let data = Self::normalize_play_record_json(normalize_legacy_record_type(data));
+        let play_record: types::fm_teal::feed::play::Play =
+            value::from_json_value::<types::fm_teal::feed::play::Play>(data)?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
-        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
+        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.feed.play", rkey);
 
         play_ingestor
             .insert_play(&play_record, &uri, cid, did, rkey)
@@ -417,8 +455,10 @@ impl CarImportIngestor {
         rkey: &str,
         cid: &str,
     ) -> Result<()> {
-        let status_record: types::fm_teal::alpha::actor::status::Status =
-            value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(data.clone())?;
+        let status_record: types::fm_teal::actor::status::Status =
+            value::from_json_value::<types::fm_teal::actor::status::Status>(
+                normalize_legacy_record_type(data),
+            )?;
 
         let status_ingestor =
             super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
@@ -439,9 +479,9 @@ impl CarImportIngestor {
         rkey: &str,
         cid: &str,
     ) -> Result<()> {
-        let profile_status_record: types::fm_teal::alpha::actor::profile_status::ProfileStatus =
-            value::from_json_value::<types::fm_teal::alpha::actor::profile_status::ProfileStatus>(
-                data.clone(),
+        let profile_status_record: types::fm_teal::actor::profile_status::ProfileStatus =
+            value::from_json_value::<types::fm_teal::actor::profile_status::ProfileStatus>(
+                normalize_legacy_record_type(data),
             )?;
 
         let profile_status_ingestor =
@@ -467,22 +507,28 @@ impl CarImportIngestor {
         cid: &str,
     ) -> Result<()> {
         let kind = match collection {
-            "fm.teal.alpha.feed.social.post" => super::super::teal::social::SocialCollection::Post,
-            "fm.teal.alpha.feed.social.like" => super::super::teal::social::SocialCollection::Like,
-            "fm.teal.alpha.feed.social.repost" => {
+            "fm.teal.feed.social.post" | "fm.teal.alpha.feed.social.post" => {
+                super::super::teal::social::SocialCollection::Post
+            }
+            "fm.teal.feed.social.like" | "fm.teal.alpha.feed.social.like" => {
+                super::super::teal::social::SocialCollection::Like
+            }
+            "fm.teal.feed.social.repost" | "fm.teal.alpha.feed.social.repost" => {
                 super::super::teal::social::SocialCollection::Repost
             }
-            "fm.teal.alpha.graph.follow" => super::super::teal::social::SocialCollection::Follow,
-            "fm.teal.alpha.feed.social.playlist" => {
+            "fm.teal.graph.follow" | "fm.teal.alpha.graph.follow" => {
+                super::super::teal::social::SocialCollection::Follow
+            }
+            "fm.teal.feed.social.playlist" | "fm.teal.alpha.feed.social.playlist" => {
                 super::super::teal::social::SocialCollection::Playlist
             }
-            "fm.teal.alpha.feed.social.playlistItem" => {
+            "fm.teal.feed.social.playlistItem" | "fm.teal.alpha.feed.social.playlistItem" => {
                 super::super::teal::social::SocialCollection::PlaylistItem
             }
-            "fm.teal.alpha.feed.social.badge" => {
+            "fm.teal.feed.social.badge" | "fm.teal.alpha.feed.social.badge" => {
                 super::super::teal::social::SocialCollection::Badge
             }
-            "fm.teal.alpha.feed.social.badgeAssignment" => {
+            "fm.teal.feed.social.badgeAssignment" | "fm.teal.alpha.feed.social.badgeAssignment" => {
                 super::super::teal::social::SocialCollection::BadgeAssignment
             }
             _ => return Err(anyhow!("Unsupported social collection: {}", collection)),

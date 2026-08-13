@@ -91,15 +91,16 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaActorDefs: {
+  FmTealActorDefs: {
     lexicon: 1,
-    id: 'fm.teal.alpha.actor.defs',
+    id: 'fm.teal.actor.defs',
     defs: {
       profileView: {
         type: 'object',
         properties: {
           did: {
             type: 'string',
+            format: 'did',
             description: 'The decentralized identifier of the actor',
           },
           displayName: {
@@ -122,25 +123,27 @@ export const schemaDict = {
             type: 'ref',
             description:
               "The user's most recent item featured on their profile.",
-            ref: 'lex:fm.teal.alpha.actor.profile#featuredItem',
+            ref: 'lex:fm.teal.actor.profile#featuredItem',
           },
           avatar: {
             type: 'string',
+            format: 'cid',
             description: 'IPLD of the avatar',
           },
           banner: {
             type: 'string',
+            format: 'cid',
             description: 'IPLD of the banner image',
           },
           status: {
             type: 'ref',
-            ref: 'lex:fm.teal.alpha.actor.defs#statusView',
+            ref: 'lex:fm.teal.actor.defs#statusView',
           },
           profileStatus: {
             type: 'ref',
             description:
               "The actor's Teal onboarding state as indexed by the appview.",
-            ref: 'lex:fm.teal.alpha.actor.profileStatus#main',
+            ref: 'lex:fm.teal.actor.profileStatus#main',
           },
           statsDefaultPeriod: {
             type: 'string',
@@ -159,6 +162,7 @@ export const schemaDict = {
         properties: {
           did: {
             type: 'string',
+            format: 'did',
             description: 'The decentralized identifier of the actor',
           },
           displayName: {
@@ -166,9 +170,11 @@ export const schemaDict = {
           },
           handle: {
             type: 'string',
+            format: 'handle',
           },
           avatar: {
             type: 'string',
+            format: 'cid',
             description: 'IPLD of the avatar',
           },
         },
@@ -180,27 +186,27 @@ export const schemaDict = {
           time: {
             type: 'string',
             format: 'datetime',
-            description: 'The unix timestamp of when the item was recorded',
+            description: 'The datetime at which the status was recorded.',
           },
           expiry: {
             type: 'string',
             format: 'datetime',
             description:
-              'The unix timestamp of the expiry time of the item. If unavailable, default to 10 minutes past the start time.',
+              'The datetime after which the status is no longer current.',
           },
           item: {
             type: 'ref',
-            ref: 'lex:fm.teal.alpha.feed.defs#playView',
+            ref: 'lex:fm.teal.feed.defs#playView',
           },
         },
       },
     },
   },
-  FmTealAlphaActorGetProfile: {
+  FmTealActorGetProfile: {
     lexicon: 1,
-    id: 'fm.teal.alpha.actor.getProfile',
+    id: 'fm.teal.actor.getProfile',
     description:
-      'This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.',
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves a profile for an actor DID or handle.',
     defs: {
       main: {
         type: 'query',
@@ -211,7 +217,7 @@ export const schemaDict = {
             actor: {
               type: 'string',
               format: 'at-identifier',
-              description: "The author's DID",
+              description: "The actor's DID or handle",
             },
           },
         },
@@ -223,7 +229,7 @@ export const schemaDict = {
             properties: {
               actor: {
                 type: 'ref',
-                ref: 'lex:fm.teal.alpha.actor.defs#profileView',
+                ref: 'lex:fm.teal.actor.defs#profileView',
               },
             },
           },
@@ -231,9 +237,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaActorGetProfiles: {
+  FmTealActorGetProfiles: {
     lexicon: 1,
-    id: 'fm.teal.alpha.actor.getProfiles',
+    id: 'fm.teal.actor.getProfiles',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Retrieves the associated profile.',
     defs: {
@@ -249,7 +255,7 @@ export const schemaDict = {
                 type: 'string',
                 format: 'at-identifier',
               },
-              description: 'Array of actor DIDs',
+              description: 'Array of actor DIDs or handles',
             },
           },
         },
@@ -263,7 +269,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                  ref: 'lex:fm.teal.actor.defs#miniProfileView',
                 },
               },
             },
@@ -272,9 +278,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaActorProfile: {
+  FmTealActorProfile: {
     lexicon: 1,
-    id: 'fm.teal.alpha.actor.profile',
+    id: 'fm.teal.actor.profile',
     defs: {
       main: {
         type: 'record',
@@ -308,7 +314,7 @@ export const schemaDict = {
               type: 'ref',
               description:
                 "The user's most recent item featured on their profile.",
-              ref: 'lex:fm.teal.alpha.actor.profile#featuredItem',
+              ref: 'lex:fm.teal.actor.profile#featuredItem',
             },
             avatar: {
               type: 'blob',
@@ -349,16 +355,16 @@ export const schemaDict = {
           },
           type: {
             type: 'string',
-            description:
-              'The type of the item. Must be a valid Musicbrainz type, e.g. album, track, recording, etc.',
+            knownValues: ['artist', 'release', 'recording'],
+            description: 'The MusicBrainz entity type of the item.',
           },
         },
       },
     },
   },
-  FmTealAlphaActorProfileStatus: {
+  FmTealActorProfileStatus: {
     lexicon: 1,
-    id: 'fm.teal.alpha.actor.profileStatus',
+    id: 'fm.teal.actor.profileStatus',
     defs: {
       main: {
         type: 'record',
@@ -394,9 +400,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaActorSearchActors: {
+  FmTealActorSearchActors: {
     lexicon: 1,
-    id: 'fm.teal.alpha.actor.searchActors',
+    id: 'fm.teal.actor.searchActors',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Searches for actors based on profile contents.',
     defs: {
@@ -434,7 +440,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                  ref: 'lex:fm.teal.actor.defs#miniProfileView',
                 },
               },
               cursor: {
@@ -447,9 +453,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaActorStatus: {
+  FmTealActorStatus: {
     lexicon: 1,
-    id: 'fm.teal.alpha.actor.status',
+    id: 'fm.teal.actor.status',
     defs: {
       main: {
         type: 'record',
@@ -463,27 +469,26 @@ export const schemaDict = {
             time: {
               type: 'string',
               format: 'datetime',
-              description:
-                'The RFC 3339 formatted time of when the item was recorded',
+              description: 'The datetime at which the status was recorded.',
             },
             expiry: {
               type: 'string',
               format: 'datetime',
               description:
-                'The RFC 3339 formatted time of the expiry time of the item. If unavailable, default to 10 minutes past the start time.',
+                'The datetime after which the status is no longer current. If unavailable, default to 10 minutes after the start time.',
             },
             item: {
               type: 'ref',
-              ref: 'lex:fm.teal.alpha.feed.defs#playView',
+              ref: 'lex:fm.teal.feed.defs#playView',
             },
           },
         },
       },
     },
   },
-  FmTealAlphaFeedDefs: {
+  FmTealFeedDefs: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.defs',
+    id: 'fm.teal.feed.defs',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Misc. items related to feeds.',
     defs: {
@@ -507,7 +512,7 @@ export const schemaDict = {
           },
           author: {
             type: 'ref',
-            ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+            ref: 'lex:fm.teal.actor.defs#miniProfileView',
             description:
               'Compact Teal profile metadata for the account that authored this play',
           },
@@ -542,7 +547,7 @@ export const schemaDict = {
             type: 'array',
             items: {
               type: 'ref',
-              ref: 'lex:fm.teal.alpha.feed.defs#artist',
+              ref: 'lex:fm.teal.feed.defs#artist',
             },
             description: 'Array of artists in order of original appearance.',
           },
@@ -562,14 +567,16 @@ export const schemaDict = {
             type: 'string',
             description: 'The ISRC code associated with the recording',
           },
-          originUrl: {
+          originUri: {
             type: 'string',
-            description: 'The URL associated with this track',
+            format: 'uri',
+            description: 'The exact URI where the listening event originated.',
           },
-          musicServiceBaseDomain: {
+          musicServiceUri: {
             type: 'string',
+            format: 'uri',
             description:
-              "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if not provided.",
+              'The canonical URI identifying the listening surface or music service.',
           },
           submissionClientAgent: {
             type: 'string',
@@ -581,7 +588,7 @@ export const schemaDict = {
           playedTime: {
             type: 'string',
             format: 'datetime',
-            description: 'The unix timestamp of when the track was played',
+            description: 'The datetime at which playback began.',
           },
         },
       },
@@ -606,9 +613,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedGetActorFeed: {
+  FmTealFeedGetActorFeed: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.getActorFeed',
+    id: 'fm.teal.feed.getActorFeed',
     description:
       "This lexicon is in a not officially released state. It is subject to change. | Retrieves multiple plays from the index or via an author's DID.",
     defs: {
@@ -620,7 +627,7 @@ export const schemaDict = {
           properties: {
             authorDID: {
               type: 'string',
-              format: 'at-identifier',
+              format: 'did',
               description: "The author's DID for the play",
             },
             cursor: {
@@ -644,7 +651,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.feed.defs#playView',
+                  ref: 'lex:fm.teal.feed.defs#playView',
                 },
               },
               cursor: {
@@ -657,9 +664,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedGetPlay: {
+  FmTealFeedGetPlay: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.getPlay',
+    id: 'fm.teal.feed.getPlay',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.',
     defs: {
@@ -671,11 +678,12 @@ export const schemaDict = {
           properties: {
             authorDID: {
               type: 'string',
-              format: 'at-identifier',
+              format: 'did',
               description: "The author's DID for the play",
             },
             rkey: {
               type: 'string',
+              format: 'record-key',
               description: 'The record key of the play',
             },
           },
@@ -688,7 +696,7 @@ export const schemaDict = {
             properties: {
               play: {
                 type: 'ref',
-                ref: 'lex:fm.teal.alpha.feed.defs#playView',
+                ref: 'lex:fm.teal.feed.defs#playView',
               },
             },
           },
@@ -696,9 +704,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedPlay: {
+  FmTealFeedPlay: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.play',
+    id: 'fm.teal.feed.play',
     description:
       "This lexicon is in a not officially released state. It is subject to change. | A declaration of a teal.fm play. Plays are submitted as a result of a user listening to a track. Plays should be marked as tracked when a user has listened to the entire track if it's under 2 minutes long, or half of the track's duration up to 4 minutes, whichever is longest.",
     defs: {
@@ -755,7 +763,7 @@ export const schemaDict = {
               type: 'array',
               items: {
                 type: 'ref',
-                ref: 'lex:fm.teal.alpha.feed.defs#artist',
+                ref: 'lex:fm.teal.feed.defs#artist',
               },
               description: 'Array of artists in order of original appearance.',
             },
@@ -775,14 +783,17 @@ export const schemaDict = {
               type: 'string',
               description: 'The ISRC code associated with the recording',
             },
-            originUrl: {
+            originUri: {
               type: 'string',
-              description: 'The URL associated with this track',
-            },
-            musicServiceBaseDomain: {
-              type: 'string',
+              format: 'uri',
               description:
-                "The base domain of the music service. e.g. music.apple.com, tidal.com, spotify.com. Defaults to 'local' if unavailable or not provided.",
+                'The exact URI where the listening event originated.',
+            },
+            musicServiceUri: {
+              type: 'string',
+              format: 'uri',
+              description:
+                'The canonical URI identifying the listening surface or music service.',
             },
             submissionClientAgent: {
               type: 'string',
@@ -794,7 +805,7 @@ export const schemaDict = {
             playedTime: {
               type: 'string',
               format: 'datetime',
-              description: 'The unix timestamp of when the track was played',
+              description: 'The datetime at which playback began.',
             },
             trackDiscriminant: {
               type: 'string',
@@ -815,9 +826,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedSocialDefs: {
+  FmTealFeedSocialDefs: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.defs',
+    id: 'fm.teal.feed.social.defs',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Miscellaneous types related to the social feed.',
     defs: {
@@ -872,7 +883,7 @@ export const schemaDict = {
             type: 'array',
             items: {
               type: 'ref',
-              ref: 'lex:fm.teal.alpha.feed.defs#artist',
+              ref: 'lex:fm.teal.feed.defs#artist',
             },
             description: 'Array of artists in order of original appearance.',
           },
@@ -913,9 +924,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedSocialLike: {
+  FmTealFeedSocialLike: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.like',
+    id: 'fm.teal.feed.social.like',
     description:
       "This lexicon is in a not officially released state. It is subject to change. | The action of 'Liking' a Teal.fm post.",
     defs: {
@@ -942,9 +953,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedSocialPlaylist: {
+  FmTealFeedSocialPlaylist: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.playlist',
+    id: 'fm.teal.feed.social.playlist',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | A teal.fm playlist, representing a list of tracks.',
     defs: {
@@ -977,9 +988,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedSocialPlaylistItem: {
+  FmTealFeedSocialPlaylistItem: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.playlistItem',
+    id: 'fm.teal.feed.social.playlistItem',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | A teal.fm playlist item.',
     defs: {
@@ -1004,7 +1015,7 @@ export const schemaDict = {
             },
             track: {
               type: 'ref',
-              ref: 'lex:fm.teal.alpha.feed.social.defs#trackView',
+              ref: 'lex:fm.teal.feed.social.defs#trackView',
             },
             order: {
               type: 'integer',
@@ -1015,9 +1026,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedSocialPost: {
+  FmTealFeedSocialPost: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.post',
+    id: 'fm.teal.feed.social.post',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Record containing a teal.fm post. Teal.fm posts include a track that is connected to the post, and could have some text. Replies, by default, have the same track as the parent post.',
     defs: {
@@ -1088,7 +1099,7 @@ export const schemaDict = {
             },
             reply: {
               type: 'ref',
-              ref: 'lex:fm.teal.alpha.feed.social.post#replyRef',
+              ref: 'lex:fm.teal.feed.social.post#replyRef',
             },
             facets: {
               type: 'array',
@@ -1096,7 +1107,7 @@ export const schemaDict = {
                 'Rich text facets, which may include mentions, links, and other features.',
               items: {
                 type: 'ref',
-                ref: 'lex:fm.teal.alpha.richtext.facet',
+                ref: 'lex:fm.teal.richtext.facet',
               },
             },
             langs: {
@@ -1145,9 +1156,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaFeedSocialRepost: {
+  FmTealFeedSocialRepost: {
     lexicon: 1,
-    id: 'fm.teal.alpha.feed.social.repost',
+    id: 'fm.teal.feed.social.repost',
     description:
       "This lexicon is in a not officially released state. It is subject to change. | The action of 'Reposting' a Teal.fm post.",
     defs: {
@@ -1174,9 +1185,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaGraphFollow: {
+  FmTealGraphFollow: {
     lexicon: 1,
-    id: 'fm.teal.alpha.graph.follow',
+    id: 'fm.teal.graph.follow',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | The action of following another actor on Teal.',
     defs: {
@@ -1205,9 +1216,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaGraphGetFollowers: {
+  FmTealGraphGetFollowers: {
     lexicon: 1,
-    id: 'fm.teal.alpha.graph.getFollowers',
+    id: 'fm.teal.graph.getFollowers',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Retrieves actors who follow an actor.',
     defs: {
@@ -1243,7 +1254,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                  ref: 'lex:fm.teal.actor.defs#miniProfileView',
                 },
               },
               cursor: {
@@ -1255,9 +1266,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaGraphGetFollows: {
+  FmTealGraphGetFollows: {
     lexicon: 1,
-    id: 'fm.teal.alpha.graph.getFollows',
+    id: 'fm.teal.graph.getFollows',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Retrieves actors followed by an actor.',
     defs: {
@@ -1293,7 +1304,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                  ref: 'lex:fm.teal.actor.defs#miniProfileView',
                 },
               },
               cursor: {
@@ -1305,9 +1316,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaGraphGetSummary: {
+  FmTealGraphGetSummary: {
     lexicon: 1,
-    id: 'fm.teal.alpha.graph.getSummary',
+    id: 'fm.teal.graph.getSummary',
     description:
       'This lexicon is in a not officially released state. It is subject to change. | Retrieves Teal social graph counts and viewer state for an actor.',
     defs: {
@@ -1355,9 +1366,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaMusicDefs: {
+  FmTealMusicDefs: {
     lexicon: 1,
-    id: 'fm.teal.alpha.music.defs',
+    id: 'fm.teal.music.defs',
     defs: {
       artistView: {
         type: 'object',
@@ -1380,7 +1391,7 @@ export const schemaDict = {
             type: 'array',
             items: {
               type: 'ref',
-              ref: 'lex:fm.teal.alpha.music.defs#albumSummary',
+              ref: 'lex:fm.teal.music.defs#albumSummary',
             },
           },
         },
@@ -1391,7 +1402,7 @@ export const schemaDict = {
         properties: {
           actor: {
             type: 'ref',
-            ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+            ref: 'lex:fm.teal.actor.defs#miniProfileView',
             description: 'The listener ranked on this artist leaderboard',
           },
           playCount: {
@@ -1432,7 +1443,7 @@ export const schemaDict = {
             type: 'array',
             items: {
               type: 'ref',
-              ref: 'lex:fm.teal.alpha.music.defs#trackSummary',
+              ref: 'lex:fm.teal.music.defs#trackSummary',
             },
           },
         },
@@ -1490,9 +1501,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaMusicGetAlbum: {
+  FmTealMusicGetAlbum: {
     lexicon: 1,
-    id: 'fm.teal.alpha.music.getAlbum',
+    id: 'fm.teal.music.getAlbum',
     defs: {
       main: {
         type: 'query',
@@ -1528,13 +1539,13 @@ export const schemaDict = {
             properties: {
               album: {
                 type: 'ref',
-                ref: 'lex:fm.teal.alpha.music.defs#albumView',
+                ref: 'lex:fm.teal.music.defs#albumView',
               },
               plays: {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.feed.defs#playView',
+                  ref: 'lex:fm.teal.feed.defs#playView',
                 },
               },
               cursor: {
@@ -1547,9 +1558,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaMusicGetArtist: {
+  FmTealMusicGetArtist: {
     lexicon: 1,
-    id: 'fm.teal.alpha.music.getArtist',
+    id: 'fm.teal.music.getArtist',
     defs: {
       main: {
         type: 'query',
@@ -1578,7 +1589,7 @@ export const schemaDict = {
             properties: {
               artist: {
                 type: 'ref',
-                ref: 'lex:fm.teal.alpha.music.defs#artistView',
+                ref: 'lex:fm.teal.music.defs#artistView',
               },
             },
           },
@@ -1586,9 +1597,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaMusicGetArtistListeners: {
+  FmTealMusicGetArtistListeners: {
     lexicon: 1,
-    id: 'fm.teal.alpha.music.getArtistListeners',
+    id: 'fm.teal.music.getArtistListeners',
     defs: {
       main: {
         type: 'query',
@@ -1637,7 +1648,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.music.defs#artistListenerView',
+                  ref: 'lex:fm.teal.music.defs#artistListenerView',
                 },
               },
               cursor: {
@@ -1650,9 +1661,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaRichtextFacet: {
+  FmTealRichtextFacet: {
     lexicon: 1,
-    id: 'fm.teal.alpha.richtext.facet',
+    id: 'fm.teal.richtext.facet',
     defs: {
       main: {
         type: 'object',
@@ -1677,9 +1688,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaSearchDefs: {
+  FmTealSearchDefs: {
     lexicon: 1,
-    id: 'fm.teal.alpha.search.defs',
+    id: 'fm.teal.search.defs',
     defs: {
       songResult: {
         type: 'object',
@@ -1715,9 +1726,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaSearchGetResults: {
+  FmTealSearchGetResults: {
     lexicon: 1,
-    id: 'fm.teal.alpha.search.getResults',
+    id: 'fm.teal.search.getResults',
     description: 'Search indexed Teal listeners and music metadata.',
     defs: {
       main: {
@@ -1751,28 +1762,28 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                  ref: 'lex:fm.teal.actor.defs#miniProfileView',
                 },
               },
               songs: {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.search.defs#songResult',
+                  ref: 'lex:fm.teal.search.defs#songResult',
                 },
               },
               artists: {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.stats.defs#artistView',
+                  ref: 'lex:fm.teal.stats.defs#artistView',
                 },
               },
               albums: {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.stats.defs#releaseView',
+                  ref: 'lex:fm.teal.stats.defs#releaseView',
                 },
               },
             },
@@ -1781,9 +1792,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaStatsDefs: {
+  FmTealStatsDefs: {
     lexicon: 1,
-    id: 'fm.teal.alpha.stats.defs',
+    id: 'fm.teal.stats.defs',
     defs: {
       artistView: {
         type: 'object',
@@ -1842,9 +1853,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaStatsGetLatest: {
+  FmTealStatsGetLatest: {
     lexicon: 1,
-    id: 'fm.teal.alpha.stats.getLatest',
+    id: 'fm.teal.stats.getLatest',
     defs: {
       main: {
         type: 'query',
@@ -1875,7 +1886,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.feed.defs#playView',
+                  ref: 'lex:fm.teal.feed.defs#playView',
                 },
               },
               cursor: {
@@ -1888,9 +1899,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaStatsGetTopArtists: {
+  FmTealStatsGetTopArtists: {
     lexicon: 1,
-    id: 'fm.teal.alpha.stats.getTopArtists',
+    id: 'fm.teal.stats.getTopArtists',
     description: 'Get top artists by play count',
     defs: {
       main: {
@@ -1927,7 +1938,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.stats.defs#artistView',
+                  ref: 'lex:fm.teal.stats.defs#artistView',
                 },
               },
               cursor: {
@@ -1940,9 +1951,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaStatsGetTopReleases: {
+  FmTealStatsGetTopReleases: {
     lexicon: 1,
-    id: 'fm.teal.alpha.stats.getTopReleases',
+    id: 'fm.teal.stats.getTopReleases',
     description: 'Get top releases/albums by play count',
     defs: {
       main: {
@@ -1979,7 +1990,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.stats.defs#releaseView',
+                  ref: 'lex:fm.teal.stats.defs#releaseView',
                 },
               },
               cursor: {
@@ -1992,9 +2003,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaStatsGetUserTopArtists: {
+  FmTealStatsGetUserTopArtists: {
     lexicon: 1,
-    id: 'fm.teal.alpha.stats.getUserTopArtists',
+    id: 'fm.teal.stats.getUserTopArtists',
     description: "Get a user's top artists by play count",
     defs: {
       main: {
@@ -2037,7 +2048,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.stats.defs#artistView',
+                  ref: 'lex:fm.teal.stats.defs#artistView',
                 },
               },
               cursor: {
@@ -2050,9 +2061,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaStatsGetUserTopRecordings: {
+  FmTealStatsGetUserTopRecordings: {
     lexicon: 1,
-    id: 'fm.teal.alpha.stats.getUserTopRecordings',
+    id: 'fm.teal.stats.getUserTopRecordings',
     description: "Get a user's top recordings/tracks by play count",
     defs: {
       main: {
@@ -2095,7 +2106,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.stats.defs#recordingView',
+                  ref: 'lex:fm.teal.stats.defs#recordingView',
                 },
               },
               cursor: {
@@ -2108,9 +2119,9 @@ export const schemaDict = {
       },
     },
   },
-  FmTealAlphaStatsGetUserTopReleases: {
+  FmTealStatsGetUserTopReleases: {
     lexicon: 1,
-    id: 'fm.teal.alpha.stats.getUserTopReleases',
+    id: 'fm.teal.stats.getUserTopReleases',
     description: "Get a user's top releases/albums by play count",
     defs: {
       main: {
@@ -2153,7 +2164,7 @@ export const schemaDict = {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:fm.teal.alpha.stats.defs#releaseView',
+                  ref: 'lex:fm.teal.stats.defs#releaseView',
                 },
               },
               cursor: {
@@ -2200,40 +2211,39 @@ export function validate(
 
 export const ids = {
   AppBskyRichtextFacet: 'app.bsky.richtext.facet',
-  FmTealAlphaActorDefs: 'fm.teal.alpha.actor.defs',
-  FmTealAlphaActorGetProfile: 'fm.teal.alpha.actor.getProfile',
-  FmTealAlphaActorGetProfiles: 'fm.teal.alpha.actor.getProfiles',
-  FmTealAlphaActorProfile: 'fm.teal.alpha.actor.profile',
-  FmTealAlphaActorProfileStatus: 'fm.teal.alpha.actor.profileStatus',
-  FmTealAlphaActorSearchActors: 'fm.teal.alpha.actor.searchActors',
-  FmTealAlphaActorStatus: 'fm.teal.alpha.actor.status',
-  FmTealAlphaFeedDefs: 'fm.teal.alpha.feed.defs',
-  FmTealAlphaFeedGetActorFeed: 'fm.teal.alpha.feed.getActorFeed',
-  FmTealAlphaFeedGetPlay: 'fm.teal.alpha.feed.getPlay',
-  FmTealAlphaFeedPlay: 'fm.teal.alpha.feed.play',
-  FmTealAlphaFeedSocialDefs: 'fm.teal.alpha.feed.social.defs',
-  FmTealAlphaFeedSocialLike: 'fm.teal.alpha.feed.social.like',
-  FmTealAlphaFeedSocialPlaylist: 'fm.teal.alpha.feed.social.playlist',
-  FmTealAlphaFeedSocialPlaylistItem: 'fm.teal.alpha.feed.social.playlistItem',
-  FmTealAlphaFeedSocialPost: 'fm.teal.alpha.feed.social.post',
-  FmTealAlphaFeedSocialRepost: 'fm.teal.alpha.feed.social.repost',
-  FmTealAlphaGraphFollow: 'fm.teal.alpha.graph.follow',
-  FmTealAlphaGraphGetFollowers: 'fm.teal.alpha.graph.getFollowers',
-  FmTealAlphaGraphGetFollows: 'fm.teal.alpha.graph.getFollows',
-  FmTealAlphaGraphGetSummary: 'fm.teal.alpha.graph.getSummary',
-  FmTealAlphaMusicDefs: 'fm.teal.alpha.music.defs',
-  FmTealAlphaMusicGetAlbum: 'fm.teal.alpha.music.getAlbum',
-  FmTealAlphaMusicGetArtist: 'fm.teal.alpha.music.getArtist',
-  FmTealAlphaMusicGetArtistListeners: 'fm.teal.alpha.music.getArtistListeners',
-  FmTealAlphaRichtextFacet: 'fm.teal.alpha.richtext.facet',
-  FmTealAlphaSearchDefs: 'fm.teal.alpha.search.defs',
-  FmTealAlphaSearchGetResults: 'fm.teal.alpha.search.getResults',
-  FmTealAlphaStatsDefs: 'fm.teal.alpha.stats.defs',
-  FmTealAlphaStatsGetLatest: 'fm.teal.alpha.stats.getLatest',
-  FmTealAlphaStatsGetTopArtists: 'fm.teal.alpha.stats.getTopArtists',
-  FmTealAlphaStatsGetTopReleases: 'fm.teal.alpha.stats.getTopReleases',
-  FmTealAlphaStatsGetUserTopArtists: 'fm.teal.alpha.stats.getUserTopArtists',
-  FmTealAlphaStatsGetUserTopRecordings:
-    'fm.teal.alpha.stats.getUserTopRecordings',
-  FmTealAlphaStatsGetUserTopReleases: 'fm.teal.alpha.stats.getUserTopReleases',
+  FmTealActorDefs: 'fm.teal.actor.defs',
+  FmTealActorGetProfile: 'fm.teal.actor.getProfile',
+  FmTealActorGetProfiles: 'fm.teal.actor.getProfiles',
+  FmTealActorProfile: 'fm.teal.actor.profile',
+  FmTealActorProfileStatus: 'fm.teal.actor.profileStatus',
+  FmTealActorSearchActors: 'fm.teal.actor.searchActors',
+  FmTealActorStatus: 'fm.teal.actor.status',
+  FmTealFeedDefs: 'fm.teal.feed.defs',
+  FmTealFeedGetActorFeed: 'fm.teal.feed.getActorFeed',
+  FmTealFeedGetPlay: 'fm.teal.feed.getPlay',
+  FmTealFeedPlay: 'fm.teal.feed.play',
+  FmTealFeedSocialDefs: 'fm.teal.feed.social.defs',
+  FmTealFeedSocialLike: 'fm.teal.feed.social.like',
+  FmTealFeedSocialPlaylist: 'fm.teal.feed.social.playlist',
+  FmTealFeedSocialPlaylistItem: 'fm.teal.feed.social.playlistItem',
+  FmTealFeedSocialPost: 'fm.teal.feed.social.post',
+  FmTealFeedSocialRepost: 'fm.teal.feed.social.repost',
+  FmTealGraphFollow: 'fm.teal.graph.follow',
+  FmTealGraphGetFollowers: 'fm.teal.graph.getFollowers',
+  FmTealGraphGetFollows: 'fm.teal.graph.getFollows',
+  FmTealGraphGetSummary: 'fm.teal.graph.getSummary',
+  FmTealMusicDefs: 'fm.teal.music.defs',
+  FmTealMusicGetAlbum: 'fm.teal.music.getAlbum',
+  FmTealMusicGetArtist: 'fm.teal.music.getArtist',
+  FmTealMusicGetArtistListeners: 'fm.teal.music.getArtistListeners',
+  FmTealRichtextFacet: 'fm.teal.richtext.facet',
+  FmTealSearchDefs: 'fm.teal.search.defs',
+  FmTealSearchGetResults: 'fm.teal.search.getResults',
+  FmTealStatsDefs: 'fm.teal.stats.defs',
+  FmTealStatsGetLatest: 'fm.teal.stats.getLatest',
+  FmTealStatsGetTopArtists: 'fm.teal.stats.getTopArtists',
+  FmTealStatsGetTopReleases: 'fm.teal.stats.getTopReleases',
+  FmTealStatsGetUserTopArtists: 'fm.teal.stats.getUserTopArtists',
+  FmTealStatsGetUserTopRecordings: 'fm.teal.stats.getUserTopRecordings',
+  FmTealStatsGetUserTopReleases: 'fm.teal.stats.getUserTopReleases',
 } as const

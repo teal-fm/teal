@@ -10,24 +10,24 @@ import {
   createServer as createXrpcServer,
 } from '@atproto/xrpc-server'
 import { schemas } from './lexicons'
-import * as FmTealAlphaActorGetProfile from './types/fm/teal/alpha/actor/getProfile'
-import * as FmTealAlphaActorGetProfiles from './types/fm/teal/alpha/actor/getProfiles'
-import * as FmTealAlphaActorSearchActors from './types/fm/teal/alpha/actor/searchActors'
-import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed'
-import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay'
-import * as FmTealAlphaGraphGetFollowers from './types/fm/teal/alpha/graph/getFollowers'
-import * as FmTealAlphaGraphGetFollows from './types/fm/teal/alpha/graph/getFollows'
-import * as FmTealAlphaGraphGetSummary from './types/fm/teal/alpha/graph/getSummary'
-import * as FmTealAlphaMusicGetAlbum from './types/fm/teal/alpha/music/getAlbum'
-import * as FmTealAlphaMusicGetArtist from './types/fm/teal/alpha/music/getArtist'
-import * as FmTealAlphaMusicGetArtistListeners from './types/fm/teal/alpha/music/getArtistListeners'
-import * as FmTealAlphaSearchGetResults from './types/fm/teal/alpha/search/getResults'
-import * as FmTealAlphaStatsGetLatest from './types/fm/teal/alpha/stats/getLatest'
-import * as FmTealAlphaStatsGetTopArtists from './types/fm/teal/alpha/stats/getTopArtists'
-import * as FmTealAlphaStatsGetTopReleases from './types/fm/teal/alpha/stats/getTopReleases'
-import * as FmTealAlphaStatsGetUserTopArtists from './types/fm/teal/alpha/stats/getUserTopArtists'
-import * as FmTealAlphaStatsGetUserTopRecordings from './types/fm/teal/alpha/stats/getUserTopRecordings'
-import * as FmTealAlphaStatsGetUserTopReleases from './types/fm/teal/alpha/stats/getUserTopReleases'
+import * as FmTealActorGetProfile from './types/fm/teal/actor/getProfile'
+import * as FmTealActorGetProfiles from './types/fm/teal/actor/getProfiles'
+import * as FmTealActorSearchActors from './types/fm/teal/actor/searchActors'
+import * as FmTealFeedGetActorFeed from './types/fm/teal/feed/getActorFeed'
+import * as FmTealFeedGetPlay from './types/fm/teal/feed/getPlay'
+import * as FmTealGraphGetFollowers from './types/fm/teal/graph/getFollowers'
+import * as FmTealGraphGetFollows from './types/fm/teal/graph/getFollows'
+import * as FmTealGraphGetSummary from './types/fm/teal/graph/getSummary'
+import * as FmTealMusicGetAlbum from './types/fm/teal/music/getAlbum'
+import * as FmTealMusicGetArtist from './types/fm/teal/music/getArtist'
+import * as FmTealMusicGetArtistListeners from './types/fm/teal/music/getArtistListeners'
+import * as FmTealSearchGetResults from './types/fm/teal/search/getResults'
+import * as FmTealStatsGetLatest from './types/fm/teal/stats/getLatest'
+import * as FmTealStatsGetTopArtists from './types/fm/teal/stats/getTopArtists'
+import * as FmTealStatsGetTopReleases from './types/fm/teal/stats/getTopReleases'
+import * as FmTealStatsGetUserTopArtists from './types/fm/teal/stats/getUserTopArtists'
+import * as FmTealStatsGetUserTopRecordings from './types/fm/teal/stats/getUserTopRecordings'
+import * as FmTealStatsGetUserTopReleases from './types/fm/teal/stats/getUserTopReleases'
 
 export function createServer(options?: XrpcOptions): Server {
   return new Server(options)
@@ -85,37 +85,27 @@ export class FmNS {
 
 export class FmTealNS {
   _server: Server
-  alpha: FmTealAlphaNS
+  actor: FmTealActorNS
+  feed: FmTealFeedNS
+  graph: FmTealGraphNS
+  music: FmTealMusicNS
+  richtext: FmTealRichtextNS
+  search: FmTealSearchNS
+  stats: FmTealStatsNS
 
   constructor(server: Server) {
     this._server = server
-    this.alpha = new FmTealAlphaNS(server)
+    this.actor = new FmTealActorNS(server)
+    this.feed = new FmTealFeedNS(server)
+    this.graph = new FmTealGraphNS(server)
+    this.music = new FmTealMusicNS(server)
+    this.richtext = new FmTealRichtextNS(server)
+    this.search = new FmTealSearchNS(server)
+    this.stats = new FmTealStatsNS(server)
   }
 }
 
-export class FmTealAlphaNS {
-  _server: Server
-  actor: FmTealAlphaActorNS
-  feed: FmTealAlphaFeedNS
-  graph: FmTealAlphaGraphNS
-  music: FmTealAlphaMusicNS
-  richtext: FmTealAlphaRichtextNS
-  search: FmTealAlphaSearchNS
-  stats: FmTealAlphaStatsNS
-
-  constructor(server: Server) {
-    this._server = server
-    this.actor = new FmTealAlphaActorNS(server)
-    this.feed = new FmTealAlphaFeedNS(server)
-    this.graph = new FmTealAlphaGraphNS(server)
-    this.music = new FmTealAlphaMusicNS(server)
-    this.richtext = new FmTealAlphaRichtextNS(server)
-    this.search = new FmTealAlphaSearchNS(server)
-    this.stats = new FmTealAlphaStatsNS(server)
-  }
-}
-
-export class FmTealAlphaActorNS {
+export class FmTealActorNS {
   _server: Server
 
   constructor(server: Server) {
@@ -125,75 +115,75 @@ export class FmTealAlphaActorNS {
   getProfile<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaActorGetProfile.QueryParams,
-      FmTealAlphaActorGetProfile.HandlerInput,
-      FmTealAlphaActorGetProfile.HandlerOutput
+      FmTealActorGetProfile.QueryParams,
+      FmTealActorGetProfile.HandlerInput,
+      FmTealActorGetProfile.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.actor.getProfile' // @ts-ignore
+    const nsid = 'fm.teal.actor.getProfile' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getProfiles<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaActorGetProfiles.QueryParams,
-      FmTealAlphaActorGetProfiles.HandlerInput,
-      FmTealAlphaActorGetProfiles.HandlerOutput
+      FmTealActorGetProfiles.QueryParams,
+      FmTealActorGetProfiles.HandlerInput,
+      FmTealActorGetProfiles.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.actor.getProfiles' // @ts-ignore
+    const nsid = 'fm.teal.actor.getProfiles' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   searchActors<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaActorSearchActors.QueryParams,
-      FmTealAlphaActorSearchActors.HandlerInput,
-      FmTealAlphaActorSearchActors.HandlerOutput
+      FmTealActorSearchActors.QueryParams,
+      FmTealActorSearchActors.HandlerInput,
+      FmTealActorSearchActors.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.actor.searchActors' // @ts-ignore
+    const nsid = 'fm.teal.actor.searchActors' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
 
-export class FmTealAlphaFeedNS {
+export class FmTealFeedNS {
   _server: Server
-  social: FmTealAlphaFeedSocialNS
+  social: FmTealFeedSocialNS
 
   constructor(server: Server) {
     this._server = server
-    this.social = new FmTealAlphaFeedSocialNS(server)
+    this.social = new FmTealFeedSocialNS(server)
   }
 
   getActorFeed<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaFeedGetActorFeed.QueryParams,
-      FmTealAlphaFeedGetActorFeed.HandlerInput,
-      FmTealAlphaFeedGetActorFeed.HandlerOutput
+      FmTealFeedGetActorFeed.QueryParams,
+      FmTealFeedGetActorFeed.HandlerInput,
+      FmTealFeedGetActorFeed.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.feed.getActorFeed' // @ts-ignore
+    const nsid = 'fm.teal.feed.getActorFeed' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getPlay<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaFeedGetPlay.QueryParams,
-      FmTealAlphaFeedGetPlay.HandlerInput,
-      FmTealAlphaFeedGetPlay.HandlerOutput
+      FmTealFeedGetPlay.QueryParams,
+      FmTealFeedGetPlay.HandlerInput,
+      FmTealFeedGetPlay.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.feed.getPlay' // @ts-ignore
+    const nsid = 'fm.teal.feed.getPlay' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
 
-export class FmTealAlphaFeedSocialNS {
+export class FmTealFeedSocialNS {
   _server: Server
 
   constructor(server: Server) {
@@ -201,7 +191,7 @@ export class FmTealAlphaFeedSocialNS {
   }
 }
 
-export class FmTealAlphaGraphNS {
+export class FmTealGraphNS {
   _server: Server
 
   constructor(server: Server) {
@@ -211,41 +201,41 @@ export class FmTealAlphaGraphNS {
   getFollowers<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaGraphGetFollowers.QueryParams,
-      FmTealAlphaGraphGetFollowers.HandlerInput,
-      FmTealAlphaGraphGetFollowers.HandlerOutput
+      FmTealGraphGetFollowers.QueryParams,
+      FmTealGraphGetFollowers.HandlerInput,
+      FmTealGraphGetFollowers.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.graph.getFollowers' // @ts-ignore
+    const nsid = 'fm.teal.graph.getFollowers' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getFollows<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaGraphGetFollows.QueryParams,
-      FmTealAlphaGraphGetFollows.HandlerInput,
-      FmTealAlphaGraphGetFollows.HandlerOutput
+      FmTealGraphGetFollows.QueryParams,
+      FmTealGraphGetFollows.HandlerInput,
+      FmTealGraphGetFollows.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.graph.getFollows' // @ts-ignore
+    const nsid = 'fm.teal.graph.getFollows' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getSummary<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaGraphGetSummary.QueryParams,
-      FmTealAlphaGraphGetSummary.HandlerInput,
-      FmTealAlphaGraphGetSummary.HandlerOutput
+      FmTealGraphGetSummary.QueryParams,
+      FmTealGraphGetSummary.HandlerInput,
+      FmTealGraphGetSummary.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.graph.getSummary' // @ts-ignore
+    const nsid = 'fm.teal.graph.getSummary' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
 
-export class FmTealAlphaMusicNS {
+export class FmTealMusicNS {
   _server: Server
 
   constructor(server: Server) {
@@ -255,41 +245,41 @@ export class FmTealAlphaMusicNS {
   getAlbum<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaMusicGetAlbum.QueryParams,
-      FmTealAlphaMusicGetAlbum.HandlerInput,
-      FmTealAlphaMusicGetAlbum.HandlerOutput
+      FmTealMusicGetAlbum.QueryParams,
+      FmTealMusicGetAlbum.HandlerInput,
+      FmTealMusicGetAlbum.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.music.getAlbum' // @ts-ignore
+    const nsid = 'fm.teal.music.getAlbum' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getArtist<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaMusicGetArtist.QueryParams,
-      FmTealAlphaMusicGetArtist.HandlerInput,
-      FmTealAlphaMusicGetArtist.HandlerOutput
+      FmTealMusicGetArtist.QueryParams,
+      FmTealMusicGetArtist.HandlerInput,
+      FmTealMusicGetArtist.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.music.getArtist' // @ts-ignore
+    const nsid = 'fm.teal.music.getArtist' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getArtistListeners<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaMusicGetArtistListeners.QueryParams,
-      FmTealAlphaMusicGetArtistListeners.HandlerInput,
-      FmTealAlphaMusicGetArtistListeners.HandlerOutput
+      FmTealMusicGetArtistListeners.QueryParams,
+      FmTealMusicGetArtistListeners.HandlerInput,
+      FmTealMusicGetArtistListeners.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.music.getArtistListeners' // @ts-ignore
+    const nsid = 'fm.teal.music.getArtistListeners' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
 
-export class FmTealAlphaRichtextNS {
+export class FmTealRichtextNS {
   _server: Server
 
   constructor(server: Server) {
@@ -297,7 +287,7 @@ export class FmTealAlphaRichtextNS {
   }
 }
 
-export class FmTealAlphaSearchNS {
+export class FmTealSearchNS {
   _server: Server
 
   constructor(server: Server) {
@@ -307,17 +297,17 @@ export class FmTealAlphaSearchNS {
   getResults<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaSearchGetResults.QueryParams,
-      FmTealAlphaSearchGetResults.HandlerInput,
-      FmTealAlphaSearchGetResults.HandlerOutput
+      FmTealSearchGetResults.QueryParams,
+      FmTealSearchGetResults.HandlerInput,
+      FmTealSearchGetResults.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.search.getResults' // @ts-ignore
+    const nsid = 'fm.teal.search.getResults' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
 
-export class FmTealAlphaStatsNS {
+export class FmTealStatsNS {
   _server: Server
 
   constructor(server: Server) {
@@ -327,72 +317,72 @@ export class FmTealAlphaStatsNS {
   getLatest<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaStatsGetLatest.QueryParams,
-      FmTealAlphaStatsGetLatest.HandlerInput,
-      FmTealAlphaStatsGetLatest.HandlerOutput
+      FmTealStatsGetLatest.QueryParams,
+      FmTealStatsGetLatest.HandlerInput,
+      FmTealStatsGetLatest.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.stats.getLatest' // @ts-ignore
+    const nsid = 'fm.teal.stats.getLatest' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getTopArtists<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaStatsGetTopArtists.QueryParams,
-      FmTealAlphaStatsGetTopArtists.HandlerInput,
-      FmTealAlphaStatsGetTopArtists.HandlerOutput
+      FmTealStatsGetTopArtists.QueryParams,
+      FmTealStatsGetTopArtists.HandlerInput,
+      FmTealStatsGetTopArtists.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.stats.getTopArtists' // @ts-ignore
+    const nsid = 'fm.teal.stats.getTopArtists' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getTopReleases<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaStatsGetTopReleases.QueryParams,
-      FmTealAlphaStatsGetTopReleases.HandlerInput,
-      FmTealAlphaStatsGetTopReleases.HandlerOutput
+      FmTealStatsGetTopReleases.QueryParams,
+      FmTealStatsGetTopReleases.HandlerInput,
+      FmTealStatsGetTopReleases.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.stats.getTopReleases' // @ts-ignore
+    const nsid = 'fm.teal.stats.getTopReleases' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getUserTopArtists<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaStatsGetUserTopArtists.QueryParams,
-      FmTealAlphaStatsGetUserTopArtists.HandlerInput,
-      FmTealAlphaStatsGetUserTopArtists.HandlerOutput
+      FmTealStatsGetUserTopArtists.QueryParams,
+      FmTealStatsGetUserTopArtists.HandlerInput,
+      FmTealStatsGetUserTopArtists.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.stats.getUserTopArtists' // @ts-ignore
+    const nsid = 'fm.teal.stats.getUserTopArtists' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getUserTopRecordings<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaStatsGetUserTopRecordings.QueryParams,
-      FmTealAlphaStatsGetUserTopRecordings.HandlerInput,
-      FmTealAlphaStatsGetUserTopRecordings.HandlerOutput
+      FmTealStatsGetUserTopRecordings.QueryParams,
+      FmTealStatsGetUserTopRecordings.HandlerInput,
+      FmTealStatsGetUserTopRecordings.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.stats.getUserTopRecordings' // @ts-ignore
+    const nsid = 'fm.teal.stats.getUserTopRecordings' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
   getUserTopReleases<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
-      FmTealAlphaStatsGetUserTopReleases.QueryParams,
-      FmTealAlphaStatsGetUserTopReleases.HandlerInput,
-      FmTealAlphaStatsGetUserTopReleases.HandlerOutput
+      FmTealStatsGetUserTopReleases.QueryParams,
+      FmTealStatsGetUserTopReleases.HandlerInput,
+      FmTealStatsGetUserTopReleases.HandlerOutput
     >,
   ) {
-    const nsid = 'fm.teal.alpha.stats.getUserTopReleases' // @ts-ignore
+    const nsid = 'fm.teal.stats.getUserTopReleases' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }

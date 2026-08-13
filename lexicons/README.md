@@ -5,7 +5,7 @@ This directory contains ATProto lexicon definitions used by the Teal project.
 ## Structure
 
 - `app/`, `chat/`, `com/`, `tools/` - Symbolic links to the official ATProto lexicons from the [bluesky-social/atproto](https://github.com/bluesky-social/atproto) repository
-- `fm.teal.alpha/` - Custom Teal-specific lexicon definitions
+- `fm.teal/` - Custom Teal-specific lexicon definitions
 
 ## Submodule Setup
 
@@ -116,6 +116,6 @@ echo "Lexicons setup complete!"
 
 ### Adding Custom Lexicons
 
-Custom lexicons should be added to the `fm.teal.alpha/` directory following the ATProto lexicon schema format. These files are tracked directly in our repository and not affected by submodule updates.
+Custom lexicons should be added to the `fm.teal/` directory following the ATProto lexicon schema format. These files are tracked directly in our repository and not affected by submodule updates.
 
 **Note**: The symbolic links (`app`, `chat`, `com`, `tools`) are not tracked in git and will be created during setup. They are ignored in `.gitignore` to avoid conflicts.
