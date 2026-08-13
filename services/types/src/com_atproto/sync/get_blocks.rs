@@ -110,7 +110,9 @@ impl core::fmt::Display for GetBlocksError {
     }
 }
 
-/// Response type for com.atproto.sync.getBlocks
+/** Response marker for the `com.atproto.sync.getBlocks` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetBlocksOutput` for this endpoint.*/
 pub struct GetBlocksResponse;
 impl jacquard_common::xrpc::XrpcResp for GetBlocksResponse {
     const NSID: &'static str = "com.atproto.sync.getBlocks";
@@ -144,7 +146,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetBlocks<S> {
     type Response = GetBlocksResponse;
 }
 
-/// Endpoint type for com.atproto.sync.getBlocks
+/** Endpoint marker for the `com.atproto.sync.getBlocks` query.
+
+Path: `/xrpc/com.atproto.sync.getBlocks`. The request payload type is `GetBlocks<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetBlocksRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetBlocksRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.getBlocks";
@@ -163,56 +167,63 @@ pub mod get_blocks_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Did;
         type Cids;
+        type Did;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Did = Unset;
         type Cids = Unset;
-    }
-    ///State transition - sets the `did` field to Set
-    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDid<St> {}
-    impl<St: State> State for SetDid<St> {
-        type Did = Set<members::did>;
-        type Cids = St::Cids;
+        type Did = Unset;
     }
     ///State transition - sets the `cids` field to Set
     pub struct SetCids<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCids<St> {}
     impl<St: State> State for SetCids<St> {
-        type Did = St::Did;
         type Cids = Set<members::cids>;
+        type Did = St::Did;
+    }
+    ///State transition - sets the `did` field to Set
+    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDid<St> {}
+    impl<St: State> State for SetDid<St> {
+        type Cids = St::Cids;
+        type Did = Set<members::did>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `did` field
-        pub struct did(());
         ///Marker type for the `cids` field
         pub struct cids(());
+        ///Marker type for the `did` field
+        pub struct did(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetBlocksBuilder<S: BosStr, St: get_blocks_state::State> {
+pub struct GetBlocksBuilder<St: get_blocks_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Cid<S>>>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetBlocks<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetBlocksBuilder<S, get_blocks_state::Empty> {
+impl GetBlocks<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetBlocksBuilder<get_blocks_state::Empty, DefaultStr> {
         GetBlocksBuilder::new()
     }
 }
 
-impl<S: BosStr> GetBlocksBuilder<S, get_blocks_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetBlocks<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetBlocksBuilder<get_blocks_state::Empty, S> {
+        GetBlocksBuilder::builder()
+    }
+}
+
+impl GetBlocksBuilder<get_blocks_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetBlocksBuilder {
             _state: PhantomData,
@@ -222,7 +233,18 @@ impl<S: BosStr> GetBlocksBuilder<S, get_blocks_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetBlocksBuilder<S, St>
+impl<S: BosStr> GetBlocksBuilder<get_blocks_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetBlocksBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetBlocksBuilder<St, S>
 where
     St: get_blocks_state::State,
     St::Cids: get_blocks_state::IsUnset,
@@ -231,7 +253,7 @@ where
     pub fn cids(
         mut self,
         value: impl Into<Vec<Cid<S>>>,
-    ) -> GetBlocksBuilder<S, get_blocks_state::SetCids<St>> {
+    ) -> GetBlocksBuilder<get_blocks_state::SetCids<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetBlocksBuilder {
             _state: PhantomData,
@@ -241,7 +263,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetBlocksBuilder<S, St>
+impl<St, S: BosStr> GetBlocksBuilder<St, S>
 where
     St: get_blocks_state::State,
     St::Did: get_blocks_state::IsUnset,
@@ -250,7 +272,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetBlocksBuilder<S, get_blocks_state::SetDid<St>> {
+    ) -> GetBlocksBuilder<get_blocks_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         GetBlocksBuilder {
             _state: PhantomData,
@@ -260,11 +282,11 @@ where
     }
 }
 
-impl<S: BosStr, St> GetBlocksBuilder<S, St>
+impl<St, S: BosStr> GetBlocksBuilder<St, S>
 where
     St: get_blocks_state::State,
-    St::Did: get_blocks_state::IsSet,
     St::Cids: get_blocks_state::IsSet,
+    St::Did: get_blocks_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> GetBlocks<S> {

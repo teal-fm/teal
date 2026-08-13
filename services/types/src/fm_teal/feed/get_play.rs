@@ -34,7 +34,9 @@ pub struct GetPlayOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.feed.getPlay
+/** Response marker for the `fm.teal.feed.getPlay` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetPlayOutput<S>` for this endpoint.*/
 pub struct GetPlayResponse;
 impl jacquard_common::xrpc::XrpcResp for GetPlayResponse {
     const NSID: &'static str = "fm.teal.feed.getPlay";
@@ -49,7 +51,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetPlay<S> {
     type Response = GetPlayResponse;
 }
 
-/// Endpoint type for fm.teal.feed.getPlay
+/** Endpoint marker for the `fm.teal.feed.getPlay` query.
+
+Path: `/xrpc/fm.teal.feed.getPlay`. The request payload type is `GetPlay<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetPlayRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetPlayRequest {
     const PATH: &'static str = "/xrpc/fm.teal.feed.getPlay";
@@ -103,21 +107,28 @@ pub mod get_play_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetPlayBuilder<S: BosStr, St: get_play_state::State> {
+pub struct GetPlayBuilder<St: get_play_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<RecordKey<Rkey<S>>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetPlay<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetPlayBuilder<S, get_play_state::Empty> {
+impl GetPlay<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetPlayBuilder<get_play_state::Empty, DefaultStr> {
         GetPlayBuilder::new()
     }
 }
 
-impl<S: BosStr> GetPlayBuilder<S, get_play_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetPlay<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetPlayBuilder<get_play_state::Empty, S> {
+        GetPlayBuilder::builder()
+    }
+}
+
+impl GetPlayBuilder<get_play_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetPlayBuilder {
             _state: PhantomData,
@@ -127,7 +138,18 @@ impl<S: BosStr> GetPlayBuilder<S, get_play_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetPlayBuilder<S, St>
+impl<S: BosStr> GetPlayBuilder<get_play_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetPlayBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetPlayBuilder<St, S>
 where
     St: get_play_state::State,
     St::AuthorDid: get_play_state::IsUnset,
@@ -136,7 +158,7 @@ where
     pub fn author_did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetPlayBuilder<S, get_play_state::SetAuthorDid<St>> {
+    ) -> GetPlayBuilder<get_play_state::SetAuthorDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetPlayBuilder {
             _state: PhantomData,
@@ -146,7 +168,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetPlayBuilder<S, St>
+impl<St, S: BosStr> GetPlayBuilder<St, S>
 where
     St: get_play_state::State,
     St::Rkey: get_play_state::IsUnset,
@@ -155,7 +177,7 @@ where
     pub fn rkey(
         mut self,
         value: impl Into<RecordKey<Rkey<S>>>,
-    ) -> GetPlayBuilder<S, get_play_state::SetRkey<St>> {
+    ) -> GetPlayBuilder<get_play_state::SetRkey<St>, S> {
         self._fields.1 = Option::Some(value.into());
         GetPlayBuilder {
             _state: PhantomData,
@@ -165,7 +187,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetPlayBuilder<S, St>
+impl<St, S: BosStr> GetPlayBuilder<St, S>
 where
     St: get_play_state::State,
     St::AuthorDid: get_play_state::IsSet,

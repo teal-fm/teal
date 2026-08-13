@@ -118,7 +118,9 @@ impl core::fmt::Display for AddReactionError {
     }
 }
 
-/// Response type for chat.bsky.convo.addReaction
+/** Response marker for the `chat.bsky.convo.addReaction` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `AddReactionOutput<S>` for this endpoint.*/
 pub struct AddReactionResponse;
 impl jacquard_common::xrpc::XrpcResp for AddReactionResponse {
     const NSID: &'static str = "chat.bsky.convo.addReaction";
@@ -135,7 +137,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for AddReaction<S> {
     type Response = AddReactionResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.addReaction
+/** Endpoint marker for the `chat.bsky.convo.addReaction` procedure.
+
+Path: `/xrpc/chat.bsky.convo.addReaction`. The request payload type is `AddReaction<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct AddReactionRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for AddReactionRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.addReaction";

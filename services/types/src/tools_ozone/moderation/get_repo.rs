@@ -76,7 +76,9 @@ impl core::fmt::Display for GetRepoError {
     }
 }
 
-/// Response type for tools.ozone.moderation.getRepo
+/** Response marker for the `tools.ozone.moderation.getRepo` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetRepoOutput<S>` for this endpoint.*/
 pub struct GetRepoResponse;
 impl jacquard_common::xrpc::XrpcResp for GetRepoResponse {
     const NSID: &'static str = "tools.ozone.moderation.getRepo";
@@ -91,7 +93,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetRepo<S> {
     type Response = GetRepoResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.getRepo
+/** Endpoint marker for the `tools.ozone.moderation.getRepo` query.
+
+Path: `/xrpc/tools.ozone.moderation.getRepo`. The request payload type is `GetRepo<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetRepoRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetRepoRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.getRepo";
@@ -133,21 +137,28 @@ pub mod get_repo_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetRepoBuilder<S: BosStr, St: get_repo_state::State> {
+pub struct GetRepoBuilder<St: get_repo_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetRepo<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetRepoBuilder<S, get_repo_state::Empty> {
+impl GetRepo<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetRepoBuilder<get_repo_state::Empty, DefaultStr> {
         GetRepoBuilder::new()
     }
 }
 
-impl<S: BosStr> GetRepoBuilder<S, get_repo_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetRepo<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetRepoBuilder<get_repo_state::Empty, S> {
+        GetRepoBuilder::builder()
+    }
+}
+
+impl GetRepoBuilder<get_repo_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetRepoBuilder {
             _state: PhantomData,
@@ -157,7 +168,18 @@ impl<S: BosStr> GetRepoBuilder<S, get_repo_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetRepoBuilder<S, St>
+impl<S: BosStr> GetRepoBuilder<get_repo_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetRepoBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetRepoBuilder<St, S>
 where
     St: get_repo_state::State,
     St::Did: get_repo_state::IsUnset,
@@ -166,7 +188,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetRepoBuilder<S, get_repo_state::SetDid<St>> {
+    ) -> GetRepoBuilder<get_repo_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetRepoBuilder {
             _state: PhantomData,
@@ -176,7 +198,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetRepoBuilder<S, St>
+impl<St, S: BosStr> GetRepoBuilder<St, S>
 where
     St: get_repo_state::State,
     St::Did: get_repo_state::IsSet,

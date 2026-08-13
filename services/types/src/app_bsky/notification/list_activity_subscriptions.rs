@@ -22,7 +22,7 @@ use crate::app_bsky::actor::ProfileView;
 pub struct ListActivitySubscriptions<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -39,7 +39,9 @@ pub struct ListActivitySubscriptionsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.notification.listActivitySubscriptions
+/** Response marker for the `app.bsky.notification.listActivitySubscriptions` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ListActivitySubscriptionsOutput<S>` for this endpoint.*/
 pub struct ListActivitySubscriptionsResponse;
 impl jacquard_common::xrpc::XrpcResp for ListActivitySubscriptionsResponse {
     const NSID: &'static str = "app.bsky.notification.listActivitySubscriptions";
@@ -54,7 +56,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ListActivitySubscriptions
     type Response = ListActivitySubscriptionsResponse;
 }
 
-/// Endpoint type for app.bsky.notification.listActivitySubscriptions
+/** Endpoint marker for the `app.bsky.notification.listActivitySubscriptions` query.
+
+Path: `/xrpc/app.bsky.notification.listActivitySubscriptions`. The request payload type is `ListActivitySubscriptions<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ListActivitySubscriptionsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ListActivitySubscriptionsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.notification.listActivitySubscriptions";
@@ -88,28 +92,39 @@ pub mod list_activity_subscriptions_state {
 
 /// Builder for constructing an instance of this type.
 pub struct ListActivitySubscriptionsBuilder<
-    S: BosStr,
     St: list_activity_subscriptions_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ListActivitySubscriptions<S> {
-    /// Create a new builder for this type.
+impl ListActivitySubscriptions<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> ListActivitySubscriptionsBuilder<
-        S,
         list_activity_subscriptions_state::Empty,
+        DefaultStr,
     > {
         ListActivitySubscriptionsBuilder::new()
     }
 }
 
-impl<
-    S: BosStr,
-> ListActivitySubscriptionsBuilder<S, list_activity_subscriptions_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ListActivitySubscriptions<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListActivitySubscriptionsBuilder<
+        list_activity_subscriptions_state::Empty,
+        S,
+    > {
+        ListActivitySubscriptionsBuilder::builder()
+    }
+}
+
+impl ListActivitySubscriptionsBuilder<
+    list_activity_subscriptions_state::Empty,
+    DefaultStr,
+> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListActivitySubscriptionsBuilder {
             _state: PhantomData,
@@ -121,8 +136,21 @@ impl<
 
 impl<
     S: BosStr,
+> ListActivitySubscriptionsBuilder<list_activity_subscriptions_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListActivitySubscriptionsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<
     St: list_activity_subscriptions_state::State,
-> ListActivitySubscriptionsBuilder<S, St> {
+    S: BosStr,
+> ListActivitySubscriptionsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -136,9 +164,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: list_activity_subscriptions_state::State,
-> ListActivitySubscriptionsBuilder<S, St> {
+    S: BosStr,
+> ListActivitySubscriptionsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -151,7 +179,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> ListActivitySubscriptionsBuilder<S, St>
+impl<St, S: BosStr> ListActivitySubscriptionsBuilder<St, S>
 where
     St: list_activity_subscriptions_state::State,
 {

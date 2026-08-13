@@ -33,7 +33,9 @@ pub struct GetPostsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.feed.getPosts
+/** Response marker for the `app.bsky.feed.getPosts` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetPostsOutput<S>` for this endpoint.*/
 pub struct GetPostsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetPostsResponse {
     const NSID: &'static str = "app.bsky.feed.getPosts";
@@ -48,7 +50,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetPosts<S> {
     type Response = GetPostsResponse;
 }
 
-/// Endpoint type for app.bsky.feed.getPosts
+/** Endpoint marker for the `app.bsky.feed.getPosts` query.
+
+Path: `/xrpc/app.bsky.feed.getPosts`. The request payload type is `GetPosts<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetPostsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetPostsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.feed.getPosts";
@@ -90,21 +94,28 @@ pub mod get_posts_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetPostsBuilder<S: BosStr, St: get_posts_state::State> {
+pub struct GetPostsBuilder<St: get_posts_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<AtUri<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetPosts<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetPostsBuilder<S, get_posts_state::Empty> {
+impl GetPosts<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetPostsBuilder<get_posts_state::Empty, DefaultStr> {
         GetPostsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetPostsBuilder<S, get_posts_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetPosts<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetPostsBuilder<get_posts_state::Empty, S> {
+        GetPostsBuilder::builder()
+    }
+}
+
+impl GetPostsBuilder<get_posts_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetPostsBuilder {
             _state: PhantomData,
@@ -114,7 +125,18 @@ impl<S: BosStr> GetPostsBuilder<S, get_posts_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetPostsBuilder<S, St>
+impl<S: BosStr> GetPostsBuilder<get_posts_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetPostsBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetPostsBuilder<St, S>
 where
     St: get_posts_state::State,
     St::Uris: get_posts_state::IsUnset,
@@ -123,7 +145,7 @@ where
     pub fn uris(
         mut self,
         value: impl Into<Vec<AtUri<S>>>,
-    ) -> GetPostsBuilder<S, get_posts_state::SetUris<St>> {
+    ) -> GetPostsBuilder<get_posts_state::SetUris<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetPostsBuilder {
             _state: PhantomData,
@@ -133,7 +155,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetPostsBuilder<S, St>
+impl<St, S: BosStr> GetPostsBuilder<St, S>
 where
     St: get_posts_state::State,
     St::Uris: get_posts_state::IsSet,

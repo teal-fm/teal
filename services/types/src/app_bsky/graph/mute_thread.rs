@@ -25,7 +25,9 @@ pub struct MuteThread<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.muteThread
+/** Response marker for the `app.bsky.graph.muteThread` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct MuteThreadResponse;
 impl jacquard_common::xrpc::XrpcResp for MuteThreadResponse {
     const NSID: &'static str = "app.bsky.graph.muteThread";
@@ -42,7 +44,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for MuteThread<S> {
     type Response = MuteThreadResponse;
 }
 
-/// Endpoint type for app.bsky.graph.muteThread
+/** Endpoint marker for the `app.bsky.graph.muteThread` procedure.
+
+Path: `/xrpc/app.bsky.graph.muteThread`. The request payload type is `MuteThread<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct MuteThreadRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for MuteThreadRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.muteThread";
@@ -86,21 +90,28 @@ pub mod mute_thread_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct MuteThreadBuilder<S: BosStr, St: mute_thread_state::State> {
+pub struct MuteThreadBuilder<St: mute_thread_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> MuteThread<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> MuteThreadBuilder<S, mute_thread_state::Empty> {
+impl MuteThread<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> MuteThreadBuilder<mute_thread_state::Empty, DefaultStr> {
         MuteThreadBuilder::new()
     }
 }
 
-impl<S: BosStr> MuteThreadBuilder<S, mute_thread_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> MuteThread<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> MuteThreadBuilder<mute_thread_state::Empty, S> {
+        MuteThreadBuilder::builder()
+    }
+}
+
+impl MuteThreadBuilder<mute_thread_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         MuteThreadBuilder {
             _state: PhantomData,
@@ -110,7 +121,18 @@ impl<S: BosStr> MuteThreadBuilder<S, mute_thread_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> MuteThreadBuilder<S, St>
+impl<S: BosStr> MuteThreadBuilder<mute_thread_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        MuteThreadBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> MuteThreadBuilder<St, S>
 where
     St: mute_thread_state::State,
     St::Root: mute_thread_state::IsUnset,
@@ -119,7 +141,7 @@ where
     pub fn root(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> MuteThreadBuilder<S, mute_thread_state::SetRoot<St>> {
+    ) -> MuteThreadBuilder<mute_thread_state::SetRoot<St>, S> {
         self._fields.0 = Option::Some(value.into());
         MuteThreadBuilder {
             _state: PhantomData,
@@ -129,7 +151,7 @@ where
     }
 }
 
-impl<S: BosStr, St> MuteThreadBuilder<S, St>
+impl<St, S: BosStr> MuteThreadBuilder<St, S>
 where
     St: mute_thread_state::State,
     St::Root: mute_thread_state::IsSet,

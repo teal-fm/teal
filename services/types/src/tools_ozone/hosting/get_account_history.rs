@@ -101,7 +101,7 @@ pub struct GetAccountHistory<S: BosStr = DefaultStr> {
     pub did: Did<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub events: Option<Vec<S>>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -201,7 +201,9 @@ impl<S: BosStr> LexiconSchema for HandleUpdated<S> {
     }
 }
 
-/// Response type for tools.ozone.hosting.getAccountHistory
+/** Response marker for the `tools.ozone.hosting.getAccountHistory` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetAccountHistoryOutput<S>` for this endpoint.*/
 pub struct GetAccountHistoryResponse;
 impl jacquard_common::xrpc::XrpcResp for GetAccountHistoryResponse {
     const NSID: &'static str = "tools.ozone.hosting.getAccountHistory";
@@ -216,7 +218,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetAccountHistory<S> {
     type Response = GetAccountHistoryResponse;
 }
 
-/// Endpoint type for tools.ozone.hosting.getAccountHistory
+/** Endpoint marker for the `tools.ozone.hosting.getAccountHistory` query.
+
+Path: `/xrpc/tools.ozone.hosting.getAccountHistory`. The request payload type is `GetAccountHistory<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetAccountHistoryRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetAccountHistoryRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.hosting.getAccountHistory";
@@ -488,21 +492,28 @@ pub mod event_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct EventBuilder<S: BosStr, St: event_state::State> {
+pub struct EventBuilder<St: event_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<S>, Option<EventDetails<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Event<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> EventBuilder<S, event_state::Empty> {
+impl Event<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> EventBuilder<event_state::Empty, DefaultStr> {
         EventBuilder::new()
     }
 }
 
-impl<S: BosStr> EventBuilder<S, event_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Event<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> EventBuilder<event_state::Empty, S> {
+        EventBuilder::builder()
+    }
+}
+
+impl EventBuilder<event_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         EventBuilder {
             _state: PhantomData,
@@ -512,7 +523,18 @@ impl<S: BosStr> EventBuilder<S, event_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> EventBuilder<S, St>
+impl<S: BosStr> EventBuilder<event_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        EventBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> EventBuilder<St, S>
 where
     St: event_state::State,
     St::CreatedAt: event_state::IsUnset,
@@ -521,7 +543,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> EventBuilder<S, event_state::SetCreatedAt<St>> {
+    ) -> EventBuilder<event_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         EventBuilder {
             _state: PhantomData,
@@ -531,7 +553,7 @@ where
     }
 }
 
-impl<S: BosStr, St> EventBuilder<S, St>
+impl<St, S: BosStr> EventBuilder<St, S>
 where
     St: event_state::State,
     St::CreatedBy: event_state::IsUnset,
@@ -540,7 +562,7 @@ where
     pub fn created_by(
         mut self,
         value: impl Into<S>,
-    ) -> EventBuilder<S, event_state::SetCreatedBy<St>> {
+    ) -> EventBuilder<event_state::SetCreatedBy<St>, S> {
         self._fields.1 = Option::Some(value.into());
         EventBuilder {
             _state: PhantomData,
@@ -550,7 +572,7 @@ where
     }
 }
 
-impl<S: BosStr, St> EventBuilder<S, St>
+impl<St, S: BosStr> EventBuilder<St, S>
 where
     St: event_state::State,
     St::Details: event_state::IsUnset,
@@ -559,7 +581,7 @@ where
     pub fn details(
         mut self,
         value: impl Into<EventDetails<S>>,
-    ) -> EventBuilder<S, event_state::SetDetails<St>> {
+    ) -> EventBuilder<event_state::SetDetails<St>, S> {
         self._fields.2 = Option::Some(value.into());
         EventBuilder {
             _state: PhantomData,
@@ -569,7 +591,7 @@ where
     }
 }
 
-impl<S: BosStr, St> EventBuilder<S, St>
+impl<St, S: BosStr> EventBuilder<St, S>
 where
     St: event_state::State,
     St::CreatedAt: event_state::IsSet,
@@ -629,21 +651,31 @@ pub mod handle_updated_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct HandleUpdatedBuilder<S: BosStr, St: handle_updated_state::State> {
+pub struct HandleUpdatedBuilder<
+    St: handle_updated_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Handle<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> HandleUpdated<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> HandleUpdatedBuilder<S, handle_updated_state::Empty> {
+impl HandleUpdated<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> HandleUpdatedBuilder<handle_updated_state::Empty, DefaultStr> {
         HandleUpdatedBuilder::new()
     }
 }
 
-impl<S: BosStr> HandleUpdatedBuilder<S, handle_updated_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> HandleUpdated<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> HandleUpdatedBuilder<handle_updated_state::Empty, S> {
+        HandleUpdatedBuilder::builder()
+    }
+}
+
+impl HandleUpdatedBuilder<handle_updated_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         HandleUpdatedBuilder {
             _state: PhantomData,
@@ -653,7 +685,18 @@ impl<S: BosStr> HandleUpdatedBuilder<S, handle_updated_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> HandleUpdatedBuilder<S, St>
+impl<S: BosStr> HandleUpdatedBuilder<handle_updated_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        HandleUpdatedBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> HandleUpdatedBuilder<St, S>
 where
     St: handle_updated_state::State,
     St::Handle: handle_updated_state::IsUnset,
@@ -662,7 +705,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> HandleUpdatedBuilder<S, handle_updated_state::SetHandle<St>> {
+    ) -> HandleUpdatedBuilder<handle_updated_state::SetHandle<St>, S> {
         self._fields.0 = Option::Some(value.into());
         HandleUpdatedBuilder {
             _state: PhantomData,
@@ -672,7 +715,7 @@ where
     }
 }
 
-impl<S: BosStr, St> HandleUpdatedBuilder<S, St>
+impl<St, S: BosStr> HandleUpdatedBuilder<St, S>
 where
     St: handle_updated_state::State,
     St::Handle: handle_updated_state::IsSet,
@@ -733,21 +776,34 @@ pub mod get_account_history_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetAccountHistoryBuilder<S: BosStr, St: get_account_history_state::State> {
+pub struct GetAccountHistoryBuilder<
+    St: get_account_history_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Did<S>>, Option<Vec<S>>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetAccountHistory<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetAccountHistoryBuilder<S, get_account_history_state::Empty> {
+impl GetAccountHistory<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetAccountHistoryBuilder<
+        get_account_history_state::Empty,
+        DefaultStr,
+    > {
         GetAccountHistoryBuilder::new()
     }
 }
 
-impl<S: BosStr> GetAccountHistoryBuilder<S, get_account_history_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetAccountHistory<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetAccountHistoryBuilder<get_account_history_state::Empty, S> {
+        GetAccountHistoryBuilder::builder()
+    }
+}
+
+impl GetAccountHistoryBuilder<get_account_history_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetAccountHistoryBuilder {
             _state: PhantomData,
@@ -757,7 +813,18 @@ impl<S: BosStr> GetAccountHistoryBuilder<S, get_account_history_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_account_history_state::State> GetAccountHistoryBuilder<S, St> {
+impl<S: BosStr> GetAccountHistoryBuilder<get_account_history_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetAccountHistoryBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_account_history_state::State, S: BosStr> GetAccountHistoryBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -770,7 +837,7 @@ impl<S: BosStr, St: get_account_history_state::State> GetAccountHistoryBuilder<S
     }
 }
 
-impl<S: BosStr, St> GetAccountHistoryBuilder<S, St>
+impl<St, S: BosStr> GetAccountHistoryBuilder<St, S>
 where
     St: get_account_history_state::State,
     St::Did: get_account_history_state::IsUnset,
@@ -779,7 +846,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetAccountHistoryBuilder<S, get_account_history_state::SetDid<St>> {
+    ) -> GetAccountHistoryBuilder<get_account_history_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         GetAccountHistoryBuilder {
             _state: PhantomData,
@@ -789,7 +856,7 @@ where
     }
 }
 
-impl<S: BosStr, St: get_account_history_state::State> GetAccountHistoryBuilder<S, St> {
+impl<St: get_account_history_state::State, S: BosStr> GetAccountHistoryBuilder<St, S> {
     /// Set the `events` field (optional)
     pub fn events(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -802,7 +869,7 @@ impl<S: BosStr, St: get_account_history_state::State> GetAccountHistoryBuilder<S
     }
 }
 
-impl<S: BosStr, St: get_account_history_state::State> GetAccountHistoryBuilder<S, St> {
+impl<St: get_account_history_state::State, S: BosStr> GetAccountHistoryBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.3 = value.into();
@@ -815,7 +882,7 @@ impl<S: BosStr, St: get_account_history_state::State> GetAccountHistoryBuilder<S
     }
 }
 
-impl<S: BosStr, St> GetAccountHistoryBuilder<S, St>
+impl<St, S: BosStr> GetAccountHistoryBuilder<St, S>
 where
     St: get_account_history_state::State,
     St::Did: get_account_history_state::IsSet,

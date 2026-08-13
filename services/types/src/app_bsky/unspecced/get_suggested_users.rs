@@ -22,7 +22,7 @@ use crate::app_bsky::actor::ProfileView;
 pub struct GetSuggestedUsers<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub category: Option<S>,
-    ///Defaults to `25`. Min: 1. Max: 50.
+    /// Defaults to `25`. Min: 1. Max: 50.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -43,7 +43,9 @@ pub struct GetSuggestedUsersOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.unspecced.getSuggestedUsers
+/** Response marker for the `app.bsky.unspecced.getSuggestedUsers` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSuggestedUsersOutput<S>` for this endpoint.*/
 pub struct GetSuggestedUsersResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSuggestedUsersResponse {
     const NSID: &'static str = "app.bsky.unspecced.getSuggestedUsers";
@@ -58,7 +60,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetSuggestedUsers<S> {
     type Response = GetSuggestedUsersResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getSuggestedUsers
+/** Endpoint marker for the `app.bsky.unspecced.getSuggestedUsers` query.
+
+Path: `/xrpc/app.bsky.unspecced.getSuggestedUsers`. The request payload type is `GetSuggestedUsers<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSuggestedUsersRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSuggestedUsersRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getSuggestedUsers";
@@ -91,21 +95,34 @@ pub mod get_suggested_users_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetSuggestedUsersBuilder<S: BosStr, St: get_suggested_users_state::State> {
+pub struct GetSuggestedUsersBuilder<
+    St: get_suggested_users_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetSuggestedUsers<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetSuggestedUsersBuilder<S, get_suggested_users_state::Empty> {
+impl GetSuggestedUsers<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetSuggestedUsersBuilder<
+        get_suggested_users_state::Empty,
+        DefaultStr,
+    > {
         GetSuggestedUsersBuilder::new()
     }
 }
 
-impl<S: BosStr> GetSuggestedUsersBuilder<S, get_suggested_users_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetSuggestedUsers<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetSuggestedUsersBuilder<get_suggested_users_state::Empty, S> {
+        GetSuggestedUsersBuilder::builder()
+    }
+}
+
+impl GetSuggestedUsersBuilder<get_suggested_users_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetSuggestedUsersBuilder {
             _state: PhantomData,
@@ -115,7 +132,18 @@ impl<S: BosStr> GetSuggestedUsersBuilder<S, get_suggested_users_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_suggested_users_state::State> GetSuggestedUsersBuilder<S, St> {
+impl<S: BosStr> GetSuggestedUsersBuilder<get_suggested_users_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetSuggestedUsersBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_suggested_users_state::State, S: BosStr> GetSuggestedUsersBuilder<St, S> {
     /// Set the `category` field (optional)
     pub fn category(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -128,7 +156,7 @@ impl<S: BosStr, St: get_suggested_users_state::State> GetSuggestedUsersBuilder<S
     }
 }
 
-impl<S: BosStr, St: get_suggested_users_state::State> GetSuggestedUsersBuilder<S, St> {
+impl<St: get_suggested_users_state::State, S: BosStr> GetSuggestedUsersBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -141,7 +169,7 @@ impl<S: BosStr, St: get_suggested_users_state::State> GetSuggestedUsersBuilder<S
     }
 }
 
-impl<S: BosStr, St> GetSuggestedUsersBuilder<S, St>
+impl<St, S: BosStr> GetSuggestedUsersBuilder<St, S>
 where
     St: get_suggested_users_state::State,
 {

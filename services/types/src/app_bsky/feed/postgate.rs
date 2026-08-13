@@ -304,7 +304,7 @@ pub mod postgate_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct PostgateBuilder<S: BosStr, St: postgate_state::State> {
+pub struct PostgateBuilder<St: postgate_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -315,15 +315,22 @@ pub struct PostgateBuilder<S: BosStr, St: postgate_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Postgate<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> PostgateBuilder<S, postgate_state::Empty> {
+impl Postgate<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> PostgateBuilder<postgate_state::Empty, DefaultStr> {
         PostgateBuilder::new()
     }
 }
 
-impl<S: BosStr> PostgateBuilder<S, postgate_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Postgate<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PostgateBuilder<postgate_state::Empty, S> {
+        PostgateBuilder::builder()
+    }
+}
+
+impl PostgateBuilder<postgate_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PostgateBuilder {
             _state: PhantomData,
@@ -333,7 +340,18 @@ impl<S: BosStr> PostgateBuilder<S, postgate_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> PostgateBuilder<S, St>
+impl<S: BosStr> PostgateBuilder<postgate_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PostgateBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> PostgateBuilder<St, S>
 where
     St: postgate_state::State,
     St::CreatedAt: postgate_state::IsUnset,
@@ -342,7 +360,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> PostgateBuilder<S, postgate_state::SetCreatedAt<St>> {
+    ) -> PostgateBuilder<postgate_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         PostgateBuilder {
             _state: PhantomData,
@@ -352,7 +370,7 @@ where
     }
 }
 
-impl<S: BosStr, St: postgate_state::State> PostgateBuilder<S, St> {
+impl<St: postgate_state::State, S: BosStr> PostgateBuilder<St, S> {
     /// Set the `detachedEmbeddingUris` field (optional)
     pub fn detached_embedding_uris(
         mut self,
@@ -371,7 +389,7 @@ impl<S: BosStr, St: postgate_state::State> PostgateBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: postgate_state::State> PostgateBuilder<S, St> {
+impl<St: postgate_state::State, S: BosStr> PostgateBuilder<St, S> {
     /// Set the `embeddingRules` field (optional)
     pub fn embedding_rules(
         mut self,
@@ -390,7 +408,7 @@ impl<S: BosStr, St: postgate_state::State> PostgateBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> PostgateBuilder<S, St>
+impl<St, S: BosStr> PostgateBuilder<St, S>
 where
     St: postgate_state::State,
     St::Post: postgate_state::IsUnset,
@@ -399,7 +417,7 @@ where
     pub fn post(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> PostgateBuilder<S, postgate_state::SetPost<St>> {
+    ) -> PostgateBuilder<postgate_state::SetPost<St>, S> {
         self._fields.3 = Option::Some(value.into());
         PostgateBuilder {
             _state: PhantomData,
@@ -409,7 +427,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PostgateBuilder<S, St>
+impl<St, S: BosStr> PostgateBuilder<St, S>
 where
     St: postgate_state::State,
     St::CreatedAt: postgate_state::IsSet,

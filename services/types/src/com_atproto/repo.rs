@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `com.atproto.repo` Lexicon namespace/module.
 pub mod apply_writes;
 pub mod create_record;
 pub mod delete_record;
@@ -107,21 +108,28 @@ pub mod commit_meta_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct CommitMetaBuilder<S: BosStr, St: commit_meta_state::State> {
+pub struct CommitMetaBuilder<St: commit_meta_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Cid<S>>, Option<Tid>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> CommitMeta<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> CommitMetaBuilder<S, commit_meta_state::Empty> {
+impl CommitMeta<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> CommitMetaBuilder<commit_meta_state::Empty, DefaultStr> {
         CommitMetaBuilder::new()
     }
 }
 
-impl<S: BosStr> CommitMetaBuilder<S, commit_meta_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> CommitMeta<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> CommitMetaBuilder<commit_meta_state::Empty, S> {
+        CommitMetaBuilder::builder()
+    }
+}
+
+impl CommitMetaBuilder<commit_meta_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         CommitMetaBuilder {
             _state: PhantomData,
@@ -131,7 +139,18 @@ impl<S: BosStr> CommitMetaBuilder<S, commit_meta_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> CommitMetaBuilder<S, St>
+impl<S: BosStr> CommitMetaBuilder<commit_meta_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        CommitMetaBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> CommitMetaBuilder<St, S>
 where
     St: commit_meta_state::State,
     St::Cid: commit_meta_state::IsUnset,
@@ -140,7 +159,7 @@ where
     pub fn cid(
         mut self,
         value: impl Into<Cid<S>>,
-    ) -> CommitMetaBuilder<S, commit_meta_state::SetCid<St>> {
+    ) -> CommitMetaBuilder<commit_meta_state::SetCid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         CommitMetaBuilder {
             _state: PhantomData,
@@ -150,7 +169,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitMetaBuilder<S, St>
+impl<St, S: BosStr> CommitMetaBuilder<St, S>
 where
     St: commit_meta_state::State,
     St::Rev: commit_meta_state::IsUnset,
@@ -159,7 +178,7 @@ where
     pub fn rev(
         mut self,
         value: impl Into<Tid>,
-    ) -> CommitMetaBuilder<S, commit_meta_state::SetRev<St>> {
+    ) -> CommitMetaBuilder<commit_meta_state::SetRev<St>, S> {
         self._fields.1 = Option::Some(value.into());
         CommitMetaBuilder {
             _state: PhantomData,
@@ -169,7 +188,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitMetaBuilder<S, St>
+impl<St, S: BosStr> CommitMetaBuilder<St, S>
 where
     St: commit_meta_state::State,
     St::Cid: commit_meta_state::IsSet,

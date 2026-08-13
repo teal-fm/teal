@@ -35,7 +35,9 @@ pub struct GetConvoAvailabilityOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for chat.bsky.convo.getConvoAvailability
+/** Response marker for the `chat.bsky.convo.getConvoAvailability` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetConvoAvailabilityOutput<S>` for this endpoint.*/
 pub struct GetConvoAvailabilityResponse;
 impl jacquard_common::xrpc::XrpcResp for GetConvoAvailabilityResponse {
     const NSID: &'static str = "chat.bsky.convo.getConvoAvailability";
@@ -50,7 +52,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetConvoAvailability<S> {
     type Response = GetConvoAvailabilityResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.getConvoAvailability
+/** Endpoint marker for the `chat.bsky.convo.getConvoAvailability` query.
+
+Path: `/xrpc/chat.bsky.convo.getConvoAvailability`. The request payload type is `GetConvoAvailability<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetConvoAvailabilityRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetConvoAvailabilityRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.getConvoAvailability";
@@ -93,23 +97,36 @@ pub mod get_convo_availability_state {
 
 /// Builder for constructing an instance of this type.
 pub struct GetConvoAvailabilityBuilder<
-    S: BosStr,
     St: get_convo_availability_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Did<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetConvoAvailability<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetConvoAvailabilityBuilder<S, get_convo_availability_state::Empty> {
+impl GetConvoAvailability<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetConvoAvailabilityBuilder<
+        get_convo_availability_state::Empty,
+        DefaultStr,
+    > {
         GetConvoAvailabilityBuilder::new()
     }
 }
 
-impl<S: BosStr> GetConvoAvailabilityBuilder<S, get_convo_availability_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetConvoAvailability<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetConvoAvailabilityBuilder<
+        get_convo_availability_state::Empty,
+        S,
+    > {
+        GetConvoAvailabilityBuilder::builder()
+    }
+}
+
+impl GetConvoAvailabilityBuilder<get_convo_availability_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetConvoAvailabilityBuilder {
             _state: PhantomData,
@@ -119,7 +136,18 @@ impl<S: BosStr> GetConvoAvailabilityBuilder<S, get_convo_availability_state::Emp
     }
 }
 
-impl<S: BosStr, St> GetConvoAvailabilityBuilder<S, St>
+impl<S: BosStr> GetConvoAvailabilityBuilder<get_convo_availability_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetConvoAvailabilityBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetConvoAvailabilityBuilder<St, S>
 where
     St: get_convo_availability_state::State,
     St::Members: get_convo_availability_state::IsUnset,
@@ -128,7 +156,7 @@ where
     pub fn members(
         mut self,
         value: impl Into<Vec<Did<S>>>,
-    ) -> GetConvoAvailabilityBuilder<S, get_convo_availability_state::SetMembers<St>> {
+    ) -> GetConvoAvailabilityBuilder<get_convo_availability_state::SetMembers<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetConvoAvailabilityBuilder {
             _state: PhantomData,
@@ -138,7 +166,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetConvoAvailabilityBuilder<S, St>
+impl<St, S: BosStr> GetConvoAvailabilityBuilder<St, S>
 where
     St: get_convo_availability_state::State,
     St::Members: get_convo_availability_state::IsSet,

@@ -25,7 +25,9 @@ pub struct DeleteAccount<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.admin.deleteAccount
+/** Response marker for the `com.atproto.admin.deleteAccount` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DeleteAccountResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteAccountResponse {
     const NSID: &'static str = "com.atproto.admin.deleteAccount";
@@ -42,7 +44,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeleteAccount<S> {
     type Response = DeleteAccountResponse;
 }
 
-/// Endpoint type for com.atproto.admin.deleteAccount
+/** Endpoint marker for the `com.atproto.admin.deleteAccount` procedure.
+
+Path: `/xrpc/com.atproto.admin.deleteAccount`. The request payload type is `DeleteAccount<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DeleteAccountRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteAccountRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.deleteAccount";
@@ -86,21 +90,31 @@ pub mod delete_account_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct DeleteAccountBuilder<S: BosStr, St: delete_account_state::State> {
+pub struct DeleteAccountBuilder<
+    St: delete_account_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> DeleteAccount<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> DeleteAccountBuilder<S, delete_account_state::Empty> {
+impl DeleteAccount<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> DeleteAccountBuilder<delete_account_state::Empty, DefaultStr> {
         DeleteAccountBuilder::new()
     }
 }
 
-impl<S: BosStr> DeleteAccountBuilder<S, delete_account_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> DeleteAccount<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> DeleteAccountBuilder<delete_account_state::Empty, S> {
+        DeleteAccountBuilder::builder()
+    }
+}
+
+impl DeleteAccountBuilder<delete_account_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         DeleteAccountBuilder {
             _state: PhantomData,
@@ -110,7 +124,18 @@ impl<S: BosStr> DeleteAccountBuilder<S, delete_account_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> DeleteAccountBuilder<S, St>
+impl<S: BosStr> DeleteAccountBuilder<delete_account_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        DeleteAccountBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> DeleteAccountBuilder<St, S>
 where
     St: delete_account_state::State,
     St::Did: delete_account_state::IsUnset,
@@ -119,7 +144,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> DeleteAccountBuilder<S, delete_account_state::SetDid<St>> {
+    ) -> DeleteAccountBuilder<delete_account_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         DeleteAccountBuilder {
             _state: PhantomData,
@@ -129,7 +154,7 @@ where
     }
 }
 
-impl<S: BosStr, St> DeleteAccountBuilder<S, St>
+impl<St, S: BosStr> DeleteAccountBuilder<St, S>
 where
     St: delete_account_state::State,
     St::Did: delete_account_state::IsSet,

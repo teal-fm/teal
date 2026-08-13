@@ -25,7 +25,9 @@ pub struct MuteActorList<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.muteActorList
+/** Response marker for the `app.bsky.graph.muteActorList` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct MuteActorListResponse;
 impl jacquard_common::xrpc::XrpcResp for MuteActorListResponse {
     const NSID: &'static str = "app.bsky.graph.muteActorList";
@@ -42,7 +44,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for MuteActorList<S> {
     type Response = MuteActorListResponse;
 }
 
-/// Endpoint type for app.bsky.graph.muteActorList
+/** Endpoint marker for the `app.bsky.graph.muteActorList` procedure.
+
+Path: `/xrpc/app.bsky.graph.muteActorList`. The request payload type is `MuteActorList<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct MuteActorListRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for MuteActorListRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.muteActorList";
@@ -86,21 +90,31 @@ pub mod mute_actor_list_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct MuteActorListBuilder<S: BosStr, St: mute_actor_list_state::State> {
+pub struct MuteActorListBuilder<
+    St: mute_actor_list_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> MuteActorList<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> MuteActorListBuilder<S, mute_actor_list_state::Empty> {
+impl MuteActorList<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> MuteActorListBuilder<mute_actor_list_state::Empty, DefaultStr> {
         MuteActorListBuilder::new()
     }
 }
 
-impl<S: BosStr> MuteActorListBuilder<S, mute_actor_list_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> MuteActorList<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> MuteActorListBuilder<mute_actor_list_state::Empty, S> {
+        MuteActorListBuilder::builder()
+    }
+}
+
+impl MuteActorListBuilder<mute_actor_list_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         MuteActorListBuilder {
             _state: PhantomData,
@@ -110,7 +124,18 @@ impl<S: BosStr> MuteActorListBuilder<S, mute_actor_list_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> MuteActorListBuilder<S, St>
+impl<S: BosStr> MuteActorListBuilder<mute_actor_list_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        MuteActorListBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> MuteActorListBuilder<St, S>
 where
     St: mute_actor_list_state::State,
     St::List: mute_actor_list_state::IsUnset,
@@ -119,7 +144,7 @@ where
     pub fn list(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> MuteActorListBuilder<S, mute_actor_list_state::SetList<St>> {
+    ) -> MuteActorListBuilder<mute_actor_list_state::SetList<St>, S> {
         self._fields.0 = Option::Some(value.into());
         MuteActorListBuilder {
             _state: PhantomData,
@@ -129,7 +154,7 @@ where
     }
 }
 
-impl<S: BosStr, St> MuteActorListBuilder<S, St>
+impl<St, S: BosStr> MuteActorListBuilder<St, S>
 where
     St: mute_actor_list_state::State,
     St::List: mute_actor_list_state::IsSet,

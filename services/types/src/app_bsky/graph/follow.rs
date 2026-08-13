@@ -150,21 +150,28 @@ pub mod follow_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct FollowBuilder<S: BosStr, St: follow_state::State> {
+pub struct FollowBuilder<St: follow_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<Did<S>>, Option<StrongRef<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Follow<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> FollowBuilder<S, follow_state::Empty> {
+impl Follow<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> FollowBuilder<follow_state::Empty, DefaultStr> {
         FollowBuilder::new()
     }
 }
 
-impl<S: BosStr> FollowBuilder<S, follow_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Follow<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> FollowBuilder<follow_state::Empty, S> {
+        FollowBuilder::builder()
+    }
+}
+
+impl FollowBuilder<follow_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         FollowBuilder {
             _state: PhantomData,
@@ -174,7 +181,18 @@ impl<S: BosStr> FollowBuilder<S, follow_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> FollowBuilder<S, St>
+impl<S: BosStr> FollowBuilder<follow_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        FollowBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> FollowBuilder<St, S>
 where
     St: follow_state::State,
     St::CreatedAt: follow_state::IsUnset,
@@ -183,7 +201,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> FollowBuilder<S, follow_state::SetCreatedAt<St>> {
+    ) -> FollowBuilder<follow_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         FollowBuilder {
             _state: PhantomData,
@@ -193,7 +211,7 @@ where
     }
 }
 
-impl<S: BosStr, St> FollowBuilder<S, St>
+impl<St, S: BosStr> FollowBuilder<St, S>
 where
     St: follow_state::State,
     St::Subject: follow_state::IsUnset,
@@ -202,7 +220,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> FollowBuilder<S, follow_state::SetSubject<St>> {
+    ) -> FollowBuilder<follow_state::SetSubject<St>, S> {
         self._fields.1 = Option::Some(value.into());
         FollowBuilder {
             _state: PhantomData,
@@ -212,7 +230,7 @@ where
     }
 }
 
-impl<S: BosStr, St: follow_state::State> FollowBuilder<S, St> {
+impl<St: follow_state::State, S: BosStr> FollowBuilder<St, S> {
     /// Set the `via` field (optional)
     pub fn via(mut self, value: impl Into<Option<StrongRef<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -225,7 +243,7 @@ impl<S: BosStr, St: follow_state::State> FollowBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> FollowBuilder<S, St>
+impl<St, S: BosStr> FollowBuilder<St, S>
 where
     St: follow_state::State,
     St::CreatedAt: follow_state::IsSet,

@@ -22,7 +22,7 @@ use crate::app_bsky::actor::ProfileView;
 pub struct GetBlocks<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -39,7 +39,9 @@ pub struct GetBlocksOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.getBlocks
+/** Response marker for the `app.bsky.graph.getBlocks` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetBlocksOutput<S>` for this endpoint.*/
 pub struct GetBlocksResponse;
 impl jacquard_common::xrpc::XrpcResp for GetBlocksResponse {
     const NSID: &'static str = "app.bsky.graph.getBlocks";
@@ -54,7 +56,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetBlocks<S> {
     type Response = GetBlocksResponse;
 }
 
-/// Endpoint type for app.bsky.graph.getBlocks
+/** Endpoint marker for the `app.bsky.graph.getBlocks` query.
+
+Path: `/xrpc/app.bsky.graph.getBlocks`. The request payload type is `GetBlocks<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetBlocksRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetBlocksRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.getBlocks";
@@ -87,21 +91,28 @@ pub mod get_blocks_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetBlocksBuilder<S: BosStr, St: get_blocks_state::State> {
+pub struct GetBlocksBuilder<St: get_blocks_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetBlocks<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetBlocksBuilder<S, get_blocks_state::Empty> {
+impl GetBlocks<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetBlocksBuilder<get_blocks_state::Empty, DefaultStr> {
         GetBlocksBuilder::new()
     }
 }
 
-impl<S: BosStr> GetBlocksBuilder<S, get_blocks_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetBlocks<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetBlocksBuilder<get_blocks_state::Empty, S> {
+        GetBlocksBuilder::builder()
+    }
+}
+
+impl GetBlocksBuilder<get_blocks_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetBlocksBuilder {
             _state: PhantomData,
@@ -111,7 +122,18 @@ impl<S: BosStr> GetBlocksBuilder<S, get_blocks_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_blocks_state::State> GetBlocksBuilder<S, St> {
+impl<S: BosStr> GetBlocksBuilder<get_blocks_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetBlocksBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_blocks_state::State, S: BosStr> GetBlocksBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -124,7 +146,7 @@ impl<S: BosStr, St: get_blocks_state::State> GetBlocksBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_blocks_state::State> GetBlocksBuilder<S, St> {
+impl<St: get_blocks_state::State, S: BosStr> GetBlocksBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -137,7 +159,7 @@ impl<S: BosStr, St: get_blocks_state::State> GetBlocksBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetBlocksBuilder<S, St>
+impl<St, S: BosStr> GetBlocksBuilder<St, S>
 where
     St: get_blocks_state::State,
 {

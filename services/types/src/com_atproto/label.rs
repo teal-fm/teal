@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `com.atproto.label` Lexicon namespace/module.
 pub mod query_labels;
 
 
@@ -675,8 +676,8 @@ pub mod label_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type Cts;
-        type Uri;
         type Src;
+        type Uri;
         type Val;
     }
     /// Empty state - all required fields are unset
@@ -684,8 +685,8 @@ pub mod label_state {
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type Cts = Unset;
-        type Uri = Unset;
         type Src = Unset;
+        type Uri = Unset;
         type Val = Unset;
     }
     ///State transition - sets the `cts` field to Set
@@ -693,17 +694,8 @@ pub mod label_state {
     impl<St: State> sealed::Sealed for SetCts<St> {}
     impl<St: State> State for SetCts<St> {
         type Cts = Set<members::cts>;
+        type Src = St::Src;
         type Uri = St::Uri;
-        type Src = St::Src;
-        type Val = St::Val;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type Cts = St::Cts;
-        type Uri = Set<members::uri>;
-        type Src = St::Src;
         type Val = St::Val;
     }
     ///State transition - sets the `src` field to Set
@@ -711,8 +703,17 @@ pub mod label_state {
     impl<St: State> sealed::Sealed for SetSrc<St> {}
     impl<St: State> State for SetSrc<St> {
         type Cts = St::Cts;
-        type Uri = St::Uri;
         type Src = Set<members::src>;
+        type Uri = St::Uri;
+        type Val = St::Val;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type Cts = St::Cts;
+        type Src = St::Src;
+        type Uri = Set<members::uri>;
         type Val = St::Val;
     }
     ///State transition - sets the `val` field to Set
@@ -720,8 +721,8 @@ pub mod label_state {
     impl<St: State> sealed::Sealed for SetVal<St> {}
     impl<St: State> State for SetVal<St> {
         type Cts = St::Cts;
-        type Uri = St::Uri;
         type Src = St::Src;
+        type Uri = St::Uri;
         type Val = Set<members::val>;
     }
     /// Marker types for field names
@@ -729,17 +730,17 @@ pub mod label_state {
     pub mod members {
         ///Marker type for the `cts` field
         pub struct cts(());
-        ///Marker type for the `uri` field
-        pub struct uri(());
         ///Marker type for the `src` field
         pub struct src(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
         ///Marker type for the `val` field
         pub struct val(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct LabelBuilder<S: BosStr, St: label_state::State> {
+pub struct LabelBuilder<St: label_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Cid<S>>,
@@ -755,15 +756,22 @@ pub struct LabelBuilder<S: BosStr, St: label_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Label<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> LabelBuilder<S, label_state::Empty> {
+impl Label<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> LabelBuilder<label_state::Empty, DefaultStr> {
         LabelBuilder::new()
     }
 }
 
-impl<S: BosStr> LabelBuilder<S, label_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Label<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LabelBuilder<label_state::Empty, S> {
+        LabelBuilder::builder()
+    }
+}
+
+impl LabelBuilder<label_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LabelBuilder {
             _state: PhantomData,
@@ -773,7 +781,18 @@ impl<S: BosStr> LabelBuilder<S, label_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
+impl<S: BosStr> LabelBuilder<label_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LabelBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: label_state::State, S: BosStr> LabelBuilder<St, S> {
     /// Set the `cid` field (optional)
     pub fn cid(mut self, value: impl Into<Option<Cid<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -786,7 +805,7 @@ impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> LabelBuilder<S, St>
+impl<St, S: BosStr> LabelBuilder<St, S>
 where
     St: label_state::State,
     St::Cts: label_state::IsUnset,
@@ -795,7 +814,7 @@ where
     pub fn cts(
         mut self,
         value: impl Into<Datetime>,
-    ) -> LabelBuilder<S, label_state::SetCts<St>> {
+    ) -> LabelBuilder<label_state::SetCts<St>, S> {
         self._fields.1 = Option::Some(value.into());
         LabelBuilder {
             _state: PhantomData,
@@ -805,7 +824,7 @@ where
     }
 }
 
-impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
+impl<St: label_state::State, S: BosStr> LabelBuilder<St, S> {
     /// Set the `exp` field (optional)
     pub fn exp(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.2 = value.into();
@@ -818,7 +837,7 @@ impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
+impl<St: label_state::State, S: BosStr> LabelBuilder<St, S> {
     /// Set the `neg` field (optional)
     pub fn neg(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.3 = value.into();
@@ -831,7 +850,7 @@ impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
+impl<St: label_state::State, S: BosStr> LabelBuilder<St, S> {
     /// Set the `sig` field (optional)
     pub fn sig(mut self, value: impl Into<Option<Bytes>>) -> Self {
         self._fields.4 = value.into();
@@ -844,7 +863,7 @@ impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> LabelBuilder<S, St>
+impl<St, S: BosStr> LabelBuilder<St, S>
 where
     St: label_state::State,
     St::Src: label_state::IsUnset,
@@ -853,7 +872,7 @@ where
     pub fn src(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> LabelBuilder<S, label_state::SetSrc<St>> {
+    ) -> LabelBuilder<label_state::SetSrc<St>, S> {
         self._fields.5 = Option::Some(value.into());
         LabelBuilder {
             _state: PhantomData,
@@ -863,7 +882,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelBuilder<S, St>
+impl<St, S: BosStr> LabelBuilder<St, S>
 where
     St: label_state::State,
     St::Uri: label_state::IsUnset,
@@ -872,7 +891,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<UriValue<S>>,
-    ) -> LabelBuilder<S, label_state::SetUri<St>> {
+    ) -> LabelBuilder<label_state::SetUri<St>, S> {
         self._fields.6 = Option::Some(value.into());
         LabelBuilder {
             _state: PhantomData,
@@ -882,7 +901,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelBuilder<S, St>
+impl<St, S: BosStr> LabelBuilder<St, S>
 where
     St: label_state::State,
     St::Val: label_state::IsUnset,
@@ -891,7 +910,7 @@ where
     pub fn val(
         mut self,
         value: impl Into<S>,
-    ) -> LabelBuilder<S, label_state::SetVal<St>> {
+    ) -> LabelBuilder<label_state::SetVal<St>, S> {
         self._fields.7 = Option::Some(value.into());
         LabelBuilder {
             _state: PhantomData,
@@ -901,7 +920,7 @@ where
     }
 }
 
-impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
+impl<St: label_state::State, S: BosStr> LabelBuilder<St, S> {
     /// Set the `ver` field (optional)
     pub fn ver(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.8 = value.into();
@@ -914,12 +933,12 @@ impl<S: BosStr, St: label_state::State> LabelBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> LabelBuilder<S, St>
+impl<St, S: BosStr> LabelBuilder<St, S>
 where
     St: label_state::State,
     St::Cts: label_state::IsSet,
-    St::Uri: label_state::IsSet,
     St::Src: label_state::IsSet,
+    St::Uri: label_state::IsSet,
     St::Val: label_state::IsSet,
 {
     /// Build the final struct.
@@ -1292,74 +1311,74 @@ pub mod label_value_definition_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Severity;
-        type Identifier;
         type Blurs;
+        type Identifier;
         type Locales;
+        type Severity;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Severity = Unset;
-        type Identifier = Unset;
         type Blurs = Unset;
+        type Identifier = Unset;
         type Locales = Unset;
-    }
-    ///State transition - sets the `severity` field to Set
-    pub struct SetSeverity<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSeverity<St> {}
-    impl<St: State> State for SetSeverity<St> {
-        type Severity = Set<members::severity>;
-        type Identifier = St::Identifier;
-        type Blurs = St::Blurs;
-        type Locales = St::Locales;
-    }
-    ///State transition - sets the `identifier` field to Set
-    pub struct SetIdentifier<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetIdentifier<St> {}
-    impl<St: State> State for SetIdentifier<St> {
-        type Severity = St::Severity;
-        type Identifier = Set<members::identifier>;
-        type Blurs = St::Blurs;
-        type Locales = St::Locales;
+        type Severity = Unset;
     }
     ///State transition - sets the `blurs` field to Set
     pub struct SetBlurs<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetBlurs<St> {}
     impl<St: State> State for SetBlurs<St> {
-        type Severity = St::Severity;
-        type Identifier = St::Identifier;
         type Blurs = Set<members::blurs>;
+        type Identifier = St::Identifier;
         type Locales = St::Locales;
+        type Severity = St::Severity;
+    }
+    ///State transition - sets the `identifier` field to Set
+    pub struct SetIdentifier<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetIdentifier<St> {}
+    impl<St: State> State for SetIdentifier<St> {
+        type Blurs = St::Blurs;
+        type Identifier = Set<members::identifier>;
+        type Locales = St::Locales;
+        type Severity = St::Severity;
     }
     ///State transition - sets the `locales` field to Set
     pub struct SetLocales<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetLocales<St> {}
     impl<St: State> State for SetLocales<St> {
-        type Severity = St::Severity;
-        type Identifier = St::Identifier;
         type Blurs = St::Blurs;
+        type Identifier = St::Identifier;
         type Locales = Set<members::locales>;
+        type Severity = St::Severity;
+    }
+    ///State transition - sets the `severity` field to Set
+    pub struct SetSeverity<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSeverity<St> {}
+    impl<St: State> State for SetSeverity<St> {
+        type Blurs = St::Blurs;
+        type Identifier = St::Identifier;
+        type Locales = St::Locales;
+        type Severity = Set<members::severity>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `severity` field
-        pub struct severity(());
-        ///Marker type for the `identifier` field
-        pub struct identifier(());
         ///Marker type for the `blurs` field
         pub struct blurs(());
+        ///Marker type for the `identifier` field
+        pub struct identifier(());
         ///Marker type for the `locales` field
         pub struct locales(());
+        ///Marker type for the `severity` field
+        pub struct severity(());
     }
 }
 
 /// Builder for constructing an instance of this type.
 pub struct LabelValueDefinitionBuilder<
-    S: BosStr,
     St: label_value_definition_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (
@@ -1373,15 +1392,28 @@ pub struct LabelValueDefinitionBuilder<
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> LabelValueDefinition<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> LabelValueDefinitionBuilder<S, label_value_definition_state::Empty> {
+impl LabelValueDefinition<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> LabelValueDefinitionBuilder<
+        label_value_definition_state::Empty,
+        DefaultStr,
+    > {
         LabelValueDefinitionBuilder::new()
     }
 }
 
-impl<S: BosStr> LabelValueDefinitionBuilder<S, label_value_definition_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> LabelValueDefinition<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LabelValueDefinitionBuilder<
+        label_value_definition_state::Empty,
+        S,
+    > {
+        LabelValueDefinitionBuilder::builder()
+    }
+}
+
+impl LabelValueDefinitionBuilder<label_value_definition_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LabelValueDefinitionBuilder {
             _state: PhantomData,
@@ -1391,10 +1423,21 @@ impl<S: BosStr> LabelValueDefinitionBuilder<S, label_value_definition_state::Emp
     }
 }
 
+impl<S: BosStr> LabelValueDefinitionBuilder<label_value_definition_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LabelValueDefinitionBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
 impl<
-    S: BosStr,
     St: label_value_definition_state::State,
-> LabelValueDefinitionBuilder<S, St> {
+    S: BosStr,
+> LabelValueDefinitionBuilder<St, S> {
     /// Set the `adultOnly` field (optional)
     pub fn adult_only(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.0 = value.into();
@@ -1407,7 +1450,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionBuilder<St, S>
 where
     St: label_value_definition_state::State,
     St::Blurs: label_value_definition_state::IsUnset,
@@ -1416,7 +1459,7 @@ where
     pub fn blurs(
         mut self,
         value: impl Into<LabelValueDefinitionBlurs<S>>,
-    ) -> LabelValueDefinitionBuilder<S, label_value_definition_state::SetBlurs<St>> {
+    ) -> LabelValueDefinitionBuilder<label_value_definition_state::SetBlurs<St>, S> {
         self._fields.1 = Option::Some(value.into());
         LabelValueDefinitionBuilder {
             _state: PhantomData,
@@ -1427,9 +1470,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: label_value_definition_state::State,
-> LabelValueDefinitionBuilder<S, St> {
+    S: BosStr,
+> LabelValueDefinitionBuilder<St, S> {
     /// Set the `defaultSetting` field (optional)
     pub fn default_setting(
         mut self,
@@ -1448,7 +1491,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionBuilder<St, S>
 where
     St: label_value_definition_state::State,
     St::Identifier: label_value_definition_state::IsUnset,
@@ -1458,8 +1501,8 @@ where
         mut self,
         value: impl Into<S>,
     ) -> LabelValueDefinitionBuilder<
-        S,
         label_value_definition_state::SetIdentifier<St>,
+        S,
     > {
         self._fields.3 = Option::Some(value.into());
         LabelValueDefinitionBuilder {
@@ -1470,7 +1513,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionBuilder<St, S>
 where
     St: label_value_definition_state::State,
     St::Locales: label_value_definition_state::IsUnset,
@@ -1479,7 +1522,7 @@ where
     pub fn locales(
         mut self,
         value: impl Into<Vec<label::LabelValueDefinitionStrings<S>>>,
-    ) -> LabelValueDefinitionBuilder<S, label_value_definition_state::SetLocales<St>> {
+    ) -> LabelValueDefinitionBuilder<label_value_definition_state::SetLocales<St>, S> {
         self._fields.4 = Option::Some(value.into());
         LabelValueDefinitionBuilder {
             _state: PhantomData,
@@ -1489,7 +1532,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionBuilder<St, S>
 where
     St: label_value_definition_state::State,
     St::Severity: label_value_definition_state::IsUnset,
@@ -1498,7 +1541,7 @@ where
     pub fn severity(
         mut self,
         value: impl Into<LabelValueDefinitionSeverity<S>>,
-    ) -> LabelValueDefinitionBuilder<S, label_value_definition_state::SetSeverity<St>> {
+    ) -> LabelValueDefinitionBuilder<label_value_definition_state::SetSeverity<St>, S> {
         self._fields.5 = Option::Some(value.into());
         LabelValueDefinitionBuilder {
             _state: PhantomData,
@@ -1508,13 +1551,13 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionBuilder<St, S>
 where
     St: label_value_definition_state::State,
-    St::Severity: label_value_definition_state::IsSet,
-    St::Identifier: label_value_definition_state::IsSet,
     St::Blurs: label_value_definition_state::IsSet,
+    St::Identifier: label_value_definition_state::IsSet,
     St::Locales: label_value_definition_state::IsSet,
+    St::Severity: label_value_definition_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> LabelValueDefinition<S> {
@@ -1605,28 +1648,39 @@ pub mod label_value_definition_strings_state {
 
 /// Builder for constructing an instance of this type.
 pub struct LabelValueDefinitionStringsBuilder<
-    S: BosStr,
     St: label_value_definition_strings_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Language>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> LabelValueDefinitionStrings<S> {
-    /// Create a new builder for this type.
+impl LabelValueDefinitionStrings<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> LabelValueDefinitionStringsBuilder<
-        S,
         label_value_definition_strings_state::Empty,
+        DefaultStr,
     > {
         LabelValueDefinitionStringsBuilder::new()
     }
 }
 
-impl<
-    S: BosStr,
-> LabelValueDefinitionStringsBuilder<S, label_value_definition_strings_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> LabelValueDefinitionStrings<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LabelValueDefinitionStringsBuilder<
+        label_value_definition_strings_state::Empty,
+        S,
+    > {
+        LabelValueDefinitionStringsBuilder::builder()
+    }
+}
+
+impl LabelValueDefinitionStringsBuilder<
+    label_value_definition_strings_state::Empty,
+    DefaultStr,
+> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LabelValueDefinitionStringsBuilder {
             _state: PhantomData,
@@ -1636,7 +1690,20 @@ impl<
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionStringsBuilder<S, St>
+impl<
+    S: BosStr,
+> LabelValueDefinitionStringsBuilder<label_value_definition_strings_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LabelValueDefinitionStringsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> LabelValueDefinitionStringsBuilder<St, S>
 where
     St: label_value_definition_strings_state::State,
     St::Description: label_value_definition_strings_state::IsUnset,
@@ -1646,8 +1713,8 @@ where
         mut self,
         value: impl Into<S>,
     ) -> LabelValueDefinitionStringsBuilder<
-        S,
         label_value_definition_strings_state::SetDescription<St>,
+        S,
     > {
         self._fields.0 = Option::Some(value.into());
         LabelValueDefinitionStringsBuilder {
@@ -1658,7 +1725,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionStringsBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionStringsBuilder<St, S>
 where
     St: label_value_definition_strings_state::State,
     St::Lang: label_value_definition_strings_state::IsUnset,
@@ -1668,8 +1735,8 @@ where
         mut self,
         value: impl Into<Language>,
     ) -> LabelValueDefinitionStringsBuilder<
-        S,
         label_value_definition_strings_state::SetLang<St>,
+        S,
     > {
         self._fields.1 = Option::Some(value.into());
         LabelValueDefinitionStringsBuilder {
@@ -1680,7 +1747,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionStringsBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionStringsBuilder<St, S>
 where
     St: label_value_definition_strings_state::State,
     St::Name: label_value_definition_strings_state::IsUnset,
@@ -1690,8 +1757,8 @@ where
         mut self,
         value: impl Into<S>,
     ) -> LabelValueDefinitionStringsBuilder<
-        S,
         label_value_definition_strings_state::SetName<St>,
+        S,
     > {
         self._fields.2 = Option::Some(value.into());
         LabelValueDefinitionStringsBuilder {
@@ -1702,7 +1769,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelValueDefinitionStringsBuilder<S, St>
+impl<St, S: BosStr> LabelValueDefinitionStringsBuilder<St, S>
 where
     St: label_value_definition_strings_state::State,
     St::Description: label_value_definition_strings_state::IsSet,
@@ -1765,21 +1832,28 @@ pub mod self_labels_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SelfLabelsBuilder<S: BosStr, St: self_labels_state::State> {
+pub struct SelfLabelsBuilder<St: self_labels_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<label::SelfLabel<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SelfLabels<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SelfLabelsBuilder<S, self_labels_state::Empty> {
+impl SelfLabels<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SelfLabelsBuilder<self_labels_state::Empty, DefaultStr> {
         SelfLabelsBuilder::new()
     }
 }
 
-impl<S: BosStr> SelfLabelsBuilder<S, self_labels_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SelfLabels<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SelfLabelsBuilder<self_labels_state::Empty, S> {
+        SelfLabelsBuilder::builder()
+    }
+}
+
+impl SelfLabelsBuilder<self_labels_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SelfLabelsBuilder {
             _state: PhantomData,
@@ -1789,7 +1863,18 @@ impl<S: BosStr> SelfLabelsBuilder<S, self_labels_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SelfLabelsBuilder<S, St>
+impl<S: BosStr> SelfLabelsBuilder<self_labels_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SelfLabelsBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SelfLabelsBuilder<St, S>
 where
     St: self_labels_state::State,
     St::Values: self_labels_state::IsUnset,
@@ -1798,7 +1883,7 @@ where
     pub fn values(
         mut self,
         value: impl Into<Vec<label::SelfLabel<S>>>,
-    ) -> SelfLabelsBuilder<S, self_labels_state::SetValues<St>> {
+    ) -> SelfLabelsBuilder<self_labels_state::SetValues<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SelfLabelsBuilder {
             _state: PhantomData,
@@ -1808,7 +1893,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SelfLabelsBuilder<S, St>
+impl<St, S: BosStr> SelfLabelsBuilder<St, S>
 where
     St: self_labels_state::State,
     St::Values: self_labels_state::IsSet,

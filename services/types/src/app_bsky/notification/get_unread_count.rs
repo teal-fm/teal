@@ -35,7 +35,9 @@ pub struct GetUnreadCountOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.notification.getUnreadCount
+/** Response marker for the `app.bsky.notification.getUnreadCount` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetUnreadCountOutput<S>` for this endpoint.*/
 pub struct GetUnreadCountResponse;
 impl jacquard_common::xrpc::XrpcResp for GetUnreadCountResponse {
     const NSID: &'static str = "app.bsky.notification.getUnreadCount";
@@ -50,7 +52,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetUnreadCount {
     type Response = GetUnreadCountResponse;
 }
 
-/// Endpoint type for app.bsky.notification.getUnreadCount
+/** Endpoint marker for the `app.bsky.notification.getUnreadCount` query.
+
+Path: `/xrpc/app.bsky.notification.getUnreadCount`. The request payload type is `GetUnreadCount`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetUnreadCountRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetUnreadCountRequest {
     const PATH: &'static str = "/xrpc/app.bsky.notification.getUnreadCount";
@@ -92,8 +96,18 @@ impl GetUnreadCount {
 }
 
 impl GetUnreadCountBuilder<get_unread_count_state::Empty> {
-    /// Create a new builder with all fields unset.
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
+        GetUnreadCountBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+        }
+    }
+}
+
+impl GetUnreadCountBuilder<get_unread_count_state::Empty> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
         GetUnreadCountBuilder {
             _state: PhantomData,
             _fields: (None, None),

@@ -59,56 +59,63 @@ pub mod strong_ref_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Uri;
         type Cid;
+        type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Uri = Unset;
         type Cid = Unset;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type Uri = Set<members::uri>;
-        type Cid = St::Cid;
+        type Uri = Unset;
     }
     ///State transition - sets the `cid` field to Set
     pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCid<St> {}
     impl<St: State> State for SetCid<St> {
-        type Uri = St::Uri;
         type Cid = Set<members::cid>;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type Cid = St::Cid;
+        type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `uri` field
-        pub struct uri(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct StrongRefBuilder<S: BosStr, St: strong_ref_state::State> {
+pub struct StrongRefBuilder<St: strong_ref_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Cid<S>>, Option<AtUri<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> StrongRef<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> StrongRefBuilder<S, strong_ref_state::Empty> {
+impl StrongRef<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> StrongRefBuilder<strong_ref_state::Empty, DefaultStr> {
         StrongRefBuilder::new()
     }
 }
 
-impl<S: BosStr> StrongRefBuilder<S, strong_ref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> StrongRef<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> StrongRefBuilder<strong_ref_state::Empty, S> {
+        StrongRefBuilder::builder()
+    }
+}
+
+impl StrongRefBuilder<strong_ref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         StrongRefBuilder {
             _state: PhantomData,
@@ -118,7 +125,18 @@ impl<S: BosStr> StrongRefBuilder<S, strong_ref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> StrongRefBuilder<S, St>
+impl<S: BosStr> StrongRefBuilder<strong_ref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        StrongRefBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> StrongRefBuilder<St, S>
 where
     St: strong_ref_state::State,
     St::Cid: strong_ref_state::IsUnset,
@@ -127,7 +145,7 @@ where
     pub fn cid(
         mut self,
         value: impl Into<Cid<S>>,
-    ) -> StrongRefBuilder<S, strong_ref_state::SetCid<St>> {
+    ) -> StrongRefBuilder<strong_ref_state::SetCid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         StrongRefBuilder {
             _state: PhantomData,
@@ -137,7 +155,7 @@ where
     }
 }
 
-impl<S: BosStr, St> StrongRefBuilder<S, St>
+impl<St, S: BosStr> StrongRefBuilder<St, S>
 where
     St: strong_ref_state::State,
     St::Uri: strong_ref_state::IsUnset,
@@ -146,7 +164,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> StrongRefBuilder<S, strong_ref_state::SetUri<St>> {
+    ) -> StrongRefBuilder<strong_ref_state::SetUri<St>, S> {
         self._fields.1 = Option::Some(value.into());
         StrongRefBuilder {
             _state: PhantomData,
@@ -156,11 +174,11 @@ where
     }
 }
 
-impl<S: BosStr, St> StrongRefBuilder<S, St>
+impl<St, S: BosStr> StrongRefBuilder<St, S>
 where
     St: strong_ref_state::State,
-    St::Uri: strong_ref_state::IsSet,
     St::Cid: strong_ref_state::IsSet,
+    St::Uri: strong_ref_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> StrongRef<S> {

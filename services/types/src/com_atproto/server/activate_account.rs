@@ -15,11 +15,15 @@ use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use serde::{Serialize, Deserialize};
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.server.activateAccount` procedure.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct ActivateAccount;
-/// Response type for com.atproto.server.activateAccount
+/** Response marker for the `com.atproto.server.activateAccount` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct ActivateAccountResponse;
 impl jacquard_common::xrpc::XrpcResp for ActivateAccountResponse {
     const NSID: &'static str = "com.atproto.server.activateAccount";
@@ -36,7 +40,9 @@ impl jacquard_common::xrpc::XrpcRequest for ActivateAccount {
     type Response = ActivateAccountResponse;
 }
 
-/// Endpoint type for com.atproto.server.activateAccount
+/** Endpoint marker for the `com.atproto.server.activateAccount` procedure.
+
+Path: `/xrpc/com.atproto.server.activateAccount`. The request payload type is `ActivateAccount`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct ActivateAccountRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ActivateAccountRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.activateAccount";

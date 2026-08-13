@@ -129,7 +129,9 @@ impl<S: BosStr> LexiconSchema for BatchItem<S> {
     }
 }
 
-/// Response type for chat.bsky.convo.sendMessageBatch
+/** Response marker for the `chat.bsky.convo.sendMessageBatch` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SendMessageBatchOutput<S>` for this endpoint.*/
 pub struct SendMessageBatchResponse;
 impl jacquard_common::xrpc::XrpcResp for SendMessageBatchResponse {
     const NSID: &'static str = "chat.bsky.convo.sendMessageBatch";
@@ -146,7 +148,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SendMessageBatch<S> {
     type Response = SendMessageBatchResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.sendMessageBatch
+/** Endpoint marker for the `chat.bsky.convo.sendMessageBatch` procedure.
+
+Path: `/xrpc/chat.bsky.convo.sendMessageBatch`. The request payload type is `SendMessageBatch<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SendMessageBatchRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SendMessageBatchRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.sendMessageBatch";
@@ -202,21 +206,28 @@ pub mod batch_item_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct BatchItemBuilder<S: BosStr, St: batch_item_state::State> {
+pub struct BatchItemBuilder<St: batch_item_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<MessageInput<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> BatchItem<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> BatchItemBuilder<S, batch_item_state::Empty> {
+impl BatchItem<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> BatchItemBuilder<batch_item_state::Empty, DefaultStr> {
         BatchItemBuilder::new()
     }
 }
 
-impl<S: BosStr> BatchItemBuilder<S, batch_item_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> BatchItem<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> BatchItemBuilder<batch_item_state::Empty, S> {
+        BatchItemBuilder::builder()
+    }
+}
+
+impl BatchItemBuilder<batch_item_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         BatchItemBuilder {
             _state: PhantomData,
@@ -226,7 +237,18 @@ impl<S: BosStr> BatchItemBuilder<S, batch_item_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> BatchItemBuilder<S, St>
+impl<S: BosStr> BatchItemBuilder<batch_item_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        BatchItemBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> BatchItemBuilder<St, S>
 where
     St: batch_item_state::State,
     St::ConvoId: batch_item_state::IsUnset,
@@ -235,7 +257,7 @@ where
     pub fn convo_id(
         mut self,
         value: impl Into<S>,
-    ) -> BatchItemBuilder<S, batch_item_state::SetConvoId<St>> {
+    ) -> BatchItemBuilder<batch_item_state::SetConvoId<St>, S> {
         self._fields.0 = Option::Some(value.into());
         BatchItemBuilder {
             _state: PhantomData,
@@ -245,7 +267,7 @@ where
     }
 }
 
-impl<S: BosStr, St> BatchItemBuilder<S, St>
+impl<St, S: BosStr> BatchItemBuilder<St, S>
 where
     St: batch_item_state::State,
     St::Message: batch_item_state::IsUnset,
@@ -254,7 +276,7 @@ where
     pub fn message(
         mut self,
         value: impl Into<MessageInput<S>>,
-    ) -> BatchItemBuilder<S, batch_item_state::SetMessage<St>> {
+    ) -> BatchItemBuilder<batch_item_state::SetMessage<St>, S> {
         self._fields.1 = Option::Some(value.into());
         BatchItemBuilder {
             _state: PhantomData,
@@ -264,7 +286,7 @@ where
     }
 }
 
-impl<S: BosStr, St> BatchItemBuilder<S, St>
+impl<St, S: BosStr> BatchItemBuilder<St, S>
 where
     St: batch_item_state::State,
     St::ConvoId: batch_item_state::IsSet,
@@ -402,21 +424,34 @@ pub mod send_message_batch_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SendMessageBatchBuilder<S: BosStr, St: send_message_batch_state::State> {
+pub struct SendMessageBatchBuilder<
+    St: send_message_batch_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<send_message_batch::BatchItem<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SendMessageBatch<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SendMessageBatchBuilder<S, send_message_batch_state::Empty> {
+impl SendMessageBatch<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SendMessageBatchBuilder<
+        send_message_batch_state::Empty,
+        DefaultStr,
+    > {
         SendMessageBatchBuilder::new()
     }
 }
 
-impl<S: BosStr> SendMessageBatchBuilder<S, send_message_batch_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SendMessageBatch<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SendMessageBatchBuilder<send_message_batch_state::Empty, S> {
+        SendMessageBatchBuilder::builder()
+    }
+}
+
+impl SendMessageBatchBuilder<send_message_batch_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SendMessageBatchBuilder {
             _state: PhantomData,
@@ -426,7 +461,18 @@ impl<S: BosStr> SendMessageBatchBuilder<S, send_message_batch_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SendMessageBatchBuilder<S, St>
+impl<S: BosStr> SendMessageBatchBuilder<send_message_batch_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SendMessageBatchBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SendMessageBatchBuilder<St, S>
 where
     St: send_message_batch_state::State,
     St::Items: send_message_batch_state::IsUnset,
@@ -435,7 +481,7 @@ where
     pub fn items(
         mut self,
         value: impl Into<Vec<send_message_batch::BatchItem<S>>>,
-    ) -> SendMessageBatchBuilder<S, send_message_batch_state::SetItems<St>> {
+    ) -> SendMessageBatchBuilder<send_message_batch_state::SetItems<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SendMessageBatchBuilder {
             _state: PhantomData,
@@ -445,7 +491,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SendMessageBatchBuilder<S, St>
+impl<St, S: BosStr> SendMessageBatchBuilder<St, S>
 where
     St: send_message_batch_state::State,
     St::Items: send_message_batch_state::IsSet,

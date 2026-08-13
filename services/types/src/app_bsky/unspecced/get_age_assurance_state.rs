@@ -26,11 +26,15 @@ pub struct GetAgeAssuranceStateOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// XRPC request marker type.
+/** Request marker for the `app.bsky.unspecced.getAgeAssuranceState` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct GetAgeAssuranceState;
-/// Response type for app.bsky.unspecced.getAgeAssuranceState
+/** Response marker for the `app.bsky.unspecced.getAgeAssuranceState` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetAgeAssuranceStateOutput<S>` for this endpoint.*/
 pub struct GetAgeAssuranceStateResponse;
 impl jacquard_common::xrpc::XrpcResp for GetAgeAssuranceStateResponse {
     const NSID: &'static str = "app.bsky.unspecced.getAgeAssuranceState";
@@ -45,7 +49,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetAgeAssuranceState {
     type Response = GetAgeAssuranceStateResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getAgeAssuranceState
+/** Endpoint marker for the `app.bsky.unspecced.getAgeAssuranceState` query.
+
+Path: `/xrpc/app.bsky.unspecced.getAgeAssuranceState`. The request payload type is `GetAgeAssuranceState`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct GetAgeAssuranceStateRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetAgeAssuranceStateRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getAgeAssuranceState";

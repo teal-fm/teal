@@ -410,21 +410,28 @@ pub mod labels_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct LabelsBuilder<S: BosStr, St: labels_state::State> {
+pub struct LabelsBuilder<St: labels_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Label<S>>>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Labels<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> LabelsBuilder<S, labels_state::Empty> {
+impl Labels<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> LabelsBuilder<labels_state::Empty, DefaultStr> {
         LabelsBuilder::new()
     }
 }
 
-impl<S: BosStr> LabelsBuilder<S, labels_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Labels<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LabelsBuilder<labels_state::Empty, S> {
+        LabelsBuilder::builder()
+    }
+}
+
+impl LabelsBuilder<labels_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LabelsBuilder {
             _state: PhantomData,
@@ -434,7 +441,18 @@ impl<S: BosStr> LabelsBuilder<S, labels_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> LabelsBuilder<S, St>
+impl<S: BosStr> LabelsBuilder<labels_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LabelsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> LabelsBuilder<St, S>
 where
     St: labels_state::State,
     St::Labels: labels_state::IsUnset,
@@ -443,7 +461,7 @@ where
     pub fn labels(
         mut self,
         value: impl Into<Vec<Label<S>>>,
-    ) -> LabelsBuilder<S, labels_state::SetLabels<St>> {
+    ) -> LabelsBuilder<labels_state::SetLabels<St>, S> {
         self._fields.0 = Option::Some(value.into());
         LabelsBuilder {
             _state: PhantomData,
@@ -453,7 +471,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelsBuilder<S, St>
+impl<St, S: BosStr> LabelsBuilder<St, S>
 where
     St: labels_state::State,
     St::Seq: labels_state::IsUnset,
@@ -462,7 +480,7 @@ where
     pub fn seq(
         mut self,
         value: impl Into<i64>,
-    ) -> LabelsBuilder<S, labels_state::SetSeq<St>> {
+    ) -> LabelsBuilder<labels_state::SetSeq<St>, S> {
         self._fields.1 = Option::Some(value.into());
         LabelsBuilder {
             _state: PhantomData,
@@ -472,7 +490,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelsBuilder<S, St>
+impl<St, S: BosStr> LabelsBuilder<St, S>
 where
     St: labels_state::State,
     St::Labels: labels_state::IsSet,
@@ -529,8 +547,18 @@ impl SubscribeLabels {
 }
 
 impl SubscribeLabelsBuilder<subscribe_labels_state::Empty> {
-    /// Create a new builder with all fields unset.
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
+        SubscribeLabelsBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+        }
+    }
+}
+
+impl SubscribeLabelsBuilder<subscribe_labels_state::Empty> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
         SubscribeLabelsBuilder {
             _state: PhantomData,
             _fields: (None,),

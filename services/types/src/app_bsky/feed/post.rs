@@ -305,70 +305,77 @@ pub mod entity_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Value;
         type Index;
         type Type;
+        type Value;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Value = Unset;
         type Index = Unset;
         type Type = Unset;
-    }
-    ///State transition - sets the `value` field to Set
-    pub struct SetValue<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetValue<St> {}
-    impl<St: State> State for SetValue<St> {
-        type Value = Set<members::value>;
-        type Index = St::Index;
-        type Type = St::Type;
+        type Value = Unset;
     }
     ///State transition - sets the `index` field to Set
     pub struct SetIndex<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetIndex<St> {}
     impl<St: State> State for SetIndex<St> {
-        type Value = St::Value;
         type Index = Set<members::index>;
         type Type = St::Type;
+        type Value = St::Value;
     }
     ///State transition - sets the `type` field to Set
     pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetType<St> {}
     impl<St: State> State for SetType<St> {
-        type Value = St::Value;
         type Index = St::Index;
         type Type = Set<members::r#type>;
+        type Value = St::Value;
+    }
+    ///State transition - sets the `value` field to Set
+    pub struct SetValue<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetValue<St> {}
+    impl<St: State> State for SetValue<St> {
+        type Index = St::Index;
+        type Type = St::Type;
+        type Value = Set<members::value>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `value` field
-        pub struct value(());
         ///Marker type for the `index` field
         pub struct index(());
         ///Marker type for the `type` field
         pub struct r#type(());
+        ///Marker type for the `value` field
+        pub struct value(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct EntityBuilder<S: BosStr, St: entity_state::State> {
+pub struct EntityBuilder<St: entity_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<post::TextSlice<S>>, Option<S>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Entity<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> EntityBuilder<S, entity_state::Empty> {
+impl Entity<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> EntityBuilder<entity_state::Empty, DefaultStr> {
         EntityBuilder::new()
     }
 }
 
-impl<S: BosStr> EntityBuilder<S, entity_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Entity<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> EntityBuilder<entity_state::Empty, S> {
+        EntityBuilder::builder()
+    }
+}
+
+impl EntityBuilder<entity_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         EntityBuilder {
             _state: PhantomData,
@@ -378,7 +385,18 @@ impl<S: BosStr> EntityBuilder<S, entity_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> EntityBuilder<S, St>
+impl<S: BosStr> EntityBuilder<entity_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        EntityBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> EntityBuilder<St, S>
 where
     St: entity_state::State,
     St::Index: entity_state::IsUnset,
@@ -387,7 +405,7 @@ where
     pub fn index(
         mut self,
         value: impl Into<post::TextSlice<S>>,
-    ) -> EntityBuilder<S, entity_state::SetIndex<St>> {
+    ) -> EntityBuilder<entity_state::SetIndex<St>, S> {
         self._fields.0 = Option::Some(value.into());
         EntityBuilder {
             _state: PhantomData,
@@ -397,7 +415,7 @@ where
     }
 }
 
-impl<S: BosStr, St> EntityBuilder<S, St>
+impl<St, S: BosStr> EntityBuilder<St, S>
 where
     St: entity_state::State,
     St::Type: entity_state::IsUnset,
@@ -406,7 +424,7 @@ where
     pub fn r#type(
         mut self,
         value: impl Into<S>,
-    ) -> EntityBuilder<S, entity_state::SetType<St>> {
+    ) -> EntityBuilder<entity_state::SetType<St>, S> {
         self._fields.1 = Option::Some(value.into());
         EntityBuilder {
             _state: PhantomData,
@@ -416,7 +434,7 @@ where
     }
 }
 
-impl<S: BosStr, St> EntityBuilder<S, St>
+impl<St, S: BosStr> EntityBuilder<St, S>
 where
     St: entity_state::State,
     St::Value: entity_state::IsUnset,
@@ -425,7 +443,7 @@ where
     pub fn value(
         mut self,
         value: impl Into<S>,
-    ) -> EntityBuilder<S, entity_state::SetValue<St>> {
+    ) -> EntityBuilder<entity_state::SetValue<St>, S> {
         self._fields.2 = Option::Some(value.into());
         EntityBuilder {
             _state: PhantomData,
@@ -435,12 +453,12 @@ where
     }
 }
 
-impl<S: BosStr, St> EntityBuilder<S, St>
+impl<St, S: BosStr> EntityBuilder<St, S>
 where
     St: entity_state::State,
-    St::Value: entity_state::IsSet,
     St::Index: entity_state::IsSet,
     St::Type: entity_state::IsSet,
+    St::Value: entity_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Entity<S> {
@@ -738,42 +756,42 @@ pub mod post_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Text;
         type CreatedAt;
+        type Text;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Text = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `text` field to Set
-    pub struct SetText<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetText<St> {}
-    impl<St: State> State for SetText<St> {
-        type Text = Set<members::text>;
-        type CreatedAt = St::CreatedAt;
+        type Text = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Text = St::Text;
         type CreatedAt = Set<members::created_at>;
+        type Text = St::Text;
+    }
+    ///State transition - sets the `text` field to Set
+    pub struct SetText<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetText<St> {}
+    impl<St: State> State for SetText<St> {
+        type CreatedAt = St::CreatedAt;
+        type Text = Set<members::text>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `text` field
-        pub struct text(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `text` field
+        pub struct text(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct PostBuilder<S: BosStr, St: post_state::State> {
+pub struct PostBuilder<St: post_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -789,15 +807,22 @@ pub struct PostBuilder<S: BosStr, St: post_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Post<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> PostBuilder<S, post_state::Empty> {
+impl Post<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> PostBuilder<post_state::Empty, DefaultStr> {
         PostBuilder::new()
     }
 }
 
-impl<S: BosStr> PostBuilder<S, post_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Post<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PostBuilder<post_state::Empty, S> {
+        PostBuilder::builder()
+    }
+}
+
+impl PostBuilder<post_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PostBuilder {
             _state: PhantomData,
@@ -807,7 +832,18 @@ impl<S: BosStr> PostBuilder<S, post_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> PostBuilder<S, St>
+impl<S: BosStr> PostBuilder<post_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PostBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> PostBuilder<St, S>
 where
     St: post_state::State,
     St::CreatedAt: post_state::IsUnset,
@@ -816,7 +852,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> PostBuilder<S, post_state::SetCreatedAt<St>> {
+    ) -> PostBuilder<post_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         PostBuilder {
             _state: PhantomData,
@@ -826,7 +862,7 @@ where
     }
 }
 
-impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
+impl<St: post_state::State, S: BosStr> PostBuilder<St, S> {
     /// Set the `embed` field (optional)
     pub fn embed(mut self, value: impl Into<Option<PostEmbed<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -839,7 +875,7 @@ impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
+impl<St: post_state::State, S: BosStr> PostBuilder<St, S> {
     /// Set the `entities` field (optional)
     pub fn entities(mut self, value: impl Into<Option<Vec<post::Entity<S>>>>) -> Self {
         self._fields.2 = value.into();
@@ -852,7 +888,7 @@ impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
+impl<St: post_state::State, S: BosStr> PostBuilder<St, S> {
     /// Set the `facets` field (optional)
     pub fn facets(mut self, value: impl Into<Option<Vec<Facet<S>>>>) -> Self {
         self._fields.3 = value.into();
@@ -865,7 +901,7 @@ impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
+impl<St: post_state::State, S: BosStr> PostBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<SelfLabels<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -878,7 +914,7 @@ impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
+impl<St: post_state::State, S: BosStr> PostBuilder<St, S> {
     /// Set the `langs` field (optional)
     pub fn langs(mut self, value: impl Into<Option<Vec<Language>>>) -> Self {
         self._fields.5 = value.into();
@@ -891,7 +927,7 @@ impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
+impl<St: post_state::State, S: BosStr> PostBuilder<St, S> {
     /// Set the `reply` field (optional)
     pub fn reply(mut self, value: impl Into<Option<post::ReplyRef<S>>>) -> Self {
         self._fields.6 = value.into();
@@ -904,7 +940,7 @@ impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
+impl<St: post_state::State, S: BosStr> PostBuilder<St, S> {
     /// Set the `tags` field (optional)
     pub fn tags(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.7 = value.into();
@@ -917,7 +953,7 @@ impl<S: BosStr, St: post_state::State> PostBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> PostBuilder<S, St>
+impl<St, S: BosStr> PostBuilder<St, S>
 where
     St: post_state::State,
     St::Text: post_state::IsUnset,
@@ -926,7 +962,7 @@ where
     pub fn text(
         mut self,
         value: impl Into<S>,
-    ) -> PostBuilder<S, post_state::SetText<St>> {
+    ) -> PostBuilder<post_state::SetText<St>, S> {
         self._fields.8 = Option::Some(value.into());
         PostBuilder {
             _state: PhantomData,
@@ -936,11 +972,11 @@ where
     }
 }
 
-impl<S: BosStr, St> PostBuilder<S, St>
+impl<St, S: BosStr> PostBuilder<St, S>
 where
     St: post_state::State,
-    St::Text: post_state::IsSet,
     St::CreatedAt: post_state::IsSet,
+    St::Text: post_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Post<S> {
@@ -1019,21 +1055,28 @@ pub mod reply_ref_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ReplyRefBuilder<S: BosStr, St: reply_ref_state::State> {
+pub struct ReplyRefBuilder<St: reply_ref_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<StrongRef<S>>, Option<StrongRef<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ReplyRef<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ReplyRefBuilder<S, reply_ref_state::Empty> {
+impl ReplyRef<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ReplyRefBuilder<reply_ref_state::Empty, DefaultStr> {
         ReplyRefBuilder::new()
     }
 }
 
-impl<S: BosStr> ReplyRefBuilder<S, reply_ref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ReplyRef<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ReplyRefBuilder<reply_ref_state::Empty, S> {
+        ReplyRefBuilder::builder()
+    }
+}
+
+impl ReplyRefBuilder<reply_ref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ReplyRefBuilder {
             _state: PhantomData,
@@ -1043,7 +1086,18 @@ impl<S: BosStr> ReplyRefBuilder<S, reply_ref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ReplyRefBuilder<S, St>
+impl<S: BosStr> ReplyRefBuilder<reply_ref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ReplyRefBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ReplyRefBuilder<St, S>
 where
     St: reply_ref_state::State,
     St::Parent: reply_ref_state::IsUnset,
@@ -1052,7 +1106,7 @@ where
     pub fn parent(
         mut self,
         value: impl Into<StrongRef<S>>,
-    ) -> ReplyRefBuilder<S, reply_ref_state::SetParent<St>> {
+    ) -> ReplyRefBuilder<reply_ref_state::SetParent<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ReplyRefBuilder {
             _state: PhantomData,
@@ -1062,7 +1116,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ReplyRefBuilder<S, St>
+impl<St, S: BosStr> ReplyRefBuilder<St, S>
 where
     St: reply_ref_state::State,
     St::Root: reply_ref_state::IsUnset,
@@ -1071,7 +1125,7 @@ where
     pub fn root(
         mut self,
         value: impl Into<StrongRef<S>>,
-    ) -> ReplyRefBuilder<S, reply_ref_state::SetRoot<St>> {
+    ) -> ReplyRefBuilder<reply_ref_state::SetRoot<St>, S> {
         self._fields.1 = Option::Some(value.into());
         ReplyRefBuilder {
             _state: PhantomData,
@@ -1081,7 +1135,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ReplyRefBuilder<S, St>
+impl<St, S: BosStr> ReplyRefBuilder<St, S>
 where
     St: reply_ref_state::State,
     St::Parent: reply_ref_state::IsSet,
@@ -1150,21 +1204,28 @@ pub mod text_slice_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct TextSliceBuilder<S: BosStr, St: text_slice_state::State> {
+pub struct TextSliceBuilder<St: text_slice_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<i64>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> TextSlice<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> TextSliceBuilder<S, text_slice_state::Empty> {
+impl TextSlice<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> TextSliceBuilder<text_slice_state::Empty, DefaultStr> {
         TextSliceBuilder::new()
     }
 }
 
-impl<S: BosStr> TextSliceBuilder<S, text_slice_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> TextSlice<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> TextSliceBuilder<text_slice_state::Empty, S> {
+        TextSliceBuilder::builder()
+    }
+}
+
+impl TextSliceBuilder<text_slice_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         TextSliceBuilder {
             _state: PhantomData,
@@ -1174,7 +1235,18 @@ impl<S: BosStr> TextSliceBuilder<S, text_slice_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> TextSliceBuilder<S, St>
+impl<S: BosStr> TextSliceBuilder<text_slice_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        TextSliceBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> TextSliceBuilder<St, S>
 where
     St: text_slice_state::State,
     St::End: text_slice_state::IsUnset,
@@ -1183,7 +1255,7 @@ where
     pub fn end(
         mut self,
         value: impl Into<i64>,
-    ) -> TextSliceBuilder<S, text_slice_state::SetEnd<St>> {
+    ) -> TextSliceBuilder<text_slice_state::SetEnd<St>, S> {
         self._fields.0 = Option::Some(value.into());
         TextSliceBuilder {
             _state: PhantomData,
@@ -1193,7 +1265,7 @@ where
     }
 }
 
-impl<S: BosStr, St> TextSliceBuilder<S, St>
+impl<St, S: BosStr> TextSliceBuilder<St, S>
 where
     St: text_slice_state::State,
     St::Start: text_slice_state::IsUnset,
@@ -1202,7 +1274,7 @@ where
     pub fn start(
         mut self,
         value: impl Into<i64>,
-    ) -> TextSliceBuilder<S, text_slice_state::SetStart<St>> {
+    ) -> TextSliceBuilder<text_slice_state::SetStart<St>, S> {
         self._fields.1 = Option::Some(value.into());
         TextSliceBuilder {
             _state: PhantomData,
@@ -1212,7 +1284,7 @@ where
     }
 }
 
-impl<S: BosStr, St> TextSliceBuilder<S, St>
+impl<St, S: BosStr> TextSliceBuilder<St, S>
 where
     St: text_slice_state::State,
     St::End: text_slice_state::IsSet,

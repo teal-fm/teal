@@ -76,7 +76,9 @@ impl core::fmt::Display for MuteConvoError {
     }
 }
 
-/// Response type for chat.bsky.convo.muteConvo
+/** Response marker for the `chat.bsky.convo.muteConvo` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `MuteConvoOutput<S>` for this endpoint.*/
 pub struct MuteConvoResponse;
 impl jacquard_common::xrpc::XrpcResp for MuteConvoResponse {
     const NSID: &'static str = "chat.bsky.convo.muteConvo";
@@ -93,7 +95,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for MuteConvo<S> {
     type Response = MuteConvoResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.muteConvo
+/** Endpoint marker for the `chat.bsky.convo.muteConvo` procedure.
+
+Path: `/xrpc/chat.bsky.convo.muteConvo`. The request payload type is `MuteConvo<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct MuteConvoRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for MuteConvoRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.muteConvo";

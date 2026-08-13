@@ -120,7 +120,9 @@ impl core::fmt::Display for GetConvoForMembersError {
     }
 }
 
-/// Response type for chat.bsky.convo.getConvoForMembers
+/** Response marker for the `chat.bsky.convo.getConvoForMembers` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetConvoForMembersOutput<S>` for this endpoint.*/
 pub struct GetConvoForMembersResponse;
 impl jacquard_common::xrpc::XrpcResp for GetConvoForMembersResponse {
     const NSID: &'static str = "chat.bsky.convo.getConvoForMembers";
@@ -135,7 +137,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetConvoForMembers<S> {
     type Response = GetConvoForMembersResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.getConvoForMembers
+/** Endpoint marker for the `chat.bsky.convo.getConvoForMembers` query.
+
+Path: `/xrpc/chat.bsky.convo.getConvoForMembers`. The request payload type is `GetConvoForMembers<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetConvoForMembersRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetConvoForMembersRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.getConvoForMembers";
@@ -177,21 +181,37 @@ pub mod get_convo_for_members_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetConvoForMembersBuilder<S: BosStr, St: get_convo_for_members_state::State> {
+pub struct GetConvoForMembersBuilder<
+    St: get_convo_for_members_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Did<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetConvoForMembers<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetConvoForMembersBuilder<S, get_convo_for_members_state::Empty> {
+impl GetConvoForMembers<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetConvoForMembersBuilder<
+        get_convo_for_members_state::Empty,
+        DefaultStr,
+    > {
         GetConvoForMembersBuilder::new()
     }
 }
 
-impl<S: BosStr> GetConvoForMembersBuilder<S, get_convo_for_members_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetConvoForMembers<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetConvoForMembersBuilder<
+        get_convo_for_members_state::Empty,
+        S,
+    > {
+        GetConvoForMembersBuilder::builder()
+    }
+}
+
+impl GetConvoForMembersBuilder<get_convo_for_members_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetConvoForMembersBuilder {
             _state: PhantomData,
@@ -201,7 +221,18 @@ impl<S: BosStr> GetConvoForMembersBuilder<S, get_convo_for_members_state::Empty>
     }
 }
 
-impl<S: BosStr, St> GetConvoForMembersBuilder<S, St>
+impl<S: BosStr> GetConvoForMembersBuilder<get_convo_for_members_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetConvoForMembersBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetConvoForMembersBuilder<St, S>
 where
     St: get_convo_for_members_state::State,
     St::Members: get_convo_for_members_state::IsUnset,
@@ -210,7 +241,7 @@ where
     pub fn members(
         mut self,
         value: impl Into<Vec<Did<S>>>,
-    ) -> GetConvoForMembersBuilder<S, get_convo_for_members_state::SetMembers<St>> {
+    ) -> GetConvoForMembersBuilder<get_convo_for_members_state::SetMembers<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetConvoForMembersBuilder {
             _state: PhantomData,
@@ -220,7 +251,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetConvoForMembersBuilder<S, St>
+impl<St, S: BosStr> GetConvoForMembersBuilder<St, S>
 where
     St: get_convo_for_members_state::State,
     St::Members: get_convo_for_members_state::IsSet,

@@ -120,69 +120,76 @@ pub mod playlist_item_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type CreatedAt;
-        type Track;
         type Subject;
+        type Track;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type CreatedAt = Unset;
-        type Track = Unset;
         type Subject = Unset;
+        type Track = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
         type CreatedAt = Set<members::created_at>;
+        type Subject = St::Subject;
         type Track = St::Track;
-        type Subject = St::Subject;
-    }
-    ///State transition - sets the `track` field to Set
-    pub struct SetTrack<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTrack<St> {}
-    impl<St: State> State for SetTrack<St> {
-        type CreatedAt = St::CreatedAt;
-        type Track = Set<members::track>;
-        type Subject = St::Subject;
     }
     ///State transition - sets the `subject` field to Set
     pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSubject<St> {}
     impl<St: State> State for SetSubject<St> {
         type CreatedAt = St::CreatedAt;
-        type Track = St::Track;
         type Subject = Set<members::subject>;
+        type Track = St::Track;
+    }
+    ///State transition - sets the `track` field to Set
+    pub struct SetTrack<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTrack<St> {}
+    impl<St: State> State for SetTrack<St> {
+        type CreatedAt = St::CreatedAt;
+        type Subject = St::Subject;
+        type Track = Set<members::track>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `created_at` field
         pub struct created_at(());
-        ///Marker type for the `track` field
-        pub struct track(());
         ///Marker type for the `subject` field
         pub struct subject(());
+        ///Marker type for the `track` field
+        pub struct track(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct PlaylistItemBuilder<S: BosStr, St: playlist_item_state::State> {
+pub struct PlaylistItemBuilder<St: playlist_item_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<i64>, Option<StrongRef<S>>, Option<TrackView<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> PlaylistItem<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> PlaylistItemBuilder<S, playlist_item_state::Empty> {
+impl PlaylistItem<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> PlaylistItemBuilder<playlist_item_state::Empty, DefaultStr> {
         PlaylistItemBuilder::new()
     }
 }
 
-impl<S: BosStr> PlaylistItemBuilder<S, playlist_item_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> PlaylistItem<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PlaylistItemBuilder<playlist_item_state::Empty, S> {
+        PlaylistItemBuilder::builder()
+    }
+}
+
+impl PlaylistItemBuilder<playlist_item_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PlaylistItemBuilder {
             _state: PhantomData,
@@ -192,7 +199,18 @@ impl<S: BosStr> PlaylistItemBuilder<S, playlist_item_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> PlaylistItemBuilder<S, St>
+impl<S: BosStr> PlaylistItemBuilder<playlist_item_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PlaylistItemBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> PlaylistItemBuilder<St, S>
 where
     St: playlist_item_state::State,
     St::CreatedAt: playlist_item_state::IsUnset,
@@ -201,7 +219,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> PlaylistItemBuilder<S, playlist_item_state::SetCreatedAt<St>> {
+    ) -> PlaylistItemBuilder<playlist_item_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         PlaylistItemBuilder {
             _state: PhantomData,
@@ -211,7 +229,7 @@ where
     }
 }
 
-impl<S: BosStr, St: playlist_item_state::State> PlaylistItemBuilder<S, St> {
+impl<St: playlist_item_state::State, S: BosStr> PlaylistItemBuilder<St, S> {
     /// Set the `order` field (optional)
     pub fn order(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -224,7 +242,7 @@ impl<S: BosStr, St: playlist_item_state::State> PlaylistItemBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> PlaylistItemBuilder<S, St>
+impl<St, S: BosStr> PlaylistItemBuilder<St, S>
 where
     St: playlist_item_state::State,
     St::Subject: playlist_item_state::IsUnset,
@@ -233,7 +251,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<StrongRef<S>>,
-    ) -> PlaylistItemBuilder<S, playlist_item_state::SetSubject<St>> {
+    ) -> PlaylistItemBuilder<playlist_item_state::SetSubject<St>, S> {
         self._fields.2 = Option::Some(value.into());
         PlaylistItemBuilder {
             _state: PhantomData,
@@ -243,7 +261,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PlaylistItemBuilder<S, St>
+impl<St, S: BosStr> PlaylistItemBuilder<St, S>
 where
     St: playlist_item_state::State,
     St::Track: playlist_item_state::IsUnset,
@@ -252,7 +270,7 @@ where
     pub fn track(
         mut self,
         value: impl Into<TrackView<S>>,
-    ) -> PlaylistItemBuilder<S, playlist_item_state::SetTrack<St>> {
+    ) -> PlaylistItemBuilder<playlist_item_state::SetTrack<St>, S> {
         self._fields.3 = Option::Some(value.into());
         PlaylistItemBuilder {
             _state: PhantomData,
@@ -262,12 +280,12 @@ where
     }
 }
 
-impl<S: BosStr, St> PlaylistItemBuilder<S, St>
+impl<St, S: BosStr> PlaylistItemBuilder<St, S>
 where
     St: playlist_item_state::State,
     St::CreatedAt: playlist_item_state::IsSet,
-    St::Track: playlist_item_state::IsSet,
     St::Subject: playlist_item_state::IsSet,
+    St::Track: playlist_item_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> PlaylistItem<S> {

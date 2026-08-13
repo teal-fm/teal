@@ -33,7 +33,9 @@ pub struct GetStarterPackOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.getStarterPack
+/** Response marker for the `app.bsky.graph.getStarterPack` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetStarterPackOutput<S>` for this endpoint.*/
 pub struct GetStarterPackResponse;
 impl jacquard_common::xrpc::XrpcResp for GetStarterPackResponse {
     const NSID: &'static str = "app.bsky.graph.getStarterPack";
@@ -48,7 +50,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetStarterPack<S> {
     type Response = GetStarterPackResponse;
 }
 
-/// Endpoint type for app.bsky.graph.getStarterPack
+/** Endpoint marker for the `app.bsky.graph.getStarterPack` query.
+
+Path: `/xrpc/app.bsky.graph.getStarterPack`. The request payload type is `GetStarterPack<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetStarterPackRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetStarterPackRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.getStarterPack";
@@ -90,21 +94,31 @@ pub mod get_starter_pack_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetStarterPackBuilder<S: BosStr, St: get_starter_pack_state::State> {
+pub struct GetStarterPackBuilder<
+    St: get_starter_pack_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetStarterPack<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetStarterPackBuilder<S, get_starter_pack_state::Empty> {
+impl GetStarterPack<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetStarterPackBuilder<get_starter_pack_state::Empty, DefaultStr> {
         GetStarterPackBuilder::new()
     }
 }
 
-impl<S: BosStr> GetStarterPackBuilder<S, get_starter_pack_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetStarterPack<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetStarterPackBuilder<get_starter_pack_state::Empty, S> {
+        GetStarterPackBuilder::builder()
+    }
+}
+
+impl GetStarterPackBuilder<get_starter_pack_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetStarterPackBuilder {
             _state: PhantomData,
@@ -114,7 +128,18 @@ impl<S: BosStr> GetStarterPackBuilder<S, get_starter_pack_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetStarterPackBuilder<S, St>
+impl<S: BosStr> GetStarterPackBuilder<get_starter_pack_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetStarterPackBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetStarterPackBuilder<St, S>
 where
     St: get_starter_pack_state::State,
     St::StarterPack: get_starter_pack_state::IsUnset,
@@ -123,7 +148,7 @@ where
     pub fn starter_pack(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> GetStarterPackBuilder<S, get_starter_pack_state::SetStarterPack<St>> {
+    ) -> GetStarterPackBuilder<get_starter_pack_state::SetStarterPack<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetStarterPackBuilder {
             _state: PhantomData,
@@ -133,7 +158,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetStarterPackBuilder<S, St>
+impl<St, S: BosStr> GetStarterPackBuilder<St, S>
 where
     St: get_starter_pack_state::State,
     St::StarterPack: get_starter_pack_state::IsSet,

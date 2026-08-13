@@ -3,6 +3,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `fm.teal.graph` Lexicon namespace/module.
 pub mod follow;
 pub mod get_followers;
 pub mod get_follows;

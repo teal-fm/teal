@@ -27,7 +27,9 @@ pub struct UpdateAccountEmail<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.admin.updateAccountEmail
+/** Response marker for the `com.atproto.admin.updateAccountEmail` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct UpdateAccountEmailResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateAccountEmailResponse {
     const NSID: &'static str = "com.atproto.admin.updateAccountEmail";
@@ -44,7 +46,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateAccountEmail<S> {
     type Response = UpdateAccountEmailResponse;
 }
 
-/// Endpoint type for com.atproto.admin.updateAccountEmail
+/** Endpoint marker for the `com.atproto.admin.updateAccountEmail` procedure.
+
+Path: `/xrpc/com.atproto.admin.updateAccountEmail`. The request payload type is `UpdateAccountEmail<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateAccountEmailRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateAccountEmailRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.updateAccountEmail";
@@ -100,21 +104,34 @@ pub mod update_account_email_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct UpdateAccountEmailBuilder<S: BosStr, St: update_account_email_state::State> {
+pub struct UpdateAccountEmailBuilder<
+    St: update_account_email_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpdateAccountEmail<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> UpdateAccountEmailBuilder<S, update_account_email_state::Empty> {
+impl UpdateAccountEmail<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> UpdateAccountEmailBuilder<
+        update_account_email_state::Empty,
+        DefaultStr,
+    > {
         UpdateAccountEmailBuilder::new()
     }
 }
 
-impl<S: BosStr> UpdateAccountEmailBuilder<S, update_account_email_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpdateAccountEmail<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpdateAccountEmailBuilder<update_account_email_state::Empty, S> {
+        UpdateAccountEmailBuilder::builder()
+    }
+}
+
+impl UpdateAccountEmailBuilder<update_account_email_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpdateAccountEmailBuilder {
             _state: PhantomData,
@@ -124,7 +141,18 @@ impl<S: BosStr> UpdateAccountEmailBuilder<S, update_account_email_state::Empty> 
     }
 }
 
-impl<S: BosStr, St> UpdateAccountEmailBuilder<S, St>
+impl<S: BosStr> UpdateAccountEmailBuilder<update_account_email_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpdateAccountEmailBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> UpdateAccountEmailBuilder<St, S>
 where
     St: update_account_email_state::State,
     St::Account: update_account_email_state::IsUnset,
@@ -133,7 +161,7 @@ where
     pub fn account(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> UpdateAccountEmailBuilder<S, update_account_email_state::SetAccount<St>> {
+    ) -> UpdateAccountEmailBuilder<update_account_email_state::SetAccount<St>, S> {
         self._fields.0 = Option::Some(value.into());
         UpdateAccountEmailBuilder {
             _state: PhantomData,
@@ -143,7 +171,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateAccountEmailBuilder<S, St>
+impl<St, S: BosStr> UpdateAccountEmailBuilder<St, S>
 where
     St: update_account_email_state::State,
     St::Email: update_account_email_state::IsUnset,
@@ -152,7 +180,7 @@ where
     pub fn email(
         mut self,
         value: impl Into<S>,
-    ) -> UpdateAccountEmailBuilder<S, update_account_email_state::SetEmail<St>> {
+    ) -> UpdateAccountEmailBuilder<update_account_email_state::SetEmail<St>, S> {
         self._fields.1 = Option::Some(value.into());
         UpdateAccountEmailBuilder {
             _state: PhantomData,
@@ -162,7 +190,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateAccountEmailBuilder<S, St>
+impl<St, S: BosStr> UpdateAccountEmailBuilder<St, S>
 where
     St: update_account_email_state::State,
     St::Account: update_account_email_state::IsSet,

@@ -423,56 +423,63 @@ pub mod caption_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Lang;
         type File;
+        type Lang;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Lang = Unset;
         type File = Unset;
-    }
-    ///State transition - sets the `lang` field to Set
-    pub struct SetLang<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetLang<St> {}
-    impl<St: State> State for SetLang<St> {
-        type Lang = Set<members::lang>;
-        type File = St::File;
+        type Lang = Unset;
     }
     ///State transition - sets the `file` field to Set
     pub struct SetFile<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetFile<St> {}
     impl<St: State> State for SetFile<St> {
-        type Lang = St::Lang;
         type File = Set<members::file>;
+        type Lang = St::Lang;
+    }
+    ///State transition - sets the `lang` field to Set
+    pub struct SetLang<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetLang<St> {}
+    impl<St: State> State for SetLang<St> {
+        type File = St::File;
+        type Lang = Set<members::lang>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `lang` field
-        pub struct lang(());
         ///Marker type for the `file` field
         pub struct file(());
+        ///Marker type for the `lang` field
+        pub struct lang(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct CaptionBuilder<S: BosStr, St: caption_state::State> {
+pub struct CaptionBuilder<St: caption_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<BlobRef<S>>, Option<Language>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Caption<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> CaptionBuilder<S, caption_state::Empty> {
+impl Caption<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> CaptionBuilder<caption_state::Empty, DefaultStr> {
         CaptionBuilder::new()
     }
 }
 
-impl<S: BosStr> CaptionBuilder<S, caption_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Caption<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> CaptionBuilder<caption_state::Empty, S> {
+        CaptionBuilder::builder()
+    }
+}
+
+impl CaptionBuilder<caption_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         CaptionBuilder {
             _state: PhantomData,
@@ -482,7 +489,18 @@ impl<S: BosStr> CaptionBuilder<S, caption_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> CaptionBuilder<S, St>
+impl<S: BosStr> CaptionBuilder<caption_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        CaptionBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> CaptionBuilder<St, S>
 where
     St: caption_state::State,
     St::File: caption_state::IsUnset,
@@ -491,7 +509,7 @@ where
     pub fn file(
         mut self,
         value: impl Into<BlobRef<S>>,
-    ) -> CaptionBuilder<S, caption_state::SetFile<St>> {
+    ) -> CaptionBuilder<caption_state::SetFile<St>, S> {
         self._fields.0 = Option::Some(value.into());
         CaptionBuilder {
             _state: PhantomData,
@@ -501,7 +519,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CaptionBuilder<S, St>
+impl<St, S: BosStr> CaptionBuilder<St, S>
 where
     St: caption_state::State,
     St::Lang: caption_state::IsUnset,
@@ -510,7 +528,7 @@ where
     pub fn lang(
         mut self,
         value: impl Into<Language>,
-    ) -> CaptionBuilder<S, caption_state::SetLang<St>> {
+    ) -> CaptionBuilder<caption_state::SetLang<St>, S> {
         self._fields.1 = Option::Some(value.into());
         CaptionBuilder {
             _state: PhantomData,
@@ -520,11 +538,11 @@ where
     }
 }
 
-impl<S: BosStr, St> CaptionBuilder<S, St>
+impl<St, S: BosStr> CaptionBuilder<St, S>
 where
     St: caption_state::State,
-    St::Lang: caption_state::IsSet,
     St::File: caption_state::IsSet,
+    St::Lang: caption_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Caption<S> {
@@ -741,7 +759,7 @@ pub mod video_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct VideoBuilder<S: BosStr, St: video_state::State> {
+pub struct VideoBuilder<St: video_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<S>,
@@ -753,15 +771,22 @@ pub struct VideoBuilder<S: BosStr, St: video_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Video<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> VideoBuilder<S, video_state::Empty> {
+impl Video<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> VideoBuilder<video_state::Empty, DefaultStr> {
         VideoBuilder::new()
     }
 }
 
-impl<S: BosStr> VideoBuilder<S, video_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Video<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> VideoBuilder<video_state::Empty, S> {
+        VideoBuilder::builder()
+    }
+}
+
+impl VideoBuilder<video_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         VideoBuilder {
             _state: PhantomData,
@@ -771,7 +796,18 @@ impl<S: BosStr> VideoBuilder<S, video_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
+impl<S: BosStr> VideoBuilder<video_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        VideoBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: video_state::State, S: BosStr> VideoBuilder<St, S> {
     /// Set the `alt` field (optional)
     pub fn alt(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -784,7 +820,7 @@ impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
+impl<St: video_state::State, S: BosStr> VideoBuilder<St, S> {
     /// Set the `aspectRatio` field (optional)
     pub fn aspect_ratio(mut self, value: impl Into<Option<AspectRatio<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -797,7 +833,7 @@ impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
+impl<St: video_state::State, S: BosStr> VideoBuilder<St, S> {
     /// Set the `captions` field (optional)
     pub fn captions(mut self, value: impl Into<Option<Vec<video::Caption<S>>>>) -> Self {
         self._fields.2 = value.into();
@@ -810,7 +846,7 @@ impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
+impl<St: video_state::State, S: BosStr> VideoBuilder<St, S> {
     /// Set the `presentation` field (optional)
     pub fn presentation(
         mut self,
@@ -826,7 +862,7 @@ impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> VideoBuilder<S, St>
+impl<St, S: BosStr> VideoBuilder<St, S>
 where
     St: video_state::State,
     St::Video: video_state::IsUnset,
@@ -835,7 +871,7 @@ where
     pub fn video(
         mut self,
         value: impl Into<BlobRef<S>>,
-    ) -> VideoBuilder<S, video_state::SetVideo<St>> {
+    ) -> VideoBuilder<video_state::SetVideo<St>, S> {
         self._fields.4 = Option::Some(value.into());
         VideoBuilder {
             _state: PhantomData,
@@ -845,7 +881,7 @@ where
     }
 }
 
-impl<S: BosStr, St> VideoBuilder<S, St>
+impl<St, S: BosStr> VideoBuilder<St, S>
 where
     St: video_state::State,
     St::Video: video_state::IsSet,
@@ -919,7 +955,7 @@ pub mod view_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ViewBuilder<S: BosStr, St: view_state::State> {
+pub struct ViewBuilder<St: view_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<S>,
@@ -932,15 +968,22 @@ pub struct ViewBuilder<S: BosStr, St: view_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> View<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ViewBuilder<S, view_state::Empty> {
+impl View<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ViewBuilder<view_state::Empty, DefaultStr> {
         ViewBuilder::new()
     }
 }
 
-impl<S: BosStr> ViewBuilder<S, view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> View<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ViewBuilder<view_state::Empty, S> {
+        ViewBuilder::builder()
+    }
+}
+
+impl ViewBuilder<view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ViewBuilder {
             _state: PhantomData,
@@ -950,7 +993,18 @@ impl<S: BosStr> ViewBuilder<S, view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
+impl<S: BosStr> ViewBuilder<view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ViewBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: view_state::State, S: BosStr> ViewBuilder<St, S> {
     /// Set the `alt` field (optional)
     pub fn alt(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -963,7 +1017,7 @@ impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
+impl<St: view_state::State, S: BosStr> ViewBuilder<St, S> {
     /// Set the `aspectRatio` field (optional)
     pub fn aspect_ratio(mut self, value: impl Into<Option<AspectRatio<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -976,7 +1030,7 @@ impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ViewBuilder<S, St>
+impl<St, S: BosStr> ViewBuilder<St, S>
 where
     St: view_state::State,
     St::Cid: view_state::IsUnset,
@@ -985,7 +1039,7 @@ where
     pub fn cid(
         mut self,
         value: impl Into<Cid<S>>,
-    ) -> ViewBuilder<S, view_state::SetCid<St>> {
+    ) -> ViewBuilder<view_state::SetCid<St>, S> {
         self._fields.2 = Option::Some(value.into());
         ViewBuilder {
             _state: PhantomData,
@@ -995,7 +1049,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ViewBuilder<S, St>
+impl<St, S: BosStr> ViewBuilder<St, S>
 where
     St: view_state::State,
     St::Playlist: view_state::IsUnset,
@@ -1004,7 +1058,7 @@ where
     pub fn playlist(
         mut self,
         value: impl Into<UriValue<S>>,
-    ) -> ViewBuilder<S, view_state::SetPlaylist<St>> {
+    ) -> ViewBuilder<view_state::SetPlaylist<St>, S> {
         self._fields.3 = Option::Some(value.into());
         ViewBuilder {
             _state: PhantomData,
@@ -1014,7 +1068,7 @@ where
     }
 }
 
-impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
+impl<St: view_state::State, S: BosStr> ViewBuilder<St, S> {
     /// Set the `presentation` field (optional)
     pub fn presentation(
         mut self,
@@ -1030,7 +1084,7 @@ impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
+impl<St: view_state::State, S: BosStr> ViewBuilder<St, S> {
     /// Set the `thumbnail` field (optional)
     pub fn thumbnail(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.5 = value.into();
@@ -1043,7 +1097,7 @@ impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ViewBuilder<S, St>
+impl<St, S: BosStr> ViewBuilder<St, S>
 where
     St: view_state::State,
     St::Cid: view_state::IsSet,

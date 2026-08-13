@@ -24,7 +24,7 @@ pub struct GetTimeline<S: BosStr = DefaultStr> {
     pub algorithm: Option<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -41,7 +41,9 @@ pub struct GetTimelineOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.feed.getTimeline
+/** Response marker for the `app.bsky.feed.getTimeline` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetTimelineOutput<S>` for this endpoint.*/
 pub struct GetTimelineResponse;
 impl jacquard_common::xrpc::XrpcResp for GetTimelineResponse {
     const NSID: &'static str = "app.bsky.feed.getTimeline";
@@ -56,7 +58,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetTimeline<S> {
     type Response = GetTimelineResponse;
 }
 
-/// Endpoint type for app.bsky.feed.getTimeline
+/** Endpoint marker for the `app.bsky.feed.getTimeline` query.
+
+Path: `/xrpc/app.bsky.feed.getTimeline`. The request payload type is `GetTimeline<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetTimelineRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetTimelineRequest {
     const PATH: &'static str = "/xrpc/app.bsky.feed.getTimeline";
@@ -89,21 +93,28 @@ pub mod get_timeline_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetTimelineBuilder<S: BosStr, St: get_timeline_state::State> {
+pub struct GetTimelineBuilder<St: get_timeline_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetTimeline<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetTimelineBuilder<S, get_timeline_state::Empty> {
+impl GetTimeline<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetTimelineBuilder<get_timeline_state::Empty, DefaultStr> {
         GetTimelineBuilder::new()
     }
 }
 
-impl<S: BosStr> GetTimelineBuilder<S, get_timeline_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetTimeline<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetTimelineBuilder<get_timeline_state::Empty, S> {
+        GetTimelineBuilder::builder()
+    }
+}
+
+impl GetTimelineBuilder<get_timeline_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetTimelineBuilder {
             _state: PhantomData,
@@ -113,7 +124,18 @@ impl<S: BosStr> GetTimelineBuilder<S, get_timeline_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_timeline_state::State> GetTimelineBuilder<S, St> {
+impl<S: BosStr> GetTimelineBuilder<get_timeline_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetTimelineBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_timeline_state::State, S: BosStr> GetTimelineBuilder<St, S> {
     /// Set the `algorithm` field (optional)
     pub fn algorithm(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -126,7 +148,7 @@ impl<S: BosStr, St: get_timeline_state::State> GetTimelineBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_timeline_state::State> GetTimelineBuilder<S, St> {
+impl<St: get_timeline_state::State, S: BosStr> GetTimelineBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -139,7 +161,7 @@ impl<S: BosStr, St: get_timeline_state::State> GetTimelineBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_timeline_state::State> GetTimelineBuilder<S, St> {
+impl<St: get_timeline_state::State, S: BosStr> GetTimelineBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.2 = value.into();
@@ -152,7 +174,7 @@ impl<S: BosStr, St: get_timeline_state::State> GetTimelineBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetTimelineBuilder<S, St>
+impl<St, S: BosStr> GetTimelineBuilder<St, S>
 where
     St: get_timeline_state::State,
 {

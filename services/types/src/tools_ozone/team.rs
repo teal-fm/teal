@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `tools.ozone.team` Lexicon namespace/module.
 pub mod add_member;
 pub mod delete_member;
 pub mod list_members;
@@ -202,42 +203,42 @@ pub mod member_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Role;
         type Did;
+        type Role;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Role = Unset;
         type Did = Unset;
-    }
-    ///State transition - sets the `role` field to Set
-    pub struct SetRole<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRole<St> {}
-    impl<St: State> State for SetRole<St> {
-        type Role = Set<members::role>;
-        type Did = St::Did;
+        type Role = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type Role = St::Role;
         type Did = Set<members::did>;
+        type Role = St::Role;
+    }
+    ///State transition - sets the `role` field to Set
+    pub struct SetRole<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRole<St> {}
+    impl<St: State> State for SetRole<St> {
+        type Did = St::Did;
+        type Role = Set<members::role>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `role` field
-        pub struct role(());
         ///Marker type for the `did` field
         pub struct did(());
+        ///Marker type for the `role` field
+        pub struct role(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct MemberBuilder<S: BosStr, St: member_state::State> {
+pub struct MemberBuilder<St: member_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -251,15 +252,22 @@ pub struct MemberBuilder<S: BosStr, St: member_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Member<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> MemberBuilder<S, member_state::Empty> {
+impl Member<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> MemberBuilder<member_state::Empty, DefaultStr> {
         MemberBuilder::new()
     }
 }
 
-impl<S: BosStr> MemberBuilder<S, member_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Member<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> MemberBuilder<member_state::Empty, S> {
+        MemberBuilder::builder()
+    }
+}
+
+impl MemberBuilder<member_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         MemberBuilder {
             _state: PhantomData,
@@ -269,7 +277,18 @@ impl<S: BosStr> MemberBuilder<S, member_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
+impl<S: BosStr> MemberBuilder<member_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        MemberBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: member_state::State, S: BosStr> MemberBuilder<St, S> {
     /// Set the `createdAt` field (optional)
     pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.0 = value.into();
@@ -282,7 +301,7 @@ impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> MemberBuilder<S, St>
+impl<St, S: BosStr> MemberBuilder<St, S>
 where
     St: member_state::State,
     St::Did: member_state::IsUnset,
@@ -291,7 +310,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> MemberBuilder<S, member_state::SetDid<St>> {
+    ) -> MemberBuilder<member_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         MemberBuilder {
             _state: PhantomData,
@@ -301,7 +320,7 @@ where
     }
 }
 
-impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
+impl<St: member_state::State, S: BosStr> MemberBuilder<St, S> {
     /// Set the `disabled` field (optional)
     pub fn disabled(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.2 = value.into();
@@ -314,7 +333,7 @@ impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
+impl<St: member_state::State, S: BosStr> MemberBuilder<St, S> {
     /// Set the `lastUpdatedBy` field (optional)
     pub fn last_updated_by(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.3 = value.into();
@@ -327,7 +346,7 @@ impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
+impl<St: member_state::State, S: BosStr> MemberBuilder<St, S> {
     /// Set the `profile` field (optional)
     pub fn profile(mut self, value: impl Into<Option<ProfileViewDetailed<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -340,7 +359,7 @@ impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> MemberBuilder<S, St>
+impl<St, S: BosStr> MemberBuilder<St, S>
 where
     St: member_state::State,
     St::Role: member_state::IsUnset,
@@ -349,7 +368,7 @@ where
     pub fn role(
         mut self,
         value: impl Into<MemberRole<S>>,
-    ) -> MemberBuilder<S, member_state::SetRole<St>> {
+    ) -> MemberBuilder<member_state::SetRole<St>, S> {
         self._fields.5 = Option::Some(value.into());
         MemberBuilder {
             _state: PhantomData,
@@ -359,7 +378,7 @@ where
     }
 }
 
-impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
+impl<St: member_state::State, S: BosStr> MemberBuilder<St, S> {
     /// Set the `updatedAt` field (optional)
     pub fn updated_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.6 = value.into();
@@ -372,11 +391,11 @@ impl<S: BosStr, St: member_state::State> MemberBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> MemberBuilder<S, St>
+impl<St, S: BosStr> MemberBuilder<St, S>
 where
     St: member_state::State,
-    St::Role: member_state::IsSet,
     St::Did: member_state::IsSet,
+    St::Role: member_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Member<S> {

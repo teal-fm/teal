@@ -25,7 +25,9 @@ pub struct UnmuteThread<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.unmuteThread
+/** Response marker for the `app.bsky.graph.unmuteThread` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct UnmuteThreadResponse;
 impl jacquard_common::xrpc::XrpcResp for UnmuteThreadResponse {
     const NSID: &'static str = "app.bsky.graph.unmuteThread";
@@ -42,7 +44,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UnmuteThread<S> {
     type Response = UnmuteThreadResponse;
 }
 
-/// Endpoint type for app.bsky.graph.unmuteThread
+/** Endpoint marker for the `app.bsky.graph.unmuteThread` procedure.
+
+Path: `/xrpc/app.bsky.graph.unmuteThread`. The request payload type is `UnmuteThread<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UnmuteThreadRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UnmuteThreadRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.unmuteThread";
@@ -86,21 +90,28 @@ pub mod unmute_thread_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct UnmuteThreadBuilder<S: BosStr, St: unmute_thread_state::State> {
+pub struct UnmuteThreadBuilder<St: unmute_thread_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UnmuteThread<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> UnmuteThreadBuilder<S, unmute_thread_state::Empty> {
+impl UnmuteThread<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> UnmuteThreadBuilder<unmute_thread_state::Empty, DefaultStr> {
         UnmuteThreadBuilder::new()
     }
 }
 
-impl<S: BosStr> UnmuteThreadBuilder<S, unmute_thread_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UnmuteThread<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UnmuteThreadBuilder<unmute_thread_state::Empty, S> {
+        UnmuteThreadBuilder::builder()
+    }
+}
+
+impl UnmuteThreadBuilder<unmute_thread_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UnmuteThreadBuilder {
             _state: PhantomData,
@@ -110,7 +121,18 @@ impl<S: BosStr> UnmuteThreadBuilder<S, unmute_thread_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> UnmuteThreadBuilder<S, St>
+impl<S: BosStr> UnmuteThreadBuilder<unmute_thread_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UnmuteThreadBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> UnmuteThreadBuilder<St, S>
 where
     St: unmute_thread_state::State,
     St::Root: unmute_thread_state::IsUnset,
@@ -119,7 +141,7 @@ where
     pub fn root(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> UnmuteThreadBuilder<S, unmute_thread_state::SetRoot<St>> {
+    ) -> UnmuteThreadBuilder<unmute_thread_state::SetRoot<St>, S> {
         self._fields.0 = Option::Some(value.into());
         UnmuteThreadBuilder {
             _state: PhantomData,
@@ -129,7 +151,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UnmuteThreadBuilder<S, St>
+impl<St, S: BosStr> UnmuteThreadBuilder<St, S>
 where
     St: unmute_thread_state::State,
     St::Root: unmute_thread_state::IsSet,

@@ -78,7 +78,9 @@ impl core::fmt::Display for UpdateReadError {
     }
 }
 
-/// Response type for chat.bsky.convo.updateRead
+/** Response marker for the `chat.bsky.convo.updateRead` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UpdateReadOutput<S>` for this endpoint.*/
 pub struct UpdateReadResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateReadResponse {
     const NSID: &'static str = "chat.bsky.convo.updateRead";
@@ -95,7 +97,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateRead<S> {
     type Response = UpdateReadResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.updateRead
+/** Endpoint marker for the `chat.bsky.convo.updateRead` procedure.
+
+Path: `/xrpc/chat.bsky.convo.updateRead`. The request payload type is `UpdateRead<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateReadRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateReadRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.updateRead";

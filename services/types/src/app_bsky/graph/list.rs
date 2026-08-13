@@ -211,56 +211,56 @@ pub mod list_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Purpose;
         type CreatedAt;
         type Name;
+        type Purpose;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Purpose = Unset;
         type CreatedAt = Unset;
         type Name = Unset;
-    }
-    ///State transition - sets the `purpose` field to Set
-    pub struct SetPurpose<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPurpose<St> {}
-    impl<St: State> State for SetPurpose<St> {
-        type Purpose = Set<members::purpose>;
-        type CreatedAt = St::CreatedAt;
-        type Name = St::Name;
+        type Purpose = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Purpose = St::Purpose;
         type CreatedAt = Set<members::created_at>;
         type Name = St::Name;
+        type Purpose = St::Purpose;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetName<St> {}
     impl<St: State> State for SetName<St> {
-        type Purpose = St::Purpose;
         type CreatedAt = St::CreatedAt;
         type Name = Set<members::name>;
+        type Purpose = St::Purpose;
+    }
+    ///State transition - sets the `purpose` field to Set
+    pub struct SetPurpose<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPurpose<St> {}
+    impl<St: State> State for SetPurpose<St> {
+        type CreatedAt = St::CreatedAt;
+        type Name = St::Name;
+        type Purpose = Set<members::purpose>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `purpose` field
-        pub struct purpose(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
         ///Marker type for the `name` field
         pub struct name(());
+        ///Marker type for the `purpose` field
+        pub struct purpose(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ListBuilder<S: BosStr, St: list_state::State> {
+pub struct ListBuilder<St: list_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<BlobRef<S>>,
@@ -274,15 +274,22 @@ pub struct ListBuilder<S: BosStr, St: list_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> List<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ListBuilder<S, list_state::Empty> {
+impl List<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListBuilder<list_state::Empty, DefaultStr> {
         ListBuilder::new()
     }
 }
 
-impl<S: BosStr> ListBuilder<S, list_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> List<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListBuilder<list_state::Empty, S> {
+        ListBuilder::builder()
+    }
+}
+
+impl ListBuilder<list_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListBuilder {
             _state: PhantomData,
@@ -292,7 +299,18 @@ impl<S: BosStr> ListBuilder<S, list_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
+impl<S: BosStr> ListBuilder<list_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: list_state::State, S: BosStr> ListBuilder<St, S> {
     /// Set the `avatar` field (optional)
     pub fn avatar(mut self, value: impl Into<Option<BlobRef<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -305,7 +323,7 @@ impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ListBuilder<S, St>
+impl<St, S: BosStr> ListBuilder<St, S>
 where
     St: list_state::State,
     St::CreatedAt: list_state::IsUnset,
@@ -314,7 +332,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> ListBuilder<S, list_state::SetCreatedAt<St>> {
+    ) -> ListBuilder<list_state::SetCreatedAt<St>, S> {
         self._fields.1 = Option::Some(value.into());
         ListBuilder {
             _state: PhantomData,
@@ -324,7 +342,7 @@ where
     }
 }
 
-impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
+impl<St: list_state::State, S: BosStr> ListBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -337,7 +355,7 @@ impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
+impl<St: list_state::State, S: BosStr> ListBuilder<St, S> {
     /// Set the `descriptionFacets` field (optional)
     pub fn description_facets(
         mut self,
@@ -353,7 +371,7 @@ impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
+impl<St: list_state::State, S: BosStr> ListBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<SelfLabels<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -366,7 +384,7 @@ impl<S: BosStr, St: list_state::State> ListBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ListBuilder<S, St>
+impl<St, S: BosStr> ListBuilder<St, S>
 where
     St: list_state::State,
     St::Name: list_state::IsUnset,
@@ -375,7 +393,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> ListBuilder<S, list_state::SetName<St>> {
+    ) -> ListBuilder<list_state::SetName<St>, S> {
         self._fields.5 = Option::Some(value.into());
         ListBuilder {
             _state: PhantomData,
@@ -385,7 +403,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ListBuilder<S, St>
+impl<St, S: BosStr> ListBuilder<St, S>
 where
     St: list_state::State,
     St::Purpose: list_state::IsUnset,
@@ -394,7 +412,7 @@ where
     pub fn purpose(
         mut self,
         value: impl Into<ListPurpose<S>>,
-    ) -> ListBuilder<S, list_state::SetPurpose<St>> {
+    ) -> ListBuilder<list_state::SetPurpose<St>, S> {
         self._fields.6 = Option::Some(value.into());
         ListBuilder {
             _state: PhantomData,
@@ -404,12 +422,12 @@ where
     }
 }
 
-impl<S: BosStr, St> ListBuilder<S, St>
+impl<St, S: BosStr> ListBuilder<St, S>
 where
     St: list_state::State,
-    St::Purpose: list_state::IsSet,
     St::CreatedAt: list_state::IsSet,
     St::Name: list_state::IsSet,
+    St::Purpose: list_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> List<S> {

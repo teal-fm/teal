@@ -97,7 +97,9 @@ impl core::fmt::Display for ResolveIdentityError {
     }
 }
 
-/// Response type for com.atproto.identity.resolveIdentity
+/** Response marker for the `com.atproto.identity.resolveIdentity` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ResolveIdentityOutput<S>` for this endpoint.*/
 pub struct ResolveIdentityResponse;
 impl jacquard_common::xrpc::XrpcResp for ResolveIdentityResponse {
     const NSID: &'static str = "com.atproto.identity.resolveIdentity";
@@ -112,7 +114,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ResolveIdentity<S> {
     type Response = ResolveIdentityResponse;
 }
 
-/// Endpoint type for com.atproto.identity.resolveIdentity
+/** Endpoint marker for the `com.atproto.identity.resolveIdentity` query.
+
+Path: `/xrpc/com.atproto.identity.resolveIdentity`. The request payload type is `ResolveIdentity<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ResolveIdentityRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ResolveIdentityRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.resolveIdentity";
@@ -154,21 +158,31 @@ pub mod resolve_identity_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ResolveIdentityBuilder<S: BosStr, St: resolve_identity_state::State> {
+pub struct ResolveIdentityBuilder<
+    St: resolve_identity_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ResolveIdentity<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ResolveIdentityBuilder<S, resolve_identity_state::Empty> {
+impl ResolveIdentity<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ResolveIdentityBuilder<resolve_identity_state::Empty, DefaultStr> {
         ResolveIdentityBuilder::new()
     }
 }
 
-impl<S: BosStr> ResolveIdentityBuilder<S, resolve_identity_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ResolveIdentity<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ResolveIdentityBuilder<resolve_identity_state::Empty, S> {
+        ResolveIdentityBuilder::builder()
+    }
+}
+
+impl ResolveIdentityBuilder<resolve_identity_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ResolveIdentityBuilder {
             _state: PhantomData,
@@ -178,7 +192,18 @@ impl<S: BosStr> ResolveIdentityBuilder<S, resolve_identity_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ResolveIdentityBuilder<S, St>
+impl<S: BosStr> ResolveIdentityBuilder<resolve_identity_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ResolveIdentityBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ResolveIdentityBuilder<St, S>
 where
     St: resolve_identity_state::State,
     St::Identifier: resolve_identity_state::IsUnset,
@@ -187,7 +212,7 @@ where
     pub fn identifier(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> ResolveIdentityBuilder<S, resolve_identity_state::SetIdentifier<St>> {
+    ) -> ResolveIdentityBuilder<resolve_identity_state::SetIdentifier<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ResolveIdentityBuilder {
             _state: PhantomData,
@@ -197,7 +222,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ResolveIdentityBuilder<S, St>
+impl<St, S: BosStr> ResolveIdentityBuilder<St, S>
 where
     St: resolve_identity_state::State,
     St::Identifier: resolve_identity_state::IsSet,

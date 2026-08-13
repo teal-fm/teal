@@ -33,7 +33,9 @@ pub struct GetReporterStatsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.moderation.getReporterStats
+/** Response marker for the `tools.ozone.moderation.getReporterStats` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetReporterStatsOutput<S>` for this endpoint.*/
 pub struct GetReporterStatsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetReporterStatsResponse {
     const NSID: &'static str = "tools.ozone.moderation.getReporterStats";
@@ -48,7 +50,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetReporterStats<S> {
     type Response = GetReporterStatsResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.getReporterStats
+/** Endpoint marker for the `tools.ozone.moderation.getReporterStats` query.
+
+Path: `/xrpc/tools.ozone.moderation.getReporterStats`. The request payload type is `GetReporterStats<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetReporterStatsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetReporterStatsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.getReporterStats";
@@ -90,21 +94,34 @@ pub mod get_reporter_stats_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetReporterStatsBuilder<S: BosStr, St: get_reporter_stats_state::State> {
+pub struct GetReporterStatsBuilder<
+    St: get_reporter_stats_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Did<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetReporterStats<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetReporterStatsBuilder<S, get_reporter_stats_state::Empty> {
+impl GetReporterStats<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetReporterStatsBuilder<
+        get_reporter_stats_state::Empty,
+        DefaultStr,
+    > {
         GetReporterStatsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetReporterStatsBuilder<S, get_reporter_stats_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetReporterStats<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetReporterStatsBuilder<get_reporter_stats_state::Empty, S> {
+        GetReporterStatsBuilder::builder()
+    }
+}
+
+impl GetReporterStatsBuilder<get_reporter_stats_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetReporterStatsBuilder {
             _state: PhantomData,
@@ -114,7 +131,18 @@ impl<S: BosStr> GetReporterStatsBuilder<S, get_reporter_stats_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetReporterStatsBuilder<S, St>
+impl<S: BosStr> GetReporterStatsBuilder<get_reporter_stats_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetReporterStatsBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetReporterStatsBuilder<St, S>
 where
     St: get_reporter_stats_state::State,
     St::Dids: get_reporter_stats_state::IsUnset,
@@ -123,7 +151,7 @@ where
     pub fn dids(
         mut self,
         value: impl Into<Vec<Did<S>>>,
-    ) -> GetReporterStatsBuilder<S, get_reporter_stats_state::SetDids<St>> {
+    ) -> GetReporterStatsBuilder<get_reporter_stats_state::SetDids<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetReporterStatsBuilder {
             _state: PhantomData,
@@ -133,7 +161,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetReporterStatsBuilder<S, St>
+impl<St, S: BosStr> GetReporterStatsBuilder<St, S>
 where
     St: get_reporter_stats_state::State,
     St::Dids: get_reporter_stats_state::IsSet,

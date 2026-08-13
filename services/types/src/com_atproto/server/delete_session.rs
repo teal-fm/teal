@@ -66,11 +66,15 @@ impl core::fmt::Display for DeleteSessionError {
     }
 }
 
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.server.deleteSession` procedure.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct DeleteSession;
-/// Response type for com.atproto.server.deleteSession
+/** Response marker for the `com.atproto.server.deleteSession` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DeleteSessionResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteSessionResponse {
     const NSID: &'static str = "com.atproto.server.deleteSession";
@@ -87,7 +91,9 @@ impl jacquard_common::xrpc::XrpcRequest for DeleteSession {
     type Response = DeleteSessionResponse;
 }
 
-/// Endpoint type for com.atproto.server.deleteSession
+/** Endpoint marker for the `com.atproto.server.deleteSession` procedure.
+
+Path: `/xrpc/com.atproto.server.deleteSession`. The request payload type is `DeleteSession`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct DeleteSessionRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteSessionRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.deleteSession";

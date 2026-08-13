@@ -37,7 +37,9 @@ pub struct GetFeedGeneratorOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.feed.getFeedGenerator
+/** Response marker for the `app.bsky.feed.getFeedGenerator` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetFeedGeneratorOutput<S>` for this endpoint.*/
 pub struct GetFeedGeneratorResponse;
 impl jacquard_common::xrpc::XrpcResp for GetFeedGeneratorResponse {
     const NSID: &'static str = "app.bsky.feed.getFeedGenerator";
@@ -52,7 +54,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetFeedGenerator<S> {
     type Response = GetFeedGeneratorResponse;
 }
 
-/// Endpoint type for app.bsky.feed.getFeedGenerator
+/** Endpoint marker for the `app.bsky.feed.getFeedGenerator` query.
+
+Path: `/xrpc/app.bsky.feed.getFeedGenerator`. The request payload type is `GetFeedGenerator<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetFeedGeneratorRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetFeedGeneratorRequest {
     const PATH: &'static str = "/xrpc/app.bsky.feed.getFeedGenerator";
@@ -94,21 +98,34 @@ pub mod get_feed_generator_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetFeedGeneratorBuilder<S: BosStr, St: get_feed_generator_state::State> {
+pub struct GetFeedGeneratorBuilder<
+    St: get_feed_generator_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetFeedGenerator<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetFeedGeneratorBuilder<S, get_feed_generator_state::Empty> {
+impl GetFeedGenerator<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetFeedGeneratorBuilder<
+        get_feed_generator_state::Empty,
+        DefaultStr,
+    > {
         GetFeedGeneratorBuilder::new()
     }
 }
 
-impl<S: BosStr> GetFeedGeneratorBuilder<S, get_feed_generator_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetFeedGenerator<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetFeedGeneratorBuilder<get_feed_generator_state::Empty, S> {
+        GetFeedGeneratorBuilder::builder()
+    }
+}
+
+impl GetFeedGeneratorBuilder<get_feed_generator_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetFeedGeneratorBuilder {
             _state: PhantomData,
@@ -118,7 +135,18 @@ impl<S: BosStr> GetFeedGeneratorBuilder<S, get_feed_generator_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetFeedGeneratorBuilder<S, St>
+impl<S: BosStr> GetFeedGeneratorBuilder<get_feed_generator_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetFeedGeneratorBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetFeedGeneratorBuilder<St, S>
 where
     St: get_feed_generator_state::State,
     St::Feed: get_feed_generator_state::IsUnset,
@@ -127,7 +155,7 @@ where
     pub fn feed(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> GetFeedGeneratorBuilder<S, get_feed_generator_state::SetFeed<St>> {
+    ) -> GetFeedGeneratorBuilder<get_feed_generator_state::SetFeed<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetFeedGeneratorBuilder {
             _state: PhantomData,
@@ -137,7 +165,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetFeedGeneratorBuilder<S, St>
+impl<St, S: BosStr> GetFeedGeneratorBuilder<St, S>
 where
     St: get_feed_generator_state::State,
     St::Feed: get_feed_generator_state::IsSet,

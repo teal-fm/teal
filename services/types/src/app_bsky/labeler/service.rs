@@ -127,42 +127,42 @@ pub mod service_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Policies;
         type CreatedAt;
+        type Policies;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Policies = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `policies` field to Set
-    pub struct SetPolicies<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPolicies<St> {}
-    impl<St: State> State for SetPolicies<St> {
-        type Policies = Set<members::policies>;
-        type CreatedAt = St::CreatedAt;
+        type Policies = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Policies = St::Policies;
         type CreatedAt = Set<members::created_at>;
+        type Policies = St::Policies;
+    }
+    ///State transition - sets the `policies` field to Set
+    pub struct SetPolicies<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPolicies<St> {}
+    impl<St: State> State for SetPolicies<St> {
+        type CreatedAt = St::CreatedAt;
+        type Policies = Set<members::policies>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `policies` field
-        pub struct policies(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `policies` field
+        pub struct policies(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ServiceBuilder<S: BosStr, St: service_state::State> {
+pub struct ServiceBuilder<St: service_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -175,15 +175,22 @@ pub struct ServiceBuilder<S: BosStr, St: service_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Service<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ServiceBuilder<S, service_state::Empty> {
+impl Service<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ServiceBuilder<service_state::Empty, DefaultStr> {
         ServiceBuilder::new()
     }
 }
 
-impl<S: BosStr> ServiceBuilder<S, service_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Service<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ServiceBuilder<service_state::Empty, S> {
+        ServiceBuilder::builder()
+    }
+}
+
+impl ServiceBuilder<service_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ServiceBuilder {
             _state: PhantomData,
@@ -193,7 +200,18 @@ impl<S: BosStr> ServiceBuilder<S, service_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ServiceBuilder<S, St>
+impl<S: BosStr> ServiceBuilder<service_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ServiceBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ServiceBuilder<St, S>
 where
     St: service_state::State,
     St::CreatedAt: service_state::IsUnset,
@@ -202,7 +220,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> ServiceBuilder<S, service_state::SetCreatedAt<St>> {
+    ) -> ServiceBuilder<service_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ServiceBuilder {
             _state: PhantomData,
@@ -212,7 +230,7 @@ where
     }
 }
 
-impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
+impl<St: service_state::State, S: BosStr> ServiceBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<SelfLabels<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -225,7 +243,7 @@ impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ServiceBuilder<S, St>
+impl<St, S: BosStr> ServiceBuilder<St, S>
 where
     St: service_state::State,
     St::Policies: service_state::IsUnset,
@@ -234,7 +252,7 @@ where
     pub fn policies(
         mut self,
         value: impl Into<LabelerPolicies<S>>,
-    ) -> ServiceBuilder<S, service_state::SetPolicies<St>> {
+    ) -> ServiceBuilder<service_state::SetPolicies<St>, S> {
         self._fields.2 = Option::Some(value.into());
         ServiceBuilder {
             _state: PhantomData,
@@ -244,7 +262,7 @@ where
     }
 }
 
-impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
+impl<St: service_state::State, S: BosStr> ServiceBuilder<St, S> {
     /// Set the `reasonTypes` field (optional)
     pub fn reason_types(mut self, value: impl Into<Option<Vec<ReasonType<S>>>>) -> Self {
         self._fields.3 = value.into();
@@ -257,7 +275,7 @@ impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
+impl<St: service_state::State, S: BosStr> ServiceBuilder<St, S> {
     /// Set the `subjectCollections` field (optional)
     pub fn subject_collections(
         mut self,
@@ -273,7 +291,7 @@ impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
+impl<St: service_state::State, S: BosStr> ServiceBuilder<St, S> {
     /// Set the `subjectTypes` field (optional)
     pub fn subject_types(
         mut self,
@@ -289,11 +307,11 @@ impl<S: BosStr, St: service_state::State> ServiceBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ServiceBuilder<S, St>
+impl<St, S: BosStr> ServiceBuilder<St, S>
 where
     St: service_state::State,
-    St::Policies: service_state::IsSet,
     St::CreatedAt: service_state::IsSet,
+    St::Policies: service_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Service<S> {

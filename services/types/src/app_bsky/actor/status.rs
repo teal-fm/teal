@@ -214,42 +214,42 @@ pub mod status_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Status;
         type CreatedAt;
+        type Status;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Status = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `status` field to Set
-    pub struct SetStatus<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetStatus<St> {}
-    impl<St: State> State for SetStatus<St> {
-        type Status = Set<members::status>;
-        type CreatedAt = St::CreatedAt;
+        type Status = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Status = St::Status;
         type CreatedAt = Set<members::created_at>;
+        type Status = St::Status;
+    }
+    ///State transition - sets the `status` field to Set
+    pub struct SetStatus<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetStatus<St> {}
+    impl<St: State> State for SetStatus<St> {
+        type CreatedAt = St::CreatedAt;
+        type Status = Set<members::status>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `status` field
-        pub struct status(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `status` field
+        pub struct status(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct StatusBuilder<S: BosStr, St: status_state::State> {
+pub struct StatusBuilder<St: status_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -260,15 +260,22 @@ pub struct StatusBuilder<S: BosStr, St: status_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Status<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> StatusBuilder<S, status_state::Empty> {
+impl Status<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> StatusBuilder<status_state::Empty, DefaultStr> {
         StatusBuilder::new()
     }
 }
 
-impl<S: BosStr> StatusBuilder<S, status_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Status<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> StatusBuilder<status_state::Empty, S> {
+        StatusBuilder::builder()
+    }
+}
+
+impl StatusBuilder<status_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         StatusBuilder {
             _state: PhantomData,
@@ -278,7 +285,18 @@ impl<S: BosStr> StatusBuilder<S, status_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> StatusBuilder<S, St>
+impl<S: BosStr> StatusBuilder<status_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        StatusBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> StatusBuilder<St, S>
 where
     St: status_state::State,
     St::CreatedAt: status_state::IsUnset,
@@ -287,7 +305,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> StatusBuilder<S, status_state::SetCreatedAt<St>> {
+    ) -> StatusBuilder<status_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         StatusBuilder {
             _state: PhantomData,
@@ -297,7 +315,7 @@ where
     }
 }
 
-impl<S: BosStr, St: status_state::State> StatusBuilder<S, St> {
+impl<St: status_state::State, S: BosStr> StatusBuilder<St, S> {
     /// Set the `durationMinutes` field (optional)
     pub fn duration_minutes(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -310,7 +328,7 @@ impl<S: BosStr, St: status_state::State> StatusBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: status_state::State> StatusBuilder<S, St> {
+impl<St: status_state::State, S: BosStr> StatusBuilder<St, S> {
     /// Set the `embed` field (optional)
     pub fn embed(mut self, value: impl Into<Option<ExternalRecord<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -323,7 +341,7 @@ impl<S: BosStr, St: status_state::State> StatusBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> StatusBuilder<S, St>
+impl<St, S: BosStr> StatusBuilder<St, S>
 where
     St: status_state::State,
     St::Status: status_state::IsUnset,
@@ -332,7 +350,7 @@ where
     pub fn status(
         mut self,
         value: impl Into<StatusStatus<S>>,
-    ) -> StatusBuilder<S, status_state::SetStatus<St>> {
+    ) -> StatusBuilder<status_state::SetStatus<St>, S> {
         self._fields.3 = Option::Some(value.into());
         StatusBuilder {
             _state: PhantomData,
@@ -342,11 +360,11 @@ where
     }
 }
 
-impl<S: BosStr, St> StatusBuilder<S, St>
+impl<St, S: BosStr> StatusBuilder<St, S>
 where
     St: status_state::State,
-    St::Status: status_state::IsSet,
     St::CreatedAt: status_state::IsSet,
+    St::Status: status_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Status<S> {

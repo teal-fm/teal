@@ -89,7 +89,9 @@ impl core::fmt::Display for UpdateEmailError {
     }
 }
 
-/// Response type for com.atproto.server.updateEmail
+/** Response marker for the `com.atproto.server.updateEmail` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct UpdateEmailResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateEmailResponse {
     const NSID: &'static str = "com.atproto.server.updateEmail";
@@ -106,7 +108,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateEmail<S> {
     type Response = UpdateEmailResponse;
 }
 
-/// Endpoint type for com.atproto.server.updateEmail
+/** Endpoint marker for the `com.atproto.server.updateEmail` procedure.
+
+Path: `/xrpc/com.atproto.server.updateEmail`. The request payload type is `UpdateEmail<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateEmailRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateEmailRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.updateEmail";

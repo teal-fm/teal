@@ -74,7 +74,9 @@ impl core::fmt::Display for GetHeadError {
     }
 }
 
-/// Response type for com.atproto.sync.getHead
+/** Response marker for the `com.atproto.sync.getHead` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetHeadOutput<S>` for this endpoint.*/
 pub struct GetHeadResponse;
 impl jacquard_common::xrpc::XrpcResp for GetHeadResponse {
     const NSID: &'static str = "com.atproto.sync.getHead";
@@ -89,7 +91,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetHead<S> {
     type Response = GetHeadResponse;
 }
 
-/// Endpoint type for com.atproto.sync.getHead
+/** Endpoint marker for the `com.atproto.sync.getHead` query.
+
+Path: `/xrpc/com.atproto.sync.getHead`. The request payload type is `GetHead<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetHeadRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetHeadRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.getHead";
@@ -131,21 +135,28 @@ pub mod get_head_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetHeadBuilder<S: BosStr, St: get_head_state::State> {
+pub struct GetHeadBuilder<St: get_head_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetHead<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetHeadBuilder<S, get_head_state::Empty> {
+impl GetHead<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetHeadBuilder<get_head_state::Empty, DefaultStr> {
         GetHeadBuilder::new()
     }
 }
 
-impl<S: BosStr> GetHeadBuilder<S, get_head_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetHead<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetHeadBuilder<get_head_state::Empty, S> {
+        GetHeadBuilder::builder()
+    }
+}
+
+impl GetHeadBuilder<get_head_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetHeadBuilder {
             _state: PhantomData,
@@ -155,7 +166,18 @@ impl<S: BosStr> GetHeadBuilder<S, get_head_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetHeadBuilder<S, St>
+impl<S: BosStr> GetHeadBuilder<get_head_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetHeadBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetHeadBuilder<St, S>
 where
     St: get_head_state::State,
     St::Did: get_head_state::IsUnset,
@@ -164,7 +186,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetHeadBuilder<S, get_head_state::SetDid<St>> {
+    ) -> GetHeadBuilder<get_head_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetHeadBuilder {
             _state: PhantomData,
@@ -174,7 +196,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetHeadBuilder<S, St>
+impl<St, S: BosStr> GetHeadBuilder<St, S>
 where
     St: get_head_state::State,
     St::Did: get_head_state::IsSet,

@@ -134,7 +134,9 @@ pub struct QueryEventsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.safelink.queryEvents
+/** Response marker for the `tools.ozone.safelink.queryEvents` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `QueryEventsOutput<S>` for this endpoint.*/
 pub struct QueryEventsResponse;
 impl jacquard_common::xrpc::XrpcResp for QueryEventsResponse {
     const NSID: &'static str = "tools.ozone.safelink.queryEvents";
@@ -151,7 +153,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for QueryEvents<S> {
     type Response = QueryEventsResponse;
 }
 
-/// Endpoint type for tools.ozone.safelink.queryEvents
+/** Endpoint marker for the `tools.ozone.safelink.queryEvents` procedure.
+
+Path: `/xrpc/tools.ozone.safelink.queryEvents`. The request payload type is `QueryEvents<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct QueryEventsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for QueryEventsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.safelink.queryEvents";

@@ -3,6 +3,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `com.atproto` Lexicon namespace/module.
 pub mod admin;
 pub mod identity;
 pub mod label;

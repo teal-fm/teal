@@ -51,18 +51,18 @@ pub struct QueryStatuses<S: BosStr = DefaultStr> {
     pub include_muted: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_reviewed_by: Option<Did<S>>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub min_account_suspend_count: Option<i64>,
-    ///(min: 0, max: 100)
+    /// (min: 0, max: 100)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub min_priority_score: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub min_reported_records_count: Option<i64>,
-    ///(min: 1)
+    /// (min: 1)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub min_strike_count: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -85,11 +85,11 @@ pub struct QueryStatuses<S: BosStr = DefaultStr> {
     pub reviewed_after: Option<Datetime>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reviewed_before: Option<Datetime>,
-    ///Defaults to `"desc"`.
+    /// Defaults to `"desc"`.
     #[serde(default = "_default_sort_direction")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_direction: Option<S>,
-    ///Defaults to `"lastReportedAt"`.
+    /// Defaults to `"lastReportedAt"`.
     #[serde(default = "_default_sort_field")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_field: Option<S>,
@@ -114,7 +114,9 @@ pub struct QueryStatusesOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.moderation.queryStatuses
+/** Response marker for the `tools.ozone.moderation.queryStatuses` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `QueryStatusesOutput<S>` for this endpoint.*/
 pub struct QueryStatusesResponse;
 impl jacquard_common::xrpc::XrpcResp for QueryStatusesResponse {
     const NSID: &'static str = "tools.ozone.moderation.queryStatuses";
@@ -129,7 +131,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for QueryStatuses<S> {
     type Response = QueryStatusesResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.queryStatuses
+/** Endpoint marker for the `tools.ozone.moderation.queryStatuses` query.
+
+Path: `/xrpc/tools.ozone.moderation.queryStatuses`. The request payload type is `QueryStatuses<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct QueryStatusesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for QueryStatusesRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.queryStatuses";
@@ -170,7 +174,10 @@ pub mod query_statuses_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct QueryStatusesBuilder<S: BosStr, St: query_statuses_state::State> {
+pub struct QueryStatusesBuilder<
+    St: query_statuses_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<S>,
@@ -213,15 +220,22 @@ pub struct QueryStatusesBuilder<S: BosStr, St: query_statuses_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> QueryStatuses<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> QueryStatusesBuilder<S, query_statuses_state::Empty> {
+impl QueryStatuses<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> QueryStatusesBuilder<query_statuses_state::Empty, DefaultStr> {
         QueryStatusesBuilder::new()
     }
 }
 
-impl<S: BosStr> QueryStatusesBuilder<S, query_statuses_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> QueryStatuses<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> QueryStatusesBuilder<query_statuses_state::Empty, S> {
+        QueryStatusesBuilder::builder()
+    }
+}
+
+impl QueryStatusesBuilder<query_statuses_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         QueryStatusesBuilder {
             _state: PhantomData,
@@ -268,7 +282,55 @@ impl<S: BosStr> QueryStatusesBuilder<S, query_statuses_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<S: BosStr> QueryStatusesBuilder<query_statuses_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        QueryStatusesBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `ageAssuranceState` field (optional)
     pub fn age_assurance_state(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -281,7 +343,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `appealed` field (optional)
     pub fn appealed(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.1 = value.into();
@@ -294,7 +356,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `collections` field (optional)
     pub fn collections(mut self, value: impl Into<Option<Vec<Nsid<S>>>>) -> Self {
         self._fields.2 = value.into();
@@ -307,7 +369,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `comment` field (optional)
     pub fn comment(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.3 = value.into();
@@ -320,7 +382,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -333,7 +395,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `excludeTags` field (optional)
     pub fn exclude_tags(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.5 = value.into();
@@ -346,7 +408,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `hostingDeletedAfter` field (optional)
     pub fn hosting_deleted_after(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.6 = value.into();
@@ -359,7 +421,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `hostingDeletedBefore` field (optional)
     pub fn hosting_deleted_before(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.7 = value.into();
@@ -372,7 +434,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `hostingStatuses` field (optional)
     pub fn hosting_statuses(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.8 = value.into();
@@ -385,7 +447,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `hostingUpdatedAfter` field (optional)
     pub fn hosting_updated_after(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.9 = value.into();
@@ -398,7 +460,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `hostingUpdatedBefore` field (optional)
     pub fn hosting_updated_before(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.10 = value.into();
@@ -411,7 +473,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `ignoreSubjects` field (optional)
     pub fn ignore_subjects(
         mut self,
@@ -427,7 +489,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `includeAllUserRecords` field (optional)
     pub fn include_all_user_records(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.12 = value.into();
@@ -440,7 +502,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `includeMuted` field (optional)
     pub fn include_muted(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.13 = value.into();
@@ -453,7 +515,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `lastReviewedBy` field (optional)
     pub fn last_reviewed_by(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.14 = value.into();
@@ -466,7 +528,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.15 = value.into();
@@ -479,7 +541,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `minAccountSuspendCount` field (optional)
     pub fn min_account_suspend_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.16 = value.into();
@@ -492,7 +554,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `minPriorityScore` field (optional)
     pub fn min_priority_score(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.17 = value.into();
@@ -505,7 +567,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `minReportedRecordsCount` field (optional)
     pub fn min_reported_records_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.18 = value.into();
@@ -518,7 +580,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `minStrikeCount` field (optional)
     pub fn min_strike_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.19 = value.into();
@@ -531,7 +593,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `minTakendownRecordsCount` field (optional)
     pub fn min_takendown_records_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.20 = value.into();
@@ -544,7 +606,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `onlyMuted` field (optional)
     pub fn only_muted(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.21 = value.into();
@@ -557,7 +619,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `queueCount` field (optional)
     pub fn queue_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.22 = value.into();
@@ -570,7 +632,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `queueIndex` field (optional)
     pub fn queue_index(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.23 = value.into();
@@ -583,7 +645,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `queueSeed` field (optional)
     pub fn queue_seed(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.24 = value.into();
@@ -596,7 +658,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `reportedAfter` field (optional)
     pub fn reported_after(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.25 = value.into();
@@ -609,7 +671,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `reportedBefore` field (optional)
     pub fn reported_before(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.26 = value.into();
@@ -622,7 +684,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `reviewState` field (optional)
     pub fn review_state(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.27 = value.into();
@@ -635,7 +697,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `reviewedAfter` field (optional)
     pub fn reviewed_after(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.28 = value.into();
@@ -648,7 +710,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `reviewedBefore` field (optional)
     pub fn reviewed_before(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.29 = value.into();
@@ -661,7 +723,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `sortDirection` field (optional)
     pub fn sort_direction(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.30 = value.into();
@@ -674,7 +736,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `sortField` field (optional)
     pub fn sort_field(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.31 = value.into();
@@ -687,7 +749,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `subject` field (optional)
     pub fn subject(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.32 = value.into();
@@ -700,7 +762,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `subjectType` field (optional)
     pub fn subject_type(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.33 = value.into();
@@ -713,7 +775,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `tags` field (optional)
     pub fn tags(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.34 = value.into();
@@ -726,7 +788,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
+impl<St: query_statuses_state::State, S: BosStr> QueryStatusesBuilder<St, S> {
     /// Set the `takendown` field (optional)
     pub fn takendown(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.35 = value.into();
@@ -739,7 +801,7 @@ impl<S: BosStr, St: query_statuses_state::State> QueryStatusesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> QueryStatusesBuilder<S, St>
+impl<St, S: BosStr> QueryStatusesBuilder<St, S>
 where
     St: query_statuses_state::State,
 {

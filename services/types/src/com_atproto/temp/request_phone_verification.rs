@@ -24,7 +24,9 @@ pub struct RequestPhoneVerification<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.temp.requestPhoneVerification
+/** Response marker for the `com.atproto.temp.requestPhoneVerification` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct RequestPhoneVerificationResponse;
 impl jacquard_common::xrpc::XrpcResp for RequestPhoneVerificationResponse {
     const NSID: &'static str = "com.atproto.temp.requestPhoneVerification";
@@ -41,7 +43,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RequestPhoneVerification<
     type Response = RequestPhoneVerificationResponse;
 }
 
-/// Endpoint type for com.atproto.temp.requestPhoneVerification
+/** Endpoint marker for the `com.atproto.temp.requestPhoneVerification` procedure.
+
+Path: `/xrpc/com.atproto.temp.requestPhoneVerification`. The request payload type is `RequestPhoneVerification<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RequestPhoneVerificationRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RequestPhoneVerificationRequest {
     const PATH: &'static str = "/xrpc/com.atproto.temp.requestPhoneVerification";

@@ -183,7 +183,9 @@ impl core::fmt::Display for GetRepoStatusError {
     }
 }
 
-/// Response type for com.atproto.sync.getRepoStatus
+/** Response marker for the `com.atproto.sync.getRepoStatus` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetRepoStatusOutput<S>` for this endpoint.*/
 pub struct GetRepoStatusResponse;
 impl jacquard_common::xrpc::XrpcResp for GetRepoStatusResponse {
     const NSID: &'static str = "com.atproto.sync.getRepoStatus";
@@ -198,7 +200,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetRepoStatus<S> {
     type Response = GetRepoStatusResponse;
 }
 
-/// Endpoint type for com.atproto.sync.getRepoStatus
+/** Endpoint marker for the `com.atproto.sync.getRepoStatus` query.
+
+Path: `/xrpc/com.atproto.sync.getRepoStatus`. The request payload type is `GetRepoStatus<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetRepoStatusRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetRepoStatusRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.getRepoStatus";
@@ -240,21 +244,31 @@ pub mod get_repo_status_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetRepoStatusBuilder<S: BosStr, St: get_repo_status_state::State> {
+pub struct GetRepoStatusBuilder<
+    St: get_repo_status_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetRepoStatus<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetRepoStatusBuilder<S, get_repo_status_state::Empty> {
+impl GetRepoStatus<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetRepoStatusBuilder<get_repo_status_state::Empty, DefaultStr> {
         GetRepoStatusBuilder::new()
     }
 }
 
-impl<S: BosStr> GetRepoStatusBuilder<S, get_repo_status_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetRepoStatus<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetRepoStatusBuilder<get_repo_status_state::Empty, S> {
+        GetRepoStatusBuilder::builder()
+    }
+}
+
+impl GetRepoStatusBuilder<get_repo_status_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetRepoStatusBuilder {
             _state: PhantomData,
@@ -264,7 +278,18 @@ impl<S: BosStr> GetRepoStatusBuilder<S, get_repo_status_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetRepoStatusBuilder<S, St>
+impl<S: BosStr> GetRepoStatusBuilder<get_repo_status_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetRepoStatusBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetRepoStatusBuilder<St, S>
 where
     St: get_repo_status_state::State,
     St::Did: get_repo_status_state::IsUnset,
@@ -273,7 +298,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetRepoStatusBuilder<S, get_repo_status_state::SetDid<St>> {
+    ) -> GetRepoStatusBuilder<get_repo_status_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetRepoStatusBuilder {
             _state: PhantomData,
@@ -283,7 +308,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetRepoStatusBuilder<S, St>
+impl<St, S: BosStr> GetRepoStatusBuilder<St, S>
 where
     St: get_repo_status_state::State,
     St::Did: get_repo_status_state::IsSet,

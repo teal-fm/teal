@@ -32,7 +32,9 @@ pub struct GetSubjectsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.moderation.getSubjects
+/** Response marker for the `tools.ozone.moderation.getSubjects` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSubjectsOutput<S>` for this endpoint.*/
 pub struct GetSubjectsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSubjectsResponse {
     const NSID: &'static str = "tools.ozone.moderation.getSubjects";
@@ -47,7 +49,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetSubjects<S> {
     type Response = GetSubjectsResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.getSubjects
+/** Endpoint marker for the `tools.ozone.moderation.getSubjects` query.
+
+Path: `/xrpc/tools.ozone.moderation.getSubjects`. The request payload type is `GetSubjects<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSubjectsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSubjectsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.getSubjects";
@@ -89,21 +93,28 @@ pub mod get_subjects_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetSubjectsBuilder<S: BosStr, St: get_subjects_state::State> {
+pub struct GetSubjectsBuilder<St: get_subjects_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetSubjects<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetSubjectsBuilder<S, get_subjects_state::Empty> {
+impl GetSubjects<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetSubjectsBuilder<get_subjects_state::Empty, DefaultStr> {
         GetSubjectsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetSubjectsBuilder<S, get_subjects_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetSubjects<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetSubjectsBuilder<get_subjects_state::Empty, S> {
+        GetSubjectsBuilder::builder()
+    }
+}
+
+impl GetSubjectsBuilder<get_subjects_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetSubjectsBuilder {
             _state: PhantomData,
@@ -113,7 +124,18 @@ impl<S: BosStr> GetSubjectsBuilder<S, get_subjects_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetSubjectsBuilder<S, St>
+impl<S: BosStr> GetSubjectsBuilder<get_subjects_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetSubjectsBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetSubjectsBuilder<St, S>
 where
     St: get_subjects_state::State,
     St::Subjects: get_subjects_state::IsUnset,
@@ -122,7 +144,7 @@ where
     pub fn subjects(
         mut self,
         value: impl Into<Vec<S>>,
-    ) -> GetSubjectsBuilder<S, get_subjects_state::SetSubjects<St>> {
+    ) -> GetSubjectsBuilder<get_subjects_state::SetSubjects<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetSubjectsBuilder {
             _state: PhantomData,
@@ -132,7 +154,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetSubjectsBuilder<S, St>
+impl<St, S: BosStr> GetSubjectsBuilder<St, S>
 where
     St: get_subjects_state::State,
     St::Subjects: get_subjects_state::IsSet,

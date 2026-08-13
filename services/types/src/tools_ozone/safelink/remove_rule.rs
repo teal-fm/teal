@@ -88,7 +88,9 @@ impl core::fmt::Display for RemoveRuleError {
     }
 }
 
-/// Response type for tools.ozone.safelink.removeRule
+/** Response marker for the `tools.ozone.safelink.removeRule` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `RemoveRuleOutput<S>` for this endpoint.*/
 pub struct RemoveRuleResponse;
 impl jacquard_common::xrpc::XrpcResp for RemoveRuleResponse {
     const NSID: &'static str = "tools.ozone.safelink.removeRule";
@@ -105,7 +107,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RemoveRule<S> {
     type Response = RemoveRuleResponse;
 }
 
-/// Endpoint type for tools.ozone.safelink.removeRule
+/** Endpoint marker for the `tools.ozone.safelink.removeRule` procedure.
+
+Path: `/xrpc/tools.ozone.safelink.removeRule`. The request payload type is `RemoveRule<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RemoveRuleRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RemoveRuleRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.safelink.removeRule";
@@ -161,21 +165,28 @@ pub mod remove_rule_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RemoveRuleBuilder<S: BosStr, St: remove_rule_state::State> {
+pub struct RemoveRuleBuilder<St: remove_rule_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Did<S>>, Option<PatternType<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RemoveRule<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RemoveRuleBuilder<S, remove_rule_state::Empty> {
+impl RemoveRule<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RemoveRuleBuilder<remove_rule_state::Empty, DefaultStr> {
         RemoveRuleBuilder::new()
     }
 }
 
-impl<S: BosStr> RemoveRuleBuilder<S, remove_rule_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RemoveRule<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RemoveRuleBuilder<remove_rule_state::Empty, S> {
+        RemoveRuleBuilder::builder()
+    }
+}
+
+impl RemoveRuleBuilder<remove_rule_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RemoveRuleBuilder {
             _state: PhantomData,
@@ -185,7 +196,18 @@ impl<S: BosStr> RemoveRuleBuilder<S, remove_rule_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: remove_rule_state::State> RemoveRuleBuilder<S, St> {
+impl<S: BosStr> RemoveRuleBuilder<remove_rule_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RemoveRuleBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: remove_rule_state::State, S: BosStr> RemoveRuleBuilder<St, S> {
     /// Set the `comment` field (optional)
     pub fn comment(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -198,7 +220,7 @@ impl<S: BosStr, St: remove_rule_state::State> RemoveRuleBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: remove_rule_state::State> RemoveRuleBuilder<S, St> {
+impl<St: remove_rule_state::State, S: BosStr> RemoveRuleBuilder<St, S> {
     /// Set the `createdBy` field (optional)
     pub fn created_by(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -211,7 +233,7 @@ impl<S: BosStr, St: remove_rule_state::State> RemoveRuleBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> RemoveRuleBuilder<S, St>
+impl<St, S: BosStr> RemoveRuleBuilder<St, S>
 where
     St: remove_rule_state::State,
     St::Pattern: remove_rule_state::IsUnset,
@@ -220,7 +242,7 @@ where
     pub fn pattern(
         mut self,
         value: impl Into<PatternType<S>>,
-    ) -> RemoveRuleBuilder<S, remove_rule_state::SetPattern<St>> {
+    ) -> RemoveRuleBuilder<remove_rule_state::SetPattern<St>, S> {
         self._fields.2 = Option::Some(value.into());
         RemoveRuleBuilder {
             _state: PhantomData,
@@ -230,7 +252,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RemoveRuleBuilder<S, St>
+impl<St, S: BosStr> RemoveRuleBuilder<St, S>
 where
     St: remove_rule_state::State,
     St::Url: remove_rule_state::IsUnset,
@@ -239,7 +261,7 @@ where
     pub fn url(
         mut self,
         value: impl Into<S>,
-    ) -> RemoveRuleBuilder<S, remove_rule_state::SetUrl<St>> {
+    ) -> RemoveRuleBuilder<remove_rule_state::SetUrl<St>, S> {
         self._fields.3 = Option::Some(value.into());
         RemoveRuleBuilder {
             _state: PhantomData,
@@ -249,7 +271,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RemoveRuleBuilder<S, St>
+impl<St, S: BosStr> RemoveRuleBuilder<St, S>
 where
     St: remove_rule_state::State,
     St::Pattern: remove_rule_state::IsSet,

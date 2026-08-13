@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `app.bsky.unspecced` Lexicon namespace/module.
 pub mod get_age_assurance_state;
 pub mod get_config;
 pub mod get_onboarding_suggested_starter_packs;
@@ -736,56 +737,59 @@ pub mod age_assurance_event_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Status;
         type AttemptId;
         type CreatedAt;
+        type Status;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Status = Unset;
         type AttemptId = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `status` field to Set
-    pub struct SetStatus<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetStatus<St> {}
-    impl<St: State> State for SetStatus<St> {
-        type Status = Set<members::status>;
-        type AttemptId = St::AttemptId;
-        type CreatedAt = St::CreatedAt;
+        type Status = Unset;
     }
     ///State transition - sets the `attempt_id` field to Set
     pub struct SetAttemptId<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAttemptId<St> {}
     impl<St: State> State for SetAttemptId<St> {
-        type Status = St::Status;
         type AttemptId = Set<members::attempt_id>;
         type CreatedAt = St::CreatedAt;
+        type Status = St::Status;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Status = St::Status;
         type AttemptId = St::AttemptId;
         type CreatedAt = Set<members::created_at>;
+        type Status = St::Status;
+    }
+    ///State transition - sets the `status` field to Set
+    pub struct SetStatus<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetStatus<St> {}
+    impl<St: State> State for SetStatus<St> {
+        type AttemptId = St::AttemptId;
+        type CreatedAt = St::CreatedAt;
+        type Status = Set<members::status>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `status` field
-        pub struct status(());
         ///Marker type for the `attempt_id` field
         pub struct attempt_id(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `status` field
+        pub struct status(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AgeAssuranceEventBuilder<S: BosStr, St: age_assurance_event_state::State> {
+pub struct AgeAssuranceEventBuilder<
+    St: age_assurance_event_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<S>,
@@ -800,15 +804,25 @@ pub struct AgeAssuranceEventBuilder<S: BosStr, St: age_assurance_event_state::St
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AgeAssuranceEvent<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AgeAssuranceEventBuilder<S, age_assurance_event_state::Empty> {
+impl AgeAssuranceEvent<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AgeAssuranceEventBuilder<
+        age_assurance_event_state::Empty,
+        DefaultStr,
+    > {
         AgeAssuranceEventBuilder::new()
     }
 }
 
-impl<S: BosStr> AgeAssuranceEventBuilder<S, age_assurance_event_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AgeAssuranceEvent<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AgeAssuranceEventBuilder<age_assurance_event_state::Empty, S> {
+        AgeAssuranceEventBuilder::builder()
+    }
+}
+
+impl AgeAssuranceEventBuilder<age_assurance_event_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AgeAssuranceEventBuilder {
             _state: PhantomData,
@@ -818,7 +832,18 @@ impl<S: BosStr> AgeAssuranceEventBuilder<S, age_assurance_event_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> AgeAssuranceEventBuilder<S, St>
+impl<S: BosStr> AgeAssuranceEventBuilder<age_assurance_event_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AgeAssuranceEventBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> AgeAssuranceEventBuilder<St, S>
 where
     St: age_assurance_event_state::State,
     St::AttemptId: age_assurance_event_state::IsUnset,
@@ -827,7 +852,7 @@ where
     pub fn attempt_id(
         mut self,
         value: impl Into<S>,
-    ) -> AgeAssuranceEventBuilder<S, age_assurance_event_state::SetAttemptId<St>> {
+    ) -> AgeAssuranceEventBuilder<age_assurance_event_state::SetAttemptId<St>, S> {
         self._fields.0 = Option::Some(value.into());
         AgeAssuranceEventBuilder {
             _state: PhantomData,
@@ -837,7 +862,7 @@ where
     }
 }
 
-impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S, St> {
+impl<St: age_assurance_event_state::State, S: BosStr> AgeAssuranceEventBuilder<St, S> {
     /// Set the `completeIp` field (optional)
     pub fn complete_ip(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -850,7 +875,7 @@ impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S
     }
 }
 
-impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S, St> {
+impl<St: age_assurance_event_state::State, S: BosStr> AgeAssuranceEventBuilder<St, S> {
     /// Set the `completeUa` field (optional)
     pub fn complete_ua(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -863,7 +888,7 @@ impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S
     }
 }
 
-impl<S: BosStr, St> AgeAssuranceEventBuilder<S, St>
+impl<St, S: BosStr> AgeAssuranceEventBuilder<St, S>
 where
     St: age_assurance_event_state::State,
     St::CreatedAt: age_assurance_event_state::IsUnset,
@@ -872,7 +897,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> AgeAssuranceEventBuilder<S, age_assurance_event_state::SetCreatedAt<St>> {
+    ) -> AgeAssuranceEventBuilder<age_assurance_event_state::SetCreatedAt<St>, S> {
         self._fields.3 = Option::Some(value.into());
         AgeAssuranceEventBuilder {
             _state: PhantomData,
@@ -882,7 +907,7 @@ where
     }
 }
 
-impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S, St> {
+impl<St: age_assurance_event_state::State, S: BosStr> AgeAssuranceEventBuilder<St, S> {
     /// Set the `email` field (optional)
     pub fn email(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -895,7 +920,7 @@ impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S
     }
 }
 
-impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S, St> {
+impl<St: age_assurance_event_state::State, S: BosStr> AgeAssuranceEventBuilder<St, S> {
     /// Set the `initIp` field (optional)
     pub fn init_ip(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.5 = value.into();
@@ -908,7 +933,7 @@ impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S
     }
 }
 
-impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S, St> {
+impl<St: age_assurance_event_state::State, S: BosStr> AgeAssuranceEventBuilder<St, S> {
     /// Set the `initUa` field (optional)
     pub fn init_ua(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.6 = value.into();
@@ -921,7 +946,7 @@ impl<S: BosStr, St: age_assurance_event_state::State> AgeAssuranceEventBuilder<S
     }
 }
 
-impl<S: BosStr, St> AgeAssuranceEventBuilder<S, St>
+impl<St, S: BosStr> AgeAssuranceEventBuilder<St, S>
 where
     St: age_assurance_event_state::State,
     St::Status: age_assurance_event_state::IsUnset,
@@ -930,7 +955,7 @@ where
     pub fn status(
         mut self,
         value: impl Into<AgeAssuranceEventStatus<S>>,
-    ) -> AgeAssuranceEventBuilder<S, age_assurance_event_state::SetStatus<St>> {
+    ) -> AgeAssuranceEventBuilder<age_assurance_event_state::SetStatus<St>, S> {
         self._fields.7 = Option::Some(value.into());
         AgeAssuranceEventBuilder {
             _state: PhantomData,
@@ -940,12 +965,12 @@ where
     }
 }
 
-impl<S: BosStr, St> AgeAssuranceEventBuilder<S, St>
+impl<St, S: BosStr> AgeAssuranceEventBuilder<St, S>
 where
     St: age_assurance_event_state::State,
-    St::Status: age_assurance_event_state::IsSet,
     St::AttemptId: age_assurance_event_state::IsSet,
     St::CreatedAt: age_assurance_event_state::IsSet,
+    St::Status: age_assurance_event_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AgeAssuranceEvent<S> {
@@ -1497,23 +1522,36 @@ pub mod skeleton_search_actor_state {
 
 /// Builder for constructing an instance of this type.
 pub struct SkeletonSearchActorBuilder<
-    S: BosStr,
     St: skeleton_search_actor_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SkeletonSearchActor<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SkeletonSearchActorBuilder<S, skeleton_search_actor_state::Empty> {
+impl SkeletonSearchActor<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SkeletonSearchActorBuilder<
+        skeleton_search_actor_state::Empty,
+        DefaultStr,
+    > {
         SkeletonSearchActorBuilder::new()
     }
 }
 
-impl<S: BosStr> SkeletonSearchActorBuilder<S, skeleton_search_actor_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SkeletonSearchActor<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SkeletonSearchActorBuilder<
+        skeleton_search_actor_state::Empty,
+        S,
+    > {
+        SkeletonSearchActorBuilder::builder()
+    }
+}
+
+impl SkeletonSearchActorBuilder<skeleton_search_actor_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SkeletonSearchActorBuilder {
             _state: PhantomData,
@@ -1523,7 +1561,18 @@ impl<S: BosStr> SkeletonSearchActorBuilder<S, skeleton_search_actor_state::Empty
     }
 }
 
-impl<S: BosStr, St> SkeletonSearchActorBuilder<S, St>
+impl<S: BosStr> SkeletonSearchActorBuilder<skeleton_search_actor_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SkeletonSearchActorBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SkeletonSearchActorBuilder<St, S>
 where
     St: skeleton_search_actor_state::State,
     St::Did: skeleton_search_actor_state::IsUnset,
@@ -1532,7 +1581,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> SkeletonSearchActorBuilder<S, skeleton_search_actor_state::SetDid<St>> {
+    ) -> SkeletonSearchActorBuilder<skeleton_search_actor_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SkeletonSearchActorBuilder {
             _state: PhantomData,
@@ -1542,7 +1591,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonSearchActorBuilder<S, St>
+impl<St, S: BosStr> SkeletonSearchActorBuilder<St, S>
 where
     St: skeleton_search_actor_state::State,
     St::Did: skeleton_search_actor_state::IsSet,
@@ -1599,21 +1648,34 @@ pub mod skeleton_search_post_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SkeletonSearchPostBuilder<S: BosStr, St: skeleton_search_post_state::State> {
+pub struct SkeletonSearchPostBuilder<
+    St: skeleton_search_post_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SkeletonSearchPost<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SkeletonSearchPostBuilder<S, skeleton_search_post_state::Empty> {
+impl SkeletonSearchPost<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SkeletonSearchPostBuilder<
+        skeleton_search_post_state::Empty,
+        DefaultStr,
+    > {
         SkeletonSearchPostBuilder::new()
     }
 }
 
-impl<S: BosStr> SkeletonSearchPostBuilder<S, skeleton_search_post_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SkeletonSearchPost<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SkeletonSearchPostBuilder<skeleton_search_post_state::Empty, S> {
+        SkeletonSearchPostBuilder::builder()
+    }
+}
+
+impl SkeletonSearchPostBuilder<skeleton_search_post_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SkeletonSearchPostBuilder {
             _state: PhantomData,
@@ -1623,7 +1685,18 @@ impl<S: BosStr> SkeletonSearchPostBuilder<S, skeleton_search_post_state::Empty> 
     }
 }
 
-impl<S: BosStr, St> SkeletonSearchPostBuilder<S, St>
+impl<S: BosStr> SkeletonSearchPostBuilder<skeleton_search_post_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SkeletonSearchPostBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SkeletonSearchPostBuilder<St, S>
 where
     St: skeleton_search_post_state::State,
     St::Uri: skeleton_search_post_state::IsUnset,
@@ -1632,7 +1705,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> SkeletonSearchPostBuilder<S, skeleton_search_post_state::SetUri<St>> {
+    ) -> SkeletonSearchPostBuilder<skeleton_search_post_state::SetUri<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SkeletonSearchPostBuilder {
             _state: PhantomData,
@@ -1642,7 +1715,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonSearchPostBuilder<S, St>
+impl<St, S: BosStr> SkeletonSearchPostBuilder<St, S>
 where
     St: skeleton_search_post_state::State,
     St::Uri: skeleton_search_post_state::IsSet,
@@ -1700,28 +1773,39 @@ pub mod skeleton_search_starter_pack_state {
 
 /// Builder for constructing an instance of this type.
 pub struct SkeletonSearchStarterPackBuilder<
-    S: BosStr,
     St: skeleton_search_starter_pack_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SkeletonSearchStarterPack<S> {
-    /// Create a new builder for this type.
+impl SkeletonSearchStarterPack<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> SkeletonSearchStarterPackBuilder<
-        S,
         skeleton_search_starter_pack_state::Empty,
+        DefaultStr,
     > {
         SkeletonSearchStarterPackBuilder::new()
     }
 }
 
-impl<
-    S: BosStr,
-> SkeletonSearchStarterPackBuilder<S, skeleton_search_starter_pack_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SkeletonSearchStarterPack<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SkeletonSearchStarterPackBuilder<
+        skeleton_search_starter_pack_state::Empty,
+        S,
+    > {
+        SkeletonSearchStarterPackBuilder::builder()
+    }
+}
+
+impl SkeletonSearchStarterPackBuilder<
+    skeleton_search_starter_pack_state::Empty,
+    DefaultStr,
+> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SkeletonSearchStarterPackBuilder {
             _state: PhantomData,
@@ -1731,7 +1815,20 @@ impl<
     }
 }
 
-impl<S: BosStr, St> SkeletonSearchStarterPackBuilder<S, St>
+impl<
+    S: BosStr,
+> SkeletonSearchStarterPackBuilder<skeleton_search_starter_pack_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SkeletonSearchStarterPackBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SkeletonSearchStarterPackBuilder<St, S>
 where
     St: skeleton_search_starter_pack_state::State,
     St::Uri: skeleton_search_starter_pack_state::IsUnset,
@@ -1741,8 +1838,8 @@ where
         mut self,
         value: impl Into<AtUri<S>>,
     ) -> SkeletonSearchStarterPackBuilder<
-        S,
         skeleton_search_starter_pack_state::SetUri<St>,
+        S,
     > {
         self._fields.0 = Option::Some(value.into());
         SkeletonSearchStarterPackBuilder {
@@ -1753,7 +1850,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonSearchStarterPackBuilder<S, St>
+impl<St, S: BosStr> SkeletonSearchStarterPackBuilder<St, S>
 where
     St: skeleton_search_starter_pack_state::State,
     St::Uri: skeleton_search_starter_pack_state::IsSet,
@@ -1787,110 +1884,113 @@ pub mod skeleton_trend_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Link;
-        type StartedAt;
         type Dids;
         type DisplayName;
+        type Link;
         type PostCount;
+        type StartedAt;
         type Topic;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Link = Unset;
-        type StartedAt = Unset;
         type Dids = Unset;
         type DisplayName = Unset;
+        type Link = Unset;
         type PostCount = Unset;
+        type StartedAt = Unset;
         type Topic = Unset;
-    }
-    ///State transition - sets the `link` field to Set
-    pub struct SetLink<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetLink<St> {}
-    impl<St: State> State for SetLink<St> {
-        type Link = Set<members::link>;
-        type StartedAt = St::StartedAt;
-        type Dids = St::Dids;
-        type DisplayName = St::DisplayName;
-        type PostCount = St::PostCount;
-        type Topic = St::Topic;
-    }
-    ///State transition - sets the `started_at` field to Set
-    pub struct SetStartedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetStartedAt<St> {}
-    impl<St: State> State for SetStartedAt<St> {
-        type Link = St::Link;
-        type StartedAt = Set<members::started_at>;
-        type Dids = St::Dids;
-        type DisplayName = St::DisplayName;
-        type PostCount = St::PostCount;
-        type Topic = St::Topic;
     }
     ///State transition - sets the `dids` field to Set
     pub struct SetDids<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDids<St> {}
     impl<St: State> State for SetDids<St> {
-        type Link = St::Link;
-        type StartedAt = St::StartedAt;
         type Dids = Set<members::dids>;
         type DisplayName = St::DisplayName;
+        type Link = St::Link;
         type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
         type Topic = St::Topic;
     }
     ///State transition - sets the `display_name` field to Set
     pub struct SetDisplayName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDisplayName<St> {}
     impl<St: State> State for SetDisplayName<St> {
-        type Link = St::Link;
-        type StartedAt = St::StartedAt;
         type Dids = St::Dids;
         type DisplayName = Set<members::display_name>;
+        type Link = St::Link;
         type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
+        type Topic = St::Topic;
+    }
+    ///State transition - sets the `link` field to Set
+    pub struct SetLink<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetLink<St> {}
+    impl<St: State> State for SetLink<St> {
+        type Dids = St::Dids;
+        type DisplayName = St::DisplayName;
+        type Link = Set<members::link>;
+        type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
         type Topic = St::Topic;
     }
     ///State transition - sets the `post_count` field to Set
     pub struct SetPostCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPostCount<St> {}
     impl<St: State> State for SetPostCount<St> {
-        type Link = St::Link;
-        type StartedAt = St::StartedAt;
         type Dids = St::Dids;
         type DisplayName = St::DisplayName;
+        type Link = St::Link;
         type PostCount = Set<members::post_count>;
+        type StartedAt = St::StartedAt;
+        type Topic = St::Topic;
+    }
+    ///State transition - sets the `started_at` field to Set
+    pub struct SetStartedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetStartedAt<St> {}
+    impl<St: State> State for SetStartedAt<St> {
+        type Dids = St::Dids;
+        type DisplayName = St::DisplayName;
+        type Link = St::Link;
+        type PostCount = St::PostCount;
+        type StartedAt = Set<members::started_at>;
         type Topic = St::Topic;
     }
     ///State transition - sets the `topic` field to Set
     pub struct SetTopic<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTopic<St> {}
     impl<St: State> State for SetTopic<St> {
-        type Link = St::Link;
-        type StartedAt = St::StartedAt;
         type Dids = St::Dids;
         type DisplayName = St::DisplayName;
+        type Link = St::Link;
         type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
         type Topic = Set<members::topic>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `link` field
-        pub struct link(());
-        ///Marker type for the `started_at` field
-        pub struct started_at(());
         ///Marker type for the `dids` field
         pub struct dids(());
         ///Marker type for the `display_name` field
         pub struct display_name(());
+        ///Marker type for the `link` field
+        pub struct link(());
         ///Marker type for the `post_count` field
         pub struct post_count(());
+        ///Marker type for the `started_at` field
+        pub struct started_at(());
         ///Marker type for the `topic` field
         pub struct topic(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SkeletonTrendBuilder<S: BosStr, St: skeleton_trend_state::State> {
+pub struct SkeletonTrendBuilder<
+    St: skeleton_trend_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<S>,
@@ -1905,15 +2005,22 @@ pub struct SkeletonTrendBuilder<S: BosStr, St: skeleton_trend_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SkeletonTrend<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SkeletonTrendBuilder<S, skeleton_trend_state::Empty> {
+impl SkeletonTrend<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SkeletonTrendBuilder<skeleton_trend_state::Empty, DefaultStr> {
         SkeletonTrendBuilder::new()
     }
 }
 
-impl<S: BosStr> SkeletonTrendBuilder<S, skeleton_trend_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SkeletonTrend<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SkeletonTrendBuilder<skeleton_trend_state::Empty, S> {
+        SkeletonTrendBuilder::builder()
+    }
+}
+
+impl SkeletonTrendBuilder<skeleton_trend_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SkeletonTrendBuilder {
             _state: PhantomData,
@@ -1923,7 +2030,18 @@ impl<S: BosStr> SkeletonTrendBuilder<S, skeleton_trend_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: skeleton_trend_state::State> SkeletonTrendBuilder<S, St> {
+impl<S: BosStr> SkeletonTrendBuilder<skeleton_trend_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SkeletonTrendBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: skeleton_trend_state::State, S: BosStr> SkeletonTrendBuilder<St, S> {
     /// Set the `category` field (optional)
     pub fn category(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -1936,7 +2054,7 @@ impl<S: BosStr, St: skeleton_trend_state::State> SkeletonTrendBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> SkeletonTrendBuilder<S, St>
+impl<St, S: BosStr> SkeletonTrendBuilder<St, S>
 where
     St: skeleton_trend_state::State,
     St::Dids: skeleton_trend_state::IsUnset,
@@ -1945,7 +2063,7 @@ where
     pub fn dids(
         mut self,
         value: impl Into<Vec<Did<S>>>,
-    ) -> SkeletonTrendBuilder<S, skeleton_trend_state::SetDids<St>> {
+    ) -> SkeletonTrendBuilder<skeleton_trend_state::SetDids<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SkeletonTrendBuilder {
             _state: PhantomData,
@@ -1955,7 +2073,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonTrendBuilder<S, St>
+impl<St, S: BosStr> SkeletonTrendBuilder<St, S>
 where
     St: skeleton_trend_state::State,
     St::DisplayName: skeleton_trend_state::IsUnset,
@@ -1964,7 +2082,7 @@ where
     pub fn display_name(
         mut self,
         value: impl Into<S>,
-    ) -> SkeletonTrendBuilder<S, skeleton_trend_state::SetDisplayName<St>> {
+    ) -> SkeletonTrendBuilder<skeleton_trend_state::SetDisplayName<St>, S> {
         self._fields.2 = Option::Some(value.into());
         SkeletonTrendBuilder {
             _state: PhantomData,
@@ -1974,7 +2092,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonTrendBuilder<S, St>
+impl<St, S: BosStr> SkeletonTrendBuilder<St, S>
 where
     St: skeleton_trend_state::State,
     St::Link: skeleton_trend_state::IsUnset,
@@ -1983,7 +2101,7 @@ where
     pub fn link(
         mut self,
         value: impl Into<S>,
-    ) -> SkeletonTrendBuilder<S, skeleton_trend_state::SetLink<St>> {
+    ) -> SkeletonTrendBuilder<skeleton_trend_state::SetLink<St>, S> {
         self._fields.3 = Option::Some(value.into());
         SkeletonTrendBuilder {
             _state: PhantomData,
@@ -1993,7 +2111,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonTrendBuilder<S, St>
+impl<St, S: BosStr> SkeletonTrendBuilder<St, S>
 where
     St: skeleton_trend_state::State,
     St::PostCount: skeleton_trend_state::IsUnset,
@@ -2002,7 +2120,7 @@ where
     pub fn post_count(
         mut self,
         value: impl Into<i64>,
-    ) -> SkeletonTrendBuilder<S, skeleton_trend_state::SetPostCount<St>> {
+    ) -> SkeletonTrendBuilder<skeleton_trend_state::SetPostCount<St>, S> {
         self._fields.4 = Option::Some(value.into());
         SkeletonTrendBuilder {
             _state: PhantomData,
@@ -2012,7 +2130,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonTrendBuilder<S, St>
+impl<St, S: BosStr> SkeletonTrendBuilder<St, S>
 where
     St: skeleton_trend_state::State,
     St::StartedAt: skeleton_trend_state::IsUnset,
@@ -2021,7 +2139,7 @@ where
     pub fn started_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> SkeletonTrendBuilder<S, skeleton_trend_state::SetStartedAt<St>> {
+    ) -> SkeletonTrendBuilder<skeleton_trend_state::SetStartedAt<St>, S> {
         self._fields.5 = Option::Some(value.into());
         SkeletonTrendBuilder {
             _state: PhantomData,
@@ -2031,7 +2149,7 @@ where
     }
 }
 
-impl<S: BosStr, St: skeleton_trend_state::State> SkeletonTrendBuilder<S, St> {
+impl<St: skeleton_trend_state::State, S: BosStr> SkeletonTrendBuilder<St, S> {
     /// Set the `status` field (optional)
     pub fn status(mut self, value: impl Into<Option<SkeletonTrendStatus<S>>>) -> Self {
         self._fields.6 = value.into();
@@ -2044,7 +2162,7 @@ impl<S: BosStr, St: skeleton_trend_state::State> SkeletonTrendBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> SkeletonTrendBuilder<S, St>
+impl<St, S: BosStr> SkeletonTrendBuilder<St, S>
 where
     St: skeleton_trend_state::State,
     St::Topic: skeleton_trend_state::IsUnset,
@@ -2053,7 +2171,7 @@ where
     pub fn topic(
         mut self,
         value: impl Into<S>,
-    ) -> SkeletonTrendBuilder<S, skeleton_trend_state::SetTopic<St>> {
+    ) -> SkeletonTrendBuilder<skeleton_trend_state::SetTopic<St>, S> {
         self._fields.7 = Option::Some(value.into());
         SkeletonTrendBuilder {
             _state: PhantomData,
@@ -2063,14 +2181,14 @@ where
     }
 }
 
-impl<S: BosStr, St> SkeletonTrendBuilder<S, St>
+impl<St, S: BosStr> SkeletonTrendBuilder<St, S>
 where
     St: skeleton_trend_state::State,
-    St::Link: skeleton_trend_state::IsSet,
-    St::StartedAt: skeleton_trend_state::IsSet,
     St::Dids: skeleton_trend_state::IsSet,
     St::DisplayName: skeleton_trend_state::IsSet,
+    St::Link: skeleton_trend_state::IsSet,
     St::PostCount: skeleton_trend_state::IsSet,
+    St::StartedAt: skeleton_trend_state::IsSet,
     St::Topic: skeleton_trend_state::IsSet,
 {
     /// Build the final struct.
@@ -2139,21 +2257,34 @@ pub mod thread_item_blocked_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ThreadItemBlockedBuilder<S: BosStr, St: thread_item_blocked_state::State> {
+pub struct ThreadItemBlockedBuilder<
+    St: thread_item_blocked_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<BlockedAuthor<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ThreadItemBlocked<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ThreadItemBlockedBuilder<S, thread_item_blocked_state::Empty> {
+impl ThreadItemBlocked<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ThreadItemBlockedBuilder<
+        thread_item_blocked_state::Empty,
+        DefaultStr,
+    > {
         ThreadItemBlockedBuilder::new()
     }
 }
 
-impl<S: BosStr> ThreadItemBlockedBuilder<S, thread_item_blocked_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ThreadItemBlocked<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ThreadItemBlockedBuilder<thread_item_blocked_state::Empty, S> {
+        ThreadItemBlockedBuilder::builder()
+    }
+}
+
+impl ThreadItemBlockedBuilder<thread_item_blocked_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ThreadItemBlockedBuilder {
             _state: PhantomData,
@@ -2163,7 +2294,18 @@ impl<S: BosStr> ThreadItemBlockedBuilder<S, thread_item_blocked_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ThreadItemBlockedBuilder<S, St>
+impl<S: BosStr> ThreadItemBlockedBuilder<thread_item_blocked_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ThreadItemBlockedBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ThreadItemBlockedBuilder<St, S>
 where
     St: thread_item_blocked_state::State,
     St::Author: thread_item_blocked_state::IsUnset,
@@ -2172,7 +2314,7 @@ where
     pub fn author(
         mut self,
         value: impl Into<BlockedAuthor<S>>,
-    ) -> ThreadItemBlockedBuilder<S, thread_item_blocked_state::SetAuthor<St>> {
+    ) -> ThreadItemBlockedBuilder<thread_item_blocked_state::SetAuthor<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ThreadItemBlockedBuilder {
             _state: PhantomData,
@@ -2182,7 +2324,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadItemBlockedBuilder<S, St>
+impl<St, S: BosStr> ThreadItemBlockedBuilder<St, S>
 where
     St: thread_item_blocked_state::State,
     St::Author: thread_item_blocked_state::IsSet,
@@ -2216,110 +2358,113 @@ pub mod thread_item_post_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type MoreParents;
-        type OpThread;
-        type MoreReplies;
-        type Post;
         type HiddenByThreadgate;
+        type MoreParents;
+        type MoreReplies;
         type MutedByViewer;
+        type OpThread;
+        type Post;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type MoreParents = Unset;
-        type OpThread = Unset;
-        type MoreReplies = Unset;
-        type Post = Unset;
         type HiddenByThreadgate = Unset;
+        type MoreParents = Unset;
+        type MoreReplies = Unset;
         type MutedByViewer = Unset;
-    }
-    ///State transition - sets the `more_parents` field to Set
-    pub struct SetMoreParents<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMoreParents<St> {}
-    impl<St: State> State for SetMoreParents<St> {
-        type MoreParents = Set<members::more_parents>;
-        type OpThread = St::OpThread;
-        type MoreReplies = St::MoreReplies;
-        type Post = St::Post;
-        type HiddenByThreadgate = St::HiddenByThreadgate;
-        type MutedByViewer = St::MutedByViewer;
-    }
-    ///State transition - sets the `op_thread` field to Set
-    pub struct SetOpThread<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetOpThread<St> {}
-    impl<St: State> State for SetOpThread<St> {
-        type MoreParents = St::MoreParents;
-        type OpThread = Set<members::op_thread>;
-        type MoreReplies = St::MoreReplies;
-        type Post = St::Post;
-        type HiddenByThreadgate = St::HiddenByThreadgate;
-        type MutedByViewer = St::MutedByViewer;
-    }
-    ///State transition - sets the `more_replies` field to Set
-    pub struct SetMoreReplies<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMoreReplies<St> {}
-    impl<St: State> State for SetMoreReplies<St> {
-        type MoreParents = St::MoreParents;
-        type OpThread = St::OpThread;
-        type MoreReplies = Set<members::more_replies>;
-        type Post = St::Post;
-        type HiddenByThreadgate = St::HiddenByThreadgate;
-        type MutedByViewer = St::MutedByViewer;
-    }
-    ///State transition - sets the `post` field to Set
-    pub struct SetPost<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPost<St> {}
-    impl<St: State> State for SetPost<St> {
-        type MoreParents = St::MoreParents;
-        type OpThread = St::OpThread;
-        type MoreReplies = St::MoreReplies;
-        type Post = Set<members::post>;
-        type HiddenByThreadgate = St::HiddenByThreadgate;
-        type MutedByViewer = St::MutedByViewer;
+        type OpThread = Unset;
+        type Post = Unset;
     }
     ///State transition - sets the `hidden_by_threadgate` field to Set
     pub struct SetHiddenByThreadgate<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetHiddenByThreadgate<St> {}
     impl<St: State> State for SetHiddenByThreadgate<St> {
-        type MoreParents = St::MoreParents;
-        type OpThread = St::OpThread;
-        type MoreReplies = St::MoreReplies;
-        type Post = St::Post;
         type HiddenByThreadgate = Set<members::hidden_by_threadgate>;
+        type MoreParents = St::MoreParents;
+        type MoreReplies = St::MoreReplies;
         type MutedByViewer = St::MutedByViewer;
+        type OpThread = St::OpThread;
+        type Post = St::Post;
+    }
+    ///State transition - sets the `more_parents` field to Set
+    pub struct SetMoreParents<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMoreParents<St> {}
+    impl<St: State> State for SetMoreParents<St> {
+        type HiddenByThreadgate = St::HiddenByThreadgate;
+        type MoreParents = Set<members::more_parents>;
+        type MoreReplies = St::MoreReplies;
+        type MutedByViewer = St::MutedByViewer;
+        type OpThread = St::OpThread;
+        type Post = St::Post;
+    }
+    ///State transition - sets the `more_replies` field to Set
+    pub struct SetMoreReplies<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMoreReplies<St> {}
+    impl<St: State> State for SetMoreReplies<St> {
+        type HiddenByThreadgate = St::HiddenByThreadgate;
+        type MoreParents = St::MoreParents;
+        type MoreReplies = Set<members::more_replies>;
+        type MutedByViewer = St::MutedByViewer;
+        type OpThread = St::OpThread;
+        type Post = St::Post;
     }
     ///State transition - sets the `muted_by_viewer` field to Set
     pub struct SetMutedByViewer<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMutedByViewer<St> {}
     impl<St: State> State for SetMutedByViewer<St> {
-        type MoreParents = St::MoreParents;
-        type OpThread = St::OpThread;
-        type MoreReplies = St::MoreReplies;
-        type Post = St::Post;
         type HiddenByThreadgate = St::HiddenByThreadgate;
+        type MoreParents = St::MoreParents;
+        type MoreReplies = St::MoreReplies;
         type MutedByViewer = Set<members::muted_by_viewer>;
+        type OpThread = St::OpThread;
+        type Post = St::Post;
+    }
+    ///State transition - sets the `op_thread` field to Set
+    pub struct SetOpThread<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetOpThread<St> {}
+    impl<St: State> State for SetOpThread<St> {
+        type HiddenByThreadgate = St::HiddenByThreadgate;
+        type MoreParents = St::MoreParents;
+        type MoreReplies = St::MoreReplies;
+        type MutedByViewer = St::MutedByViewer;
+        type OpThread = Set<members::op_thread>;
+        type Post = St::Post;
+    }
+    ///State transition - sets the `post` field to Set
+    pub struct SetPost<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPost<St> {}
+    impl<St: State> State for SetPost<St> {
+        type HiddenByThreadgate = St::HiddenByThreadgate;
+        type MoreParents = St::MoreParents;
+        type MoreReplies = St::MoreReplies;
+        type MutedByViewer = St::MutedByViewer;
+        type OpThread = St::OpThread;
+        type Post = Set<members::post>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `more_parents` field
-        pub struct more_parents(());
-        ///Marker type for the `op_thread` field
-        pub struct op_thread(());
-        ///Marker type for the `more_replies` field
-        pub struct more_replies(());
-        ///Marker type for the `post` field
-        pub struct post(());
         ///Marker type for the `hidden_by_threadgate` field
         pub struct hidden_by_threadgate(());
+        ///Marker type for the `more_parents` field
+        pub struct more_parents(());
+        ///Marker type for the `more_replies` field
+        pub struct more_replies(());
         ///Marker type for the `muted_by_viewer` field
         pub struct muted_by_viewer(());
+        ///Marker type for the `op_thread` field
+        pub struct op_thread(());
+        ///Marker type for the `post` field
+        pub struct post(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ThreadItemPostBuilder<S: BosStr, St: thread_item_post_state::State> {
+pub struct ThreadItemPostBuilder<
+    St: thread_item_post_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<bool>,
@@ -2332,15 +2477,22 @@ pub struct ThreadItemPostBuilder<S: BosStr, St: thread_item_post_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ThreadItemPost<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ThreadItemPostBuilder<S, thread_item_post_state::Empty> {
+impl ThreadItemPost<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ThreadItemPostBuilder<thread_item_post_state::Empty, DefaultStr> {
         ThreadItemPostBuilder::new()
     }
 }
 
-impl<S: BosStr> ThreadItemPostBuilder<S, thread_item_post_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ThreadItemPost<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ThreadItemPostBuilder<thread_item_post_state::Empty, S> {
+        ThreadItemPostBuilder::builder()
+    }
+}
+
+impl ThreadItemPostBuilder<thread_item_post_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ThreadItemPostBuilder {
             _state: PhantomData,
@@ -2350,7 +2502,18 @@ impl<S: BosStr> ThreadItemPostBuilder<S, thread_item_post_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ThreadItemPostBuilder<S, St>
+impl<S: BosStr> ThreadItemPostBuilder<thread_item_post_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ThreadItemPostBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ThreadItemPostBuilder<St, S>
 where
     St: thread_item_post_state::State,
     St::HiddenByThreadgate: thread_item_post_state::IsUnset,
@@ -2359,7 +2522,7 @@ where
     pub fn hidden_by_threadgate(
         mut self,
         value: impl Into<bool>,
-    ) -> ThreadItemPostBuilder<S, thread_item_post_state::SetHiddenByThreadgate<St>> {
+    ) -> ThreadItemPostBuilder<thread_item_post_state::SetHiddenByThreadgate<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ThreadItemPostBuilder {
             _state: PhantomData,
@@ -2369,7 +2532,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadItemPostBuilder<S, St>
+impl<St, S: BosStr> ThreadItemPostBuilder<St, S>
 where
     St: thread_item_post_state::State,
     St::MoreParents: thread_item_post_state::IsUnset,
@@ -2378,7 +2541,7 @@ where
     pub fn more_parents(
         mut self,
         value: impl Into<bool>,
-    ) -> ThreadItemPostBuilder<S, thread_item_post_state::SetMoreParents<St>> {
+    ) -> ThreadItemPostBuilder<thread_item_post_state::SetMoreParents<St>, S> {
         self._fields.1 = Option::Some(value.into());
         ThreadItemPostBuilder {
             _state: PhantomData,
@@ -2388,7 +2551,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadItemPostBuilder<S, St>
+impl<St, S: BosStr> ThreadItemPostBuilder<St, S>
 where
     St: thread_item_post_state::State,
     St::MoreReplies: thread_item_post_state::IsUnset,
@@ -2397,7 +2560,7 @@ where
     pub fn more_replies(
         mut self,
         value: impl Into<i64>,
-    ) -> ThreadItemPostBuilder<S, thread_item_post_state::SetMoreReplies<St>> {
+    ) -> ThreadItemPostBuilder<thread_item_post_state::SetMoreReplies<St>, S> {
         self._fields.2 = Option::Some(value.into());
         ThreadItemPostBuilder {
             _state: PhantomData,
@@ -2407,7 +2570,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadItemPostBuilder<S, St>
+impl<St, S: BosStr> ThreadItemPostBuilder<St, S>
 where
     St: thread_item_post_state::State,
     St::MutedByViewer: thread_item_post_state::IsUnset,
@@ -2416,7 +2579,7 @@ where
     pub fn muted_by_viewer(
         mut self,
         value: impl Into<bool>,
-    ) -> ThreadItemPostBuilder<S, thread_item_post_state::SetMutedByViewer<St>> {
+    ) -> ThreadItemPostBuilder<thread_item_post_state::SetMutedByViewer<St>, S> {
         self._fields.3 = Option::Some(value.into());
         ThreadItemPostBuilder {
             _state: PhantomData,
@@ -2426,7 +2589,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadItemPostBuilder<S, St>
+impl<St, S: BosStr> ThreadItemPostBuilder<St, S>
 where
     St: thread_item_post_state::State,
     St::OpThread: thread_item_post_state::IsUnset,
@@ -2435,7 +2598,7 @@ where
     pub fn op_thread(
         mut self,
         value: impl Into<bool>,
-    ) -> ThreadItemPostBuilder<S, thread_item_post_state::SetOpThread<St>> {
+    ) -> ThreadItemPostBuilder<thread_item_post_state::SetOpThread<St>, S> {
         self._fields.4 = Option::Some(value.into());
         ThreadItemPostBuilder {
             _state: PhantomData,
@@ -2445,7 +2608,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadItemPostBuilder<S, St>
+impl<St, S: BosStr> ThreadItemPostBuilder<St, S>
 where
     St: thread_item_post_state::State,
     St::Post: thread_item_post_state::IsUnset,
@@ -2454,7 +2617,7 @@ where
     pub fn post(
         mut self,
         value: impl Into<PostView<S>>,
-    ) -> ThreadItemPostBuilder<S, thread_item_post_state::SetPost<St>> {
+    ) -> ThreadItemPostBuilder<thread_item_post_state::SetPost<St>, S> {
         self._fields.5 = Option::Some(value.into());
         ThreadItemPostBuilder {
             _state: PhantomData,
@@ -2464,15 +2627,15 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadItemPostBuilder<S, St>
+impl<St, S: BosStr> ThreadItemPostBuilder<St, S>
 where
     St: thread_item_post_state::State,
-    St::MoreParents: thread_item_post_state::IsSet,
-    St::OpThread: thread_item_post_state::IsSet,
-    St::MoreReplies: thread_item_post_state::IsSet,
-    St::Post: thread_item_post_state::IsSet,
     St::HiddenByThreadgate: thread_item_post_state::IsSet,
+    St::MoreParents: thread_item_post_state::IsSet,
+    St::MoreReplies: thread_item_post_state::IsSet,
     St::MutedByViewer: thread_item_post_state::IsSet,
+    St::OpThread: thread_item_post_state::IsSet,
+    St::Post: thread_item_post_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ThreadItemPost<S> {
@@ -2513,110 +2676,110 @@ pub mod trend_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type PostCount;
-        type Link;
-        type Topic;
-        type DisplayName;
-        type StartedAt;
         type Actors;
+        type DisplayName;
+        type Link;
+        type PostCount;
+        type StartedAt;
+        type Topic;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type PostCount = Unset;
-        type Link = Unset;
-        type Topic = Unset;
-        type DisplayName = Unset;
-        type StartedAt = Unset;
         type Actors = Unset;
-    }
-    ///State transition - sets the `post_count` field to Set
-    pub struct SetPostCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPostCount<St> {}
-    impl<St: State> State for SetPostCount<St> {
-        type PostCount = Set<members::post_count>;
-        type Link = St::Link;
-        type Topic = St::Topic;
-        type DisplayName = St::DisplayName;
-        type StartedAt = St::StartedAt;
-        type Actors = St::Actors;
-    }
-    ///State transition - sets the `link` field to Set
-    pub struct SetLink<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetLink<St> {}
-    impl<St: State> State for SetLink<St> {
-        type PostCount = St::PostCount;
-        type Link = Set<members::link>;
-        type Topic = St::Topic;
-        type DisplayName = St::DisplayName;
-        type StartedAt = St::StartedAt;
-        type Actors = St::Actors;
-    }
-    ///State transition - sets the `topic` field to Set
-    pub struct SetTopic<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTopic<St> {}
-    impl<St: State> State for SetTopic<St> {
-        type PostCount = St::PostCount;
-        type Link = St::Link;
-        type Topic = Set<members::topic>;
-        type DisplayName = St::DisplayName;
-        type StartedAt = St::StartedAt;
-        type Actors = St::Actors;
-    }
-    ///State transition - sets the `display_name` field to Set
-    pub struct SetDisplayName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDisplayName<St> {}
-    impl<St: State> State for SetDisplayName<St> {
-        type PostCount = St::PostCount;
-        type Link = St::Link;
-        type Topic = St::Topic;
-        type DisplayName = Set<members::display_name>;
-        type StartedAt = St::StartedAt;
-        type Actors = St::Actors;
-    }
-    ///State transition - sets the `started_at` field to Set
-    pub struct SetStartedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetStartedAt<St> {}
-    impl<St: State> State for SetStartedAt<St> {
-        type PostCount = St::PostCount;
-        type Link = St::Link;
-        type Topic = St::Topic;
-        type DisplayName = St::DisplayName;
-        type StartedAt = Set<members::started_at>;
-        type Actors = St::Actors;
+        type DisplayName = Unset;
+        type Link = Unset;
+        type PostCount = Unset;
+        type StartedAt = Unset;
+        type Topic = Unset;
     }
     ///State transition - sets the `actors` field to Set
     pub struct SetActors<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetActors<St> {}
     impl<St: State> State for SetActors<St> {
-        type PostCount = St::PostCount;
-        type Link = St::Link;
-        type Topic = St::Topic;
-        type DisplayName = St::DisplayName;
-        type StartedAt = St::StartedAt;
         type Actors = Set<members::actors>;
+        type DisplayName = St::DisplayName;
+        type Link = St::Link;
+        type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
+        type Topic = St::Topic;
+    }
+    ///State transition - sets the `display_name` field to Set
+    pub struct SetDisplayName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDisplayName<St> {}
+    impl<St: State> State for SetDisplayName<St> {
+        type Actors = St::Actors;
+        type DisplayName = Set<members::display_name>;
+        type Link = St::Link;
+        type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
+        type Topic = St::Topic;
+    }
+    ///State transition - sets the `link` field to Set
+    pub struct SetLink<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetLink<St> {}
+    impl<St: State> State for SetLink<St> {
+        type Actors = St::Actors;
+        type DisplayName = St::DisplayName;
+        type Link = Set<members::link>;
+        type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
+        type Topic = St::Topic;
+    }
+    ///State transition - sets the `post_count` field to Set
+    pub struct SetPostCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPostCount<St> {}
+    impl<St: State> State for SetPostCount<St> {
+        type Actors = St::Actors;
+        type DisplayName = St::DisplayName;
+        type Link = St::Link;
+        type PostCount = Set<members::post_count>;
+        type StartedAt = St::StartedAt;
+        type Topic = St::Topic;
+    }
+    ///State transition - sets the `started_at` field to Set
+    pub struct SetStartedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetStartedAt<St> {}
+    impl<St: State> State for SetStartedAt<St> {
+        type Actors = St::Actors;
+        type DisplayName = St::DisplayName;
+        type Link = St::Link;
+        type PostCount = St::PostCount;
+        type StartedAt = Set<members::started_at>;
+        type Topic = St::Topic;
+    }
+    ///State transition - sets the `topic` field to Set
+    pub struct SetTopic<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTopic<St> {}
+    impl<St: State> State for SetTopic<St> {
+        type Actors = St::Actors;
+        type DisplayName = St::DisplayName;
+        type Link = St::Link;
+        type PostCount = St::PostCount;
+        type StartedAt = St::StartedAt;
+        type Topic = Set<members::topic>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `post_count` field
-        pub struct post_count(());
-        ///Marker type for the `link` field
-        pub struct link(());
-        ///Marker type for the `topic` field
-        pub struct topic(());
-        ///Marker type for the `display_name` field
-        pub struct display_name(());
-        ///Marker type for the `started_at` field
-        pub struct started_at(());
         ///Marker type for the `actors` field
         pub struct actors(());
+        ///Marker type for the `display_name` field
+        pub struct display_name(());
+        ///Marker type for the `link` field
+        pub struct link(());
+        ///Marker type for the `post_count` field
+        pub struct post_count(());
+        ///Marker type for the `started_at` field
+        pub struct started_at(());
+        ///Marker type for the `topic` field
+        pub struct topic(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct TrendViewBuilder<S: BosStr, St: trend_view_state::State> {
+pub struct TrendViewBuilder<St: trend_view_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Vec<ProfileViewBasic<S>>>,
@@ -2631,15 +2794,22 @@ pub struct TrendViewBuilder<S: BosStr, St: trend_view_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> TrendView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> TrendViewBuilder<S, trend_view_state::Empty> {
+impl TrendView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> TrendViewBuilder<trend_view_state::Empty, DefaultStr> {
         TrendViewBuilder::new()
     }
 }
 
-impl<S: BosStr> TrendViewBuilder<S, trend_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> TrendView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> TrendViewBuilder<trend_view_state::Empty, S> {
+        TrendViewBuilder::builder()
+    }
+}
+
+impl TrendViewBuilder<trend_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         TrendViewBuilder {
             _state: PhantomData,
@@ -2649,7 +2819,18 @@ impl<S: BosStr> TrendViewBuilder<S, trend_view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> TrendViewBuilder<S, St>
+impl<S: BosStr> TrendViewBuilder<trend_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        TrendViewBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> TrendViewBuilder<St, S>
 where
     St: trend_view_state::State,
     St::Actors: trend_view_state::IsUnset,
@@ -2658,7 +2839,7 @@ where
     pub fn actors(
         mut self,
         value: impl Into<Vec<ProfileViewBasic<S>>>,
-    ) -> TrendViewBuilder<S, trend_view_state::SetActors<St>> {
+    ) -> TrendViewBuilder<trend_view_state::SetActors<St>, S> {
         self._fields.0 = Option::Some(value.into());
         TrendViewBuilder {
             _state: PhantomData,
@@ -2668,7 +2849,7 @@ where
     }
 }
 
-impl<S: BosStr, St: trend_view_state::State> TrendViewBuilder<S, St> {
+impl<St: trend_view_state::State, S: BosStr> TrendViewBuilder<St, S> {
     /// Set the `category` field (optional)
     pub fn category(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -2681,7 +2862,7 @@ impl<S: BosStr, St: trend_view_state::State> TrendViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> TrendViewBuilder<S, St>
+impl<St, S: BosStr> TrendViewBuilder<St, S>
 where
     St: trend_view_state::State,
     St::DisplayName: trend_view_state::IsUnset,
@@ -2690,7 +2871,7 @@ where
     pub fn display_name(
         mut self,
         value: impl Into<S>,
-    ) -> TrendViewBuilder<S, trend_view_state::SetDisplayName<St>> {
+    ) -> TrendViewBuilder<trend_view_state::SetDisplayName<St>, S> {
         self._fields.2 = Option::Some(value.into());
         TrendViewBuilder {
             _state: PhantomData,
@@ -2700,7 +2881,7 @@ where
     }
 }
 
-impl<S: BosStr, St> TrendViewBuilder<S, St>
+impl<St, S: BosStr> TrendViewBuilder<St, S>
 where
     St: trend_view_state::State,
     St::Link: trend_view_state::IsUnset,
@@ -2709,7 +2890,7 @@ where
     pub fn link(
         mut self,
         value: impl Into<S>,
-    ) -> TrendViewBuilder<S, trend_view_state::SetLink<St>> {
+    ) -> TrendViewBuilder<trend_view_state::SetLink<St>, S> {
         self._fields.3 = Option::Some(value.into());
         TrendViewBuilder {
             _state: PhantomData,
@@ -2719,7 +2900,7 @@ where
     }
 }
 
-impl<S: BosStr, St> TrendViewBuilder<S, St>
+impl<St, S: BosStr> TrendViewBuilder<St, S>
 where
     St: trend_view_state::State,
     St::PostCount: trend_view_state::IsUnset,
@@ -2728,7 +2909,7 @@ where
     pub fn post_count(
         mut self,
         value: impl Into<i64>,
-    ) -> TrendViewBuilder<S, trend_view_state::SetPostCount<St>> {
+    ) -> TrendViewBuilder<trend_view_state::SetPostCount<St>, S> {
         self._fields.4 = Option::Some(value.into());
         TrendViewBuilder {
             _state: PhantomData,
@@ -2738,7 +2919,7 @@ where
     }
 }
 
-impl<S: BosStr, St> TrendViewBuilder<S, St>
+impl<St, S: BosStr> TrendViewBuilder<St, S>
 where
     St: trend_view_state::State,
     St::StartedAt: trend_view_state::IsUnset,
@@ -2747,7 +2928,7 @@ where
     pub fn started_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> TrendViewBuilder<S, trend_view_state::SetStartedAt<St>> {
+    ) -> TrendViewBuilder<trend_view_state::SetStartedAt<St>, S> {
         self._fields.5 = Option::Some(value.into());
         TrendViewBuilder {
             _state: PhantomData,
@@ -2757,7 +2938,7 @@ where
     }
 }
 
-impl<S: BosStr, St: trend_view_state::State> TrendViewBuilder<S, St> {
+impl<St: trend_view_state::State, S: BosStr> TrendViewBuilder<St, S> {
     /// Set the `status` field (optional)
     pub fn status(mut self, value: impl Into<Option<TrendViewStatus<S>>>) -> Self {
         self._fields.6 = value.into();
@@ -2770,7 +2951,7 @@ impl<S: BosStr, St: trend_view_state::State> TrendViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> TrendViewBuilder<S, St>
+impl<St, S: BosStr> TrendViewBuilder<St, S>
 where
     St: trend_view_state::State,
     St::Topic: trend_view_state::IsUnset,
@@ -2779,7 +2960,7 @@ where
     pub fn topic(
         mut self,
         value: impl Into<S>,
-    ) -> TrendViewBuilder<S, trend_view_state::SetTopic<St>> {
+    ) -> TrendViewBuilder<trend_view_state::SetTopic<St>, S> {
         self._fields.7 = Option::Some(value.into());
         TrendViewBuilder {
             _state: PhantomData,
@@ -2789,15 +2970,15 @@ where
     }
 }
 
-impl<S: BosStr, St> TrendViewBuilder<S, St>
+impl<St, S: BosStr> TrendViewBuilder<St, S>
 where
     St: trend_view_state::State,
-    St::PostCount: trend_view_state::IsSet,
-    St::Link: trend_view_state::IsSet,
-    St::Topic: trend_view_state::IsSet,
-    St::DisplayName: trend_view_state::IsSet,
-    St::StartedAt: trend_view_state::IsSet,
     St::Actors: trend_view_state::IsSet,
+    St::DisplayName: trend_view_state::IsSet,
+    St::Link: trend_view_state::IsSet,
+    St::PostCount: trend_view_state::IsSet,
+    St::StartedAt: trend_view_state::IsSet,
+    St::Topic: trend_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> TrendView<S> {

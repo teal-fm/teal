@@ -25,13 +25,13 @@ pub struct ListOptions<S: BosStr = DefaultStr> {
     pub cursor: Option<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keys: Option<Vec<Nsid<S>>>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prefix: Option<S>,
-    ///Defaults to `"instance"`.
+    /// Defaults to `"instance"`.
     #[serde(default = "_default_scope")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<S>,
@@ -48,7 +48,9 @@ pub struct ListOptionsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.setting.listOptions
+/** Response marker for the `tools.ozone.setting.listOptions` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ListOptionsOutput<S>` for this endpoint.*/
 pub struct ListOptionsResponse;
 impl jacquard_common::xrpc::XrpcResp for ListOptionsResponse {
     const NSID: &'static str = "tools.ozone.setting.listOptions";
@@ -63,7 +65,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ListOptions<S> {
     type Response = ListOptionsResponse;
 }
 
-/// Endpoint type for tools.ozone.setting.listOptions
+/** Endpoint marker for the `tools.ozone.setting.listOptions` query.
+
+Path: `/xrpc/tools.ozone.setting.listOptions`. The request payload type is `ListOptions<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ListOptionsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ListOptionsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.setting.listOptions";
@@ -100,21 +104,28 @@ pub mod list_options_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ListOptionsBuilder<S: BosStr, St: list_options_state::State> {
+pub struct ListOptionsBuilder<St: list_options_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Vec<Nsid<S>>>, Option<i64>, Option<S>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ListOptions<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ListOptionsBuilder<S, list_options_state::Empty> {
+impl ListOptions<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListOptionsBuilder<list_options_state::Empty, DefaultStr> {
         ListOptionsBuilder::new()
     }
 }
 
-impl<S: BosStr> ListOptionsBuilder<S, list_options_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ListOptions<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListOptionsBuilder<list_options_state::Empty, S> {
+        ListOptionsBuilder::builder()
+    }
+}
+
+impl ListOptionsBuilder<list_options_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListOptionsBuilder {
             _state: PhantomData,
@@ -124,7 +135,18 @@ impl<S: BosStr> ListOptionsBuilder<S, list_options_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
+impl<S: BosStr> ListOptionsBuilder<list_options_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListOptionsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: list_options_state::State, S: BosStr> ListOptionsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -137,7 +159,7 @@ impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
+impl<St: list_options_state::State, S: BosStr> ListOptionsBuilder<St, S> {
     /// Set the `keys` field (optional)
     pub fn keys(mut self, value: impl Into<Option<Vec<Nsid<S>>>>) -> Self {
         self._fields.1 = value.into();
@@ -150,7 +172,7 @@ impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
+impl<St: list_options_state::State, S: BosStr> ListOptionsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.2 = value.into();
@@ -163,7 +185,7 @@ impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
+impl<St: list_options_state::State, S: BosStr> ListOptionsBuilder<St, S> {
     /// Set the `prefix` field (optional)
     pub fn prefix(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.3 = value.into();
@@ -176,7 +198,7 @@ impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
+impl<St: list_options_state::State, S: BosStr> ListOptionsBuilder<St, S> {
     /// Set the `scope` field (optional)
     pub fn scope(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -189,7 +211,7 @@ impl<S: BosStr, St: list_options_state::State> ListOptionsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ListOptionsBuilder<S, St>
+impl<St, S: BosStr> ListOptionsBuilder<St, S>
 where
     St: list_options_state::State,
 {

@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `fm.teal.actor` Lexicon namespace/module.
 pub mod get_profile;
 pub mod get_profiles;
 pub mod profile;

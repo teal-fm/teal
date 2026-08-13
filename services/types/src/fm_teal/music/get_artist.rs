@@ -36,7 +36,9 @@ pub struct GetArtistOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.music.getArtist
+/** Response marker for the `fm.teal.music.getArtist` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetArtistOutput<S>` for this endpoint.*/
 pub struct GetArtistResponse;
 impl jacquard_common::xrpc::XrpcResp for GetArtistResponse {
     const NSID: &'static str = "fm.teal.music.getArtist";
@@ -51,7 +53,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetArtist<S> {
     type Response = GetArtistResponse;
 }
 
-/// Endpoint type for fm.teal.music.getArtist
+/** Endpoint marker for the `fm.teal.music.getArtist` query.
+
+Path: `/xrpc/fm.teal.music.getArtist`. The request payload type is `GetArtist<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetArtistRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetArtistRequest {
     const PATH: &'static str = "/xrpc/fm.teal.music.getArtist";
@@ -80,21 +84,28 @@ pub mod get_artist_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetArtistBuilder<S: BosStr, St: get_artist_state::State> {
+pub struct GetArtistBuilder<St: get_artist_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<UriValue<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetArtist<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetArtistBuilder<S, get_artist_state::Empty> {
+impl GetArtist<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetArtistBuilder<get_artist_state::Empty, DefaultStr> {
         GetArtistBuilder::new()
     }
 }
 
-impl<S: BosStr> GetArtistBuilder<S, get_artist_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetArtist<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetArtistBuilder<get_artist_state::Empty, S> {
+        GetArtistBuilder::builder()
+    }
+}
+
+impl GetArtistBuilder<get_artist_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetArtistBuilder {
             _state: PhantomData,
@@ -104,7 +115,18 @@ impl<S: BosStr> GetArtistBuilder<S, get_artist_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_artist_state::State> GetArtistBuilder<S, St> {
+impl<S: BosStr> GetArtistBuilder<get_artist_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetArtistBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_artist_state::State, S: BosStr> GetArtistBuilder<St, S> {
     /// Set the `mbid` field (optional)
     pub fn mbid(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -117,7 +139,7 @@ impl<S: BosStr, St: get_artist_state::State> GetArtistBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_artist_state::State> GetArtistBuilder<S, St> {
+impl<St: get_artist_state::State, S: BosStr> GetArtistBuilder<St, S> {
     /// Set the `name` field (optional)
     pub fn name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -130,7 +152,7 @@ impl<S: BosStr, St: get_artist_state::State> GetArtistBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetArtistBuilder<S, St>
+impl<St, S: BosStr> GetArtistBuilder<St, S>
 where
     St: get_artist_state::State,
 {

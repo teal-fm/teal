@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `tools.ozone.signature` Lexicon namespace/module.
 pub mod find_correlation;
 pub mod find_related_accounts;
 pub mod search_accounts;

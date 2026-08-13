@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `app.bsky.actor` Lexicon namespace/module.
 pub mod get_preferences;
 pub mod get_profile;
 pub mod get_profiles;
@@ -2498,21 +2499,34 @@ pub mod adult_content_pref_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AdultContentPrefBuilder<S: BosStr, St: adult_content_pref_state::State> {
+pub struct AdultContentPrefBuilder<
+    St: adult_content_pref_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<bool>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AdultContentPref<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AdultContentPrefBuilder<S, adult_content_pref_state::Empty> {
+impl AdultContentPref<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AdultContentPrefBuilder<
+        adult_content_pref_state::Empty,
+        DefaultStr,
+    > {
         AdultContentPrefBuilder::new()
     }
 }
 
-impl<S: BosStr> AdultContentPrefBuilder<S, adult_content_pref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AdultContentPref<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AdultContentPrefBuilder<adult_content_pref_state::Empty, S> {
+        AdultContentPrefBuilder::builder()
+    }
+}
+
+impl AdultContentPrefBuilder<adult_content_pref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AdultContentPrefBuilder {
             _state: PhantomData,
@@ -2522,7 +2536,18 @@ impl<S: BosStr> AdultContentPrefBuilder<S, adult_content_pref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> AdultContentPrefBuilder<S, St>
+impl<S: BosStr> AdultContentPrefBuilder<adult_content_pref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AdultContentPrefBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> AdultContentPrefBuilder<St, S>
 where
     St: adult_content_pref_state::State,
     St::Enabled: adult_content_pref_state::IsUnset,
@@ -2531,7 +2556,7 @@ where
     pub fn enabled(
         mut self,
         value: impl Into<bool>,
-    ) -> AdultContentPrefBuilder<S, adult_content_pref_state::SetEnabled<St>> {
+    ) -> AdultContentPrefBuilder<adult_content_pref_state::SetEnabled<St>, S> {
         self._fields.0 = Option::Some(value.into());
         AdultContentPrefBuilder {
             _state: PhantomData,
@@ -2541,7 +2566,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AdultContentPrefBuilder<S, St>
+impl<St, S: BosStr> AdultContentPrefBuilder<St, S>
 where
     St: adult_content_pref_state::State,
     St::Enabled: adult_content_pref_state::IsSet,
@@ -4234,21 +4259,31 @@ pub mod hidden_posts_pref_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct HiddenPostsPrefBuilder<S: BosStr, St: hidden_posts_pref_state::State> {
+pub struct HiddenPostsPrefBuilder<
+    St: hidden_posts_pref_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<AtUri<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> HiddenPostsPref<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> HiddenPostsPrefBuilder<S, hidden_posts_pref_state::Empty> {
+impl HiddenPostsPref<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> HiddenPostsPrefBuilder<hidden_posts_pref_state::Empty, DefaultStr> {
         HiddenPostsPrefBuilder::new()
     }
 }
 
-impl<S: BosStr> HiddenPostsPrefBuilder<S, hidden_posts_pref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> HiddenPostsPref<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> HiddenPostsPrefBuilder<hidden_posts_pref_state::Empty, S> {
+        HiddenPostsPrefBuilder::builder()
+    }
+}
+
+impl HiddenPostsPrefBuilder<hidden_posts_pref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         HiddenPostsPrefBuilder {
             _state: PhantomData,
@@ -4258,7 +4293,18 @@ impl<S: BosStr> HiddenPostsPrefBuilder<S, hidden_posts_pref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> HiddenPostsPrefBuilder<S, St>
+impl<S: BosStr> HiddenPostsPrefBuilder<hidden_posts_pref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        HiddenPostsPrefBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> HiddenPostsPrefBuilder<St, S>
 where
     St: hidden_posts_pref_state::State,
     St::Items: hidden_posts_pref_state::IsUnset,
@@ -4267,7 +4313,7 @@ where
     pub fn items(
         mut self,
         value: impl Into<Vec<AtUri<S>>>,
-    ) -> HiddenPostsPrefBuilder<S, hidden_posts_pref_state::SetItems<St>> {
+    ) -> HiddenPostsPrefBuilder<hidden_posts_pref_state::SetItems<St>, S> {
         self._fields.0 = Option::Some(value.into());
         HiddenPostsPrefBuilder {
             _state: PhantomData,
@@ -4277,7 +4323,7 @@ where
     }
 }
 
-impl<S: BosStr, St> HiddenPostsPrefBuilder<S, St>
+impl<St, S: BosStr> HiddenPostsPrefBuilder<St, S>
 where
     St: hidden_posts_pref_state::State,
     St::Items: hidden_posts_pref_state::IsSet,
@@ -4334,21 +4380,31 @@ pub mod interests_pref_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct InterestsPrefBuilder<S: BosStr, St: interests_pref_state::State> {
+pub struct InterestsPrefBuilder<
+    St: interests_pref_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> InterestsPref<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> InterestsPrefBuilder<S, interests_pref_state::Empty> {
+impl InterestsPref<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> InterestsPrefBuilder<interests_pref_state::Empty, DefaultStr> {
         InterestsPrefBuilder::new()
     }
 }
 
-impl<S: BosStr> InterestsPrefBuilder<S, interests_pref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> InterestsPref<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> InterestsPrefBuilder<interests_pref_state::Empty, S> {
+        InterestsPrefBuilder::builder()
+    }
+}
+
+impl InterestsPrefBuilder<interests_pref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         InterestsPrefBuilder {
             _state: PhantomData,
@@ -4358,7 +4414,18 @@ impl<S: BosStr> InterestsPrefBuilder<S, interests_pref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> InterestsPrefBuilder<S, St>
+impl<S: BosStr> InterestsPrefBuilder<interests_pref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        InterestsPrefBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> InterestsPrefBuilder<St, S>
 where
     St: interests_pref_state::State,
     St::Tags: interests_pref_state::IsUnset,
@@ -4367,7 +4434,7 @@ where
     pub fn tags(
         mut self,
         value: impl Into<Vec<S>>,
-    ) -> InterestsPrefBuilder<S, interests_pref_state::SetTags<St>> {
+    ) -> InterestsPrefBuilder<interests_pref_state::SetTags<St>, S> {
         self._fields.0 = Option::Some(value.into());
         InterestsPrefBuilder {
             _state: PhantomData,
@@ -4377,7 +4444,7 @@ where
     }
 }
 
-impl<S: BosStr, St> InterestsPrefBuilder<S, St>
+impl<St, S: BosStr> InterestsPrefBuilder<St, S>
 where
     St: interests_pref_state::State,
     St::Tags: interests_pref_state::IsSet,
@@ -4446,21 +4513,31 @@ pub mod known_followers_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct KnownFollowersBuilder<S: BosStr, St: known_followers_state::State> {
+pub struct KnownFollowersBuilder<
+    St: known_followers_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<i64>, Option<Vec<actor::ProfileViewBasic<S>>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> KnownFollowers<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> KnownFollowersBuilder<S, known_followers_state::Empty> {
+impl KnownFollowers<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> KnownFollowersBuilder<known_followers_state::Empty, DefaultStr> {
         KnownFollowersBuilder::new()
     }
 }
 
-impl<S: BosStr> KnownFollowersBuilder<S, known_followers_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> KnownFollowers<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> KnownFollowersBuilder<known_followers_state::Empty, S> {
+        KnownFollowersBuilder::builder()
+    }
+}
+
+impl KnownFollowersBuilder<known_followers_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         KnownFollowersBuilder {
             _state: PhantomData,
@@ -4470,7 +4547,18 @@ impl<S: BosStr> KnownFollowersBuilder<S, known_followers_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> KnownFollowersBuilder<S, St>
+impl<S: BosStr> KnownFollowersBuilder<known_followers_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        KnownFollowersBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> KnownFollowersBuilder<St, S>
 where
     St: known_followers_state::State,
     St::Count: known_followers_state::IsUnset,
@@ -4479,7 +4567,7 @@ where
     pub fn count(
         mut self,
         value: impl Into<i64>,
-    ) -> KnownFollowersBuilder<S, known_followers_state::SetCount<St>> {
+    ) -> KnownFollowersBuilder<known_followers_state::SetCount<St>, S> {
         self._fields.0 = Option::Some(value.into());
         KnownFollowersBuilder {
             _state: PhantomData,
@@ -4489,7 +4577,7 @@ where
     }
 }
 
-impl<S: BosStr, St> KnownFollowersBuilder<S, St>
+impl<St, S: BosStr> KnownFollowersBuilder<St, S>
 where
     St: known_followers_state::State,
     St::Followers: known_followers_state::IsUnset,
@@ -4498,7 +4586,7 @@ where
     pub fn followers(
         mut self,
         value: impl Into<Vec<actor::ProfileViewBasic<S>>>,
-    ) -> KnownFollowersBuilder<S, known_followers_state::SetFollowers<St>> {
+    ) -> KnownFollowersBuilder<known_followers_state::SetFollowers<St>, S> {
         self._fields.1 = Option::Some(value.into());
         KnownFollowersBuilder {
             _state: PhantomData,
@@ -4508,7 +4596,7 @@ where
     }
 }
 
-impl<S: BosStr, St> KnownFollowersBuilder<S, St>
+impl<St, S: BosStr> KnownFollowersBuilder<St, S>
 where
     St: known_followers_state::State,
     St::Count: known_followers_state::IsSet,
@@ -4568,21 +4656,31 @@ pub mod labeler_pref_item_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct LabelerPrefItemBuilder<S: BosStr, St: labeler_pref_item_state::State> {
+pub struct LabelerPrefItemBuilder<
+    St: labeler_pref_item_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> LabelerPrefItem<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> LabelerPrefItemBuilder<S, labeler_pref_item_state::Empty> {
+impl LabelerPrefItem<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> LabelerPrefItemBuilder<labeler_pref_item_state::Empty, DefaultStr> {
         LabelerPrefItemBuilder::new()
     }
 }
 
-impl<S: BosStr> LabelerPrefItemBuilder<S, labeler_pref_item_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> LabelerPrefItem<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LabelerPrefItemBuilder<labeler_pref_item_state::Empty, S> {
+        LabelerPrefItemBuilder::builder()
+    }
+}
+
+impl LabelerPrefItemBuilder<labeler_pref_item_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LabelerPrefItemBuilder {
             _state: PhantomData,
@@ -4592,7 +4690,18 @@ impl<S: BosStr> LabelerPrefItemBuilder<S, labeler_pref_item_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> LabelerPrefItemBuilder<S, St>
+impl<S: BosStr> LabelerPrefItemBuilder<labeler_pref_item_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LabelerPrefItemBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> LabelerPrefItemBuilder<St, S>
 where
     St: labeler_pref_item_state::State,
     St::Did: labeler_pref_item_state::IsUnset,
@@ -4601,7 +4710,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> LabelerPrefItemBuilder<S, labeler_pref_item_state::SetDid<St>> {
+    ) -> LabelerPrefItemBuilder<labeler_pref_item_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         LabelerPrefItemBuilder {
             _state: PhantomData,
@@ -4611,7 +4720,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelerPrefItemBuilder<S, St>
+impl<St, S: BosStr> LabelerPrefItemBuilder<St, S>
 where
     St: labeler_pref_item_state::State,
     St::Did: labeler_pref_item_state::IsSet,
@@ -4668,21 +4777,28 @@ pub mod labelers_pref_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct LabelersPrefBuilder<S: BosStr, St: labelers_pref_state::State> {
+pub struct LabelersPrefBuilder<St: labelers_pref_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<actor::LabelerPrefItem<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> LabelersPref<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> LabelersPrefBuilder<S, labelers_pref_state::Empty> {
+impl LabelersPref<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> LabelersPrefBuilder<labelers_pref_state::Empty, DefaultStr> {
         LabelersPrefBuilder::new()
     }
 }
 
-impl<S: BosStr> LabelersPrefBuilder<S, labelers_pref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> LabelersPref<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LabelersPrefBuilder<labelers_pref_state::Empty, S> {
+        LabelersPrefBuilder::builder()
+    }
+}
+
+impl LabelersPrefBuilder<labelers_pref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LabelersPrefBuilder {
             _state: PhantomData,
@@ -4692,7 +4808,18 @@ impl<S: BosStr> LabelersPrefBuilder<S, labelers_pref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> LabelersPrefBuilder<S, St>
+impl<S: BosStr> LabelersPrefBuilder<labelers_pref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LabelersPrefBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> LabelersPrefBuilder<St, S>
 where
     St: labelers_pref_state::State,
     St::Labelers: labelers_pref_state::IsUnset,
@@ -4701,7 +4828,7 @@ where
     pub fn labelers(
         mut self,
         value: impl Into<Vec<actor::LabelerPrefItem<S>>>,
-    ) -> LabelersPrefBuilder<S, labelers_pref_state::SetLabelers<St>> {
+    ) -> LabelersPrefBuilder<labelers_pref_state::SetLabelers<St>, S> {
         self._fields.0 = Option::Some(value.into());
         LabelersPrefBuilder {
             _state: PhantomData,
@@ -4711,7 +4838,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LabelersPrefBuilder<S, St>
+impl<St, S: BosStr> LabelersPrefBuilder<St, S>
 where
     St: labelers_pref_state::State,
     St::Labelers: labelers_pref_state::IsSet,
@@ -4759,42 +4886,42 @@ pub mod muted_word_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Value;
         type Targets;
+        type Value;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Value = Unset;
         type Targets = Unset;
-    }
-    ///State transition - sets the `value` field to Set
-    pub struct SetValue<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetValue<St> {}
-    impl<St: State> State for SetValue<St> {
-        type Value = Set<members::value>;
-        type Targets = St::Targets;
+        type Value = Unset;
     }
     ///State transition - sets the `targets` field to Set
     pub struct SetTargets<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTargets<St> {}
     impl<St: State> State for SetTargets<St> {
-        type Value = St::Value;
         type Targets = Set<members::targets>;
+        type Value = St::Value;
+    }
+    ///State transition - sets the `value` field to Set
+    pub struct SetValue<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetValue<St> {}
+    impl<St: State> State for SetValue<St> {
+        type Targets = St::Targets;
+        type Value = Set<members::value>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `value` field
-        pub struct value(());
         ///Marker type for the `targets` field
         pub struct targets(());
+        ///Marker type for the `value` field
+        pub struct value(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct MutedWordBuilder<S: BosStr, St: muted_word_state::State> {
+pub struct MutedWordBuilder<St: muted_word_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<MutedWordActorTarget<S>>,
@@ -4806,15 +4933,22 @@ pub struct MutedWordBuilder<S: BosStr, St: muted_word_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> MutedWord<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> MutedWordBuilder<S, muted_word_state::Empty> {
+impl MutedWord<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> MutedWordBuilder<muted_word_state::Empty, DefaultStr> {
         MutedWordBuilder::new()
     }
 }
 
-impl<S: BosStr> MutedWordBuilder<S, muted_word_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> MutedWord<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> MutedWordBuilder<muted_word_state::Empty, S> {
+        MutedWordBuilder::builder()
+    }
+}
+
+impl MutedWordBuilder<muted_word_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         MutedWordBuilder {
             _state: PhantomData,
@@ -4824,7 +4958,18 @@ impl<S: BosStr> MutedWordBuilder<S, muted_word_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: muted_word_state::State> MutedWordBuilder<S, St> {
+impl<S: BosStr> MutedWordBuilder<muted_word_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        MutedWordBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: muted_word_state::State, S: BosStr> MutedWordBuilder<St, S> {
     /// Set the `actorTarget` field (optional)
     pub fn actor_target(
         mut self,
@@ -4840,7 +4985,7 @@ impl<S: BosStr, St: muted_word_state::State> MutedWordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: muted_word_state::State> MutedWordBuilder<S, St> {
+impl<St: muted_word_state::State, S: BosStr> MutedWordBuilder<St, S> {
     /// Set the `expiresAt` field (optional)
     pub fn expires_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.1 = value.into();
@@ -4853,7 +4998,7 @@ impl<S: BosStr, St: muted_word_state::State> MutedWordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: muted_word_state::State> MutedWordBuilder<S, St> {
+impl<St: muted_word_state::State, S: BosStr> MutedWordBuilder<St, S> {
     /// Set the `id` field (optional)
     pub fn id(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -4866,7 +5011,7 @@ impl<S: BosStr, St: muted_word_state::State> MutedWordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> MutedWordBuilder<S, St>
+impl<St, S: BosStr> MutedWordBuilder<St, S>
 where
     St: muted_word_state::State,
     St::Targets: muted_word_state::IsUnset,
@@ -4875,7 +5020,7 @@ where
     pub fn targets(
         mut self,
         value: impl Into<Vec<actor::MutedWordTarget<S>>>,
-    ) -> MutedWordBuilder<S, muted_word_state::SetTargets<St>> {
+    ) -> MutedWordBuilder<muted_word_state::SetTargets<St>, S> {
         self._fields.3 = Option::Some(value.into());
         MutedWordBuilder {
             _state: PhantomData,
@@ -4885,7 +5030,7 @@ where
     }
 }
 
-impl<S: BosStr, St> MutedWordBuilder<S, St>
+impl<St, S: BosStr> MutedWordBuilder<St, S>
 where
     St: muted_word_state::State,
     St::Value: muted_word_state::IsUnset,
@@ -4894,7 +5039,7 @@ where
     pub fn value(
         mut self,
         value: impl Into<S>,
-    ) -> MutedWordBuilder<S, muted_word_state::SetValue<St>> {
+    ) -> MutedWordBuilder<muted_word_state::SetValue<St>, S> {
         self._fields.4 = Option::Some(value.into());
         MutedWordBuilder {
             _state: PhantomData,
@@ -4904,11 +5049,11 @@ where
     }
 }
 
-impl<S: BosStr, St> MutedWordBuilder<S, St>
+impl<St, S: BosStr> MutedWordBuilder<St, S>
 where
     St: muted_word_state::State,
-    St::Value: muted_word_state::IsSet,
     St::Targets: muted_word_state::IsSet,
+    St::Value: muted_word_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> MutedWord<S> {
@@ -4970,21 +5115,31 @@ pub mod muted_words_pref_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct MutedWordsPrefBuilder<S: BosStr, St: muted_words_pref_state::State> {
+pub struct MutedWordsPrefBuilder<
+    St: muted_words_pref_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<actor::MutedWord<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> MutedWordsPref<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> MutedWordsPrefBuilder<S, muted_words_pref_state::Empty> {
+impl MutedWordsPref<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> MutedWordsPrefBuilder<muted_words_pref_state::Empty, DefaultStr> {
         MutedWordsPrefBuilder::new()
     }
 }
 
-impl<S: BosStr> MutedWordsPrefBuilder<S, muted_words_pref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> MutedWordsPref<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> MutedWordsPrefBuilder<muted_words_pref_state::Empty, S> {
+        MutedWordsPrefBuilder::builder()
+    }
+}
+
+impl MutedWordsPrefBuilder<muted_words_pref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         MutedWordsPrefBuilder {
             _state: PhantomData,
@@ -4994,7 +5149,18 @@ impl<S: BosStr> MutedWordsPrefBuilder<S, muted_words_pref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> MutedWordsPrefBuilder<S, St>
+impl<S: BosStr> MutedWordsPrefBuilder<muted_words_pref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        MutedWordsPrefBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> MutedWordsPrefBuilder<St, S>
 where
     St: muted_words_pref_state::State,
     St::Items: muted_words_pref_state::IsUnset,
@@ -5003,7 +5169,7 @@ where
     pub fn items(
         mut self,
         value: impl Into<Vec<actor::MutedWord<S>>>,
-    ) -> MutedWordsPrefBuilder<S, muted_words_pref_state::SetItems<St>> {
+    ) -> MutedWordsPrefBuilder<muted_words_pref_state::SetItems<St>, S> {
         self._fields.0 = Option::Some(value.into());
         MutedWordsPrefBuilder {
             _state: PhantomData,
@@ -5013,7 +5179,7 @@ where
     }
 }
 
-impl<S: BosStr, St> MutedWordsPrefBuilder<S, St>
+impl<St, S: BosStr> MutedWordsPrefBuilder<St, S>
 where
     St: muted_words_pref_state::State,
     St::Items: muted_words_pref_state::IsSet,
@@ -5051,56 +5217,63 @@ pub mod nux_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Id;
         type Completed;
+        type Id;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Id = Unset;
         type Completed = Unset;
-    }
-    ///State transition - sets the `id` field to Set
-    pub struct SetId<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetId<St> {}
-    impl<St: State> State for SetId<St> {
-        type Id = Set<members::id>;
-        type Completed = St::Completed;
+        type Id = Unset;
     }
     ///State transition - sets the `completed` field to Set
     pub struct SetCompleted<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCompleted<St> {}
     impl<St: State> State for SetCompleted<St> {
-        type Id = St::Id;
         type Completed = Set<members::completed>;
+        type Id = St::Id;
+    }
+    ///State transition - sets the `id` field to Set
+    pub struct SetId<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetId<St> {}
+    impl<St: State> State for SetId<St> {
+        type Completed = St::Completed;
+        type Id = Set<members::id>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `id` field
-        pub struct id(());
         ///Marker type for the `completed` field
         pub struct completed(());
+        ///Marker type for the `id` field
+        pub struct id(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct NuxBuilder<S: BosStr, St: nux_state::State> {
+pub struct NuxBuilder<St: nux_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<bool>, Option<S>, Option<Datetime>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Nux<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> NuxBuilder<S, nux_state::Empty> {
+impl Nux<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> NuxBuilder<nux_state::Empty, DefaultStr> {
         NuxBuilder::new()
     }
 }
 
-impl<S: BosStr> NuxBuilder<S, nux_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Nux<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> NuxBuilder<nux_state::Empty, S> {
+        NuxBuilder::builder()
+    }
+}
+
+impl NuxBuilder<nux_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         NuxBuilder {
             _state: PhantomData,
@@ -5110,7 +5283,18 @@ impl<S: BosStr> NuxBuilder<S, nux_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> NuxBuilder<S, St>
+impl<S: BosStr> NuxBuilder<nux_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        NuxBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> NuxBuilder<St, S>
 where
     St: nux_state::State,
     St::Completed: nux_state::IsUnset,
@@ -5119,7 +5303,7 @@ where
     pub fn completed(
         mut self,
         value: impl Into<bool>,
-    ) -> NuxBuilder<S, nux_state::SetCompleted<St>> {
+    ) -> NuxBuilder<nux_state::SetCompleted<St>, S> {
         self._fields.0 = Option::Some(value.into());
         NuxBuilder {
             _state: PhantomData,
@@ -5129,7 +5313,7 @@ where
     }
 }
 
-impl<S: BosStr, St: nux_state::State> NuxBuilder<S, St> {
+impl<St: nux_state::State, S: BosStr> NuxBuilder<St, S> {
     /// Set the `data` field (optional)
     pub fn data(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -5142,7 +5326,7 @@ impl<S: BosStr, St: nux_state::State> NuxBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: nux_state::State> NuxBuilder<S, St> {
+impl<St: nux_state::State, S: BosStr> NuxBuilder<St, S> {
     /// Set the `expiresAt` field (optional)
     pub fn expires_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.2 = value.into();
@@ -5155,13 +5339,13 @@ impl<S: BosStr, St: nux_state::State> NuxBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> NuxBuilder<S, St>
+impl<St, S: BosStr> NuxBuilder<St, S>
 where
     St: nux_state::State,
     St::Id: nux_state::IsUnset,
 {
     /// Set the `id` field (required)
-    pub fn id(mut self, value: impl Into<S>) -> NuxBuilder<S, nux_state::SetId<St>> {
+    pub fn id(mut self, value: impl Into<S>) -> NuxBuilder<nux_state::SetId<St>, S> {
         self._fields.3 = Option::Some(value.into());
         NuxBuilder {
             _state: PhantomData,
@@ -5171,11 +5355,11 @@ where
     }
 }
 
-impl<S: BosStr, St> NuxBuilder<S, St>
+impl<St, S: BosStr> NuxBuilder<St, S>
 where
     St: nux_state::State,
-    St::Id: nux_state::IsSet,
     St::Completed: nux_state::IsSet,
+    St::Id: nux_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Nux<S> {
@@ -5209,62 +5393,72 @@ pub mod profile_associated_germ_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type ShowButtonTo;
         type MessageMeUrl;
+        type ShowButtonTo;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type ShowButtonTo = Unset;
         type MessageMeUrl = Unset;
-    }
-    ///State transition - sets the `show_button_to` field to Set
-    pub struct SetShowButtonTo<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetShowButtonTo<St> {}
-    impl<St: State> State for SetShowButtonTo<St> {
-        type ShowButtonTo = Set<members::show_button_to>;
-        type MessageMeUrl = St::MessageMeUrl;
+        type ShowButtonTo = Unset;
     }
     ///State transition - sets the `message_me_url` field to Set
     pub struct SetMessageMeUrl<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMessageMeUrl<St> {}
     impl<St: State> State for SetMessageMeUrl<St> {
-        type ShowButtonTo = St::ShowButtonTo;
         type MessageMeUrl = Set<members::message_me_url>;
+        type ShowButtonTo = St::ShowButtonTo;
+    }
+    ///State transition - sets the `show_button_to` field to Set
+    pub struct SetShowButtonTo<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetShowButtonTo<St> {}
+    impl<St: State> State for SetShowButtonTo<St> {
+        type MessageMeUrl = St::MessageMeUrl;
+        type ShowButtonTo = Set<members::show_button_to>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `show_button_to` field
-        pub struct show_button_to(());
         ///Marker type for the `message_me_url` field
         pub struct message_me_url(());
+        ///Marker type for the `show_button_to` field
+        pub struct show_button_to(());
     }
 }
 
 /// Builder for constructing an instance of this type.
 pub struct ProfileAssociatedGermBuilder<
-    S: BosStr,
     St: profile_associated_germ_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<UriValue<S>>, Option<ProfileAssociatedGermShowButtonTo<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ProfileAssociatedGerm<S> {
-    /// Create a new builder for this type.
+impl ProfileAssociatedGerm<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> ProfileAssociatedGermBuilder<
-        S,
         profile_associated_germ_state::Empty,
+        DefaultStr,
     > {
         ProfileAssociatedGermBuilder::new()
     }
 }
 
-impl<S: BosStr> ProfileAssociatedGermBuilder<S, profile_associated_germ_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ProfileAssociatedGerm<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ProfileAssociatedGermBuilder<
+        profile_associated_germ_state::Empty,
+        S,
+    > {
+        ProfileAssociatedGermBuilder::builder()
+    }
+}
+
+impl ProfileAssociatedGermBuilder<profile_associated_germ_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ProfileAssociatedGermBuilder {
             _state: PhantomData,
@@ -5274,7 +5468,18 @@ impl<S: BosStr> ProfileAssociatedGermBuilder<S, profile_associated_germ_state::E
     }
 }
 
-impl<S: BosStr, St> ProfileAssociatedGermBuilder<S, St>
+impl<S: BosStr> ProfileAssociatedGermBuilder<profile_associated_germ_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ProfileAssociatedGermBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ProfileAssociatedGermBuilder<St, S>
 where
     St: profile_associated_germ_state::State,
     St::MessageMeUrl: profile_associated_germ_state::IsUnset,
@@ -5284,8 +5489,8 @@ where
         mut self,
         value: impl Into<UriValue<S>>,
     ) -> ProfileAssociatedGermBuilder<
-        S,
         profile_associated_germ_state::SetMessageMeUrl<St>,
+        S,
     > {
         self._fields.0 = Option::Some(value.into());
         ProfileAssociatedGermBuilder {
@@ -5296,7 +5501,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ProfileAssociatedGermBuilder<S, St>
+impl<St, S: BosStr> ProfileAssociatedGermBuilder<St, S>
 where
     St: profile_associated_germ_state::State,
     St::ShowButtonTo: profile_associated_germ_state::IsUnset,
@@ -5306,8 +5511,8 @@ where
         mut self,
         value: impl Into<ProfileAssociatedGermShowButtonTo<S>>,
     ) -> ProfileAssociatedGermBuilder<
-        S,
         profile_associated_germ_state::SetShowButtonTo<St>,
+        S,
     > {
         self._fields.1 = Option::Some(value.into());
         ProfileAssociatedGermBuilder {
@@ -5318,11 +5523,11 @@ where
     }
 }
 
-impl<S: BosStr, St> ProfileAssociatedGermBuilder<S, St>
+impl<St, S: BosStr> ProfileAssociatedGermBuilder<St, S>
 where
     St: profile_associated_germ_state::State,
-    St::ShowButtonTo: profile_associated_germ_state::IsSet,
     St::MessageMeUrl: profile_associated_germ_state::IsSet,
+    St::ShowButtonTo: profile_associated_germ_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ProfileAssociatedGerm<S> {
@@ -5355,42 +5560,42 @@ pub mod profile_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Handle;
         type Did;
+        type Handle;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Handle = Unset;
         type Did = Unset;
-    }
-    ///State transition - sets the `handle` field to Set
-    pub struct SetHandle<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetHandle<St> {}
-    impl<St: State> State for SetHandle<St> {
-        type Handle = Set<members::handle>;
-        type Did = St::Did;
+        type Handle = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type Handle = St::Handle;
         type Did = Set<members::did>;
+        type Handle = St::Handle;
+    }
+    ///State transition - sets the `handle` field to Set
+    pub struct SetHandle<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetHandle<St> {}
+    impl<St: State> State for SetHandle<St> {
+        type Did = St::Did;
+        type Handle = Set<members::handle>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `handle` field
-        pub struct handle(());
         ///Marker type for the `did` field
         pub struct did(());
+        ///Marker type for the `handle` field
+        pub struct handle(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ProfileViewBuilder<S: BosStr, St: profile_view_state::State> {
+pub struct ProfileViewBuilder<St: profile_view_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<actor::ProfileAssociated<S>>,
@@ -5411,15 +5616,22 @@ pub struct ProfileViewBuilder<S: BosStr, St: profile_view_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ProfileView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ProfileViewBuilder<S, profile_view_state::Empty> {
+impl ProfileView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ProfileViewBuilder<profile_view_state::Empty, DefaultStr> {
         ProfileViewBuilder::new()
     }
 }
 
-impl<S: BosStr> ProfileViewBuilder<S, profile_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ProfileView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ProfileViewBuilder<profile_view_state::Empty, S> {
+        ProfileViewBuilder::builder()
+    }
+}
+
+impl ProfileViewBuilder<profile_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ProfileViewBuilder {
             _state: PhantomData,
@@ -5444,7 +5656,33 @@ impl<S: BosStr> ProfileViewBuilder<S, profile_view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<S: BosStr> ProfileViewBuilder<profile_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ProfileViewBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `associated` field (optional)
     pub fn associated(
         mut self,
@@ -5463,7 +5701,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `avatar` field (optional)
     pub fn avatar(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -5476,7 +5714,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `createdAt` field (optional)
     pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.2 = value.into();
@@ -5489,7 +5727,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `debug` field (optional)
     pub fn debug(mut self, value: impl Into<Option<Data<S>>>) -> Self {
         self._fields.3 = value.into();
@@ -5502,7 +5740,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -5515,7 +5753,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ProfileViewBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBuilder<St, S>
 where
     St: profile_view_state::State,
     St::Did: profile_view_state::IsUnset,
@@ -5524,7 +5762,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> ProfileViewBuilder<S, profile_view_state::SetDid<St>> {
+    ) -> ProfileViewBuilder<profile_view_state::SetDid<St>, S> {
         self._fields.5 = Option::Some(value.into());
         ProfileViewBuilder {
             _state: PhantomData,
@@ -5534,7 +5772,7 @@ where
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `displayName` field (optional)
     pub fn display_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.6 = value.into();
@@ -5547,7 +5785,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ProfileViewBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBuilder<St, S>
 where
     St: profile_view_state::State,
     St::Handle: profile_view_state::IsUnset,
@@ -5556,7 +5794,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> ProfileViewBuilder<S, profile_view_state::SetHandle<St>> {
+    ) -> ProfileViewBuilder<profile_view_state::SetHandle<St>, S> {
         self._fields.7 = Option::Some(value.into());
         ProfileViewBuilder {
             _state: PhantomData,
@@ -5566,7 +5804,7 @@ where
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `indexedAt` field (optional)
     pub fn indexed_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.8 = value.into();
@@ -5579,7 +5817,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<Vec<Label<S>>>>) -> Self {
         self._fields.9 = value.into();
@@ -5592,7 +5830,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `pronouns` field (optional)
     pub fn pronouns(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.10 = value.into();
@@ -5605,7 +5843,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `status` field (optional)
     pub fn status(mut self, value: impl Into<Option<actor::StatusView<S>>>) -> Self {
         self._fields.11 = value.into();
@@ -5618,7 +5856,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `verification` field (optional)
     pub fn verification(
         mut self,
@@ -5637,7 +5875,7 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
+impl<St: profile_view_state::State, S: BosStr> ProfileViewBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<actor::ViewerState<S>>>) -> Self {
         self._fields.13 = value.into();
@@ -5650,11 +5888,11 @@ impl<S: BosStr, St: profile_view_state::State> ProfileViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ProfileViewBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBuilder<St, S>
 where
     St: profile_view_state::State,
-    St::Handle: profile_view_state::IsSet,
     St::Did: profile_view_state::IsSet,
+    St::Handle: profile_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ProfileView<S> {
@@ -5746,7 +5984,10 @@ pub mod profile_view_basic_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ProfileViewBasicBuilder<S: BosStr, St: profile_view_basic_state::State> {
+pub struct ProfileViewBasicBuilder<
+    St: profile_view_basic_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<actor::ProfileAssociated<S>>,
@@ -5765,15 +6006,25 @@ pub struct ProfileViewBasicBuilder<S: BosStr, St: profile_view_basic_state::Stat
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ProfileViewBasic<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ProfileViewBasicBuilder<S, profile_view_basic_state::Empty> {
+impl ProfileViewBasic<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ProfileViewBasicBuilder<
+        profile_view_basic_state::Empty,
+        DefaultStr,
+    > {
         ProfileViewBasicBuilder::new()
     }
 }
 
-impl<S: BosStr> ProfileViewBasicBuilder<S, profile_view_basic_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ProfileViewBasic<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ProfileViewBasicBuilder<profile_view_basic_state::Empty, S> {
+        ProfileViewBasicBuilder::builder()
+    }
+}
+
+impl ProfileViewBasicBuilder<profile_view_basic_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ProfileViewBasicBuilder {
             _state: PhantomData,
@@ -5796,7 +6047,31 @@ impl<S: BosStr> ProfileViewBasicBuilder<S, profile_view_basic_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<S: BosStr> ProfileViewBasicBuilder<profile_view_basic_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ProfileViewBasicBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `associated` field (optional)
     pub fn associated(
         mut self,
@@ -5815,7 +6090,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `avatar` field (optional)
     pub fn avatar(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -5828,7 +6103,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `createdAt` field (optional)
     pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.2 = value.into();
@@ -5841,7 +6116,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `debug` field (optional)
     pub fn debug(mut self, value: impl Into<Option<Data<S>>>) -> Self {
         self._fields.3 = value.into();
@@ -5854,7 +6129,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> ProfileViewBasicBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBasicBuilder<St, S>
 where
     St: profile_view_basic_state::State,
     St::Did: profile_view_basic_state::IsUnset,
@@ -5863,7 +6138,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> ProfileViewBasicBuilder<S, profile_view_basic_state::SetDid<St>> {
+    ) -> ProfileViewBasicBuilder<profile_view_basic_state::SetDid<St>, S> {
         self._fields.4 = Option::Some(value.into());
         ProfileViewBasicBuilder {
             _state: PhantomData,
@@ -5873,7 +6148,7 @@ where
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `displayName` field (optional)
     pub fn display_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.5 = value.into();
@@ -5886,7 +6161,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> ProfileViewBasicBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBasicBuilder<St, S>
 where
     St: profile_view_basic_state::State,
     St::Handle: profile_view_basic_state::IsUnset,
@@ -5895,7 +6170,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> ProfileViewBasicBuilder<S, profile_view_basic_state::SetHandle<St>> {
+    ) -> ProfileViewBasicBuilder<profile_view_basic_state::SetHandle<St>, S> {
         self._fields.6 = Option::Some(value.into());
         ProfileViewBasicBuilder {
             _state: PhantomData,
@@ -5905,7 +6180,7 @@ where
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<Vec<Label<S>>>>) -> Self {
         self._fields.7 = value.into();
@@ -5918,7 +6193,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `pronouns` field (optional)
     pub fn pronouns(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.8 = value.into();
@@ -5931,7 +6206,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `status` field (optional)
     pub fn status(mut self, value: impl Into<Option<actor::StatusView<S>>>) -> Self {
         self._fields.9 = value.into();
@@ -5944,7 +6219,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `verification` field (optional)
     pub fn verification(
         mut self,
@@ -5963,7 +6238,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<actor::ViewerState<S>>>) -> Self {
         self._fields.11 = value.into();
@@ -5976,7 +6251,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> ProfileViewBasicBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBasicBuilder<St, S>
 where
     St: profile_view_basic_state::State,
     St::Did: profile_view_basic_state::IsSet,
@@ -6033,44 +6308,44 @@ pub mod profile_view_detailed_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Handle;
         type Did;
+        type Handle;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Handle = Unset;
         type Did = Unset;
-    }
-    ///State transition - sets the `handle` field to Set
-    pub struct SetHandle<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetHandle<St> {}
-    impl<St: State> State for SetHandle<St> {
-        type Handle = Set<members::handle>;
-        type Did = St::Did;
+        type Handle = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type Handle = St::Handle;
         type Did = Set<members::did>;
+        type Handle = St::Handle;
+    }
+    ///State transition - sets the `handle` field to Set
+    pub struct SetHandle<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetHandle<St> {}
+    impl<St: State> State for SetHandle<St> {
+        type Did = St::Did;
+        type Handle = Set<members::handle>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `handle` field
-        pub struct handle(());
         ///Marker type for the `did` field
         pub struct did(());
+        ///Marker type for the `handle` field
+        pub struct handle(());
     }
 }
 
 /// Builder for constructing an instance of this type.
 pub struct ProfileViewDetailedBuilder<
-    S: BosStr,
     St: profile_view_detailed_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (
@@ -6099,15 +6374,28 @@ pub struct ProfileViewDetailedBuilder<
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ProfileViewDetailed<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ProfileViewDetailedBuilder<S, profile_view_detailed_state::Empty> {
+impl ProfileViewDetailed<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ProfileViewDetailedBuilder<
+        profile_view_detailed_state::Empty,
+        DefaultStr,
+    > {
         ProfileViewDetailedBuilder::new()
     }
 }
 
-impl<S: BosStr> ProfileViewDetailedBuilder<S, profile_view_detailed_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ProfileViewDetailed<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ProfileViewDetailedBuilder<
+        profile_view_detailed_state::Empty,
+        S,
+    > {
+        ProfileViewDetailedBuilder::builder()
+    }
+}
+
+impl ProfileViewDetailedBuilder<profile_view_detailed_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ProfileViewDetailedBuilder {
             _state: PhantomData,
@@ -6139,10 +6427,43 @@ impl<S: BosStr> ProfileViewDetailedBuilder<S, profile_view_detailed_state::Empty
     }
 }
 
+impl<S: BosStr> ProfileViewDetailedBuilder<profile_view_detailed_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ProfileViewDetailedBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `associated` field (optional)
     pub fn associated(
         mut self,
@@ -6162,9 +6483,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `avatar` field (optional)
     pub fn avatar(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -6178,9 +6499,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `banner` field (optional)
     pub fn banner(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -6194,9 +6515,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `createdAt` field (optional)
     pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.3 = value.into();
@@ -6210,9 +6531,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `debug` field (optional)
     pub fn debug(mut self, value: impl Into<Option<Data<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -6226,9 +6547,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.5 = value.into();
@@ -6241,7 +6562,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> ProfileViewDetailedBuilder<S, St>
+impl<St, S: BosStr> ProfileViewDetailedBuilder<St, S>
 where
     St: profile_view_detailed_state::State,
     St::Did: profile_view_detailed_state::IsUnset,
@@ -6250,7 +6571,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> ProfileViewDetailedBuilder<S, profile_view_detailed_state::SetDid<St>> {
+    ) -> ProfileViewDetailedBuilder<profile_view_detailed_state::SetDid<St>, S> {
         self._fields.6 = Option::Some(value.into());
         ProfileViewDetailedBuilder {
             _state: PhantomData,
@@ -6261,9 +6582,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `displayName` field (optional)
     pub fn display_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.7 = value.into();
@@ -6277,9 +6598,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `followersCount` field (optional)
     pub fn followers_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.8 = value.into();
@@ -6293,9 +6614,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `followsCount` field (optional)
     pub fn follows_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.9 = value.into();
@@ -6308,7 +6629,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> ProfileViewDetailedBuilder<S, St>
+impl<St, S: BosStr> ProfileViewDetailedBuilder<St, S>
 where
     St: profile_view_detailed_state::State,
     St::Handle: profile_view_detailed_state::IsUnset,
@@ -6317,7 +6638,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> ProfileViewDetailedBuilder<S, profile_view_detailed_state::SetHandle<St>> {
+    ) -> ProfileViewDetailedBuilder<profile_view_detailed_state::SetHandle<St>, S> {
         self._fields.10 = Option::Some(value.into());
         ProfileViewDetailedBuilder {
             _state: PhantomData,
@@ -6328,9 +6649,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `indexedAt` field (optional)
     pub fn indexed_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.11 = value.into();
@@ -6344,9 +6665,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `joinedViaStarterPack` field (optional)
     pub fn joined_via_starter_pack(
         mut self,
@@ -6366,9 +6687,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<Vec<Label<S>>>>) -> Self {
         self._fields.13 = value.into();
@@ -6382,9 +6703,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `pinnedPost` field (optional)
     pub fn pinned_post(mut self, value: impl Into<Option<StrongRef<S>>>) -> Self {
         self._fields.14 = value.into();
@@ -6398,9 +6719,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `postsCount` field (optional)
     pub fn posts_count(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.15 = value.into();
@@ -6414,9 +6735,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `pronouns` field (optional)
     pub fn pronouns(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.16 = value.into();
@@ -6430,9 +6751,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `status` field (optional)
     pub fn status(mut self, value: impl Into<Option<actor::StatusView<S>>>) -> Self {
         self._fields.17 = value.into();
@@ -6446,9 +6767,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `verification` field (optional)
     pub fn verification(
         mut self,
@@ -6468,9 +6789,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<actor::ViewerState<S>>>) -> Self {
         self._fields.19 = value.into();
@@ -6484,9 +6805,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: profile_view_detailed_state::State,
-> ProfileViewDetailedBuilder<S, St> {
+    S: BosStr,
+> ProfileViewDetailedBuilder<St, S> {
     /// Set the `website` field (optional)
     pub fn website(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.20 = value.into();
@@ -6499,11 +6820,11 @@ impl<
     }
 }
 
-impl<S: BosStr, St> ProfileViewDetailedBuilder<S, St>
+impl<St, S: BosStr> ProfileViewDetailedBuilder<St, S>
 where
     St: profile_view_detailed_state::State,
-    St::Handle: profile_view_detailed_state::IsSet,
     St::Did: profile_view_detailed_state::IsSet,
+    St::Handle: profile_view_detailed_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ProfileViewDetailed<S> {
@@ -6574,86 +6895,93 @@ pub mod saved_feed_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Type;
         type Id;
         type Pinned;
+        type Type;
         type Value;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Type = Unset;
         type Id = Unset;
         type Pinned = Unset;
+        type Type = Unset;
         type Value = Unset;
-    }
-    ///State transition - sets the `type` field to Set
-    pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetType<St> {}
-    impl<St: State> State for SetType<St> {
-        type Type = Set<members::r#type>;
-        type Id = St::Id;
-        type Pinned = St::Pinned;
-        type Value = St::Value;
     }
     ///State transition - sets the `id` field to Set
     pub struct SetId<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetId<St> {}
     impl<St: State> State for SetId<St> {
-        type Type = St::Type;
         type Id = Set<members::id>;
         type Pinned = St::Pinned;
+        type Type = St::Type;
         type Value = St::Value;
     }
     ///State transition - sets the `pinned` field to Set
     pub struct SetPinned<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPinned<St> {}
     impl<St: State> State for SetPinned<St> {
-        type Type = St::Type;
         type Id = St::Id;
         type Pinned = Set<members::pinned>;
+        type Type = St::Type;
+        type Value = St::Value;
+    }
+    ///State transition - sets the `type` field to Set
+    pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetType<St> {}
+    impl<St: State> State for SetType<St> {
+        type Id = St::Id;
+        type Pinned = St::Pinned;
+        type Type = Set<members::r#type>;
         type Value = St::Value;
     }
     ///State transition - sets the `value` field to Set
     pub struct SetValue<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetValue<St> {}
     impl<St: State> State for SetValue<St> {
-        type Type = St::Type;
         type Id = St::Id;
         type Pinned = St::Pinned;
+        type Type = St::Type;
         type Value = Set<members::value>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `type` field
-        pub struct r#type(());
         ///Marker type for the `id` field
         pub struct id(());
         ///Marker type for the `pinned` field
         pub struct pinned(());
+        ///Marker type for the `type` field
+        pub struct r#type(());
         ///Marker type for the `value` field
         pub struct value(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SavedFeedBuilder<S: BosStr, St: saved_feed_state::State> {
+pub struct SavedFeedBuilder<St: saved_feed_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<bool>, Option<SavedFeedType<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SavedFeed<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SavedFeedBuilder<S, saved_feed_state::Empty> {
+impl SavedFeed<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SavedFeedBuilder<saved_feed_state::Empty, DefaultStr> {
         SavedFeedBuilder::new()
     }
 }
 
-impl<S: BosStr> SavedFeedBuilder<S, saved_feed_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SavedFeed<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SavedFeedBuilder<saved_feed_state::Empty, S> {
+        SavedFeedBuilder::builder()
+    }
+}
+
+impl SavedFeedBuilder<saved_feed_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SavedFeedBuilder {
             _state: PhantomData,
@@ -6663,7 +6991,18 @@ impl<S: BosStr> SavedFeedBuilder<S, saved_feed_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SavedFeedBuilder<S, St>
+impl<S: BosStr> SavedFeedBuilder<saved_feed_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SavedFeedBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SavedFeedBuilder<St, S>
 where
     St: saved_feed_state::State,
     St::Id: saved_feed_state::IsUnset,
@@ -6672,7 +7011,7 @@ where
     pub fn id(
         mut self,
         value: impl Into<S>,
-    ) -> SavedFeedBuilder<S, saved_feed_state::SetId<St>> {
+    ) -> SavedFeedBuilder<saved_feed_state::SetId<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SavedFeedBuilder {
             _state: PhantomData,
@@ -6682,7 +7021,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SavedFeedBuilder<S, St>
+impl<St, S: BosStr> SavedFeedBuilder<St, S>
 where
     St: saved_feed_state::State,
     St::Pinned: saved_feed_state::IsUnset,
@@ -6691,7 +7030,7 @@ where
     pub fn pinned(
         mut self,
         value: impl Into<bool>,
-    ) -> SavedFeedBuilder<S, saved_feed_state::SetPinned<St>> {
+    ) -> SavedFeedBuilder<saved_feed_state::SetPinned<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SavedFeedBuilder {
             _state: PhantomData,
@@ -6701,7 +7040,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SavedFeedBuilder<S, St>
+impl<St, S: BosStr> SavedFeedBuilder<St, S>
 where
     St: saved_feed_state::State,
     St::Type: saved_feed_state::IsUnset,
@@ -6710,7 +7049,7 @@ where
     pub fn r#type(
         mut self,
         value: impl Into<SavedFeedType<S>>,
-    ) -> SavedFeedBuilder<S, saved_feed_state::SetType<St>> {
+    ) -> SavedFeedBuilder<saved_feed_state::SetType<St>, S> {
         self._fields.2 = Option::Some(value.into());
         SavedFeedBuilder {
             _state: PhantomData,
@@ -6720,7 +7059,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SavedFeedBuilder<S, St>
+impl<St, S: BosStr> SavedFeedBuilder<St, S>
 where
     St: saved_feed_state::State,
     St::Value: saved_feed_state::IsUnset,
@@ -6729,7 +7068,7 @@ where
     pub fn value(
         mut self,
         value: impl Into<S>,
-    ) -> SavedFeedBuilder<S, saved_feed_state::SetValue<St>> {
+    ) -> SavedFeedBuilder<saved_feed_state::SetValue<St>, S> {
         self._fields.3 = Option::Some(value.into());
         SavedFeedBuilder {
             _state: PhantomData,
@@ -6739,12 +7078,12 @@ where
     }
 }
 
-impl<S: BosStr, St> SavedFeedBuilder<S, St>
+impl<St, S: BosStr> SavedFeedBuilder<St, S>
 where
     St: saved_feed_state::State,
-    St::Type: saved_feed_state::IsSet,
     St::Id: saved_feed_state::IsSet,
     St::Pinned: saved_feed_state::IsSet,
+    St::Type: saved_feed_state::IsSet,
     St::Value: saved_feed_state::IsSet,
 {
     /// Build the final struct.
@@ -6782,56 +7121,66 @@ pub mod saved_feeds_pref_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Saved;
         type Pinned;
+        type Saved;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Saved = Unset;
         type Pinned = Unset;
-    }
-    ///State transition - sets the `saved` field to Set
-    pub struct SetSaved<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSaved<St> {}
-    impl<St: State> State for SetSaved<St> {
-        type Saved = Set<members::saved>;
-        type Pinned = St::Pinned;
+        type Saved = Unset;
     }
     ///State transition - sets the `pinned` field to Set
     pub struct SetPinned<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPinned<St> {}
     impl<St: State> State for SetPinned<St> {
-        type Saved = St::Saved;
         type Pinned = Set<members::pinned>;
+        type Saved = St::Saved;
+    }
+    ///State transition - sets the `saved` field to Set
+    pub struct SetSaved<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSaved<St> {}
+    impl<St: State> State for SetSaved<St> {
+        type Pinned = St::Pinned;
+        type Saved = Set<members::saved>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `saved` field
-        pub struct saved(());
         ///Marker type for the `pinned` field
         pub struct pinned(());
+        ///Marker type for the `saved` field
+        pub struct saved(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SavedFeedsPrefBuilder<S: BosStr, St: saved_feeds_pref_state::State> {
+pub struct SavedFeedsPrefBuilder<
+    St: saved_feeds_pref_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<AtUri<S>>>, Option<Vec<AtUri<S>>>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SavedFeedsPref<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SavedFeedsPrefBuilder<S, saved_feeds_pref_state::Empty> {
+impl SavedFeedsPref<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SavedFeedsPrefBuilder<saved_feeds_pref_state::Empty, DefaultStr> {
         SavedFeedsPrefBuilder::new()
     }
 }
 
-impl<S: BosStr> SavedFeedsPrefBuilder<S, saved_feeds_pref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SavedFeedsPref<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SavedFeedsPrefBuilder<saved_feeds_pref_state::Empty, S> {
+        SavedFeedsPrefBuilder::builder()
+    }
+}
+
+impl SavedFeedsPrefBuilder<saved_feeds_pref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SavedFeedsPrefBuilder {
             _state: PhantomData,
@@ -6841,7 +7190,18 @@ impl<S: BosStr> SavedFeedsPrefBuilder<S, saved_feeds_pref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SavedFeedsPrefBuilder<S, St>
+impl<S: BosStr> SavedFeedsPrefBuilder<saved_feeds_pref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SavedFeedsPrefBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SavedFeedsPrefBuilder<St, S>
 where
     St: saved_feeds_pref_state::State,
     St::Pinned: saved_feeds_pref_state::IsUnset,
@@ -6850,7 +7210,7 @@ where
     pub fn pinned(
         mut self,
         value: impl Into<Vec<AtUri<S>>>,
-    ) -> SavedFeedsPrefBuilder<S, saved_feeds_pref_state::SetPinned<St>> {
+    ) -> SavedFeedsPrefBuilder<saved_feeds_pref_state::SetPinned<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SavedFeedsPrefBuilder {
             _state: PhantomData,
@@ -6860,7 +7220,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SavedFeedsPrefBuilder<S, St>
+impl<St, S: BosStr> SavedFeedsPrefBuilder<St, S>
 where
     St: saved_feeds_pref_state::State,
     St::Saved: saved_feeds_pref_state::IsUnset,
@@ -6869,7 +7229,7 @@ where
     pub fn saved(
         mut self,
         value: impl Into<Vec<AtUri<S>>>,
-    ) -> SavedFeedsPrefBuilder<S, saved_feeds_pref_state::SetSaved<St>> {
+    ) -> SavedFeedsPrefBuilder<saved_feeds_pref_state::SetSaved<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SavedFeedsPrefBuilder {
             _state: PhantomData,
@@ -6879,7 +7239,7 @@ where
     }
 }
 
-impl<S: BosStr, St: saved_feeds_pref_state::State> SavedFeedsPrefBuilder<S, St> {
+impl<St: saved_feeds_pref_state::State, S: BosStr> SavedFeedsPrefBuilder<St, S> {
     /// Set the `timelineIndex` field (optional)
     pub fn timeline_index(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.2 = value.into();
@@ -6892,11 +7252,11 @@ impl<S: BosStr, St: saved_feeds_pref_state::State> SavedFeedsPrefBuilder<S, St> 
     }
 }
 
-impl<S: BosStr, St> SavedFeedsPrefBuilder<S, St>
+impl<St, S: BosStr> SavedFeedsPrefBuilder<St, S>
 where
     St: saved_feeds_pref_state::State,
-    St::Saved: saved_feeds_pref_state::IsSet,
     St::Pinned: saved_feeds_pref_state::IsSet,
+    St::Saved: saved_feeds_pref_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> SavedFeedsPref<S> {
@@ -6954,21 +7314,34 @@ pub mod saved_feeds_pref_v2_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SavedFeedsPrefV2Builder<S: BosStr, St: saved_feeds_pref_v2_state::State> {
+pub struct SavedFeedsPrefV2Builder<
+    St: saved_feeds_pref_v2_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<actor::SavedFeed<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SavedFeedsPrefV2<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SavedFeedsPrefV2Builder<S, saved_feeds_pref_v2_state::Empty> {
+impl SavedFeedsPrefV2<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SavedFeedsPrefV2Builder<
+        saved_feeds_pref_v2_state::Empty,
+        DefaultStr,
+    > {
         SavedFeedsPrefV2Builder::new()
     }
 }
 
-impl<S: BosStr> SavedFeedsPrefV2Builder<S, saved_feeds_pref_v2_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SavedFeedsPrefV2<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SavedFeedsPrefV2Builder<saved_feeds_pref_v2_state::Empty, S> {
+        SavedFeedsPrefV2Builder::builder()
+    }
+}
+
+impl SavedFeedsPrefV2Builder<saved_feeds_pref_v2_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SavedFeedsPrefV2Builder {
             _state: PhantomData,
@@ -6978,7 +7351,18 @@ impl<S: BosStr> SavedFeedsPrefV2Builder<S, saved_feeds_pref_v2_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SavedFeedsPrefV2Builder<S, St>
+impl<S: BosStr> SavedFeedsPrefV2Builder<saved_feeds_pref_v2_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SavedFeedsPrefV2Builder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SavedFeedsPrefV2Builder<St, S>
 where
     St: saved_feeds_pref_v2_state::State,
     St::Items: saved_feeds_pref_v2_state::IsUnset,
@@ -6987,7 +7371,7 @@ where
     pub fn items(
         mut self,
         value: impl Into<Vec<actor::SavedFeed<S>>>,
-    ) -> SavedFeedsPrefV2Builder<S, saved_feeds_pref_v2_state::SetItems<St>> {
+    ) -> SavedFeedsPrefV2Builder<saved_feeds_pref_v2_state::SetItems<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SavedFeedsPrefV2Builder {
             _state: PhantomData,
@@ -6997,7 +7381,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SavedFeedsPrefV2Builder<S, St>
+impl<St, S: BosStr> SavedFeedsPrefV2Builder<St, S>
 where
     St: saved_feeds_pref_v2_state::State,
     St::Items: saved_feeds_pref_v2_state::IsSet,
@@ -7031,42 +7415,42 @@ pub mod status_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Status;
         type Record;
+        type Status;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Status = Unset;
         type Record = Unset;
-    }
-    ///State transition - sets the `status` field to Set
-    pub struct SetStatus<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetStatus<St> {}
-    impl<St: State> State for SetStatus<St> {
-        type Status = Set<members::status>;
-        type Record = St::Record;
+        type Status = Unset;
     }
     ///State transition - sets the `record` field to Set
     pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetRecord<St> {}
     impl<St: State> State for SetRecord<St> {
-        type Status = St::Status;
         type Record = Set<members::record>;
+        type Status = St::Status;
+    }
+    ///State transition - sets the `status` field to Set
+    pub struct SetStatus<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetStatus<St> {}
+    impl<St: State> State for SetStatus<St> {
+        type Record = St::Record;
+        type Status = Set<members::status>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `status` field
-        pub struct status(());
         ///Marker type for the `record` field
         pub struct record(());
+        ///Marker type for the `status` field
+        pub struct status(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct StatusViewBuilder<S: BosStr, St: status_view_state::State> {
+pub struct StatusViewBuilder<St: status_view_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Cid<S>>,
@@ -7082,15 +7466,22 @@ pub struct StatusViewBuilder<S: BosStr, St: status_view_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> StatusView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> StatusViewBuilder<S, status_view_state::Empty> {
+impl StatusView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> StatusViewBuilder<status_view_state::Empty, DefaultStr> {
         StatusViewBuilder::new()
     }
 }
 
-impl<S: BosStr> StatusViewBuilder<S, status_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> StatusView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> StatusViewBuilder<status_view_state::Empty, S> {
+        StatusViewBuilder::builder()
+    }
+}
+
+impl StatusViewBuilder<status_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         StatusViewBuilder {
             _state: PhantomData,
@@ -7100,7 +7491,18 @@ impl<S: BosStr> StatusViewBuilder<S, status_view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
+impl<S: BosStr> StatusViewBuilder<status_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        StatusViewBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: status_view_state::State, S: BosStr> StatusViewBuilder<St, S> {
     /// Set the `cid` field (optional)
     pub fn cid(mut self, value: impl Into<Option<Cid<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -7113,7 +7515,7 @@ impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
+impl<St: status_view_state::State, S: BosStr> StatusViewBuilder<St, S> {
     /// Set the `embed` field (optional)
     pub fn embed(mut self, value: impl Into<Option<View<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -7126,7 +7528,7 @@ impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
+impl<St: status_view_state::State, S: BosStr> StatusViewBuilder<St, S> {
     /// Set the `expiresAt` field (optional)
     pub fn expires_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.2 = value.into();
@@ -7139,7 +7541,7 @@ impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
+impl<St: status_view_state::State, S: BosStr> StatusViewBuilder<St, S> {
     /// Set the `isActive` field (optional)
     pub fn is_active(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.3 = value.into();
@@ -7152,7 +7554,7 @@ impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
+impl<St: status_view_state::State, S: BosStr> StatusViewBuilder<St, S> {
     /// Set the `isDisabled` field (optional)
     pub fn is_disabled(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.4 = value.into();
@@ -7165,7 +7567,7 @@ impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
+impl<St: status_view_state::State, S: BosStr> StatusViewBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<Vec<Label<S>>>>) -> Self {
         self._fields.5 = value.into();
@@ -7178,7 +7580,7 @@ impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> StatusViewBuilder<S, St>
+impl<St, S: BosStr> StatusViewBuilder<St, S>
 where
     St: status_view_state::State,
     St::Record: status_view_state::IsUnset,
@@ -7187,7 +7589,7 @@ where
     pub fn record(
         mut self,
         value: impl Into<Data<S>>,
-    ) -> StatusViewBuilder<S, status_view_state::SetRecord<St>> {
+    ) -> StatusViewBuilder<status_view_state::SetRecord<St>, S> {
         self._fields.6 = Option::Some(value.into());
         StatusViewBuilder {
             _state: PhantomData,
@@ -7197,7 +7599,7 @@ where
     }
 }
 
-impl<S: BosStr, St> StatusViewBuilder<S, St>
+impl<St, S: BosStr> StatusViewBuilder<St, S>
 where
     St: status_view_state::State,
     St::Status: status_view_state::IsUnset,
@@ -7206,7 +7608,7 @@ where
     pub fn status(
         mut self,
         value: impl Into<StatusViewStatus<S>>,
-    ) -> StatusViewBuilder<S, status_view_state::SetStatus<St>> {
+    ) -> StatusViewBuilder<status_view_state::SetStatus<St>, S> {
         self._fields.7 = Option::Some(value.into());
         StatusViewBuilder {
             _state: PhantomData,
@@ -7216,7 +7618,7 @@ where
     }
 }
 
-impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
+impl<St: status_view_state::State, S: BosStr> StatusViewBuilder<St, S> {
     /// Set the `uri` field (optional)
     pub fn uri(mut self, value: impl Into<Option<AtUri<S>>>) -> Self {
         self._fields.8 = value.into();
@@ -7229,11 +7631,11 @@ impl<S: BosStr, St: status_view_state::State> StatusViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> StatusViewBuilder<S, St>
+impl<St, S: BosStr> StatusViewBuilder<St, S>
 where
     St: status_view_state::State,
-    St::Status: status_view_state::IsSet,
     St::Record: status_view_state::IsSet,
+    St::Status: status_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> StatusView<S> {
@@ -7342,7 +7744,10 @@ pub mod verification_state_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct VerificationStateBuilder<S: BosStr, St: verification_state_state::State> {
+pub struct VerificationStateBuilder<
+    St: verification_state_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<VerificationStateTrustedVerifierStatus<S>>,
@@ -7352,15 +7757,25 @@ pub struct VerificationStateBuilder<S: BosStr, St: verification_state_state::Sta
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> VerificationState<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> VerificationStateBuilder<S, verification_state_state::Empty> {
+impl VerificationState<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> VerificationStateBuilder<
+        verification_state_state::Empty,
+        DefaultStr,
+    > {
         VerificationStateBuilder::new()
     }
 }
 
-impl<S: BosStr> VerificationStateBuilder<S, verification_state_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> VerificationState<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> VerificationStateBuilder<verification_state_state::Empty, S> {
+        VerificationStateBuilder::builder()
+    }
+}
+
+impl VerificationStateBuilder<verification_state_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         VerificationStateBuilder {
             _state: PhantomData,
@@ -7370,7 +7785,18 @@ impl<S: BosStr> VerificationStateBuilder<S, verification_state_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> VerificationStateBuilder<S, St>
+impl<S: BosStr> VerificationStateBuilder<verification_state_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        VerificationStateBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> VerificationStateBuilder<St, S>
 where
     St: verification_state_state::State,
     St::TrustedVerifierStatus: verification_state_state::IsUnset,
@@ -7380,8 +7806,8 @@ where
         mut self,
         value: impl Into<VerificationStateTrustedVerifierStatus<S>>,
     ) -> VerificationStateBuilder<
-        S,
         verification_state_state::SetTrustedVerifierStatus<St>,
+        S,
     > {
         self._fields.0 = Option::Some(value.into());
         VerificationStateBuilder {
@@ -7392,7 +7818,7 @@ where
     }
 }
 
-impl<S: BosStr, St> VerificationStateBuilder<S, St>
+impl<St, S: BosStr> VerificationStateBuilder<St, S>
 where
     St: verification_state_state::State,
     St::Verifications: verification_state_state::IsUnset,
@@ -7401,7 +7827,7 @@ where
     pub fn verifications(
         mut self,
         value: impl Into<Vec<actor::VerificationView<S>>>,
-    ) -> VerificationStateBuilder<S, verification_state_state::SetVerifications<St>> {
+    ) -> VerificationStateBuilder<verification_state_state::SetVerifications<St>, S> {
         self._fields.1 = Option::Some(value.into());
         VerificationStateBuilder {
             _state: PhantomData,
@@ -7411,7 +7837,7 @@ where
     }
 }
 
-impl<S: BosStr, St> VerificationStateBuilder<S, St>
+impl<St, S: BosStr> VerificationStateBuilder<St, S>
 where
     St: verification_state_state::State,
     St::VerifiedStatus: verification_state_state::IsUnset,
@@ -7420,7 +7846,7 @@ where
     pub fn verified_status(
         mut self,
         value: impl Into<VerificationStateVerifiedStatus<S>>,
-    ) -> VerificationStateBuilder<S, verification_state_state::SetVerifiedStatus<St>> {
+    ) -> VerificationStateBuilder<verification_state_state::SetVerifiedStatus<St>, S> {
         self._fields.2 = Option::Some(value.into());
         VerificationStateBuilder {
             _state: PhantomData,
@@ -7430,7 +7856,7 @@ where
     }
 }
 
-impl<S: BosStr, St> VerificationStateBuilder<S, St>
+impl<St, S: BosStr> VerificationStateBuilder<St, S>
 where
     St: verification_state_state::State,
     St::TrustedVerifierStatus: verification_state_state::IsSet,
@@ -7471,71 +7897,74 @@ pub mod verification_view_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type CreatedAt;
-        type Uri;
-        type Issuer;
         type IsValid;
+        type Issuer;
+        type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type CreatedAt = Unset;
-        type Uri = Unset;
-        type Issuer = Unset;
         type IsValid = Unset;
+        type Issuer = Unset;
+        type Uri = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
         type CreatedAt = Set<members::created_at>;
-        type Uri = St::Uri;
+        type IsValid = St::IsValid;
         type Issuer = St::Issuer;
-        type IsValid = St::IsValid;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type CreatedAt = St::CreatedAt;
-        type Uri = Set<members::uri>;
-        type Issuer = St::Issuer;
-        type IsValid = St::IsValid;
-    }
-    ///State transition - sets the `issuer` field to Set
-    pub struct SetIssuer<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetIssuer<St> {}
-    impl<St: State> State for SetIssuer<St> {
-        type CreatedAt = St::CreatedAt;
         type Uri = St::Uri;
-        type Issuer = Set<members::issuer>;
-        type IsValid = St::IsValid;
     }
     ///State transition - sets the `is_valid` field to Set
     pub struct SetIsValid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetIsValid<St> {}
     impl<St: State> State for SetIsValid<St> {
         type CreatedAt = St::CreatedAt;
-        type Uri = St::Uri;
-        type Issuer = St::Issuer;
         type IsValid = Set<members::is_valid>;
+        type Issuer = St::Issuer;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `issuer` field to Set
+    pub struct SetIssuer<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetIssuer<St> {}
+    impl<St: State> State for SetIssuer<St> {
+        type CreatedAt = St::CreatedAt;
+        type IsValid = St::IsValid;
+        type Issuer = Set<members::issuer>;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type CreatedAt = St::CreatedAt;
+        type IsValid = St::IsValid;
+        type Issuer = St::Issuer;
+        type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `created_at` field
         pub struct created_at(());
-        ///Marker type for the `uri` field
-        pub struct uri(());
-        ///Marker type for the `issuer` field
-        pub struct issuer(());
         ///Marker type for the `is_valid` field
         pub struct is_valid(());
+        ///Marker type for the `issuer` field
+        pub struct issuer(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct VerificationViewBuilder<S: BosStr, St: verification_view_state::State> {
+pub struct VerificationViewBuilder<
+    St: verification_view_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -7548,15 +7977,22 @@ pub struct VerificationViewBuilder<S: BosStr, St: verification_view_state::State
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> VerificationView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> VerificationViewBuilder<S, verification_view_state::Empty> {
+impl VerificationView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> VerificationViewBuilder<verification_view_state::Empty, DefaultStr> {
         VerificationViewBuilder::new()
     }
 }
 
-impl<S: BosStr> VerificationViewBuilder<S, verification_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> VerificationView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> VerificationViewBuilder<verification_view_state::Empty, S> {
+        VerificationViewBuilder::builder()
+    }
+}
+
+impl VerificationViewBuilder<verification_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         VerificationViewBuilder {
             _state: PhantomData,
@@ -7566,7 +8002,18 @@ impl<S: BosStr> VerificationViewBuilder<S, verification_view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> VerificationViewBuilder<S, St>
+impl<S: BosStr> VerificationViewBuilder<verification_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        VerificationViewBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> VerificationViewBuilder<St, S>
 where
     St: verification_view_state::State,
     St::CreatedAt: verification_view_state::IsUnset,
@@ -7575,7 +8022,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> VerificationViewBuilder<S, verification_view_state::SetCreatedAt<St>> {
+    ) -> VerificationViewBuilder<verification_view_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         VerificationViewBuilder {
             _state: PhantomData,
@@ -7585,7 +8032,7 @@ where
     }
 }
 
-impl<S: BosStr, St> VerificationViewBuilder<S, St>
+impl<St, S: BosStr> VerificationViewBuilder<St, S>
 where
     St: verification_view_state::State,
     St::IsValid: verification_view_state::IsUnset,
@@ -7594,7 +8041,7 @@ where
     pub fn is_valid(
         mut self,
         value: impl Into<bool>,
-    ) -> VerificationViewBuilder<S, verification_view_state::SetIsValid<St>> {
+    ) -> VerificationViewBuilder<verification_view_state::SetIsValid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         VerificationViewBuilder {
             _state: PhantomData,
@@ -7604,7 +8051,7 @@ where
     }
 }
 
-impl<S: BosStr, St> VerificationViewBuilder<S, St>
+impl<St, S: BosStr> VerificationViewBuilder<St, S>
 where
     St: verification_view_state::State,
     St::Issuer: verification_view_state::IsUnset,
@@ -7613,7 +8060,7 @@ where
     pub fn issuer(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> VerificationViewBuilder<S, verification_view_state::SetIssuer<St>> {
+    ) -> VerificationViewBuilder<verification_view_state::SetIssuer<St>, S> {
         self._fields.2 = Option::Some(value.into());
         VerificationViewBuilder {
             _state: PhantomData,
@@ -7623,7 +8070,7 @@ where
     }
 }
 
-impl<S: BosStr, St: verification_view_state::State> VerificationViewBuilder<S, St> {
+impl<St: verification_view_state::State, S: BosStr> VerificationViewBuilder<St, S> {
     /// Set the `issuerDisplayName` field (optional)
     pub fn issuer_display_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.3 = value.into();
@@ -7636,7 +8083,7 @@ impl<S: BosStr, St: verification_view_state::State> VerificationViewBuilder<S, S
     }
 }
 
-impl<S: BosStr, St: verification_view_state::State> VerificationViewBuilder<S, St> {
+impl<St: verification_view_state::State, S: BosStr> VerificationViewBuilder<St, S> {
     /// Set the `issuerHandle` field (optional)
     pub fn issuer_handle(mut self, value: impl Into<Option<Handle<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -7649,7 +8096,7 @@ impl<S: BosStr, St: verification_view_state::State> VerificationViewBuilder<S, S
     }
 }
 
-impl<S: BosStr, St> VerificationViewBuilder<S, St>
+impl<St, S: BosStr> VerificationViewBuilder<St, S>
 where
     St: verification_view_state::State,
     St::Uri: verification_view_state::IsUnset,
@@ -7658,7 +8105,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> VerificationViewBuilder<S, verification_view_state::SetUri<St>> {
+    ) -> VerificationViewBuilder<verification_view_state::SetUri<St>, S> {
         self._fields.5 = Option::Some(value.into());
         VerificationViewBuilder {
             _state: PhantomData,
@@ -7668,13 +8115,13 @@ where
     }
 }
 
-impl<S: BosStr, St> VerificationViewBuilder<S, St>
+impl<St, S: BosStr> VerificationViewBuilder<St, S>
 where
     St: verification_view_state::State,
     St::CreatedAt: verification_view_state::IsSet,
-    St::Uri: verification_view_state::IsSet,
-    St::Issuer: verification_view_state::IsSet,
     St::IsValid: verification_view_state::IsSet,
+    St::Issuer: verification_view_state::IsSet,
+    St::Uri: verification_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> VerificationView<S> {

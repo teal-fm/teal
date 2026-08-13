@@ -89,7 +89,9 @@ impl core::fmt::Display for CreateTemplateError {
     }
 }
 
-/// Response type for tools.ozone.communication.createTemplate
+/** Response marker for the `tools.ozone.communication.createTemplate` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CreateTemplateOutput<S>` for this endpoint.*/
 pub struct CreateTemplateResponse;
 impl jacquard_common::xrpc::XrpcResp for CreateTemplateResponse {
     const NSID: &'static str = "tools.ozone.communication.createTemplate";
@@ -106,7 +108,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for CreateTemplate<S> {
     type Response = CreateTemplateResponse;
 }
 
-/// Endpoint type for tools.ozone.communication.createTemplate
+/** Endpoint marker for the `tools.ozone.communication.createTemplate` procedure.
+
+Path: `/xrpc/tools.ozone.communication.createTemplate`. The request payload type is `CreateTemplate<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct CreateTemplateRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CreateTemplateRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.communication.createTemplate";

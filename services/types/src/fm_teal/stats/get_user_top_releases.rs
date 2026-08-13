@@ -24,11 +24,11 @@ pub struct GetUserTopReleases<S: BosStr = DefaultStr> {
     pub actor: AtIdentifier<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
-    ///Defaults to `"90days"`.
+    /// Defaults to `"90days"`.
     #[serde(default = "_default_period")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub period: Option<S>,
@@ -46,7 +46,9 @@ pub struct GetUserTopReleasesOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.stats.getUserTopReleases
+/** Response marker for the `fm.teal.stats.getUserTopReleases` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetUserTopReleasesOutput<S>` for this endpoint.*/
 pub struct GetUserTopReleasesResponse;
 impl jacquard_common::xrpc::XrpcResp for GetUserTopReleasesResponse {
     const NSID: &'static str = "fm.teal.stats.getUserTopReleases";
@@ -61,7 +63,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetUserTopReleases<S> {
     type Response = GetUserTopReleasesResponse;
 }
 
-/// Endpoint type for fm.teal.stats.getUserTopReleases
+/** Endpoint marker for the `fm.teal.stats.getUserTopReleases` query.
+
+Path: `/xrpc/fm.teal.stats.getUserTopReleases`. The request payload type is `GetUserTopReleases<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetUserTopReleasesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetUserTopReleasesRequest {
     const PATH: &'static str = "/xrpc/fm.teal.stats.getUserTopReleases";
@@ -111,21 +115,37 @@ pub mod get_user_top_releases_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetUserTopReleasesBuilder<S: BosStr, St: get_user_top_releases_state::State> {
+pub struct GetUserTopReleasesBuilder<
+    St: get_user_top_releases_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>, Option<S>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetUserTopReleases<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetUserTopReleasesBuilder<S, get_user_top_releases_state::Empty> {
+impl GetUserTopReleases<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetUserTopReleasesBuilder<
+        get_user_top_releases_state::Empty,
+        DefaultStr,
+    > {
         GetUserTopReleasesBuilder::new()
     }
 }
 
-impl<S: BosStr> GetUserTopReleasesBuilder<S, get_user_top_releases_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetUserTopReleases<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetUserTopReleasesBuilder<
+        get_user_top_releases_state::Empty,
+        S,
+    > {
+        GetUserTopReleasesBuilder::builder()
+    }
+}
+
+impl GetUserTopReleasesBuilder<get_user_top_releases_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetUserTopReleasesBuilder {
             _state: PhantomData,
@@ -135,7 +155,18 @@ impl<S: BosStr> GetUserTopReleasesBuilder<S, get_user_top_releases_state::Empty>
     }
 }
 
-impl<S: BosStr, St> GetUserTopReleasesBuilder<S, St>
+impl<S: BosStr> GetUserTopReleasesBuilder<get_user_top_releases_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetUserTopReleasesBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetUserTopReleasesBuilder<St, S>
 where
     St: get_user_top_releases_state::State,
     St::Actor: get_user_top_releases_state::IsUnset,
@@ -144,7 +175,7 @@ where
     pub fn actor(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> GetUserTopReleasesBuilder<S, get_user_top_releases_state::SetActor<St>> {
+    ) -> GetUserTopReleasesBuilder<get_user_top_releases_state::SetActor<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetUserTopReleasesBuilder {
             _state: PhantomData,
@@ -155,9 +186,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: get_user_top_releases_state::State,
-> GetUserTopReleasesBuilder<S, St> {
+    S: BosStr,
+> GetUserTopReleasesBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -171,9 +202,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: get_user_top_releases_state::State,
-> GetUserTopReleasesBuilder<S, St> {
+    S: BosStr,
+> GetUserTopReleasesBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.2 = value.into();
@@ -187,9 +218,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: get_user_top_releases_state::State,
-> GetUserTopReleasesBuilder<S, St> {
+    S: BosStr,
+> GetUserTopReleasesBuilder<St, S> {
     /// Set the `period` field (optional)
     pub fn period(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.3 = value.into();
@@ -202,7 +233,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> GetUserTopReleasesBuilder<S, St>
+impl<St, S: BosStr> GetUserTopReleasesBuilder<St, S>
 where
     St: get_user_top_releases_state::State,
     St::Actor: get_user_top_releases_state::IsSet,

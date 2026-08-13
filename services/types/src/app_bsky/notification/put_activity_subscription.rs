@@ -38,7 +38,9 @@ pub struct PutActivitySubscriptionOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.notification.putActivitySubscription
+/** Response marker for the `app.bsky.notification.putActivitySubscription` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `PutActivitySubscriptionOutput<S>` for this endpoint.*/
 pub struct PutActivitySubscriptionResponse;
 impl jacquard_common::xrpc::XrpcResp for PutActivitySubscriptionResponse {
     const NSID: &'static str = "app.bsky.notification.putActivitySubscription";
@@ -55,7 +57,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for PutActivitySubscription<S
     type Response = PutActivitySubscriptionResponse;
 }
 
-/// Endpoint type for app.bsky.notification.putActivitySubscription
+/** Endpoint marker for the `app.bsky.notification.putActivitySubscription` procedure.
+
+Path: `/xrpc/app.bsky.notification.putActivitySubscription`. The request payload type is `PutActivitySubscription<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct PutActivitySubscriptionRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for PutActivitySubscriptionRequest {
     const PATH: &'static str = "/xrpc/app.bsky.notification.putActivitySubscription";
@@ -112,28 +116,36 @@ pub mod put_activity_subscription_state {
 
 /// Builder for constructing an instance of this type.
 pub struct PutActivitySubscriptionBuilder<
-    S: BosStr,
     St: put_activity_subscription_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<ActivitySubscription<S>>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> PutActivitySubscription<S> {
-    /// Create a new builder for this type.
+impl PutActivitySubscription<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> PutActivitySubscriptionBuilder<
-        S,
         put_activity_subscription_state::Empty,
+        DefaultStr,
     > {
         PutActivitySubscriptionBuilder::new()
     }
 }
 
-impl<
-    S: BosStr,
-> PutActivitySubscriptionBuilder<S, put_activity_subscription_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> PutActivitySubscription<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PutActivitySubscriptionBuilder<
+        put_activity_subscription_state::Empty,
+        S,
+    > {
+        PutActivitySubscriptionBuilder::builder()
+    }
+}
+
+impl PutActivitySubscriptionBuilder<put_activity_subscription_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PutActivitySubscriptionBuilder {
             _state: PhantomData,
@@ -143,7 +155,20 @@ impl<
     }
 }
 
-impl<S: BosStr, St> PutActivitySubscriptionBuilder<S, St>
+impl<
+    S: BosStr,
+> PutActivitySubscriptionBuilder<put_activity_subscription_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PutActivitySubscriptionBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> PutActivitySubscriptionBuilder<St, S>
 where
     St: put_activity_subscription_state::State,
     St::ActivitySubscription: put_activity_subscription_state::IsUnset,
@@ -153,8 +178,8 @@ where
         mut self,
         value: impl Into<ActivitySubscription<S>>,
     ) -> PutActivitySubscriptionBuilder<
-        S,
         put_activity_subscription_state::SetActivitySubscription<St>,
+        S,
     > {
         self._fields.0 = Option::Some(value.into());
         PutActivitySubscriptionBuilder {
@@ -165,7 +190,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PutActivitySubscriptionBuilder<S, St>
+impl<St, S: BosStr> PutActivitySubscriptionBuilder<St, S>
 where
     St: put_activity_subscription_state::State,
     St::Subject: put_activity_subscription_state::IsUnset,
@@ -175,8 +200,8 @@ where
         mut self,
         value: impl Into<Did<S>>,
     ) -> PutActivitySubscriptionBuilder<
-        S,
         put_activity_subscription_state::SetSubject<St>,
+        S,
     > {
         self._fields.1 = Option::Some(value.into());
         PutActivitySubscriptionBuilder {
@@ -187,7 +212,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PutActivitySubscriptionBuilder<S, St>
+impl<St, S: BosStr> PutActivitySubscriptionBuilder<St, S>
 where
     St: put_activity_subscription_state::State,
     St::ActivitySubscription: put_activity_subscription_state::IsSet,

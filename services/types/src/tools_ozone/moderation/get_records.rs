@@ -45,7 +45,9 @@ pub enum GetRecordsOutputRecordsItem<S: BosStr = DefaultStr> {
     RecordViewNotFound(Box<RecordViewNotFound<S>>),
 }
 
-/// Response type for tools.ozone.moderation.getRecords
+/** Response marker for the `tools.ozone.moderation.getRecords` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetRecordsOutput<S>` for this endpoint.*/
 pub struct GetRecordsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetRecordsResponse {
     const NSID: &'static str = "tools.ozone.moderation.getRecords";
@@ -60,7 +62,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetRecords<S> {
     type Response = GetRecordsResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.getRecords
+/** Endpoint marker for the `tools.ozone.moderation.getRecords` query.
+
+Path: `/xrpc/tools.ozone.moderation.getRecords`. The request payload type is `GetRecords<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetRecordsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetRecordsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.getRecords";
@@ -102,21 +106,28 @@ pub mod get_records_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetRecordsBuilder<S: BosStr, St: get_records_state::State> {
+pub struct GetRecordsBuilder<St: get_records_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<AtUri<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetRecords<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetRecordsBuilder<S, get_records_state::Empty> {
+impl GetRecords<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetRecordsBuilder<get_records_state::Empty, DefaultStr> {
         GetRecordsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetRecordsBuilder<S, get_records_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetRecords<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetRecordsBuilder<get_records_state::Empty, S> {
+        GetRecordsBuilder::builder()
+    }
+}
+
+impl GetRecordsBuilder<get_records_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetRecordsBuilder {
             _state: PhantomData,
@@ -126,7 +137,18 @@ impl<S: BosStr> GetRecordsBuilder<S, get_records_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetRecordsBuilder<S, St>
+impl<S: BosStr> GetRecordsBuilder<get_records_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetRecordsBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetRecordsBuilder<St, S>
 where
     St: get_records_state::State,
     St::Uris: get_records_state::IsUnset,
@@ -135,7 +157,7 @@ where
     pub fn uris(
         mut self,
         value: impl Into<Vec<AtUri<S>>>,
-    ) -> GetRecordsBuilder<S, get_records_state::SetUris<St>> {
+    ) -> GetRecordsBuilder<get_records_state::SetUris<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetRecordsBuilder {
             _state: PhantomData,
@@ -145,7 +167,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetRecordsBuilder<S, St>
+impl<St, S: BosStr> GetRecordsBuilder<St, S>
 where
     St: get_records_state::State,
     St::Uris: get_records_state::IsSet,

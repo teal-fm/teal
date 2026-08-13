@@ -211,7 +211,9 @@ pub struct UpsertOptionOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.setting.upsertOption
+/** Response marker for the `tools.ozone.setting.upsertOption` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UpsertOptionOutput<S>` for this endpoint.*/
 pub struct UpsertOptionResponse;
 impl jacquard_common::xrpc::XrpcResp for UpsertOptionResponse {
     const NSID: &'static str = "tools.ozone.setting.upsertOption";
@@ -228,7 +230,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpsertOption<S> {
     type Response = UpsertOptionResponse;
 }
 
-/// Endpoint type for tools.ozone.setting.upsertOption
+/** Endpoint marker for the `tools.ozone.setting.upsertOption` procedure.
+
+Path: `/xrpc/tools.ozone.setting.upsertOption`. The request payload type is `UpsertOption<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpsertOptionRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpsertOptionRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.setting.upsertOption";
@@ -298,7 +302,7 @@ pub mod upsert_option_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct UpsertOptionBuilder<S: BosStr, St: upsert_option_state::State> {
+pub struct UpsertOptionBuilder<St: upsert_option_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<S>,
@@ -310,15 +314,22 @@ pub struct UpsertOptionBuilder<S: BosStr, St: upsert_option_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpsertOption<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> UpsertOptionBuilder<S, upsert_option_state::Empty> {
+impl UpsertOption<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> UpsertOptionBuilder<upsert_option_state::Empty, DefaultStr> {
         UpsertOptionBuilder::new()
     }
 }
 
-impl<S: BosStr> UpsertOptionBuilder<S, upsert_option_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpsertOption<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpsertOptionBuilder<upsert_option_state::Empty, S> {
+        UpsertOptionBuilder::builder()
+    }
+}
+
+impl UpsertOptionBuilder<upsert_option_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpsertOptionBuilder {
             _state: PhantomData,
@@ -328,7 +339,18 @@ impl<S: BosStr> UpsertOptionBuilder<S, upsert_option_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: upsert_option_state::State> UpsertOptionBuilder<S, St> {
+impl<S: BosStr> UpsertOptionBuilder<upsert_option_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpsertOptionBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: upsert_option_state::State, S: BosStr> UpsertOptionBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -341,7 +363,7 @@ impl<S: BosStr, St: upsert_option_state::State> UpsertOptionBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> UpsertOptionBuilder<S, St>
+impl<St, S: BosStr> UpsertOptionBuilder<St, S>
 where
     St: upsert_option_state::State,
     St::Key: upsert_option_state::IsUnset,
@@ -350,7 +372,7 @@ where
     pub fn key(
         mut self,
         value: impl Into<Nsid<S>>,
-    ) -> UpsertOptionBuilder<S, upsert_option_state::SetKey<St>> {
+    ) -> UpsertOptionBuilder<upsert_option_state::SetKey<St>, S> {
         self._fields.1 = Option::Some(value.into());
         UpsertOptionBuilder {
             _state: PhantomData,
@@ -360,7 +382,7 @@ where
     }
 }
 
-impl<S: BosStr, St: upsert_option_state::State> UpsertOptionBuilder<S, St> {
+impl<St: upsert_option_state::State, S: BosStr> UpsertOptionBuilder<St, S> {
     /// Set the `managerRole` field (optional)
     pub fn manager_role(
         mut self,
@@ -379,7 +401,7 @@ impl<S: BosStr, St: upsert_option_state::State> UpsertOptionBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> UpsertOptionBuilder<S, St>
+impl<St, S: BosStr> UpsertOptionBuilder<St, S>
 where
     St: upsert_option_state::State,
     St::Scope: upsert_option_state::IsUnset,
@@ -388,7 +410,7 @@ where
     pub fn scope(
         mut self,
         value: impl Into<UpsertOptionScope<S>>,
-    ) -> UpsertOptionBuilder<S, upsert_option_state::SetScope<St>> {
+    ) -> UpsertOptionBuilder<upsert_option_state::SetScope<St>, S> {
         self._fields.3 = Option::Some(value.into());
         UpsertOptionBuilder {
             _state: PhantomData,
@@ -398,7 +420,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpsertOptionBuilder<S, St>
+impl<St, S: BosStr> UpsertOptionBuilder<St, S>
 where
     St: upsert_option_state::State,
     St::Value: upsert_option_state::IsUnset,
@@ -407,7 +429,7 @@ where
     pub fn value(
         mut self,
         value: impl Into<Data<S>>,
-    ) -> UpsertOptionBuilder<S, upsert_option_state::SetValue<St>> {
+    ) -> UpsertOptionBuilder<upsert_option_state::SetValue<St>, S> {
         self._fields.4 = Option::Some(value.into());
         UpsertOptionBuilder {
             _state: PhantomData,
@@ -417,7 +439,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpsertOptionBuilder<S, St>
+impl<St, S: BosStr> UpsertOptionBuilder<St, S>
 where
     St: upsert_option_state::State,
     St::Key: upsert_option_state::IsSet,

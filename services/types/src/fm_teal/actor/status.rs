@@ -117,56 +117,63 @@ pub mod status_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Time;
         type Item;
+        type Time;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Time = Unset;
         type Item = Unset;
-    }
-    ///State transition - sets the `time` field to Set
-    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTime<St> {}
-    impl<St: State> State for SetTime<St> {
-        type Time = Set<members::time>;
-        type Item = St::Item;
+        type Time = Unset;
     }
     ///State transition - sets the `item` field to Set
     pub struct SetItem<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetItem<St> {}
     impl<St: State> State for SetItem<St> {
-        type Time = St::Time;
         type Item = Set<members::item>;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `time` field to Set
+    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTime<St> {}
+    impl<St: State> State for SetTime<St> {
+        type Item = St::Item;
+        type Time = Set<members::time>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `time` field
-        pub struct time(());
         ///Marker type for the `item` field
         pub struct item(());
+        ///Marker type for the `time` field
+        pub struct time(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct StatusBuilder<S: BosStr, St: status_state::State> {
+pub struct StatusBuilder<St: status_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<PlayView<S>>, Option<Datetime>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Status<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> StatusBuilder<S, status_state::Empty> {
+impl Status<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> StatusBuilder<status_state::Empty, DefaultStr> {
         StatusBuilder::new()
     }
 }
 
-impl<S: BosStr> StatusBuilder<S, status_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Status<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> StatusBuilder<status_state::Empty, S> {
+        StatusBuilder::builder()
+    }
+}
+
+impl StatusBuilder<status_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         StatusBuilder {
             _state: PhantomData,
@@ -176,7 +183,18 @@ impl<S: BosStr> StatusBuilder<S, status_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: status_state::State> StatusBuilder<S, St> {
+impl<S: BosStr> StatusBuilder<status_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        StatusBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: status_state::State, S: BosStr> StatusBuilder<St, S> {
     /// Set the `expiry` field (optional)
     pub fn expiry(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.0 = value.into();
@@ -189,7 +207,7 @@ impl<S: BosStr, St: status_state::State> StatusBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> StatusBuilder<S, St>
+impl<St, S: BosStr> StatusBuilder<St, S>
 where
     St: status_state::State,
     St::Item: status_state::IsUnset,
@@ -198,7 +216,7 @@ where
     pub fn item(
         mut self,
         value: impl Into<PlayView<S>>,
-    ) -> StatusBuilder<S, status_state::SetItem<St>> {
+    ) -> StatusBuilder<status_state::SetItem<St>, S> {
         self._fields.1 = Option::Some(value.into());
         StatusBuilder {
             _state: PhantomData,
@@ -208,7 +226,7 @@ where
     }
 }
 
-impl<S: BosStr, St> StatusBuilder<S, St>
+impl<St, S: BosStr> StatusBuilder<St, S>
 where
     St: status_state::State,
     St::Time: status_state::IsUnset,
@@ -217,7 +235,7 @@ where
     pub fn time(
         mut self,
         value: impl Into<Datetime>,
-    ) -> StatusBuilder<S, status_state::SetTime<St>> {
+    ) -> StatusBuilder<status_state::SetTime<St>, S> {
         self._fields.2 = Option::Some(value.into());
         StatusBuilder {
             _state: PhantomData,
@@ -227,11 +245,11 @@ where
     }
 }
 
-impl<S: BosStr, St> StatusBuilder<S, St>
+impl<St, S: BosStr> StatusBuilder<St, S>
 where
     St: status_state::State,
-    St::Time: status_state::IsSet,
     St::Item: status_state::IsSet,
+    St::Time: status_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Status<S> {

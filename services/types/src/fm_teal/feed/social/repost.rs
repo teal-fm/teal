@@ -114,56 +114,63 @@ pub mod repost_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Subject;
         type CreatedAt;
+        type Subject;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Subject = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type Subject = Set<members::subject>;
-        type CreatedAt = St::CreatedAt;
+        type Subject = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Subject = St::Subject;
         type CreatedAt = Set<members::created_at>;
+        type Subject = St::Subject;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type CreatedAt = St::CreatedAt;
+        type Subject = Set<members::subject>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `subject` field
-        pub struct subject(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `subject` field
+        pub struct subject(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RepostBuilder<S: BosStr, St: repost_state::State> {
+pub struct RepostBuilder<St: repost_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<StrongRef<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Repost<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RepostBuilder<S, repost_state::Empty> {
+impl Repost<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RepostBuilder<repost_state::Empty, DefaultStr> {
         RepostBuilder::new()
     }
 }
 
-impl<S: BosStr> RepostBuilder<S, repost_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Repost<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RepostBuilder<repost_state::Empty, S> {
+        RepostBuilder::builder()
+    }
+}
+
+impl RepostBuilder<repost_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RepostBuilder {
             _state: PhantomData,
@@ -173,7 +180,18 @@ impl<S: BosStr> RepostBuilder<S, repost_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RepostBuilder<S, St>
+impl<S: BosStr> RepostBuilder<repost_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RepostBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RepostBuilder<St, S>
 where
     St: repost_state::State,
     St::CreatedAt: repost_state::IsUnset,
@@ -182,7 +200,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> RepostBuilder<S, repost_state::SetCreatedAt<St>> {
+    ) -> RepostBuilder<repost_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RepostBuilder {
             _state: PhantomData,
@@ -192,7 +210,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RepostBuilder<S, St>
+impl<St, S: BosStr> RepostBuilder<St, S>
 where
     St: repost_state::State,
     St::Subject: repost_state::IsUnset,
@@ -201,7 +219,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<StrongRef<S>>,
-    ) -> RepostBuilder<S, repost_state::SetSubject<St>> {
+    ) -> RepostBuilder<repost_state::SetSubject<St>, S> {
         self._fields.1 = Option::Some(value.into());
         RepostBuilder {
             _state: PhantomData,
@@ -211,11 +229,11 @@ where
     }
 }
 
-impl<S: BosStr, St> RepostBuilder<S, St>
+impl<St, S: BosStr> RepostBuilder<St, S>
 where
     St: repost_state::State,
-    St::Subject: repost_state::IsSet,
     St::CreatedAt: repost_state::IsSet,
+    St::Subject: repost_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Repost<S> {

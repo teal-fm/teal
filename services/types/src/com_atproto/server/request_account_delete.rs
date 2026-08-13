@@ -15,11 +15,15 @@ use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use serde::{Serialize, Deserialize};
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.server.requestAccountDelete` procedure.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct RequestAccountDelete;
-/// Response type for com.atproto.server.requestAccountDelete
+/** Response marker for the `com.atproto.server.requestAccountDelete` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct RequestAccountDeleteResponse;
 impl jacquard_common::xrpc::XrpcResp for RequestAccountDeleteResponse {
     const NSID: &'static str = "com.atproto.server.requestAccountDelete";
@@ -36,7 +40,9 @@ impl jacquard_common::xrpc::XrpcRequest for RequestAccountDelete {
     type Response = RequestAccountDeleteResponse;
 }
 
-/// Endpoint type for com.atproto.server.requestAccountDelete
+/** Endpoint marker for the `com.atproto.server.requestAccountDelete` procedure.
+
+Path: `/xrpc/com.atproto.server.requestAccountDelete`. The request payload type is `RequestAccountDelete`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct RequestAccountDeleteRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RequestAccountDeleteRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.requestAccountDelete";

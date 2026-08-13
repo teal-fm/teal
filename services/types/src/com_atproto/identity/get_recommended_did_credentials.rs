@@ -32,11 +32,15 @@ pub struct GetRecommendedDidCredentialsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.identity.getRecommendedDidCredentials` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct GetRecommendedDidCredentials;
-/// Response type for com.atproto.identity.getRecommendedDidCredentials
+/** Response marker for the `com.atproto.identity.getRecommendedDidCredentials` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetRecommendedDidCredentialsOutput<S>` for this endpoint.*/
 pub struct GetRecommendedDidCredentialsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetRecommendedDidCredentialsResponse {
     const NSID: &'static str = "com.atproto.identity.getRecommendedDidCredentials";
@@ -51,7 +55,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetRecommendedDidCredentials {
     type Response = GetRecommendedDidCredentialsResponse;
 }
 
-/// Endpoint type for com.atproto.identity.getRecommendedDidCredentials
+/** Endpoint marker for the `com.atproto.identity.getRecommendedDidCredentials` query.
+
+Path: `/xrpc/com.atproto.identity.getRecommendedDidCredentials`. The request payload type is `GetRecommendedDidCredentials`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct GetRecommendedDidCredentialsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetRecommendedDidCredentialsRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.getRecommendedDidCredentials";

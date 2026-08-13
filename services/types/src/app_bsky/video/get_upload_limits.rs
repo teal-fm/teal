@@ -32,11 +32,15 @@ pub struct GetUploadLimitsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// XRPC request marker type.
+/** Request marker for the `app.bsky.video.getUploadLimits` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct GetUploadLimits;
-/// Response type for app.bsky.video.getUploadLimits
+/** Response marker for the `app.bsky.video.getUploadLimits` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetUploadLimitsOutput<S>` for this endpoint.*/
 pub struct GetUploadLimitsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetUploadLimitsResponse {
     const NSID: &'static str = "app.bsky.video.getUploadLimits";
@@ -51,7 +55,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetUploadLimits {
     type Response = GetUploadLimitsResponse;
 }
 
-/// Endpoint type for app.bsky.video.getUploadLimits
+/** Endpoint marker for the `app.bsky.video.getUploadLimits` query.
+
+Path: `/xrpc/app.bsky.video.getUploadLimits`. The request payload type is `GetUploadLimits`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct GetUploadLimitsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetUploadLimitsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.video.getUploadLimits";

@@ -27,7 +27,9 @@ pub struct AddValues<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.set.addValues
+/** Response marker for the `tools.ozone.set.addValues` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct AddValuesResponse;
 impl jacquard_common::xrpc::XrpcResp for AddValuesResponse {
     const NSID: &'static str = "tools.ozone.set.addValues";
@@ -44,7 +46,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for AddValues<S> {
     type Response = AddValuesResponse;
 }
 
-/// Endpoint type for tools.ozone.set.addValues
+/** Endpoint marker for the `tools.ozone.set.addValues` procedure.
+
+Path: `/xrpc/tools.ozone.set.addValues`. The request payload type is `AddValues<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct AddValuesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for AddValuesRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.set.addValues";
@@ -100,21 +104,28 @@ pub mod add_values_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AddValuesBuilder<S: BosStr, St: add_values_state::State> {
+pub struct AddValuesBuilder<St: add_values_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Vec<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AddValues<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AddValuesBuilder<S, add_values_state::Empty> {
+impl AddValues<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AddValuesBuilder<add_values_state::Empty, DefaultStr> {
         AddValuesBuilder::new()
     }
 }
 
-impl<S: BosStr> AddValuesBuilder<S, add_values_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AddValues<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AddValuesBuilder<add_values_state::Empty, S> {
+        AddValuesBuilder::builder()
+    }
+}
+
+impl AddValuesBuilder<add_values_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AddValuesBuilder {
             _state: PhantomData,
@@ -124,7 +135,18 @@ impl<S: BosStr> AddValuesBuilder<S, add_values_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> AddValuesBuilder<S, St>
+impl<S: BosStr> AddValuesBuilder<add_values_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AddValuesBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> AddValuesBuilder<St, S>
 where
     St: add_values_state::State,
     St::Name: add_values_state::IsUnset,
@@ -133,7 +155,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> AddValuesBuilder<S, add_values_state::SetName<St>> {
+    ) -> AddValuesBuilder<add_values_state::SetName<St>, S> {
         self._fields.0 = Option::Some(value.into());
         AddValuesBuilder {
             _state: PhantomData,
@@ -143,7 +165,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AddValuesBuilder<S, St>
+impl<St, S: BosStr> AddValuesBuilder<St, S>
 where
     St: add_values_state::State,
     St::Values: add_values_state::IsUnset,
@@ -152,7 +174,7 @@ where
     pub fn values(
         mut self,
         value: impl Into<Vec<S>>,
-    ) -> AddValuesBuilder<S, add_values_state::SetValues<St>> {
+    ) -> AddValuesBuilder<add_values_state::SetValues<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AddValuesBuilder {
             _state: PhantomData,
@@ -162,7 +184,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AddValuesBuilder<S, St>
+impl<St, S: BosStr> AddValuesBuilder<St, S>
 where
     St: add_values_state::State,
     St::Name: add_values_state::IsSet,

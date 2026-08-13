@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `com.atproto.admin` Lexicon namespace/module.
 pub mod delete_account;
 pub mod disable_account_invites;
 pub mod disable_invite_codes;
@@ -199,56 +200,56 @@ pub mod account_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type IndexedAt;
         type Did;
         type Handle;
+        type IndexedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type IndexedAt = Unset;
         type Did = Unset;
         type Handle = Unset;
-    }
-    ///State transition - sets the `indexed_at` field to Set
-    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
-    impl<St: State> State for SetIndexedAt<St> {
-        type IndexedAt = Set<members::indexed_at>;
-        type Did = St::Did;
-        type Handle = St::Handle;
+        type IndexedAt = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type IndexedAt = St::IndexedAt;
         type Did = Set<members::did>;
         type Handle = St::Handle;
+        type IndexedAt = St::IndexedAt;
     }
     ///State transition - sets the `handle` field to Set
     pub struct SetHandle<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetHandle<St> {}
     impl<St: State> State for SetHandle<St> {
-        type IndexedAt = St::IndexedAt;
         type Did = St::Did;
         type Handle = Set<members::handle>;
+        type IndexedAt = St::IndexedAt;
+    }
+    ///State transition - sets the `indexed_at` field to Set
+    pub struct SetIndexedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetIndexedAt<St> {}
+    impl<St: State> State for SetIndexedAt<St> {
+        type Did = St::Did;
+        type Handle = St::Handle;
+        type IndexedAt = Set<members::indexed_at>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `indexed_at` field
-        pub struct indexed_at(());
         ///Marker type for the `did` field
         pub struct did(());
         ///Marker type for the `handle` field
         pub struct handle(());
+        ///Marker type for the `indexed_at` field
+        pub struct indexed_at(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AccountViewBuilder<S: BosStr, St: account_view_state::State> {
+pub struct AccountViewBuilder<St: account_view_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -267,15 +268,22 @@ pub struct AccountViewBuilder<S: BosStr, St: account_view_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AccountView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AccountViewBuilder<S, account_view_state::Empty> {
+impl AccountView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AccountViewBuilder<account_view_state::Empty, DefaultStr> {
         AccountViewBuilder::new()
     }
 }
 
-impl<S: BosStr> AccountViewBuilder<S, account_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AccountView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AccountViewBuilder<account_view_state::Empty, S> {
+        AccountViewBuilder::builder()
+    }
+}
+
+impl AccountViewBuilder<account_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AccountViewBuilder {
             _state: PhantomData,
@@ -298,7 +306,31 @@ impl<S: BosStr> AccountViewBuilder<S, account_view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<S: BosStr> AccountViewBuilder<account_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AccountViewBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `deactivatedAt` field (optional)
     pub fn deactivated_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.0 = value.into();
@@ -311,7 +343,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AccountViewBuilder<S, St>
+impl<St, S: BosStr> AccountViewBuilder<St, S>
 where
     St: account_view_state::State,
     St::Did: account_view_state::IsUnset,
@@ -320,7 +352,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> AccountViewBuilder<S, account_view_state::SetDid<St>> {
+    ) -> AccountViewBuilder<account_view_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AccountViewBuilder {
             _state: PhantomData,
@@ -330,7 +362,7 @@ where
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `email` field (optional)
     pub fn email(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -343,7 +375,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `emailConfirmedAt` field (optional)
     pub fn email_confirmed_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.3 = value.into();
@@ -356,7 +388,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AccountViewBuilder<S, St>
+impl<St, S: BosStr> AccountViewBuilder<St, S>
 where
     St: account_view_state::State,
     St::Handle: account_view_state::IsUnset,
@@ -365,7 +397,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> AccountViewBuilder<S, account_view_state::SetHandle<St>> {
+    ) -> AccountViewBuilder<account_view_state::SetHandle<St>, S> {
         self._fields.4 = Option::Some(value.into());
         AccountViewBuilder {
             _state: PhantomData,
@@ -375,7 +407,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AccountViewBuilder<S, St>
+impl<St, S: BosStr> AccountViewBuilder<St, S>
 where
     St: account_view_state::State,
     St::IndexedAt: account_view_state::IsUnset,
@@ -384,7 +416,7 @@ where
     pub fn indexed_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> AccountViewBuilder<S, account_view_state::SetIndexedAt<St>> {
+    ) -> AccountViewBuilder<account_view_state::SetIndexedAt<St>, S> {
         self._fields.5 = Option::Some(value.into());
         AccountViewBuilder {
             _state: PhantomData,
@@ -394,7 +426,7 @@ where
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `inviteNote` field (optional)
     pub fn invite_note(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.6 = value.into();
@@ -407,7 +439,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `invitedBy` field (optional)
     pub fn invited_by(mut self, value: impl Into<Option<InviteCode<S>>>) -> Self {
         self._fields.7 = value.into();
@@ -420,7 +452,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `invites` field (optional)
     pub fn invites(mut self, value: impl Into<Option<Vec<InviteCode<S>>>>) -> Self {
         self._fields.8 = value.into();
@@ -433,7 +465,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `invitesDisabled` field (optional)
     pub fn invites_disabled(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.9 = value.into();
@@ -446,7 +478,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `relatedRecords` field (optional)
     pub fn related_records(mut self, value: impl Into<Option<Vec<Data<S>>>>) -> Self {
         self._fields.10 = value.into();
@@ -459,7 +491,7 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
+impl<St: account_view_state::State, S: BosStr> AccountViewBuilder<St, S> {
     /// Set the `threatSignatures` field (optional)
     pub fn threat_signatures(
         mut self,
@@ -478,12 +510,12 @@ impl<S: BosStr, St: account_view_state::State> AccountViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AccountViewBuilder<S, St>
+impl<St, S: BosStr> AccountViewBuilder<St, S>
 where
     St: account_view_state::State,
-    St::IndexedAt: account_view_state::IsSet,
     St::Did: account_view_state::IsSet,
     St::Handle: account_view_state::IsSet,
+    St::IndexedAt: account_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AccountView<S> {
@@ -758,56 +790,63 @@ pub mod repo_blob_ref_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Did;
         type Cid;
+        type Did;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Did = Unset;
         type Cid = Unset;
-    }
-    ///State transition - sets the `did` field to Set
-    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDid<St> {}
-    impl<St: State> State for SetDid<St> {
-        type Did = Set<members::did>;
-        type Cid = St::Cid;
+        type Did = Unset;
     }
     ///State transition - sets the `cid` field to Set
     pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCid<St> {}
     impl<St: State> State for SetCid<St> {
-        type Did = St::Did;
         type Cid = Set<members::cid>;
+        type Did = St::Did;
+    }
+    ///State transition - sets the `did` field to Set
+    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDid<St> {}
+    impl<St: State> State for SetDid<St> {
+        type Cid = St::Cid;
+        type Did = Set<members::did>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `did` field
-        pub struct did(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `did` field
+        pub struct did(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RepoBlobRefBuilder<S: BosStr, St: repo_blob_ref_state::State> {
+pub struct RepoBlobRefBuilder<St: repo_blob_ref_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Cid<S>>, Option<Did<S>>, Option<AtUri<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RepoBlobRef<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RepoBlobRefBuilder<S, repo_blob_ref_state::Empty> {
+impl RepoBlobRef<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RepoBlobRefBuilder<repo_blob_ref_state::Empty, DefaultStr> {
         RepoBlobRefBuilder::new()
     }
 }
 
-impl<S: BosStr> RepoBlobRefBuilder<S, repo_blob_ref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RepoBlobRef<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RepoBlobRefBuilder<repo_blob_ref_state::Empty, S> {
+        RepoBlobRefBuilder::builder()
+    }
+}
+
+impl RepoBlobRefBuilder<repo_blob_ref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RepoBlobRefBuilder {
             _state: PhantomData,
@@ -817,7 +856,18 @@ impl<S: BosStr> RepoBlobRefBuilder<S, repo_blob_ref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RepoBlobRefBuilder<S, St>
+impl<S: BosStr> RepoBlobRefBuilder<repo_blob_ref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RepoBlobRefBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RepoBlobRefBuilder<St, S>
 where
     St: repo_blob_ref_state::State,
     St::Cid: repo_blob_ref_state::IsUnset,
@@ -826,7 +876,7 @@ where
     pub fn cid(
         mut self,
         value: impl Into<Cid<S>>,
-    ) -> RepoBlobRefBuilder<S, repo_blob_ref_state::SetCid<St>> {
+    ) -> RepoBlobRefBuilder<repo_blob_ref_state::SetCid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RepoBlobRefBuilder {
             _state: PhantomData,
@@ -836,7 +886,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RepoBlobRefBuilder<S, St>
+impl<St, S: BosStr> RepoBlobRefBuilder<St, S>
 where
     St: repo_blob_ref_state::State,
     St::Did: repo_blob_ref_state::IsUnset,
@@ -845,7 +895,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> RepoBlobRefBuilder<S, repo_blob_ref_state::SetDid<St>> {
+    ) -> RepoBlobRefBuilder<repo_blob_ref_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         RepoBlobRefBuilder {
             _state: PhantomData,
@@ -855,7 +905,7 @@ where
     }
 }
 
-impl<S: BosStr, St: repo_blob_ref_state::State> RepoBlobRefBuilder<S, St> {
+impl<St: repo_blob_ref_state::State, S: BosStr> RepoBlobRefBuilder<St, S> {
     /// Set the `recordUri` field (optional)
     pub fn record_uri(mut self, value: impl Into<Option<AtUri<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -868,11 +918,11 @@ impl<S: BosStr, St: repo_blob_ref_state::State> RepoBlobRefBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> RepoBlobRefBuilder<S, St>
+impl<St, S: BosStr> RepoBlobRefBuilder<St, S>
 where
     St: repo_blob_ref_state::State,
-    St::Did: repo_blob_ref_state::IsSet,
     St::Cid: repo_blob_ref_state::IsSet,
+    St::Did: repo_blob_ref_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RepoBlobRef<S> {
@@ -930,21 +980,28 @@ pub mod repo_ref_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RepoRefBuilder<S: BosStr, St: repo_ref_state::State> {
+pub struct RepoRefBuilder<St: repo_ref_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RepoRef<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RepoRefBuilder<S, repo_ref_state::Empty> {
+impl RepoRef<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RepoRefBuilder<repo_ref_state::Empty, DefaultStr> {
         RepoRefBuilder::new()
     }
 }
 
-impl<S: BosStr> RepoRefBuilder<S, repo_ref_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RepoRef<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RepoRefBuilder<repo_ref_state::Empty, S> {
+        RepoRefBuilder::builder()
+    }
+}
+
+impl RepoRefBuilder<repo_ref_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RepoRefBuilder {
             _state: PhantomData,
@@ -954,7 +1011,18 @@ impl<S: BosStr> RepoRefBuilder<S, repo_ref_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RepoRefBuilder<S, St>
+impl<S: BosStr> RepoRefBuilder<repo_ref_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RepoRefBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RepoRefBuilder<St, S>
 where
     St: repo_ref_state::State,
     St::Did: repo_ref_state::IsUnset,
@@ -963,7 +1031,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> RepoRefBuilder<S, repo_ref_state::SetDid<St>> {
+    ) -> RepoRefBuilder<repo_ref_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RepoRefBuilder {
             _state: PhantomData,
@@ -973,7 +1041,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RepoRefBuilder<S, St>
+impl<St, S: BosStr> RepoRefBuilder<St, S>
 where
     St: repo_ref_state::State,
     St::Did: repo_ref_state::IsSet,
@@ -1027,21 +1095,28 @@ pub mod status_attr_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct StatusAttrBuilder<S: BosStr, St: status_attr_state::State> {
+pub struct StatusAttrBuilder<St: status_attr_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<bool>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> StatusAttr<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> StatusAttrBuilder<S, status_attr_state::Empty> {
+impl StatusAttr<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> StatusAttrBuilder<status_attr_state::Empty, DefaultStr> {
         StatusAttrBuilder::new()
     }
 }
 
-impl<S: BosStr> StatusAttrBuilder<S, status_attr_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> StatusAttr<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> StatusAttrBuilder<status_attr_state::Empty, S> {
+        StatusAttrBuilder::builder()
+    }
+}
+
+impl StatusAttrBuilder<status_attr_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         StatusAttrBuilder {
             _state: PhantomData,
@@ -1051,7 +1126,18 @@ impl<S: BosStr> StatusAttrBuilder<S, status_attr_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> StatusAttrBuilder<S, St>
+impl<S: BosStr> StatusAttrBuilder<status_attr_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        StatusAttrBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> StatusAttrBuilder<St, S>
 where
     St: status_attr_state::State,
     St::Applied: status_attr_state::IsUnset,
@@ -1060,7 +1146,7 @@ where
     pub fn applied(
         mut self,
         value: impl Into<bool>,
-    ) -> StatusAttrBuilder<S, status_attr_state::SetApplied<St>> {
+    ) -> StatusAttrBuilder<status_attr_state::SetApplied<St>, S> {
         self._fields.0 = Option::Some(value.into());
         StatusAttrBuilder {
             _state: PhantomData,
@@ -1070,7 +1156,7 @@ where
     }
 }
 
-impl<S: BosStr, St: status_attr_state::State> StatusAttrBuilder<S, St> {
+impl<St: status_attr_state::State, S: BosStr> StatusAttrBuilder<St, S> {
     /// Set the `ref` field (optional)
     pub fn r#ref(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -1083,7 +1169,7 @@ impl<S: BosStr, St: status_attr_state::State> StatusAttrBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> StatusAttrBuilder<S, St>
+impl<St, S: BosStr> StatusAttrBuilder<St, S>
 where
     St: status_attr_state::State,
     St::Applied: status_attr_state::IsSet,

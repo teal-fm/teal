@@ -148,21 +148,28 @@ pub mod block_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct BlockBuilder<S: BosStr, St: block_state::State> {
+pub struct BlockBuilder<St: block_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Block<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> BlockBuilder<S, block_state::Empty> {
+impl Block<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> BlockBuilder<block_state::Empty, DefaultStr> {
         BlockBuilder::new()
     }
 }
 
-impl<S: BosStr> BlockBuilder<S, block_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Block<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> BlockBuilder<block_state::Empty, S> {
+        BlockBuilder::builder()
+    }
+}
+
+impl BlockBuilder<block_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         BlockBuilder {
             _state: PhantomData,
@@ -172,7 +179,18 @@ impl<S: BosStr> BlockBuilder<S, block_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> BlockBuilder<S, St>
+impl<S: BosStr> BlockBuilder<block_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        BlockBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> BlockBuilder<St, S>
 where
     St: block_state::State,
     St::CreatedAt: block_state::IsUnset,
@@ -181,7 +199,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> BlockBuilder<S, block_state::SetCreatedAt<St>> {
+    ) -> BlockBuilder<block_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         BlockBuilder {
             _state: PhantomData,
@@ -191,7 +209,7 @@ where
     }
 }
 
-impl<S: BosStr, St> BlockBuilder<S, St>
+impl<St, S: BosStr> BlockBuilder<St, S>
 where
     St: block_state::State,
     St::Subject: block_state::IsUnset,
@@ -200,7 +218,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> BlockBuilder<S, block_state::SetSubject<St>> {
+    ) -> BlockBuilder<block_state::SetSubject<St>, S> {
         self._fields.1 = Option::Some(value.into());
         BlockBuilder {
             _state: PhantomData,
@@ -210,7 +228,7 @@ where
     }
 }
 
-impl<S: BosStr, St> BlockBuilder<S, St>
+impl<St, S: BosStr> BlockBuilder<St, S>
 where
     St: block_state::State,
     St::CreatedAt: block_state::IsSet,

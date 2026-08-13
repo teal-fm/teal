@@ -22,7 +22,7 @@ use crate::fm_teal::feed::PlayView;
 pub struct GetLatest<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -40,7 +40,9 @@ pub struct GetLatestOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.stats.getLatest
+/** Response marker for the `fm.teal.stats.getLatest` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetLatestOutput<S>` for this endpoint.*/
 pub struct GetLatestResponse;
 impl jacquard_common::xrpc::XrpcResp for GetLatestResponse {
     const NSID: &'static str = "fm.teal.stats.getLatest";
@@ -55,7 +57,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetLatest<S> {
     type Response = GetLatestResponse;
 }
 
-/// Endpoint type for fm.teal.stats.getLatest
+/** Endpoint marker for the `fm.teal.stats.getLatest` query.
+
+Path: `/xrpc/fm.teal.stats.getLatest`. The request payload type is `GetLatest<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetLatestRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetLatestRequest {
     const PATH: &'static str = "/xrpc/fm.teal.stats.getLatest";
@@ -88,21 +92,28 @@ pub mod get_latest_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetLatestBuilder<S: BosStr, St: get_latest_state::State> {
+pub struct GetLatestBuilder<St: get_latest_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetLatest<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetLatestBuilder<S, get_latest_state::Empty> {
+impl GetLatest<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetLatestBuilder<get_latest_state::Empty, DefaultStr> {
         GetLatestBuilder::new()
     }
 }
 
-impl<S: BosStr> GetLatestBuilder<S, get_latest_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetLatest<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetLatestBuilder<get_latest_state::Empty, S> {
+        GetLatestBuilder::builder()
+    }
+}
+
+impl GetLatestBuilder<get_latest_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetLatestBuilder {
             _state: PhantomData,
@@ -112,7 +123,18 @@ impl<S: BosStr> GetLatestBuilder<S, get_latest_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_latest_state::State> GetLatestBuilder<S, St> {
+impl<S: BosStr> GetLatestBuilder<get_latest_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetLatestBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_latest_state::State, S: BosStr> GetLatestBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -125,7 +147,7 @@ impl<S: BosStr, St: get_latest_state::State> GetLatestBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_latest_state::State> GetLatestBuilder<S, St> {
+impl<St: get_latest_state::State, S: BosStr> GetLatestBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -138,7 +160,7 @@ impl<S: BosStr, St: get_latest_state::State> GetLatestBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetLatestBuilder<S, St>
+impl<St, S: BosStr> GetLatestBuilder<St, S>
 where
     St: get_latest_state::State,
 {

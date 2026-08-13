@@ -102,7 +102,9 @@ impl core::fmt::Display for GetLatestCommitError {
     }
 }
 
-/// Response type for com.atproto.sync.getLatestCommit
+/** Response marker for the `com.atproto.sync.getLatestCommit` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetLatestCommitOutput<S>` for this endpoint.*/
 pub struct GetLatestCommitResponse;
 impl jacquard_common::xrpc::XrpcResp for GetLatestCommitResponse {
     const NSID: &'static str = "com.atproto.sync.getLatestCommit";
@@ -117,7 +119,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetLatestCommit<S> {
     type Response = GetLatestCommitResponse;
 }
 
-/// Endpoint type for com.atproto.sync.getLatestCommit
+/** Endpoint marker for the `com.atproto.sync.getLatestCommit` query.
+
+Path: `/xrpc/com.atproto.sync.getLatestCommit`. The request payload type is `GetLatestCommit<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetLatestCommitRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetLatestCommitRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.getLatestCommit";
@@ -159,21 +163,31 @@ pub mod get_latest_commit_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetLatestCommitBuilder<S: BosStr, St: get_latest_commit_state::State> {
+pub struct GetLatestCommitBuilder<
+    St: get_latest_commit_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetLatestCommit<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetLatestCommitBuilder<S, get_latest_commit_state::Empty> {
+impl GetLatestCommit<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetLatestCommitBuilder<get_latest_commit_state::Empty, DefaultStr> {
         GetLatestCommitBuilder::new()
     }
 }
 
-impl<S: BosStr> GetLatestCommitBuilder<S, get_latest_commit_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetLatestCommit<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetLatestCommitBuilder<get_latest_commit_state::Empty, S> {
+        GetLatestCommitBuilder::builder()
+    }
+}
+
+impl GetLatestCommitBuilder<get_latest_commit_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetLatestCommitBuilder {
             _state: PhantomData,
@@ -183,7 +197,18 @@ impl<S: BosStr> GetLatestCommitBuilder<S, get_latest_commit_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetLatestCommitBuilder<S, St>
+impl<S: BosStr> GetLatestCommitBuilder<get_latest_commit_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetLatestCommitBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetLatestCommitBuilder<St, S>
 where
     St: get_latest_commit_state::State,
     St::Did: get_latest_commit_state::IsUnset,
@@ -192,7 +217,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetLatestCommitBuilder<S, get_latest_commit_state::SetDid<St>> {
+    ) -> GetLatestCommitBuilder<get_latest_commit_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetLatestCommitBuilder {
             _state: PhantomData,
@@ -202,7 +227,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetLatestCommitBuilder<S, St>
+impl<St, S: BosStr> GetLatestCommitBuilder<St, S>
 where
     St: get_latest_commit_state::State,
     St::Did: get_latest_commit_state::IsSet,

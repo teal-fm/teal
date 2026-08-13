@@ -114,56 +114,63 @@ pub mod like_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Subject;
         type CreatedAt;
+        type Subject;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Subject = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type Subject = Set<members::subject>;
-        type CreatedAt = St::CreatedAt;
+        type Subject = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Subject = St::Subject;
         type CreatedAt = Set<members::created_at>;
+        type Subject = St::Subject;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type CreatedAt = St::CreatedAt;
+        type Subject = Set<members::subject>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `subject` field
-        pub struct subject(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `subject` field
+        pub struct subject(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct LikeBuilder<S: BosStr, St: like_state::State> {
+pub struct LikeBuilder<St: like_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<StrongRef<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Like<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> LikeBuilder<S, like_state::Empty> {
+impl Like<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> LikeBuilder<like_state::Empty, DefaultStr> {
         LikeBuilder::new()
     }
 }
 
-impl<S: BosStr> LikeBuilder<S, like_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Like<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LikeBuilder<like_state::Empty, S> {
+        LikeBuilder::builder()
+    }
+}
+
+impl LikeBuilder<like_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LikeBuilder {
             _state: PhantomData,
@@ -173,7 +180,18 @@ impl<S: BosStr> LikeBuilder<S, like_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> LikeBuilder<S, St>
+impl<S: BosStr> LikeBuilder<like_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LikeBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> LikeBuilder<St, S>
 where
     St: like_state::State,
     St::CreatedAt: like_state::IsUnset,
@@ -182,7 +200,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> LikeBuilder<S, like_state::SetCreatedAt<St>> {
+    ) -> LikeBuilder<like_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         LikeBuilder {
             _state: PhantomData,
@@ -192,7 +210,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LikeBuilder<S, St>
+impl<St, S: BosStr> LikeBuilder<St, S>
 where
     St: like_state::State,
     St::Subject: like_state::IsUnset,
@@ -201,7 +219,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<StrongRef<S>>,
-    ) -> LikeBuilder<S, like_state::SetSubject<St>> {
+    ) -> LikeBuilder<like_state::SetSubject<St>, S> {
         self._fields.1 = Option::Some(value.into());
         LikeBuilder {
             _state: PhantomData,
@@ -211,11 +229,11 @@ where
     }
 }
 
-impl<S: BosStr, St> LikeBuilder<S, St>
+impl<St, S: BosStr> LikeBuilder<St, S>
 where
     St: like_state::State,
-    St::Subject: like_state::IsSet,
     St::CreatedAt: like_state::IsSet,
+    St::Subject: like_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Like<S> {

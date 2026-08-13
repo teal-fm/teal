@@ -95,7 +95,9 @@ pub struct ModTool<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.moderation.createReport
+/** Response marker for the `com.atproto.moderation.createReport` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CreateReportOutput<S>` for this endpoint.*/
 pub struct CreateReportResponse;
 impl jacquard_common::xrpc::XrpcResp for CreateReportResponse {
     const NSID: &'static str = "com.atproto.moderation.createReport";
@@ -112,7 +114,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for CreateReport<S> {
     type Response = CreateReportResponse;
 }
 
-/// Endpoint type for com.atproto.moderation.createReport
+/** Endpoint marker for the `com.atproto.moderation.createReport` procedure.
+
+Path: `/xrpc/com.atproto.moderation.createReport`. The request payload type is `CreateReport<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct CreateReportRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CreateReportRequest {
     const PATH: &'static str = "/xrpc/com.atproto.moderation.createReport";
@@ -148,42 +152,42 @@ pub mod create_report_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Subject;
         type ReasonType;
+        type Subject;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Subject = Unset;
         type ReasonType = Unset;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type Subject = Set<members::subject>;
-        type ReasonType = St::ReasonType;
+        type Subject = Unset;
     }
     ///State transition - sets the `reason_type` field to Set
     pub struct SetReasonType<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetReasonType<St> {}
     impl<St: State> State for SetReasonType<St> {
-        type Subject = St::Subject;
         type ReasonType = Set<members::reason_type>;
+        type Subject = St::Subject;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type ReasonType = St::ReasonType;
+        type Subject = Set<members::subject>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `subject` field
-        pub struct subject(());
         ///Marker type for the `reason_type` field
         pub struct reason_type(());
+        ///Marker type for the `subject` field
+        pub struct subject(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct CreateReportBuilder<S: BosStr, St: create_report_state::State> {
+pub struct CreateReportBuilder<St: create_report_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<create_report::ModTool<S>>,
@@ -194,15 +198,22 @@ pub struct CreateReportBuilder<S: BosStr, St: create_report_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> CreateReport<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> CreateReportBuilder<S, create_report_state::Empty> {
+impl CreateReport<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> CreateReportBuilder<create_report_state::Empty, DefaultStr> {
         CreateReportBuilder::new()
     }
 }
 
-impl<S: BosStr> CreateReportBuilder<S, create_report_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> CreateReport<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> CreateReportBuilder<create_report_state::Empty, S> {
+        CreateReportBuilder::builder()
+    }
+}
+
+impl CreateReportBuilder<create_report_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         CreateReportBuilder {
             _state: PhantomData,
@@ -212,7 +223,18 @@ impl<S: BosStr> CreateReportBuilder<S, create_report_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: create_report_state::State> CreateReportBuilder<S, St> {
+impl<S: BosStr> CreateReportBuilder<create_report_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        CreateReportBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: create_report_state::State, S: BosStr> CreateReportBuilder<St, S> {
     /// Set the `modTool` field (optional)
     pub fn mod_tool(
         mut self,
@@ -228,7 +250,7 @@ impl<S: BosStr, St: create_report_state::State> CreateReportBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_report_state::State> CreateReportBuilder<S, St> {
+impl<St: create_report_state::State, S: BosStr> CreateReportBuilder<St, S> {
     /// Set the `reason` field (optional)
     pub fn reason(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -241,7 +263,7 @@ impl<S: BosStr, St: create_report_state::State> CreateReportBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> CreateReportBuilder<S, St>
+impl<St, S: BosStr> CreateReportBuilder<St, S>
 where
     St: create_report_state::State,
     St::ReasonType: create_report_state::IsUnset,
@@ -250,7 +272,7 @@ where
     pub fn reason_type(
         mut self,
         value: impl Into<ReasonType<S>>,
-    ) -> CreateReportBuilder<S, create_report_state::SetReasonType<St>> {
+    ) -> CreateReportBuilder<create_report_state::SetReasonType<St>, S> {
         self._fields.2 = Option::Some(value.into());
         CreateReportBuilder {
             _state: PhantomData,
@@ -260,7 +282,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CreateReportBuilder<S, St>
+impl<St, S: BosStr> CreateReportBuilder<St, S>
 where
     St: create_report_state::State,
     St::Subject: create_report_state::IsUnset,
@@ -269,7 +291,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<CreateReportSubject<S>>,
-    ) -> CreateReportBuilder<S, create_report_state::SetSubject<St>> {
+    ) -> CreateReportBuilder<create_report_state::SetSubject<St>, S> {
         self._fields.3 = Option::Some(value.into());
         CreateReportBuilder {
             _state: PhantomData,
@@ -279,11 +301,11 @@ where
     }
 }
 
-impl<S: BosStr, St> CreateReportBuilder<S, St>
+impl<St, S: BosStr> CreateReportBuilder<St, S>
 where
     St: create_report_state::State,
-    St::Subject: create_report_state::IsSet,
     St::ReasonType: create_report_state::IsSet,
+    St::Subject: create_report_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> CreateReport<S> {

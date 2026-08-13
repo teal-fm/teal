@@ -20,7 +20,7 @@ use crate::app_bsky::feed::GeneratorView;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase")]
 pub struct GetSuggestedFeeds {
-    ///Defaults to `10`. Min: 1. Max: 25.
+    /// Defaults to `10`. Min: 1. Max: 25.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -35,7 +35,9 @@ pub struct GetSuggestedFeedsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.unspecced.getSuggestedFeeds
+/** Response marker for the `app.bsky.unspecced.getSuggestedFeeds` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSuggestedFeedsOutput<S>` for this endpoint.*/
 pub struct GetSuggestedFeedsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSuggestedFeedsResponse {
     const NSID: &'static str = "app.bsky.unspecced.getSuggestedFeeds";
@@ -50,7 +52,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetSuggestedFeeds {
     type Response = GetSuggestedFeedsResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getSuggestedFeeds
+/** Endpoint marker for the `app.bsky.unspecced.getSuggestedFeeds` query.
+
+Path: `/xrpc/app.bsky.unspecced.getSuggestedFeeds`. The request payload type is `GetSuggestedFeeds`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSuggestedFeedsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSuggestedFeedsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getSuggestedFeeds";
@@ -96,8 +100,18 @@ impl GetSuggestedFeeds {
 }
 
 impl GetSuggestedFeedsBuilder<get_suggested_feeds_state::Empty> {
-    /// Create a new builder with all fields unset.
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
+        GetSuggestedFeedsBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+        }
+    }
+}
+
+impl GetSuggestedFeedsBuilder<get_suggested_feeds_state::Empty> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
         GetSuggestedFeedsBuilder {
             _state: PhantomData,
             _fields: (None,),

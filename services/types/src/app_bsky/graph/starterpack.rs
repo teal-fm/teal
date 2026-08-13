@@ -237,21 +237,28 @@ pub mod feed_item_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct FeedItemBuilder<S: BosStr, St: feed_item_state::State> {
+pub struct FeedItemBuilder<St: feed_item_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> FeedItem<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> FeedItemBuilder<S, feed_item_state::Empty> {
+impl FeedItem<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> FeedItemBuilder<feed_item_state::Empty, DefaultStr> {
         FeedItemBuilder::new()
     }
 }
 
-impl<S: BosStr> FeedItemBuilder<S, feed_item_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> FeedItem<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> FeedItemBuilder<feed_item_state::Empty, S> {
+        FeedItemBuilder::builder()
+    }
+}
+
+impl FeedItemBuilder<feed_item_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         FeedItemBuilder {
             _state: PhantomData,
@@ -261,7 +268,18 @@ impl<S: BosStr> FeedItemBuilder<S, feed_item_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> FeedItemBuilder<S, St>
+impl<S: BosStr> FeedItemBuilder<feed_item_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        FeedItemBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> FeedItemBuilder<St, S>
 where
     St: feed_item_state::State,
     St::Uri: feed_item_state::IsUnset,
@@ -270,7 +288,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> FeedItemBuilder<S, feed_item_state::SetUri<St>> {
+    ) -> FeedItemBuilder<feed_item_state::SetUri<St>, S> {
         self._fields.0 = Option::Some(value.into());
         FeedItemBuilder {
             _state: PhantomData,
@@ -280,7 +298,7 @@ where
     }
 }
 
-impl<S: BosStr, St> FeedItemBuilder<S, St>
+impl<St, S: BosStr> FeedItemBuilder<St, S>
 where
     St: feed_item_state::State,
     St::Uri: feed_item_state::IsSet,
@@ -432,56 +450,56 @@ pub mod starterpack_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Name;
-        type List;
         type CreatedAt;
+        type List;
+        type Name;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Name = Unset;
-        type List = Unset;
         type CreatedAt = Unset;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type Name = Set<members::name>;
-        type List = St::List;
-        type CreatedAt = St::CreatedAt;
-    }
-    ///State transition - sets the `list` field to Set
-    pub struct SetList<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetList<St> {}
-    impl<St: State> State for SetList<St> {
-        type Name = St::Name;
-        type List = Set<members::list>;
-        type CreatedAt = St::CreatedAt;
+        type List = Unset;
+        type Name = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type Name = St::Name;
-        type List = St::List;
         type CreatedAt = Set<members::created_at>;
+        type List = St::List;
+        type Name = St::Name;
+    }
+    ///State transition - sets the `list` field to Set
+    pub struct SetList<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetList<St> {}
+    impl<St: State> State for SetList<St> {
+        type CreatedAt = St::CreatedAt;
+        type List = Set<members::list>;
+        type Name = St::Name;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type CreatedAt = St::CreatedAt;
+        type List = St::List;
+        type Name = Set<members::name>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `name` field
-        pub struct name(());
-        ///Marker type for the `list` field
-        pub struct list(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `list` field
+        pub struct list(());
+        ///Marker type for the `name` field
+        pub struct name(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct StarterpackBuilder<S: BosStr, St: starterpack_state::State> {
+pub struct StarterpackBuilder<St: starterpack_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -494,15 +512,22 @@ pub struct StarterpackBuilder<S: BosStr, St: starterpack_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Starterpack<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> StarterpackBuilder<S, starterpack_state::Empty> {
+impl Starterpack<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> StarterpackBuilder<starterpack_state::Empty, DefaultStr> {
         StarterpackBuilder::new()
     }
 }
 
-impl<S: BosStr> StarterpackBuilder<S, starterpack_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Starterpack<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> StarterpackBuilder<starterpack_state::Empty, S> {
+        StarterpackBuilder::builder()
+    }
+}
+
+impl StarterpackBuilder<starterpack_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         StarterpackBuilder {
             _state: PhantomData,
@@ -512,7 +537,18 @@ impl<S: BosStr> StarterpackBuilder<S, starterpack_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> StarterpackBuilder<S, St>
+impl<S: BosStr> StarterpackBuilder<starterpack_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        StarterpackBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> StarterpackBuilder<St, S>
 where
     St: starterpack_state::State,
     St::CreatedAt: starterpack_state::IsUnset,
@@ -521,7 +557,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> StarterpackBuilder<S, starterpack_state::SetCreatedAt<St>> {
+    ) -> StarterpackBuilder<starterpack_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         StarterpackBuilder {
             _state: PhantomData,
@@ -531,7 +567,7 @@ where
     }
 }
 
-impl<S: BosStr, St: starterpack_state::State> StarterpackBuilder<S, St> {
+impl<St: starterpack_state::State, S: BosStr> StarterpackBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -544,7 +580,7 @@ impl<S: BosStr, St: starterpack_state::State> StarterpackBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: starterpack_state::State> StarterpackBuilder<S, St> {
+impl<St: starterpack_state::State, S: BosStr> StarterpackBuilder<St, S> {
     /// Set the `descriptionFacets` field (optional)
     pub fn description_facets(
         mut self,
@@ -560,7 +596,7 @@ impl<S: BosStr, St: starterpack_state::State> StarterpackBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: starterpack_state::State> StarterpackBuilder<S, St> {
+impl<St: starterpack_state::State, S: BosStr> StarterpackBuilder<St, S> {
     /// Set the `feeds` field (optional)
     pub fn feeds(
         mut self,
@@ -576,7 +612,7 @@ impl<S: BosStr, St: starterpack_state::State> StarterpackBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> StarterpackBuilder<S, St>
+impl<St, S: BosStr> StarterpackBuilder<St, S>
 where
     St: starterpack_state::State,
     St::List: starterpack_state::IsUnset,
@@ -585,7 +621,7 @@ where
     pub fn list(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> StarterpackBuilder<S, starterpack_state::SetList<St>> {
+    ) -> StarterpackBuilder<starterpack_state::SetList<St>, S> {
         self._fields.4 = Option::Some(value.into());
         StarterpackBuilder {
             _state: PhantomData,
@@ -595,7 +631,7 @@ where
     }
 }
 
-impl<S: BosStr, St> StarterpackBuilder<S, St>
+impl<St, S: BosStr> StarterpackBuilder<St, S>
 where
     St: starterpack_state::State,
     St::Name: starterpack_state::IsUnset,
@@ -604,7 +640,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> StarterpackBuilder<S, starterpack_state::SetName<St>> {
+    ) -> StarterpackBuilder<starterpack_state::SetName<St>, S> {
         self._fields.5 = Option::Some(value.into());
         StarterpackBuilder {
             _state: PhantomData,
@@ -614,12 +650,12 @@ where
     }
 }
 
-impl<S: BosStr, St> StarterpackBuilder<S, St>
+impl<St, S: BosStr> StarterpackBuilder<St, S>
 where
     St: starterpack_state::State,
-    St::Name: starterpack_state::IsSet,
-    St::List: starterpack_state::IsSet,
     St::CreatedAt: starterpack_state::IsSet,
+    St::List: starterpack_state::IsSet,
+    St::Name: starterpack_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Starterpack<S> {

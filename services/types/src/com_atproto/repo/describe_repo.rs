@@ -40,7 +40,9 @@ pub struct DescribeRepoOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.repo.describeRepo
+/** Response marker for the `com.atproto.repo.describeRepo` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `DescribeRepoOutput<S>` for this endpoint.*/
 pub struct DescribeRepoResponse;
 impl jacquard_common::xrpc::XrpcResp for DescribeRepoResponse {
     const NSID: &'static str = "com.atproto.repo.describeRepo";
@@ -55,7 +57,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DescribeRepo<S> {
     type Response = DescribeRepoResponse;
 }
 
-/// Endpoint type for com.atproto.repo.describeRepo
+/** Endpoint marker for the `com.atproto.repo.describeRepo` query.
+
+Path: `/xrpc/com.atproto.repo.describeRepo`. The request payload type is `DescribeRepo<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DescribeRepoRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DescribeRepoRequest {
     const PATH: &'static str = "/xrpc/com.atproto.repo.describeRepo";
@@ -97,21 +101,28 @@ pub mod describe_repo_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct DescribeRepoBuilder<S: BosStr, St: describe_repo_state::State> {
+pub struct DescribeRepoBuilder<St: describe_repo_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> DescribeRepo<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> DescribeRepoBuilder<S, describe_repo_state::Empty> {
+impl DescribeRepo<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> DescribeRepoBuilder<describe_repo_state::Empty, DefaultStr> {
         DescribeRepoBuilder::new()
     }
 }
 
-impl<S: BosStr> DescribeRepoBuilder<S, describe_repo_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> DescribeRepo<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> DescribeRepoBuilder<describe_repo_state::Empty, S> {
+        DescribeRepoBuilder::builder()
+    }
+}
+
+impl DescribeRepoBuilder<describe_repo_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         DescribeRepoBuilder {
             _state: PhantomData,
@@ -121,7 +132,18 @@ impl<S: BosStr> DescribeRepoBuilder<S, describe_repo_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> DescribeRepoBuilder<S, St>
+impl<S: BosStr> DescribeRepoBuilder<describe_repo_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        DescribeRepoBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> DescribeRepoBuilder<St, S>
 where
     St: describe_repo_state::State,
     St::Repo: describe_repo_state::IsUnset,
@@ -130,7 +152,7 @@ where
     pub fn repo(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> DescribeRepoBuilder<S, describe_repo_state::SetRepo<St>> {
+    ) -> DescribeRepoBuilder<describe_repo_state::SetRepo<St>, S> {
         self._fields.0 = Option::Some(value.into());
         DescribeRepoBuilder {
             _state: PhantomData,
@@ -140,7 +162,7 @@ where
     }
 }
 
-impl<S: BosStr, St> DescribeRepoBuilder<S, St>
+impl<St, S: BosStr> DescribeRepoBuilder<St, S>
 where
     St: describe_repo_state::State,
     St::Repo: describe_repo_state::IsSet,

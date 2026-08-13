@@ -3,6 +3,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `com.atproto.temp` Lexicon namespace/module.
 pub mod add_reserved_handle;
 pub mod check_handle_availability;
 pub mod check_signup_queue;

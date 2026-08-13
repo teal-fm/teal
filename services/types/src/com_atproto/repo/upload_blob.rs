@@ -33,7 +33,9 @@ pub struct UploadBlobOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.repo.uploadBlob
+/** Response marker for the `com.atproto.repo.uploadBlob` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UploadBlobOutput<S>` for this endpoint.*/
 pub struct UploadBlobResponse;
 impl jacquard_common::xrpc::XrpcResp for UploadBlobResponse {
     const NSID: &'static str = "com.atproto.repo.uploadBlob";
@@ -55,7 +57,7 @@ impl jacquard_common::xrpc::XrpcRequest for UploadBlob {
     where
         Self: Serialize,
     {
-        Ok(buffer.copy_from_slice(self.body.as_ref()))
+        Ok(buffer.extend_from_slice(self.body.as_ref()))
     }
     fn decode_body<'de>(
         body: &'de [u8],
@@ -69,7 +71,9 @@ impl jacquard_common::xrpc::XrpcRequest for UploadBlob {
     }
 }
 
-/// Endpoint type for com.atproto.repo.uploadBlob
+/** Endpoint marker for the `com.atproto.repo.uploadBlob` procedure.
+
+Path: `/xrpc/com.atproto.repo.uploadBlob`. The request payload type is `UploadBlob`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UploadBlobRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UploadBlobRequest {
     const PATH: &'static str = "/xrpc/com.atproto.repo.uploadBlob";

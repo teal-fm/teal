@@ -100,11 +100,15 @@ impl<S: BosStr> LexiconSchema for Links<S> {
     }
 }
 
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.server.describeServer` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct DescribeServer;
-/// Response type for com.atproto.server.describeServer
+/** Response marker for the `com.atproto.server.describeServer` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `DescribeServerOutput<S>` for this endpoint.*/
 pub struct DescribeServerResponse;
 impl jacquard_common::xrpc::XrpcResp for DescribeServerResponse {
     const NSID: &'static str = "com.atproto.server.describeServer";
@@ -119,7 +123,9 @@ impl jacquard_common::xrpc::XrpcRequest for DescribeServer {
     type Response = DescribeServerResponse;
 }
 
-/// Endpoint type for com.atproto.server.describeServer
+/** Endpoint marker for the `com.atproto.server.describeServer` query.
+
+Path: `/xrpc/com.atproto.server.describeServer`. The request payload type is `DescribeServer`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct DescribeServerRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DescribeServerRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.describeServer";

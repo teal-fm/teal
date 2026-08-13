@@ -25,7 +25,9 @@ pub struct NotifyOfUpdate<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.sync.notifyOfUpdate
+/** Response marker for the `com.atproto.sync.notifyOfUpdate` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct NotifyOfUpdateResponse;
 impl jacquard_common::xrpc::XrpcResp for NotifyOfUpdateResponse {
     const NSID: &'static str = "com.atproto.sync.notifyOfUpdate";
@@ -42,7 +44,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for NotifyOfUpdate<S> {
     type Response = NotifyOfUpdateResponse;
 }
 
-/// Endpoint type for com.atproto.sync.notifyOfUpdate
+/** Endpoint marker for the `com.atproto.sync.notifyOfUpdate` procedure.
+
+Path: `/xrpc/com.atproto.sync.notifyOfUpdate`. The request payload type is `NotifyOfUpdate<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct NotifyOfUpdateRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for NotifyOfUpdateRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.notifyOfUpdate";

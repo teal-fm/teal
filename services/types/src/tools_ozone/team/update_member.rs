@@ -169,7 +169,9 @@ impl core::fmt::Display for UpdateMemberError {
     }
 }
 
-/// Response type for tools.ozone.team.updateMember
+/** Response marker for the `tools.ozone.team.updateMember` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UpdateMemberOutput<S>` for this endpoint.*/
 pub struct UpdateMemberResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateMemberResponse {
     const NSID: &'static str = "tools.ozone.team.updateMember";
@@ -186,7 +188,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateMember<S> {
     type Response = UpdateMemberResponse;
 }
 
-/// Endpoint type for tools.ozone.team.updateMember
+/** Endpoint marker for the `tools.ozone.team.updateMember` procedure.
+
+Path: `/xrpc/tools.ozone.team.updateMember`. The request payload type is `UpdateMember<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateMemberRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateMemberRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.team.updateMember";
@@ -230,21 +234,28 @@ pub mod update_member_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct UpdateMemberBuilder<S: BosStr, St: update_member_state::State> {
+pub struct UpdateMemberBuilder<St: update_member_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<bool>, Option<UpdateMemberRole<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpdateMember<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> UpdateMemberBuilder<S, update_member_state::Empty> {
+impl UpdateMember<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> UpdateMemberBuilder<update_member_state::Empty, DefaultStr> {
         UpdateMemberBuilder::new()
     }
 }
 
-impl<S: BosStr> UpdateMemberBuilder<S, update_member_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpdateMember<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpdateMemberBuilder<update_member_state::Empty, S> {
+        UpdateMemberBuilder::builder()
+    }
+}
+
+impl UpdateMemberBuilder<update_member_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpdateMemberBuilder {
             _state: PhantomData,
@@ -254,7 +265,18 @@ impl<S: BosStr> UpdateMemberBuilder<S, update_member_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> UpdateMemberBuilder<S, St>
+impl<S: BosStr> UpdateMemberBuilder<update_member_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpdateMemberBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> UpdateMemberBuilder<St, S>
 where
     St: update_member_state::State,
     St::Did: update_member_state::IsUnset,
@@ -263,7 +285,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> UpdateMemberBuilder<S, update_member_state::SetDid<St>> {
+    ) -> UpdateMemberBuilder<update_member_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         UpdateMemberBuilder {
             _state: PhantomData,
@@ -273,7 +295,7 @@ where
     }
 }
 
-impl<S: BosStr, St: update_member_state::State> UpdateMemberBuilder<S, St> {
+impl<St: update_member_state::State, S: BosStr> UpdateMemberBuilder<St, S> {
     /// Set the `disabled` field (optional)
     pub fn disabled(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.1 = value.into();
@@ -286,7 +308,7 @@ impl<S: BosStr, St: update_member_state::State> UpdateMemberBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: update_member_state::State> UpdateMemberBuilder<S, St> {
+impl<St: update_member_state::State, S: BosStr> UpdateMemberBuilder<St, S> {
     /// Set the `role` field (optional)
     pub fn role(mut self, value: impl Into<Option<UpdateMemberRole<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -299,7 +321,7 @@ impl<S: BosStr, St: update_member_state::State> UpdateMemberBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> UpdateMemberBuilder<S, St>
+impl<St, S: BosStr> UpdateMemberBuilder<St, S>
 where
     St: update_member_state::State,
     St::Did: update_member_state::IsSet,

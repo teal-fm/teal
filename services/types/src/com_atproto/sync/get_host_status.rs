@@ -82,7 +82,9 @@ impl core::fmt::Display for GetHostStatusError {
     }
 }
 
-/// Response type for com.atproto.sync.getHostStatus
+/** Response marker for the `com.atproto.sync.getHostStatus` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetHostStatusOutput<S>` for this endpoint.*/
 pub struct GetHostStatusResponse;
 impl jacquard_common::xrpc::XrpcResp for GetHostStatusResponse {
     const NSID: &'static str = "com.atproto.sync.getHostStatus";
@@ -97,7 +99,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetHostStatus<S> {
     type Response = GetHostStatusResponse;
 }
 
-/// Endpoint type for com.atproto.sync.getHostStatus
+/** Endpoint marker for the `com.atproto.sync.getHostStatus` query.
+
+Path: `/xrpc/com.atproto.sync.getHostStatus`. The request payload type is `GetHostStatus<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetHostStatusRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetHostStatusRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.getHostStatus";
@@ -139,21 +143,31 @@ pub mod get_host_status_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetHostStatusBuilder<S: BosStr, St: get_host_status_state::State> {
+pub struct GetHostStatusBuilder<
+    St: get_host_status_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetHostStatus<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetHostStatusBuilder<S, get_host_status_state::Empty> {
+impl GetHostStatus<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetHostStatusBuilder<get_host_status_state::Empty, DefaultStr> {
         GetHostStatusBuilder::new()
     }
 }
 
-impl<S: BosStr> GetHostStatusBuilder<S, get_host_status_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetHostStatus<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetHostStatusBuilder<get_host_status_state::Empty, S> {
+        GetHostStatusBuilder::builder()
+    }
+}
+
+impl GetHostStatusBuilder<get_host_status_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetHostStatusBuilder {
             _state: PhantomData,
@@ -163,7 +177,18 @@ impl<S: BosStr> GetHostStatusBuilder<S, get_host_status_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetHostStatusBuilder<S, St>
+impl<S: BosStr> GetHostStatusBuilder<get_host_status_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetHostStatusBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetHostStatusBuilder<St, S>
 where
     St: get_host_status_state::State,
     St::Hostname: get_host_status_state::IsUnset,
@@ -172,7 +197,7 @@ where
     pub fn hostname(
         mut self,
         value: impl Into<S>,
-    ) -> GetHostStatusBuilder<S, get_host_status_state::SetHostname<St>> {
+    ) -> GetHostStatusBuilder<get_host_status_state::SetHostname<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetHostStatusBuilder {
             _state: PhantomData,
@@ -182,7 +207,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetHostStatusBuilder<S, St>
+impl<St, S: BosStr> GetHostStatusBuilder<St, S>
 where
     St: get_host_status_state::State,
     St::Hostname: get_host_status_state::IsSet,

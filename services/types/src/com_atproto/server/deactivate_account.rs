@@ -27,7 +27,9 @@ pub struct DeactivateAccount<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.server.deactivateAccount
+/** Response marker for the `com.atproto.server.deactivateAccount` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DeactivateAccountResponse;
 impl jacquard_common::xrpc::XrpcResp for DeactivateAccountResponse {
     const NSID: &'static str = "com.atproto.server.deactivateAccount";
@@ -44,7 +46,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeactivateAccount<S> {
     type Response = DeactivateAccountResponse;
 }
 
-/// Endpoint type for com.atproto.server.deactivateAccount
+/** Endpoint marker for the `com.atproto.server.deactivateAccount` procedure.
+
+Path: `/xrpc/com.atproto.server.deactivateAccount`. The request payload type is `DeactivateAccount<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DeactivateAccountRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeactivateAccountRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.deactivateAccount";

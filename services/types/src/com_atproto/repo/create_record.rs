@@ -183,7 +183,9 @@ impl core::fmt::Display for CreateRecordError {
     }
 }
 
-/// Response type for com.atproto.repo.createRecord
+/** Response marker for the `com.atproto.repo.createRecord` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CreateRecordOutput<S>` for this endpoint.*/
 pub struct CreateRecordResponse;
 impl jacquard_common::xrpc::XrpcResp for CreateRecordResponse {
     const NSID: &'static str = "com.atproto.repo.createRecord";
@@ -200,7 +202,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for CreateRecord<S> {
     type Response = CreateRecordResponse;
 }
 
-/// Endpoint type for com.atproto.repo.createRecord
+/** Endpoint marker for the `com.atproto.repo.createRecord` procedure.
+
+Path: `/xrpc/com.atproto.repo.createRecord`. The request payload type is `CreateRecord<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct CreateRecordRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CreateRecordRequest {
     const PATH: &'static str = "/xrpc/com.atproto.repo.createRecord";
@@ -221,56 +225,56 @@ pub mod create_record_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Repo;
-        type Record;
         type Collection;
+        type Record;
+        type Repo;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Repo = Unset;
-        type Record = Unset;
         type Collection = Unset;
-    }
-    ///State transition - sets the `repo` field to Set
-    pub struct SetRepo<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRepo<St> {}
-    impl<St: State> State for SetRepo<St> {
-        type Repo = Set<members::repo>;
-        type Record = St::Record;
-        type Collection = St::Collection;
-    }
-    ///State transition - sets the `record` field to Set
-    pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRecord<St> {}
-    impl<St: State> State for SetRecord<St> {
-        type Repo = St::Repo;
-        type Record = Set<members::record>;
-        type Collection = St::Collection;
+        type Record = Unset;
+        type Repo = Unset;
     }
     ///State transition - sets the `collection` field to Set
     pub struct SetCollection<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCollection<St> {}
     impl<St: State> State for SetCollection<St> {
-        type Repo = St::Repo;
-        type Record = St::Record;
         type Collection = Set<members::collection>;
+        type Record = St::Record;
+        type Repo = St::Repo;
+    }
+    ///State transition - sets the `record` field to Set
+    pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRecord<St> {}
+    impl<St: State> State for SetRecord<St> {
+        type Collection = St::Collection;
+        type Record = Set<members::record>;
+        type Repo = St::Repo;
+    }
+    ///State transition - sets the `repo` field to Set
+    pub struct SetRepo<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRepo<St> {}
+    impl<St: State> State for SetRepo<St> {
+        type Collection = St::Collection;
+        type Record = St::Record;
+        type Repo = Set<members::repo>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `repo` field
-        pub struct repo(());
-        ///Marker type for the `record` field
-        pub struct record(());
         ///Marker type for the `collection` field
         pub struct collection(());
+        ///Marker type for the `record` field
+        pub struct record(());
+        ///Marker type for the `repo` field
+        pub struct repo(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct CreateRecordBuilder<S: BosStr, St: create_record_state::State> {
+pub struct CreateRecordBuilder<St: create_record_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Nsid<S>>,
@@ -283,15 +287,22 @@ pub struct CreateRecordBuilder<S: BosStr, St: create_record_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> CreateRecord<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> CreateRecordBuilder<S, create_record_state::Empty> {
+impl CreateRecord<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> CreateRecordBuilder<create_record_state::Empty, DefaultStr> {
         CreateRecordBuilder::new()
     }
 }
 
-impl<S: BosStr> CreateRecordBuilder<S, create_record_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> CreateRecord<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> CreateRecordBuilder<create_record_state::Empty, S> {
+        CreateRecordBuilder::builder()
+    }
+}
+
+impl CreateRecordBuilder<create_record_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         CreateRecordBuilder {
             _state: PhantomData,
@@ -301,7 +312,18 @@ impl<S: BosStr> CreateRecordBuilder<S, create_record_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> CreateRecordBuilder<S, St>
+impl<S: BosStr> CreateRecordBuilder<create_record_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        CreateRecordBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> CreateRecordBuilder<St, S>
 where
     St: create_record_state::State,
     St::Collection: create_record_state::IsUnset,
@@ -310,7 +332,7 @@ where
     pub fn collection(
         mut self,
         value: impl Into<Nsid<S>>,
-    ) -> CreateRecordBuilder<S, create_record_state::SetCollection<St>> {
+    ) -> CreateRecordBuilder<create_record_state::SetCollection<St>, S> {
         self._fields.0 = Option::Some(value.into());
         CreateRecordBuilder {
             _state: PhantomData,
@@ -320,7 +342,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CreateRecordBuilder<S, St>
+impl<St, S: BosStr> CreateRecordBuilder<St, S>
 where
     St: create_record_state::State,
     St::Record: create_record_state::IsUnset,
@@ -329,7 +351,7 @@ where
     pub fn record(
         mut self,
         value: impl Into<Data<S>>,
-    ) -> CreateRecordBuilder<S, create_record_state::SetRecord<St>> {
+    ) -> CreateRecordBuilder<create_record_state::SetRecord<St>, S> {
         self._fields.1 = Option::Some(value.into());
         CreateRecordBuilder {
             _state: PhantomData,
@@ -339,7 +361,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CreateRecordBuilder<S, St>
+impl<St, S: BosStr> CreateRecordBuilder<St, S>
 where
     St: create_record_state::State,
     St::Repo: create_record_state::IsUnset,
@@ -348,7 +370,7 @@ where
     pub fn repo(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> CreateRecordBuilder<S, create_record_state::SetRepo<St>> {
+    ) -> CreateRecordBuilder<create_record_state::SetRepo<St>, S> {
         self._fields.2 = Option::Some(value.into());
         CreateRecordBuilder {
             _state: PhantomData,
@@ -358,7 +380,7 @@ where
     }
 }
 
-impl<S: BosStr, St: create_record_state::State> CreateRecordBuilder<S, St> {
+impl<St: create_record_state::State, S: BosStr> CreateRecordBuilder<St, S> {
     /// Set the `rkey` field (optional)
     pub fn rkey(mut self, value: impl Into<Option<RecordKey<Rkey<S>>>>) -> Self {
         self._fields.3 = value.into();
@@ -371,7 +393,7 @@ impl<S: BosStr, St: create_record_state::State> CreateRecordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_record_state::State> CreateRecordBuilder<S, St> {
+impl<St: create_record_state::State, S: BosStr> CreateRecordBuilder<St, S> {
     /// Set the `swapCommit` field (optional)
     pub fn swap_commit(mut self, value: impl Into<Option<Cid<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -384,7 +406,7 @@ impl<S: BosStr, St: create_record_state::State> CreateRecordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_record_state::State> CreateRecordBuilder<S, St> {
+impl<St: create_record_state::State, S: BosStr> CreateRecordBuilder<St, S> {
     /// Set the `validate` field (optional)
     pub fn validate(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.5 = value.into();
@@ -397,12 +419,12 @@ impl<S: BosStr, St: create_record_state::State> CreateRecordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> CreateRecordBuilder<S, St>
+impl<St, S: BosStr> CreateRecordBuilder<St, S>
 where
     St: create_record_state::State,
-    St::Repo: create_record_state::IsSet,
-    St::Record: create_record_state::IsSet,
     St::Collection: create_record_state::IsSet,
+    St::Record: create_record_state::IsSet,
+    St::Repo: create_record_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> CreateRecord<S> {

@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `chat.bsky.actor` Lexicon namespace/module.
 pub mod declaration;
 pub mod delete_account;
 pub mod export_account_data;
@@ -478,21 +479,34 @@ pub mod group_convo_member_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GroupConvoMemberBuilder<S: BosStr, St: group_convo_member_state::State> {
+pub struct GroupConvoMemberBuilder<
+    St: group_convo_member_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<actor::ProfileViewBasic<S>>, Option<actor::MemberRole<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GroupConvoMember<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GroupConvoMemberBuilder<S, group_convo_member_state::Empty> {
+impl GroupConvoMember<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GroupConvoMemberBuilder<
+        group_convo_member_state::Empty,
+        DefaultStr,
+    > {
         GroupConvoMemberBuilder::new()
     }
 }
 
-impl<S: BosStr> GroupConvoMemberBuilder<S, group_convo_member_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GroupConvoMember<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GroupConvoMemberBuilder<group_convo_member_state::Empty, S> {
+        GroupConvoMemberBuilder::builder()
+    }
+}
+
+impl GroupConvoMemberBuilder<group_convo_member_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GroupConvoMemberBuilder {
             _state: PhantomData,
@@ -502,7 +516,18 @@ impl<S: BosStr> GroupConvoMemberBuilder<S, group_convo_member_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: group_convo_member_state::State> GroupConvoMemberBuilder<S, St> {
+impl<S: BosStr> GroupConvoMemberBuilder<group_convo_member_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GroupConvoMemberBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: group_convo_member_state::State, S: BosStr> GroupConvoMemberBuilder<St, S> {
     /// Set the `addedBy` field (optional)
     pub fn added_by(
         mut self,
@@ -518,7 +543,7 @@ impl<S: BosStr, St: group_convo_member_state::State> GroupConvoMemberBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> GroupConvoMemberBuilder<S, St>
+impl<St, S: BosStr> GroupConvoMemberBuilder<St, S>
 where
     St: group_convo_member_state::State,
     St::Role: group_convo_member_state::IsUnset,
@@ -527,7 +552,7 @@ where
     pub fn role(
         mut self,
         value: impl Into<actor::MemberRole<S>>,
-    ) -> GroupConvoMemberBuilder<S, group_convo_member_state::SetRole<St>> {
+    ) -> GroupConvoMemberBuilder<group_convo_member_state::SetRole<St>, S> {
         self._fields.1 = Option::Some(value.into());
         GroupConvoMemberBuilder {
             _state: PhantomData,
@@ -537,7 +562,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GroupConvoMemberBuilder<S, St>
+impl<St, S: BosStr> GroupConvoMemberBuilder<St, S>
 where
     St: group_convo_member_state::State,
     St::Role: group_convo_member_state::IsSet,
@@ -608,7 +633,10 @@ pub mod profile_view_basic_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ProfileViewBasicBuilder<S: BosStr, St: profile_view_basic_state::State> {
+pub struct ProfileViewBasicBuilder<
+    St: profile_view_basic_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<ProfileAssociated<S>>,
@@ -626,15 +654,25 @@ pub struct ProfileViewBasicBuilder<S: BosStr, St: profile_view_basic_state::Stat
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ProfileViewBasic<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ProfileViewBasicBuilder<S, profile_view_basic_state::Empty> {
+impl ProfileViewBasic<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ProfileViewBasicBuilder<
+        profile_view_basic_state::Empty,
+        DefaultStr,
+    > {
         ProfileViewBasicBuilder::new()
     }
 }
 
-impl<S: BosStr> ProfileViewBasicBuilder<S, profile_view_basic_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ProfileViewBasic<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ProfileViewBasicBuilder<profile_view_basic_state::Empty, S> {
+        ProfileViewBasicBuilder::builder()
+    }
+}
+
+impl ProfileViewBasicBuilder<profile_view_basic_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ProfileViewBasicBuilder {
             _state: PhantomData,
@@ -644,7 +682,18 @@ impl<S: BosStr> ProfileViewBasicBuilder<S, profile_view_basic_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<S: BosStr> ProfileViewBasicBuilder<profile_view_basic_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ProfileViewBasicBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `associated` field (optional)
     pub fn associated(mut self, value: impl Into<Option<ProfileAssociated<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -657,7 +706,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `avatar` field (optional)
     pub fn avatar(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -670,7 +719,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `chatDisabled` field (optional)
     pub fn chat_disabled(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.2 = value.into();
@@ -683,7 +732,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `createdAt` field (optional)
     pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.3 = value.into();
@@ -696,7 +745,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> ProfileViewBasicBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBasicBuilder<St, S>
 where
     St: profile_view_basic_state::State,
     St::Did: profile_view_basic_state::IsUnset,
@@ -705,7 +754,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> ProfileViewBasicBuilder<S, profile_view_basic_state::SetDid<St>> {
+    ) -> ProfileViewBasicBuilder<profile_view_basic_state::SetDid<St>, S> {
         self._fields.4 = Option::Some(value.into());
         ProfileViewBasicBuilder {
             _state: PhantomData,
@@ -715,7 +764,7 @@ where
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `displayName` field (optional)
     pub fn display_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.5 = value.into();
@@ -728,7 +777,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> ProfileViewBasicBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBasicBuilder<St, S>
 where
     St: profile_view_basic_state::State,
     St::Handle: profile_view_basic_state::IsUnset,
@@ -737,7 +786,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> ProfileViewBasicBuilder<S, profile_view_basic_state::SetHandle<St>> {
+    ) -> ProfileViewBasicBuilder<profile_view_basic_state::SetHandle<St>, S> {
         self._fields.6 = Option::Some(value.into());
         ProfileViewBasicBuilder {
             _state: PhantomData,
@@ -747,7 +796,7 @@ where
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `kind` field (optional)
     pub fn kind(mut self, value: impl Into<Option<ProfileViewBasicKind<S>>>) -> Self {
         self._fields.7 = value.into();
@@ -760,7 +809,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<Vec<Label<S>>>>) -> Self {
         self._fields.8 = value.into();
@@ -773,7 +822,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `verification` field (optional)
     pub fn verification(
         mut self,
@@ -789,7 +838,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, St> {
+impl<St: profile_view_basic_state::State, S: BosStr> ProfileViewBasicBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<ViewerState<S>>>) -> Self {
         self._fields.10 = value.into();
@@ -802,7 +851,7 @@ impl<S: BosStr, St: profile_view_basic_state::State> ProfileViewBasicBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> ProfileViewBasicBuilder<S, St>
+impl<St, S: BosStr> ProfileViewBasicBuilder<St, S>
 where
     St: profile_view_basic_state::State,
     St::Did: profile_view_basic_state::IsSet,

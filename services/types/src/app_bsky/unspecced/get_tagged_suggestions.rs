@@ -129,7 +129,9 @@ where
     }
 }
 
-/// Response type for app.bsky.unspecced.getTaggedSuggestions
+/** Response marker for the `app.bsky.unspecced.getTaggedSuggestions` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetTaggedSuggestionsOutput<S>` for this endpoint.*/
 pub struct GetTaggedSuggestionsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetTaggedSuggestionsResponse {
     const NSID: &'static str = "app.bsky.unspecced.getTaggedSuggestions";
@@ -144,7 +146,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetTaggedSuggestions {
     type Response = GetTaggedSuggestionsResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getTaggedSuggestions
+/** Endpoint marker for the `app.bsky.unspecced.getTaggedSuggestions` query.
+
+Path: `/xrpc/app.bsky.unspecced.getTaggedSuggestions`. The request payload type is `GetTaggedSuggestions`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetTaggedSuggestionsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetTaggedSuggestionsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getTaggedSuggestions";
@@ -178,70 +182,77 @@ pub mod suggestion_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type Subject;
         type SubjectType;
         type Tag;
-        type Subject;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type Subject = Unset;
         type SubjectType = Unset;
         type Tag = Unset;
-        type Subject = Unset;
-    }
-    ///State transition - sets the `subject_type` field to Set
-    pub struct SetSubjectType<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubjectType<St> {}
-    impl<St: State> State for SetSubjectType<St> {
-        type SubjectType = Set<members::subject_type>;
-        type Tag = St::Tag;
-        type Subject = St::Subject;
-    }
-    ///State transition - sets the `tag` field to Set
-    pub struct SetTag<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTag<St> {}
-    impl<St: State> State for SetTag<St> {
-        type SubjectType = St::SubjectType;
-        type Tag = Set<members::tag>;
-        type Subject = St::Subject;
     }
     ///State transition - sets the `subject` field to Set
     pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSubject<St> {}
     impl<St: State> State for SetSubject<St> {
+        type Subject = Set<members::subject>;
         type SubjectType = St::SubjectType;
         type Tag = St::Tag;
-        type Subject = Set<members::subject>;
+    }
+    ///State transition - sets the `subject_type` field to Set
+    pub struct SetSubjectType<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubjectType<St> {}
+    impl<St: State> State for SetSubjectType<St> {
+        type Subject = St::Subject;
+        type SubjectType = Set<members::subject_type>;
+        type Tag = St::Tag;
+    }
+    ///State transition - sets the `tag` field to Set
+    pub struct SetTag<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTag<St> {}
+    impl<St: State> State for SetTag<St> {
+        type Subject = St::Subject;
+        type SubjectType = St::SubjectType;
+        type Tag = Set<members::tag>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `subject` field
+        pub struct subject(());
         ///Marker type for the `subject_type` field
         pub struct subject_type(());
         ///Marker type for the `tag` field
         pub struct tag(());
-        ///Marker type for the `subject` field
-        pub struct subject(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SuggestionBuilder<S: BosStr, St: suggestion_state::State> {
+pub struct SuggestionBuilder<St: suggestion_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<UriValue<S>>, Option<SuggestionSubjectType<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Suggestion<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SuggestionBuilder<S, suggestion_state::Empty> {
+impl Suggestion<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SuggestionBuilder<suggestion_state::Empty, DefaultStr> {
         SuggestionBuilder::new()
     }
 }
 
-impl<S: BosStr> SuggestionBuilder<S, suggestion_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Suggestion<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SuggestionBuilder<suggestion_state::Empty, S> {
+        SuggestionBuilder::builder()
+    }
+}
+
+impl SuggestionBuilder<suggestion_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SuggestionBuilder {
             _state: PhantomData,
@@ -251,7 +262,18 @@ impl<S: BosStr> SuggestionBuilder<S, suggestion_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SuggestionBuilder<S, St>
+impl<S: BosStr> SuggestionBuilder<suggestion_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SuggestionBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SuggestionBuilder<St, S>
 where
     St: suggestion_state::State,
     St::Subject: suggestion_state::IsUnset,
@@ -260,7 +282,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<UriValue<S>>,
-    ) -> SuggestionBuilder<S, suggestion_state::SetSubject<St>> {
+    ) -> SuggestionBuilder<suggestion_state::SetSubject<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SuggestionBuilder {
             _state: PhantomData,
@@ -270,7 +292,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SuggestionBuilder<S, St>
+impl<St, S: BosStr> SuggestionBuilder<St, S>
 where
     St: suggestion_state::State,
     St::SubjectType: suggestion_state::IsUnset,
@@ -279,7 +301,7 @@ where
     pub fn subject_type(
         mut self,
         value: impl Into<SuggestionSubjectType<S>>,
-    ) -> SuggestionBuilder<S, suggestion_state::SetSubjectType<St>> {
+    ) -> SuggestionBuilder<suggestion_state::SetSubjectType<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SuggestionBuilder {
             _state: PhantomData,
@@ -289,7 +311,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SuggestionBuilder<S, St>
+impl<St, S: BosStr> SuggestionBuilder<St, S>
 where
     St: suggestion_state::State,
     St::Tag: suggestion_state::IsUnset,
@@ -298,7 +320,7 @@ where
     pub fn tag(
         mut self,
         value: impl Into<S>,
-    ) -> SuggestionBuilder<S, suggestion_state::SetTag<St>> {
+    ) -> SuggestionBuilder<suggestion_state::SetTag<St>, S> {
         self._fields.2 = Option::Some(value.into());
         SuggestionBuilder {
             _state: PhantomData,
@@ -308,12 +330,12 @@ where
     }
 }
 
-impl<S: BosStr, St> SuggestionBuilder<S, St>
+impl<St, S: BosStr> SuggestionBuilder<St, S>
 where
     St: suggestion_state::State,
+    St::Subject: suggestion_state::IsSet,
     St::SubjectType: suggestion_state::IsSet,
     St::Tag: suggestion_state::IsSet,
-    St::Subject: suggestion_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Suggestion<S> {

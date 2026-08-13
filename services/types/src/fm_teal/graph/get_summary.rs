@@ -39,7 +39,9 @@ pub struct GetSummaryOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.graph.getSummary
+/** Response marker for the `fm.teal.graph.getSummary` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSummaryOutput<S>` for this endpoint.*/
 pub struct GetSummaryResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSummaryResponse {
     const NSID: &'static str = "fm.teal.graph.getSummary";
@@ -54,7 +56,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetSummary<S> {
     type Response = GetSummaryResponse;
 }
 
-/// Endpoint type for fm.teal.graph.getSummary
+/** Endpoint marker for the `fm.teal.graph.getSummary` query.
+
+Path: `/xrpc/fm.teal.graph.getSummary`. The request payload type is `GetSummary<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSummaryRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSummaryRequest {
     const PATH: &'static str = "/xrpc/fm.teal.graph.getSummary";
@@ -96,21 +100,28 @@ pub mod get_summary_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetSummaryBuilder<S: BosStr, St: get_summary_state::State> {
+pub struct GetSummaryBuilder<St: get_summary_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetSummary<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetSummaryBuilder<S, get_summary_state::Empty> {
+impl GetSummary<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetSummaryBuilder<get_summary_state::Empty, DefaultStr> {
         GetSummaryBuilder::new()
     }
 }
 
-impl<S: BosStr> GetSummaryBuilder<S, get_summary_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetSummary<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetSummaryBuilder<get_summary_state::Empty, S> {
+        GetSummaryBuilder::builder()
+    }
+}
+
+impl GetSummaryBuilder<get_summary_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetSummaryBuilder {
             _state: PhantomData,
@@ -120,7 +131,18 @@ impl<S: BosStr> GetSummaryBuilder<S, get_summary_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetSummaryBuilder<S, St>
+impl<S: BosStr> GetSummaryBuilder<get_summary_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetSummaryBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetSummaryBuilder<St, S>
 where
     St: get_summary_state::State,
     St::Actor: get_summary_state::IsUnset,
@@ -129,7 +151,7 @@ where
     pub fn actor(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> GetSummaryBuilder<S, get_summary_state::SetActor<St>> {
+    ) -> GetSummaryBuilder<get_summary_state::SetActor<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetSummaryBuilder {
             _state: PhantomData,
@@ -139,7 +161,7 @@ where
     }
 }
 
-impl<S: BosStr, St: get_summary_state::State> GetSummaryBuilder<S, St> {
+impl<St: get_summary_state::State, S: BosStr> GetSummaryBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -152,7 +174,7 @@ impl<S: BosStr, St: get_summary_state::State> GetSummaryBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetSummaryBuilder<S, St>
+impl<St, S: BosStr> GetSummaryBuilder<St, S>
 where
     St: get_summary_state::State,
     St::Actor: get_summary_state::IsSet,

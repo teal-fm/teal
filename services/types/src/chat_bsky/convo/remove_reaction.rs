@@ -108,7 +108,9 @@ impl core::fmt::Display for RemoveReactionError {
     }
 }
 
-/// Response type for chat.bsky.convo.removeReaction
+/** Response marker for the `chat.bsky.convo.removeReaction` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `RemoveReactionOutput<S>` for this endpoint.*/
 pub struct RemoveReactionResponse;
 impl jacquard_common::xrpc::XrpcResp for RemoveReactionResponse {
     const NSID: &'static str = "chat.bsky.convo.removeReaction";
@@ -125,7 +127,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RemoveReaction<S> {
     type Response = RemoveReactionResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.removeReaction
+/** Endpoint marker for the `chat.bsky.convo.removeReaction` procedure.
+
+Path: `/xrpc/chat.bsky.convo.removeReaction`. The request payload type is `RemoveReaction<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RemoveReactionRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RemoveReactionRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.removeReaction";

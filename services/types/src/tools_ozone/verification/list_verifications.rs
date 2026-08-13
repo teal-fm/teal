@@ -31,11 +31,11 @@ pub struct ListVerifications<S: BosStr = DefaultStr> {
     pub is_revoked: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub issuers: Option<Vec<Did<S>>>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
-    ///Defaults to `"desc"`.
+    /// Defaults to `"desc"`.
     #[serde(default = "_default_sort_direction")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_direction: Option<S>,
@@ -54,7 +54,9 @@ pub struct ListVerificationsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.verification.listVerifications
+/** Response marker for the `tools.ozone.verification.listVerifications` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ListVerificationsOutput<S>` for this endpoint.*/
 pub struct ListVerificationsResponse;
 impl jacquard_common::xrpc::XrpcResp for ListVerificationsResponse {
     const NSID: &'static str = "tools.ozone.verification.listVerifications";
@@ -69,7 +71,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ListVerifications<S> {
     type Response = ListVerificationsResponse;
 }
 
-/// Endpoint type for tools.ozone.verification.listVerifications
+/** Endpoint marker for the `tools.ozone.verification.listVerifications` query.
+
+Path: `/xrpc/tools.ozone.verification.listVerifications`. The request payload type is `ListVerifications<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ListVerificationsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ListVerificationsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.verification.listVerifications";
@@ -106,7 +110,10 @@ pub mod list_verifications_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ListVerificationsBuilder<S: BosStr, St: list_verifications_state::State> {
+pub struct ListVerificationsBuilder<
+    St: list_verifications_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -121,15 +128,25 @@ pub struct ListVerificationsBuilder<S: BosStr, St: list_verifications_state::Sta
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ListVerifications<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ListVerificationsBuilder<S, list_verifications_state::Empty> {
+impl ListVerifications<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListVerificationsBuilder<
+        list_verifications_state::Empty,
+        DefaultStr,
+    > {
         ListVerificationsBuilder::new()
     }
 }
 
-impl<S: BosStr> ListVerificationsBuilder<S, list_verifications_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ListVerifications<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListVerificationsBuilder<list_verifications_state::Empty, S> {
+        ListVerificationsBuilder::builder()
+    }
+}
+
+impl ListVerificationsBuilder<list_verifications_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListVerificationsBuilder {
             _state: PhantomData,
@@ -139,7 +156,18 @@ impl<S: BosStr> ListVerificationsBuilder<S, list_verifications_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<S: BosStr> ListVerificationsBuilder<list_verifications_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListVerificationsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `createdAfter` field (optional)
     pub fn created_after(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.0 = value.into();
@@ -152,7 +180,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `createdBefore` field (optional)
     pub fn created_before(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.1 = value.into();
@@ -165,7 +193,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -178,7 +206,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `isRevoked` field (optional)
     pub fn is_revoked(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.3 = value.into();
@@ -191,7 +219,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `issuers` field (optional)
     pub fn issuers(mut self, value: impl Into<Option<Vec<Did<S>>>>) -> Self {
         self._fields.4 = value.into();
@@ -204,7 +232,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.5 = value.into();
@@ -217,7 +245,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `sortDirection` field (optional)
     pub fn sort_direction(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.6 = value.into();
@@ -230,7 +258,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S, St> {
+impl<St: list_verifications_state::State, S: BosStr> ListVerificationsBuilder<St, S> {
     /// Set the `subjects` field (optional)
     pub fn subjects(mut self, value: impl Into<Option<Vec<Did<S>>>>) -> Self {
         self._fields.7 = value.into();
@@ -243,7 +271,7 @@ impl<S: BosStr, St: list_verifications_state::State> ListVerificationsBuilder<S,
     }
 }
 
-impl<S: BosStr, St> ListVerificationsBuilder<S, St>
+impl<St, S: BosStr> ListVerificationsBuilder<St, S>
 where
     St: list_verifications_state::State,
 {

@@ -37,7 +37,9 @@ pub struct ReserveSigningKeyOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.server.reserveSigningKey
+/** Response marker for the `com.atproto.server.reserveSigningKey` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ReserveSigningKeyOutput<S>` for this endpoint.*/
 pub struct ReserveSigningKeyResponse;
 impl jacquard_common::xrpc::XrpcResp for ReserveSigningKeyResponse {
     const NSID: &'static str = "com.atproto.server.reserveSigningKey";
@@ -54,7 +56,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ReserveSigningKey<S> {
     type Response = ReserveSigningKeyResponse;
 }
 
-/// Endpoint type for com.atproto.server.reserveSigningKey
+/** Endpoint marker for the `com.atproto.server.reserveSigningKey` procedure.
+
+Path: `/xrpc/com.atproto.server.reserveSigningKey`. The request payload type is `ReserveSigningKey<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ReserveSigningKeyRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ReserveSigningKeyRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.reserveSigningKey";

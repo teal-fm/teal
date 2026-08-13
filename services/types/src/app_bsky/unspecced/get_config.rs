@@ -62,11 +62,15 @@ impl<S: BosStr> LexiconSchema for LiveNowConfig<S> {
     }
 }
 
-/// XRPC request marker type.
+/** Request marker for the `app.bsky.unspecced.getConfig` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct GetConfig;
-/// Response type for app.bsky.unspecced.getConfig
+/** Response marker for the `app.bsky.unspecced.getConfig` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetConfigOutput<S>` for this endpoint.*/
 pub struct GetConfigResponse;
 impl jacquard_common::xrpc::XrpcResp for GetConfigResponse {
     const NSID: &'static str = "app.bsky.unspecced.getConfig";
@@ -81,7 +85,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetConfig {
     type Response = GetConfigResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getConfig
+/** Endpoint marker for the `app.bsky.unspecced.getConfig` query.
+
+Path: `/xrpc/app.bsky.unspecced.getConfig`. The request payload type is `GetConfig`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct GetConfigRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetConfigRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getConfig";
@@ -135,21 +141,31 @@ pub mod live_now_config_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct LiveNowConfigBuilder<S: BosStr, St: live_now_config_state::State> {
+pub struct LiveNowConfigBuilder<
+    St: live_now_config_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<Vec<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> LiveNowConfig<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> LiveNowConfigBuilder<S, live_now_config_state::Empty> {
+impl LiveNowConfig<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> LiveNowConfigBuilder<live_now_config_state::Empty, DefaultStr> {
         LiveNowConfigBuilder::new()
     }
 }
 
-impl<S: BosStr> LiveNowConfigBuilder<S, live_now_config_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> LiveNowConfig<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> LiveNowConfigBuilder<live_now_config_state::Empty, S> {
+        LiveNowConfigBuilder::builder()
+    }
+}
+
+impl LiveNowConfigBuilder<live_now_config_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         LiveNowConfigBuilder {
             _state: PhantomData,
@@ -159,7 +175,18 @@ impl<S: BosStr> LiveNowConfigBuilder<S, live_now_config_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> LiveNowConfigBuilder<S, St>
+impl<S: BosStr> LiveNowConfigBuilder<live_now_config_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        LiveNowConfigBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> LiveNowConfigBuilder<St, S>
 where
     St: live_now_config_state::State,
     St::Did: live_now_config_state::IsUnset,
@@ -168,7 +195,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> LiveNowConfigBuilder<S, live_now_config_state::SetDid<St>> {
+    ) -> LiveNowConfigBuilder<live_now_config_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         LiveNowConfigBuilder {
             _state: PhantomData,
@@ -178,7 +205,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LiveNowConfigBuilder<S, St>
+impl<St, S: BosStr> LiveNowConfigBuilder<St, S>
 where
     St: live_now_config_state::State,
     St::Domains: live_now_config_state::IsUnset,
@@ -187,7 +214,7 @@ where
     pub fn domains(
         mut self,
         value: impl Into<Vec<S>>,
-    ) -> LiveNowConfigBuilder<S, live_now_config_state::SetDomains<St>> {
+    ) -> LiveNowConfigBuilder<live_now_config_state::SetDomains<St>, S> {
         self._fields.1 = Option::Some(value.into());
         LiveNowConfigBuilder {
             _state: PhantomData,
@@ -197,7 +224,7 @@ where
     }
 }
 
-impl<S: BosStr, St> LiveNowConfigBuilder<S, St>
+impl<St, S: BosStr> LiveNowConfigBuilder<St, S>
 where
     St: live_now_config_state::State,
     St::Did: live_now_config_state::IsSet,

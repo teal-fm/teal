@@ -152,11 +152,15 @@ where
     }
 }
 
-/// XRPC request marker type.
+/** Request marker for the `tools.ozone.server.getConfig` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct GetConfig;
-/// Response type for tools.ozone.server.getConfig
+/** Response marker for the `tools.ozone.server.getConfig` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetConfigOutput<S>` for this endpoint.*/
 pub struct GetConfigResponse;
 impl jacquard_common::xrpc::XrpcResp for GetConfigResponse {
     const NSID: &'static str = "tools.ozone.server.getConfig";
@@ -171,7 +175,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetConfig {
     type Response = GetConfigResponse;
 }
 
-/// Endpoint type for tools.ozone.server.getConfig
+/** Endpoint marker for the `tools.ozone.server.getConfig` query.
+
+Path: `/xrpc/tools.ozone.server.getConfig`. The request payload type is `GetConfig`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct GetConfigRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetConfigRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.server.getConfig";

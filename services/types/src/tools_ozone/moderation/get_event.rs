@@ -33,7 +33,9 @@ pub struct GetEventOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.moderation.getEvent
+/** Response marker for the `tools.ozone.moderation.getEvent` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetEventOutput<S>` for this endpoint.*/
 pub struct GetEventResponse;
 impl jacquard_common::xrpc::XrpcResp for GetEventResponse {
     const NSID: &'static str = "tools.ozone.moderation.getEvent";
@@ -48,7 +50,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetEvent {
     type Response = GetEventResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.getEvent
+/** Endpoint marker for the `tools.ozone.moderation.getEvent` query.
+
+Path: `/xrpc/tools.ozone.moderation.getEvent`. The request payload type is `GetEvent`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetEventRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetEventRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.getEvent";
@@ -103,8 +107,18 @@ impl GetEvent {
 }
 
 impl GetEventBuilder<get_event_state::Empty> {
-    /// Create a new builder with all fields unset.
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
+        GetEventBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+        }
+    }
+}
+
+impl GetEventBuilder<get_event_state::Empty> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
         GetEventBuilder {
             _state: PhantomData,
             _fields: (None,),

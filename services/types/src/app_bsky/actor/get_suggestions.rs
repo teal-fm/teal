@@ -22,7 +22,7 @@ use crate::app_bsky::actor::ProfileView;
 pub struct GetSuggestions<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -45,7 +45,9 @@ pub struct GetSuggestionsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.actor.getSuggestions
+/** Response marker for the `app.bsky.actor.getSuggestions` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSuggestionsOutput<S>` for this endpoint.*/
 pub struct GetSuggestionsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSuggestionsResponse {
     const NSID: &'static str = "app.bsky.actor.getSuggestions";
@@ -60,7 +62,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetSuggestions<S> {
     type Response = GetSuggestionsResponse;
 }
 
-/// Endpoint type for app.bsky.actor.getSuggestions
+/** Endpoint marker for the `app.bsky.actor.getSuggestions` query.
+
+Path: `/xrpc/app.bsky.actor.getSuggestions`. The request payload type is `GetSuggestions<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSuggestionsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSuggestionsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.actor.getSuggestions";
@@ -93,21 +97,31 @@ pub mod get_suggestions_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetSuggestionsBuilder<S: BosStr, St: get_suggestions_state::State> {
+pub struct GetSuggestionsBuilder<
+    St: get_suggestions_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetSuggestions<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetSuggestionsBuilder<S, get_suggestions_state::Empty> {
+impl GetSuggestions<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetSuggestionsBuilder<get_suggestions_state::Empty, DefaultStr> {
         GetSuggestionsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetSuggestionsBuilder<S, get_suggestions_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetSuggestions<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetSuggestionsBuilder<get_suggestions_state::Empty, S> {
+        GetSuggestionsBuilder::builder()
+    }
+}
+
+impl GetSuggestionsBuilder<get_suggestions_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetSuggestionsBuilder {
             _state: PhantomData,
@@ -117,7 +131,18 @@ impl<S: BosStr> GetSuggestionsBuilder<S, get_suggestions_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_suggestions_state::State> GetSuggestionsBuilder<S, St> {
+impl<S: BosStr> GetSuggestionsBuilder<get_suggestions_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetSuggestionsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_suggestions_state::State, S: BosStr> GetSuggestionsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -130,7 +155,7 @@ impl<S: BosStr, St: get_suggestions_state::State> GetSuggestionsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_suggestions_state::State> GetSuggestionsBuilder<S, St> {
+impl<St: get_suggestions_state::State, S: BosStr> GetSuggestionsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -143,7 +168,7 @@ impl<S: BosStr, St: get_suggestions_state::State> GetSuggestionsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetSuggestionsBuilder<S, St>
+impl<St, S: BosStr> GetSuggestionsBuilder<St, S>
 where
     St: get_suggestions_state::State,
 {

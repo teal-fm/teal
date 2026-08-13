@@ -69,7 +69,9 @@ pub enum UpdateSubjectStatusOutputSubject<S: BosStr = DefaultStr> {
     RepoBlobRef(Box<RepoBlobRef<S>>),
 }
 
-/// Response type for com.atproto.admin.updateSubjectStatus
+/** Response marker for the `com.atproto.admin.updateSubjectStatus` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UpdateSubjectStatusOutput<S>` for this endpoint.*/
 pub struct UpdateSubjectStatusResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateSubjectStatusResponse {
     const NSID: &'static str = "com.atproto.admin.updateSubjectStatus";
@@ -86,7 +88,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateSubjectStatus<S> {
     type Response = UpdateSubjectStatusResponse;
 }
 
-/// Endpoint type for com.atproto.admin.updateSubjectStatus
+/** Endpoint marker for the `com.atproto.admin.updateSubjectStatus` procedure.
+
+Path: `/xrpc/com.atproto.admin.updateSubjectStatus`. The request payload type is `UpdateSubjectStatus<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateSubjectStatusRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateSubjectStatusRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.updateSubjectStatus";
@@ -131,8 +135,8 @@ pub mod update_subject_status_state {
 
 /// Builder for constructing an instance of this type.
 pub struct UpdateSubjectStatusBuilder<
-    S: BosStr,
     St: update_subject_status_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (
@@ -143,15 +147,28 @@ pub struct UpdateSubjectStatusBuilder<
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpdateSubjectStatus<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> UpdateSubjectStatusBuilder<S, update_subject_status_state::Empty> {
+impl UpdateSubjectStatus<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> UpdateSubjectStatusBuilder<
+        update_subject_status_state::Empty,
+        DefaultStr,
+    > {
         UpdateSubjectStatusBuilder::new()
     }
 }
 
-impl<S: BosStr> UpdateSubjectStatusBuilder<S, update_subject_status_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpdateSubjectStatus<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpdateSubjectStatusBuilder<
+        update_subject_status_state::Empty,
+        S,
+    > {
+        UpdateSubjectStatusBuilder::builder()
+    }
+}
+
+impl UpdateSubjectStatusBuilder<update_subject_status_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpdateSubjectStatusBuilder {
             _state: PhantomData,
@@ -161,10 +178,21 @@ impl<S: BosStr> UpdateSubjectStatusBuilder<S, update_subject_status_state::Empty
     }
 }
 
+impl<S: BosStr> UpdateSubjectStatusBuilder<update_subject_status_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpdateSubjectStatusBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
 impl<
-    S: BosStr,
     St: update_subject_status_state::State,
-> UpdateSubjectStatusBuilder<S, St> {
+    S: BosStr,
+> UpdateSubjectStatusBuilder<St, S> {
     /// Set the `deactivated` field (optional)
     pub fn deactivated(mut self, value: impl Into<Option<StatusAttr<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -177,7 +205,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> UpdateSubjectStatusBuilder<S, St>
+impl<St, S: BosStr> UpdateSubjectStatusBuilder<St, S>
 where
     St: update_subject_status_state::State,
     St::Subject: update_subject_status_state::IsUnset,
@@ -186,7 +214,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<UpdateSubjectStatusSubject<S>>,
-    ) -> UpdateSubjectStatusBuilder<S, update_subject_status_state::SetSubject<St>> {
+    ) -> UpdateSubjectStatusBuilder<update_subject_status_state::SetSubject<St>, S> {
         self._fields.1 = Option::Some(value.into());
         UpdateSubjectStatusBuilder {
             _state: PhantomData,
@@ -197,9 +225,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: update_subject_status_state::State,
-> UpdateSubjectStatusBuilder<S, St> {
+    S: BosStr,
+> UpdateSubjectStatusBuilder<St, S> {
     /// Set the `takedown` field (optional)
     pub fn takedown(mut self, value: impl Into<Option<StatusAttr<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -212,7 +240,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> UpdateSubjectStatusBuilder<S, St>
+impl<St, S: BosStr> UpdateSubjectStatusBuilder<St, S>
 where
     St: update_subject_status_state::State,
     St::Subject: update_subject_status_state::IsSet,
