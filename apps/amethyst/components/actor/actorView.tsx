@@ -5,6 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
+import {
+  LEGACY_PROFILE_COLLECTION,
+  readRepoRecordWithLegacyFallback,
+  STABLE_PROFILE_COLLECTION,
+} from "@/lib/atp/onboardingRecords";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { Agent } from "@atproto/api";
@@ -84,13 +89,18 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     let currentUser: ProfileRecord | undefined;
     let cid: string | undefined;
     try {
-      const res = await pdsAgent.call("com.atproto.repo.getRecord", {
-        repo: pdsAgent.did,
-        collection: "fm.teal.actor.profile",
-        rkey: "self",
-      });
-      currentUser = res.data.value;
-      cid = res.data.cid;
+      const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
+        pdsAgent,
+        STABLE_PROFILE_COLLECTION,
+        LEGACY_PROFILE_COLLECTION,
+      );
+      currentUser = result?.record;
+      // Legacy records are copied to the stable collection on the next edit;
+      // keep their blob refs and never try to update the old collection.
+      cid =
+        result?.collection === STABLE_PROFILE_COLLECTION
+          ? result.cid
+          : undefined;
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
@@ -104,7 +114,9 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["avatar"];
+        newAvatarBlob = (
+          await pdsAgent.uploadBlob(blob, { encoding: fileType })
+        ).data.blob as unknown as ProfileRecord["avatar"];
       }
     }
     if (newBannerUri) {
@@ -112,11 +124,15 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["banner"];
+        newBannerBlob = (
+          await pdsAgent.uploadBlob(blob, { encoding: fileType })
+        ).data.blob as unknown as ProfileRecord["banner"];
       }
     }
 
-    let record: ProfileRecord = {
+    const record: ProfileRecord = {
+      ...currentUser,
+      $type: STABLE_PROFILE_COLLECTION,
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
       avatar: newAvatarBlob,
@@ -131,7 +147,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.actor.profile",
+          collection: STABLE_PROFILE_COLLECTION,
           rkey: "self",
           record,
           swapRecord: cid,
@@ -143,7 +159,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.actor.profile",
+          collection: STABLE_PROFILE_COLLECTION,
           rkey: "self",
           record,
         },

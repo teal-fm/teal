@@ -1600,7 +1600,11 @@ impl LexiconIngestor for PlayIngestor {
                         // TODO: verify cid
                         self.insert_play(
                             &record,
-                            &assemble_at_uri(&message.did, &commit.collection, &commit.rkey),
+                            &assemble_at_uri(
+                                &message.did,
+                                crate::ingestors::teal::canonical_collection(&commit.collection),
+                                &commit.rkey,
+                            ),
                             cid,
                             &message.did,
                             &commit.rkey,
@@ -1610,7 +1614,12 @@ impl LexiconIngestor for PlayIngestor {
                 }
             } else {
                 println!("{}: Message {} deleted", message.did, commit.rkey);
-                self.remove_play(&message.did).await?;
+                let uri = assemble_at_uri(
+                    &message.did,
+                    crate::ingestors::teal::canonical_collection(&commit.collection),
+                    &commit.rkey,
+                );
+                self.remove_play(&uri).await?;
             }
         } else {
             return Err(anyhow!("Message has no commit"));
