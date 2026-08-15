@@ -1,28 +1,31 @@
 #!/bin/bash
 set -e
 
-# Navigate to the lexicons directory and find all .json files
-cd ../../lexicons
-json_files=$(find . -name "*.json" -type f | sort)
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+lexicons_root="$repo_root/lexicons"
+echo "Validating lexicons with @atproto/lex"
+bash "$repo_root/packages/lexicons/lex-validate.sh"
 
-# Go back to the lexicons package directory
-cd ../packages/lexicons
-
-# Check if we found any lexicon files
-if [ -z "$json_files" ]; then
-    echo "No lexicon files found in ../../lexicons/"
-    exit 1
-fi
-
-# Convert the file list to absolute paths
+# The current HTTP server consumes the legacy gen-server shape. Keep this
+# compatibility output until Aqua's XRPC bindings migrate to @atproto/lex.
+cd "$repo_root/packages/lexicons"
+json_files=$(find "$lexicons_root/fm.teal" -name "*.json" -type f | sort)
+json_files="$json_files $lexicons_root/app/bsky/richtext/facet.json"
 lexicon_paths=""
 for file in $json_files; do
-    lexicon_paths="$lexicon_paths ../../lexicons/$file"
+  lexicon_paths="$lexicon_paths $file"
 done
 
-# Generate lexicons
-echo "Generating lexicons from: $lexicon_paths"
-node ../../node_modules/@atproto/lex-cli/dist/index.js gen-server ./src $lexicon_paths --yes
+echo "Generating compatibility server bindings"
+pnpm exec lex gen-server ./src $lexicon_paths --yes
+
+# lex-cli emits Node ESM `.js` suffixes for generated TypeScript imports.
+# Metro resolves source files by extension and cannot follow those paths before
+# TypeScript is compiled, so keep internal generated imports extensionless.
+find ./src -type f -name "*.ts" -exec perl -pi -e "s{(from ['\"](?:\./|\.\./)[^'\"]*)\.js(['\"])}{\$1\$2}g" {} +
+
+perl -0pi -e 's/profileStatus\?: FmTealActorProfileStatus\.Main/profileStatus?: FmTealActorProfileStatus.Record/' \
+  ./src/types/fm/teal/actor/defs.ts
 
 mkdir -p ./src/types/app/bsky/richtext
 cat > ./src/types/app/bsky/richtext/facet.ts <<'EOF'

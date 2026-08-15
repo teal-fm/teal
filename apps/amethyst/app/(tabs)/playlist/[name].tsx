@@ -1,0 +1,340 @@
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Image, Pressable, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { musicHref } from "@/components/teal/PlayFeedCard";
+import {
+  AddCurrentTrackButton,
+  PlaylistTrackPicker,
+} from "@/components/teal/PlaylistControls";
+import RichText from "@/components/teal/RichText";
+import RightRail from "@/components/teal/RightRail";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
+import { Icon } from "@/lib/icons/iconWithClassName";
+import {
+  displayArtists,
+  getPlaylist,
+  getProfile,
+  type SocialPlaylistItemView,
+  type SocialPlaylistView,
+} from "@/lib/teal/api";
+import { trackViewToPlayView } from "@/lib/teal/social";
+import { useStore } from "@/stores/mainStore";
+import { RichText as AtprotoRichText } from "@atproto/api";
+import { ListMusic, Music2 } from "lucide-react-native";
+
+function rkeyFromUri(uri: string) {
+  return uri.split("/").pop() || "";
+}
+
+export default function PlaylistDetailScreen() {
+  const params = useLocalSearchParams();
+  const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri;
+  const [playlist, setPlaylist] = useState<SocialPlaylistView | null>(null);
+  const [items, setItems] = useState<SocialPlaylistItemView[]>([]);
+  const [currentTrack, setCurrentTrack] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [authorsText, setAuthorsText] = useState("");
+  const [coverUri, setCoverUri] = useState<string | undefined>();
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [addingItem, setAddingItem] = useState(false);
+  const pdsAgent = useStore((state) => state.pdsAgent);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!uri) return;
+    getPlaylist(uri)
+      .then((res) => {
+        if (!mounted) return;
+        setPlaylist(res.playlist);
+        setName(res.playlist.name);
+        setDescription(res.playlist.description || "");
+        setAuthorsText(res.playlist.authors.join("\n"));
+        setCoverUri(
+          res.playlist.coverCid
+            ? getImageCdnLink({
+                did: res.playlist.authorDid,
+                hash: res.playlist.coverCid,
+              })
+            : undefined,
+        );
+        setItems(res.items);
+      })
+      .catch((e) => {
+        if (mounted) setError(e instanceof Error ? e.message : String(e));
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [uri]);
+
+  useEffect(() => {
+    let mounted = true;
+    setCurrentTrack(null);
+    if (!pdsAgent?.did) {
+      return;
+    }
+    getProfile(pdsAgent.did)
+      .then((res) => {
+        if (mounted) setCurrentTrack(res.profile.status?.item || null);
+      })
+      .catch(() => {
+        if (mounted) setCurrentTrack(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [pdsAgent?.did]);
+
+  const canAddItems = Boolean(
+    pdsAgent?.did && playlist?.authors.includes(pdsAgent.did),
+  );
+  const canManage = Boolean(
+    pdsAgent?.did && playlist?.authorDid === pdsAgent.did,
+  );
+
+  function appendItem(item: SocialPlaylistItemView) {
+    setItems((current) => [...current, item]);
+    setPlaylist((current) =>
+      current ? { ...current, itemCount: current.itemCount + 1 } : current,
+    );
+  }
+
+  async function saveMetadata() {
+    if (!playlist || !pdsAgent?.did || saving) return;
+    setSaving(true);
+    try {
+      const authors = Array.from(
+        new Set(
+          authorsText
+            .split(/[\n,]/)
+            .map((author) => author.trim())
+            .filter(Boolean),
+        ),
+      );
+      if (!authors.includes(playlist.authorDid))
+        authors.unshift(playlist.authorDid);
+      const current: { cover?: unknown } = await pdsAgent
+        .call("com.atproto.repo.getRecord", {
+          repo: playlist.authorDid,
+          collection: "fm.teal.feed.social.playlist",
+          rkey: rkeyFromUri(playlist.uri),
+        })
+        .then((res) => res.data.value as { cover?: unknown })
+        .catch(() => ({}));
+      let cover = current.cover;
+      if (coverUri && !coverUri.startsWith("http")) {
+        const data = await fetch(coverUri).then((response) => response.blob());
+        const fileType = data.type || "image/jpeg";
+        cover = (await pdsAgent.uploadBlob(data, { encoding: fileType })).data
+          .blob;
+      }
+      let descriptionFacets: unknown[] | undefined;
+      if (description.trim()) {
+        const rt = new AtprotoRichText({ text: description.trim() });
+        await rt.detectFacets(pdsAgent);
+        descriptionFacets = rt.facets;
+      }
+      await pdsAgent.call(
+        "com.atproto.repo.putRecord",
+        {},
+        {
+          repo: playlist.authorDid,
+          collection: "fm.teal.feed.social.playlist",
+          rkey: rkeyFromUri(playlist.uri),
+          record: {
+            $type: "fm.teal.feed.social.playlist",
+            name: name.trim(),
+            description: description.trim() || undefined,
+            descriptionFacets,
+            authors,
+            cover,
+            createdAt: playlist.createdAt,
+          },
+        },
+      );
+      setPlaylist({
+        ...playlist,
+        name: name.trim(),
+        description: description.trim() || undefined,
+        descriptionFacets,
+        authors,
+      });
+      setEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function pickCover() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.9,
+    });
+    if (!result.canceled) setCoverUri(result.assets[0].uri);
+  }
+
+  return (
+    <TealShell rightRail={<RightRail />}>
+      <Stack.Screen
+        options={{ title: playlist?.name || "Playlist", headerShown: false }}
+      />
+      {error && (
+        <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+          <Text className="font-bold text-destructive">{error}</Text>
+        </View>
+      )}
+      {!playlist && !error && (
+        <View className="min-h-[24rem] items-center justify-center">
+          <ActivityIndicator size="large" />
+        </View>
+      )}
+      {playlist && (
+        <>
+          <View className="mb-8 rounded-lg border border-border bg-card p-6">
+            <View className="flex-row items-start gap-4">
+              <Pressable
+                disabled={!canManage || !editing}
+                onPress={pickCover}
+                className="h-14 w-14 overflow-hidden rounded-lg bg-accent"
+              >
+                {coverUri ? (
+                  <Image source={{ uri: coverUri }} className="h-full w-full" />
+                ) : (
+                  <View className="h-full w-full items-center justify-center">
+                    <Icon icon={ListMusic} size={24} className="text-primary" />
+                  </View>
+                )}
+              </Pressable>
+              <View className="min-w-0 flex-1">
+                {editing ? (
+                  <View className="gap-3">
+                    <Input value={name} onChangeText={setName} />
+                    <Textarea
+                      className="min-h-20"
+                      value={description}
+                      onChangeText={setDescription}
+                    />
+                    <Textarea
+                      className="min-h-20"
+                      value={authorsText}
+                      onChangeText={setAuthorsText}
+                      placeholder="Collaborator DIDs, one per line"
+                    />
+                    <View className="flex-row gap-2">
+                      <Button disabled={saving} onPress={saveMetadata}>
+                        <Text>{saving ? "Saving..." : "Save"}</Text>
+                      </Button>
+                      <Button variant="ghost" onPress={() => setEditing(false)}>
+                        <Text>Cancel</Text>
+                      </Button>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <Text className="font-sans text-3xl font-black">
+                      {playlist.name}
+                    </Text>
+                    {playlist.description && (
+                      <RichText
+                        className="mt-3 text-base"
+                        text={playlist.description}
+                        facets={playlist.descriptionFacets}
+                      />
+                    )}
+                    <Text className="mt-2 font-mono text-[10px] uppercase text-muted-foreground">
+                      {items.length} indexed tracks · {playlist.authors.length}{" "}
+                      author
+                      {playlist.authors.length === 1 ? "" : "s"}
+                    </Text>
+                  </>
+                )}
+              </View>
+            </View>
+            {canAddItems && !editing && (
+              <View className="mt-5 flex-row flex-wrap gap-2">
+                {canManage && (
+                  <Button variant="outline" onPress={() => setEditing(true)}>
+                    <Text>Edit playlist</Text>
+                  </Button>
+                )}
+                <AddCurrentTrackButton
+                  playlist={playlist}
+                  track={currentTrack}
+                  order={playlist.itemCount}
+                  onAdded={appendItem}
+                  disabled={addingItem}
+                  onBusyChange={setAddingItem}
+                />
+              </View>
+            )}
+            {canAddItems && !editing && (
+              <PlaylistTrackPicker
+                playlist={playlist}
+                items={items}
+                order={playlist.itemCount}
+                onAdded={appendItem}
+                disabled={addingItem}
+                onBusyChange={setAddingItem}
+              />
+            )}
+          </View>
+
+          <SectionHeading eyebrow="Playlist" title="Tracks" />
+          {items.length === 0 ? (
+            <Text className="text-muted-foreground">
+              No indexed playlist items yet.
+            </Text>
+          ) : (
+            <View className="gap-3">
+              {items.map((item, index) => {
+                const play = trackViewToPlayView(item.track);
+                return (
+                  <Link key={item.uri} href={musicHref(play) as any} asChild>
+                    <Pressable className="rounded-lg border border-border bg-card p-4">
+                      <View className="flex-row items-center gap-3">
+                        <Text className="w-7 font-mono text-xs text-muted-foreground">
+                          {String(index + 1).padStart(2, "0")}
+                        </Text>
+                        <View className="h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                          <Icon
+                            icon={Music2}
+                            size={18}
+                            className="text-primary"
+                          />
+                        </View>
+                        <View className="min-w-0 flex-1">
+                          <Text className="font-black" numberOfLines={1}>
+                            {play.trackName}
+                          </Text>
+                          <Text
+                            className="text-sm text-muted-foreground"
+                            numberOfLines={1}
+                          >
+                            {displayArtists(play) || "Unknown artist"}
+                          </Text>
+                        </View>
+                      </View>
+                    </Pressable>
+                  </Link>
+                );
+              })}
+            </View>
+          )}
+        </>
+      )}
+    </TealShell>
+  );
+}

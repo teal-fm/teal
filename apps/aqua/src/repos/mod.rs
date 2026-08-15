@@ -1,17 +1,36 @@
 use actor_profile::ActorProfileRepo;
 use jacquard_common::{deps::smol_str::SmolStr, types::string::UriValue};
+use types::fm_teal::actor::MiniProfileView;
 use uuid::Uuid;
 
 use crate::repos::feed_play::FeedPlayRepo;
+use crate::repos::graph::GraphRepo;
+use crate::repos::music::MusicRepo;
+use crate::repos::search::SearchRepo;
+use crate::repos::social::SocialRepo;
 use crate::repos::stats::StatsRepo;
 
 pub mod actor_profile;
 pub mod feed_play;
+pub mod graph;
+pub mod music;
 pub mod pg;
+pub mod search;
+pub mod social;
 pub mod stats;
 
 #[async_trait::async_trait]
-pub trait DataSource: ActorProfileRepo + FeedPlayRepo + StatsRepo + Send + Sync {
+pub trait DataSource:
+    ActorProfileRepo
+    + FeedPlayRepo
+    + GraphRepo
+    + MusicRepo
+    + SearchRepo
+    + SocialRepo
+    + StatsRepo
+    + Send
+    + Sync
+{
     fn boxed(self) -> Box<dyn DataSource>
     where
         Self: Sized + Send + Sync + 'static,
@@ -38,4 +57,37 @@ pub fn mbid_uri(mbid: Uuid) -> UriValue {
 
 pub fn uri_value(value: String) -> UriValue {
     UriValue::Any(SmolStr::new(value))
+}
+
+pub fn mini_profile(
+    did: Option<String>,
+    handle: Option<String>,
+    display_name: Option<String>,
+    avatar: Option<String>,
+) -> Option<MiniProfileView> {
+    did.map(|did| MiniProfileView {
+        did: Some(did.into()),
+        handle: handle.map(|handle| handle.trim_start_matches("at://").to_string().into()),
+        display_name: display_name.map(Into::into),
+        avatar: avatar.map(Into::into),
+        extra_data: Default::default(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mini_profile;
+
+    #[test]
+    fn mini_profile_normalizes_at_uri_handle() {
+        let profile = mini_profile(
+            Some("did:plc:listener".to_string()),
+            Some("at://listener.example".to_string()),
+            Some("Listener".to_string()),
+            None,
+        )
+        .expect("profile should be present");
+
+        assert_eq!(profile.handle.as_deref(), Some("listener.example"));
+    }
 }

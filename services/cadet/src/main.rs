@@ -1,24 +1,17 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use cursor::load_cursor;
+use cadet::{
+    account,
+    cursor::{self, resolve_startup_cursor},
+    db, identity, ingestion_retry, ingestors, redis_client, teal_ingestors,
+};
 use metrics_exporter_prometheus::PrometheusBuilder;
-use tracing::error;
+use tracing::{error, info};
 
 use rocketman::{
-    connection::JetstreamConnection,
-    handler,
-    ingestion::{DefaultLexiconIngestor, LexiconIngestor},
+    connection::JetstreamConnection, endpoints::JetstreamEndpoints, handler,
     options::JetstreamOptions,
 };
-
-mod cursor;
-mod db;
-mod ingestors;
-mod redis_client;
-mod resolve;
 
 fn setup_tracing() {
     tracing_subscriber::fmt()
@@ -43,61 +36,78 @@ async fn main() {
     setup_tracing();
     setup_metrics();
 
+    let stream_mode =
+        std::env::var("CADET_STREAM_MODE").unwrap_or_else(|_| "jetstream".to_string());
+    let jetstream_url = std::env::var("JETSTREAM_URL")
+        .unwrap_or_else(|_| "wss://jetstream1.us-east.bsky.network/subscribe".to_string());
+
+    if stream_mode != "jetstream" {
+        error!(
+            "Unsupported CADET_STREAM_MODE={}. subscribeRepos is reserved for a later CBOR firehose adapter; use jetstream for now.",
+            stream_mode
+        );
+        std::process::exit(1);
+    }
+
+    info!(
+        "Starting Cadet in {} mode with Jetstream endpoint {}",
+        stream_mode, jetstream_url
+    );
+
     let pool = db::init_pool()
         .await
         .expect("Could not get PostgreSQL pool");
 
+    let retry_store = ingestion_retry::IngestionRetryStore::new(pool.clone());
+
+    let mut wanted_collections = teal_ingestors::supported_teal_collections();
+    wanted_collections.extend(
+        [
+            "fm.teal.alpha.feed.play",
+            "fm.teal.alpha.actor.profile",
+            "fm.teal.alpha.actor.status",
+            "fm.teal.alpha.actor.profileStatus",
+            "com.atproto.repo.importRepo",
+        ]
+        .into_iter()
+        .map(str::to_string),
+    );
+
     let opts = JetstreamOptions::builder()
-        .wanted_collections(ingestors::teal::wanted_collections())
+        .ws_url(JetstreamEndpoints::Custom(jetstream_url.clone()))
+        .wanted_collections(wanted_collections)
         .build();
 
     let jetstream = JetstreamConnection::new(opts);
 
-    let mut ingestors: HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> = HashMap::new();
+    let ingestors =
+        teal_ingestors::build_ingestors_with_retry(pool.clone(), Some(retry_store.clone()));
 
-    for collection in [
-        ingestors::teal::STABLE_FEED_PLAY,
-        ingestors::teal::ALPHA_FEED_PLAY,
-    ] {
-        ingestors.insert(
-            collection.to_string(),
-            Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
-        );
-    }
+    let retry_ingestor = ingestors::teal::feed_play::PlayIngestor::new(pool.clone());
+    tokio::spawn(ingestion_retry::run_worker(retry_store, retry_ingestor));
 
-    for collection in [
-        ingestors::teal::STABLE_ACTOR_PROFILE,
-        ingestors::teal::ALPHA_ACTOR_PROFILE,
-    ] {
-        ingestors.insert(
-            collection.to_string(),
-            Box::new(ingestors::teal::actor_profile::ActorProfileIngestor::new(
-                pool.clone(),
-            )),
-        );
-    }
+    // Keep the indexed catalog normalized as new clients introduce alternate
+    // release/recording IDs for the same artist and title.
+    let consolidation_interval_secs = std::env::var("CADET_CONSOLIDATION_INTERVAL_SECS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(6 * 60 * 60);
+    let consolidation_pool = pool.clone();
+    tokio::spawn(async move {
+        let mut interval =
+            tokio::time::interval(std::time::Duration::from_secs(consolidation_interval_secs));
+        interval.tick().await;
 
-    for collection in [
-        ingestors::teal::STABLE_ACTOR_STATUS,
-        ingestors::teal::ALPHA_ACTOR_STATUS,
-    ] {
-        ingestors.insert(
-            collection.to_string(),
-            Box::new(ingestors::teal::actor_status::ActorStatusIngestor::new(
-                pool.clone(),
-            )),
-        );
-    }
-
-    ingestors.insert(
-        "com.atproto.repo.importRepo".to_string(),
-        Box::new(ingestors::car::CarImportIngestor::new(pool.clone())),
-    );
-
-    ingestors.insert(
-        "app.bsky.feed.post".to_string(),
-        Box::new(DefaultLexiconIngestor),
-    );
+        loop {
+            let ingestor =
+                ingestors::teal::feed_play::PlayIngestor::new(consolidation_pool.clone());
+            if let Err(error) = ingestor.run_full_consolidation().await {
+                error!("Automatic catalog consolidation failed: {}", error);
+            }
+            interval.tick().await;
+        }
+    });
 
     // CAR import job worker
     let car_ingestor = ingestors::car::CarImportIngestor::new(pool.clone());
@@ -236,8 +246,13 @@ async fn main() {
     }
 
     // tracks the last message we've processed
-    // TODO: read from db/config so we can resume from where we left off in case of crash
-    let cursor: Arc<Mutex<Option<u64>>> = Arc::new(Mutex::new(load_cursor().await));
+    // Always start cursor as Some(_) so rocketman::handler can advance it; an
+    // unset Mutex<Option<u64>> stays None forever and the jetstream offset is
+    // never persisted on subsequent restarts. resolve_startup_cursor falls back
+    // to "now" when no stored cursor exists, and clamps stale stored cursors so
+    // we don't try to replay history jetstream no longer retains.
+    let startup_cursor = resolve_startup_cursor().await;
+    let cursor: Arc<Mutex<Option<u64>>> = Arc::new(Mutex::new(Some(startup_cursor)));
 
     // get channels
     let msg_rx = jetstream.get_msg_rx();
@@ -248,6 +263,19 @@ async fn main() {
     let c_cursor = cursor.clone();
     tokio::spawn(async move {
         while let Ok(message) = msg_rx.recv_async().await {
+            if let Ok(text) = message.to_text() {
+                if let Err(e) = identity::ingest_identity_event(&pool, text).await {
+                    error!("Error processing identity event: {}", e);
+                }
+                if let Err(e) = account::ingest_account_event(&pool, text).await {
+                    error!("Error processing account event: {}", e);
+                }
+                match account::should_ingest_commit(&pool, text).await {
+                    Ok(false) => continue,
+                    Ok(true) => {}
+                    Err(e) => error!("Error checking account state: {}", e),
+                }
+            }
             if let Err(e) =
                 handler::handle_message(message, &ingestors, reconnect_tx.clone(), c_cursor.clone())
                     .await

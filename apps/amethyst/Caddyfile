@@ -1,5 +1,10 @@
-{env.CLIENT_ADDRESS} {
-    try_files {path} /index.html
-    file_server
-}
+{$CLIENT_ADDRESS} {
+	handle /xrpc/* {
+		reverse_proxy aqua-api:3000
+	}
 
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}

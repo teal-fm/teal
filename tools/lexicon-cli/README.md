@@ -76,7 +76,8 @@ lex diff HEAD~3
 ## How It Works
 
 ### TypeScript Generation
-- Uses `@atproto/lex-cli` to generate TypeScript types
+- Uses the workspace lexicon script, whose schema validation is powered by `@atproto/lex`
+- Keeps the legacy server binding step isolated in `packages/lexicons` until Aqua migrates its XRPC bindings
 - Sources lexicons from `packages/lexicons/real/`
 - Outputs to `packages/lexicons/src/types/`
 

@@ -42,6 +42,11 @@
             "accept": ["image/png", "image/jpeg"],
             "maxSize": 1000000
           },
+          "statsDefaultPeriod": {
+            "type": "string",
+            "enum": ["7days", "30days", "90days", "180days", "365days", "all"],
+            "description": "Default time period for profile listening statistics."
+          },
           "createdAt": { "type": "string", "format": "datetime" }
         }
       }

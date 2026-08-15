@@ -6,7 +6,7 @@ import VerticalPlayView from "@/components/play/verticalPlayView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
-import { MusicBrainzRecording, PlaySubmittedData } from "@/lib/oldStamp";
+import { PlaySubmittedData } from "@/lib/oldStamp";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import {
@@ -16,13 +16,10 @@ import {
   RichText,
 } from "@atproto/api";
 
-import { Artist } from "@teal/lexicons/src/types/fm/teal/feed/defs";
-import {
-  Record as PlayRecord,
-  validateRecord,
-} from "@teal/lexicons/src/types/fm/teal/feed/play";
+import { validateRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
 
 import { StampContext, StampContextValue, StampStep } from "./_layout";
+import { createPlayRecordFromRecording } from "@/lib/manualListens";
 
 type CardyBResponse = {
   error: string;
@@ -129,34 +126,6 @@ const ms2hms = (ms: number): string => {
   return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
 
-const createPlayRecord = (result: MusicBrainzRecording): PlayRecord => {
-  let artists = result["artist-credit"]?.map(
-    (a) =>
-      ({
-        artistName: a.artist.name,
-        artistMbId: a.artist.id,
-      }) as Artist,
-  );
-
-  console.log("artists", artists);
-
-  return {
-    trackName: result.title ?? "Unknown Title",
-    recordingMbId: result.id ?? undefined,
-    duration: result.length ? Math.floor(result.length / 1000) : undefined,
-    artists: artists,
-    releaseName: result.selectedRelease?.title ?? undefined,
-    releaseMbId: result.selectedRelease?.id ?? undefined,
-    isrc: result.isrcs?.[0] ?? undefined,
-    // not providing unless we have a way to map to tidal/odesli/etc w/out MB
-    //originUrl: `https://tidal.com/browse/track/274816578?u`,
-    //musicServiceBaseDomain: "tidal.com",
-    // TODO: update this based on version/git commit hash on build
-    submissionClientAgent: "tealtracker/0.0.1b",
-    playedTime: new Date().toISOString(),
-  } as PlayRecord;
-};
-
 export default function Submit() {
   const router = useRouter();
   const agent = useStore((state) => state.pdsAgent);
@@ -235,7 +204,7 @@ powered by @teal.fm`;
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      let record = createPlayRecord(selectedTrack);
+      let record = createPlayRecordFromRecording(selectedTrack);
       let result = validateRecord(record);
       if (result.success === false) {
         throw new Error("Failed to validate play: " + result.error);
@@ -331,7 +300,7 @@ powered by @teal.fm`;
               .join(", ")}
             releaseTitle={selectedTrack?.selectedRelease?.title}
           />
-          <Text className="mt-4 text-center text-sm text-gray-500">
+          <Text className="mt-4 text-center text-sm text-muted-foreground">
             Any missing info?{" "}
             <ExternalLink
               className="text-blue-600 dark:text-blue-400"
@@ -385,7 +354,7 @@ powered by @teal.fm`;
                 className={cn(
                   "absolute bottom-1 right-2 text-center text-sm text-muted-foreground",
                   blueskyPostText.length > 150
-                    ? "text-gray-600 dark:text-gray-300"
+                  ? "text-foreground"
                     : "",
                   blueskyPostText.length > 290 ? "text-red-500" : "",
                 )}

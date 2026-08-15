@@ -35,14 +35,11 @@ COPY ./ .
 # Setup lexicons and install dependencies
 RUN ./scripts/setup-lexicons.sh
 
-# Install Node.js and pnpm for lexicon generation
-RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm@9.15.0
-
-# Install dependencies and generate lexicons
-RUN pnpm install
-RUN cd tools/lexicon-cli && pnpm build
-RUN pnpm lex:gen --rust-only
+# Generate Rust lexicon bindings inside the image build. The generated source
+# tree is intentionally ignored locally, so a clean Docker context must build
+# it before compiling Aqua.
+RUN cargo install jacquard-lexgen --version 0.12.1 && \
+    jacquard-codegen --input lexicons --output services/types/src
 
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
@@ -64,6 +61,8 @@ ENV PKG_CONFIG_PATH_aarch64_unknown_linux_gnu=/usr/lib/aarch64-linux-gnu/pkgconf
 ENV OPENSSL_DIR_aarch64_unknown_linux_gnu=/usr
 ENV OPENSSL_LIB_DIR_aarch64_unknown_linux_gnu=/usr/lib/aarch64-linux-gnu
 ENV OPENSSL_INCLUDE_DIR_aarch64_unknown_linux_gnu=/usr/include/openssl
+ENV SQLX_OFFLINE=true
+ENV SQLX_OFFLINE_DIR=/buildah/.sqlx
 
 
 # Debug platform detection and run build

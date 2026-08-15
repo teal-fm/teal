@@ -2,6 +2,8 @@ import { useContext, useEffect } from "react";
 import { View } from "react-native";
 import { Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
+import RightRail from "@/components/teal/RightRail";
+import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
@@ -24,15 +26,18 @@ export default function StepThree() {
     return <Redirect href="/stamp" />;
   }
   return (
-    <View className="h-screen-safe flex-1 items-center bg-background p-4">
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{
-          title: "Play Successfully Submitted",
+          title: "Play submitted",
+          headerShown: false,
         }}
       />
-      <View className="flex min-h-full w-screen max-w-screen-md items-center justify-center gap-2 px-4">
-        <Check size={48} className="text-green-600 dark:text-green-400" />
-        <Text className="text-xl">Play Submitted!</Text>
+      <View className="min-h-[30rem] items-center justify-center gap-3 rounded-lg border border-border bg-card px-6">
+        <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
+          <Check size={24} className="text-primary" />
+        </View>
+        <Text className="font-sans text-3xl font-black">Play submitted</Text>
         <Text>
           You can view your play{" "}
           <ExternalLink
@@ -68,6 +73,6 @@ export default function StepThree() {
           <Text>Submit another</Text>
         </Button>
       </View>
-    </View>
+    </TealShell>
   );
 }

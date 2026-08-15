@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
 use jacquard_common::{
+    deps::smol_str::SmolStr,
     types::{
         string::{Datetime, UriValue},
         value,
@@ -10,16 +11,11 @@ use jacquard_common::{
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::{types::Uuid, PgPool};
+use tracing::info;
 use unicode_normalization::UnicodeNormalization;
 
-use super::{assemble_at_uri, normalize_legacy_record_type};
-
-#[derive(Debug, Clone)]
-struct FuzzyMatchCandidate {
-    artist_id: i32,
-    name: String,
-    confidence: f64,
-}
+use super::{assemble_at_uri, canonical_collection, normalize_legacy_record_type};
+use crate::account;
 
 struct MusicBrainzCleaner;
 
@@ -408,43 +404,57 @@ fn uri_mbid_value(mbid: &UriValue) -> &str {
     mbid_value(mbid.as_str())
 }
 
-fn clean(
-    record: &types::fm_teal::feed::play::Play,
-) -> types::fm_teal::feed::play::Play {
+fn normalized_mbid_text(mbid: &str) -> Option<String> {
+    let value = mbid_value(mbid).trim();
+    if value.is_empty() {
+        None
+    } else if Uuid::parse_str(value).is_ok() {
+        Some(format!("mbid:{value}"))
+    } else {
+        Some(mbid.to_string())
+    }
+}
+
+fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
+    normalized_mbid_text(mbid.as_str()).map(|value| UriValue::Any(SmolStr::new(value)))
+}
+
+fn clean(record: &types::fm_teal::feed::play::Play) -> types::fm_teal::feed::play::Play {
     let mut cleaned = record.clone();
 
     // Clean artist MBIDs inside artists vector, if present
     if let Some(artists) = &mut cleaned.artists {
         for artist in artists.iter_mut() {
-            if let Some(mbid) = &artist.artist_mb_id {
-                if mbid.as_str().is_empty() {
-                    artist.artist_mb_id = None;
-                }
+            if let Some(mbid) = artist.artist_mb_id.as_ref() {
+                artist.artist_mb_id = normalize_mbid_uri(mbid);
             }
         }
     }
 
-    // // Clean artist_mb_ids vector, if present
-    // if let Some(mbids) = &mut cleaned.artist_mb_ids {
-    //     for mbid in mbids.iter_mut() {
-    //         if mbid.is_empty() {
-    //             *mbid = "";
-    //         }
-    //     }
-    // }
+    if let Some(mbids) = &cleaned.artist_mb_ids {
+        let normalized_mbids: Vec<SmolStr> = mbids
+            .iter()
+            .map(|mbid| SmolStr::new(normalized_mbid_text(mbid.as_ref()).unwrap_or_default()))
+            .collect();
+        cleaned.artist_mb_ids = if normalized_mbids.iter().all(|mbid| mbid.is_empty()) {
+            None
+        } else {
+            Some(normalized_mbids)
+        };
+    }
 
     // Clean release_mb_id
-    if let Some(release_mbid) = &cleaned.release_mb_id {
-        if release_mbid.as_str().is_empty() {
-            cleaned.release_mb_id = None;
-        }
+    if let Some(release_mbid) = cleaned.release_mb_id.as_ref() {
+        cleaned.release_mb_id = normalize_mbid_uri(release_mbid);
     }
 
     // Clean recording_mb_id
-    if let Some(recording_mbid) = &cleaned.recording_mb_id {
-        if recording_mbid.as_str().is_empty() {
-            cleaned.recording_mb_id = None;
-        }
+    if let Some(recording_mbid) = cleaned.recording_mb_id.as_ref() {
+        cleaned.recording_mb_id = normalize_mbid_uri(recording_mbid);
+    }
+
+    if let Some(track_mbid) = cleaned.track_mb_id.as_ref() {
+        cleaned.track_mb_id = normalize_mbid_uri(track_mbid);
     }
 
     cleaned.into_static()
@@ -1053,133 +1063,22 @@ impl PlayIngestor {
         (word_similarity * 0.5) + (char_similarity * 0.3) + (length_factor * 0.2)
     }
 
-    /// Find existing artists that fuzzy match the given name
-    async fn find_fuzzy_artist_matches(
-        &self,
-        artist_name: &str,
-        _track_name: &str,
-        _album_name: Option<&str>,
-    ) -> anyhow::Result<Vec<FuzzyMatchCandidate>> {
-        let normalized_name = Self::normalize_text(artist_name, true);
-
-        // Search for artists with similar names using trigram similarity
-        let candidates = sqlx::query!(
-            r#"
-            SELECT
-                ae.id,
-                ae.name
-            FROM artists_extended ae
-            WHERE ae.mbid_type = 'musicbrainz'
-            AND (
-                LOWER(TRIM(ae.name)) = $1
-                OR LOWER(TRIM(ae.name)) LIKE '%' || $1 || '%'
-                OR $1 LIKE '%' || LOWER(TRIM(ae.name)) || '%'
-                OR similarity(LOWER(TRIM(ae.name)), $1) > 0.6
-            )
-            ORDER BY similarity(LOWER(TRIM(ae.name)), $1) DESC
-            LIMIT 10
-            "#,
-            normalized_name
-        )
-        .fetch_all(&self.sql)
-        .await
-        .unwrap_or_default();
-
-        let mut matches = Vec::new();
-
-        for candidate in candidates {
-            let name_similarity = Self::calculate_similarity(artist_name, &candidate.name, true);
-
-            // Base confidence from name similarity
-            let mut confidence = name_similarity;
-
-            // Boost confidence for exact matches after normalization
-            if Self::normalize_text(artist_name, true)
-                == Self::normalize_text(&candidate.name, true)
-            {
-                confidence = confidence.max(0.95);
-            }
-
-            // Additional boost for cleaned matches
-            let cleaned_input = MusicBrainzCleaner::clean_artist_name(artist_name);
-            let cleaned_candidate = MusicBrainzCleaner::clean_artist_name(&candidate.name);
-            if MusicBrainzCleaner::normalize_for_comparison(&cleaned_input)
-                == MusicBrainzCleaner::normalize_for_comparison(&cleaned_candidate)
-            {
-                confidence = confidence.max(0.9);
-            }
-
-            // Lower threshold since we have better cleaning now
-            if confidence >= 0.8 {
-                matches.push(FuzzyMatchCandidate {
-                    artist_id: candidate.id,
-                    name: candidate.name,
-                    confidence,
-                });
-            }
-        }
-
-        // Sort by confidence descending
-        matches.sort_by(|a, b| {
-            b.confidence
-                .partial_cmp(&a.confidence)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-
-        Ok(matches)
-    }
-
-    /// Try to match an artist to existing MusicBrainz data using fuzzy matching
-    async fn find_or_create_artist_with_fuzzy_matching(
+    /// Find or create the artist identity asserted by the source record.
+    async fn find_or_create_artist_from_record(
         &self,
         artist_name: &str,
         mbid: Option<&str>,
-        track_name: &str,
-        album_name: Option<&str>,
+        _track_name: &str,
+        _album_name: Option<&str>,
     ) -> anyhow::Result<i32> {
         // If we already have an MBID, use it directly
         if let Some(mbid) = mbid {
             return self.insert_artist_extended(Some(mbid), artist_name).await;
         }
 
-        // Try fuzzy matching against existing MusicBrainz artists
-        let matches = self
-            .find_fuzzy_artist_matches(artist_name, track_name, album_name)
-            .await?;
-
-        if let Some(best_match) = matches.first() {
-            // Use high confidence threshold for automatic matching
-            if best_match.confidence >= 0.92 {
-                tracing::info!(
-                    "🔗 Fuzzy matched '{}' to existing artist '{}' (confidence: {:.2})",
-                    artist_name,
-                    best_match.name,
-                    best_match.confidence
-                );
-
-                // Update the existing artist name if the new one seems more complete
-                if artist_name.len() > best_match.name.len() && best_match.confidence >= 0.95 {
-                    sqlx::query!(
-                        "UPDATE artists_extended SET name = $1, updated_at = NOW() WHERE id = $2",
-                        artist_name,
-                        best_match.artist_id
-                    )
-                    .execute(&self.sql)
-                    .await?;
-                }
-
-                return Ok(best_match.artist_id);
-            } else if best_match.confidence >= 0.85 {
-                tracing::debug!(
-                    "🤔 Potential match for '{}' -> '{}' (confidence: {:.2}) but below auto-match threshold",
-                    artist_name,
-                    best_match.name,
-                    best_match.confidence
-                );
-            }
-        }
-
-        // No good match found, create synthetic artist
+        // A name-only artist should not inherit a MusicBrainz identity just
+        // because the display name matches. Keep those records synthetic until
+        // the source record explicitly supplies an artist MBID.
         self.insert_artist_extended(None, artist_name).await
     }
 
@@ -1230,12 +1129,10 @@ impl PlayIngestor {
 
         // Extract discriminant from release name for new releases
         // Prioritize edition-specific patterns for better quality
-        let discriminant = self
-            .extract_edition_discriminant_from_db(name)
-            .await
-            .or_else(|| {
-                futures::executor::block_on(async { self.extract_discriminant_from_db(name).await })
-            });
+        let discriminant = match self.extract_edition_discriminant_from_db(name).await {
+            Some(discriminant) => Some(discriminant),
+            None => self.extract_discriminant_from_db(name).await,
+        };
 
         let res = sqlx::query!(
             r#"
@@ -1266,12 +1163,10 @@ impl PlayIngestor {
 
         // Extract discriminant from recording name for new recordings
         // Prioritize edition-specific patterns for better quality
-        let discriminant = self
-            .extract_edition_discriminant_from_db(name)
-            .await
-            .or_else(|| {
-                futures::executor::block_on(async { self.extract_discriminant_from_db(name).await })
-            });
+        let discriminant = match self.extract_edition_discriminant_from_db(name).await {
+            Some(discriminant) => Some(discriminant),
+            None => self.extract_discriminant_from_db(name).await,
+        };
 
         let res = sqlx::query!(
             r#"
@@ -1331,7 +1226,6 @@ impl PlayIngestor {
         did: &str,
         rkey: &str,
     ) -> anyhow::Result<()> {
-        dbg!("ingesting", play_record);
         let play_record = clean(play_record);
         let mut parsed_artists: Vec<(i32, String)> = vec![];
         let mut artist_names_raw: Vec<String> = vec![];
@@ -1340,10 +1234,17 @@ impl PlayIngestor {
             for artist in artists {
                 let artist_name = artist.artist_name.clone();
                 artist_names_raw.push(artist_name.as_str().to_owned());
-                let artist_mbid = artist.artist_mb_id.as_ref().map(uri_mbid_value);
+                let artist_mbid = artist.artist_mb_id.as_ref().and_then(|mbid| {
+                    let value = uri_mbid_value(mbid);
+                    if value.is_empty() {
+                        None
+                    } else {
+                        Some(value)
+                    }
+                });
 
                 let artist_id = self
-                    .find_or_create_artist_with_fuzzy_matching(
+                    .find_or_create_artist_from_record(
                         &artist_name,
                         artist_mbid,
                         &play_record.track_name,
@@ -1357,13 +1258,16 @@ impl PlayIngestor {
                 artist_names_raw.push(artist_name.as_str().to_owned());
 
                 let artist_mbid_opt = if let Some(ref mbid_list) = play_record.artist_mb_ids {
-                    mbid_list.get(index).map(|s| s.as_str())
+                    mbid_list
+                        .get(index)
+                        .map(|s| mbid_value(s.as_str()).trim())
+                        .filter(|mbid| !mbid.is_empty())
                 } else {
                     None
                 };
 
                 let artist_id = self
-                    .find_or_create_artist_with_fuzzy_matching(
+                    .find_or_create_artist_from_record(
                         artist_name,
                         artist_mbid_opt,
                         &play_record.track_name,
@@ -1378,7 +1282,7 @@ impl PlayIngestor {
             artist_names_raw.push(fallback_artist_name.clone());
 
             let artist_id = self
-                .find_or_create_artist_with_fuzzy_matching(
+                .find_or_create_artist_from_record(
                     &fallback_artist_name,
                     None,
                     &play_record.track_name,
@@ -1403,7 +1307,11 @@ impl PlayIngestor {
         };
 
         // Insert recording if missing
-        let recording_mbid_opt = if let Some(recording_mbid) = &play_record.recording_mb_id {
+        let recording_mbid = play_record
+            .recording_mb_id
+            .as_ref()
+            .or(play_record.track_mb_id.as_ref());
+        let recording_mbid_opt = if let Some(recording_mbid) = recording_mbid {
             let recording_name = play_record.track_name.clone();
             Some(
                 self.insert_recording(uri_mbid_value(recording_mbid), &recording_name)
@@ -1422,36 +1330,28 @@ impl PlayIngestor {
         // First try lexicon fields, then extract from names with preference for edition-specific patterns
         // TODO: Enable when types are updated with discriminant fields
         // let track_discriminant = play_record.track_discriminant.clone().or_else(|| {
-        let track_discriminant = {
-            // Try edition-specific patterns first, then general patterns
-            futures::executor::block_on(async {
-                self.extract_edition_discriminant_from_db(&play_record.track_name)
+        let track_discriminant = match self
+            .extract_edition_discriminant_from_db(&play_record.track_name)
+            .await
+        {
+            Some(discriminant) => Some(discriminant),
+            None => {
+                self.extract_discriminant_from_db(&play_record.track_name)
                     .await
-                    .or_else(|| {
-                        futures::executor::block_on(async {
-                            self.extract_discriminant_from_db(&play_record.track_name)
-                                .await
-                        })
-                    })
-            })
+            }
         };
 
         // let release_discriminant = play_record.release_discriminant.clone().or_else(|| {
-        let release_discriminant = {
-            if let Some(release_name) = &play_record.release_name {
-                futures::executor::block_on(async {
-                    // Try edition-specific patterns first, then general patterns
-                    self.extract_edition_discriminant_from_db(release_name)
-                        .await
-                        .or_else(|| {
-                            futures::executor::block_on(async {
-                                self.extract_discriminant_from_db(release_name).await
-                            })
-                        })
-                })
-            } else {
-                None
+        let release_discriminant = if let Some(release_name) = &play_record.release_name {
+            match self
+                .extract_edition_discriminant_from_db(release_name)
+                .await
+            {
+                Some(discriminant) => Some(discriminant),
+                None => self.extract_discriminant_from_db(release_name).await,
             }
+        } else {
+            None
         };
 
         // Our main insert into plays with raw artist names and discriminants
@@ -1472,17 +1372,52 @@ impl PlayIngestor {
             .as_ref()
             .map(|uri| uri.as_str().to_string());
 
-        sqlx::query!(
+        // Keep the account lock through the final play write and relationship
+        // updates. Account deactivation uses the same lock while it marks the
+        // DID inactive and purges indexed data, so a replay cannot republish a
+        // play after the purge commits.
+        let mut tx = self.sql.begin().await?;
+        account::lock_account(&mut tx, did).await?;
+
+        // Check if we already have this play content (CID) for this user (DID)
+        // This prevents duplicates when the same content is published under different rkeys
+        let existing_uri = sqlx::query_scalar::<_, String>(
+            "SELECT uri FROM plays WHERE did = $1 AND cid = $2 LIMIT 1",
+        )
+        .bind(did)
+        .bind(cid)
+        .fetch_optional(&mut *tx)
+        .await?;
+
+        if let Some(existing) = existing_uri {
+            if existing != uri {
+                tracing::debug!(
+                    "Skipping duplicate play for did={} cid={} (existing uri={}, new uri={})",
+                    did,
+                    cid,
+                    existing,
+                    uri
+                );
+                tx.rollback().await?;
+                return Ok(());
+            }
+        }
+
+        let inserted = sqlx::query(
             r#"
                 INSERT INTO plays (
                     uri, cid, did, rkey, isrc, duration, track_name, played_time,
                     processed_time, release_mbid, release_name, recording_mbid,
                     submission_client_agent, music_service_base_domain, artist_names_raw,
                     track_discriminant, release_discriminant
-                ) VALUES (
-                    $1, $2, $3, $4, $5, $6, $7, $8,
+                )
+                SELECT $1, $2, $3, $4, $5, $6, $7, $8,
                     NOW(), $9, $10, $11, $12, $13, $14, $15, $16
-                ) ON CONFLICT(uri) DO UPDATE SET
+                WHERE COALESCE(
+                    (SELECT active FROM account_states WHERE did = $3),
+                    TRUE
+                )
+                ON CONFLICT(uri) DO UPDATE SET
                     isrc = EXCLUDED.isrc,
                     duration = EXCLUDED.duration,
                     track_name = EXCLUDED.track_name,
@@ -1495,57 +1430,74 @@ impl PlayIngestor {
                     music_service_base_domain = EXCLUDED.music_service_base_domain,
                     artist_names_raw = EXCLUDED.artist_names_raw,
                     track_discriminant = EXCLUDED.track_discriminant,
-                    release_discriminant = EXCLUDED.release_discriminant;
+                    release_discriminant = EXCLUDED.release_discriminant
             "#,
-            uri,
-            cid,
-            did,
-            rkey,
-            isrc,
-            play_record.duration.map(|d| d as i32),
-            track_name,
-            time_datetime,
-            release_mbid_opt,
-            release_name,
-            recording_mbid_opt,
-            submission_client_agent,
-            music_service_base_domain,
-            artist_names_json,
-            track_discriminant,
-            release_discriminant
         )
-        .execute(&self.sql)
-        .await?;
+        .bind(uri)
+        .bind(cid)
+        .bind(did)
+        .bind(rkey)
+        .bind(isrc)
+        .bind(play_record.duration.map(|d| d as i32))
+        .bind(track_name)
+        .bind(time_datetime)
+        .bind(release_mbid_opt)
+        .bind(release_name)
+        .bind(recording_mbid_opt)
+        .bind(submission_client_agent)
+        .bind(music_service_base_domain)
+        .bind(artist_names_json)
+        .bind(track_discriminant)
+        .bind(release_discriminant)
+        .execute(&mut *tx)
+        .await?
+        .rows_affected();
+
+        if inserted == 0 {
+            info!(did, "Skipping play write for inactive account");
+            tx.commit().await?;
+            return Ok(());
+        }
+
+        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
+            .bind(uri)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
+            .execute(&mut *tx)
+            .await?;
 
         // Insert plays into the extended join table (supports all artists)
         for (artist_id, artist_name) in &parsed_artists {
-            sqlx::query!(
+            sqlx::query(
                 r#"
                     INSERT INTO play_to_artists_extended (play_uri, artist_id, artist_name) VALUES
-                    ($1, $2, $3)
-                    ON CONFLICT (play_uri, artist_id) DO NOTHING;
+                    ($1, $2, $3);
                 "#,
-                uri,
-                artist_id,
-                artist_name
             )
-            .execute(&self.sql)
+            .bind(uri)
+            .bind(artist_id)
+            .bind(artist_name)
+            .execute(&mut *tx)
             .await?;
         }
 
-        // Refresh materialized views concurrently (if needed, consider if this should be done less frequently)
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_artist_play_counts;")
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_release_play_counts;")
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_recording_play_counts;")
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("REFRESH MATERIALIZED VIEW mv_global_play_count;")
-            .execute(&self.sql)
-            .await?;
+        tx.commit().await?;
+
+        if std::env::var("CADET_DEFER_MATERIALIZED_VIEW_REFRESH").as_deref() != Ok("1") {
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_artist_play_counts;")
+                .execute(&self.sql)
+                .await?;
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_release_play_counts;")
+                .execute(&self.sql)
+                .await?;
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_recording_play_counts;")
+                .execute(&self.sql)
+                .await?;
+            sqlx::query!("REFRESH MATERIALIZED VIEW mv_global_play_count;")
+                .execute(&self.sql)
+                .await?;
+        }
 
         // // Optionally check materialised views (consider removing in production for performance)
         // // For debugging purposes, can keep for now
@@ -1576,6 +1528,10 @@ impl PlayIngestor {
     }
 
     async fn remove_play(&self, uri: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
+            .bind(uri)
+            .execute(&self.sql)
+            .await?;
         sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
             .execute(&self.sql)
             .await?;
@@ -1591,7 +1547,10 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record = parse_play_record(record)?;
+                let record: types::fm_teal::feed::play::Play =
+                    value::from_json_value::<types::fm_teal::feed::play::Play>(
+                        normalize_legacy_record_type(record),
+                    )?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         // TODO: verify cid
@@ -1599,7 +1558,7 @@ impl LexiconIngestor for PlayIngestor {
                             &record,
                             &assemble_at_uri(
                                 &message.did,
-                                crate::ingestors::teal::canonical_collection(&commit.collection),
+                                canonical_collection(&commit.collection),
                                 &commit.rkey,
                             ),
                             cid,
@@ -1610,12 +1569,12 @@ impl LexiconIngestor for PlayIngestor {
                     }
                 }
             } else {
-                println!("{}: Message {} deleted", message.did, commit.rkey);
                 let uri = assemble_at_uri(
                     &message.did,
-                    crate::ingestors::teal::canonical_collection(&commit.collection),
+                    canonical_collection(&commit.collection),
                     &commit.rkey,
                 );
+                tracing::info!("{}: Play {} deleted", message.did, uri);
                 self.remove_play(&uri).await?;
             }
         } else {
@@ -1625,48 +1584,318 @@ impl LexiconIngestor for PlayIngestor {
     }
 }
 
-/// Normalize legacy namespace tags before deserializing the generated record type.
-fn parse_play_record(record: &Value) -> anyhow::Result<types::fm_teal::feed::play::Play> {
-    Ok(value::from_json_value::<types::fm_teal::feed::play::Play>(
-        normalize_legacy_record_type(record),
-    )?)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::parse_play_record;
-    use crate::ingestors::teal::{ALPHA_FEED_PLAY, STABLE_FEED_PLAY};
-    use rocketman::types::event::Event;
-    use serde_json::{json, Value};
+    use jacquard_common::types::value;
+    use rocketman::{
+        ingestion::LexiconIngestor,
+        types::event::{Commit, Event, Kind, Operation},
+    };
+    use serde_json::json;
+    use sqlx::PgPool;
+    use uuid::Uuid;
 
-    fn direct_record(operation: &str, collection: &str) -> Value {
-        let event: Event<Value> = serde_json::from_value(json!({
-            "did": "did:plc:test",
-            "kind": "commit",
-            "commit": {
-                "rev": "3ltest",
-                "operation": operation,
-                "collection": collection,
-                "rkey": "3ltest",
-                "record": {"$type": collection, "trackName": "Test Song"},
-                "cid": "bafytest"
-            }
-        }))
-        .expect("valid direct event");
+    use super::{clean, PlayIngestor};
 
-        event.commit.expect("commit event").record.expect("record")
+    async fn test_pool() -> anyhow::Result<PgPool> {
+        let database_url = std::env::var("DATABASE_URL")?;
+        Ok(PgPool::connect(&database_url).await?)
+    }
+
+    fn play_record(
+        track_name: &str,
+        artist_name: &str,
+        release_mbid: Uuid,
+        recording_mbid: Uuid,
+    ) -> anyhow::Result<types::fm_teal::feed::play::Play> {
+        Ok(value::from_json_value::<types::fm_teal::feed::play::Play>(
+            json!({
+                "$type": "fm.teal.alpha.feed.play",
+                "trackName": track_name,
+                "recordingMbId": format!("mbid:{recording_mbid}"),
+                "releaseName": "Cadet Test Release",
+                "releaseMbId": format!("mbid:{release_mbid}"),
+                "duration": 181,
+                "artists": [{
+                    "artistName": artist_name
+                }],
+                "musicServiceUri": "https://tests.teal.fm",
+                "submissionClientAgent": "cadet-test/1.0",
+                "playedTime": "2026-06-01T00:00:00Z"
+            }),
+        )?)
     }
 
     #[test]
-    fn direct_create_and_update_records_accept_stable_and_legacy_types() {
-        for operation in ["create", "update"] {
-            for record_type in [STABLE_FEED_PLAY, ALPHA_FEED_PLAY] {
-                let record = direct_record(operation, record_type);
-                let parsed = parse_play_record(&record)
-                    .unwrap_or_else(|error| panic!("{operation} record should parse: {error}"));
+    fn clean_drops_empty_optional_mbids_from_legacy_records() -> anyhow::Result<()> {
+        let record = value::from_json_value::<types::fm_teal::feed::play::Play>(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Old Empty MBID Track",
+            "recordingMbId": "",
+            "releaseName": "Old Empty MBID Release",
+            "releaseMbId": "",
+            "trackMbId": "",
+            "artists": [{
+                "artistName": "Old Empty MBID Artist",
+                "artistMbId": ""
+            }],
+            "artistNames": ["Old Empty MBID Artist"],
+            "artistMbIds": [""]
+        }))?;
 
-                assert_eq!(parsed.track_name.as_str(), "Test Song");
-            }
-        }
+        let cleaned = clean(&record);
+
+        assert!(cleaned.recording_mb_id.is_none());
+        assert!(cleaned.release_mb_id.is_none());
+        assert!(cleaned.track_mb_id.is_none());
+        assert!(cleaned.artist_mb_ids.is_none());
+        let artists = cleaned.artists.expect("artists preserved");
+        assert_eq!(artists[0].artist_name.as_str(), "Old Empty MBID Artist");
+        assert!(artists[0].artist_mb_id.is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn clean_prefixes_legacy_bare_musicbrainz_uuids() -> anyhow::Result<()> {
+        let recording_mbid = Uuid::new_v4();
+        let release_mbid = Uuid::new_v4();
+        let artist_mbid = Uuid::new_v4();
+        let track_mbid = Uuid::new_v4();
+        let record = value::from_json_value::<types::fm_teal::feed::play::Play>(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Old Bare MBID Track",
+            "recordingMbId": recording_mbid.to_string(),
+            "releaseName": "Old Bare MBID Release",
+            "releaseMbId": release_mbid.to_string(),
+            "trackMbId": track_mbid.to_string(),
+            "artists": [{
+                "artistName": "Old Bare MBID Artist",
+                "artistMbId": artist_mbid.to_string()
+            }],
+            "artistNames": ["Old Bare MBID Artist"],
+            "artistMbIds": [artist_mbid.to_string()]
+        }))?;
+
+        let cleaned = clean(&record);
+
+        assert_eq!(
+            cleaned
+                .recording_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{recording_mbid}"))
+        );
+        assert_eq!(
+            cleaned
+                .release_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{release_mbid}"))
+        );
+        assert_eq!(
+            cleaned
+                .track_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{track_mbid}"))
+        );
+        let artists = cleaned.artists.expect("artists preserved");
+        assert_eq!(
+            artists[0]
+                .artist_mb_id
+                .as_ref()
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{artist_mbid}"))
+        );
+        assert_eq!(
+            cleaned
+                .artist_mb_ids
+                .as_ref()
+                .and_then(|mbids| mbids.first())
+                .map(|mbid| mbid.as_str().to_string()),
+            Some(format!("mbid:{artist_mbid}"))
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn clean_preserves_deprecated_artist_mbid_alignment() -> anyhow::Result<()> {
+        let artist_mbid = Uuid::new_v4();
+        let record = value::from_json_value::<types::fm_teal::feed::play::Play>(json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Partially Tagged Track",
+            "artistNames": ["Untagged Artist", "Tagged Artist"],
+            "artistMbIds": ["", artist_mbid.to_string()]
+        }))?;
+
+        let cleaned = clean(&record);
+        let mbids = cleaned.artist_mb_ids.expect("partial MBIDs preserved");
+
+        assert_eq!(mbids.len(), 2);
+        assert_eq!(mbids[0].as_str(), "");
+        assert_eq!(mbids[1].as_str(), format!("mbid:{artist_mbid}"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn creates_updates_and_deletes_play() -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let ingestor = PlayIngestor::new(pool.clone());
+        let did = format!("did:plc:cadet-play-test-{}", Uuid::new_v4());
+        let rkey = "3k2akjdlkjsf";
+        let uri = format!("at://{did}/fm.teal.alpha.feed.play/{rkey}");
+        let release_mbid = Uuid::new_v4();
+        let recording_mbid = Uuid::new_v4();
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "First Cadet Test Track",
+                    "First Cadet Test Artist",
+                    release_mbid,
+                    recording_mbid,
+                )?,
+                &uri,
+                "bafyreicadetcreate",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let inserted = sqlx::query_as::<_, (String, Option<String>, Option<String>)>(
+            "SELECT track_name, release_name, music_service_base_domain FROM plays WHERE uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(inserted.0, "First Cadet Test Track");
+        assert_eq!(inserted.1.as_deref(), Some("Cadet Test Release"));
+        assert_eq!(inserted.2.as_deref(), Some("tests.teal.fm"));
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "Updated Cadet Test Track",
+                    "Updated Cadet Test Artist",
+                    release_mbid,
+                    recording_mbid,
+                )?,
+                &uri,
+                "bafyreicadetupdate",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let updated = sqlx::query_as::<_, (String, Option<serde_json::Value>)>(
+            "SELECT track_name, artist_names_raw FROM plays WHERE uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(updated.0, "Updated Cadet Test Track");
+        assert_eq!(updated.1, Some(json!(["Updated Cadet Test Artist"])));
+
+        let extended_artist_links = sqlx::query_as::<_, (i64, Option<String>)>(
+            "SELECT COUNT(*), MAX(artist_name) FROM play_to_artists_extended WHERE play_uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(extended_artist_links.0, 1);
+        assert_eq!(
+            extended_artist_links.1.as_deref(),
+            Some("Updated Cadet Test Artist")
+        );
+
+        ingestor
+            .ingest(Event {
+                did: did.clone(),
+                time_us: Some(1),
+                kind: Kind::Commit,
+                commit: Some(Commit {
+                    rev: "test-rev".to_string(),
+                    operation: Operation::Delete,
+                    collection: "fm.teal.alpha.feed.play".to_string(),
+                    rkey: rkey.to_string(),
+                    record: None,
+                    cid: None,
+                }),
+                identity: None,
+            })
+            .await?;
+
+        let remaining_plays =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plays WHERE uri = $1")
+                .bind(&uri)
+                .fetch_one(&pool)
+                .await?;
+        let remaining_legacy_links = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM play_to_artists WHERE play_uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        let remaining_extended_links = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM play_to_artists_extended WHERE play_uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+
+        assert_eq!(remaining_plays, 0);
+        assert_eq!(remaining_legacy_links, 0);
+        assert_eq!(remaining_extended_links, 0);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn inactive_account_cannot_republish_a_play() -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let ingestor = PlayIngestor::new(pool.clone());
+        let did = format!("did:plc:cadet-inactive-play-test-{}", Uuid::new_v4());
+        let rkey = "3k2akjdlkjsf";
+        let uri = format!("at://{did}/fm.teal.alpha.feed.play/{rkey}");
+
+        sqlx::query(
+            "INSERT INTO account_states (did, active) VALUES ($1, FALSE) ON CONFLICT (did) DO UPDATE SET active = FALSE",
+        )
+        .bind(&did)
+        .execute(&pool)
+        .await?;
+
+        ingestor
+            .insert_play(
+                &play_record(
+                    "Inactive Cadet Test Track",
+                    "Inactive Cadet Test Artist",
+                    Uuid::new_v4(),
+                    Uuid::new_v4(),
+                )?,
+                &uri,
+                "bafyreicadetinactive",
+                &did,
+                rkey,
+            )
+            .await?;
+
+        let play_count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plays WHERE uri = $1")
+            .bind(&uri)
+            .fetch_one(&pool)
+            .await?;
+        assert_eq!(play_count, 0);
+
+        sqlx::query("DELETE FROM account_states WHERE did = $1")
+            .bind(&did)
+            .execute(&pool)
+            .await?;
+
+        Ok(())
     }
 }

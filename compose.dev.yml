@@ -1,4 +1,24 @@
 services:
+  amethyst:
+    build:
+      context: .
+      dockerfile: apps/amethyst/Dockerfile
+      args:
+        CLIENT_ADDRESS: ${CLIENT_ADDRESS:-localhost}
+        EXPO_PUBLIC_BASE_URL: ${EXPO_PUBLIC_BASE_URL:-http://localhost:8081}
+        EXPO_PUBLIC_AQUA_URL: ${EXPO_PUBLIC_AQUA_URL:-http://localhost:3000}
+        EXPO_PUBLIC_DID_WEB: ${EXPO_PUBLIC_DID_WEB:-did:web:localhost}
+        EXPO_PUBLIC_GIT_BRANCH: ${EXPO_PUBLIC_GIT_BRANCH:-unknown}
+        EXPO_PUBLIC_GIT_COMMIT: ${EXPO_PUBLIC_GIT_COMMIT:-unknown}
+    ports:
+      - "8081:80"
+    environment:
+      CLIENT_ADDRESS: ${CLIENT_ADDRESS:-:80}
+    networks:
+      - app_network
+    depends_on:
+      - aqua-api
+
   aqua-api:
     build:
       context: .
@@ -6,45 +26,39 @@ services:
     container_name: aqua-app
     ports:
       - "3000:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+      REDIS_URL: ${REDIS_URL:-redis://garnet:6379}
     networks:
       - app_network
     depends_on:
       - postgres
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: ${DOCKER_DB_URL}
-  amethyst:
-    build:
-      context: .
-      dockerfile: apps/amethyst/Dockerfile
-      args:
-        - CLIENT_ADDRESS=${CLIENT_ADDRESS}
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - app_network
-    environment:
-      CLIENT_ADDRESS: ${CLIENT_ADDRESS}
+      - garnet
 
   cadet:
     build:
       context: .
       dockerfile: services/cadet/Dockerfile
     container_name: cadet-app
-    ports:
-      - "3001:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+      REDIS_URL: ${REDIS_URL:-redis://garnet:6379}
+      CADET_STREAM_MODE: ${CADET_STREAM_MODE:-jetstream}
+      JETSTREAM_URL: ${JETSTREAM_URL:-wss://jetstream1.us-east.bsky.network/subscribe}
+      CADET_CURSOR_REDIS_KEY: ${CADET_CURSOR_REDIS_KEY:-cadet:jetstream:cursor}
+      CURSOR_FILE: ${CURSOR_FILE:-/var/lib/cadet/cursor.txt}
+      CADET_DEFER_MATERIALIZED_VIEW_REFRESH: ${CADET_DEFER_MATERIALIZED_VIEW_REFRESH:-1}
+    volumes:
+      - cadet_state:/var/lib/cadet
     networks:
       - app_network
     depends_on:
       - postgres
+      - garnet
 
   satellite:
     image: ghcr.io/espeon/satellite
@@ -53,24 +67,31 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: ${DOCKER_DB_URL}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
     networks:
       - app_network
     depends_on:
       - postgres
 
-  piper:
-    image: ghcr.io/teal-fm/piper:main
-    # Depends on your .env.air
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env.air
-    volumes:
-      - piper_data:/db
-      - garnet
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles:
+      - tunnel
+    command: tunnel --no-autoupdate --url http://amethyst:80
+    networks:
+      - app_network
+    depends_on:
+      - amethyst
+
+  cloudflared-named:
+    image: cloudflare/cloudflared:latest
+    profiles:
+      - named-tunnel
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TUNNEL_TOKEN:-}
+    networks:
+      - app_network
+    depends_on:
+      - amethyst
 
   garnet:
     image: ghcr.io/microsoft/garnet:latest
@@ -79,48 +100,28 @@ services:
       - "6379:6379"
     volumes:
       - garnet_data:/data
-    command: --storage-tier Storage --index-size 1g
     networks:
       - app_network
 
   postgres:
-    image: postgres:latest
+    image: postgres:16
     container_name: postgres_db
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-teal}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-teal}
+      POSTGRES_DB: ${DB_NAME:-teal}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - app_network
-  # traefik:
-  #   image: traefik:v2.10
-  #   container_name: traefik
-  #   command:
-  #     - "--api.insecure=true"
-  #     - "--providers.file.directory=/etc/traefik/dynamic"
-  #     - "--providers.file.watch=true"
-  #     - "--entrypoints.web.address=:80"
-  #   ports:
-  #     - "80:80" # HTTP
-  #     - "8080:8080" # Dashboard
-  #   volumes:
-  #     - ./traefik/dynamic:/etc/traefik/dynamic:ro
-  #   networks:
-  #     - app_network
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway" # This allows reaching host machine
+
 networks:
   app_network:
     driver: bridge
+
 volumes:
-  postgres_data:
-  caddy_data:
-  caddy_config:
-  piper_data:
   garnet_data:
+  postgres_data:
+  cadet_state:

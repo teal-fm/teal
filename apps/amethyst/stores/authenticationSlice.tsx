@@ -3,20 +3,22 @@ import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
 import * as Lexicons from "@teal/lexicons/src/lexicons";
-import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/actor/getProfile";
+import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
+import { pdsHostFromOAuthIssuer } from "../lib/atp/oauthIssuer";
+import { getProfile } from "../lib/teal/api";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {
   bsky: null | AppBskyActorDefs.ProfileViewDetailed;
-  teal: null | GetProfileOutputSchema["actor"];
-  // todo: teal profile view
+  teal: null | ProfileView;
 }
 
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
   status: "start" | "loggedIn" | "loggedOut";
+  oauthIssuer: null | string;
   oauthState: null | string;
   oauthSession: null | OAuthSession;
   pdsAgent: null | Agent;
@@ -53,6 +55,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   return {
     auth: initialAuth,
     status: "start",
+    oauthIssuer: null,
     oauthState: null,
     oauthSession: null,
     pdsAgent: null,
@@ -68,11 +71,12 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     getLoginUrl: async (handle: string) => {
       try {
         // resolve the handle to a PDS URL
-        const r = resolveFromIdentity(handle);
-        let auth = createOAuthClient(baseUrl, (await r).pds.hostname);
+        const resolvedIdentity = await resolveFromIdentity(handle);
+        const auth = createOAuthClient(baseUrl, resolvedIdentity.pds.hostname);
         const url = await auth.authorize(handle);
         set({
           auth,
+          oauthIssuer: `https://${resolvedIdentity.pds.hostname}`,
           pds: {
             url: url.toString(),
             loading: false,
@@ -95,12 +99,22 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         if (get().status === "loggedIn") {
           return;
         }
+        const oauthIssuer = state.get("iss");
+        const callbackAuth = createOAuthClient(
+          baseUrl,
+          pdsHostFromOAuthIssuer(
+            oauthIssuer,
+            pdsHostFromOAuthIssuer(get().oauthIssuer),
+          ),
+        );
         const { session, state: oauthState } =
-          await initialAuth.callback(state);
+          await callbackAuth.callback(state);
         const agent = new Agent(session);
         set({
+          auth: callbackAuth,
           // TODO: fork or update auth lib
           oauthSession: session as any,
+          oauthIssuer: oauthIssuer ?? get().oauthIssuer,
           oauthState,
           status: "loggedIn",
           pdsAgent: addDocs(agent),
@@ -123,13 +137,16 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     restorePdsAgent: async () => {
       let did = get().oauthSession?.sub;
       if (!did) {
-        //
-        // throw new Error("No session");
+        set({ status: "loggedOut" });
         return;
       }
       try {
         // restore session
-        let sess = await initialAuth.restore(did);
+        const restoreAuth = createOAuthClient(
+          baseUrl,
+          pdsHostFromOAuthIssuer(get().oauthIssuer),
+        );
+        let sess = await restoreAuth.restore(did);
 
         if (!sess) {
           throw new Error("Failed to restore session");
@@ -138,6 +155,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         const agent = new Agent(sess);
 
         set({
+          auth: restoreAuth,
           pdsAgent: addDocs(agent),
           isAgentReady: true,
           status: "loggedIn",
@@ -157,6 +175,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       set({
         status: "loggedOut",
         oauthSession: null,
+        oauthIssuer: null,
         oauthState: null,
         profiles,
         pdsAgent: null,
@@ -182,18 +201,12 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           });
         // get teal did
         try {
-          let tealDid = get().tealDid;
-          let tealProfile = await agent
-            .call(
-              "fm.teal.actor.getProfile",
-              { actor: agent?.did },
-              {},
-              { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
-            )
-            .then((profile) => {
-              console.log(profile);
-              return profile.data.actor || null;
-            });
+          // Aqua is the source of truth for Teal identity data. Fetching it
+          // directly avoids depending on the user's PDS proxy configuration,
+          // which can otherwise leave the shell showing stale Bluesky data.
+          const tealProfile = await getProfile(agent.did).then(
+            ({ profile }) => profile,
+          );
 
           set({
             profiles: {

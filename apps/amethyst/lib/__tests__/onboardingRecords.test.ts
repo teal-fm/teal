@@ -2,18 +2,34 @@ import {
   getBlobHash,
   LEGACY_PROFILE_COLLECTION,
   readRepoRecordWithLegacyFallback,
+  type RepoRecordAgent,
   STABLE_PROFILE_COLLECTION,
 } from "../atp/onboardingRecords";
 
+type MockRepoRecordAgent = RepoRecordAgent & {
+  call: jest.MockedFunction<RepoRecordAgent["call"]>;
+};
+
+function createAgent(): MockRepoRecordAgent {
+  return {
+    call: jest.fn<
+      ReturnType<RepoRecordAgent["call"]>,
+      Parameters<RepoRecordAgent["call"]>
+    >(),
+    did: "did:plc:test",
+  };
+}
+
 describe("readRepoRecordWithLegacyFallback", () => {
   it("uses the stable record when it exists", async () => {
-    const call = jest.fn().mockResolvedValue({
+    const agent = createAgent();
+    const { call } = agent;
+    call.mockResolvedValue({
       data: { cid: "stable-cid", value: { displayName: "Stable" } },
     });
-    const agent = { call, did: "did:plc:test" };
 
     const result = await readRepoRecordWithLegacyFallback(
-      agent as never,
+      agent,
       STABLE_PROFILE_COLLECTION,
       LEGACY_PROFILE_COLLECTION,
     );
@@ -32,16 +48,16 @@ describe("readRepoRecordWithLegacyFallback", () => {
   });
 
   it("falls back to the legacy record when stable is missing", async () => {
-    const call = jest
-      .fn()
+    const agent = createAgent();
+    const { call } = agent;
+    call
       .mockRejectedValueOnce({ error: "RecordNotFound", message: "missing" })
       .mockResolvedValueOnce({
         data: { cid: "legacy-cid", value: { displayName: "Legacy" } },
       });
-    const agent = { call, did: "did:plc:test" };
 
     const result = await readRepoRecordWithLegacyFallback(
-      agent as never,
+      agent,
       STABLE_PROFILE_COLLECTION,
       LEGACY_PROFILE_COLLECTION,
     );
@@ -59,18 +75,23 @@ describe("readRepoRecordWithLegacyFallback", () => {
   });
 
   it("returns null when neither namespace has a record", async () => {
-    const call = jest
-      .fn()
-      .mockRejectedValue({ error: "RecordNotFound", message: "missing" });
-    const agent = { call, did: "did:plc:test" };
+    const agent = createAgent();
+    const { call } = agent;
+    call.mockRejectedValue({ error: "RecordNotFound", message: "missing" });
 
     await expect(
       readRepoRecordWithLegacyFallback(
-        agent as never,
+        agent,
         STABLE_PROFILE_COLLECTION,
         LEGACY_PROFILE_COLLECTION,
       ),
     ).resolves.toBeNull();
+    expect(call).toHaveBeenCalledTimes(2);
+    expect(call).toHaveBeenNthCalledWith(2, "com.atproto.repo.getRecord", {
+      repo: "did:plc:test",
+      collection: LEGACY_PROFILE_COLLECTION,
+      rkey: "self",
+    });
   });
 
   it("propagates a legacy read failure when the stable record is missing", async () => {
@@ -78,15 +99,15 @@ describe("readRepoRecordWithLegacyFallback", () => {
       error: "NetworkError",
       message: "legacy read failed",
     };
-    const call = jest
-      .fn()
+    const agent = createAgent();
+    const { call } = agent;
+    call
       .mockRejectedValueOnce({ error: "RecordNotFound", message: "missing" })
       .mockRejectedValueOnce(legacyError);
-    const agent = { call, did: "did:plc:test" };
 
     await expect(
       readRepoRecordWithLegacyFallback(
-        agent as never,
+        agent,
         STABLE_PROFILE_COLLECTION,
         LEGACY_PROFILE_COLLECTION,
       ),
@@ -98,15 +119,15 @@ describe("readRepoRecordWithLegacyFallback", () => {
       error: "NetworkError",
       message: "stable read failed",
     };
-    const call = jest
-      .fn()
+    const agent = createAgent();
+    const { call } = agent;
+    call
       .mockRejectedValueOnce(stableError)
       .mockRejectedValueOnce({ error: "RecordNotFound", message: "missing" });
-    const agent = { call, did: "did:plc:test" };
 
     await expect(
       readRepoRecordWithLegacyFallback(
-        agent as never,
+        agent,
         STABLE_PROFILE_COLLECTION,
         LEGACY_PROFILE_COLLECTION,
       ),

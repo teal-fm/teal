@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT did, handle, display_name, avatar\n            FROM profiles\n            WHERE display_name ILIKE $1 OR handle ILIKE $1\n            ORDER BY\n                CASE\n                    WHEN LOWER(handle) = LOWER($2) OR LOWER(display_name) = LOWER($2) THEN 0\n                    WHEN handle ILIKE $3 OR display_name ILIKE $3 THEN 1\n                    ELSE 2\n                END,\n                display_name NULLS LAST,\n                handle NULLS LAST\n            LIMIT $4\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "did",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "handle",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "display_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "avatar",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "75d93f44f432f071ee5a829a68e3d4b1d04b1eb8af5a518a0a746de4c5ae4e67"
+}

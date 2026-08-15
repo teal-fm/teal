@@ -1,4 +1,27 @@
 services:
+  amethyst:
+    build:
+      context: .
+      dockerfile: apps/amethyst/Dockerfile
+      args:
+        CLIENT_ADDRESS: ${CLIENT_ADDRESS:-localhost}
+        EXPO_PUBLIC_BASE_URL: ${EXPO_PUBLIC_BASE_URL:-http://localhost}
+        EXPO_PUBLIC_AQUA_URL: ${EXPO_PUBLIC_AQUA_URL:-http://localhost:3000}
+        EXPO_PUBLIC_DID_WEB: ${EXPO_PUBLIC_DID_WEB:-did:web:localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      CLIENT_ADDRESS: ${CLIENT_ADDRESS:-:80}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app_network
+    depends_on:
+      - aqua-api
+
   aqua-api:
     build:
       context: .
@@ -6,10 +29,83 @@ services:
     container_name: aqua-app
     ports:
       - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+      REDIS_URL: ${REDIS_URL:-redis://garnet:6379}
     networks:
       - app_network
     depends_on:
       - postgres
       - garnet
+
+  cadet:
+    build:
+      context: .
+      dockerfile: services/cadet/Dockerfile
+    container_name: cadet-app
     env_file:
       - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+      REDIS_URL: ${REDIS_URL:-redis://garnet:6379}
+      CADET_STREAM_MODE: ${CADET_STREAM_MODE:-jetstream}
+      JETSTREAM_URL: ${JETSTREAM_URL:-wss://jetstream1.us-east.bsky.network/subscribe}
+      CADET_CURSOR_REDIS_KEY: ${CADET_CURSOR_REDIS_KEY:-cadet:jetstream:cursor}
+      CURSOR_FILE: ${CURSOR_FILE:-/var/lib/cadet/cursor.txt}
+    volumes:
+      - cadet_state:/var/lib/cadet
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+      - garnet
+
+  satellite:
+    image: ghcr.io/espeon/satellite
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+    ports:
+      - "3132:3000"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+
+  garnet:
+    image: ghcr.io/microsoft/garnet:latest
+    container_name: garnet
+    ports:
+      - "6379:6379"
+    volumes:
+      - garnet_data:/data
+    networks:
+      - app_network
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-teal}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-teal}
+      POSTGRES_DB: ${DB_NAME:-teal}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  garnet_data:
+  postgres_data:
+  cadet_state:

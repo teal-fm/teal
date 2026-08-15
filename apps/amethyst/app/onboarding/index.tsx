@@ -1,19 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import ProgressDots from "@/components/onboarding/progressDots";
-import { Text } from "@/components/ui/text"; // Your UI components
-import getImageCdnLink from "@/lib/atp/getImageCdnLink";
-import {
-  getBlobHash,
-  LEGACY_PROFILE_COLLECTION,
-  LEGACY_PROFILE_STATUS_COLLECTION,
-  readRepoRecordWithLegacyFallback,
-  STABLE_PROFILE_COLLECTION,
-  STABLE_PROFILE_STATUS_COLLECTION,
-} from "@/lib/atp/onboardingRecords";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
+import { ArrowLeft, Check, Disc3, Music2, Sparkles } from "lucide-react-native";
 
 import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
 import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/actor/profileStatus";
@@ -44,29 +38,35 @@ export default function OnboardingPage() {
   const [profileStatus, setProfileStatus] =
     useState<ProfileStatusRecord | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(true);
 
   const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
-  const profile = useStore((store) => store.profiles);
+  const profiles = useStore((store) => store.profiles);
+  const profile = agent?.did ? profiles[agent.did] : undefined;
 
-  // Read both records with a legacy fallback so an existing user is never
-  // treated as a new user just because the namespace changed.
+  useEffect(() => {
+    if (!profile?.bsky) return;
+    setDisplayName((current) => current || profile.bsky?.displayName || "");
+    setDescription((current) => current || profile.bsky?.description || "");
+    setAvatarUri((current) => current || profile.bsky?.avatar || "");
+    setBannerUri((current) => current || profile.bsky?.banner || "");
+  }, [profile?.bsky]);
+
+  // Check profile status
   React.useEffect(() => {
     const checkProfileStatus = async () => {
       if (!agent) return;
 
       try {
-        const result =
-          await readRepoRecordWithLegacyFallback<ProfileStatusRecord>(
-            agent,
-            STABLE_PROFILE_STATUS_COLLECTION,
-            LEGACY_PROFILE_STATUS_COLLECTION,
-          );
-        setProfileStatus(result?.record ?? null);
-      } catch (error) {
-        console.error("Error fetching profile status:", error);
+        const res = await agent.call("com.atproto.repo.getRecord", {
+          repo: agent.did,
+          collection: "fm.teal.actor.profileStatus",
+          rkey: "self",
+        });
+        setProfileStatus(res.data.value as ProfileStatusRecord);
+      } catch {
+        // If no record exists, user hasn't completed onboarding
         setProfileStatus(null);
       } finally {
         setStatusLoading(false);
@@ -74,43 +74,6 @@ export default function OnboardingPage() {
     };
 
     checkProfileStatus();
-  }, [agent]);
-
-  React.useEffect(() => {
-    const loadProfile = async () => {
-      if (!agent) return;
-
-      try {
-        const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
-          agent,
-          STABLE_PROFILE_COLLECTION,
-          LEGACY_PROFILE_COLLECTION,
-        );
-        if (result) {
-          setDisplayName(result.record.displayName ?? "");
-          setDescription(result.record.description ?? "");
-
-          const avatarHash = getBlobHash(result.record.avatar);
-          const bannerHash = getBlobHash(result.record.banner);
-          setAvatarUri(
-            avatarHash
-              ? (getImageCdnLink({ did: agent.did!, hash: avatarHash }) ?? "")
-              : "",
-          );
-          setBannerUri(
-            bannerHash
-              ? (getImageCdnLink({ did: agent.did!, hash: bannerHash }) ?? "")
-              : "",
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      } finally {
-        setProfileLoading(false);
-      }
-    };
-
-    loadProfile();
   }, [agent]);
 
   const handleImageSelectionComplete = (
@@ -145,18 +108,13 @@ export default function OnboardingPage() {
     let currentUser: ProfileRecord | undefined;
     let cid: string | undefined;
     try {
-      const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
-        agent,
-        STABLE_PROFILE_COLLECTION,
-        LEGACY_PROFILE_COLLECTION,
-      );
-      currentUser = result?.record;
-      // A legacy record must be copied into the stable collection, not
-      // updated in place. Its blob refs are retained below.
-      cid =
-        result?.collection === STABLE_PROFILE_COLLECTION
-          ? result.cid
-          : undefined;
+      const res = await agent.call("com.atproto.repo.getRecord", {
+        repo: agent.did,
+        collection: "fm.teal.actor.profile",
+        rkey: "self",
+      });
+      currentUser = res.data.value;
+      cid = res.data.cid;
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
@@ -187,34 +145,35 @@ export default function OnboardingPage() {
 
     setSubmissionStep(4);
 
-    const record: ProfileRecord = {
-      ...currentUser,
-      $type: STABLE_PROFILE_COLLECTION,
+    let record: ProfileRecord = {
+      $type: "fm.teal.actor.profile",
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
       avatar: newAvatarBlob,
       banner: newBannerBlob,
     };
 
+    let post;
+
     if (cid) {
-      await agent.call(
+      post = await agent.call(
         "com.atproto.repo.putRecord",
         {},
         {
           repo: agent.did,
-          collection: STABLE_PROFILE_COLLECTION,
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
           swapRecord: cid,
         },
       );
     } else {
-      await agent.call(
+      post = await agent.call(
         "com.atproto.repo.createRecord",
         {},
         {
           repo: agent.did,
-          collection: STABLE_PROFILE_COLLECTION,
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
         },
@@ -223,7 +182,7 @@ export default function OnboardingPage() {
 
     // Update profile status to mark onboarding as completed
     const profileStatusRecord: ProfileStatusRecord = {
-      $type: STABLE_PROFILE_STATUS_COLLECTION,
+      $type: "fm.teal.actor.profileStatus",
       completedOnboarding: "profileOnboarding",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -235,7 +194,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: STABLE_PROFILE_STATUS_COLLECTION,
+          collection: "fm.teal.actor.profileStatus",
           rkey: "self",
           record: profileStatusRecord,
         },
@@ -248,7 +207,7 @@ export default function OnboardingPage() {
           {},
           {
             repo: agent.did,
-            collection: STABLE_PROFILE_STATUS_COLLECTION,
+            collection: "fm.teal.actor.profileStatus",
             rkey: "self",
             record: {
               ...profileStatusRecord,
@@ -269,32 +228,81 @@ export default function OnboardingPage() {
     }, 2000);
   };
 
-  if (!agent || !profile[agent?.did!]) {
-    return <div>Loading...</div>;
+  if (!agent) {
+    return (
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+        <View className="w-full max-w-md gap-4 rounded-lg border border-border bg-card p-6">
+          <Icon icon={Disc3} size={42} className="text-primary" />
+          <Text className="font-sans text-3xl font-black">
+            Create your Teal profile
+          </Text>
+          <Text className="text-muted-foreground">
+            Sign in with your ATProto account before setting up your music
+            identity.
+          </Text>
+          <Link href="/auth/login" asChild>
+            <Button>
+              <Text>Sign in</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
   }
 
-  if (statusLoading || profileLoading) {
+  if (!profile) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Checking profile status...</Text>
+      <View className="min-h-screen flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (statusLoading) {
+    return (
+      <View className="min-h-screen flex-1 items-center justify-center gap-3 bg-background">
+        <ActivityIndicator size="large" />
+        <Text className="text-muted-foreground">
+          Checking your Teal profile...
+        </Text>
       </View>
     );
   }
 
   if (profileStatus && profileStatus.completedOnboarding !== "none") {
     return (
-      <Text>
-        Onboarding already completed: {profileStatus.completedOnboarding}
-      </Text>
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+        <View className="w-full max-w-md items-start gap-4 rounded-lg border border-border bg-card p-6">
+          <Icon icon={Check} size={42} className="text-primary" />
+          <Text className="font-sans text-3xl font-black">
+            Your Teal profile is ready
+          </Text>
+          <Text className="text-muted-foreground">
+            Your music identity already exists. You can return to your profile
+            and keep listening.
+          </Text>
+          <Link href={`/profile/${agent.did}` as any} asChild>
+            <Button>
+              <Text>View profile</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (submissionStep) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{OnboardingSubmissionSteps[submissionStep]}</Text>
+      <View className="min-h-screen flex-1 items-center justify-center gap-4 bg-background">
+        <View className="h-20 w-20 items-center justify-center rounded-full border-8 border-primary/20 bg-primary/10">
+          <ActivityIndicator size="large" />
+        </View>
+        <Text className="font-sans text-3xl font-black">
+          {OnboardingSubmissionSteps[submissionStep]}
+        </Text>
+        <Text className="text-muted-foreground">
+          Publishing your profile to the Atmosphere.
+        </Text>
       </View>
     );
   }
@@ -323,6 +331,7 @@ export default function OnboardingPage() {
             onComplete={handleImageSelectionComplete}
             initialAvatar={avatarUri}
             initialBanner={bannerUri}
+            onBack={() => setStep(2)}
           />
         );
       default:
@@ -331,9 +340,54 @@ export default function OnboardingPage() {
   };
 
   return (
-    <SafeAreaView className="flex-1 p-5 pt-5">
-      <View className="flex h-full min-h-max flex-1">{renderPage()}</View>
-      <ProgressDots totalSteps={3} currentStep={step} />
+    <SafeAreaView className="min-h-screen flex-1 bg-background">
+      <View className="z-10 min-h-screen flex-1 flex-row">
+        <View className="hidden w-[20rem] justify-between border-r border-border bg-foreground p-8 lg:flex">
+          <Link href="/" asChild>
+            <Button variant="ghost" size="sm" className="self-start">
+              <Icon icon={ArrowLeft} size={18} className="text-background" />
+              <Text className="ml-2 text-background">Back to Teal</Text>
+            </Button>
+          </Link>
+          <View className="gap-5">
+            <View className="h-16 w-16 items-center justify-center rounded-full border-[7px] border-background">
+              <View className="h-5 w-5 rounded-full bg-secondary" />
+            </View>
+            <Text className="font-sans text-4xl font-black text-background">
+              Make it yours.
+            </Text>
+            <Text className="text-base leading-6 text-background/65">
+              A Teal profile lives in your ATProto repository and follows your
+              listening history across the Atmosphere.
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Icon icon={Music2} size={18} className="text-secondary" />
+            <Text className="font-mono text-xs text-background/55">
+              fm.teal.actor.profile
+            </Text>
+          </View>
+        </View>
+        <View className="min-h-screen flex-1 px-5 py-8 md:px-12">
+          <View className="mx-auto w-full max-w-2xl flex-1">
+            <View className="mb-8 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3">
+                <Icon icon={Sparkles} size={20} className="text-primary" />
+                <Text className="font-mono text-xs font-bold uppercase text-muted-foreground">
+                  Teal profile setup
+                </Text>
+              </View>
+              <Text className="font-mono text-xs text-muted-foreground">
+                0{step} / 03
+              </Text>
+            </View>
+            <View className="flex-1 rounded-lg border border-border bg-card p-6 md:p-10">
+              {renderPage()}
+            </View>
+            <ProgressDots totalSteps={3} currentStep={step} />
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }

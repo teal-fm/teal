@@ -1,11 +1,11 @@
 import React from "react";
-import { Pressable, type ColorValue } from "react-native";
+import { Platform, Pressable, type ColorValue } from "react-native";
 import { Link, Tabs } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
-//import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
 import {
   FilePen,
+  Disc3,
   Home,
   LogOut,
   Search,
@@ -16,7 +16,6 @@ import { useColorScheme } from "nativewind";
 
 import Colors from "../../constants/Colors";
 import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
-import AuthOptions from "../auth/options";
 
 function TabBarIcon(props: { name: LucideIcon; color: ColorValue }) {
   const Name = props.name;
@@ -28,17 +27,7 @@ export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const authStatus = useStore((state) => state.status);
   const isMobile = useIsMobile();
-  // if we are on web but not native and web width is greater than 1024px
-  const hideTabBar = authStatus !== "loggedIn"; // || useIsMobile()
-
-  const j = useStore((state) => state.status);
-  // @me
-  const agent = useStore((state) => state.pdsAgent);
-  const profile = useStore((state) => state.profiles[agent?.did ?? ""]);
-
-  if (j !== "loggedIn") {
-    return <AuthOptions />;
-  }
+  const hideTabBar = !isMobile || Platform.OS === "web";
 
   return (
     <Tabs
@@ -83,14 +72,30 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search/index"
         options={{
-          title: "Search",
+          title: "Explore",
           tabBarIcon: ({ color }) => <TabBarIcon name={Search} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="manual-listens"
+        options={{
+          title: "Add listens",
+          href: authStatus === "loggedIn" ? undefined : null,
+          tabBarIcon: ({ color }) => <TabBarIcon name={Disc3} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: "Notifications",
+          href: null,
         }}
       />
       <Tabs.Screen
         name="(stamp)"
         options={{
           title: "Stamp",
+          href: authStatus === "loggedIn" ? undefined : null,
           tabBarIcon: ({ color }) => (
             <TabBarIcon name={FilePen} color={color} />
           ),
@@ -100,7 +105,7 @@ export default function TabLayout() {
         name="settings/index"
         options={{
           title: "Settings",
-
+          href: authStatus === "loggedIn" ? undefined : null,
           tabBarIcon: ({ color }) => (
             <TabBarIcon name={Settings} color={color} />
           ),
@@ -113,6 +118,27 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <TabBarIcon name={FilePen} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="listen/[did]/[rkey]"
+        options={{
+          title: "Listen",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="post/[did]/[rkey]"
+        options={{
+          title: "Post",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="at:/[...uri]"
+        options={{
+          title: "AT URI",
+          href: null,
         }}
       />
     </Tabs>

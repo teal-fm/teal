@@ -3,6 +3,7 @@ import { join } from "path";
 import { execa } from "execa";
 import pc from "picocolors";
 
+import { canonicalizeGeneratedRust } from "../utils/canonicalize-rust.js";
 import { findWorkspaceRoot } from "../utils/workspace.js";
 
 interface GenerateOptions {
@@ -83,39 +84,65 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
   console.log(pc.cyan("  🦀 Generating Rust types..."));
 
   try {
-    // Check if jacquard-codegen is available
+    const requiredJacquardVersion = "0.12.1";
+    const requiredJacquardOutput = `jacquard-lexgen ${requiredJacquardVersion}`;
+
+    // The generated Rust is checked in, so using a different generator version
+    // creates noisy, non-obvious diffs in CI. Check the version, not just that
+    // a binary happens to be on PATH.
+    let hasCompatibleCodegen = false;
     try {
-      await execa("jacquard-codegen", ["--version"], { stdio: "pipe" });
+      const { stdout } = await execa("jacquard-codegen", ["--version"], {
+        stdio: "pipe",
+      });
+      hasCompatibleCodegen = stdout.trim() === requiredJacquardOutput;
     } catch {
+      // Install below when the binary is missing or cannot report its version.
+    }
+
+    if (!hasCompatibleCodegen) {
       console.log(
-        pc.yellow("    ⚠️  jacquard-codegen not found. Installing..."),
+        pc.yellow(
+          `    ⚠️  jacquard-codegen ${requiredJacquardVersion} not found. Installing...`,
+        ),
       );
       try {
-        // Try cargo-binstall first for faster installation
+        // Prefer the prebuilt binary to keep CI setup fast. --force replaces
+        // an older jacquard-codegen already installed by the runner.
         try {
-          await execa("cargo", ["binstall", "--version"], { stdio: "pipe" });
+          await execa("cargo", ["binstall", "--version"], {
+            stdio: "pipe",
+          });
           await execa(
             "cargo",
-            ["binstall", "-y", "jacquard-lexgen", "--version", "0.12.1"],
-            {
-              stdio: "inherit",
-            },
+            [
+              "binstall",
+              "-y",
+              "--force",
+              "jacquard-lexgen",
+              "--version",
+              requiredJacquardVersion,
+            ],
+            { stdio: "inherit" },
           );
         } catch {
-          // Fallback to cargo install if binstall not available
-          await execa("cargo", [
-            "install",
-            "jacquard-lexgen",
-            "--version",
-            "0.12.1",
-          ], {
-            stdio: "inherit",
-          });
+          // Fall back to compiling when cargo-binstall is unavailable.
+          await execa(
+            "cargo",
+            [
+              "install",
+              "jacquard-lexgen",
+              "--version",
+              requiredJacquardVersion,
+              "--force",
+            ],
+            { stdio: "inherit" },
+          );
         }
         console.log(pc.green("    ✓ jacquard-codegen installed successfully"));
       } catch (installError) {
         throw new Error(
-          "Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version 0.12.1",
+          `Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version ${requiredJacquardVersion}`,
         );
       }
     }
@@ -136,6 +163,8 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
         stdio: "inherit",
       },
     );
+
+    canonicalizeGeneratedRust(join(typesPath, "src"));
 
     console.log(pc.green("    ✓ Rust types generated"));
   } catch (error) {

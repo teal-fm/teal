@@ -35,14 +35,11 @@ COPY ./ .
 # Setup lexicons and install dependencies
 RUN ./scripts/setup-lexicons.sh
 
-# Install Node.js and pnpm for lexicon generation
-RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm@9.15.0
-
-# Install dependencies and generate lexicons
-RUN pnpm install
-RUN cd tools/lexicon-cli && pnpm build
-RUN pnpm lex:gen --rust-only
+# Generate Rust lexicon bindings inside the image build. The generated source
+# tree is intentionally ignored locally, so a clean Docker context must build
+# it before compiling Cadet.
+RUN cargo install jacquard-lexgen --version 0.12.1 && \
+    jacquard-codegen --input lexicons --output services/types/src
 
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
@@ -76,11 +73,17 @@ RUN echo "DEBUG Before target.sh: TARGETPLATFORM=$TARGETPLATFORM TARGETARCH=$TAR
     cargo build --release --target $RUST_TARGET --package cadet && \
     cp target/$RUST_TARGET/release/cadet target/cadet
 
+# Stage a state directory owned by the runtime user so the cursor file mount
+# point is writable when Docker copies it onto the named volume.
+RUN mkdir -p /buildah/runtime-state/var/lib/cadet && \
+    chown -R ${UID}:${UID} /buildah/runtime-state/var/lib/cadet
+
 FROM --platform=${TARGETARCH:-$BUILDPLATFORM} gcr.io/distroless/cc
 
 # Import from builder.
 COPY --from=buildah /etc/passwd /etc/passwd
 COPY --from=buildah /etc/group /etc/group
+COPY --from=buildah --chown=10001:10001 /buildah/runtime-state/var/lib/cadet /var/lib/cadet
 
 WORKDIR /app
 
