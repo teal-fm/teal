@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use serde::{Deserialize, Serialize};
+use types::fm_teal::actor::get_status::{GetStatus, GetStatusOutput};
 
 use crate::{AppState, db};
 
@@ -24,32 +24,14 @@ pub async fn health() -> &'static str {
     "ok"
 }
 
-#[derive(Deserialize)]
-pub struct GetStatusQuery {
-    pub actor: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetStatusResponse {
-    pub did: String,
-    #[serde(rename = "isListening")]
-    pub is_listening: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub message: Option<&'static str>,
-}
-
 pub async fn get_status(
     State(state): State<AppState>,
-    Query(query): Query<GetStatusQuery>,
+    Query(query): Query<GetStatus>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let actor = query
-        .actor
-        .as_deref()
-        .map(str::trim)
-        .filter(|actor| !actor.is_empty())
-        .ok_or((StatusCode::BAD_REQUEST, "actor is required".to_string()))?;
+    let actor = query.actor.trim();
+    if actor.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
+    }
 
     let did = db::resolve_actor(&state.db, &state.http_client, &state.handle_resolver, actor)
         .await
@@ -61,17 +43,21 @@ pub async fn get_status(
         .map_err(internal_error)?;
 
     let response = match status {
-        Some(status) => GetStatusResponse {
-            did,
+        Some(status) => GetStatusOutput {
+            did: did.into(),
             is_listening: true,
-            status: Some(status),
+            status: Some(
+                serde_json::from_value(status).map_err(|error| internal_error(error.into()))?,
+            ),
             message: None,
+            extra_data: None,
         },
-        None => GetStatusResponse {
-            did,
+        None => GetStatusOutput {
+            did: did.into(),
             is_listening: false,
             status: None,
-            message: Some("Not listening to anything right now"),
+            message: Some("Not listening to anything right now".into()),
+            extra_data: None,
         },
     };
 
@@ -88,15 +74,16 @@ fn internal_error(error: anyhow::Error) -> (StatusCode, String) {
 
 #[cfg(test)]
 mod tests {
-    use super::GetStatusResponse;
+    use super::GetStatusOutput;
 
     #[test]
     fn inactive_response_explains_missing_status() {
-        let response = GetStatusResponse {
-            did: "did:plc:example".to_string(),
+        let response = GetStatusOutput {
+            did: "did:plc:example".to_string().into(),
             is_listening: false,
             status: None,
-            message: Some("Not listening to anything right now"),
+            message: Some("Not listening to anything right now".into()),
+            extra_data: None,
         };
 
         let json = serde_json::to_value(response).expect("response should serialize");

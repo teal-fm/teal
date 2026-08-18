@@ -4210,6 +4210,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "types",
  "url",
  "zstd",
 ]
