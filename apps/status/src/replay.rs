@@ -5,11 +5,14 @@ use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::PgPool;
+use std::io::{Cursor, Read};
 
 use crate::{db, jetstream::STATUS_COLLECTIONS};
 
 const PLAN_PATH: &str = "/xrpc/network.bsky.jetstream.planSnapshot";
 const SEGMENT_PATH: &str = "/xrpc/network.bsky.jetstream.getSegment";
+const ZSTD_WINDOW_LOG_MAX: u32 = 30;
+const MAX_DECOMPRESSED_BLOCK_SIZE: usize = 1 << ZSTD_WINDOW_LOG_MAX;
 
 pub async fn backfill(pool: &PgPool, client: &Client, endpoint: &str, api_key: &str) -> Result<()> {
     let endpoint = endpoint.trim_end_matches('/');
@@ -356,7 +359,27 @@ async fn process_block(pool: &PgPool, compressed: &[u8]) -> Result<()> {
 }
 
 fn decode_block(compressed: &[u8]) -> Result<Vec<ArchiveEvent>> {
-    let body = zstd::stream::decode_all(compressed)?;
+    let mut decoder = zstd::stream::Decoder::new(Cursor::new(compressed))?.single_frame();
+    decoder.window_log_max(ZSTD_WINDOW_LOG_MAX)?;
+    let output_limit = u64::try_from(MAX_DECOMPRESSED_BLOCK_SIZE)
+        .context("Jetstream decompressed block limit is too large")?
+        .checked_add(1)
+        .context("Jetstream decompressed block limit overflow")?;
+    let mut body = Vec::new();
+    decoder.by_ref().take(output_limit).read_to_end(&mut body)?;
+    if body.len() > MAX_DECOMPRESSED_BLOCK_SIZE {
+        return Err(anyhow!(
+            "Jetstream decompressed block exceeds {} bytes",
+            MAX_DECOMPRESSED_BLOCK_SIZE
+        ));
+    }
+
+    let reader = decoder.finish();
+    if !reader.buffer().is_empty()
+        || reader.get_ref().position() != u64::try_from(compressed.len())?
+    {
+        return Err(anyhow!("Jetstream block has trailing compressed bytes"));
+    }
     let mut offset = 0;
     let count = read_u32(&body, &mut offset)? as usize;
     skip_column(&body, &mut offset, count, 8)?;
@@ -409,6 +432,10 @@ fn decode_block(compressed: &[u8]) -> Result<Vec<ArchiveEvent>> {
             rkey,
             payload,
         });
+    }
+
+    if offset != body.len() {
+        return Err(anyhow!("Jetstream block has trailing bytes"));
     }
 
     Ok(events)
