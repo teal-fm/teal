@@ -33,7 +33,6 @@ pub async fn resolve_actor(
         SELECT did as "did!"
         FROM status_actors
         WHERE handle = $1
-        LIMIT 1
         "#,
         identity,
     )
@@ -225,6 +224,19 @@ pub async fn apply_status_event(
 }
 
 pub async fn apply_identity_event(pool: &PgPool, did: &str, handle: &str) -> Result<()> {
+    let mut transaction = pool.begin().await?;
+
+    sqlx::query!(
+        r#"
+        DELETE FROM status_actors
+        WHERE handle = $1 AND did <> $2
+        "#,
+        handle,
+        did,
+    )
+    .execute(&mut *transaction)
+    .await?;
+
     sqlx::query!(
         r#"
         INSERT INTO status_actors (did, handle, updated_at)
@@ -236,8 +248,10 @@ pub async fn apply_identity_event(pool: &PgPool, did: &str, handle: &str) -> Res
         did,
         handle,
     )
-    .execute(pool)
+    .execute(&mut *transaction)
     .await?;
+
+    transaction.commit().await?;
 
     Ok(())
 }
