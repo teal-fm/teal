@@ -73,12 +73,16 @@ pub async fn current_status(pool: &PgPool, did: &str) -> Result<Option<Value>> {
                 CASE
                     WHEN record->>'expiry' ~ '^[0-9]+(\.[0-9]+)?$'
                         THEN to_timestamp((record->>'expiry')::double precision)
-                    ELSE NULLIF(record->>'expiry', '')::timestamptz
+                    WHEN pg_input_is_valid(NULLIF(record->>'expiry', ''), 'timestamptz')
+                        THEN (record->>'expiry')::timestamptz
+                    ELSE NULL
                 END AS expiry,
                 CASE
                     WHEN record->>'time' ~ '^[0-9]+(\.[0-9]+)?$'
                         THEN to_timestamp((record->>'time')::double precision)
-                    ELSE NULLIF(record->>'time', '')::timestamptz
+                    WHEN pg_input_is_valid(NULLIF(record->>'time', ''), 'timestamptz')
+                        THEN (record->>'time')::timestamptz
+                    ELSE NULL
                 END AS status_time,
                 indexed_at
             FROM statii
@@ -248,12 +252,16 @@ pub async fn prune_non_current_statuses(pool: &PgPool) -> Result<u64> {
                 CASE
                     WHEN record->>'expiry' ~ '^[0-9]+(\.[0-9]+)?$'
                         THEN to_timestamp((record->>'expiry')::double precision)
-                    ELSE NULLIF(record->>'expiry', '')::timestamptz
+                    WHEN pg_input_is_valid(NULLIF(record->>'expiry', ''), 'timestamptz')
+                        THEN (record->>'expiry')::timestamptz
+                    ELSE NULL
                 END AS expiry,
                 CASE
                     WHEN record->>'time' ~ '^[0-9]+(\.[0-9]+)?$'
                         THEN to_timestamp((record->>'time')::double precision)
-                    ELSE NULLIF(record->>'time', '')::timestamptz
+                    WHEN pg_input_is_valid(NULLIF(record->>'time', ''), 'timestamptz')
+                        THEN (record->>'time')::timestamptz
+                    ELSE NULL
                 END AS status_time,
                 indexed_at
             FROM statii
