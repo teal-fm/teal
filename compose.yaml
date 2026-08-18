@@ -27,4 +27,5 @@ services:
     env_file:
       - .env
     environment:
+      DATABASE_URL: postgres://teal:awesomeness@postgres/teal
       STATUS_API_PORT: 3002
