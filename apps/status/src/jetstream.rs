@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
-use futures::StreamExt;
+use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
 use serde_json::Value;
 use sqlx::PgPool;
@@ -41,22 +41,48 @@ async fn consume_connection(pool: &PgPool, endpoint: &str, cursor: Option<u64>) 
     let (socket, response) = connect_async(url).await?;
     info!(status = %response.status(), "Connected to Jetstream v2");
 
-    let (_, mut read) = socket.split();
+    let (mut sink, mut read) = socket.split();
     while let Some(message) = read.next().await {
         let message = message?;
         let event = match message {
-            Message::Text(text) => parse_event(&text)?,
+            Message::Text(text) => match parse_event(&text) {
+                Ok(event) => event,
+                Err(error) => {
+                    warn!(%error, "Failed to parse Jetstream v2 message");
+                    continue;
+                }
+            },
             Message::Close(_) => return Ok(()),
-            Message::Ping(_) | Message::Pong(_) => continue,
+            Message::Ping(_) => {
+                sink.flush().await?;
+                continue;
+            }
+            Message::Pong(_) => continue,
             Message::Binary(_) => {
                 return Err(anyhow!("unexpected binary Jetstream v2 frame"));
             }
             _ => continue,
         };
 
-        process_event(pool, &event).await?;
-        if event.kind != "info" {
-            db::save_cursor(pool, event.cursor).await?;
+        if let Err(error) = process_event(pool, &event).await {
+            error!(
+                %error,
+                did = %event.did,
+                cursor = event.cursor,
+                "Failed to process Jetstream v2 event"
+            );
+            continue;
+        }
+
+        if event.kind != "info"
+            && let Err(error) = db::save_cursor(pool, event.cursor).await
+        {
+            error!(
+                %error,
+                did = %event.did,
+                cursor = event.cursor,
+                "Failed to save Jetstream v2 cursor"
+            );
         }
     }
 
