@@ -4193,6 +4193,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
+name = "status-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "dotenvy",
+ "futures",
+ "reqwest",
+ "serde",
+ "serde_ipld_dagcbor",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tokio-tungstenite 0.20.1",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "zstd",
+]
+
+[[package]]
 name = "stringprep"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

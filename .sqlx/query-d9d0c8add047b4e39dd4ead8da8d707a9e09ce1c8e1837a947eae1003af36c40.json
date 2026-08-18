@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM status_replay_progress WHERE id = TRUE",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "d9d0c8add047b4e39dd4ead8da8d707a9e09ce1c8e1837a947eae1003af36c40"
+}

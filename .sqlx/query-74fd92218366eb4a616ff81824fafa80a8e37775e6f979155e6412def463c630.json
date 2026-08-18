@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO status_stream_cursor (id, cursor)\n        VALUES (TRUE, $1)\n        ON CONFLICT (id) DO UPDATE SET cursor = EXCLUDED.cursor\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "74fd92218366eb4a616ff81824fafa80a8e37775e6f979155e6412def463c630"
+}

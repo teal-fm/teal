@@ -1,5 +1,12 @@
 [workspace]
-members = ["apps/aqua", "services/cadet", "services/satellite", "services/types", "tools/teal-cli"]
+members = [
+    "apps/aqua",
+    "apps/status",
+    "services/cadet",
+    "services/satellite",
+    "services/types",
+    "tools/teal-cli",
+]
 resolver = "2"
 
 [workspace.dependencies]
@@ -39,6 +46,8 @@ url = "2.5"
 rand = "0.8"
 flume = "0.11"
 async-trait = "0.1"
+futures = "0.3"
+serde_ipld_dagcbor = "0.6.4"
 time = "0.3"
 dotenvy = "0.15"
 tokio-tungstenite = { version = "*", default-features = false, features = [
@@ -55,6 +64,7 @@ thiserror = "1.0"
 # CAR and IPLD dependencies
 iroh-car = "0.5"
 base64 = "0.22"
+zstd = "0.13"
 atmst = "0.0.1"
 
 # Redis for job queues and caching

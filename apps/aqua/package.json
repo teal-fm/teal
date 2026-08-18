@@ -11,6 +11,6 @@
   },
   "packageManager": "pnpm@10.18.0",
   "dependencies": {
-    "jest-expo": "^54.0.12"
+    "jest-expo": "^56.0.4"
   }
 }

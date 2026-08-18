@@ -1,0 +1,13 @@
+{
+  "name": "@teal/status-api",
+  "private": true,
+  "scripts": {
+    "install": ":",
+    "build": "cargo build --release --manifest-path ../../Cargo.toml -p status-api",
+    "build:rust": "cargo build --release --manifest-path ../../Cargo.toml -p status-api",
+    "dev": "cargo watch -x 'run -p status-api'",
+    "test": "cargo test -p status-api",
+    "test:rust": "cargo test -p status-api"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
