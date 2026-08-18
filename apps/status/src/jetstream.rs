@@ -55,7 +55,9 @@ async fn consume_connection(pool: &PgPool, endpoint: &str, cursor: Option<u64>) 
         };
 
         process_event(pool, &event).await?;
-        db::save_cursor(pool, event.cursor).await?;
+        if event.kind != "info" {
+            db::save_cursor(pool, event.cursor).await?;
+        }
     }
 
     Ok(())
@@ -73,16 +75,22 @@ fn parse_event(text: &str) -> Result<JetstreamEvent> {
         .map(|(_, kind)| kind)
         .ok_or_else(|| anyhow!("invalid Jetstream event type: {event_type}"))?
         .to_string();
-    let did = payload
-        .get("did")
-        .and_then(Value::as_str)
-        .ok_or_else(|| anyhow!("Jetstream payload is missing did"))?
-        .to_string();
-    let cursor = payload
-        .get("seq")
-        .or_else(|| payload.get("cursor"))
-        .and_then(Value::as_u64)
-        .ok_or_else(|| anyhow!("Jetstream payload is missing seq/cursor"))?;
+    let (did, cursor) = if kind == "info" {
+        (String::new(), 0)
+    } else {
+        let did = payload
+            .get("did")
+            .and_then(Value::as_str)
+            .ok_or_else(|| anyhow!("Jetstream payload is missing did"))?
+            .to_string();
+        let cursor = payload
+            .get("seq")
+            .or_else(|| payload.get("cursor"))
+            .and_then(Value::as_u64)
+            .ok_or_else(|| anyhow!("Jetstream payload is missing seq/cursor"))?;
+
+        (did, cursor)
+    };
 
     let commit = (kind == "commit")
         .then(|| serde_json::from_value(payload.clone()))
@@ -183,7 +191,21 @@ struct Identity {
 
 #[cfg(test)]
 mod tests {
-    use super::stream_url;
+    use super::{parse_event, stream_url};
+
+    #[test]
+    fn parse_event_accepts_info_without_did_or_cursor() {
+        let event = parse_event(
+            r#"{"payload":{"$type":"com.atproto.sync.subscribeRepos#info","name":"OutdatedCursor","message":"cursor is too old"}}"#,
+        )
+        .expect("valid info event");
+
+        assert_eq!(event.kind, "info");
+        assert!(event.did.is_empty());
+        assert_eq!(event.cursor, 0);
+        assert!(event.commit.is_none());
+        assert!(event.identity.is_none());
+    }
 
     #[test]
     fn stream_url_requests_both_status_collections() {
