@@ -33,14 +33,10 @@ pub async fn get_status(
         return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
     }
 
-    let did = db::resolve_actor(&state.db, &state.http_client, &state.handle_resolver, actor)
+    let (did, status) = retrieve_status(&state, actor)
         .await
         .map_err(internal_error)?
         .ok_or((StatusCode::NOT_FOUND, "Actor not found".to_string()))?;
-
-    let status = db::current_status(&state.db, &did)
-        .await
-        .map_err(internal_error)?;
 
     let response = match status {
         Some(status) => GetStatusOutput {
@@ -62,6 +58,20 @@ pub async fn get_status(
     };
 
     Ok(Json(response))
+}
+
+async fn retrieve_status(
+    state: &AppState,
+    actor: &str,
+) -> anyhow::Result<Option<(String, Option<serde_json::Value>)>> {
+    let Some(did) =
+        db::resolve_actor(&state.db, &state.http_client, &state.handle_resolver, actor).await?
+    else {
+        return Ok(None);
+    };
+
+    let status = db::current_status(&state.db, &did).await?;
+    Ok(Some((did, status)))
 }
 
 fn internal_error(error: anyhow::Error) -> (StatusCode, String) {
