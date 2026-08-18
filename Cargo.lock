@@ -4198,8 +4198,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "cid",
  "dotenvy",
  "futures",
+ "multihash-codetable",
  "reqwest",
  "serde",
  "serde_ipld_dagcbor",

@@ -1,4 +1,6 @@
 use anyhow::{Context, Result, anyhow};
+use cid::Cid;
+use multihash_codetable::{Code, MultihashDigest};
 use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -337,14 +339,14 @@ async fn process_block(pool: &PgPool, compressed: &[u8]) -> Result<()> {
             _ => continue,
         };
 
-        let revision = (!event.revision.is_empty()).then_some(event.revision.as_str());
+        let cid = (operation != "delete").then(|| record_cid(&event.payload));
         db::apply_status_event(
             pool,
             &event.did,
             operation,
             &event.collection,
             &event.rkey,
-            revision,
+            cid.as_deref(),
             record,
         )
         .await?;
@@ -388,7 +390,7 @@ fn decode_block(compressed: &[u8]) -> Result<Vec<ArchiveEvent>> {
         )?;
         let did = read_string(dids, &mut did_offset, did_lengths[index] as usize)?;
         let rkey = read_string(rkeys, &mut rkey_offset, rkey_lengths[index] as usize)?;
-        let revision = read_string(
+        let _revision = read_string(
             revisions,
             &mut revision_offset,
             revision_lengths[index] as usize,
@@ -405,12 +407,15 @@ fn decode_block(compressed: &[u8]) -> Result<Vec<ArchiveEvent>> {
             collection,
             did,
             rkey,
-            revision,
             payload,
         });
     }
 
     Ok(events)
+}
+
+fn record_cid(payload: &[u8]) -> String {
+    Cid::new_v1(0x71, Code::Sha2_256.digest(payload)).to_string()
 }
 
 fn read_u64_at(bytes: &[u8], offset: usize) -> Result<u64> {
@@ -527,6 +532,5 @@ struct ArchiveEvent {
     collection: String,
     did: String,
     rkey: String,
-    revision: String,
     payload: Vec<u8>,
 }
