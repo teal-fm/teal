@@ -13,3 +13,19 @@ services:
       - garnet
     env_file:
       - .env
+  status-api:
+    build:
+      context: .
+      dockerfile: apps/status/Dockerfile
+    container_name: status-api
+    ports:
+      - "3002:3002"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://teal:awesomeness@postgres/teal
+      STATUS_API_PORT: 3002

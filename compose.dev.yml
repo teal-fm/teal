@@ -16,6 +16,22 @@ services:
       - .env
     environment:
       DATABASE_URL: ${DOCKER_DB_URL}
+  status-api:
+    build:
+      context: .
+      dockerfile: apps/status/Dockerfile
+    container_name: status-api
+    ports:
+      - "3002:3002"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL}
+      STATUS_API_PORT: 3002
   amethyst:
     build:
       context: .

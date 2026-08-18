@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH status_times AS (\n            SELECT\n                uri,\n                did,\n                CASE\n                    WHEN record->>'expiry' ~ '^[0-9]+(\\.[0-9]+)?$'\n                        THEN to_timestamp((record->>'expiry')::double precision)\n                    ELSE NULLIF(record->>'expiry', '')::timestamptz\n                END AS expiry,\n                CASE\n                    WHEN record->>'time' ~ '^[0-9]+(\\.[0-9]+)?$'\n                        THEN to_timestamp((record->>'time')::double precision)\n                    ELSE NULLIF(record->>'time', '')::timestamptz\n                END AS status_time,\n                indexed_at\n            FROM statii\n            WHERE rkey = 'self'\n        ), current_statuses AS (\n            SELECT DISTINCT ON (did) uri\n            FROM status_times\n            WHERE COALESCE(expiry, status_time + INTERVAL '10 minutes') > NOW()\n            ORDER BY did, status_time DESC NULLS LAST, indexed_at DESC, uri DESC\n        )\n        DELETE FROM statii\n        WHERE uri NOT IN (SELECT uri FROM current_statuses)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "28bbac9298bcd29c404a1061888456458baa22609d498f149a38d7b9500f1a25"
+}
