@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
         "wss://jetstream.us-east.bsky.network/xrpc/network.bsky.jetstream.subscribeEvents"
             .to_string()
     });
-    tokio::spawn(jetstream::run(db, jetstream_url));
+    let mut jetstream_handle = tokio::spawn(jetstream::run(db, jetstream_url));
 
     let app = Router::new()
         .route("/", get(api::root))
@@ -70,7 +70,19 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!(%addr, "Status API listening");
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+
+    let server_result = tokio::select! {
+        result = &mut jetstream_handle => {
+            match result {
+                Ok(()) => anyhow::bail!("Jetstream consumer exited unexpectedly"),
+                Err(error) => anyhow::bail!("Jetstream consumer task failed: {error}"),
+            }
+        }
+        result = axum::serve(listener, app) => result,
+    };
+
+    jetstream_handle.abort();
+    server_result?;
 
     Ok(())
 }
