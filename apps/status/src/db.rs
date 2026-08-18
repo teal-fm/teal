@@ -320,7 +320,16 @@ async fn resolve_handle(
     let response = client.get(url).query(&[("handle", handle)]).send().await?;
 
     if !response.status().is_success() {
-        return Ok(None);
+        let status = response.status();
+        let error = response.json::<ResolverError>().await?;
+        if error.error.as_deref() == Some("HandleNotFound") {
+            return Ok(None);
+        }
+
+        return Err(anyhow::anyhow!(
+            "handle resolver returned {status}: {}",
+            error.error.as_deref().unwrap_or("unknown error")
+        ));
     }
 
     let resolved = response.json::<ResolvedHandle>().await?;
@@ -330,6 +339,11 @@ async fn resolve_handle(
 #[derive(Deserialize)]
 struct ResolvedHandle {
     did: String,
+}
+
+#[derive(Deserialize)]
+struct ResolverError {
+    error: Option<String>,
 }
 
 #[cfg(test)]
