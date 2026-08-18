@@ -3,7 +3,7 @@ ARG BUILDPLATFORM
 ARG TARGETARCH
 ARG TARGETOS
 
-FROM --platform=${BUILDPLATFORM} rust:latest AS build
+FROM rust:latest AS build
 
 WORKDIR /build
 COPY ./ ./
