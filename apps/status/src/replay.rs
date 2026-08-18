@@ -312,10 +312,12 @@ async fn process_block_range(
 
 async fn process_block(pool: &PgPool, compressed: &[u8]) -> Result<()> {
     for event in decode_block(compressed)? {
-        if !STATUS_COLLECTIONS.contains(&event.collection.as_str()) || event.rkey != "self" {
+        if !STATUS_COLLECTIONS.contains(&event.collection.as_str()) {
             continue;
         }
 
+        // Jetstream archive kinds are 1=create, 2=update, 3=delete, and
+        // 7=create-resync; kind 7 materializes a record and folds as create.
         let (operation, record) = match event.kind {
             1 | 7 => (
                 "create",
