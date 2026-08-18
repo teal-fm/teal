@@ -11,6 +11,17 @@ use crate::{db, jetstream::STATUS_COLLECTIONS};
 
 const PLAN_PATH: &str = "/xrpc/network.bsky.jetstream.planSnapshot";
 const SEGMENT_PATH: &str = "/xrpc/network.bsky.jetstream.getSegment";
+// Jetstream archive format v0 (jss0) uses a 256-byte header, stores the block
+// count at byte 14 and the block index offset at byte 90, uses 52-byte index
+// entries, and prefixes each compressed block with an 8-byte length.
+const ARCHIVE_MAGIC: &[u8; 4] = b"jss0";
+const ARCHIVE_HEADER_SIZE: usize = 256;
+const ARCHIVE_BLOCK_COUNT_OFFSET: usize = 14;
+const ARCHIVE_BLOCK_INDEX_OFFSET: usize = 90;
+const BLOCK_INDEX_ENTRY_SIZE: u64 = 52;
+const BLOCK_INDEX_OFFSET_FIELD_OFFSET: usize = 0;
+const BLOCK_INDEX_COMPRESSED_SIZE_OFFSET: usize = 8;
+const BLOCK_LENGTH_PREFIX_SIZE: u64 = 8;
 const ZSTD_WINDOW_LOG_MAX: u32 = 30;
 const MAX_DECOMPRESSED_BLOCK_SIZE: usize = 1 << ZSTD_WINDOW_LOG_MAX;
 
@@ -198,19 +209,19 @@ async fn load_block_index(
         &format!("{endpoint}{SEGMENT_PATH}"),
         vec![("name", name.to_string())],
         api_key,
-        Some("bytes=0-255".to_string()),
+        Some(format!("bytes=0-{}", ARCHIVE_HEADER_SIZE - 1)),
         format!("Jetstream Replay segment header download failed: {name}"),
     )
     .await?;
-    if header.len() < 256 || &header[..4] != b"jss0" {
+    if header.len() < ARCHIVE_HEADER_SIZE || &header[..ARCHIVE_MAGIC.len()] != ARCHIVE_MAGIC {
         return Err(anyhow!("Jetstream segment has an invalid header: {name}"));
     }
 
-    let block_count = read_u32_at(&header, 14)? as usize;
-    let block_index_offset = read_u64_at(&header, 90)?;
+    let block_count = read_u32_at(&header, ARCHIVE_BLOCK_COUNT_OFFSET)? as usize;
+    let block_index_offset = read_u64_at(&header, ARCHIVE_BLOCK_INDEX_OFFSET)?;
     let block_index_len = u64::try_from(block_count)
         .ok()
-        .and_then(|count| count.checked_mul(52))
+        .and_then(|count| count.checked_mul(BLOCK_INDEX_ENTRY_SIZE))
         .ok_or_else(|| anyhow!("Jetstream block index is too large"))?;
     let block_index_end = block_index_offset
         .checked_add(block_index_len)
@@ -229,12 +240,14 @@ async fn load_block_index(
         return Err(anyhow!("Jetstream block index is truncated: {name}"));
     }
 
+    let block_index_entry_size = usize::try_from(BLOCK_INDEX_ENTRY_SIZE)?;
     (0..block_count)
         .map(|index| {
-            let entry = &block_index[index * 52..(index + 1) * 52];
+            let entry =
+                &block_index[index * block_index_entry_size..(index + 1) * block_index_entry_size];
             Ok(BlockInfo {
-                offset: read_u64_at(entry, 0)?,
-                compressed_size: u64::from(read_u32_at(entry, 8)?),
+                offset: read_u64_at(entry, BLOCK_INDEX_OFFSET_FIELD_OFFSET)?,
+                compressed_size: u64::from(read_u32_at(entry, BLOCK_INDEX_COMPRESSED_SIZE_OFFSET)?),
             })
         })
         .collect()
@@ -259,6 +272,7 @@ async fn process_block_range(
         return Err(anyhow!("Jetstream block range is outside its segment"));
     }
 
+    let block_length_prefix_size = usize::try_from(BLOCK_LENGTH_PREFIX_SIZE)?;
     let mut chunk_first = first;
     while chunk_first <= last {
         let chunk_last = chunk_first.saturating_add(BLOCKS_PER_REQUEST - 1).min(last);
@@ -266,11 +280,11 @@ async fn process_block_range(
         let last_info = &block_index[usize::try_from(chunk_last)?];
         let range_start = first_info
             .offset
-            .checked_add(8)
+            .checked_add(BLOCK_LENGTH_PREFIX_SIZE)
             .ok_or_else(|| anyhow!("Jetstream block range overflow"))?;
         let range_end = last_info
             .offset
-            .checked_add(8)
+            .checked_add(BLOCK_LENGTH_PREFIX_SIZE)
             .and_then(|offset| offset.checked_add(last_info.compressed_size))
             .and_then(|end| end.checked_sub(1))
             .ok_or_else(|| anyhow!("Jetstream block range overflow"))?;
@@ -302,7 +316,7 @@ async fn process_block_range(
             offset = end;
             if index < chunk_last {
                 offset = offset
-                    .checked_add(8)
+                    .checked_add(block_length_prefix_size)
                     .ok_or_else(|| anyhow!("Jetstream block response overflow"))?;
             }
         }
