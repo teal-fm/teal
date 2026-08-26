@@ -5,7 +5,10 @@ use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
 use serde_json::Value;
 use sqlx::PgPool;
-use tokio_tungstenite::{connect_async, tungstenite::Message};
+use tokio_tungstenite::{
+    connect_async,
+    tungstenite::{Error as WebSocketError, Message},
+};
 use tracing::{error, info, warn};
 
 use crate::db;
@@ -23,6 +26,17 @@ pub async fn run(pool: PgPool, endpoint: String) {
                     retry_delay = Duration::from_secs(1);
                     info!("Jetstream v2 connection closed; reconnecting");
                 }
+                Err(error) if cursor.is_some() && is_cursor_too_old(&error) => {
+                    warn!(
+                        %error,
+                        "Jetstream cursor is outside the lookback window; clearing it and resuming from the live tip"
+                    );
+                    if let Err(clear_error) = db::clear_cursor(&pool).await {
+                        error!(%clear_error, "Could not clear stale Jetstream cursor");
+                    } else {
+                        retry_delay = Duration::from_secs(1);
+                    }
+                }
                 Err(error) => {
                     error!(%error, "Jetstream v2 consumer failed");
                 }
@@ -33,6 +47,20 @@ pub async fn run(pool: PgPool, endpoint: String) {
         tokio::time::sleep(retry_delay).await;
         retry_delay = (retry_delay * 2).min(Duration::from_secs(120));
     }
+}
+
+fn is_cursor_too_old(error: &anyhow::Error) -> bool {
+    error.chain().any(|cause| {
+        let Some(WebSocketError::Http(response)) = cause.downcast_ref::<WebSocketError>() else {
+            return false;
+        };
+
+        response
+            .body()
+            .as_deref()
+            .and_then(|body| std::str::from_utf8(body).ok())
+            .is_some_and(|body| body.contains("\"error\":\"CursorTooOld\""))
+    })
 }
 
 async fn consume_connection(pool: &PgPool, endpoint: &str, cursor: Option<u64>) -> Result<()> {

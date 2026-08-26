@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM status_stream_cursor WHERE id = TRUE",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "b5ca6d723a0995d8b0c1558b00b475bd5ba73b60dd3f634e51a970a8f74e25e4"
+}

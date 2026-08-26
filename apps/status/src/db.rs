@@ -132,6 +132,13 @@ pub async fn save_cursor(pool: &PgPool, cursor: u64) -> Result<()> {
     Ok(())
 }
 
+pub async fn clear_cursor(pool: &PgPool) -> Result<()> {
+    sqlx::query!("DELETE FROM status_stream_cursor WHERE id = TRUE")
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 pub async fn load_replay_progress(pool: &PgPool) -> Result<Option<(u64, u64)>> {
     let row = sqlx::query!(
         r#"
