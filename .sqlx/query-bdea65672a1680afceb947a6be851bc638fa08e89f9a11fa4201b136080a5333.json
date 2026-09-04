@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO plays (uri, did, rkey, cid, track_name, recording_mbid, release_mbid)\n         VALUES ('at://did:plc:refresh/fm.teal.feed.play/1', 'did:plc:refresh', '1', 'cid', 'Refresh recording', $1, $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bdea65672a1680afceb947a6be851bc638fa08e89f9a11fa4201b136080a5333"
+}

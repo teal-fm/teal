@@ -41,6 +41,10 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 
 ## Local Open Work
 
+- In progress (2026-09-04, `fix/complete-open-work`): Cadet now runs periodic concurrent count refreshes when per-play refreshes are deferred. Five isolated PostgreSQL regression tests, 34 Cadet unit tests, offline Aqua/Cadet checks, Clippy with warnings denied, TypeScript, 230 Amethyst tests, lexicon validation, and both Compose configurations pass. SQLx query metadata is prepared. Preview rebuilding and authenticated OAuth/manual-listen QA remain.
+- Preview recovery (2026-09-04): started OrbStack and the stable Compose stack; public OAuth metadata and latest-listen XRPC pass, and Cadet is ingesting live events again. Restored the original comment in migration `20241220000002` to fix a checksum mismatch introduced by the namespace rename without changing schema or data. The new image build initially ran out of disk space; old local Rust caches were cleared before retrying.
+- CI follow-up (2026-09-04): the latest `obbpr` CI, Aqua, Cadet, and Amethyst workflows all succeeded, resolving the earlier pending CI rerun. New aggregate-refresh integration tests have a dedicated PostgreSQL CI job.
+
 - [ ] Add a periodic refresh job for Cadet's play-count materialized views now that live ingestion defers per-play refreshes.
 - [ ] Complete ATProto OAuth sign-in and callback QA through `https://sigilyph.teal.fm`.
   - Verified again on 2026-06-15 that `pnpm tunnel:verify` validates the stable-origin `client_id`, callback URI, `client_uri`, DPoP setting, and latest plays XRPC response. Browser preflight on 2026-06-15 loaded the stable preview, started sign-in for `matt.evil.gay`, resolved the PDS as `evil.gay`, and reached the provider password page at `/oauth/authorize` with `client_id=https://sigilyph.teal.fm/client-metadata.json` plus a PAR `request_uri`. Amethyst now persists the resolved OAuth issuer and reconstructs callback/restore clients from the callback `iss` so non-`bsky.social` PDS sessions do not fall back to the initial client after redirect. Remaining QA requires entering a real account password/approval and confirming the callback returns to `/auth/callback`, creates a session, and restores after refresh.
@@ -77,6 +81,8 @@ pnpm lex:gen-server
 pnpm typecheck
 SQLX_OFFLINE=true cargo check -p aqua -p cadet
 SQLX_OFFLINE=true cargo test -p cadet stores_and_loads_cursor_from_file_when_redis_is_unavailable
+# Requires a local PostgreSQL admin connection; SQLx creates isolated test databases.
+DATABASE_URL=postgres://teal:teal@127.0.0.1:5432/teal SQLX_OFFLINE=true cargo test -p cadet --test materialized_view_refresh -- --ignored
 pnpm --filter=@teal/amethyst build:web
 docker compose -f compose.dev.yml config
 docker compose -f compose.yaml config
