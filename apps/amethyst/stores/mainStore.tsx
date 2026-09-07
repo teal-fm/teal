@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create, StateCreator as ZustandStateCreator } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { mergeAuthentication, persistAuthentication } from "../lib/authPersistence";
 
 import {
   AuthenticationSlice,
@@ -25,7 +26,8 @@ export const useStore = create<PlusSharedSlices>()(
       ...createPreferenceSlice(...a),
     }),
     {
-      partialize: ({ pdsAgent, isAgentReady, ...state }) => state,
+      partialize: persistAuthentication,
+      merge: mergeAuthentication,
 
       onRehydrateStorage: () => (state) => {
         state?.restorePdsAgent();
