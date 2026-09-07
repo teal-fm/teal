@@ -5,5 +5,6 @@ pub mod identity;
 pub mod ingestion_retry;
 pub mod ingestors;
 pub mod redis_client;
+pub mod refresh;
 pub mod resolve;
 pub mod teal_ingestors;

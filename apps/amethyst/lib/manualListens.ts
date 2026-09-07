@@ -12,6 +12,7 @@ const MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2";
 const MUSICBRAINZ_USER_AGENT =
   "teal.amethyst/1.0.0 (https://teal.fm; manual listens)";
 const MUSICBRAINZ_RATE_LIMIT_MS = 1100;
+const MUSICBRAINZ_TIMEOUT_MS = 15_000;
 
 export type ListenTimestampMode = "now" | "custom";
 
@@ -204,9 +205,12 @@ async function musicBrainzJson(url: string): Promise<unknown> {
 
     let lastError: unknown;
     for (let attempt = 0; attempt < 3; attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), MUSICBRAINZ_TIMEOUT_MS);
       try {
         const response = await fetch(url, {
           headers: { "User-Agent": MUSICBRAINZ_USER_AGENT },
+          signal: controller.signal,
         });
         if (response.status === 503 && attempt < 2) {
           await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
@@ -215,12 +219,17 @@ async function musicBrainzJson(url: string): Promise<unknown> {
         if (!response.ok) {
           throw new Error(`MusicBrainz request failed with ${response.status}.`);
         }
-        return response.json();
+        return await response.json();
       } catch (error) {
+        if (controller.signal.aborted) {
+          throw new Error("MusicBrainz timed out. Please try again.");
+        }
         lastError = error;
         if (attempt < 2) {
           await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
         }
+      } finally {
+        clearTimeout(timeout);
       }
     }
     throw lastError instanceof Error

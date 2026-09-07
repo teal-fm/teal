@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use cadet::{
     account,
     cursor::{self, resolve_startup_cursor},
-    db, identity, ingestion_retry, ingestors, redis_client, teal_ingestors,
+    db, identity, ingestion_retry, ingestors, redis_client, refresh, teal_ingestors,
 };
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tracing::{error, info};
@@ -59,6 +59,18 @@ async fn main() {
         .expect("Could not get PostgreSQL pool");
 
     let retry_store = ingestion_retry::IngestionRetryStore::new(pool.clone());
+
+    if std::env::var("CADET_DEFER_MATERIALIZED_VIEW_REFRESH").as_deref() == Ok("1") {
+        let configured = std::env::var("CADET_MATERIALIZED_VIEW_REFRESH_INTERVAL_SECS").ok();
+        let period = match refresh::refresh_interval(configured.as_deref()) {
+            Ok(period) => period,
+            Err(error) => {
+                error!(%error, "Invalid materialized view refresh configuration");
+                std::process::exit(1);
+            }
+        };
+        tokio::spawn(refresh::run(pool.clone(), period));
+    }
 
     let mut wanted_collections = teal_ingestors::supported_teal_collections();
     wanted_collections.extend(

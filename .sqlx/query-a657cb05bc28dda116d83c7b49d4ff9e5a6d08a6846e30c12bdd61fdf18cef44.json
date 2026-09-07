@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO releases (mbid, name) VALUES ($1, 'Refresh release')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a657cb05bc28dda116d83c7b49d4ff9e5a6d08a6846e30c12bdd61fdf18cef44"
+}

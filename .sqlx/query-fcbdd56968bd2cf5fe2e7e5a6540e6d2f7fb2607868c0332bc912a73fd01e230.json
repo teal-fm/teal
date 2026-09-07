@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "CREATE UNIQUE INDEX idx_mv_global_play_count ON mv_global_play_count(total_plays)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "fcbdd56968bd2cf5fe2e7e5a6540e6d2f7fb2607868c0332bc912a73fd01e230"
+}

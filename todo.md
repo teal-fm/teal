@@ -41,10 +41,15 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 
 ## Local Open Work
 
-- [ ] Add a periodic refresh job for Cadet's play-count materialized views now that live ingestion defers per-play refreshes.
-- [ ] Complete ATProto OAuth sign-in and callback QA through `https://sigilyph.teal.fm`.
-  - Verified again on 2026-06-15 that `pnpm tunnel:verify` validates the stable-origin `client_id`, callback URI, `client_uri`, DPoP setting, and latest plays XRPC response. Browser preflight on 2026-06-15 loaded the stable preview, started sign-in for `matt.evil.gay`, resolved the PDS as `evil.gay`, and reached the provider password page at `/oauth/authorize` with `client_id=https://sigilyph.teal.fm/client-metadata.json` plus a PAR `request_uri`. Amethyst now persists the resolved OAuth issuer and reconstructs callback/restore clients from the callback `iss` so non-`bsky.social` PDS sessions do not fall back to the initial client after redirect. Remaining QA requires entering a real account password/approval and confirming the callback returns to `/auth/callback`, creates a session, and restores after refresh.
-- [ ] Verify `/manual-listens` end-to-end through the stable preview with a logged-in account, including MusicBrainz lookup, release selection, atomic record creation, and Aqua/PDSls visibility.
+- Completed on 2026-09-07, branch `fix/complete-open-work`, PR [#194](https://github.com/teal-fm/teal/pull/194). Stable preview `https://sigilyph.teal.fm` serves application commit `ad92a98`.
+- Verification: five isolated PostgreSQL refresh tests, 34 Cadet unit tests, offline Aqua/Cadet checks, Clippy with warnings denied, prepared SQLx metadata, TypeScript, 236 active Amethyst tests, lexicon validation, web image builds, both Compose configurations, public OAuth metadata, and live latest-listen XRPC pass.
+- Preview migration recovery: restored the original comment in migration `20241220000002` to match the existing database checksum without changing schema or data. Databases initialized with the intervening renamed comment require checksum reconciliation after verifying that the comment is their only migration difference.
+
+- [x] Add a periodic refresh job for Cadet's play-count materialized views now that live ingestion defers per-play refreshes. Deployed and observed refreshing during live ingestion on 2026-09-05 and again on 2026-09-07. Concurrent refreshes cover all four views atomically, with overlap protection and bounded statements. Dedicated PostgreSQL CI covers insert/delete, rollback/recovery, overlap, readers, and repeated ticks.
+- [x] Complete ATProto OAuth sign-in and callback QA through `https://sigilyph.teal.fm`. Chrome sign-in for `codexqa0905.teal.town` completed provider consent and callback on 2026-09-05. Fixed the persisted login-status race exposed by reload; verified authenticated `/manual-listens` reload and session restoration on 2026-09-07, including the final deployed build. Legacy saves retain the OAuth issuer and session identity while runtime clients/readiness are rebuilt.
+- [x] Verify `/manual-listens` end-to-end through the stable preview with a logged-in account. On 2026-09-07, MusicBrainz lookup and selection of the 2001 GB release of Daft Punk's Discovery returned 14 tracks. Selected One More Time and Aerodynamic with a custom local start of 12:00 CDT; the UI confirmed two listens in one atomic repository update. Both records appeared through the public PDS API and Aqua with matching URIs, CIDs, metadata, and 17:00:00/17:05:20 UTC timestamps. PDSls rendered the saved record. The throwaway account DID is `did:plc:2ldpqwlhe7rfkuuju7rlatyo`; record keys are `3muxcxy3vr22s` and `3muxcxy3vr32s` in `fm.teal.feed.play`.
+- MusicBrainz was intermittently slow during QA. Added a 15-second request/body timeout so stalled lookups report a retryable error and release the request queue. A regression test covers timeout followed by a successful lookup; Chrome on the final build showed the timeout error and re-enabled Find album.
+
 - [x] Drain the in-flight CAR import backfill queue for users with stale ingestion from the 2026-06-07 through 2026-06-10 Cadet outage. Redis/Garnet `LLEN car_import_jobs` returned `0` on 2026-06-14, local Cadet was running, and recent Cadet logs showed no CAR import job failures.
 - [x] Backfill the `fm.teal.alpha.feed.play` records present in `did:plc:tas6hj2xjrqben5653v5kohk`'s PDS repo but missing from the preview Postgres index. A focused CAR backfill completed on 2026-06-15 via `lightrail-backfill`; the preview index now has 10,215 plays for that DID, up from 10,172 immediately before the run and above the older 10,193-record comparison from 2026-06-11.
 - [x] Handle Jetstream account lifecycle events in Cadet, including deletes, takedowns, suspensions, activations, and tombstones. Cadet now tracks upstream account state, purges indexed public profile/social/play rows when an account becomes inactive, treats activation as the gate for future commit ingestion, and ignores legacy tombstone event kinds because modern Jetstream/account-hosting statuses replace them.
@@ -77,6 +82,8 @@ pnpm lex:gen-server
 pnpm typecheck
 SQLX_OFFLINE=true cargo check -p aqua -p cadet
 SQLX_OFFLINE=true cargo test -p cadet stores_and_loads_cursor_from_file_when_redis_is_unavailable
+# Requires a local PostgreSQL admin connection; SQLx creates isolated test databases.
+DATABASE_URL=postgres://teal:teal@127.0.0.1:5432/teal SQLX_OFFLINE=true cargo test -p cadet --test materialized_view_refresh -- --ignored
 pnpm --filter=@teal/amethyst build:web
 docker compose -f compose.dev.yml config
 docker compose -f compose.yaml config

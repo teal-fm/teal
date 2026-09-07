@@ -52,6 +52,7 @@ services:
       CADET_CURSOR_REDIS_KEY: ${CADET_CURSOR_REDIS_KEY:-cadet:jetstream:cursor}
       CURSOR_FILE: ${CURSOR_FILE:-/var/lib/cadet/cursor.txt}
       CADET_DEFER_MATERIALIZED_VIEW_REFRESH: ${CADET_DEFER_MATERIALIZED_VIEW_REFRESH:-1}
+      CADET_MATERIALIZED_VIEW_REFRESH_INTERVAL_SECS: ${CADET_MATERIALIZED_VIEW_REFRESH_INTERVAL_SECS:-60}
     volumes:
       - cadet_state:/var/lib/cadet
     networks:
