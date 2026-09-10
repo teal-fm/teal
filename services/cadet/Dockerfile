@@ -37,10 +37,10 @@ RUN ./scripts/setup-lexicons.sh
 
 # Install Node.js and pnpm for lexicon generation
 RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm@9.15.0
+RUN npm install -g pnpm@11.5.2
 
 # Install dependencies and generate lexicons
-RUN pnpm install
+RUN pnpm install --ignore-scripts
 RUN cd tools/lexicon-cli && pnpm build
 RUN pnpm lex:gen --rust-only
 

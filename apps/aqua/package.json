@@ -9,7 +9,7 @@
     "test": "SQLX_OFFLINE=true cargo test -p aqua",
     "test:rust": "SQLX_OFFLINE=true cargo test -p aqua"
   },
-  "packageManager": "pnpm@10.18.0",
+  "packageManager": "pnpm@11.5.2",
   "dependencies": {
     "jest-expo": "^54.0.12"
   }
