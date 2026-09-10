@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH release_variants AS (\n                SELECT\n                    LOWER(p.release_name) AS normalized_name,\n                    p.release_mbid AS mbid,\n                    MAX(p.release_name) AS name,\n                    COUNT(DISTINCT p.uri) AS play_count,\n                    MAX(p.played_time) AS last_played\n                FROM plays p\n                INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri\n                WHERE ptae.artist_id = $1\n                  AND p.release_mbid IS NOT NULL\n                  AND p.release_name IS NOT NULL\n                GROUP BY LOWER(p.release_name), p.release_mbid\n            )\n            ,release_usage AS (\n                SELECT\n                    release_variants.*,\n                    COUNT(*) OVER (PARTITION BY mbid) AS release_name_count\n                FROM release_variants\n            )\n            ,selected_releases AS (\n                SELECT DISTINCT ON (normalized_name)\n                    normalized_name,\n                    mbid,\n                    name,\n                    SUM(play_count) OVER (PARTITION BY normalized_name)::bigint AS play_count,\n                    MAX(last_played) OVER (PARTITION BY normalized_name) AS last_played\n                FROM release_usage\n                ORDER BY normalized_name,\n                    (release_name_count = 1) DESC,\n                    release_usage.play_count DESC,\n                    last_played DESC NULLS LAST,\n                    mbid\n            )\n            SELECT mbid AS \"mbid!\", name AS \"name!\", play_count AS \"play_count!\"\n            FROM selected_releases\n            ORDER BY last_played DESC NULLS LAST, name\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "play_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "8cb46e2270b1ce1f6b85ac3d35f9fa484c12e0fa5693d5f37a0f169189c3c4e7"
+}

@@ -108,6 +108,66 @@ export default function ArtistDetail() {
     }
   };
 
+  const renderRelease = (album: ArtistView["albums"][number]) => {
+    const art = coverArtUrl(album.mbid);
+    return (
+      <Link
+        key={album.mbid}
+        href={
+          musicAlbumHref(album.artistName, album.name, album.mbid) as any
+        }
+        asChild
+      >
+        <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-4">
+          <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted">
+            {art ? (
+              <Image source={{ uri: art }} className="h-full w-full" />
+            ) : (
+              <Icon
+                icon={Disc3}
+                size={26}
+                className="text-muted-foreground"
+              />
+            )}
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="font-black" numberOfLines={2}>
+              {album.name}
+            </Text>
+            <Text className="font-mono text-xs text-muted-foreground">
+              {album.playCount} listens
+            </Text>
+          </View>
+          <Icon
+            icon={ChevronRight}
+            size={18}
+            className="text-muted-foreground"
+          />
+        </Pressable>
+      </Link>
+    );
+  };
+
+  const discographyGroups: Array<{
+    title: string;
+    releases: ArtistView["albums"];
+  }> = artist
+    ? [
+        {
+          title: "Albums",
+          releases: artist.albums.filter(
+            (release) => release.releaseType !== "single",
+          ),
+        },
+        {
+          title: "Singles",
+          releases: artist.albums.filter(
+            (release) => release.releaseType === "single",
+          ),
+        },
+      ]
+    : [];
+
   return (
     <TealShell rightRail={<RightRail />}>
       <Stack.Screen
@@ -226,54 +286,18 @@ export default function ArtistDetail() {
             title="Discography"
             detail={`${artist.albums.length} RELEASES`}
           />
-          <View className="overflow-hidden rounded-lg border border-border bg-card px-3">
-            {artist.albums.map((album) => {
-              const art = coverArtUrl(album.mbid);
-              return (
-                <Link
-                  key={album.mbid}
-                  href={
-                    musicAlbumHref(
-                      album.artistName,
-                      album.name,
-                      album.mbid,
-                    ) as any
-                  }
-                  asChild
-                >
-                  <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-4">
-                    <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted">
-                      {art ? (
-                        <Image
-                          source={{ uri: art }}
-                          className="h-full w-full"
-                        />
-                      ) : (
-                        <Icon
-                          icon={Disc3}
-                          size={26}
-                          className="text-muted-foreground"
-                        />
-                      )}
-                    </View>
-                    <View className="min-w-0 flex-1">
-                      <Text className="font-black" numberOfLines={2}>
-                        {album.name}
-                      </Text>
-                      <Text className="font-mono text-xs text-muted-foreground">
-                        {album.playCount} listens
-                      </Text>
-                    </View>
-                    <Icon
-                      icon={ChevronRight}
-                      size={18}
-                      className="text-muted-foreground"
-                    />
-                  </Pressable>
-                </Link>
-              );
-            })}
-          </View>
+          {discographyGroups.map(({ title, releases }) =>
+            releases.length > 0 ? (
+              <View key={title} className="mb-6">
+                <Text className="mb-2 font-mono text-xs font-bold uppercase text-muted-foreground">
+                  {title}
+                </Text>
+                <View className="overflow-hidden rounded-lg border border-border bg-card px-3">
+                  {releases.map(renderRelease)}
+                </View>
+              </View>
+            ) : null,
+          )}
         </>
       )}
     </TealShell>
