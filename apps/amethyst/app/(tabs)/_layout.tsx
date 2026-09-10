@@ -118,6 +118,20 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="post/[did]/[rkey]"
+        options={{
+          title: "Post",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="at:/[...uri]"
+        options={{
+          title: "AT URI",
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

@@ -4,7 +4,12 @@ import { Link } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { displayArtists, type SocialPostView } from "@/lib/teal/api";
+import {
+  coverArtUrl,
+  displayArtists,
+  getRecordingCoverArtUrl,
+  type SocialPostView,
+} from "@/lib/teal/api";
 import {
   actorAvatarUrl,
   actorProfileHref,
@@ -16,10 +21,11 @@ import {
 import { musicHref } from "@/components/teal/PlayFeedCard";
 import RichText from "@/components/teal/RichText";
 import SocialComposer from "@/components/teal/SocialComposer";
+import { postHrefFromUri, rkeyFromAtUri } from "@/lib/teal/routes";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { timeAgo } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
-import { Heart, MessageCircle, Music2, Repeat2 } from "lucide-react-native";
+import { Disc3, Heart, MessageCircle, Repeat2 } from "lucide-react-native";
 
 type ActionState = {
   uri?: string;
@@ -28,8 +34,13 @@ type ActionState = {
   busy: boolean;
 };
 
-function rkeyFromUri(uri: string) {
-  return uri.split("/").pop();
+function actionStateFromUri(uri?: string): ActionState {
+  return {
+    active: Boolean(uri),
+    busy: false,
+    rkey: rkeyFromAtUri(uri),
+    uri,
+  };
 }
 
 export default function SocialPostCard({ post }: { post: SocialPostView }) {
@@ -41,11 +52,14 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   const [replyCount, setReplyCount] = useState(post.replyCount);
   const [replyOpen, setReplyOpen] = useState(false);
   const [blueskyAuthor, setBlueskyAuthor] = useState<DisplayActor>();
-  const [like, setLike] = useState<ActionState>({ active: false, busy: false });
-  const [repost, setRepost] = useState<ActionState>({
-    active: false,
-    busy: false,
-  });
+  const [like, setLike] = useState<ActionState>(() =>
+    actionStateFromUri(post.viewerLike),
+  );
+  const [repost, setRepost] = useState<ActionState>(() =>
+    actionStateFromUri(post.viewerRepost),
+  );
+  const [releaseArtFailed, setReleaseArtFailed] = useState(false);
+  const [recordingArt, setRecordingArt] = useState<string>();
   const indexedAuthor = post.author as DisplayActor | undefined;
   const authorProfile = indexedAuthor
     ? {
@@ -61,6 +75,24 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   const authorLabel = displayActorName(authorProfile, authorDid);
   const authorHref = actorProfileHref(authorProfile, authorDid);
   const authorAvatar = actorAvatarUrl(authorProfile, authorDid);
+  const releaseArt = coverArtUrl(play.releaseMbId);
+  const art = !releaseArtFailed && releaseArt ? releaseArt : recordingArt;
+  const postHref = postHrefFromUri(post.uri);
+
+  useEffect(() => {
+    setLikeCount(post.likeCount);
+    setRepostCount(post.repostCount);
+    setReplyCount(post.replyCount);
+    setLike(actionStateFromUri(post.viewerLike));
+    setRepost(actionStateFromUri(post.viewerRepost));
+  }, [
+    post.likeCount,
+    post.replyCount,
+    post.repostCount,
+    post.uri,
+    post.viewerLike,
+    post.viewerRepost,
+  ]);
 
   useEffect(() => {
     let mounted = true;
@@ -78,6 +110,27 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
     };
   }, [authorDid, indexedAuthor]);
 
+  useEffect(() => {
+    let mounted = true;
+    setRecordingArt(undefined);
+    if (releaseArt && !releaseArtFailed) {
+      return;
+    }
+    if (!play.recordingMbId) {
+      return;
+    }
+    getRecordingCoverArtUrl(play.recordingMbId).then((url) => {
+      if (mounted) setRecordingArt(url);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [play.recordingMbId, releaseArt, releaseArtFailed]);
+
+  useEffect(() => {
+    setReleaseArtFailed(false);
+  }, [releaseArt]);
+
   async function toggleAction(kind: "like" | "repost") {
     if (!pdsAgent?.did || status !== "loggedIn") return;
     const current = kind === "like" ? like : repost;
@@ -87,14 +140,14 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
 
     setCurrent({ ...current, busy: true });
     try {
-      if (current.active && current.rkey) {
+      if (current.active && (current.rkey || current.uri)) {
         await pdsAgent.call(
           "com.atproto.repo.deleteRecord",
           {},
           {
             repo: pdsAgent.did,
             collection: `fm.teal.alpha.feed.social.${kind}`,
-            rkey: current.rkey,
+            rkey: current.rkey || rkeyFromAtUri(current.uri)!,
           },
         );
         setCount((count) => Math.max(0, count - 1));
@@ -121,7 +174,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
         active: true,
         busy: false,
         uri,
-        rkey: uri ? rkeyFromUri(uri) : undefined,
+        rkey: rkeyFromAtUri(uri),
       });
     } catch (error) {
       console.error(`Failed to ${kind} social post`, error);
@@ -163,9 +216,19 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
                 @{authorHandle}
               </Text>
             )}
-            <Text className="text-xs font-light text-muted-foreground">
-              posted {timeAgo(new Date(post.createdAt))}
-            </Text>
+            {postHref ? (
+              <Link href={postHref as any} asChild>
+                <Pressable>
+                  <Text className="text-xs font-light text-muted-foreground">
+                    posted {timeAgo(new Date(post.createdAt))}
+                  </Text>
+                </Pressable>
+              </Link>
+            ) : (
+              <Text className="text-xs font-light text-muted-foreground">
+                posted {timeAgo(new Date(post.createdAt))}
+              </Text>
+            )}
           </View>
         </View>
       </View>
@@ -181,8 +244,22 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
       <Link href={musicHref(play) as any} asChild>
         <Pressable className="mt-4 rounded-lg border border-border bg-white/55 p-3">
           <View className="flex-row items-center gap-3">
-            <View className="h-10 w-10 items-center justify-center rounded-lg bg-accent">
-              <Icon icon={Music2} size={18} className="text-primary" />
+            <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-accent">
+              {art ? (
+                <Image
+                  source={{ uri: art }}
+                  className="h-full w-full"
+                  onError={() => {
+                    if (art === releaseArt) {
+                      setReleaseArtFailed(true);
+                    } else {
+                      setRecordingArt(undefined);
+                    }
+                  }}
+                />
+              ) : (
+                <Icon icon={Disc3} size={20} className="text-primary" />
+              )}
             </View>
             <View className="min-w-0 flex-1">
               <Text className="font-semibold" numberOfLines={1}>

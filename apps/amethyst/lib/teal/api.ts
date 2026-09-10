@@ -64,6 +64,8 @@ export type SocialPostView = {
   likeCount: number;
   repostCount: number;
   replyCount: number;
+  viewerLike?: string;
+  viewerRepost?: string;
 };
 
 export type SocialBadgeView = {
@@ -230,10 +232,29 @@ export function getSearchResults(q: string, limit = 8) {
   });
 }
 
-export function getSocialFeed(limit = 30, cursor?: string) {
+export function getSocialFeed(limit = 30, cursor?: string, viewer?: string) {
   return getXrpc<{ items: SocialPostView[]; cursor?: string }>(
     "fm.teal.alpha.feed.social.getFeed",
-    { limit, cursor },
+    { limit, cursor, viewer },
+  );
+}
+
+export function getSocialPost(uri: string, viewer?: string) {
+  return getXrpc<{ post: SocialPostView }>("fm.teal.alpha.feed.social.getPost", {
+    uri,
+    viewer,
+  });
+}
+
+export function getSocialPostReplies(
+  uri: string,
+  limit = 30,
+  cursor?: string,
+  viewer?: string,
+) {
+  return getXrpc<{ items: SocialPostView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getReplies",
+    { uri, limit, cursor, viewer },
   );
 }
 

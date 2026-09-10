@@ -18,6 +18,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst profile pages show Teal social graph counts, first-page followers/following lists, and signed-in follow/unfollow controls backed by `fm.teal.alpha.graph.follow` records.
 - Amethyst profiles show a minimal current-listening row only when an active status exists, including status-backed profiles that have no Teal profile record and render Bluesky identity as a fallback, with album art resolved from release MBID and recording fallback.
 - Amethyst listens have stable permalink pages at `/listen/:did/:rkey`; feed cards link their listen timestamps to the activity page while song titles still link to the music page.
+- Amethyst resolves Teal AT-URI deep links from `/at://...` to canonical profile, listen, and post pages.
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
 - Cadet has a TAP backfill consumer and `pnpm backfill` command. The command discovers Teal repos with `TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play`, filters delivered records with `TAP_COLLECTION_FILTERS=fm.teal.*`, and consumes TAP record events through the existing Teal ingestors. Full-network TAP backfill remains an explicit env override.
 - Cadet normalizes historical play MBID fields during ingestion: empty optional MBIDs are treated as missing, and bare MusicBrainz UUIDs are canonicalized to `mbid:<uuid>` before storage.
@@ -31,6 +32,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
   - The ignored local `.env` has `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.
   - Use `pnpm tunnel:up`, `pnpm tunnel:down`, `pnpm tunnel:status`, `pnpm tunnel:logs`, and `pnpm tunnel:verify` for the stable preview.
   - The preview API is pointed at the OrbStack/Docker Postgres and Garnet services so it serves the existing indexed play corpus.
+  - Restored on 2026-06-10 by clearing Docker builder cache, building `aqua-api` and `cadet` sequentially to avoid Docker disk exhaustion, starting the named Cloudflare Tunnel stack, and verifying metadata plus latest-play XRPC.
 
 ## Next: Public Demo And OAuth
 
@@ -43,10 +45,11 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 
 ## Next: Current User-Reported Fixes
 
-- [ ] Use the signed-in viewer's Teal profile display name and images in the bottom-left desktop account control instead of the viewer's Bluesky profile data.
-- [ ] Add standalone permalink pages for Teal social posts so posts can be linked directly.
-- [ ] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
-- [ ] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
+- [x] Use the signed-in viewer's Teal profile display name and images in the bottom-left desktop account control instead of the viewer's Bluesky profile data.
+- [x] Add standalone permalink pages for Teal social posts so posts can be linked directly.
+- [x] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
+- [x] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
+- [x] Prune Docker builder cache and redeploy the stable preview with rebuilt Aqua and Amethyst containers.
 
 ## Next: New Lexicon Implementation
 

@@ -3,15 +3,14 @@ import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
 import * as Lexicons from "@teal/lexicons/src/lexicons";
-import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/alpha/actor/getProfile";
+import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {
   bsky: null | AppBskyActorDefs.ProfileViewDetailed;
-  teal: null | GetProfileOutputSchema["actor"];
-  // todo: teal profile view
+  teal: null | ProfileView;
 }
 
 export interface AuthenticationSlice {
@@ -182,8 +181,8 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           });
         // get teal did
         try {
-          let tealDid = get().tealDid;
-          let tealProfile = await agent
+          const tealDid = get().tealDid;
+          const tealProfile = await agent
             .call(
               "fm.teal.alpha.actor.getProfile",
               { actor: agent?.did },
@@ -192,7 +191,11 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             )
             .then((profile) => {
               console.log(profile);
-              return profile.data.agent || null;
+              const data = profile.data as {
+                actor?: ProfileView;
+                profile?: ProfileView;
+              };
+              return data.profile || data.actor || null;
             });
 
           set({
