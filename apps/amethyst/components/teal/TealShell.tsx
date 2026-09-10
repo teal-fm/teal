@@ -101,21 +101,21 @@ function LeftRail() {
   const agent = useStore((state) => state.pdsAgent);
   const profiles = useStore((state) => state.profiles);
   const profile = agent?.did ? profiles[agent.did] : undefined;
+  const tealProfile = profile?.teal as
+    | { avatar?: string; displayName?: string; handle?: string }
+    | null
+    | undefined;
   const tealHandle = normalizeHandle(
-    (profile?.teal as { handle?: string } | null | undefined)?.handle,
+    tealProfile?.handle,
   );
-  const bskyHandle = normalizeHandle(profile?.bsky?.handle);
   const displayName =
-    profile?.teal?.displayName ||
-    profile?.bsky?.displayName ||
+    tealProfile?.displayName ||
     tealHandle ||
-    bskyHandle ||
-    "Your profile";
-  const handle = tealHandle || bskyHandle;
+    "Your Teal profile";
   const avatar = agent?.did
     ? getProfileImageUrl(
         agent.did,
-        profile?.teal?.avatar || profile?.bsky?.avatar,
+        tealProfile?.avatar,
         "avatar",
       )
     : undefined;
@@ -177,8 +177,8 @@ function LeftRail() {
                 numberOfLines={1}
               >
                 {status === "loggedIn"
-                  ? handle
-                    ? `@${handle}`
+                  ? tealHandle
+                    ? `@${tealHandle}`
                     : "Manage your Teal identity"
                   : "with ATProto"}
               </Text>
