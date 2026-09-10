@@ -38,6 +38,11 @@
           "type": "ref",
           "ref": "#statusView"
         },
+        "profileStatus": {
+          "type": "ref",
+          "description": "The actor's Teal onboarding state as indexed by the appview.",
+          "ref": "fm.teal.alpha.actor.profileStatus"
+        },
         "createdAt": { "type": "string", "format": "datetime" }
       }
     },

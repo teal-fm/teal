@@ -1,0 +1,38 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.social.badgeAssignment",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | A teal.fm badge assignment.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record assigning a badge to an actor.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["badge", "assignee", "assigner", "createdAt"],
+        "properties": {
+          "badge": {
+            "type": "ref",
+            "ref": "com.atproto.repo.strongRef",
+            "description": "Strong reference to the badge definition being assigned."
+          },
+          "assignee": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the actor receiving the badge."
+          },
+          "assigner": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the actor assigning the badge."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this badge assignment was originally created."
+          }
+        }
+      }
+    }
+  }
+}

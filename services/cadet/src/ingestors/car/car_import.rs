@@ -6,7 +6,7 @@
 //! 1. Receives CAR data via the LexiconIngestor interface (base64 encoded or URL)
 //! 2. Uses atmst::CarImporter to parse the CAR file and extract MST structure
 //! 3. Converts the CarImporter to an MST for proper tree traversal
-//! 4. Iterates through MST nodes to find Teal record types (play, profile, status)
+//! 4. Iterates through MST nodes to find Teal record types (play, profile, status, social records)
 //! 5. Delegates to existing Teal ingestors using the actual DID and proper rkey
 //!
 //! ## Usage Example
@@ -284,6 +284,36 @@ impl CarImportIngestor {
                 }
                 result
             }
+            "fm.teal.alpha.actor.profileStatus" => {
+                info!("   🧭 Processing profile status record...");
+                let result = self
+                    .process_profile_status_record(&record.data, did, &record.rkey)
+                    .await;
+                if result.is_ok() {
+                    info!("   ✅ Successfully processed profile status record");
+                } else {
+                    warn!("   ❌ Failed to process profile status record: {:?}", result);
+                }
+                result
+            }
+            "fm.teal.alpha.feed.social.post"
+            | "fm.teal.alpha.feed.social.like"
+            | "fm.teal.alpha.feed.social.repost"
+            | "fm.teal.alpha.feed.social.playlist"
+            | "fm.teal.alpha.feed.social.playlistItem"
+            | "fm.teal.alpha.feed.social.badge"
+            | "fm.teal.alpha.feed.social.badgeAssignment" => {
+                info!("   💬 Processing social record...");
+                let result = self
+                    .process_social_record(&record.collection, &record.data, did, &record.rkey)
+                    .await;
+                if result.is_ok() {
+                    info!("   ✅ Successfully processed social record");
+                } else {
+                    warn!("   ❌ Failed to process social record: {:?}", result);
+                }
+                result
+            }
             _ => {
                 warn!("❓ Unknown Teal collection: {}", record.collection);
                 Ok(())
@@ -369,6 +399,80 @@ impl CarImportIngestor {
 
         info!("Successfully stored status record from CAR import");
         Ok(())
+    }
+
+    /// Process a profile status record using the existing ActorProfileStatusIngestor
+    async fn process_profile_status_record(
+        &self,
+        data: &Value,
+        did: &str,
+        rkey: &str,
+    ) -> Result<()> {
+        let profile_status_record: types::fm_teal::alpha::actor::profile_status::ProfileStatus =
+            value::from_json_value::<types::fm_teal::alpha::actor::profile_status::ProfileStatus>(
+                data.clone(),
+            )?;
+
+        let profile_status_ingestor =
+            super::super::teal::actor_profile_status::ActorProfileStatusIngestor::new(
+                self.sql.clone(),
+            );
+
+        profile_status_ingestor
+            .insert_profile_status(
+                did,
+                rkey,
+                &format!("car-import-{}", uuid::Uuid::new_v4()),
+                &profile_status_record,
+            )
+            .await?;
+
+        info!("Successfully stored profile status record from CAR import");
+        Ok(())
+    }
+
+    /// Process a social record using the generic social ingestor
+    async fn process_social_record(
+        &self,
+        collection: &str,
+        data: &Value,
+        did: &str,
+        rkey: &str,
+    ) -> Result<()> {
+        let kind = match collection {
+            "fm.teal.alpha.feed.social.post" => {
+                super::super::teal::social::SocialCollection::Post
+            }
+            "fm.teal.alpha.feed.social.like" => {
+                super::super::teal::social::SocialCollection::Like
+            }
+            "fm.teal.alpha.feed.social.repost" => {
+                super::super::teal::social::SocialCollection::Repost
+            }
+            "fm.teal.alpha.feed.social.playlist" => {
+                super::super::teal::social::SocialCollection::Playlist
+            }
+            "fm.teal.alpha.feed.social.playlistItem" => {
+                super::super::teal::social::SocialCollection::PlaylistItem
+            }
+            "fm.teal.alpha.feed.social.badge" => {
+                super::super::teal::social::SocialCollection::Badge
+            }
+            "fm.teal.alpha.feed.social.badgeAssignment" => {
+                super::super::teal::social::SocialCollection::BadgeAssignment
+            }
+            _ => return Err(anyhow!("Unsupported social collection: {}", collection)),
+        };
+        let social_ingestor =
+            super::super::teal::social::SocialRecordIngestor::new(self.sql.clone(), kind);
+        social_ingestor
+            .insert_record(
+                did,
+                rkey,
+                &format!("car-import-{}", uuid::Uuid::new_v4()),
+                data,
+            )
+            .await
     }
 
     /// Fetch and process a CAR file from a PDS for a given identity

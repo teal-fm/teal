@@ -1,0 +1,64 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.social.badge",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | A teal.fm badge definition.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record containing badge metadata that can be assigned to actors.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "image",
+          "creator",
+          "type",
+          "createdAt"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the badge.",
+            "minLength": 1,
+            "maxLength": 100,
+            "maxGraphemes": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what the badge represents.",
+            "minLength": 1,
+            "maxLength": 5000,
+            "maxGraphemes": 500
+          },
+          "descriptionFacets": {
+            "type": "array",
+            "description": "Annotations of text in the badge description.",
+            "items": { "type": "ref", "ref": "fm.teal.alpha.richtext.facet" }
+          },
+          "image": {
+            "type": "blob",
+            "description": "Image displayed for the badge.",
+            "accept": ["image/png", "image/jpeg"],
+            "maxSize": 1000000
+          },
+          "creator": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the actor who created this badge definition."
+          },
+          "type": {
+            "type": "ref",
+            "ref": "fm.teal.alpha.feed.social.defs#badgeType"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this badge was originally created."
+          }
+        }
+      }
+    }
+  }
+}

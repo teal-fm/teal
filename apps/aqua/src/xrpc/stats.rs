@@ -72,12 +72,15 @@ pub async fn get_top_releases(
 #[derive(Deserialize)]
 pub struct GetUserTopArtistsQuery {
     pub actor: String,
+    pub period: Option<String>,
     pub limit: Option<i32>,
+    pub cursor: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct GetUserTopArtistsResponse {
     artists: Vec<ArtistView>,
+    cursor: Option<String>,
 }
 
 pub async fn get_user_top_artists(
@@ -90,9 +93,18 @@ pub async fn get_user_top_artists(
         return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
     }
 
-    match repo.get_user_top_artists(&query.actor, query.limit).await {
-        Ok(artists) => Ok(axum::Json(GetUserTopArtistsResponse {
-            artists: artists.into_static(),
+    match repo
+        .get_user_top_artists(
+            &query.actor,
+            query.period.as_deref(),
+            query.limit,
+            query.cursor.as_deref(),
+        )
+        .await
+    {
+        Ok(page) => Ok(axum::Json(GetUserTopArtistsResponse {
+            artists: page.artists.into_static(),
+            cursor: page.cursor,
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -101,12 +113,15 @@ pub async fn get_user_top_artists(
 #[derive(Deserialize)]
 pub struct GetUserTopReleasesQuery {
     pub actor: String,
+    pub period: Option<String>,
     pub limit: Option<i32>,
+    pub cursor: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct GetUserTopReleasesResponse {
     releases: Vec<ReleaseView>,
+    cursor: Option<String>,
 }
 
 pub async fn get_user_top_releases(
@@ -119,9 +134,18 @@ pub async fn get_user_top_releases(
         return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
     }
 
-    match repo.get_user_top_releases(&query.actor, query.limit).await {
-        Ok(releases) => Ok(axum::Json(GetUserTopReleasesResponse {
-            releases: releases.into_static(),
+    match repo
+        .get_user_top_releases(
+            &query.actor,
+            query.period.as_deref(),
+            query.limit,
+            query.cursor.as_deref(),
+        )
+        .await
+    {
+        Ok(page) => Ok(axum::Json(GetUserTopReleasesResponse {
+            releases: page.releases.into_static(),
+            cursor: page.cursor,
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

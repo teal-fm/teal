@@ -1,0 +1,54 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.feed.social.playlist",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | A teal.fm playlist, representing a list of tracks.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record containing the playlist metadata.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["name", "authors", "createdAt"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the playlist, required.",
+            "minLength": 1,
+            "maxLength": 100,
+            "maxGraphemes": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-form playlist description text.",
+            "maxLength": 5000,
+            "maxGraphemes": 500
+          },
+          "descriptionFacets": {
+            "type": "array",
+            "description": "Annotations of text in the playlist description.",
+            "items": { "type": "ref", "ref": "fm.teal.alpha.richtext.facet" }
+          },
+          "authors": {
+            "type": "array",
+            "description": "DIDs of actors who can author playlist items for this playlist. Include the playlist record author. Appviews may attribute playlist items to this playlist when the item's repo author appears in this list.",
+            "minLength": 1,
+            "maxLength": 100,
+            "items": { "type": "string", "format": "did" }
+          },
+          "cover": {
+            "type": "blob",
+            "description": "Optional image displayed for the playlist.",
+            "accept": ["image/png", "image/jpeg"],
+            "maxSize": 1000000
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this playlist was originally created."
+          }
+        }
+      }
+    }
+  }
+}
