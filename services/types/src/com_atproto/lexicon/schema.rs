@@ -135,21 +135,28 @@ pub mod schema_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SchemaBuilder<S: BosStr, St: schema_state::State> {
+pub struct SchemaBuilder<St: schema_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<i64>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Schema<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SchemaBuilder<S, schema_state::Empty> {
+impl Schema<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SchemaBuilder<schema_state::Empty, DefaultStr> {
         SchemaBuilder::new()
     }
 }
 
-impl<S: BosStr> SchemaBuilder<S, schema_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Schema<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SchemaBuilder<schema_state::Empty, S> {
+        SchemaBuilder::builder()
+    }
+}
+
+impl SchemaBuilder<schema_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SchemaBuilder {
             _state: PhantomData,
@@ -159,7 +166,18 @@ impl<S: BosStr> SchemaBuilder<S, schema_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SchemaBuilder<S, St>
+impl<S: BosStr> SchemaBuilder<schema_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SchemaBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SchemaBuilder<St, S>
 where
     St: schema_state::State,
     St::Lexicon: schema_state::IsUnset,
@@ -168,7 +186,7 @@ where
     pub fn lexicon(
         mut self,
         value: impl Into<i64>,
-    ) -> SchemaBuilder<S, schema_state::SetLexicon<St>> {
+    ) -> SchemaBuilder<schema_state::SetLexicon<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SchemaBuilder {
             _state: PhantomData,
@@ -178,7 +196,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SchemaBuilder<S, St>
+impl<St, S: BosStr> SchemaBuilder<St, S>
 where
     St: schema_state::State,
     St::Lexicon: schema_state::IsSet,

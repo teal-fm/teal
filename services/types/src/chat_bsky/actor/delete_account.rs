@@ -23,11 +23,15 @@ pub struct DeleteAccountOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// XRPC request marker type.
+/** Request marker for the `chat.bsky.actor.deleteAccount` procedure.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct DeleteAccount;
-/// Response type for chat.bsky.actor.deleteAccount
+/** Response marker for the `chat.bsky.actor.deleteAccount` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `DeleteAccountOutput<S>` for this endpoint.*/
 pub struct DeleteAccountResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteAccountResponse {
     const NSID: &'static str = "chat.bsky.actor.deleteAccount";
@@ -44,7 +48,9 @@ impl jacquard_common::xrpc::XrpcRequest for DeleteAccount {
     type Response = DeleteAccountResponse;
 }
 
-/// Endpoint type for chat.bsky.actor.deleteAccount
+/** Endpoint marker for the `chat.bsky.actor.deleteAccount` procedure.
+
+Path: `/xrpc/chat.bsky.actor.deleteAccount`. The request payload type is `DeleteAccount`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct DeleteAccountRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteAccountRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.actor.deleteAccount";

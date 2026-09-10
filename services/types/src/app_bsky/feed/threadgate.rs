@@ -435,21 +435,28 @@ pub mod list_rule_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ListRuleBuilder<S: BosStr, St: list_rule_state::State> {
+pub struct ListRuleBuilder<St: list_rule_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ListRule<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ListRuleBuilder<S, list_rule_state::Empty> {
+impl ListRule<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListRuleBuilder<list_rule_state::Empty, DefaultStr> {
         ListRuleBuilder::new()
     }
 }
 
-impl<S: BosStr> ListRuleBuilder<S, list_rule_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ListRule<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListRuleBuilder<list_rule_state::Empty, S> {
+        ListRuleBuilder::builder()
+    }
+}
+
+impl ListRuleBuilder<list_rule_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListRuleBuilder {
             _state: PhantomData,
@@ -459,7 +466,18 @@ impl<S: BosStr> ListRuleBuilder<S, list_rule_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ListRuleBuilder<S, St>
+impl<S: BosStr> ListRuleBuilder<list_rule_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListRuleBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ListRuleBuilder<St, S>
 where
     St: list_rule_state::State,
     St::List: list_rule_state::IsUnset,
@@ -468,7 +486,7 @@ where
     pub fn list(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> ListRuleBuilder<S, list_rule_state::SetList<St>> {
+    ) -> ListRuleBuilder<list_rule_state::SetList<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ListRuleBuilder {
             _state: PhantomData,
@@ -478,7 +496,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ListRuleBuilder<S, St>
+impl<St, S: BosStr> ListRuleBuilder<St, S>
 where
     St: list_rule_state::State,
     St::List: list_rule_state::IsSet,
@@ -544,7 +562,7 @@ pub mod threadgate_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ThreadgateBuilder<S: BosStr, St: threadgate_state::State> {
+pub struct ThreadgateBuilder<St: threadgate_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Vec<ThreadgateAllowItem<S>>>,
@@ -555,15 +573,22 @@ pub struct ThreadgateBuilder<S: BosStr, St: threadgate_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Threadgate<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ThreadgateBuilder<S, threadgate_state::Empty> {
+impl Threadgate<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ThreadgateBuilder<threadgate_state::Empty, DefaultStr> {
         ThreadgateBuilder::new()
     }
 }
 
-impl<S: BosStr> ThreadgateBuilder<S, threadgate_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Threadgate<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ThreadgateBuilder<threadgate_state::Empty, S> {
+        ThreadgateBuilder::builder()
+    }
+}
+
+impl ThreadgateBuilder<threadgate_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ThreadgateBuilder {
             _state: PhantomData,
@@ -573,7 +598,18 @@ impl<S: BosStr> ThreadgateBuilder<S, threadgate_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: threadgate_state::State> ThreadgateBuilder<S, St> {
+impl<S: BosStr> ThreadgateBuilder<threadgate_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ThreadgateBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: threadgate_state::State, S: BosStr> ThreadgateBuilder<St, S> {
     /// Set the `allow` field (optional)
     pub fn allow(
         mut self,
@@ -589,7 +625,7 @@ impl<S: BosStr, St: threadgate_state::State> ThreadgateBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ThreadgateBuilder<S, St>
+impl<St, S: BosStr> ThreadgateBuilder<St, S>
 where
     St: threadgate_state::State,
     St::CreatedAt: threadgate_state::IsUnset,
@@ -598,7 +634,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> ThreadgateBuilder<S, threadgate_state::SetCreatedAt<St>> {
+    ) -> ThreadgateBuilder<threadgate_state::SetCreatedAt<St>, S> {
         self._fields.1 = Option::Some(value.into());
         ThreadgateBuilder {
             _state: PhantomData,
@@ -608,7 +644,7 @@ where
     }
 }
 
-impl<S: BosStr, St: threadgate_state::State> ThreadgateBuilder<S, St> {
+impl<St: threadgate_state::State, S: BosStr> ThreadgateBuilder<St, S> {
     /// Set the `hiddenReplies` field (optional)
     pub fn hidden_replies(mut self, value: impl Into<Option<Vec<AtUri<S>>>>) -> Self {
         self._fields.2 = value.into();
@@ -621,7 +657,7 @@ impl<S: BosStr, St: threadgate_state::State> ThreadgateBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ThreadgateBuilder<S, St>
+impl<St, S: BosStr> ThreadgateBuilder<St, S>
 where
     St: threadgate_state::State,
     St::Post: threadgate_state::IsUnset,
@@ -630,7 +666,7 @@ where
     pub fn post(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> ThreadgateBuilder<S, threadgate_state::SetPost<St>> {
+    ) -> ThreadgateBuilder<threadgate_state::SetPost<St>, S> {
         self._fields.3 = Option::Some(value.into());
         ThreadgateBuilder {
             _state: PhantomData,
@@ -640,7 +676,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ThreadgateBuilder<S, St>
+impl<St, S: BosStr> ThreadgateBuilder<St, S>
 where
     St: threadgate_state::State,
     St::CreatedAt: threadgate_state::IsSet,

@@ -34,7 +34,7 @@ pub struct FindRelatedAccounts<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
     pub did: Did<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -62,7 +62,9 @@ pub struct RelatedAccount<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.signature.findRelatedAccounts
+/** Response marker for the `tools.ozone.signature.findRelatedAccounts` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `FindRelatedAccountsOutput<S>` for this endpoint.*/
 pub struct FindRelatedAccountsResponse;
 impl jacquard_common::xrpc::XrpcResp for FindRelatedAccountsResponse {
     const NSID: &'static str = "tools.ozone.signature.findRelatedAccounts";
@@ -77,7 +79,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for FindRelatedAccounts<S> {
     type Response = FindRelatedAccountsResponse;
 }
 
-/// Endpoint type for tools.ozone.signature.findRelatedAccounts
+/** Endpoint marker for the `tools.ozone.signature.findRelatedAccounts` query.
+
+Path: `/xrpc/tools.ozone.signature.findRelatedAccounts`. The request payload type is `FindRelatedAccounts<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct FindRelatedAccountsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for FindRelatedAccountsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.signature.findRelatedAccounts";
@@ -139,23 +143,36 @@ pub mod find_related_accounts_state {
 
 /// Builder for constructing an instance of this type.
 pub struct FindRelatedAccountsBuilder<
-    S: BosStr,
     St: find_related_accounts_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Did<S>>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> FindRelatedAccounts<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> FindRelatedAccountsBuilder<S, find_related_accounts_state::Empty> {
+impl FindRelatedAccounts<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> FindRelatedAccountsBuilder<
+        find_related_accounts_state::Empty,
+        DefaultStr,
+    > {
         FindRelatedAccountsBuilder::new()
     }
 }
 
-impl<S: BosStr> FindRelatedAccountsBuilder<S, find_related_accounts_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> FindRelatedAccounts<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> FindRelatedAccountsBuilder<
+        find_related_accounts_state::Empty,
+        S,
+    > {
+        FindRelatedAccountsBuilder::builder()
+    }
+}
+
+impl FindRelatedAccountsBuilder<find_related_accounts_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         FindRelatedAccountsBuilder {
             _state: PhantomData,
@@ -165,10 +182,21 @@ impl<S: BosStr> FindRelatedAccountsBuilder<S, find_related_accounts_state::Empty
     }
 }
 
+impl<S: BosStr> FindRelatedAccountsBuilder<find_related_accounts_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        FindRelatedAccountsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
 impl<
-    S: BosStr,
     St: find_related_accounts_state::State,
-> FindRelatedAccountsBuilder<S, St> {
+    S: BosStr,
+> FindRelatedAccountsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -181,7 +209,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> FindRelatedAccountsBuilder<S, St>
+impl<St, S: BosStr> FindRelatedAccountsBuilder<St, S>
 where
     St: find_related_accounts_state::State,
     St::Did: find_related_accounts_state::IsUnset,
@@ -190,7 +218,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> FindRelatedAccountsBuilder<S, find_related_accounts_state::SetDid<St>> {
+    ) -> FindRelatedAccountsBuilder<find_related_accounts_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         FindRelatedAccountsBuilder {
             _state: PhantomData,
@@ -201,9 +229,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: find_related_accounts_state::State,
-> FindRelatedAccountsBuilder<S, St> {
+    S: BosStr,
+> FindRelatedAccountsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.2 = value.into();
@@ -216,7 +244,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> FindRelatedAccountsBuilder<S, St>
+impl<St, S: BosStr> FindRelatedAccountsBuilder<St, S>
 where
     St: find_related_accounts_state::State,
     St::Did: find_related_accounts_state::IsSet,
@@ -264,21 +292,31 @@ pub mod related_account_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RelatedAccountBuilder<S: BosStr, St: related_account_state::State> {
+pub struct RelatedAccountBuilder<
+    St: related_account_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AccountView<S>>, Option<Vec<SigDetail<S>>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RelatedAccount<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RelatedAccountBuilder<S, related_account_state::Empty> {
+impl RelatedAccount<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RelatedAccountBuilder<related_account_state::Empty, DefaultStr> {
         RelatedAccountBuilder::new()
     }
 }
 
-impl<S: BosStr> RelatedAccountBuilder<S, related_account_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RelatedAccount<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RelatedAccountBuilder<related_account_state::Empty, S> {
+        RelatedAccountBuilder::builder()
+    }
+}
+
+impl RelatedAccountBuilder<related_account_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RelatedAccountBuilder {
             _state: PhantomData,
@@ -288,7 +326,18 @@ impl<S: BosStr> RelatedAccountBuilder<S, related_account_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RelatedAccountBuilder<S, St>
+impl<S: BosStr> RelatedAccountBuilder<related_account_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RelatedAccountBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RelatedAccountBuilder<St, S>
 where
     St: related_account_state::State,
     St::Account: related_account_state::IsUnset,
@@ -297,7 +346,7 @@ where
     pub fn account(
         mut self,
         value: impl Into<AccountView<S>>,
-    ) -> RelatedAccountBuilder<S, related_account_state::SetAccount<St>> {
+    ) -> RelatedAccountBuilder<related_account_state::SetAccount<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RelatedAccountBuilder {
             _state: PhantomData,
@@ -307,7 +356,7 @@ where
     }
 }
 
-impl<S: BosStr, St: related_account_state::State> RelatedAccountBuilder<S, St> {
+impl<St: related_account_state::State, S: BosStr> RelatedAccountBuilder<St, S> {
     /// Set the `similarities` field (optional)
     pub fn similarities(mut self, value: impl Into<Option<Vec<SigDetail<S>>>>) -> Self {
         self._fields.1 = value.into();
@@ -320,7 +369,7 @@ impl<S: BosStr, St: related_account_state::State> RelatedAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> RelatedAccountBuilder<S, St>
+impl<St, S: BosStr> RelatedAccountBuilder<St, S>
 where
     St: related_account_state::State,
     St::Account: related_account_state::IsSet,

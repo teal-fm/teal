@@ -41,7 +41,9 @@ pub struct SendEmailOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.admin.sendEmail
+/** Response marker for the `com.atproto.admin.sendEmail` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SendEmailOutput<S>` for this endpoint.*/
 pub struct SendEmailResponse;
 impl jacquard_common::xrpc::XrpcResp for SendEmailResponse {
     const NSID: &'static str = "com.atproto.admin.sendEmail";
@@ -58,7 +60,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SendEmail<S> {
     type Response = SendEmailResponse;
 }
 
-/// Endpoint type for com.atproto.admin.sendEmail
+/** Endpoint marker for the `com.atproto.admin.sendEmail` procedure.
+
+Path: `/xrpc/com.atproto.admin.sendEmail`. The request payload type is `SendEmail<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SendEmailRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SendEmailRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.sendEmail";
@@ -128,21 +132,28 @@ pub mod send_email_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SendEmailBuilder<S: BosStr, St: send_email_state::State> {
+pub struct SendEmailBuilder<St: send_email_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<S>, Option<Did<S>>, Option<Did<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SendEmail<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SendEmailBuilder<S, send_email_state::Empty> {
+impl SendEmail<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SendEmailBuilder<send_email_state::Empty, DefaultStr> {
         SendEmailBuilder::new()
     }
 }
 
-impl<S: BosStr> SendEmailBuilder<S, send_email_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SendEmail<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SendEmailBuilder<send_email_state::Empty, S> {
+        SendEmailBuilder::builder()
+    }
+}
+
+impl SendEmailBuilder<send_email_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SendEmailBuilder {
             _state: PhantomData,
@@ -152,7 +163,18 @@ impl<S: BosStr> SendEmailBuilder<S, send_email_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: send_email_state::State> SendEmailBuilder<S, St> {
+impl<S: BosStr> SendEmailBuilder<send_email_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SendEmailBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: send_email_state::State, S: BosStr> SendEmailBuilder<St, S> {
     /// Set the `comment` field (optional)
     pub fn comment(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -165,7 +187,7 @@ impl<S: BosStr, St: send_email_state::State> SendEmailBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> SendEmailBuilder<S, St>
+impl<St, S: BosStr> SendEmailBuilder<St, S>
 where
     St: send_email_state::State,
     St::Content: send_email_state::IsUnset,
@@ -174,7 +196,7 @@ where
     pub fn content(
         mut self,
         value: impl Into<S>,
-    ) -> SendEmailBuilder<S, send_email_state::SetContent<St>> {
+    ) -> SendEmailBuilder<send_email_state::SetContent<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SendEmailBuilder {
             _state: PhantomData,
@@ -184,7 +206,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SendEmailBuilder<S, St>
+impl<St, S: BosStr> SendEmailBuilder<St, S>
 where
     St: send_email_state::State,
     St::RecipientDid: send_email_state::IsUnset,
@@ -193,7 +215,7 @@ where
     pub fn recipient_did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> SendEmailBuilder<S, send_email_state::SetRecipientDid<St>> {
+    ) -> SendEmailBuilder<send_email_state::SetRecipientDid<St>, S> {
         self._fields.2 = Option::Some(value.into());
         SendEmailBuilder {
             _state: PhantomData,
@@ -203,7 +225,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SendEmailBuilder<S, St>
+impl<St, S: BosStr> SendEmailBuilder<St, S>
 where
     St: send_email_state::State,
     St::SenderDid: send_email_state::IsUnset,
@@ -212,7 +234,7 @@ where
     pub fn sender_did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> SendEmailBuilder<S, send_email_state::SetSenderDid<St>> {
+    ) -> SendEmailBuilder<send_email_state::SetSenderDid<St>, S> {
         self._fields.3 = Option::Some(value.into());
         SendEmailBuilder {
             _state: PhantomData,
@@ -222,7 +244,7 @@ where
     }
 }
 
-impl<S: BosStr, St: send_email_state::State> SendEmailBuilder<S, St> {
+impl<St: send_email_state::State, S: BosStr> SendEmailBuilder<St, S> {
     /// Set the `subject` field (optional)
     pub fn subject(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -235,7 +257,7 @@ impl<S: BosStr, St: send_email_state::State> SendEmailBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> SendEmailBuilder<S, St>
+impl<St, S: BosStr> SendEmailBuilder<St, S>
 where
     St: send_email_state::State,
     St::Content: send_email_state::IsSet,

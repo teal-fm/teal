@@ -25,7 +25,9 @@ pub struct UpdateSeen<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.notification.updateSeen
+/** Response marker for the `app.bsky.notification.updateSeen` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct UpdateSeenResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateSeenResponse {
     const NSID: &'static str = "app.bsky.notification.updateSeen";
@@ -42,7 +44,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateSeen<S> {
     type Response = UpdateSeenResponse;
 }
 
-/// Endpoint type for app.bsky.notification.updateSeen
+/** Endpoint marker for the `app.bsky.notification.updateSeen` procedure.
+
+Path: `/xrpc/app.bsky.notification.updateSeen`. The request payload type is `UpdateSeen<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateSeenRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateSeenRequest {
     const PATH: &'static str = "/xrpc/app.bsky.notification.updateSeen";
@@ -86,21 +90,28 @@ pub mod update_seen_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct UpdateSeenBuilder<S: BosStr, St: update_seen_state::State> {
+pub struct UpdateSeenBuilder<St: update_seen_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpdateSeen<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> UpdateSeenBuilder<S, update_seen_state::Empty> {
+impl UpdateSeen<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> UpdateSeenBuilder<update_seen_state::Empty, DefaultStr> {
         UpdateSeenBuilder::new()
     }
 }
 
-impl<S: BosStr> UpdateSeenBuilder<S, update_seen_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpdateSeen<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpdateSeenBuilder<update_seen_state::Empty, S> {
+        UpdateSeenBuilder::builder()
+    }
+}
+
+impl UpdateSeenBuilder<update_seen_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpdateSeenBuilder {
             _state: PhantomData,
@@ -110,7 +121,18 @@ impl<S: BosStr> UpdateSeenBuilder<S, update_seen_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> UpdateSeenBuilder<S, St>
+impl<S: BosStr> UpdateSeenBuilder<update_seen_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpdateSeenBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> UpdateSeenBuilder<St, S>
 where
     St: update_seen_state::State,
     St::SeenAt: update_seen_state::IsUnset,
@@ -119,7 +141,7 @@ where
     pub fn seen_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> UpdateSeenBuilder<S, update_seen_state::SetSeenAt<St>> {
+    ) -> UpdateSeenBuilder<update_seen_state::SetSeenAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         UpdateSeenBuilder {
             _state: PhantomData,
@@ -129,7 +151,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateSeenBuilder<S, St>
+impl<St, S: BosStr> UpdateSeenBuilder<St, S>
 where
     St: update_seen_state::State,
     St::SeenAt: update_seen_state::IsSet,

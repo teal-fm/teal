@@ -86,7 +86,9 @@ impl core::fmt::Display for ResolveDidError {
     }
 }
 
-/// Response type for com.atproto.identity.resolveDid
+/** Response marker for the `com.atproto.identity.resolveDid` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ResolveDidOutput<S>` for this endpoint.*/
 pub struct ResolveDidResponse;
 impl jacquard_common::xrpc::XrpcResp for ResolveDidResponse {
     const NSID: &'static str = "com.atproto.identity.resolveDid";
@@ -101,7 +103,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ResolveDid<S> {
     type Response = ResolveDidResponse;
 }
 
-/// Endpoint type for com.atproto.identity.resolveDid
+/** Endpoint marker for the `com.atproto.identity.resolveDid` query.
+
+Path: `/xrpc/com.atproto.identity.resolveDid`. The request payload type is `ResolveDid<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ResolveDidRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ResolveDidRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.resolveDid";
@@ -143,21 +147,28 @@ pub mod resolve_did_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ResolveDidBuilder<S: BosStr, St: resolve_did_state::State> {
+pub struct ResolveDidBuilder<St: resolve_did_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ResolveDid<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ResolveDidBuilder<S, resolve_did_state::Empty> {
+impl ResolveDid<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ResolveDidBuilder<resolve_did_state::Empty, DefaultStr> {
         ResolveDidBuilder::new()
     }
 }
 
-impl<S: BosStr> ResolveDidBuilder<S, resolve_did_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ResolveDid<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ResolveDidBuilder<resolve_did_state::Empty, S> {
+        ResolveDidBuilder::builder()
+    }
+}
+
+impl ResolveDidBuilder<resolve_did_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ResolveDidBuilder {
             _state: PhantomData,
@@ -167,7 +178,18 @@ impl<S: BosStr> ResolveDidBuilder<S, resolve_did_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ResolveDidBuilder<S, St>
+impl<S: BosStr> ResolveDidBuilder<resolve_did_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ResolveDidBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ResolveDidBuilder<St, S>
 where
     St: resolve_did_state::State,
     St::Did: resolve_did_state::IsUnset,
@@ -176,7 +198,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> ResolveDidBuilder<S, resolve_did_state::SetDid<St>> {
+    ) -> ResolveDidBuilder<resolve_did_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ResolveDidBuilder {
             _state: PhantomData,
@@ -186,7 +208,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ResolveDidBuilder<S, St>
+impl<St, S: BosStr> ResolveDidBuilder<St, S>
 where
     St: resolve_did_state::State,
     St::Did: resolve_did_state::IsSet,

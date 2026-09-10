@@ -118,7 +118,9 @@ impl<S: BosStr> LexiconSchema for AppPassword<S> {
     }
 }
 
-/// Response type for com.atproto.server.createAppPassword
+/** Response marker for the `com.atproto.server.createAppPassword` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CreateAppPasswordOutput<S>` for this endpoint.*/
 pub struct CreateAppPasswordResponse;
 impl jacquard_common::xrpc::XrpcResp for CreateAppPasswordResponse {
     const NSID: &'static str = "com.atproto.server.createAppPassword";
@@ -135,7 +137,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for CreateAppPassword<S> {
     type Response = CreateAppPasswordResponse;
 }
 
-/// Endpoint type for com.atproto.server.createAppPassword
+/** Endpoint marker for the `com.atproto.server.createAppPassword` procedure.
+
+Path: `/xrpc/com.atproto.server.createAppPassword`. The request payload type is `CreateAppPassword<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct CreateAppPasswordRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CreateAppPasswordRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.createAppPassword";
@@ -156,70 +160,77 @@ pub mod app_password_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type CreatedAt;
         type Name;
         type Password;
-        type CreatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type CreatedAt = Unset;
         type Name = Unset;
         type Password = Unset;
-        type CreatedAt = Unset;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type Name = Set<members::name>;
-        type Password = St::Password;
-        type CreatedAt = St::CreatedAt;
-    }
-    ///State transition - sets the `password` field to Set
-    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPassword<St> {}
-    impl<St: State> State for SetPassword<St> {
-        type Name = St::Name;
-        type Password = Set<members::password>;
-        type CreatedAt = St::CreatedAt;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
+        type CreatedAt = Set<members::created_at>;
         type Name = St::Name;
         type Password = St::Password;
-        type CreatedAt = Set<members::created_at>;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type CreatedAt = St::CreatedAt;
+        type Name = Set<members::name>;
+        type Password = St::Password;
+    }
+    ///State transition - sets the `password` field to Set
+    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPassword<St> {}
+    impl<St: State> State for SetPassword<St> {
+        type CreatedAt = St::CreatedAt;
+        type Name = St::Name;
+        type Password = Set<members::password>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `created_at` field
+        pub struct created_at(());
         ///Marker type for the `name` field
         pub struct name(());
         ///Marker type for the `password` field
         pub struct password(());
-        ///Marker type for the `created_at` field
-        pub struct created_at(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AppPasswordBuilder<S: BosStr, St: app_password_state::State> {
+pub struct AppPasswordBuilder<St: app_password_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<S>, Option<S>, Option<bool>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AppPassword<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AppPasswordBuilder<S, app_password_state::Empty> {
+impl AppPassword<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AppPasswordBuilder<app_password_state::Empty, DefaultStr> {
         AppPasswordBuilder::new()
     }
 }
 
-impl<S: BosStr> AppPasswordBuilder<S, app_password_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AppPassword<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AppPasswordBuilder<app_password_state::Empty, S> {
+        AppPasswordBuilder::builder()
+    }
+}
+
+impl AppPasswordBuilder<app_password_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AppPasswordBuilder {
             _state: PhantomData,
@@ -229,7 +240,18 @@ impl<S: BosStr> AppPasswordBuilder<S, app_password_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> AppPasswordBuilder<S, St>
+impl<S: BosStr> AppPasswordBuilder<app_password_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AppPasswordBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> AppPasswordBuilder<St, S>
 where
     St: app_password_state::State,
     St::CreatedAt: app_password_state::IsUnset,
@@ -238,7 +260,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> AppPasswordBuilder<S, app_password_state::SetCreatedAt<St>> {
+    ) -> AppPasswordBuilder<app_password_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         AppPasswordBuilder {
             _state: PhantomData,
@@ -248,7 +270,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AppPasswordBuilder<S, St>
+impl<St, S: BosStr> AppPasswordBuilder<St, S>
 where
     St: app_password_state::State,
     St::Name: app_password_state::IsUnset,
@@ -257,7 +279,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> AppPasswordBuilder<S, app_password_state::SetName<St>> {
+    ) -> AppPasswordBuilder<app_password_state::SetName<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AppPasswordBuilder {
             _state: PhantomData,
@@ -267,7 +289,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AppPasswordBuilder<S, St>
+impl<St, S: BosStr> AppPasswordBuilder<St, S>
 where
     St: app_password_state::State,
     St::Password: app_password_state::IsUnset,
@@ -276,7 +298,7 @@ where
     pub fn password(
         mut self,
         value: impl Into<S>,
-    ) -> AppPasswordBuilder<S, app_password_state::SetPassword<St>> {
+    ) -> AppPasswordBuilder<app_password_state::SetPassword<St>, S> {
         self._fields.2 = Option::Some(value.into());
         AppPasswordBuilder {
             _state: PhantomData,
@@ -286,7 +308,7 @@ where
     }
 }
 
-impl<S: BosStr, St: app_password_state::State> AppPasswordBuilder<S, St> {
+impl<St: app_password_state::State, S: BosStr> AppPasswordBuilder<St, S> {
     /// Set the `privileged` field (optional)
     pub fn privileged(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.3 = value.into();
@@ -299,12 +321,12 @@ impl<S: BosStr, St: app_password_state::State> AppPasswordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AppPasswordBuilder<S, St>
+impl<St, S: BosStr> AppPasswordBuilder<St, S>
 where
     St: app_password_state::State,
+    St::CreatedAt: app_password_state::IsSet,
     St::Name: app_password_state::IsSet,
     St::Password: app_password_state::IsSet,
-    St::CreatedAt: app_password_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AppPassword<S> {

@@ -76,7 +76,9 @@ impl core::fmt::Display for DeleteSetError {
     }
 }
 
-/// Response type for tools.ozone.set.deleteSet
+/** Response marker for the `tools.ozone.set.deleteSet` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `DeleteSetOutput<S>` for this endpoint.*/
 pub struct DeleteSetResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteSetResponse {
     const NSID: &'static str = "tools.ozone.set.deleteSet";
@@ -93,7 +95,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeleteSet<S> {
     type Response = DeleteSetResponse;
 }
 
-/// Endpoint type for tools.ozone.set.deleteSet
+/** Endpoint marker for the `tools.ozone.set.deleteSet` procedure.
+
+Path: `/xrpc/tools.ozone.set.deleteSet`. The request payload type is `DeleteSet<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DeleteSetRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteSetRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.set.deleteSet";

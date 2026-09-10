@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `fm.teal.music` Lexicon namespace/module.
 pub mod get_album;
 pub mod get_artist;
 pub mod get_artist_listeners;
@@ -284,71 +285,71 @@ pub mod album_summary_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type ArtistName;
+        type Mbid;
         type Name;
         type PlayCount;
-        type Mbid;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type ArtistName = Unset;
+        type Mbid = Unset;
         type Name = Unset;
         type PlayCount = Unset;
-        type Mbid = Unset;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetArtistName<St> {}
     impl<St: State> State for SetArtistName<St> {
         type ArtistName = Set<members::artist_name>;
+        type Mbid = St::Mbid;
         type Name = St::Name;
         type PlayCount = St::PlayCount;
-        type Mbid = St::Mbid;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type ArtistName = St::ArtistName;
-        type Name = Set<members::name>;
-        type PlayCount = St::PlayCount;
-        type Mbid = St::Mbid;
-    }
-    ///State transition - sets the `play_count` field to Set
-    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
-    impl<St: State> State for SetPlayCount<St> {
-        type ArtistName = St::ArtistName;
-        type Name = St::Name;
-        type PlayCount = Set<members::play_count>;
-        type Mbid = St::Mbid;
     }
     ///State transition - sets the `mbid` field to Set
     pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMbid<St> {}
     impl<St: State> State for SetMbid<St> {
         type ArtistName = St::ArtistName;
+        type Mbid = Set<members::mbid>;
         type Name = St::Name;
         type PlayCount = St::PlayCount;
-        type Mbid = Set<members::mbid>;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type ArtistName = St::ArtistName;
+        type Mbid = St::Mbid;
+        type Name = Set<members::name>;
+        type PlayCount = St::PlayCount;
+    }
+    ///State transition - sets the `play_count` field to Set
+    pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPlayCount<St> {}
+    impl<St: State> State for SetPlayCount<St> {
+        type ArtistName = St::ArtistName;
+        type Mbid = St::Mbid;
+        type Name = St::Name;
+        type PlayCount = Set<members::play_count>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `artist_name` field
         pub struct artist_name(());
+        ///Marker type for the `mbid` field
+        pub struct mbid(());
         ///Marker type for the `name` field
         pub struct name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
-        ///Marker type for the `mbid` field
-        pub struct mbid(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AlbumSummaryBuilder<S: BosStr, St: album_summary_state::State> {
+pub struct AlbumSummaryBuilder<St: album_summary_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<UriValue<S>>,
@@ -361,15 +362,22 @@ pub struct AlbumSummaryBuilder<S: BosStr, St: album_summary_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AlbumSummary<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AlbumSummaryBuilder<S, album_summary_state::Empty> {
+impl AlbumSummary<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AlbumSummaryBuilder<album_summary_state::Empty, DefaultStr> {
         AlbumSummaryBuilder::new()
     }
 }
 
-impl<S: BosStr> AlbumSummaryBuilder<S, album_summary_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AlbumSummary<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AlbumSummaryBuilder<album_summary_state::Empty, S> {
+        AlbumSummaryBuilder::builder()
+    }
+}
+
+impl AlbumSummaryBuilder<album_summary_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AlbumSummaryBuilder {
             _state: PhantomData,
@@ -379,7 +387,18 @@ impl<S: BosStr> AlbumSummaryBuilder<S, album_summary_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: album_summary_state::State> AlbumSummaryBuilder<S, St> {
+impl<S: BosStr> AlbumSummaryBuilder<album_summary_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AlbumSummaryBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: album_summary_state::State, S: BosStr> AlbumSummaryBuilder<St, S> {
     /// Set the `artistMbid` field (optional)
     pub fn artist_mbid(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -392,7 +411,7 @@ impl<S: BosStr, St: album_summary_state::State> AlbumSummaryBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AlbumSummaryBuilder<S, St>
+impl<St, S: BosStr> AlbumSummaryBuilder<St, S>
 where
     St: album_summary_state::State,
     St::ArtistName: album_summary_state::IsUnset,
@@ -401,7 +420,7 @@ where
     pub fn artist_name(
         mut self,
         value: impl Into<S>,
-    ) -> AlbumSummaryBuilder<S, album_summary_state::SetArtistName<St>> {
+    ) -> AlbumSummaryBuilder<album_summary_state::SetArtistName<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AlbumSummaryBuilder {
             _state: PhantomData,
@@ -411,7 +430,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumSummaryBuilder<S, St>
+impl<St, S: BosStr> AlbumSummaryBuilder<St, S>
 where
     St: album_summary_state::State,
     St::Mbid: album_summary_state::IsUnset,
@@ -420,7 +439,7 @@ where
     pub fn mbid(
         mut self,
         value: impl Into<UriValue<S>>,
-    ) -> AlbumSummaryBuilder<S, album_summary_state::SetMbid<St>> {
+    ) -> AlbumSummaryBuilder<album_summary_state::SetMbid<St>, S> {
         self._fields.2 = Option::Some(value.into());
         AlbumSummaryBuilder {
             _state: PhantomData,
@@ -430,7 +449,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumSummaryBuilder<S, St>
+impl<St, S: BosStr> AlbumSummaryBuilder<St, S>
 where
     St: album_summary_state::State,
     St::Name: album_summary_state::IsUnset,
@@ -439,7 +458,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> AlbumSummaryBuilder<S, album_summary_state::SetName<St>> {
+    ) -> AlbumSummaryBuilder<album_summary_state::SetName<St>, S> {
         self._fields.3 = Option::Some(value.into());
         AlbumSummaryBuilder {
             _state: PhantomData,
@@ -449,7 +468,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumSummaryBuilder<S, St>
+impl<St, S: BosStr> AlbumSummaryBuilder<St, S>
 where
     St: album_summary_state::State,
     St::PlayCount: album_summary_state::IsUnset,
@@ -458,7 +477,7 @@ where
     pub fn play_count(
         mut self,
         value: impl Into<i64>,
-    ) -> AlbumSummaryBuilder<S, album_summary_state::SetPlayCount<St>> {
+    ) -> AlbumSummaryBuilder<album_summary_state::SetPlayCount<St>, S> {
         self._fields.4 = Option::Some(value.into());
         AlbumSummaryBuilder {
             _state: PhantomData,
@@ -468,7 +487,7 @@ where
     }
 }
 
-impl<S: BosStr, St: album_summary_state::State> AlbumSummaryBuilder<S, St> {
+impl<St: album_summary_state::State, S: BosStr> AlbumSummaryBuilder<St, S> {
     /// Set the `releaseType` field (optional)
     pub fn release_type(
         mut self,
@@ -487,13 +506,13 @@ impl<S: BosStr, St: album_summary_state::State> AlbumSummaryBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AlbumSummaryBuilder<S, St>
+impl<St, S: BosStr> AlbumSummaryBuilder<St, S>
 where
     St: album_summary_state::State,
     St::ArtistName: album_summary_state::IsSet,
+    St::Mbid: album_summary_state::IsSet,
     St::Name: album_summary_state::IsSet,
     St::PlayCount: album_summary_state::IsSet,
-    St::Mbid: album_summary_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AlbumSummary<S> {
@@ -811,90 +830,90 @@ pub mod album_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Tracks;
-        type Name;
-        type Mbid;
         type ArtistName;
+        type Mbid;
+        type Name;
         type PlayCount;
+        type Tracks;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Tracks = Unset;
-        type Name = Unset;
-        type Mbid = Unset;
         type ArtistName = Unset;
+        type Mbid = Unset;
+        type Name = Unset;
         type PlayCount = Unset;
-    }
-    ///State transition - sets the `tracks` field to Set
-    pub struct SetTracks<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTracks<St> {}
-    impl<St: State> State for SetTracks<St> {
-        type Tracks = Set<members::tracks>;
-        type Name = St::Name;
-        type Mbid = St::Mbid;
-        type ArtistName = St::ArtistName;
-        type PlayCount = St::PlayCount;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type Tracks = St::Tracks;
-        type Name = Set<members::name>;
-        type Mbid = St::Mbid;
-        type ArtistName = St::ArtistName;
-        type PlayCount = St::PlayCount;
-    }
-    ///State transition - sets the `mbid` field to Set
-    pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMbid<St> {}
-    impl<St: State> State for SetMbid<St> {
-        type Tracks = St::Tracks;
-        type Name = St::Name;
-        type Mbid = Set<members::mbid>;
-        type ArtistName = St::ArtistName;
-        type PlayCount = St::PlayCount;
+        type Tracks = Unset;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetArtistName<St> {}
     impl<St: State> State for SetArtistName<St> {
-        type Tracks = St::Tracks;
-        type Name = St::Name;
-        type Mbid = St::Mbid;
         type ArtistName = Set<members::artist_name>;
+        type Mbid = St::Mbid;
+        type Name = St::Name;
         type PlayCount = St::PlayCount;
+        type Tracks = St::Tracks;
+    }
+    ///State transition - sets the `mbid` field to Set
+    pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMbid<St> {}
+    impl<St: State> State for SetMbid<St> {
+        type ArtistName = St::ArtistName;
+        type Mbid = Set<members::mbid>;
+        type Name = St::Name;
+        type PlayCount = St::PlayCount;
+        type Tracks = St::Tracks;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type ArtistName = St::ArtistName;
+        type Mbid = St::Mbid;
+        type Name = Set<members::name>;
+        type PlayCount = St::PlayCount;
+        type Tracks = St::Tracks;
     }
     ///State transition - sets the `play_count` field to Set
     pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPlayCount<St> {}
     impl<St: State> State for SetPlayCount<St> {
-        type Tracks = St::Tracks;
-        type Name = St::Name;
-        type Mbid = St::Mbid;
         type ArtistName = St::ArtistName;
+        type Mbid = St::Mbid;
+        type Name = St::Name;
         type PlayCount = Set<members::play_count>;
+        type Tracks = St::Tracks;
+    }
+    ///State transition - sets the `tracks` field to Set
+    pub struct SetTracks<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTracks<St> {}
+    impl<St: State> State for SetTracks<St> {
+        type ArtistName = St::ArtistName;
+        type Mbid = St::Mbid;
+        type Name = St::Name;
+        type PlayCount = St::PlayCount;
+        type Tracks = Set<members::tracks>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `tracks` field
-        pub struct tracks(());
-        ///Marker type for the `name` field
-        pub struct name(());
-        ///Marker type for the `mbid` field
-        pub struct mbid(());
         ///Marker type for the `artist_name` field
         pub struct artist_name(());
+        ///Marker type for the `mbid` field
+        pub struct mbid(());
+        ///Marker type for the `name` field
+        pub struct name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
+        ///Marker type for the `tracks` field
+        pub struct tracks(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AlbumViewBuilder<S: BosStr, St: album_view_state::State> {
+pub struct AlbumViewBuilder<St: album_view_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<UriValue<S>>,
@@ -907,15 +926,22 @@ pub struct AlbumViewBuilder<S: BosStr, St: album_view_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AlbumView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AlbumViewBuilder<S, album_view_state::Empty> {
+impl AlbumView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AlbumViewBuilder<album_view_state::Empty, DefaultStr> {
         AlbumViewBuilder::new()
     }
 }
 
-impl<S: BosStr> AlbumViewBuilder<S, album_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AlbumView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AlbumViewBuilder<album_view_state::Empty, S> {
+        AlbumViewBuilder::builder()
+    }
+}
+
+impl AlbumViewBuilder<album_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AlbumViewBuilder {
             _state: PhantomData,
@@ -925,7 +951,18 @@ impl<S: BosStr> AlbumViewBuilder<S, album_view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: album_view_state::State> AlbumViewBuilder<S, St> {
+impl<S: BosStr> AlbumViewBuilder<album_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AlbumViewBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: album_view_state::State, S: BosStr> AlbumViewBuilder<St, S> {
     /// Set the `artistMbid` field (optional)
     pub fn artist_mbid(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -938,7 +975,7 @@ impl<S: BosStr, St: album_view_state::State> AlbumViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AlbumViewBuilder<S, St>
+impl<St, S: BosStr> AlbumViewBuilder<St, S>
 where
     St: album_view_state::State,
     St::ArtistName: album_view_state::IsUnset,
@@ -947,7 +984,7 @@ where
     pub fn artist_name(
         mut self,
         value: impl Into<S>,
-    ) -> AlbumViewBuilder<S, album_view_state::SetArtistName<St>> {
+    ) -> AlbumViewBuilder<album_view_state::SetArtistName<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AlbumViewBuilder {
             _state: PhantomData,
@@ -957,7 +994,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumViewBuilder<S, St>
+impl<St, S: BosStr> AlbumViewBuilder<St, S>
 where
     St: album_view_state::State,
     St::Mbid: album_view_state::IsUnset,
@@ -966,7 +1003,7 @@ where
     pub fn mbid(
         mut self,
         value: impl Into<UriValue<S>>,
-    ) -> AlbumViewBuilder<S, album_view_state::SetMbid<St>> {
+    ) -> AlbumViewBuilder<album_view_state::SetMbid<St>, S> {
         self._fields.2 = Option::Some(value.into());
         AlbumViewBuilder {
             _state: PhantomData,
@@ -976,7 +1013,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumViewBuilder<S, St>
+impl<St, S: BosStr> AlbumViewBuilder<St, S>
 where
     St: album_view_state::State,
     St::Name: album_view_state::IsUnset,
@@ -985,7 +1022,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> AlbumViewBuilder<S, album_view_state::SetName<St>> {
+    ) -> AlbumViewBuilder<album_view_state::SetName<St>, S> {
         self._fields.3 = Option::Some(value.into());
         AlbumViewBuilder {
             _state: PhantomData,
@@ -995,7 +1032,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumViewBuilder<S, St>
+impl<St, S: BosStr> AlbumViewBuilder<St, S>
 where
     St: album_view_state::State,
     St::PlayCount: album_view_state::IsUnset,
@@ -1004,7 +1041,7 @@ where
     pub fn play_count(
         mut self,
         value: impl Into<i64>,
-    ) -> AlbumViewBuilder<S, album_view_state::SetPlayCount<St>> {
+    ) -> AlbumViewBuilder<album_view_state::SetPlayCount<St>, S> {
         self._fields.4 = Option::Some(value.into());
         AlbumViewBuilder {
             _state: PhantomData,
@@ -1014,7 +1051,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumViewBuilder<S, St>
+impl<St, S: BosStr> AlbumViewBuilder<St, S>
 where
     St: album_view_state::State,
     St::Tracks: album_view_state::IsUnset,
@@ -1023,7 +1060,7 @@ where
     pub fn tracks(
         mut self,
         value: impl Into<Vec<music::TrackSummary<S>>>,
-    ) -> AlbumViewBuilder<S, album_view_state::SetTracks<St>> {
+    ) -> AlbumViewBuilder<album_view_state::SetTracks<St>, S> {
         self._fields.5 = Option::Some(value.into());
         AlbumViewBuilder {
             _state: PhantomData,
@@ -1033,14 +1070,14 @@ where
     }
 }
 
-impl<S: BosStr, St> AlbumViewBuilder<S, St>
+impl<St, S: BosStr> AlbumViewBuilder<St, S>
 where
     St: album_view_state::State,
-    St::Tracks: album_view_state::IsSet,
-    St::Name: album_view_state::IsSet,
-    St::Mbid: album_view_state::IsSet,
     St::ArtistName: album_view_state::IsSet,
+    St::Mbid: album_view_state::IsSet,
+    St::Name: album_view_state::IsSet,
     St::PlayCount: album_view_state::IsSet,
+    St::Tracks: album_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AlbumView<S> {
@@ -1116,21 +1153,34 @@ pub mod artist_listener_view_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ArtistListenerViewBuilder<S: BosStr, St: artist_listener_view_state::State> {
+pub struct ArtistListenerViewBuilder<
+    St: artist_listener_view_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<MiniProfileView<S>>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ArtistListenerView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ArtistListenerViewBuilder<S, artist_listener_view_state::Empty> {
+impl ArtistListenerView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ArtistListenerViewBuilder<
+        artist_listener_view_state::Empty,
+        DefaultStr,
+    > {
         ArtistListenerViewBuilder::new()
     }
 }
 
-impl<S: BosStr> ArtistListenerViewBuilder<S, artist_listener_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ArtistListenerView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ArtistListenerViewBuilder<artist_listener_view_state::Empty, S> {
+        ArtistListenerViewBuilder::builder()
+    }
+}
+
+impl ArtistListenerViewBuilder<artist_listener_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ArtistListenerViewBuilder {
             _state: PhantomData,
@@ -1140,7 +1190,18 @@ impl<S: BosStr> ArtistListenerViewBuilder<S, artist_listener_view_state::Empty> 
     }
 }
 
-impl<S: BosStr, St> ArtistListenerViewBuilder<S, St>
+impl<S: BosStr> ArtistListenerViewBuilder<artist_listener_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ArtistListenerViewBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ArtistListenerViewBuilder<St, S>
 where
     St: artist_listener_view_state::State,
     St::Actor: artist_listener_view_state::IsUnset,
@@ -1149,7 +1210,7 @@ where
     pub fn actor(
         mut self,
         value: impl Into<MiniProfileView<S>>,
-    ) -> ArtistListenerViewBuilder<S, artist_listener_view_state::SetActor<St>> {
+    ) -> ArtistListenerViewBuilder<artist_listener_view_state::SetActor<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ArtistListenerViewBuilder {
             _state: PhantomData,
@@ -1159,7 +1220,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ArtistListenerViewBuilder<S, St>
+impl<St, S: BosStr> ArtistListenerViewBuilder<St, S>
 where
     St: artist_listener_view_state::State,
     St::PlayCount: artist_listener_view_state::IsUnset,
@@ -1168,7 +1229,7 @@ where
     pub fn play_count(
         mut self,
         value: impl Into<i64>,
-    ) -> ArtistListenerViewBuilder<S, artist_listener_view_state::SetPlayCount<St>> {
+    ) -> ArtistListenerViewBuilder<artist_listener_view_state::SetPlayCount<St>, S> {
         self._fields.1 = Option::Some(value.into());
         ArtistListenerViewBuilder {
             _state: PhantomData,
@@ -1178,7 +1239,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ArtistListenerViewBuilder<S, St>
+impl<St, S: BosStr> ArtistListenerViewBuilder<St, S>
 where
     St: artist_listener_view_state::State,
     St::Actor: artist_listener_view_state::IsSet,
@@ -1215,56 +1276,56 @@ pub mod artist_view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Name;
         type Albums;
+        type Name;
         type PlayCount;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Name = Unset;
         type Albums = Unset;
+        type Name = Unset;
         type PlayCount = Unset;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type Name = Set<members::name>;
-        type Albums = St::Albums;
-        type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `albums` field to Set
     pub struct SetAlbums<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAlbums<St> {}
     impl<St: State> State for SetAlbums<St> {
-        type Name = St::Name;
         type Albums = Set<members::albums>;
+        type Name = St::Name;
+        type PlayCount = St::PlayCount;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type Albums = St::Albums;
+        type Name = Set<members::name>;
         type PlayCount = St::PlayCount;
     }
     ///State transition - sets the `play_count` field to Set
     pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPlayCount<St> {}
     impl<St: State> State for SetPlayCount<St> {
-        type Name = St::Name;
         type Albums = St::Albums;
+        type Name = St::Name;
         type PlayCount = Set<members::play_count>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `name` field
-        pub struct name(());
         ///Marker type for the `albums` field
         pub struct albums(());
+        ///Marker type for the `name` field
+        pub struct name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ArtistViewBuilder<S: BosStr, St: artist_view_state::State> {
+pub struct ArtistViewBuilder<St: artist_view_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Vec<music::AlbumSummary<S>>>,
@@ -1275,15 +1336,22 @@ pub struct ArtistViewBuilder<S: BosStr, St: artist_view_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ArtistView<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ArtistViewBuilder<S, artist_view_state::Empty> {
+impl ArtistView<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ArtistViewBuilder<artist_view_state::Empty, DefaultStr> {
         ArtistViewBuilder::new()
     }
 }
 
-impl<S: BosStr> ArtistViewBuilder<S, artist_view_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ArtistView<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ArtistViewBuilder<artist_view_state::Empty, S> {
+        ArtistViewBuilder::builder()
+    }
+}
+
+impl ArtistViewBuilder<artist_view_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ArtistViewBuilder {
             _state: PhantomData,
@@ -1293,7 +1361,18 @@ impl<S: BosStr> ArtistViewBuilder<S, artist_view_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ArtistViewBuilder<S, St>
+impl<S: BosStr> ArtistViewBuilder<artist_view_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ArtistViewBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ArtistViewBuilder<St, S>
 where
     St: artist_view_state::State,
     St::Albums: artist_view_state::IsUnset,
@@ -1302,7 +1381,7 @@ where
     pub fn albums(
         mut self,
         value: impl Into<Vec<music::AlbumSummary<S>>>,
-    ) -> ArtistViewBuilder<S, artist_view_state::SetAlbums<St>> {
+    ) -> ArtistViewBuilder<artist_view_state::SetAlbums<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ArtistViewBuilder {
             _state: PhantomData,
@@ -1312,7 +1391,7 @@ where
     }
 }
 
-impl<S: BosStr, St: artist_view_state::State> ArtistViewBuilder<S, St> {
+impl<St: artist_view_state::State, S: BosStr> ArtistViewBuilder<St, S> {
     /// Set the `mbid` field (optional)
     pub fn mbid(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -1325,7 +1404,7 @@ impl<S: BosStr, St: artist_view_state::State> ArtistViewBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ArtistViewBuilder<S, St>
+impl<St, S: BosStr> ArtistViewBuilder<St, S>
 where
     St: artist_view_state::State,
     St::Name: artist_view_state::IsUnset,
@@ -1334,7 +1413,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> ArtistViewBuilder<S, artist_view_state::SetName<St>> {
+    ) -> ArtistViewBuilder<artist_view_state::SetName<St>, S> {
         self._fields.2 = Option::Some(value.into());
         ArtistViewBuilder {
             _state: PhantomData,
@@ -1344,7 +1423,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ArtistViewBuilder<S, St>
+impl<St, S: BosStr> ArtistViewBuilder<St, S>
 where
     St: artist_view_state::State,
     St::PlayCount: artist_view_state::IsUnset,
@@ -1353,7 +1432,7 @@ where
     pub fn play_count(
         mut self,
         value: impl Into<i64>,
-    ) -> ArtistViewBuilder<S, artist_view_state::SetPlayCount<St>> {
+    ) -> ArtistViewBuilder<artist_view_state::SetPlayCount<St>, S> {
         self._fields.3 = Option::Some(value.into());
         ArtistViewBuilder {
             _state: PhantomData,
@@ -1363,11 +1442,11 @@ where
     }
 }
 
-impl<S: BosStr, St> ArtistViewBuilder<S, St>
+impl<St, S: BosStr> ArtistViewBuilder<St, S>
 where
     St: artist_view_state::State,
-    St::Name: artist_view_state::IsSet,
     St::Albums: artist_view_state::IsSet,
+    St::Name: artist_view_state::IsSet,
     St::PlayCount: artist_view_state::IsSet,
 {
     /// Build the final struct.
@@ -1405,86 +1484,93 @@ pub mod track_summary_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Name;
         type ArtistName;
-        type Uri;
+        type Name;
         type PlayCount;
+        type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Name = Unset;
         type ArtistName = Unset;
-        type Uri = Unset;
+        type Name = Unset;
         type PlayCount = Unset;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type Name = Set<members::name>;
-        type ArtistName = St::ArtistName;
-        type Uri = St::Uri;
-        type PlayCount = St::PlayCount;
+        type Uri = Unset;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetArtistName<St> {}
     impl<St: State> State for SetArtistName<St> {
-        type Name = St::Name;
         type ArtistName = Set<members::artist_name>;
-        type Uri = St::Uri;
-        type PlayCount = St::PlayCount;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
         type Name = St::Name;
-        type ArtistName = St::ArtistName;
-        type Uri = Set<members::uri>;
         type PlayCount = St::PlayCount;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type ArtistName = St::ArtistName;
+        type Name = Set<members::name>;
+        type PlayCount = St::PlayCount;
+        type Uri = St::Uri;
     }
     ///State transition - sets the `play_count` field to Set
     pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPlayCount<St> {}
     impl<St: State> State for SetPlayCount<St> {
-        type Name = St::Name;
         type ArtistName = St::ArtistName;
-        type Uri = St::Uri;
+        type Name = St::Name;
         type PlayCount = Set<members::play_count>;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type ArtistName = St::ArtistName;
+        type Name = St::Name;
+        type PlayCount = St::PlayCount;
+        type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `name` field
-        pub struct name(());
         ///Marker type for the `artist_name` field
         pub struct artist_name(());
-        ///Marker type for the `uri` field
-        pub struct uri(());
+        ///Marker type for the `name` field
+        pub struct name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct TrackSummaryBuilder<S: BosStr, St: track_summary_state::State> {
+pub struct TrackSummaryBuilder<St: track_summary_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<S>, Option<i64>, Option<UriValue<S>>, Option<AtUri<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> TrackSummary<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> TrackSummaryBuilder<S, track_summary_state::Empty> {
+impl TrackSummary<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> TrackSummaryBuilder<track_summary_state::Empty, DefaultStr> {
         TrackSummaryBuilder::new()
     }
 }
 
-impl<S: BosStr> TrackSummaryBuilder<S, track_summary_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> TrackSummary<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> TrackSummaryBuilder<track_summary_state::Empty, S> {
+        TrackSummaryBuilder::builder()
+    }
+}
+
+impl TrackSummaryBuilder<track_summary_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         TrackSummaryBuilder {
             _state: PhantomData,
@@ -1494,7 +1580,18 @@ impl<S: BosStr> TrackSummaryBuilder<S, track_summary_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> TrackSummaryBuilder<S, St>
+impl<S: BosStr> TrackSummaryBuilder<track_summary_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        TrackSummaryBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> TrackSummaryBuilder<St, S>
 where
     St: track_summary_state::State,
     St::ArtistName: track_summary_state::IsUnset,
@@ -1503,7 +1600,7 @@ where
     pub fn artist_name(
         mut self,
         value: impl Into<S>,
-    ) -> TrackSummaryBuilder<S, track_summary_state::SetArtistName<St>> {
+    ) -> TrackSummaryBuilder<track_summary_state::SetArtistName<St>, S> {
         self._fields.0 = Option::Some(value.into());
         TrackSummaryBuilder {
             _state: PhantomData,
@@ -1513,7 +1610,7 @@ where
     }
 }
 
-impl<S: BosStr, St> TrackSummaryBuilder<S, St>
+impl<St, S: BosStr> TrackSummaryBuilder<St, S>
 where
     St: track_summary_state::State,
     St::Name: track_summary_state::IsUnset,
@@ -1522,7 +1619,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> TrackSummaryBuilder<S, track_summary_state::SetName<St>> {
+    ) -> TrackSummaryBuilder<track_summary_state::SetName<St>, S> {
         self._fields.1 = Option::Some(value.into());
         TrackSummaryBuilder {
             _state: PhantomData,
@@ -1532,7 +1629,7 @@ where
     }
 }
 
-impl<S: BosStr, St> TrackSummaryBuilder<S, St>
+impl<St, S: BosStr> TrackSummaryBuilder<St, S>
 where
     St: track_summary_state::State,
     St::PlayCount: track_summary_state::IsUnset,
@@ -1541,7 +1638,7 @@ where
     pub fn play_count(
         mut self,
         value: impl Into<i64>,
-    ) -> TrackSummaryBuilder<S, track_summary_state::SetPlayCount<St>> {
+    ) -> TrackSummaryBuilder<track_summary_state::SetPlayCount<St>, S> {
         self._fields.2 = Option::Some(value.into());
         TrackSummaryBuilder {
             _state: PhantomData,
@@ -1551,7 +1648,7 @@ where
     }
 }
 
-impl<S: BosStr, St: track_summary_state::State> TrackSummaryBuilder<S, St> {
+impl<St: track_summary_state::State, S: BosStr> TrackSummaryBuilder<St, S> {
     /// Set the `recordingMbid` field (optional)
     pub fn recording_mbid(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.3 = value.into();
@@ -1564,7 +1661,7 @@ impl<S: BosStr, St: track_summary_state::State> TrackSummaryBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> TrackSummaryBuilder<S, St>
+impl<St, S: BosStr> TrackSummaryBuilder<St, S>
 where
     St: track_summary_state::State,
     St::Uri: track_summary_state::IsUnset,
@@ -1573,7 +1670,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> TrackSummaryBuilder<S, track_summary_state::SetUri<St>> {
+    ) -> TrackSummaryBuilder<track_summary_state::SetUri<St>, S> {
         self._fields.4 = Option::Some(value.into());
         TrackSummaryBuilder {
             _state: PhantomData,
@@ -1583,13 +1680,13 @@ where
     }
 }
 
-impl<S: BosStr, St> TrackSummaryBuilder<S, St>
+impl<St, S: BosStr> TrackSummaryBuilder<St, S>
 where
     St: track_summary_state::State,
-    St::Name: track_summary_state::IsSet,
     St::ArtistName: track_summary_state::IsSet,
-    St::Uri: track_summary_state::IsSet,
+    St::Name: track_summary_state::IsSet,
     St::PlayCount: track_summary_state::IsSet,
+    St::Uri: track_summary_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> TrackSummary<S> {

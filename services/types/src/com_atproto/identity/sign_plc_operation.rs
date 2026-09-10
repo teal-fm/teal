@@ -44,7 +44,9 @@ pub struct SignPlcOperationOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.identity.signPlcOperation
+/** Response marker for the `com.atproto.identity.signPlcOperation` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SignPlcOperationOutput<S>` for this endpoint.*/
 pub struct SignPlcOperationResponse;
 impl jacquard_common::xrpc::XrpcResp for SignPlcOperationResponse {
     const NSID: &'static str = "com.atproto.identity.signPlcOperation";
@@ -61,7 +63,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SignPlcOperation<S> {
     type Response = SignPlcOperationResponse;
 }
 
-/// Endpoint type for com.atproto.identity.signPlcOperation
+/** Endpoint marker for the `com.atproto.identity.signPlcOperation` procedure.
+
+Path: `/xrpc/com.atproto.identity.signPlcOperation`. The request payload type is `SignPlcOperation<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SignPlcOperationRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SignPlcOperationRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.signPlcOperation";

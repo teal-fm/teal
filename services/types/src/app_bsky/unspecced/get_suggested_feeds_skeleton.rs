@@ -20,7 +20,7 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetSuggestedFeedsSkeleton<S: BosStr = DefaultStr> {
-    ///Defaults to `10`. Min: 1. Max: 25.
+    /// Defaults to `10`. Min: 1. Max: 25.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -37,7 +37,9 @@ pub struct GetSuggestedFeedsSkeletonOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.unspecced.getSuggestedFeedsSkeleton
+/** Response marker for the `app.bsky.unspecced.getSuggestedFeedsSkeleton` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSuggestedFeedsSkeletonOutput<S>` for this endpoint.*/
 pub struct GetSuggestedFeedsSkeletonResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSuggestedFeedsSkeletonResponse {
     const NSID: &'static str = "app.bsky.unspecced.getSuggestedFeedsSkeleton";
@@ -52,7 +54,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetSuggestedFeedsSkeleton
     type Response = GetSuggestedFeedsSkeletonResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getSuggestedFeedsSkeleton
+/** Endpoint marker for the `app.bsky.unspecced.getSuggestedFeedsSkeleton` query.
+
+Path: `/xrpc/app.bsky.unspecced.getSuggestedFeedsSkeleton`. The request payload type is `GetSuggestedFeedsSkeleton<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSuggestedFeedsSkeletonRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSuggestedFeedsSkeletonRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getSuggestedFeedsSkeleton";
@@ -86,28 +90,39 @@ pub mod get_suggested_feeds_skeleton_state {
 
 /// Builder for constructing an instance of this type.
 pub struct GetSuggestedFeedsSkeletonBuilder<
-    S: BosStr,
     St: get_suggested_feeds_skeleton_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<i64>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetSuggestedFeedsSkeleton<S> {
-    /// Create a new builder for this type.
+impl GetSuggestedFeedsSkeleton<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> GetSuggestedFeedsSkeletonBuilder<
-        S,
         get_suggested_feeds_skeleton_state::Empty,
+        DefaultStr,
     > {
         GetSuggestedFeedsSkeletonBuilder::new()
     }
 }
 
-impl<
-    S: BosStr,
-> GetSuggestedFeedsSkeletonBuilder<S, get_suggested_feeds_skeleton_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetSuggestedFeedsSkeleton<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetSuggestedFeedsSkeletonBuilder<
+        get_suggested_feeds_skeleton_state::Empty,
+        S,
+    > {
+        GetSuggestedFeedsSkeletonBuilder::builder()
+    }
+}
+
+impl GetSuggestedFeedsSkeletonBuilder<
+    get_suggested_feeds_skeleton_state::Empty,
+    DefaultStr,
+> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetSuggestedFeedsSkeletonBuilder {
             _state: PhantomData,
@@ -119,8 +134,21 @@ impl<
 
 impl<
     S: BosStr,
+> GetSuggestedFeedsSkeletonBuilder<get_suggested_feeds_skeleton_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetSuggestedFeedsSkeletonBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<
     St: get_suggested_feeds_skeleton_state::State,
-> GetSuggestedFeedsSkeletonBuilder<S, St> {
+    S: BosStr,
+> GetSuggestedFeedsSkeletonBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.0 = value.into();
@@ -134,9 +162,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: get_suggested_feeds_skeleton_state::State,
-> GetSuggestedFeedsSkeletonBuilder<S, St> {
+    S: BosStr,
+> GetSuggestedFeedsSkeletonBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -149,7 +177,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> GetSuggestedFeedsSkeletonBuilder<S, St>
+impl<St, S: BosStr> GetSuggestedFeedsSkeletonBuilder<St, S>
 where
     St: get_suggested_feeds_skeleton_state::State,
 {

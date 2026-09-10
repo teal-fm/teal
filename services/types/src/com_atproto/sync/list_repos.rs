@@ -31,7 +31,7 @@ use crate::com_atproto::sync::list_repos;
 pub struct ListRepos<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `500`. Min: 1. Max: 1000.
+    /// Defaults to `500`. Min: 1. Max: 1000.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -160,7 +160,9 @@ where
     }
 }
 
-/// Response type for com.atproto.sync.listRepos
+/** Response marker for the `com.atproto.sync.listRepos` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ListReposOutput<S>` for this endpoint.*/
 pub struct ListReposResponse;
 impl jacquard_common::xrpc::XrpcResp for ListReposResponse {
     const NSID: &'static str = "com.atproto.sync.listRepos";
@@ -175,7 +177,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ListRepos<S> {
     type Response = ListReposResponse;
 }
 
-/// Endpoint type for com.atproto.sync.listRepos
+/** Endpoint marker for the `com.atproto.sync.listRepos` query.
+
+Path: `/xrpc/com.atproto.sync.listRepos`. The request payload type is `ListRepos<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ListReposRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ListReposRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.listRepos";
@@ -223,21 +227,28 @@ pub mod list_repos_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ListReposBuilder<S: BosStr, St: list_repos_state::State> {
+pub struct ListReposBuilder<St: list_repos_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ListRepos<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ListReposBuilder<S, list_repos_state::Empty> {
+impl ListRepos<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListReposBuilder<list_repos_state::Empty, DefaultStr> {
         ListReposBuilder::new()
     }
 }
 
-impl<S: BosStr> ListReposBuilder<S, list_repos_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ListRepos<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListReposBuilder<list_repos_state::Empty, S> {
+        ListReposBuilder::builder()
+    }
+}
+
+impl ListReposBuilder<list_repos_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListReposBuilder {
             _state: PhantomData,
@@ -247,7 +258,18 @@ impl<S: BosStr> ListReposBuilder<S, list_repos_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: list_repos_state::State> ListReposBuilder<S, St> {
+impl<S: BosStr> ListReposBuilder<list_repos_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListReposBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: list_repos_state::State, S: BosStr> ListReposBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -260,7 +282,7 @@ impl<S: BosStr, St: list_repos_state::State> ListReposBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: list_repos_state::State> ListReposBuilder<S, St> {
+impl<St: list_repos_state::State, S: BosStr> ListReposBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -273,7 +295,7 @@ impl<S: BosStr, St: list_repos_state::State> ListReposBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ListReposBuilder<S, St>
+impl<St, S: BosStr> ListReposBuilder<St, S>
 where
     St: list_repos_state::State,
 {
@@ -345,7 +367,7 @@ pub mod repo_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RepoBuilder<S: BosStr, St: repo_state::State> {
+pub struct RepoBuilder<St: repo_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<bool>,
@@ -357,15 +379,22 @@ pub struct RepoBuilder<S: BosStr, St: repo_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Repo<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RepoBuilder<S, repo_state::Empty> {
+impl Repo<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RepoBuilder<repo_state::Empty, DefaultStr> {
         RepoBuilder::new()
     }
 }
 
-impl<S: BosStr> RepoBuilder<S, repo_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Repo<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RepoBuilder<repo_state::Empty, S> {
+        RepoBuilder::builder()
+    }
+}
+
+impl RepoBuilder<repo_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RepoBuilder {
             _state: PhantomData,
@@ -375,7 +404,18 @@ impl<S: BosStr> RepoBuilder<S, repo_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: repo_state::State> RepoBuilder<S, St> {
+impl<S: BosStr> RepoBuilder<repo_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RepoBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: repo_state::State, S: BosStr> RepoBuilder<St, S> {
     /// Set the `active` field (optional)
     pub fn active(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.0 = value.into();
@@ -388,7 +428,7 @@ impl<S: BosStr, St: repo_state::State> RepoBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> RepoBuilder<S, St>
+impl<St, S: BosStr> RepoBuilder<St, S>
 where
     St: repo_state::State,
     St::Did: repo_state::IsUnset,
@@ -397,7 +437,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> RepoBuilder<S, repo_state::SetDid<St>> {
+    ) -> RepoBuilder<repo_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         RepoBuilder {
             _state: PhantomData,
@@ -407,7 +447,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RepoBuilder<S, St>
+impl<St, S: BosStr> RepoBuilder<St, S>
 where
     St: repo_state::State,
     St::Head: repo_state::IsUnset,
@@ -416,7 +456,7 @@ where
     pub fn head(
         mut self,
         value: impl Into<Cid<S>>,
-    ) -> RepoBuilder<S, repo_state::SetHead<St>> {
+    ) -> RepoBuilder<repo_state::SetHead<St>, S> {
         self._fields.2 = Option::Some(value.into());
         RepoBuilder {
             _state: PhantomData,
@@ -426,7 +466,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RepoBuilder<S, St>
+impl<St, S: BosStr> RepoBuilder<St, S>
 where
     St: repo_state::State,
     St::Rev: repo_state::IsUnset,
@@ -435,7 +475,7 @@ where
     pub fn rev(
         mut self,
         value: impl Into<Tid>,
-    ) -> RepoBuilder<S, repo_state::SetRev<St>> {
+    ) -> RepoBuilder<repo_state::SetRev<St>, S> {
         self._fields.3 = Option::Some(value.into());
         RepoBuilder {
             _state: PhantomData,
@@ -445,7 +485,7 @@ where
     }
 }
 
-impl<S: BosStr, St: repo_state::State> RepoBuilder<S, St> {
+impl<St: repo_state::State, S: BosStr> RepoBuilder<St, S> {
     /// Set the `status` field (optional)
     pub fn status(mut self, value: impl Into<Option<RepoStatus<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -458,7 +498,7 @@ impl<S: BosStr, St: repo_state::State> RepoBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> RepoBuilder<S, St>
+impl<St, S: BosStr> RepoBuilder<St, S>
 where
     St: repo_state::State,
     St::Did: repo_state::IsSet,

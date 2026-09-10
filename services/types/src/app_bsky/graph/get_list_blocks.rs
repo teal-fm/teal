@@ -22,7 +22,7 @@ use crate::app_bsky::graph::ListView;
 pub struct GetListBlocks<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -39,7 +39,9 @@ pub struct GetListBlocksOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.getListBlocks
+/** Response marker for the `app.bsky.graph.getListBlocks` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetListBlocksOutput<S>` for this endpoint.*/
 pub struct GetListBlocksResponse;
 impl jacquard_common::xrpc::XrpcResp for GetListBlocksResponse {
     const NSID: &'static str = "app.bsky.graph.getListBlocks";
@@ -54,7 +56,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetListBlocks<S> {
     type Response = GetListBlocksResponse;
 }
 
-/// Endpoint type for app.bsky.graph.getListBlocks
+/** Endpoint marker for the `app.bsky.graph.getListBlocks` query.
+
+Path: `/xrpc/app.bsky.graph.getListBlocks`. The request payload type is `GetListBlocks<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetListBlocksRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetListBlocksRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.getListBlocks";
@@ -87,21 +91,31 @@ pub mod get_list_blocks_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetListBlocksBuilder<S: BosStr, St: get_list_blocks_state::State> {
+pub struct GetListBlocksBuilder<
+    St: get_list_blocks_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetListBlocks<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetListBlocksBuilder<S, get_list_blocks_state::Empty> {
+impl GetListBlocks<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetListBlocksBuilder<get_list_blocks_state::Empty, DefaultStr> {
         GetListBlocksBuilder::new()
     }
 }
 
-impl<S: BosStr> GetListBlocksBuilder<S, get_list_blocks_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetListBlocks<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetListBlocksBuilder<get_list_blocks_state::Empty, S> {
+        GetListBlocksBuilder::builder()
+    }
+}
+
+impl GetListBlocksBuilder<get_list_blocks_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetListBlocksBuilder {
             _state: PhantomData,
@@ -111,7 +125,18 @@ impl<S: BosStr> GetListBlocksBuilder<S, get_list_blocks_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_list_blocks_state::State> GetListBlocksBuilder<S, St> {
+impl<S: BosStr> GetListBlocksBuilder<get_list_blocks_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetListBlocksBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_list_blocks_state::State, S: BosStr> GetListBlocksBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -124,7 +149,7 @@ impl<S: BosStr, St: get_list_blocks_state::State> GetListBlocksBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_list_blocks_state::State> GetListBlocksBuilder<S, St> {
+impl<St: get_list_blocks_state::State, S: BosStr> GetListBlocksBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -137,7 +162,7 @@ impl<S: BosStr, St: get_list_blocks_state::State> GetListBlocksBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetListBlocksBuilder<S, St>
+impl<St, S: BosStr> GetListBlocksBuilder<St, S>
 where
     St: get_list_blocks_state::State,
 {

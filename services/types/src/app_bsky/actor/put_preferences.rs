@@ -25,7 +25,9 @@ pub struct PutPreferences<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.actor.putPreferences
+/** Response marker for the `app.bsky.actor.putPreferences` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct PutPreferencesResponse;
 impl jacquard_common::xrpc::XrpcResp for PutPreferencesResponse {
     const NSID: &'static str = "app.bsky.actor.putPreferences";
@@ -42,7 +44,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for PutPreferences<S> {
     type Response = PutPreferencesResponse;
 }
 
-/// Endpoint type for app.bsky.actor.putPreferences
+/** Endpoint marker for the `app.bsky.actor.putPreferences` procedure.
+
+Path: `/xrpc/app.bsky.actor.putPreferences`. The request payload type is `PutPreferences<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct PutPreferencesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for PutPreferencesRequest {
     const PATH: &'static str = "/xrpc/app.bsky.actor.putPreferences";
@@ -86,21 +90,31 @@ pub mod put_preferences_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct PutPreferencesBuilder<S: BosStr, St: put_preferences_state::State> {
+pub struct PutPreferencesBuilder<
+    St: put_preferences_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Preferences<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> PutPreferences<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> PutPreferencesBuilder<S, put_preferences_state::Empty> {
+impl PutPreferences<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> PutPreferencesBuilder<put_preferences_state::Empty, DefaultStr> {
         PutPreferencesBuilder::new()
     }
 }
 
-impl<S: BosStr> PutPreferencesBuilder<S, put_preferences_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> PutPreferences<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PutPreferencesBuilder<put_preferences_state::Empty, S> {
+        PutPreferencesBuilder::builder()
+    }
+}
+
+impl PutPreferencesBuilder<put_preferences_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PutPreferencesBuilder {
             _state: PhantomData,
@@ -110,7 +124,18 @@ impl<S: BosStr> PutPreferencesBuilder<S, put_preferences_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> PutPreferencesBuilder<S, St>
+impl<S: BosStr> PutPreferencesBuilder<put_preferences_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PutPreferencesBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> PutPreferencesBuilder<St, S>
 where
     St: put_preferences_state::State,
     St::Preferences: put_preferences_state::IsUnset,
@@ -119,7 +144,7 @@ where
     pub fn preferences(
         mut self,
         value: impl Into<Preferences<S>>,
-    ) -> PutPreferencesBuilder<S, put_preferences_state::SetPreferences<St>> {
+    ) -> PutPreferencesBuilder<put_preferences_state::SetPreferences<St>, S> {
         self._fields.0 = Option::Some(value.into());
         PutPreferencesBuilder {
             _state: PhantomData,
@@ -129,7 +154,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PutPreferencesBuilder<S, St>
+impl<St, S: BosStr> PutPreferencesBuilder<St, S>
 where
     St: put_preferences_state::State,
     St::Preferences: put_preferences_state::IsSet,

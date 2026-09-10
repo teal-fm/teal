@@ -21,7 +21,7 @@ use crate::app_bsky::unspecced::SkeletonTrend;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetTrendsSkeleton<S: BosStr = DefaultStr> {
-    ///Defaults to `10`. Min: 1. Max: 25.
+    /// Defaults to `10`. Min: 1. Max: 25.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -38,7 +38,9 @@ pub struct GetTrendsSkeletonOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.unspecced.getTrendsSkeleton
+/** Response marker for the `app.bsky.unspecced.getTrendsSkeleton` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetTrendsSkeletonOutput<S>` for this endpoint.*/
 pub struct GetTrendsSkeletonResponse;
 impl jacquard_common::xrpc::XrpcResp for GetTrendsSkeletonResponse {
     const NSID: &'static str = "app.bsky.unspecced.getTrendsSkeleton";
@@ -53,7 +55,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetTrendsSkeleton<S> {
     type Response = GetTrendsSkeletonResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getTrendsSkeleton
+/** Endpoint marker for the `app.bsky.unspecced.getTrendsSkeleton` query.
+
+Path: `/xrpc/app.bsky.unspecced.getTrendsSkeleton`. The request payload type is `GetTrendsSkeleton<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetTrendsSkeletonRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetTrendsSkeletonRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getTrendsSkeleton";
@@ -86,21 +90,34 @@ pub mod get_trends_skeleton_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetTrendsSkeletonBuilder<S: BosStr, St: get_trends_skeleton_state::State> {
+pub struct GetTrendsSkeletonBuilder<
+    St: get_trends_skeleton_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<i64>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetTrendsSkeleton<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetTrendsSkeletonBuilder<S, get_trends_skeleton_state::Empty> {
+impl GetTrendsSkeleton<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetTrendsSkeletonBuilder<
+        get_trends_skeleton_state::Empty,
+        DefaultStr,
+    > {
         GetTrendsSkeletonBuilder::new()
     }
 }
 
-impl<S: BosStr> GetTrendsSkeletonBuilder<S, get_trends_skeleton_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetTrendsSkeleton<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetTrendsSkeletonBuilder<get_trends_skeleton_state::Empty, S> {
+        GetTrendsSkeletonBuilder::builder()
+    }
+}
+
+impl GetTrendsSkeletonBuilder<get_trends_skeleton_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetTrendsSkeletonBuilder {
             _state: PhantomData,
@@ -110,7 +127,18 @@ impl<S: BosStr> GetTrendsSkeletonBuilder<S, get_trends_skeleton_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_trends_skeleton_state::State> GetTrendsSkeletonBuilder<S, St> {
+impl<S: BosStr> GetTrendsSkeletonBuilder<get_trends_skeleton_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetTrendsSkeletonBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_trends_skeleton_state::State, S: BosStr> GetTrendsSkeletonBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.0 = value.into();
@@ -123,7 +151,7 @@ impl<S: BosStr, St: get_trends_skeleton_state::State> GetTrendsSkeletonBuilder<S
     }
 }
 
-impl<S: BosStr, St: get_trends_skeleton_state::State> GetTrendsSkeletonBuilder<S, St> {
+impl<St: get_trends_skeleton_state::State, S: BosStr> GetTrendsSkeletonBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -136,7 +164,7 @@ impl<S: BosStr, St: get_trends_skeleton_state::State> GetTrendsSkeletonBuilder<S
     }
 }
 
-impl<S: BosStr, St> GetTrendsSkeletonBuilder<S, St>
+impl<St, S: BosStr> GetTrendsSkeletonBuilder<St, S>
 where
     St: get_trends_skeleton_state::State,
 {

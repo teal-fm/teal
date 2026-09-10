@@ -28,7 +28,9 @@ pub struct DisableAccountInvites<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.admin.disableAccountInvites
+/** Response marker for the `com.atproto.admin.disableAccountInvites` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DisableAccountInvitesResponse;
 impl jacquard_common::xrpc::XrpcResp for DisableAccountInvitesResponse {
     const NSID: &'static str = "com.atproto.admin.disableAccountInvites";
@@ -45,7 +47,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DisableAccountInvites<S> 
     type Response = DisableAccountInvitesResponse;
 }
 
-/// Endpoint type for com.atproto.admin.disableAccountInvites
+/** Endpoint marker for the `com.atproto.admin.disableAccountInvites` procedure.
+
+Path: `/xrpc/com.atproto.admin.disableAccountInvites`. The request payload type is `DisableAccountInvites<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DisableAccountInvitesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DisableAccountInvitesRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.disableAccountInvites";
@@ -90,26 +94,36 @@ pub mod disable_account_invites_state {
 
 /// Builder for constructing an instance of this type.
 pub struct DisableAccountInvitesBuilder<
-    S: BosStr,
     St: disable_account_invites_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> DisableAccountInvites<S> {
-    /// Create a new builder for this type.
+impl DisableAccountInvites<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> DisableAccountInvitesBuilder<
-        S,
         disable_account_invites_state::Empty,
+        DefaultStr,
     > {
         DisableAccountInvitesBuilder::new()
     }
 }
 
-impl<S: BosStr> DisableAccountInvitesBuilder<S, disable_account_invites_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> DisableAccountInvites<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> DisableAccountInvitesBuilder<
+        disable_account_invites_state::Empty,
+        S,
+    > {
+        DisableAccountInvitesBuilder::builder()
+    }
+}
+
+impl DisableAccountInvitesBuilder<disable_account_invites_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         DisableAccountInvitesBuilder {
             _state: PhantomData,
@@ -119,7 +133,18 @@ impl<S: BosStr> DisableAccountInvitesBuilder<S, disable_account_invites_state::E
     }
 }
 
-impl<S: BosStr, St> DisableAccountInvitesBuilder<S, St>
+impl<S: BosStr> DisableAccountInvitesBuilder<disable_account_invites_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        DisableAccountInvitesBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> DisableAccountInvitesBuilder<St, S>
 where
     St: disable_account_invites_state::State,
     St::Account: disable_account_invites_state::IsUnset,
@@ -128,7 +153,7 @@ where
     pub fn account(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> DisableAccountInvitesBuilder<S, disable_account_invites_state::SetAccount<St>> {
+    ) -> DisableAccountInvitesBuilder<disable_account_invites_state::SetAccount<St>, S> {
         self._fields.0 = Option::Some(value.into());
         DisableAccountInvitesBuilder {
             _state: PhantomData,
@@ -139,9 +164,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: disable_account_invites_state::State,
-> DisableAccountInvitesBuilder<S, St> {
+    S: BosStr,
+> DisableAccountInvitesBuilder<St, S> {
     /// Set the `note` field (optional)
     pub fn note(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -154,7 +179,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> DisableAccountInvitesBuilder<S, St>
+impl<St, S: BosStr> DisableAccountInvitesBuilder<St, S>
 where
     St: disable_account_invites_state::State,
     St::Account: disable_account_invites_state::IsSet,

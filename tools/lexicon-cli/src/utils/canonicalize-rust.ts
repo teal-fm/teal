@@ -123,7 +123,7 @@ function sortTransitionBlocks(source: string): string {
     .filter((part) => part.trim().length > 0)
     .map((part) => sortTypeLines(part.replace(/^\n+/, "").replace(/\n+$/, "")));
 
-  transitions.sort((a, b) => transitionKey(a).localeCompare(transitionKey(b)));
+  transitions.sort((a, b) => compareKeys(transitionKey(a), transitionKey(b)));
 
   return `${prefix}${transitions.join("\n")}\n${suffix}`;
 }
@@ -141,7 +141,7 @@ function sortMembers(source: string): string {
     .map((part, index) => index === 0 ? part : `        ///Marker type for the \`${part}`)
     .filter((part) => part.trim().length > 0);
 
-  entries.sort((a, b) => memberKey(a).localeCompare(memberKey(b)));
+  entries.sort((a, b) => compareKeys(memberKey(a), memberKey(b)));
 
   const replacement = `    pub mod members {\n${entries.join("")}    }`;
   return source.slice(0, match.index) + replacement + source.slice(match.index + match[0].length);
@@ -155,15 +155,15 @@ function sortIsSetBounds(source: string): string {
 }
 
 function isSortableTypeLine(line: string): boolean {
-  return /^        type [A-Za-z][A-Za-z0-9_]*(?:;| = )/.test(line);
+  return /^        type (?:r#)?[A-Za-z][A-Za-z0-9_]*(?:;| = )/.test(line);
 }
 
 function compareByTypeName(left: string, right: string): number {
-  return typeKey(left).localeCompare(typeKey(right));
+  return compareKeys(typeKey(left), typeKey(right));
 }
 
 function typeKey(line: string): string {
-  return line.match(/\btype ([A-Za-z][A-Za-z0-9_]*)/)?.[1] ?? line;
+  return line.match(/\btype ((?:r#)?[A-Za-z][A-Za-z0-9_]*)/)?.[1].replace(/^r#/, "") ?? line;
 }
 
 function transitionKey(block: string): string {
@@ -173,5 +173,9 @@ function transitionKey(block: string): string {
 }
 
 function memberKey(entry: string): string {
-  return entry.match(/pub struct ((?:r#)?[A-Za-z_][A-Za-z0-9_]*)/)?.[1] ?? entry;
+  return entry.match(/pub struct ((?:r#)?[A-Za-z_][A-Za-z0-9_]*)/)?.[1].replace(/^r#/, "") ?? entry;
+}
+
+function compareKeys(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

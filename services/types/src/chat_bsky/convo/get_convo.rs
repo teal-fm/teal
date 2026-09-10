@@ -74,7 +74,9 @@ impl core::fmt::Display for GetConvoError {
     }
 }
 
-/// Response type for chat.bsky.convo.getConvo
+/** Response marker for the `chat.bsky.convo.getConvo` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetConvoOutput<S>` for this endpoint.*/
 pub struct GetConvoResponse;
 impl jacquard_common::xrpc::XrpcResp for GetConvoResponse {
     const NSID: &'static str = "chat.bsky.convo.getConvo";
@@ -89,7 +91,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetConvo<S> {
     type Response = GetConvoResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.getConvo
+/** Endpoint marker for the `chat.bsky.convo.getConvo` query.
+
+Path: `/xrpc/chat.bsky.convo.getConvo`. The request payload type is `GetConvo<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetConvoRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetConvoRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.getConvo";
@@ -131,21 +135,28 @@ pub mod get_convo_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetConvoBuilder<S: BosStr, St: get_convo_state::State> {
+pub struct GetConvoBuilder<St: get_convo_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetConvo<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetConvoBuilder<S, get_convo_state::Empty> {
+impl GetConvo<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetConvoBuilder<get_convo_state::Empty, DefaultStr> {
         GetConvoBuilder::new()
     }
 }
 
-impl<S: BosStr> GetConvoBuilder<S, get_convo_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetConvo<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetConvoBuilder<get_convo_state::Empty, S> {
+        GetConvoBuilder::builder()
+    }
+}
+
+impl GetConvoBuilder<get_convo_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetConvoBuilder {
             _state: PhantomData,
@@ -155,7 +166,18 @@ impl<S: BosStr> GetConvoBuilder<S, get_convo_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetConvoBuilder<S, St>
+impl<S: BosStr> GetConvoBuilder<get_convo_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetConvoBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetConvoBuilder<St, S>
 where
     St: get_convo_state::State,
     St::ConvoId: get_convo_state::IsUnset,
@@ -164,7 +186,7 @@ where
     pub fn convo_id(
         mut self,
         value: impl Into<S>,
-    ) -> GetConvoBuilder<S, get_convo_state::SetConvoId<St>> {
+    ) -> GetConvoBuilder<get_convo_state::SetConvoId<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetConvoBuilder {
             _state: PhantomData,
@@ -174,7 +196,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetConvoBuilder<S, St>
+impl<St, S: BosStr> GetConvoBuilder<St, S>
 where
     St: get_convo_state::State,
     St::ConvoId: get_convo_state::IsSet,

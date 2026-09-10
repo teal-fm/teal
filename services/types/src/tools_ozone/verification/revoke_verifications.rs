@@ -63,7 +63,9 @@ pub struct RevokeError<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.verification.revokeVerifications
+/** Response marker for the `tools.ozone.verification.revokeVerifications` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `RevokeVerificationsOutput<S>` for this endpoint.*/
 pub struct RevokeVerificationsResponse;
 impl jacquard_common::xrpc::XrpcResp for RevokeVerificationsResponse {
     const NSID: &'static str = "tools.ozone.verification.revokeVerifications";
@@ -80,7 +82,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RevokeVerifications<S> {
     type Response = RevokeVerificationsResponse;
 }
 
-/// Endpoint type for tools.ozone.verification.revokeVerifications
+/** Endpoint marker for the `tools.ozone.verification.revokeVerifications` procedure.
+
+Path: `/xrpc/tools.ozone.verification.revokeVerifications`. The request payload type is `RevokeVerifications<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RevokeVerificationsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RevokeVerificationsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.verification.revokeVerifications";
@@ -139,21 +143,37 @@ pub mod revoke_verifications_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RevokeVerificationsBuilder<S: BosStr, St: revoke_verifications_state::State> {
+pub struct RevokeVerificationsBuilder<
+    St: revoke_verifications_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Vec<AtUri<S>>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RevokeVerifications<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RevokeVerificationsBuilder<S, revoke_verifications_state::Empty> {
+impl RevokeVerifications<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RevokeVerificationsBuilder<
+        revoke_verifications_state::Empty,
+        DefaultStr,
+    > {
         RevokeVerificationsBuilder::new()
     }
 }
 
-impl<S: BosStr> RevokeVerificationsBuilder<S, revoke_verifications_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RevokeVerifications<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RevokeVerificationsBuilder<
+        revoke_verifications_state::Empty,
+        S,
+    > {
+        RevokeVerificationsBuilder::builder()
+    }
+}
+
+impl RevokeVerificationsBuilder<revoke_verifications_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RevokeVerificationsBuilder {
             _state: PhantomData,
@@ -163,10 +183,21 @@ impl<S: BosStr> RevokeVerificationsBuilder<S, revoke_verifications_state::Empty>
     }
 }
 
+impl<S: BosStr> RevokeVerificationsBuilder<revoke_verifications_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RevokeVerificationsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
 impl<
-    S: BosStr,
     St: revoke_verifications_state::State,
-> RevokeVerificationsBuilder<S, St> {
+    S: BosStr,
+> RevokeVerificationsBuilder<St, S> {
     /// Set the `revokeReason` field (optional)
     pub fn revoke_reason(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -179,7 +210,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> RevokeVerificationsBuilder<S, St>
+impl<St, S: BosStr> RevokeVerificationsBuilder<St, S>
 where
     St: revoke_verifications_state::State,
     St::Uris: revoke_verifications_state::IsUnset,
@@ -188,7 +219,7 @@ where
     pub fn uris(
         mut self,
         value: impl Into<Vec<AtUri<S>>>,
-    ) -> RevokeVerificationsBuilder<S, revoke_verifications_state::SetUris<St>> {
+    ) -> RevokeVerificationsBuilder<revoke_verifications_state::SetUris<St>, S> {
         self._fields.1 = Option::Some(value.into());
         RevokeVerificationsBuilder {
             _state: PhantomData,
@@ -198,7 +229,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RevokeVerificationsBuilder<S, St>
+impl<St, S: BosStr> RevokeVerificationsBuilder<St, S>
 where
     St: revoke_verifications_state::State,
     St::Uris: revoke_verifications_state::IsSet,
@@ -234,56 +265,63 @@ pub mod revoke_error_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Uri;
         type Error;
+        type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Uri = Unset;
         type Error = Unset;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type Uri = Set<members::uri>;
-        type Error = St::Error;
+        type Uri = Unset;
     }
     ///State transition - sets the `error` field to Set
     pub struct SetError<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetError<St> {}
     impl<St: State> State for SetError<St> {
-        type Uri = St::Uri;
         type Error = Set<members::error>;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type Error = St::Error;
+        type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `uri` field
-        pub struct uri(());
         ///Marker type for the `error` field
         pub struct error(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RevokeErrorBuilder<S: BosStr, St: revoke_error_state::State> {
+pub struct RevokeErrorBuilder<St: revoke_error_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<AtUri<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RevokeError<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RevokeErrorBuilder<S, revoke_error_state::Empty> {
+impl RevokeError<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RevokeErrorBuilder<revoke_error_state::Empty, DefaultStr> {
         RevokeErrorBuilder::new()
     }
 }
 
-impl<S: BosStr> RevokeErrorBuilder<S, revoke_error_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RevokeError<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RevokeErrorBuilder<revoke_error_state::Empty, S> {
+        RevokeErrorBuilder::builder()
+    }
+}
+
+impl RevokeErrorBuilder<revoke_error_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RevokeErrorBuilder {
             _state: PhantomData,
@@ -293,7 +331,18 @@ impl<S: BosStr> RevokeErrorBuilder<S, revoke_error_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RevokeErrorBuilder<S, St>
+impl<S: BosStr> RevokeErrorBuilder<revoke_error_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RevokeErrorBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RevokeErrorBuilder<St, S>
 where
     St: revoke_error_state::State,
     St::Error: revoke_error_state::IsUnset,
@@ -302,7 +351,7 @@ where
     pub fn error(
         mut self,
         value: impl Into<S>,
-    ) -> RevokeErrorBuilder<S, revoke_error_state::SetError<St>> {
+    ) -> RevokeErrorBuilder<revoke_error_state::SetError<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RevokeErrorBuilder {
             _state: PhantomData,
@@ -312,7 +361,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RevokeErrorBuilder<S, St>
+impl<St, S: BosStr> RevokeErrorBuilder<St, S>
 where
     St: revoke_error_state::State,
     St::Uri: revoke_error_state::IsUnset,
@@ -321,7 +370,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> RevokeErrorBuilder<S, revoke_error_state::SetUri<St>> {
+    ) -> RevokeErrorBuilder<revoke_error_state::SetUri<St>, S> {
         self._fields.1 = Option::Some(value.into());
         RevokeErrorBuilder {
             _state: PhantomData,
@@ -331,11 +380,11 @@ where
     }
 }
 
-impl<S: BosStr, St> RevokeErrorBuilder<S, St>
+impl<St, S: BosStr> RevokeErrorBuilder<St, S>
 where
     St: revoke_error_state::State,
-    St::Uri: revoke_error_state::IsSet,
     St::Error: revoke_error_state::IsSet,
+    St::Uri: revoke_error_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RevokeError<S> {

@@ -113,7 +113,9 @@ pub struct UpdateAllReadOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for chat.bsky.convo.updateAllRead
+/** Response marker for the `chat.bsky.convo.updateAllRead` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UpdateAllReadOutput<S>` for this endpoint.*/
 pub struct UpdateAllReadResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateAllReadResponse {
     const NSID: &'static str = "chat.bsky.convo.updateAllRead";
@@ -130,7 +132,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateAllRead<S> {
     type Response = UpdateAllReadResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.updateAllRead
+/** Endpoint marker for the `chat.bsky.convo.updateAllRead` procedure.
+
+Path: `/xrpc/chat.bsky.convo.updateAllRead`. The request payload type is `UpdateAllRead<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateAllReadRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateAllReadRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.updateAllRead";

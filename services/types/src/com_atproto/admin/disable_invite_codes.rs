@@ -27,7 +27,9 @@ pub struct DisableInviteCodes<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.admin.disableInviteCodes
+/** Response marker for the `com.atproto.admin.disableInviteCodes` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DisableInviteCodesResponse;
 impl jacquard_common::xrpc::XrpcResp for DisableInviteCodesResponse {
     const NSID: &'static str = "com.atproto.admin.disableInviteCodes";
@@ -44,7 +46,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DisableInviteCodes<S> {
     type Response = DisableInviteCodesResponse;
 }
 
-/// Endpoint type for com.atproto.admin.disableInviteCodes
+/** Endpoint marker for the `com.atproto.admin.disableInviteCodes` procedure.
+
+Path: `/xrpc/com.atproto.admin.disableInviteCodes`. The request payload type is `DisableInviteCodes<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DisableInviteCodesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DisableInviteCodesRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.disableInviteCodes";

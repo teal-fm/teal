@@ -99,7 +99,9 @@ impl core::fmt::Display for RefreshIdentityError {
     }
 }
 
-/// Response type for com.atproto.identity.refreshIdentity
+/** Response marker for the `com.atproto.identity.refreshIdentity` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `RefreshIdentityOutput<S>` for this endpoint.*/
 pub struct RefreshIdentityResponse;
 impl jacquard_common::xrpc::XrpcResp for RefreshIdentityResponse {
     const NSID: &'static str = "com.atproto.identity.refreshIdentity";
@@ -116,7 +118,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RefreshIdentity<S> {
     type Response = RefreshIdentityResponse;
 }
 
-/// Endpoint type for com.atproto.identity.refreshIdentity
+/** Endpoint marker for the `com.atproto.identity.refreshIdentity` procedure.
+
+Path: `/xrpc/com.atproto.identity.refreshIdentity`. The request payload type is `RefreshIdentity<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RefreshIdentityRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RefreshIdentityRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.refreshIdentity";
@@ -160,21 +164,31 @@ pub mod refresh_identity_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RefreshIdentityBuilder<S: BosStr, St: refresh_identity_state::State> {
+pub struct RefreshIdentityBuilder<
+    St: refresh_identity_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RefreshIdentity<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RefreshIdentityBuilder<S, refresh_identity_state::Empty> {
+impl RefreshIdentity<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RefreshIdentityBuilder<refresh_identity_state::Empty, DefaultStr> {
         RefreshIdentityBuilder::new()
     }
 }
 
-impl<S: BosStr> RefreshIdentityBuilder<S, refresh_identity_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RefreshIdentity<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RefreshIdentityBuilder<refresh_identity_state::Empty, S> {
+        RefreshIdentityBuilder::builder()
+    }
+}
+
+impl RefreshIdentityBuilder<refresh_identity_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RefreshIdentityBuilder {
             _state: PhantomData,
@@ -184,7 +198,18 @@ impl<S: BosStr> RefreshIdentityBuilder<S, refresh_identity_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RefreshIdentityBuilder<S, St>
+impl<S: BosStr> RefreshIdentityBuilder<refresh_identity_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RefreshIdentityBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RefreshIdentityBuilder<St, S>
 where
     St: refresh_identity_state::State,
     St::Identifier: refresh_identity_state::IsUnset,
@@ -193,7 +218,7 @@ where
     pub fn identifier(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> RefreshIdentityBuilder<S, refresh_identity_state::SetIdentifier<St>> {
+    ) -> RefreshIdentityBuilder<refresh_identity_state::SetIdentifier<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RefreshIdentityBuilder {
             _state: PhantomData,
@@ -203,7 +228,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RefreshIdentityBuilder<S, St>
+impl<St, S: BosStr> RefreshIdentityBuilder<St, S>
 where
     St: refresh_identity_state::State,
     St::Identifier: refresh_identity_state::IsSet,

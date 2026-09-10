@@ -193,11 +193,15 @@ impl core::fmt::Display for RefreshSessionError {
     }
 }
 
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.server.refreshSession` procedure.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct RefreshSession;
-/// Response type for com.atproto.server.refreshSession
+/** Response marker for the `com.atproto.server.refreshSession` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `RefreshSessionOutput<S>` for this endpoint.*/
 pub struct RefreshSessionResponse;
 impl jacquard_common::xrpc::XrpcResp for RefreshSessionResponse {
     const NSID: &'static str = "com.atproto.server.refreshSession";
@@ -214,7 +218,9 @@ impl jacquard_common::xrpc::XrpcRequest for RefreshSession {
     type Response = RefreshSessionResponse;
 }
 
-/// Endpoint type for com.atproto.server.refreshSession
+/** Endpoint marker for the `com.atproto.server.refreshSession` procedure.
+
+Path: `/xrpc/com.atproto.server.refreshSession`. The request payload type is `RefreshSession`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct RefreshSessionRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RefreshSessionRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.refreshSession";

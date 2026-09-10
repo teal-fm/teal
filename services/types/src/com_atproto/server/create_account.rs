@@ -158,7 +158,9 @@ impl core::fmt::Display for CreateAccountError {
     }
 }
 
-/// Response type for com.atproto.server.createAccount
+/** Response marker for the `com.atproto.server.createAccount` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CreateAccountOutput<S>` for this endpoint.*/
 pub struct CreateAccountResponse;
 impl jacquard_common::xrpc::XrpcResp for CreateAccountResponse {
     const NSID: &'static str = "com.atproto.server.createAccount";
@@ -175,7 +177,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for CreateAccount<S> {
     type Response = CreateAccountResponse;
 }
 
-/// Endpoint type for com.atproto.server.createAccount
+/** Endpoint marker for the `com.atproto.server.createAccount` procedure.
+
+Path: `/xrpc/com.atproto.server.createAccount`. The request payload type is `CreateAccount<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct CreateAccountRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CreateAccountRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.createAccount";
@@ -219,7 +223,10 @@ pub mod create_account_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct CreateAccountBuilder<S: BosStr, St: create_account_state::State> {
+pub struct CreateAccountBuilder<
+    St: create_account_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Did<S>>,
@@ -235,15 +242,22 @@ pub struct CreateAccountBuilder<S: BosStr, St: create_account_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> CreateAccount<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> CreateAccountBuilder<S, create_account_state::Empty> {
+impl CreateAccount<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> CreateAccountBuilder<create_account_state::Empty, DefaultStr> {
         CreateAccountBuilder::new()
     }
 }
 
-impl<S: BosStr> CreateAccountBuilder<S, create_account_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> CreateAccount<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> CreateAccountBuilder<create_account_state::Empty, S> {
+        CreateAccountBuilder::builder()
+    }
+}
+
+impl CreateAccountBuilder<create_account_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         CreateAccountBuilder {
             _state: PhantomData,
@@ -253,7 +267,18 @@ impl<S: BosStr> CreateAccountBuilder<S, create_account_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<S: BosStr> CreateAccountBuilder<create_account_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        CreateAccountBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `did` field (optional)
     pub fn did(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -266,7 +291,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `email` field (optional)
     pub fn email(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -279,7 +304,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> CreateAccountBuilder<S, St>
+impl<St, S: BosStr> CreateAccountBuilder<St, S>
 where
     St: create_account_state::State,
     St::Handle: create_account_state::IsUnset,
@@ -288,7 +313,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> CreateAccountBuilder<S, create_account_state::SetHandle<St>> {
+    ) -> CreateAccountBuilder<create_account_state::SetHandle<St>, S> {
         self._fields.2 = Option::Some(value.into());
         CreateAccountBuilder {
             _state: PhantomData,
@@ -298,7 +323,7 @@ where
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `inviteCode` field (optional)
     pub fn invite_code(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.3 = value.into();
@@ -311,7 +336,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `password` field (optional)
     pub fn password(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -324,7 +349,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `plcOp` field (optional)
     pub fn plc_op(mut self, value: impl Into<Option<Data<S>>>) -> Self {
         self._fields.5 = value.into();
@@ -337,7 +362,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `recoveryKey` field (optional)
     pub fn recovery_key(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.6 = value.into();
@@ -350,7 +375,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `verificationCode` field (optional)
     pub fn verification_code(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.7 = value.into();
@@ -363,7 +388,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
+impl<St: create_account_state::State, S: BosStr> CreateAccountBuilder<St, S> {
     /// Set the `verificationPhone` field (optional)
     pub fn verification_phone(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.8 = value.into();
@@ -376,7 +401,7 @@ impl<S: BosStr, St: create_account_state::State> CreateAccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> CreateAccountBuilder<S, St>
+impl<St, S: BosStr> CreateAccountBuilder<St, S>
 where
     St: create_account_state::State,
     St::Handle: create_account_state::IsSet,

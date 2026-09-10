@@ -96,7 +96,9 @@ impl core::fmt::Display for UpdateTemplateError {
     }
 }
 
-/// Response type for tools.ozone.communication.updateTemplate
+/** Response marker for the `tools.ozone.communication.updateTemplate` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UpdateTemplateOutput<S>` for this endpoint.*/
 pub struct UpdateTemplateResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateTemplateResponse {
     const NSID: &'static str = "tools.ozone.communication.updateTemplate";
@@ -113,7 +115,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateTemplate<S> {
     type Response = UpdateTemplateResponse;
 }
 
-/// Endpoint type for tools.ozone.communication.updateTemplate
+/** Endpoint marker for the `tools.ozone.communication.updateTemplate` procedure.
+
+Path: `/xrpc/tools.ozone.communication.updateTemplate`. The request payload type is `UpdateTemplate<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateTemplateRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateTemplateRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.communication.updateTemplate";

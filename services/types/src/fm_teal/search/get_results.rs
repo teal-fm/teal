@@ -26,7 +26,7 @@ use crate::fm_teal::stats::ReleaseView;
 pub struct GetResults<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actor: Option<Did<S>>,
-    ///Defaults to `8`. Min: 1. Max: 25.
+    /// Defaults to `8`. Min: 1. Max: 25.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -45,7 +45,9 @@ pub struct GetResultsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.search.getResults
+/** Response marker for the `fm.teal.search.getResults` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetResultsOutput<S>` for this endpoint.*/
 pub struct GetResultsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetResultsResponse {
     const NSID: &'static str = "fm.teal.search.getResults";
@@ -60,7 +62,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetResults<S> {
     type Response = GetResultsResponse;
 }
 
-/// Endpoint type for fm.teal.search.getResults
+/** Endpoint marker for the `fm.teal.search.getResults` query.
+
+Path: `/xrpc/fm.teal.search.getResults`. The request payload type is `GetResults<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetResultsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetResultsRequest {
     const PATH: &'static str = "/xrpc/fm.teal.search.getResults";
@@ -106,21 +110,28 @@ pub mod get_results_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetResultsBuilder<S: BosStr, St: get_results_state::State> {
+pub struct GetResultsBuilder<St: get_results_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetResults<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetResultsBuilder<S, get_results_state::Empty> {
+impl GetResults<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetResultsBuilder<get_results_state::Empty, DefaultStr> {
         GetResultsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetResultsBuilder<S, get_results_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetResults<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetResultsBuilder<get_results_state::Empty, S> {
+        GetResultsBuilder::builder()
+    }
+}
+
+impl GetResultsBuilder<get_results_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetResultsBuilder {
             _state: PhantomData,
@@ -130,7 +141,18 @@ impl<S: BosStr> GetResultsBuilder<S, get_results_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_results_state::State> GetResultsBuilder<S, St> {
+impl<S: BosStr> GetResultsBuilder<get_results_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetResultsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_results_state::State, S: BosStr> GetResultsBuilder<St, S> {
     /// Set the `actor` field (optional)
     pub fn actor(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -143,7 +165,7 @@ impl<S: BosStr, St: get_results_state::State> GetResultsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_results_state::State> GetResultsBuilder<S, St> {
+impl<St: get_results_state::State, S: BosStr> GetResultsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -156,7 +178,7 @@ impl<S: BosStr, St: get_results_state::State> GetResultsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetResultsBuilder<S, St>
+impl<St, S: BosStr> GetResultsBuilder<St, S>
 where
     St: get_results_state::State,
     St::Q: get_results_state::IsUnset,
@@ -165,7 +187,7 @@ where
     pub fn q(
         mut self,
         value: impl Into<S>,
-    ) -> GetResultsBuilder<S, get_results_state::SetQ<St>> {
+    ) -> GetResultsBuilder<get_results_state::SetQ<St>, S> {
         self._fields.2 = Option::Some(value.into());
         GetResultsBuilder {
             _state: PhantomData,
@@ -175,7 +197,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetResultsBuilder<S, St>
+impl<St, S: BosStr> GetResultsBuilder<St, S>
 where
     St: get_results_state::State,
     St::Q: get_results_state::IsSet,

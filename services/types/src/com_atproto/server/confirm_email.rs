@@ -94,7 +94,9 @@ impl core::fmt::Display for ConfirmEmailError {
     }
 }
 
-/// Response type for com.atproto.server.confirmEmail
+/** Response marker for the `com.atproto.server.confirmEmail` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct ConfirmEmailResponse;
 impl jacquard_common::xrpc::XrpcResp for ConfirmEmailResponse {
     const NSID: &'static str = "com.atproto.server.confirmEmail";
@@ -111,7 +113,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ConfirmEmail<S> {
     type Response = ConfirmEmailResponse;
 }
 
-/// Endpoint type for com.atproto.server.confirmEmail
+/** Endpoint marker for the `com.atproto.server.confirmEmail` procedure.
+
+Path: `/xrpc/com.atproto.server.confirmEmail`. The request payload type is `ConfirmEmail<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ConfirmEmailRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ConfirmEmailRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.confirmEmail";

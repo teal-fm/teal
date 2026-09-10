@@ -31,7 +31,7 @@ use crate::com_atproto::repo::list_missing_blobs;
 pub struct ListMissingBlobs<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `500`. Min: 1. Max: 1000.
+    /// Defaults to `500`. Min: 1. Max: 1000.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -58,7 +58,9 @@ pub struct RecordBlob<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.repo.listMissingBlobs
+/** Response marker for the `com.atproto.repo.listMissingBlobs` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ListMissingBlobsOutput<S>` for this endpoint.*/
 pub struct ListMissingBlobsResponse;
 impl jacquard_common::xrpc::XrpcResp for ListMissingBlobsResponse {
     const NSID: &'static str = "com.atproto.repo.listMissingBlobs";
@@ -73,7 +75,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ListMissingBlobs<S> {
     type Response = ListMissingBlobsResponse;
 }
 
-/// Endpoint type for com.atproto.repo.listMissingBlobs
+/** Endpoint marker for the `com.atproto.repo.listMissingBlobs` query.
+
+Path: `/xrpc/com.atproto.repo.listMissingBlobs`. The request payload type is `ListMissingBlobs<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ListMissingBlobsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ListMissingBlobsRequest {
     const PATH: &'static str = "/xrpc/com.atproto.repo.listMissingBlobs";
@@ -121,21 +125,34 @@ pub mod list_missing_blobs_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ListMissingBlobsBuilder<S: BosStr, St: list_missing_blobs_state::State> {
+pub struct ListMissingBlobsBuilder<
+    St: list_missing_blobs_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ListMissingBlobs<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ListMissingBlobsBuilder<S, list_missing_blobs_state::Empty> {
+impl ListMissingBlobs<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListMissingBlobsBuilder<
+        list_missing_blobs_state::Empty,
+        DefaultStr,
+    > {
         ListMissingBlobsBuilder::new()
     }
 }
 
-impl<S: BosStr> ListMissingBlobsBuilder<S, list_missing_blobs_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ListMissingBlobs<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListMissingBlobsBuilder<list_missing_blobs_state::Empty, S> {
+        ListMissingBlobsBuilder::builder()
+    }
+}
+
+impl ListMissingBlobsBuilder<list_missing_blobs_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListMissingBlobsBuilder {
             _state: PhantomData,
@@ -145,7 +162,18 @@ impl<S: BosStr> ListMissingBlobsBuilder<S, list_missing_blobs_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: list_missing_blobs_state::State> ListMissingBlobsBuilder<S, St> {
+impl<S: BosStr> ListMissingBlobsBuilder<list_missing_blobs_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListMissingBlobsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: list_missing_blobs_state::State, S: BosStr> ListMissingBlobsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -158,7 +186,7 @@ impl<S: BosStr, St: list_missing_blobs_state::State> ListMissingBlobsBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: list_missing_blobs_state::State> ListMissingBlobsBuilder<S, St> {
+impl<St: list_missing_blobs_state::State, S: BosStr> ListMissingBlobsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -171,7 +199,7 @@ impl<S: BosStr, St: list_missing_blobs_state::State> ListMissingBlobsBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> ListMissingBlobsBuilder<S, St>
+impl<St, S: BosStr> ListMissingBlobsBuilder<St, S>
 where
     St: list_missing_blobs_state::State,
 {
@@ -229,21 +257,28 @@ pub mod record_blob_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RecordBlobBuilder<S: BosStr, St: record_blob_state::State> {
+pub struct RecordBlobBuilder<St: record_blob_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Cid<S>>, Option<AtUri<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RecordBlob<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RecordBlobBuilder<S, record_blob_state::Empty> {
+impl RecordBlob<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RecordBlobBuilder<record_blob_state::Empty, DefaultStr> {
         RecordBlobBuilder::new()
     }
 }
 
-impl<S: BosStr> RecordBlobBuilder<S, record_blob_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RecordBlob<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RecordBlobBuilder<record_blob_state::Empty, S> {
+        RecordBlobBuilder::builder()
+    }
+}
+
+impl RecordBlobBuilder<record_blob_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RecordBlobBuilder {
             _state: PhantomData,
@@ -253,7 +288,18 @@ impl<S: BosStr> RecordBlobBuilder<S, record_blob_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RecordBlobBuilder<S, St>
+impl<S: BosStr> RecordBlobBuilder<record_blob_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RecordBlobBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RecordBlobBuilder<St, S>
 where
     St: record_blob_state::State,
     St::Cid: record_blob_state::IsUnset,
@@ -262,7 +308,7 @@ where
     pub fn cid(
         mut self,
         value: impl Into<Cid<S>>,
-    ) -> RecordBlobBuilder<S, record_blob_state::SetCid<St>> {
+    ) -> RecordBlobBuilder<record_blob_state::SetCid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RecordBlobBuilder {
             _state: PhantomData,
@@ -272,7 +318,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RecordBlobBuilder<S, St>
+impl<St, S: BosStr> RecordBlobBuilder<St, S>
 where
     St: record_blob_state::State,
     St::RecordUri: record_blob_state::IsUnset,
@@ -281,7 +327,7 @@ where
     pub fn record_uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> RecordBlobBuilder<S, record_blob_state::SetRecordUri<St>> {
+    ) -> RecordBlobBuilder<record_blob_state::SetRecordUri<St>, S> {
         self._fields.1 = Option::Some(value.into());
         RecordBlobBuilder {
             _state: PhantomData,
@@ -291,7 +337,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RecordBlobBuilder<S, St>
+impl<St, S: BosStr> RecordBlobBuilder<St, S>
 where
     St: record_blob_state::State,
     St::Cid: record_blob_state::IsSet,

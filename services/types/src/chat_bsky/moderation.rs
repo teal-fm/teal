@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `chat.bsky.moderation` Lexicon namespace/module.
 pub mod get_actor_metadata;
 pub mod get_convo;
 pub mod get_convo_members;
@@ -330,110 +331,110 @@ pub mod group_convo_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type JoinRequestCount;
-        type MemberLimit;
-        type MemberCount;
-        type Name;
         type CreatedAt;
+        type JoinRequestCount;
         type LockStatus;
+        type MemberCount;
+        type MemberLimit;
+        type Name;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type JoinRequestCount = Unset;
-        type MemberLimit = Unset;
-        type MemberCount = Unset;
-        type Name = Unset;
         type CreatedAt = Unset;
+        type JoinRequestCount = Unset;
         type LockStatus = Unset;
-    }
-    ///State transition - sets the `join_request_count` field to Set
-    pub struct SetJoinRequestCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetJoinRequestCount<St> {}
-    impl<St: State> State for SetJoinRequestCount<St> {
-        type JoinRequestCount = Set<members::join_request_count>;
-        type MemberLimit = St::MemberLimit;
-        type MemberCount = St::MemberCount;
-        type Name = St::Name;
-        type CreatedAt = St::CreatedAt;
-        type LockStatus = St::LockStatus;
-    }
-    ///State transition - sets the `member_limit` field to Set
-    pub struct SetMemberLimit<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMemberLimit<St> {}
-    impl<St: State> State for SetMemberLimit<St> {
-        type JoinRequestCount = St::JoinRequestCount;
-        type MemberLimit = Set<members::member_limit>;
-        type MemberCount = St::MemberCount;
-        type Name = St::Name;
-        type CreatedAt = St::CreatedAt;
-        type LockStatus = St::LockStatus;
-    }
-    ///State transition - sets the `member_count` field to Set
-    pub struct SetMemberCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMemberCount<St> {}
-    impl<St: State> State for SetMemberCount<St> {
-        type JoinRequestCount = St::JoinRequestCount;
-        type MemberLimit = St::MemberLimit;
-        type MemberCount = Set<members::member_count>;
-        type Name = St::Name;
-        type CreatedAt = St::CreatedAt;
-        type LockStatus = St::LockStatus;
-    }
-    ///State transition - sets the `name` field to Set
-    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetName<St> {}
-    impl<St: State> State for SetName<St> {
-        type JoinRequestCount = St::JoinRequestCount;
-        type MemberLimit = St::MemberLimit;
-        type MemberCount = St::MemberCount;
-        type Name = Set<members::name>;
-        type CreatedAt = St::CreatedAt;
-        type LockStatus = St::LockStatus;
+        type MemberCount = Unset;
+        type MemberLimit = Unset;
+        type Name = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
-        type JoinRequestCount = St::JoinRequestCount;
-        type MemberLimit = St::MemberLimit;
-        type MemberCount = St::MemberCount;
-        type Name = St::Name;
         type CreatedAt = Set<members::created_at>;
+        type JoinRequestCount = St::JoinRequestCount;
         type LockStatus = St::LockStatus;
+        type MemberCount = St::MemberCount;
+        type MemberLimit = St::MemberLimit;
+        type Name = St::Name;
+    }
+    ///State transition - sets the `join_request_count` field to Set
+    pub struct SetJoinRequestCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetJoinRequestCount<St> {}
+    impl<St: State> State for SetJoinRequestCount<St> {
+        type CreatedAt = St::CreatedAt;
+        type JoinRequestCount = Set<members::join_request_count>;
+        type LockStatus = St::LockStatus;
+        type MemberCount = St::MemberCount;
+        type MemberLimit = St::MemberLimit;
+        type Name = St::Name;
     }
     ///State transition - sets the `lock_status` field to Set
     pub struct SetLockStatus<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetLockStatus<St> {}
     impl<St: State> State for SetLockStatus<St> {
-        type JoinRequestCount = St::JoinRequestCount;
-        type MemberLimit = St::MemberLimit;
-        type MemberCount = St::MemberCount;
-        type Name = St::Name;
         type CreatedAt = St::CreatedAt;
+        type JoinRequestCount = St::JoinRequestCount;
         type LockStatus = Set<members::lock_status>;
+        type MemberCount = St::MemberCount;
+        type MemberLimit = St::MemberLimit;
+        type Name = St::Name;
+    }
+    ///State transition - sets the `member_count` field to Set
+    pub struct SetMemberCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMemberCount<St> {}
+    impl<St: State> State for SetMemberCount<St> {
+        type CreatedAt = St::CreatedAt;
+        type JoinRequestCount = St::JoinRequestCount;
+        type LockStatus = St::LockStatus;
+        type MemberCount = Set<members::member_count>;
+        type MemberLimit = St::MemberLimit;
+        type Name = St::Name;
+    }
+    ///State transition - sets the `member_limit` field to Set
+    pub struct SetMemberLimit<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMemberLimit<St> {}
+    impl<St: State> State for SetMemberLimit<St> {
+        type CreatedAt = St::CreatedAt;
+        type JoinRequestCount = St::JoinRequestCount;
+        type LockStatus = St::LockStatus;
+        type MemberCount = St::MemberCount;
+        type MemberLimit = Set<members::member_limit>;
+        type Name = St::Name;
+    }
+    ///State transition - sets the `name` field to Set
+    pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetName<St> {}
+    impl<St: State> State for SetName<St> {
+        type CreatedAt = St::CreatedAt;
+        type JoinRequestCount = St::JoinRequestCount;
+        type LockStatus = St::LockStatus;
+        type MemberCount = St::MemberCount;
+        type MemberLimit = St::MemberLimit;
+        type Name = Set<members::name>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `join_request_count` field
-        pub struct join_request_count(());
-        ///Marker type for the `member_limit` field
-        pub struct member_limit(());
-        ///Marker type for the `member_count` field
-        pub struct member_count(());
-        ///Marker type for the `name` field
-        pub struct name(());
         ///Marker type for the `created_at` field
         pub struct created_at(());
+        ///Marker type for the `join_request_count` field
+        pub struct join_request_count(());
         ///Marker type for the `lock_status` field
         pub struct lock_status(());
+        ///Marker type for the `member_count` field
+        pub struct member_count(());
+        ///Marker type for the `member_limit` field
+        pub struct member_limit(());
+        ///Marker type for the `name` field
+        pub struct name(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GroupConvoBuilder<S: BosStr, St: group_convo_state::State> {
+pub struct GroupConvoBuilder<St: group_convo_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Datetime>,
@@ -447,15 +448,22 @@ pub struct GroupConvoBuilder<S: BosStr, St: group_convo_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GroupConvo<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GroupConvoBuilder<S, group_convo_state::Empty> {
+impl GroupConvo<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GroupConvoBuilder<group_convo_state::Empty, DefaultStr> {
         GroupConvoBuilder::new()
     }
 }
 
-impl<S: BosStr> GroupConvoBuilder<S, group_convo_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GroupConvo<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GroupConvoBuilder<group_convo_state::Empty, S> {
+        GroupConvoBuilder::builder()
+    }
+}
+
+impl GroupConvoBuilder<group_convo_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GroupConvoBuilder {
             _state: PhantomData,
@@ -465,7 +473,18 @@ impl<S: BosStr> GroupConvoBuilder<S, group_convo_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GroupConvoBuilder<S, St>
+impl<S: BosStr> GroupConvoBuilder<group_convo_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GroupConvoBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GroupConvoBuilder<St, S>
 where
     St: group_convo_state::State,
     St::CreatedAt: group_convo_state::IsUnset,
@@ -474,7 +493,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> GroupConvoBuilder<S, group_convo_state::SetCreatedAt<St>> {
+    ) -> GroupConvoBuilder<group_convo_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GroupConvoBuilder {
             _state: PhantomData,
@@ -484,7 +503,7 @@ where
     }
 }
 
-impl<S: BosStr, St: group_convo_state::State> GroupConvoBuilder<S, St> {
+impl<St: group_convo_state::State, S: BosStr> GroupConvoBuilder<St, S> {
     /// Set the `joinLink` field (optional)
     pub fn join_link(mut self, value: impl Into<Option<JoinLinkView<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -497,7 +516,7 @@ impl<S: BosStr, St: group_convo_state::State> GroupConvoBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GroupConvoBuilder<S, St>
+impl<St, S: BosStr> GroupConvoBuilder<St, S>
 where
     St: group_convo_state::State,
     St::JoinRequestCount: group_convo_state::IsUnset,
@@ -506,7 +525,7 @@ where
     pub fn join_request_count(
         mut self,
         value: impl Into<i64>,
-    ) -> GroupConvoBuilder<S, group_convo_state::SetJoinRequestCount<St>> {
+    ) -> GroupConvoBuilder<group_convo_state::SetJoinRequestCount<St>, S> {
         self._fields.2 = Option::Some(value.into());
         GroupConvoBuilder {
             _state: PhantomData,
@@ -516,7 +535,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GroupConvoBuilder<S, St>
+impl<St, S: BosStr> GroupConvoBuilder<St, S>
 where
     St: group_convo_state::State,
     St::LockStatus: group_convo_state::IsUnset,
@@ -525,7 +544,7 @@ where
     pub fn lock_status(
         mut self,
         value: impl Into<ConvoLockStatus<S>>,
-    ) -> GroupConvoBuilder<S, group_convo_state::SetLockStatus<St>> {
+    ) -> GroupConvoBuilder<group_convo_state::SetLockStatus<St>, S> {
         self._fields.3 = Option::Some(value.into());
         GroupConvoBuilder {
             _state: PhantomData,
@@ -535,7 +554,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GroupConvoBuilder<S, St>
+impl<St, S: BosStr> GroupConvoBuilder<St, S>
 where
     St: group_convo_state::State,
     St::MemberCount: group_convo_state::IsUnset,
@@ -544,7 +563,7 @@ where
     pub fn member_count(
         mut self,
         value: impl Into<i64>,
-    ) -> GroupConvoBuilder<S, group_convo_state::SetMemberCount<St>> {
+    ) -> GroupConvoBuilder<group_convo_state::SetMemberCount<St>, S> {
         self._fields.4 = Option::Some(value.into());
         GroupConvoBuilder {
             _state: PhantomData,
@@ -554,7 +573,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GroupConvoBuilder<S, St>
+impl<St, S: BosStr> GroupConvoBuilder<St, S>
 where
     St: group_convo_state::State,
     St::MemberLimit: group_convo_state::IsUnset,
@@ -563,7 +582,7 @@ where
     pub fn member_limit(
         mut self,
         value: impl Into<i64>,
-    ) -> GroupConvoBuilder<S, group_convo_state::SetMemberLimit<St>> {
+    ) -> GroupConvoBuilder<group_convo_state::SetMemberLimit<St>, S> {
         self._fields.5 = Option::Some(value.into());
         GroupConvoBuilder {
             _state: PhantomData,
@@ -573,7 +592,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GroupConvoBuilder<S, St>
+impl<St, S: BosStr> GroupConvoBuilder<St, S>
 where
     St: group_convo_state::State,
     St::Name: group_convo_state::IsUnset,
@@ -582,7 +601,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> GroupConvoBuilder<S, group_convo_state::SetName<St>> {
+    ) -> GroupConvoBuilder<group_convo_state::SetName<St>, S> {
         self._fields.6 = Option::Some(value.into());
         GroupConvoBuilder {
             _state: PhantomData,
@@ -592,15 +611,15 @@ where
     }
 }
 
-impl<S: BosStr, St> GroupConvoBuilder<S, St>
+impl<St, S: BosStr> GroupConvoBuilder<St, S>
 where
     St: group_convo_state::State,
-    St::JoinRequestCount: group_convo_state::IsSet,
-    St::MemberLimit: group_convo_state::IsSet,
-    St::MemberCount: group_convo_state::IsSet,
-    St::Name: group_convo_state::IsSet,
     St::CreatedAt: group_convo_state::IsSet,
+    St::JoinRequestCount: group_convo_state::IsSet,
     St::LockStatus: group_convo_state::IsSet,
+    St::MemberCount: group_convo_state::IsSet,
+    St::MemberLimit: group_convo_state::IsSet,
+    St::Name: group_convo_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> GroupConvo<S> {

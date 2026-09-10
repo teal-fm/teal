@@ -300,56 +300,56 @@ pub mod generator_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type CreatedAt;
         type Did;
         type DisplayName;
-        type CreatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type CreatedAt = Unset;
         type Did = Unset;
         type DisplayName = Unset;
-        type CreatedAt = Unset;
-    }
-    ///State transition - sets the `did` field to Set
-    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDid<St> {}
-    impl<St: State> State for SetDid<St> {
-        type Did = Set<members::did>;
-        type DisplayName = St::DisplayName;
-        type CreatedAt = St::CreatedAt;
-    }
-    ///State transition - sets the `display_name` field to Set
-    pub struct SetDisplayName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDisplayName<St> {}
-    impl<St: State> State for SetDisplayName<St> {
-        type Did = St::Did;
-        type DisplayName = Set<members::display_name>;
-        type CreatedAt = St::CreatedAt;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
+        type CreatedAt = Set<members::created_at>;
         type Did = St::Did;
         type DisplayName = St::DisplayName;
-        type CreatedAt = Set<members::created_at>;
+    }
+    ///State transition - sets the `did` field to Set
+    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDid<St> {}
+    impl<St: State> State for SetDid<St> {
+        type CreatedAt = St::CreatedAt;
+        type Did = Set<members::did>;
+        type DisplayName = St::DisplayName;
+    }
+    ///State transition - sets the `display_name` field to Set
+    pub struct SetDisplayName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDisplayName<St> {}
+    impl<St: State> State for SetDisplayName<St> {
+        type CreatedAt = St::CreatedAt;
+        type Did = St::Did;
+        type DisplayName = Set<members::display_name>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `created_at` field
+        pub struct created_at(());
         ///Marker type for the `did` field
         pub struct did(());
         ///Marker type for the `display_name` field
         pub struct display_name(());
-        ///Marker type for the `created_at` field
-        pub struct created_at(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GeneratorBuilder<S: BosStr, St: generator_state::State> {
+pub struct GeneratorBuilder<St: generator_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<bool>,
@@ -365,15 +365,22 @@ pub struct GeneratorBuilder<S: BosStr, St: generator_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Generator<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GeneratorBuilder<S, generator_state::Empty> {
+impl Generator<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GeneratorBuilder<generator_state::Empty, DefaultStr> {
         GeneratorBuilder::new()
     }
 }
 
-impl<S: BosStr> GeneratorBuilder<S, generator_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Generator<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GeneratorBuilder<generator_state::Empty, S> {
+        GeneratorBuilder::builder()
+    }
+}
+
+impl GeneratorBuilder<generator_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GeneratorBuilder {
             _state: PhantomData,
@@ -383,7 +390,18 @@ impl<S: BosStr> GeneratorBuilder<S, generator_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
+impl<S: BosStr> GeneratorBuilder<generator_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GeneratorBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: generator_state::State, S: BosStr> GeneratorBuilder<St, S> {
     /// Set the `acceptsInteractions` field (optional)
     pub fn accepts_interactions(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.0 = value.into();
@@ -396,7 +414,7 @@ impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
+impl<St: generator_state::State, S: BosStr> GeneratorBuilder<St, S> {
     /// Set the `avatar` field (optional)
     pub fn avatar(mut self, value: impl Into<Option<BlobRef<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -409,7 +427,7 @@ impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
+impl<St: generator_state::State, S: BosStr> GeneratorBuilder<St, S> {
     /// Set the `contentMode` field (optional)
     pub fn content_mode(
         mut self,
@@ -425,7 +443,7 @@ impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GeneratorBuilder<S, St>
+impl<St, S: BosStr> GeneratorBuilder<St, S>
 where
     St: generator_state::State,
     St::CreatedAt: generator_state::IsUnset,
@@ -434,7 +452,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> GeneratorBuilder<S, generator_state::SetCreatedAt<St>> {
+    ) -> GeneratorBuilder<generator_state::SetCreatedAt<St>, S> {
         self._fields.3 = Option::Some(value.into());
         GeneratorBuilder {
             _state: PhantomData,
@@ -444,7 +462,7 @@ where
     }
 }
 
-impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
+impl<St: generator_state::State, S: BosStr> GeneratorBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -457,7 +475,7 @@ impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
+impl<St: generator_state::State, S: BosStr> GeneratorBuilder<St, S> {
     /// Set the `descriptionFacets` field (optional)
     pub fn description_facets(
         mut self,
@@ -473,7 +491,7 @@ impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GeneratorBuilder<S, St>
+impl<St, S: BosStr> GeneratorBuilder<St, S>
 where
     St: generator_state::State,
     St::Did: generator_state::IsUnset,
@@ -482,7 +500,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GeneratorBuilder<S, generator_state::SetDid<St>> {
+    ) -> GeneratorBuilder<generator_state::SetDid<St>, S> {
         self._fields.6 = Option::Some(value.into());
         GeneratorBuilder {
             _state: PhantomData,
@@ -492,7 +510,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GeneratorBuilder<S, St>
+impl<St, S: BosStr> GeneratorBuilder<St, S>
 where
     St: generator_state::State,
     St::DisplayName: generator_state::IsUnset,
@@ -501,7 +519,7 @@ where
     pub fn display_name(
         mut self,
         value: impl Into<S>,
-    ) -> GeneratorBuilder<S, generator_state::SetDisplayName<St>> {
+    ) -> GeneratorBuilder<generator_state::SetDisplayName<St>, S> {
         self._fields.7 = Option::Some(value.into());
         GeneratorBuilder {
             _state: PhantomData,
@@ -511,7 +529,7 @@ where
     }
 }
 
-impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
+impl<St: generator_state::State, S: BosStr> GeneratorBuilder<St, S> {
     /// Set the `labels` field (optional)
     pub fn labels(mut self, value: impl Into<Option<SelfLabels<S>>>) -> Self {
         self._fields.8 = value.into();
@@ -524,12 +542,12 @@ impl<S: BosStr, St: generator_state::State> GeneratorBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GeneratorBuilder<S, St>
+impl<St, S: BosStr> GeneratorBuilder<St, S>
 where
     St: generator_state::State,
+    St::CreatedAt: generator_state::IsSet,
     St::Did: generator_state::IsSet,
     St::DisplayName: generator_state::IsSet,
-    St::CreatedAt: generator_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Generator<S> {

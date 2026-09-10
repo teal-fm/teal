@@ -26,7 +26,9 @@ pub struct UpdateHandle<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.identity.updateHandle
+/** Response marker for the `com.atproto.identity.updateHandle` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct UpdateHandleResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateHandleResponse {
     const NSID: &'static str = "com.atproto.identity.updateHandle";
@@ -43,7 +45,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateHandle<S> {
     type Response = UpdateHandleResponse;
 }
 
-/// Endpoint type for com.atproto.identity.updateHandle
+/** Endpoint marker for the `com.atproto.identity.updateHandle` procedure.
+
+Path: `/xrpc/com.atproto.identity.updateHandle`. The request payload type is `UpdateHandle<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateHandleRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateHandleRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.updateHandle";
@@ -87,21 +91,28 @@ pub mod update_handle_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct UpdateHandleBuilder<S: BosStr, St: update_handle_state::State> {
+pub struct UpdateHandleBuilder<St: update_handle_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Handle<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpdateHandle<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> UpdateHandleBuilder<S, update_handle_state::Empty> {
+impl UpdateHandle<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> UpdateHandleBuilder<update_handle_state::Empty, DefaultStr> {
         UpdateHandleBuilder::new()
     }
 }
 
-impl<S: BosStr> UpdateHandleBuilder<S, update_handle_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpdateHandle<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpdateHandleBuilder<update_handle_state::Empty, S> {
+        UpdateHandleBuilder::builder()
+    }
+}
+
+impl UpdateHandleBuilder<update_handle_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpdateHandleBuilder {
             _state: PhantomData,
@@ -111,7 +122,18 @@ impl<S: BosStr> UpdateHandleBuilder<S, update_handle_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> UpdateHandleBuilder<S, St>
+impl<S: BosStr> UpdateHandleBuilder<update_handle_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpdateHandleBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> UpdateHandleBuilder<St, S>
 where
     St: update_handle_state::State,
     St::Handle: update_handle_state::IsUnset,
@@ -120,7 +142,7 @@ where
     pub fn handle(
         mut self,
         value: impl Into<Handle<S>>,
-    ) -> UpdateHandleBuilder<S, update_handle_state::SetHandle<St>> {
+    ) -> UpdateHandleBuilder<update_handle_state::SetHandle<St>, S> {
         self._fields.0 = Option::Some(value.into());
         UpdateHandleBuilder {
             _state: PhantomData,
@@ -130,7 +152,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateHandleBuilder<S, St>
+impl<St, S: BosStr> UpdateHandleBuilder<St, S>
 where
     St: update_handle_state::State,
     St::Handle: update_handle_state::IsSet,

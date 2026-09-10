@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `fm.teal.feed.social` Lexicon namespace/module.
 pub mod like;
 pub mod playlist;
 pub mod playlist_item;

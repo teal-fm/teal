@@ -32,7 +32,9 @@ pub struct AddReservedHandleOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.temp.addReservedHandle
+/** Response marker for the `com.atproto.temp.addReservedHandle` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `AddReservedHandleOutput<S>` for this endpoint.*/
 pub struct AddReservedHandleResponse;
 impl jacquard_common::xrpc::XrpcResp for AddReservedHandleResponse {
     const NSID: &'static str = "com.atproto.temp.addReservedHandle";
@@ -49,7 +51,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for AddReservedHandle<S> {
     type Response = AddReservedHandleResponse;
 }
 
-/// Endpoint type for com.atproto.temp.addReservedHandle
+/** Endpoint marker for the `com.atproto.temp.addReservedHandle` procedure.
+
+Path: `/xrpc/com.atproto.temp.addReservedHandle`. The request payload type is `AddReservedHandle<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct AddReservedHandleRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for AddReservedHandleRequest {
     const PATH: &'static str = "/xrpc/com.atproto.temp.addReservedHandle";

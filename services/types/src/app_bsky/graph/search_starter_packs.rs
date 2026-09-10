@@ -22,7 +22,7 @@ use crate::app_bsky::graph::StarterPackViewBasic;
 pub struct SearchStarterPacks<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `25`. Min: 1. Max: 100.
+    /// Defaults to `25`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -40,7 +40,9 @@ pub struct SearchStarterPacksOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.searchStarterPacks
+/** Response marker for the `app.bsky.graph.searchStarterPacks` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SearchStarterPacksOutput<S>` for this endpoint.*/
 pub struct SearchStarterPacksResponse;
 impl jacquard_common::xrpc::XrpcResp for SearchStarterPacksResponse {
     const NSID: &'static str = "app.bsky.graph.searchStarterPacks";
@@ -55,7 +57,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SearchStarterPacks<S> {
     type Response = SearchStarterPacksResponse;
 }
 
-/// Endpoint type for app.bsky.graph.searchStarterPacks
+/** Endpoint marker for the `app.bsky.graph.searchStarterPacks` query.
+
+Path: `/xrpc/app.bsky.graph.searchStarterPacks`. The request payload type is `SearchStarterPacks<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SearchStarterPacksRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SearchStarterPacksRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.searchStarterPacks";
@@ -101,21 +105,34 @@ pub mod search_starter_packs_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SearchStarterPacksBuilder<S: BosStr, St: search_starter_packs_state::State> {
+pub struct SearchStarterPacksBuilder<
+    St: search_starter_packs_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SearchStarterPacks<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SearchStarterPacksBuilder<S, search_starter_packs_state::Empty> {
+impl SearchStarterPacks<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SearchStarterPacksBuilder<
+        search_starter_packs_state::Empty,
+        DefaultStr,
+    > {
         SearchStarterPacksBuilder::new()
     }
 }
 
-impl<S: BosStr> SearchStarterPacksBuilder<S, search_starter_packs_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SearchStarterPacks<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SearchStarterPacksBuilder<search_starter_packs_state::Empty, S> {
+        SearchStarterPacksBuilder::builder()
+    }
+}
+
+impl SearchStarterPacksBuilder<search_starter_packs_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SearchStarterPacksBuilder {
             _state: PhantomData,
@@ -125,7 +142,18 @@ impl<S: BosStr> SearchStarterPacksBuilder<S, search_starter_packs_state::Empty> 
     }
 }
 
-impl<S: BosStr, St: search_starter_packs_state::State> SearchStarterPacksBuilder<S, St> {
+impl<S: BosStr> SearchStarterPacksBuilder<search_starter_packs_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SearchStarterPacksBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: search_starter_packs_state::State, S: BosStr> SearchStarterPacksBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -138,7 +166,7 @@ impl<S: BosStr, St: search_starter_packs_state::State> SearchStarterPacksBuilder
     }
 }
 
-impl<S: BosStr, St: search_starter_packs_state::State> SearchStarterPacksBuilder<S, St> {
+impl<St: search_starter_packs_state::State, S: BosStr> SearchStarterPacksBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -151,7 +179,7 @@ impl<S: BosStr, St: search_starter_packs_state::State> SearchStarterPacksBuilder
     }
 }
 
-impl<S: BosStr, St> SearchStarterPacksBuilder<S, St>
+impl<St, S: BosStr> SearchStarterPacksBuilder<St, S>
 where
     St: search_starter_packs_state::State,
     St::Q: search_starter_packs_state::IsUnset,
@@ -160,7 +188,7 @@ where
     pub fn q(
         mut self,
         value: impl Into<S>,
-    ) -> SearchStarterPacksBuilder<S, search_starter_packs_state::SetQ<St>> {
+    ) -> SearchStarterPacksBuilder<search_starter_packs_state::SetQ<St>, S> {
         self._fields.2 = Option::Some(value.into());
         SearchStarterPacksBuilder {
             _state: PhantomData,
@@ -170,7 +198,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SearchStarterPacksBuilder<S, St>
+impl<St, S: BosStr> SearchStarterPacksBuilder<St, S>
 where
     St: search_starter_packs_state::State,
     St::Q: search_starter_packs_state::IsSet,

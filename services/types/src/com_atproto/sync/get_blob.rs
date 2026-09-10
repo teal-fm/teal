@@ -110,7 +110,9 @@ impl core::fmt::Display for GetBlobError {
     }
 }
 
-/// Response type for com.atproto.sync.getBlob
+/** Response marker for the `com.atproto.sync.getBlob` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetBlobOutput` for this endpoint.*/
 pub struct GetBlobResponse;
 impl jacquard_common::xrpc::XrpcResp for GetBlobResponse {
     const NSID: &'static str = "com.atproto.sync.getBlob";
@@ -144,7 +146,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetBlob<S> {
     type Response = GetBlobResponse;
 }
 
-/// Endpoint type for com.atproto.sync.getBlob
+/** Endpoint marker for the `com.atproto.sync.getBlob` query.
+
+Path: `/xrpc/com.atproto.sync.getBlob`. The request payload type is `GetBlob<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetBlobRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetBlobRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.getBlob";
@@ -198,21 +202,28 @@ pub mod get_blob_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetBlobBuilder<S: BosStr, St: get_blob_state::State> {
+pub struct GetBlobBuilder<St: get_blob_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Cid<S>>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetBlob<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetBlobBuilder<S, get_blob_state::Empty> {
+impl GetBlob<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetBlobBuilder<get_blob_state::Empty, DefaultStr> {
         GetBlobBuilder::new()
     }
 }
 
-impl<S: BosStr> GetBlobBuilder<S, get_blob_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetBlob<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetBlobBuilder<get_blob_state::Empty, S> {
+        GetBlobBuilder::builder()
+    }
+}
+
+impl GetBlobBuilder<get_blob_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetBlobBuilder {
             _state: PhantomData,
@@ -222,7 +233,18 @@ impl<S: BosStr> GetBlobBuilder<S, get_blob_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetBlobBuilder<S, St>
+impl<S: BosStr> GetBlobBuilder<get_blob_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetBlobBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetBlobBuilder<St, S>
 where
     St: get_blob_state::State,
     St::Cid: get_blob_state::IsUnset,
@@ -231,7 +253,7 @@ where
     pub fn cid(
         mut self,
         value: impl Into<Cid<S>>,
-    ) -> GetBlobBuilder<S, get_blob_state::SetCid<St>> {
+    ) -> GetBlobBuilder<get_blob_state::SetCid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetBlobBuilder {
             _state: PhantomData,
@@ -241,7 +263,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetBlobBuilder<S, St>
+impl<St, S: BosStr> GetBlobBuilder<St, S>
 where
     St: get_blob_state::State,
     St::Did: get_blob_state::IsUnset,
@@ -250,7 +272,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetBlobBuilder<S, get_blob_state::SetDid<St>> {
+    ) -> GetBlobBuilder<get_blob_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         GetBlobBuilder {
             _state: PhantomData,
@@ -260,7 +282,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetBlobBuilder<S, St>
+impl<St, S: BosStr> GetBlobBuilder<St, S>
 where
     St: get_blob_state::State,
     St::Cid: get_blob_state::IsSet,

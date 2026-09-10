@@ -112,7 +112,9 @@ pub struct RemoveOptionsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.setting.removeOptions
+/** Response marker for the `tools.ozone.setting.removeOptions` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `RemoveOptionsOutput<S>` for this endpoint.*/
 pub struct RemoveOptionsResponse;
 impl jacquard_common::xrpc::XrpcResp for RemoveOptionsResponse {
     const NSID: &'static str = "tools.ozone.setting.removeOptions";
@@ -129,7 +131,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RemoveOptions<S> {
     type Response = RemoveOptionsResponse;
 }
 
-/// Endpoint type for tools.ozone.setting.removeOptions
+/** Endpoint marker for the `tools.ozone.setting.removeOptions` procedure.
+
+Path: `/xrpc/tools.ozone.setting.removeOptions`. The request payload type is `RemoveOptions<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RemoveOptionsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RemoveOptionsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.setting.removeOptions";
@@ -150,56 +154,66 @@ pub mod remove_options_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Scope;
         type Keys;
+        type Scope;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Scope = Unset;
         type Keys = Unset;
-    }
-    ///State transition - sets the `scope` field to Set
-    pub struct SetScope<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetScope<St> {}
-    impl<St: State> State for SetScope<St> {
-        type Scope = Set<members::scope>;
-        type Keys = St::Keys;
+        type Scope = Unset;
     }
     ///State transition - sets the `keys` field to Set
     pub struct SetKeys<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetKeys<St> {}
     impl<St: State> State for SetKeys<St> {
-        type Scope = St::Scope;
         type Keys = Set<members::keys>;
+        type Scope = St::Scope;
+    }
+    ///State transition - sets the `scope` field to Set
+    pub struct SetScope<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetScope<St> {}
+    impl<St: State> State for SetScope<St> {
+        type Keys = St::Keys;
+        type Scope = Set<members::scope>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `scope` field
-        pub struct scope(());
         ///Marker type for the `keys` field
         pub struct keys(());
+        ///Marker type for the `scope` field
+        pub struct scope(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RemoveOptionsBuilder<S: BosStr, St: remove_options_state::State> {
+pub struct RemoveOptionsBuilder<
+    St: remove_options_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Nsid<S>>>, Option<RemoveOptionsScope<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RemoveOptions<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RemoveOptionsBuilder<S, remove_options_state::Empty> {
+impl RemoveOptions<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RemoveOptionsBuilder<remove_options_state::Empty, DefaultStr> {
         RemoveOptionsBuilder::new()
     }
 }
 
-impl<S: BosStr> RemoveOptionsBuilder<S, remove_options_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RemoveOptions<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RemoveOptionsBuilder<remove_options_state::Empty, S> {
+        RemoveOptionsBuilder::builder()
+    }
+}
+
+impl RemoveOptionsBuilder<remove_options_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RemoveOptionsBuilder {
             _state: PhantomData,
@@ -209,7 +223,18 @@ impl<S: BosStr> RemoveOptionsBuilder<S, remove_options_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RemoveOptionsBuilder<S, St>
+impl<S: BosStr> RemoveOptionsBuilder<remove_options_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RemoveOptionsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RemoveOptionsBuilder<St, S>
 where
     St: remove_options_state::State,
     St::Keys: remove_options_state::IsUnset,
@@ -218,7 +243,7 @@ where
     pub fn keys(
         mut self,
         value: impl Into<Vec<Nsid<S>>>,
-    ) -> RemoveOptionsBuilder<S, remove_options_state::SetKeys<St>> {
+    ) -> RemoveOptionsBuilder<remove_options_state::SetKeys<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RemoveOptionsBuilder {
             _state: PhantomData,
@@ -228,7 +253,7 @@ where
     }
 }
 
-impl<S: BosStr, St> RemoveOptionsBuilder<S, St>
+impl<St, S: BosStr> RemoveOptionsBuilder<St, S>
 where
     St: remove_options_state::State,
     St::Scope: remove_options_state::IsUnset,
@@ -237,7 +262,7 @@ where
     pub fn scope(
         mut self,
         value: impl Into<RemoveOptionsScope<S>>,
-    ) -> RemoveOptionsBuilder<S, remove_options_state::SetScope<St>> {
+    ) -> RemoveOptionsBuilder<remove_options_state::SetScope<St>, S> {
         self._fields.1 = Option::Some(value.into());
         RemoveOptionsBuilder {
             _state: PhantomData,
@@ -247,11 +272,11 @@ where
     }
 }
 
-impl<S: BosStr, St> RemoveOptionsBuilder<S, St>
+impl<St, S: BosStr> RemoveOptionsBuilder<St, S>
 where
     St: remove_options_state::State,
-    St::Scope: remove_options_state::IsSet,
     St::Keys: remove_options_state::IsSet,
+    St::Scope: remove_options_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RemoveOptions<S> {

@@ -33,7 +33,9 @@ pub struct UploadVideoOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.video.uploadVideo
+/** Response marker for the `app.bsky.video.uploadVideo` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UploadVideoOutput<S>` for this endpoint.*/
 pub struct UploadVideoResponse;
 impl jacquard_common::xrpc::XrpcResp for UploadVideoResponse {
     const NSID: &'static str = "app.bsky.video.uploadVideo";
@@ -55,7 +57,7 @@ impl jacquard_common::xrpc::XrpcRequest for UploadVideo {
     where
         Self: Serialize,
     {
-        Ok(buffer.copy_from_slice(self.body.as_ref()))
+        Ok(buffer.extend_from_slice(self.body.as_ref()))
     }
     fn decode_body<'de>(
         body: &'de [u8],
@@ -69,7 +71,9 @@ impl jacquard_common::xrpc::XrpcRequest for UploadVideo {
     }
 }
 
-/// Endpoint type for app.bsky.video.uploadVideo
+/** Endpoint marker for the `app.bsky.video.uploadVideo` procedure.
+
+Path: `/xrpc/app.bsky.video.uploadVideo`. The request payload type is `UploadVideo`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UploadVideoRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UploadVideoRequest {
     const PATH: &'static str = "/xrpc/app.bsky.video.uploadVideo";

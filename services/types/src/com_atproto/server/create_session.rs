@@ -196,7 +196,9 @@ impl core::fmt::Display for CreateSessionError {
     }
 }
 
-/// Response type for com.atproto.server.createSession
+/** Response marker for the `com.atproto.server.createSession` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CreateSessionOutput<S>` for this endpoint.*/
 pub struct CreateSessionResponse;
 impl jacquard_common::xrpc::XrpcResp for CreateSessionResponse {
     const NSID: &'static str = "com.atproto.server.createSession";
@@ -213,7 +215,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for CreateSession<S> {
     type Response = CreateSessionResponse;
 }
 
-/// Endpoint type for com.atproto.server.createSession
+/** Endpoint marker for the `com.atproto.server.createSession` procedure.
+
+Path: `/xrpc/com.atproto.server.createSession`. The request payload type is `CreateSession<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct CreateSessionRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CreateSessionRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.createSession";

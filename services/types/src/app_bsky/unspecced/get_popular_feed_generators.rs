@@ -22,7 +22,7 @@ use crate::app_bsky::feed::GeneratorView;
 pub struct GetPopularFeedGenerators<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -41,7 +41,9 @@ pub struct GetPopularFeedGeneratorsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.unspecced.getPopularFeedGenerators
+/** Response marker for the `app.bsky.unspecced.getPopularFeedGenerators` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetPopularFeedGeneratorsOutput<S>` for this endpoint.*/
 pub struct GetPopularFeedGeneratorsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetPopularFeedGeneratorsResponse {
     const NSID: &'static str = "app.bsky.unspecced.getPopularFeedGenerators";
@@ -56,7 +58,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetPopularFeedGenerators<
     type Response = GetPopularFeedGeneratorsResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getPopularFeedGenerators
+/** Endpoint marker for the `app.bsky.unspecced.getPopularFeedGenerators` query.
+
+Path: `/xrpc/app.bsky.unspecced.getPopularFeedGenerators`. The request payload type is `GetPopularFeedGenerators<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetPopularFeedGeneratorsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetPopularFeedGeneratorsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getPopularFeedGenerators";
@@ -90,28 +94,39 @@ pub mod get_popular_feed_generators_state {
 
 /// Builder for constructing an instance of this type.
 pub struct GetPopularFeedGeneratorsBuilder<
-    S: BosStr,
     St: get_popular_feed_generators_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetPopularFeedGenerators<S> {
-    /// Create a new builder for this type.
+impl GetPopularFeedGenerators<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> GetPopularFeedGeneratorsBuilder<
-        S,
         get_popular_feed_generators_state::Empty,
+        DefaultStr,
     > {
         GetPopularFeedGeneratorsBuilder::new()
     }
 }
 
-impl<
-    S: BosStr,
-> GetPopularFeedGeneratorsBuilder<S, get_popular_feed_generators_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetPopularFeedGenerators<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetPopularFeedGeneratorsBuilder<
+        get_popular_feed_generators_state::Empty,
+        S,
+    > {
+        GetPopularFeedGeneratorsBuilder::builder()
+    }
+}
+
+impl GetPopularFeedGeneratorsBuilder<
+    get_popular_feed_generators_state::Empty,
+    DefaultStr,
+> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetPopularFeedGeneratorsBuilder {
             _state: PhantomData,
@@ -123,8 +138,21 @@ impl<
 
 impl<
     S: BosStr,
+> GetPopularFeedGeneratorsBuilder<get_popular_feed_generators_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetPopularFeedGeneratorsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<
     St: get_popular_feed_generators_state::State,
-> GetPopularFeedGeneratorsBuilder<S, St> {
+    S: BosStr,
+> GetPopularFeedGeneratorsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -138,9 +166,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: get_popular_feed_generators_state::State,
-> GetPopularFeedGeneratorsBuilder<S, St> {
+    S: BosStr,
+> GetPopularFeedGeneratorsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -154,9 +182,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: get_popular_feed_generators_state::State,
-> GetPopularFeedGeneratorsBuilder<S, St> {
+    S: BosStr,
+> GetPopularFeedGeneratorsBuilder<St, S> {
     /// Set the `query` field (optional)
     pub fn query(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -169,7 +197,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> GetPopularFeedGeneratorsBuilder<S, St>
+impl<St, S: BosStr> GetPopularFeedGeneratorsBuilder<St, S>
 where
     St: get_popular_feed_generators_state::State,
 {

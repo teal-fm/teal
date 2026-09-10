@@ -184,7 +184,9 @@ impl core::fmt::Display for PutRecordError {
     }
 }
 
-/// Response type for com.atproto.repo.putRecord
+/** Response marker for the `com.atproto.repo.putRecord` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `PutRecordOutput<S>` for this endpoint.*/
 pub struct PutRecordResponse;
 impl jacquard_common::xrpc::XrpcResp for PutRecordResponse {
     const NSID: &'static str = "com.atproto.repo.putRecord";
@@ -201,7 +203,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for PutRecord<S> {
     type Response = PutRecordResponse;
 }
 
-/// Endpoint type for com.atproto.repo.putRecord
+/** Endpoint marker for the `com.atproto.repo.putRecord` procedure.
+
+Path: `/xrpc/com.atproto.repo.putRecord`. The request payload type is `PutRecord<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct PutRecordRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for PutRecordRequest {
     const PATH: &'static str = "/xrpc/com.atproto.repo.putRecord";
@@ -287,7 +291,7 @@ pub mod put_record_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct PutRecordBuilder<S: BosStr, St: put_record_state::State> {
+pub struct PutRecordBuilder<St: put_record_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Nsid<S>>,
@@ -301,15 +305,22 @@ pub struct PutRecordBuilder<S: BosStr, St: put_record_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> PutRecord<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> PutRecordBuilder<S, put_record_state::Empty> {
+impl PutRecord<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> PutRecordBuilder<put_record_state::Empty, DefaultStr> {
         PutRecordBuilder::new()
     }
 }
 
-impl<S: BosStr> PutRecordBuilder<S, put_record_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> PutRecord<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PutRecordBuilder<put_record_state::Empty, S> {
+        PutRecordBuilder::builder()
+    }
+}
+
+impl PutRecordBuilder<put_record_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PutRecordBuilder {
             _state: PhantomData,
@@ -319,7 +330,18 @@ impl<S: BosStr> PutRecordBuilder<S, put_record_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> PutRecordBuilder<S, St>
+impl<S: BosStr> PutRecordBuilder<put_record_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PutRecordBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> PutRecordBuilder<St, S>
 where
     St: put_record_state::State,
     St::Collection: put_record_state::IsUnset,
@@ -328,7 +350,7 @@ where
     pub fn collection(
         mut self,
         value: impl Into<Nsid<S>>,
-    ) -> PutRecordBuilder<S, put_record_state::SetCollection<St>> {
+    ) -> PutRecordBuilder<put_record_state::SetCollection<St>, S> {
         self._fields.0 = Option::Some(value.into());
         PutRecordBuilder {
             _state: PhantomData,
@@ -338,7 +360,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PutRecordBuilder<S, St>
+impl<St, S: BosStr> PutRecordBuilder<St, S>
 where
     St: put_record_state::State,
     St::Record: put_record_state::IsUnset,
@@ -347,7 +369,7 @@ where
     pub fn record(
         mut self,
         value: impl Into<Data<S>>,
-    ) -> PutRecordBuilder<S, put_record_state::SetRecord<St>> {
+    ) -> PutRecordBuilder<put_record_state::SetRecord<St>, S> {
         self._fields.1 = Option::Some(value.into());
         PutRecordBuilder {
             _state: PhantomData,
@@ -357,7 +379,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PutRecordBuilder<S, St>
+impl<St, S: BosStr> PutRecordBuilder<St, S>
 where
     St: put_record_state::State,
     St::Repo: put_record_state::IsUnset,
@@ -366,7 +388,7 @@ where
     pub fn repo(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> PutRecordBuilder<S, put_record_state::SetRepo<St>> {
+    ) -> PutRecordBuilder<put_record_state::SetRepo<St>, S> {
         self._fields.2 = Option::Some(value.into());
         PutRecordBuilder {
             _state: PhantomData,
@@ -376,7 +398,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PutRecordBuilder<S, St>
+impl<St, S: BosStr> PutRecordBuilder<St, S>
 where
     St: put_record_state::State,
     St::Rkey: put_record_state::IsUnset,
@@ -385,7 +407,7 @@ where
     pub fn rkey(
         mut self,
         value: impl Into<RecordKey<Rkey<S>>>,
-    ) -> PutRecordBuilder<S, put_record_state::SetRkey<St>> {
+    ) -> PutRecordBuilder<put_record_state::SetRkey<St>, S> {
         self._fields.3 = Option::Some(value.into());
         PutRecordBuilder {
             _state: PhantomData,
@@ -395,7 +417,7 @@ where
     }
 }
 
-impl<S: BosStr, St: put_record_state::State> PutRecordBuilder<S, St> {
+impl<St: put_record_state::State, S: BosStr> PutRecordBuilder<St, S> {
     /// Set the `swapCommit` field (optional)
     pub fn swap_commit(mut self, value: impl Into<Option<Cid<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -408,7 +430,7 @@ impl<S: BosStr, St: put_record_state::State> PutRecordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: put_record_state::State> PutRecordBuilder<S, St> {
+impl<St: put_record_state::State, S: BosStr> PutRecordBuilder<St, S> {
     /// Set the `swapRecord` field (optional)
     pub fn swap_record(mut self, value: impl Into<Option<Cid<S>>>) -> Self {
         self._fields.5 = value.into();
@@ -421,7 +443,7 @@ impl<S: BosStr, St: put_record_state::State> PutRecordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: put_record_state::State> PutRecordBuilder<S, St> {
+impl<St: put_record_state::State, S: BosStr> PutRecordBuilder<St, S> {
     /// Set the `validate` field (optional)
     pub fn validate(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.6 = value.into();
@@ -434,7 +456,7 @@ impl<S: BosStr, St: put_record_state::State> PutRecordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> PutRecordBuilder<S, St>
+impl<St, S: BosStr> PutRecordBuilder<St, S>
 where
     St: put_record_state::State,
     St::Collection: put_record_state::IsSet,

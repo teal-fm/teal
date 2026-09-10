@@ -33,7 +33,9 @@ pub struct FindCorrelationOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.signature.findCorrelation
+/** Response marker for the `tools.ozone.signature.findCorrelation` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `FindCorrelationOutput<S>` for this endpoint.*/
 pub struct FindCorrelationResponse;
 impl jacquard_common::xrpc::XrpcResp for FindCorrelationResponse {
     const NSID: &'static str = "tools.ozone.signature.findCorrelation";
@@ -48,7 +50,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for FindCorrelation<S> {
     type Response = FindCorrelationResponse;
 }
 
-/// Endpoint type for tools.ozone.signature.findCorrelation
+/** Endpoint marker for the `tools.ozone.signature.findCorrelation` query.
+
+Path: `/xrpc/tools.ozone.signature.findCorrelation`. The request payload type is `FindCorrelation<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct FindCorrelationRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for FindCorrelationRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.signature.findCorrelation";
@@ -90,21 +94,31 @@ pub mod find_correlation_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct FindCorrelationBuilder<S: BosStr, St: find_correlation_state::State> {
+pub struct FindCorrelationBuilder<
+    St: find_correlation_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Did<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> FindCorrelation<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> FindCorrelationBuilder<S, find_correlation_state::Empty> {
+impl FindCorrelation<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> FindCorrelationBuilder<find_correlation_state::Empty, DefaultStr> {
         FindCorrelationBuilder::new()
     }
 }
 
-impl<S: BosStr> FindCorrelationBuilder<S, find_correlation_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> FindCorrelation<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> FindCorrelationBuilder<find_correlation_state::Empty, S> {
+        FindCorrelationBuilder::builder()
+    }
+}
+
+impl FindCorrelationBuilder<find_correlation_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         FindCorrelationBuilder {
             _state: PhantomData,
@@ -114,7 +128,18 @@ impl<S: BosStr> FindCorrelationBuilder<S, find_correlation_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> FindCorrelationBuilder<S, St>
+impl<S: BosStr> FindCorrelationBuilder<find_correlation_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        FindCorrelationBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> FindCorrelationBuilder<St, S>
 where
     St: find_correlation_state::State,
     St::Dids: find_correlation_state::IsUnset,
@@ -123,7 +148,7 @@ where
     pub fn dids(
         mut self,
         value: impl Into<Vec<Did<S>>>,
-    ) -> FindCorrelationBuilder<S, find_correlation_state::SetDids<St>> {
+    ) -> FindCorrelationBuilder<find_correlation_state::SetDids<St>, S> {
         self._fields.0 = Option::Some(value.into());
         FindCorrelationBuilder {
             _state: PhantomData,
@@ -133,7 +158,7 @@ where
     }
 }
 
-impl<S: BosStr, St> FindCorrelationBuilder<S, St>
+impl<St, S: BosStr> FindCorrelationBuilder<St, S>
 where
     St: find_correlation_state::State,
     St::Dids: find_correlation_state::IsSet,

@@ -88,7 +88,9 @@ impl core::fmt::Display for DeleteMessageForSelfError {
     }
 }
 
-/// Response type for chat.bsky.convo.deleteMessageForSelf
+/** Response marker for the `chat.bsky.convo.deleteMessageForSelf` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `DeleteMessageForSelfOutput<S>` for this endpoint.*/
 pub struct DeleteMessageForSelfResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteMessageForSelfResponse {
     const NSID: &'static str = "chat.bsky.convo.deleteMessageForSelf";
@@ -105,7 +107,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeleteMessageForSelf<S> {
     type Response = DeleteMessageForSelfResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.deleteMessageForSelf
+/** Endpoint marker for the `chat.bsky.convo.deleteMessageForSelf` procedure.
+
+Path: `/xrpc/chat.bsky.convo.deleteMessageForSelf`. The request payload type is `DeleteMessageForSelf<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DeleteMessageForSelfRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteMessageForSelfRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.deleteMessageForSelf";

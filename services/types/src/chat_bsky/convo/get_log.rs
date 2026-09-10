@@ -131,7 +131,9 @@ pub enum GetLogOutputLogsItem<S: BosStr = DefaultStr> {
     LogReadJoinRequests(Box<LogReadJoinRequests<S>>),
 }
 
-/// Response type for chat.bsky.convo.getLog
+/** Response marker for the `chat.bsky.convo.getLog` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetLogOutput<S>` for this endpoint.*/
 pub struct GetLogResponse;
 impl jacquard_common::xrpc::XrpcResp for GetLogResponse {
     const NSID: &'static str = "chat.bsky.convo.getLog";
@@ -146,7 +148,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetLog<S> {
     type Response = GetLogResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.getLog
+/** Endpoint marker for the `chat.bsky.convo.getLog` query.
+
+Path: `/xrpc/chat.bsky.convo.getLog`. The request payload type is `GetLog<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetLogRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetLogRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.getLog";
@@ -175,21 +179,28 @@ pub mod get_log_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetLogBuilder<S: BosStr, St: get_log_state::State> {
+pub struct GetLogBuilder<St: get_log_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetLog<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetLogBuilder<S, get_log_state::Empty> {
+impl GetLog<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetLogBuilder<get_log_state::Empty, DefaultStr> {
         GetLogBuilder::new()
     }
 }
 
-impl<S: BosStr> GetLogBuilder<S, get_log_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetLog<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetLogBuilder<get_log_state::Empty, S> {
+        GetLogBuilder::builder()
+    }
+}
+
+impl GetLogBuilder<get_log_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetLogBuilder {
             _state: PhantomData,
@@ -199,7 +210,18 @@ impl<S: BosStr> GetLogBuilder<S, get_log_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_log_state::State> GetLogBuilder<S, St> {
+impl<S: BosStr> GetLogBuilder<get_log_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetLogBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_log_state::State, S: BosStr> GetLogBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -212,7 +234,7 @@ impl<S: BosStr, St: get_log_state::State> GetLogBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetLogBuilder<S, St>
+impl<St, S: BosStr> GetLogBuilder<St, S>
 where
     St: get_log_state::State,
 {

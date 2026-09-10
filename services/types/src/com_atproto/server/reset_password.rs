@@ -76,7 +76,9 @@ impl core::fmt::Display for ResetPasswordError {
     }
 }
 
-/// Response type for com.atproto.server.resetPassword
+/** Response marker for the `com.atproto.server.resetPassword` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct ResetPasswordResponse;
 impl jacquard_common::xrpc::XrpcResp for ResetPasswordResponse {
     const NSID: &'static str = "com.atproto.server.resetPassword";
@@ -93,7 +95,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for ResetPassword<S> {
     type Response = ResetPasswordResponse;
 }
 
-/// Endpoint type for com.atproto.server.resetPassword
+/** Endpoint marker for the `com.atproto.server.resetPassword` procedure.
+
+Path: `/xrpc/com.atproto.server.resetPassword`. The request payload type is `ResetPassword<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct ResetPasswordRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ResetPasswordRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.resetPassword";

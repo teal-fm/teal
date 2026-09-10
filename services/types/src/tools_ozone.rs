@@ -3,6 +3,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `tools.ozone` Lexicon namespace/module.
 pub mod communication;
 pub mod hosting;
 pub mod moderation;

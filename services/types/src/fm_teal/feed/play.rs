@@ -303,7 +303,7 @@ pub mod play_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct PlayBuilder<S: BosStr, St: play_state::State> {
+pub struct PlayBuilder<St: play_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Vec<S>>,
@@ -326,15 +326,22 @@ pub struct PlayBuilder<S: BosStr, St: play_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Play<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> PlayBuilder<S, play_state::Empty> {
+impl Play<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> PlayBuilder<play_state::Empty, DefaultStr> {
         PlayBuilder::new()
     }
 }
 
-impl<S: BosStr> PlayBuilder<S, play_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Play<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PlayBuilder<play_state::Empty, S> {
+        PlayBuilder::builder()
+    }
+}
+
+impl PlayBuilder<play_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PlayBuilder {
             _state: PhantomData,
@@ -361,7 +368,35 @@ impl<S: BosStr> PlayBuilder<S, play_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<S: BosStr> PlayBuilder<play_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PlayBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `artistMbIds` field (optional)
     pub fn artist_mb_ids(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -374,7 +409,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `artistNames` field (optional)
     pub fn artist_names(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -387,7 +422,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `artists` field (optional)
     pub fn artists(mut self, value: impl Into<Option<Vec<Artist<S>>>>) -> Self {
         self._fields.2 = value.into();
@@ -400,7 +435,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `duration` field (optional)
     pub fn duration(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.3 = value.into();
@@ -413,7 +448,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `isrc` field (optional)
     pub fn isrc(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -426,7 +461,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `musicServiceUri` field (optional)
     pub fn music_service_uri(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.5 = value.into();
@@ -439,7 +474,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `originUri` field (optional)
     pub fn origin_uri(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.6 = value.into();
@@ -452,7 +487,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `playedTime` field (optional)
     pub fn played_time(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.7 = value.into();
@@ -465,7 +500,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `recordingMbId` field (optional)
     pub fn recording_mb_id(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.8 = value.into();
@@ -478,7 +513,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `releaseDiscriminant` field (optional)
     pub fn release_discriminant(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.9 = value.into();
@@ -491,7 +526,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `releaseMbId` field (optional)
     pub fn release_mb_id(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.10 = value.into();
@@ -504,7 +539,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `releaseName` field (optional)
     pub fn release_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.11 = value.into();
@@ -517,7 +552,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `submissionClientAgent` field (optional)
     pub fn submission_client_agent(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.12 = value.into();
@@ -530,7 +565,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `trackDiscriminant` field (optional)
     pub fn track_discriminant(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.13 = value.into();
@@ -543,7 +578,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
+impl<St: play_state::State, S: BosStr> PlayBuilder<St, S> {
     /// Set the `trackMbId` field (optional)
     pub fn track_mb_id(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.14 = value.into();
@@ -556,7 +591,7 @@ impl<S: BosStr, St: play_state::State> PlayBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> PlayBuilder<S, St>
+impl<St, S: BosStr> PlayBuilder<St, S>
 where
     St: play_state::State,
     St::TrackName: play_state::IsUnset,
@@ -565,7 +600,7 @@ where
     pub fn track_name(
         mut self,
         value: impl Into<S>,
-    ) -> PlayBuilder<S, play_state::SetTrackName<St>> {
+    ) -> PlayBuilder<play_state::SetTrackName<St>, S> {
         self._fields.15 = Option::Some(value.into());
         PlayBuilder {
             _state: PhantomData,
@@ -575,7 +610,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PlayBuilder<S, St>
+impl<St, S: BosStr> PlayBuilder<St, S>
 where
     St: play_state::State,
     St::TrackName: play_state::IsSet,

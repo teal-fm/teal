@@ -369,56 +369,63 @@ pub mod featured_item_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Type;
         type Mbid;
+        type Type;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Type = Unset;
         type Mbid = Unset;
-    }
-    ///State transition - sets the `type` field to Set
-    pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetType<St> {}
-    impl<St: State> State for SetType<St> {
-        type Type = Set<members::r#type>;
-        type Mbid = St::Mbid;
+        type Type = Unset;
     }
     ///State transition - sets the `mbid` field to Set
     pub struct SetMbid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMbid<St> {}
     impl<St: State> State for SetMbid<St> {
-        type Type = St::Type;
         type Mbid = Set<members::mbid>;
+        type Type = St::Type;
+    }
+    ///State transition - sets the `type` field to Set
+    pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetType<St> {}
+    impl<St: State> State for SetType<St> {
+        type Mbid = St::Mbid;
+        type Type = Set<members::r#type>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `type` field
-        pub struct r#type(());
         ///Marker type for the `mbid` field
         pub struct mbid(());
+        ///Marker type for the `type` field
+        pub struct r#type(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct FeaturedItemBuilder<S: BosStr, St: featured_item_state::State> {
+pub struct FeaturedItemBuilder<St: featured_item_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<UriValue<S>>, Option<FeaturedItemType<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> FeaturedItem<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> FeaturedItemBuilder<S, featured_item_state::Empty> {
+impl FeaturedItem<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> FeaturedItemBuilder<featured_item_state::Empty, DefaultStr> {
         FeaturedItemBuilder::new()
     }
 }
 
-impl<S: BosStr> FeaturedItemBuilder<S, featured_item_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> FeaturedItem<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> FeaturedItemBuilder<featured_item_state::Empty, S> {
+        FeaturedItemBuilder::builder()
+    }
+}
+
+impl FeaturedItemBuilder<featured_item_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         FeaturedItemBuilder {
             _state: PhantomData,
@@ -428,7 +435,18 @@ impl<S: BosStr> FeaturedItemBuilder<S, featured_item_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> FeaturedItemBuilder<S, St>
+impl<S: BosStr> FeaturedItemBuilder<featured_item_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        FeaturedItemBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> FeaturedItemBuilder<St, S>
 where
     St: featured_item_state::State,
     St::Mbid: featured_item_state::IsUnset,
@@ -437,7 +455,7 @@ where
     pub fn mbid(
         mut self,
         value: impl Into<UriValue<S>>,
-    ) -> FeaturedItemBuilder<S, featured_item_state::SetMbid<St>> {
+    ) -> FeaturedItemBuilder<featured_item_state::SetMbid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         FeaturedItemBuilder {
             _state: PhantomData,
@@ -447,7 +465,7 @@ where
     }
 }
 
-impl<S: BosStr, St> FeaturedItemBuilder<S, St>
+impl<St, S: BosStr> FeaturedItemBuilder<St, S>
 where
     St: featured_item_state::State,
     St::Type: featured_item_state::IsUnset,
@@ -456,7 +474,7 @@ where
     pub fn r#type(
         mut self,
         value: impl Into<FeaturedItemType<S>>,
-    ) -> FeaturedItemBuilder<S, featured_item_state::SetType<St>> {
+    ) -> FeaturedItemBuilder<featured_item_state::SetType<St>, S> {
         self._fields.1 = Option::Some(value.into());
         FeaturedItemBuilder {
             _state: PhantomData,
@@ -466,11 +484,11 @@ where
     }
 }
 
-impl<S: BosStr, St> FeaturedItemBuilder<S, St>
+impl<St, S: BosStr> FeaturedItemBuilder<St, S>
 where
     St: featured_item_state::State,
-    St::Type: featured_item_state::IsSet,
     St::Mbid: featured_item_state::IsSet,
+    St::Type: featured_item_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> FeaturedItem<S> {
@@ -653,7 +671,7 @@ pub mod profile_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ProfileBuilder<S: BosStr, St: profile_state::State> {
+pub struct ProfileBuilder<St: profile_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<BlobRef<S>>,
@@ -668,15 +686,22 @@ pub struct ProfileBuilder<S: BosStr, St: profile_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Profile<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ProfileBuilder<S, profile_state::Empty> {
+impl Profile<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ProfileBuilder<profile_state::Empty, DefaultStr> {
         ProfileBuilder::new()
     }
 }
 
-impl<S: BosStr> ProfileBuilder<S, profile_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Profile<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ProfileBuilder<profile_state::Empty, S> {
+        ProfileBuilder::builder()
+    }
+}
+
+impl ProfileBuilder<profile_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ProfileBuilder {
             _state: PhantomData,
@@ -686,7 +711,18 @@ impl<S: BosStr> ProfileBuilder<S, profile_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<S: BosStr> ProfileBuilder<profile_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ProfileBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `avatar` field (optional)
     pub fn avatar(mut self, value: impl Into<Option<BlobRef<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -699,7 +735,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `banner` field (optional)
     pub fn banner(mut self, value: impl Into<Option<BlobRef<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -712,7 +748,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `createdAt` field (optional)
     pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.2 = value.into();
@@ -725,7 +761,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.3 = value.into();
@@ -738,7 +774,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `descriptionFacets` field (optional)
     pub fn description_facets(
         mut self,
@@ -754,7 +790,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `displayName` field (optional)
     pub fn display_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.5 = value.into();
@@ -767,7 +803,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `featuredItem` field (optional)
     pub fn featured_item(
         mut self,
@@ -786,7 +822,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `statsDefaultPeriod` field (optional)
     pub fn stats_default_period(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.7 = value.into();
@@ -799,7 +835,7 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ProfileBuilder<S, St>
+impl<St, S: BosStr> ProfileBuilder<St, S>
 where
     St: profile_state::State,
 {

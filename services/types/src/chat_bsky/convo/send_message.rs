@@ -97,7 +97,9 @@ impl core::fmt::Display for SendMessageError {
     }
 }
 
-/// Response type for chat.bsky.convo.sendMessage
+/** Response marker for the `chat.bsky.convo.sendMessage` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SendMessageOutput<S>` for this endpoint.*/
 pub struct SendMessageResponse;
 impl jacquard_common::xrpc::XrpcResp for SendMessageResponse {
     const NSID: &'static str = "chat.bsky.convo.sendMessage";
@@ -114,7 +116,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SendMessage<S> {
     type Response = SendMessageResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.sendMessage
+/** Endpoint marker for the `chat.bsky.convo.sendMessage` procedure.
+
+Path: `/xrpc/chat.bsky.convo.sendMessage`. The request payload type is `SendMessage<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SendMessageRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SendMessageRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.sendMessage";
@@ -170,21 +174,28 @@ pub mod send_message_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SendMessageBuilder<S: BosStr, St: send_message_state::State> {
+pub struct SendMessageBuilder<St: send_message_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<MessageInput<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SendMessage<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SendMessageBuilder<S, send_message_state::Empty> {
+impl SendMessage<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SendMessageBuilder<send_message_state::Empty, DefaultStr> {
         SendMessageBuilder::new()
     }
 }
 
-impl<S: BosStr> SendMessageBuilder<S, send_message_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SendMessage<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SendMessageBuilder<send_message_state::Empty, S> {
+        SendMessageBuilder::builder()
+    }
+}
+
+impl SendMessageBuilder<send_message_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SendMessageBuilder {
             _state: PhantomData,
@@ -194,7 +205,18 @@ impl<S: BosStr> SendMessageBuilder<S, send_message_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SendMessageBuilder<S, St>
+impl<S: BosStr> SendMessageBuilder<send_message_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SendMessageBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SendMessageBuilder<St, S>
 where
     St: send_message_state::State,
     St::ConvoId: send_message_state::IsUnset,
@@ -203,7 +225,7 @@ where
     pub fn convo_id(
         mut self,
         value: impl Into<S>,
-    ) -> SendMessageBuilder<S, send_message_state::SetConvoId<St>> {
+    ) -> SendMessageBuilder<send_message_state::SetConvoId<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SendMessageBuilder {
             _state: PhantomData,
@@ -213,7 +235,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SendMessageBuilder<S, St>
+impl<St, S: BosStr> SendMessageBuilder<St, S>
 where
     St: send_message_state::State,
     St::Message: send_message_state::IsUnset,
@@ -222,7 +244,7 @@ where
     pub fn message(
         mut self,
         value: impl Into<MessageInput<S>>,
-    ) -> SendMessageBuilder<S, send_message_state::SetMessage<St>> {
+    ) -> SendMessageBuilder<send_message_state::SetMessage<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SendMessageBuilder {
             _state: PhantomData,
@@ -232,7 +254,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SendMessageBuilder<S, St>
+impl<St, S: BosStr> SendMessageBuilder<St, S>
 where
     St: send_message_state::State,
     St::ConvoId: send_message_state::IsSet,

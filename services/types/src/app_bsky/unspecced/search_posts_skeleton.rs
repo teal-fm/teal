@@ -30,7 +30,7 @@ pub struct SearchPostsSkeleton<S: BosStr = DefaultStr> {
     pub domain: Option<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lang: Option<Language>,
-    ///Defaults to `25`. Min: 1. Max: 100.
+    /// Defaults to `25`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -39,7 +39,7 @@ pub struct SearchPostsSkeleton<S: BosStr = DefaultStr> {
     pub q: S,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub since: Option<S>,
-    ///Defaults to `"latest"`.
+    /// Defaults to `"latest"`.
     #[serde(default = "_default_sort")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<S>,
@@ -109,7 +109,9 @@ impl core::fmt::Display for SearchPostsSkeletonError {
     }
 }
 
-/// Response type for app.bsky.unspecced.searchPostsSkeleton
+/** Response marker for the `app.bsky.unspecced.searchPostsSkeleton` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SearchPostsSkeletonOutput<S>` for this endpoint.*/
 pub struct SearchPostsSkeletonResponse;
 impl jacquard_common::xrpc::XrpcResp for SearchPostsSkeletonResponse {
     const NSID: &'static str = "app.bsky.unspecced.searchPostsSkeleton";
@@ -124,7 +126,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SearchPostsSkeleton<S> {
     type Response = SearchPostsSkeletonResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.searchPostsSkeleton
+/** Endpoint marker for the `app.bsky.unspecced.searchPostsSkeleton` query.
+
+Path: `/xrpc/app.bsky.unspecced.searchPostsSkeleton`. The request payload type is `SearchPostsSkeleton<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SearchPostsSkeletonRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SearchPostsSkeletonRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.searchPostsSkeleton";
@@ -175,8 +179,8 @@ pub mod search_posts_skeleton_state {
 
 /// Builder for constructing an instance of this type.
 pub struct SearchPostsSkeletonBuilder<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (
@@ -197,15 +201,28 @@ pub struct SearchPostsSkeletonBuilder<
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SearchPostsSkeleton<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SearchPostsSkeletonBuilder<S, search_posts_skeleton_state::Empty> {
+impl SearchPostsSkeleton<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SearchPostsSkeletonBuilder<
+        search_posts_skeleton_state::Empty,
+        DefaultStr,
+    > {
         SearchPostsSkeletonBuilder::new()
     }
 }
 
-impl<S: BosStr> SearchPostsSkeletonBuilder<S, search_posts_skeleton_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SearchPostsSkeleton<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SearchPostsSkeletonBuilder<
+        search_posts_skeleton_state::Empty,
+        S,
+    > {
+        SearchPostsSkeletonBuilder::builder()
+    }
+}
+
+impl SearchPostsSkeletonBuilder<search_posts_skeleton_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SearchPostsSkeletonBuilder {
             _state: PhantomData,
@@ -229,10 +246,35 @@ impl<S: BosStr> SearchPostsSkeletonBuilder<S, search_posts_skeleton_state::Empty
     }
 }
 
+impl<S: BosStr> SearchPostsSkeletonBuilder<search_posts_skeleton_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SearchPostsSkeletonBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `author` field (optional)
     pub fn author(mut self, value: impl Into<Option<AtIdentifier<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -246,9 +288,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -262,9 +304,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `domain` field (optional)
     pub fn domain(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -278,9 +320,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `lang` field (optional)
     pub fn lang(mut self, value: impl Into<Option<Language>>) -> Self {
         self._fields.3 = value.into();
@@ -294,9 +336,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.4 = value.into();
@@ -310,9 +352,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `mentions` field (optional)
     pub fn mentions(mut self, value: impl Into<Option<AtIdentifier<S>>>) -> Self {
         self._fields.5 = value.into();
@@ -325,7 +367,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> SearchPostsSkeletonBuilder<S, St>
+impl<St, S: BosStr> SearchPostsSkeletonBuilder<St, S>
 where
     St: search_posts_skeleton_state::State,
     St::Q: search_posts_skeleton_state::IsUnset,
@@ -334,7 +376,7 @@ where
     pub fn q(
         mut self,
         value: impl Into<S>,
-    ) -> SearchPostsSkeletonBuilder<S, search_posts_skeleton_state::SetQ<St>> {
+    ) -> SearchPostsSkeletonBuilder<search_posts_skeleton_state::SetQ<St>, S> {
         self._fields.6 = Option::Some(value.into());
         SearchPostsSkeletonBuilder {
             _state: PhantomData,
@@ -345,9 +387,9 @@ where
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `since` field (optional)
     pub fn since(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.7 = value.into();
@@ -361,9 +403,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `sort` field (optional)
     pub fn sort(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.8 = value.into();
@@ -377,9 +419,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `tag` field (optional)
     pub fn tag(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
         self._fields.9 = value.into();
@@ -393,9 +435,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `until` field (optional)
     pub fn until(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.10 = value.into();
@@ -409,9 +451,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `url` field (optional)
     pub fn url(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.11 = value.into();
@@ -425,9 +467,9 @@ impl<
 }
 
 impl<
-    S: BosStr,
     St: search_posts_skeleton_state::State,
-> SearchPostsSkeletonBuilder<S, St> {
+    S: BosStr,
+> SearchPostsSkeletonBuilder<St, S> {
     /// Set the `viewer` field (optional)
     pub fn viewer(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.12 = value.into();
@@ -440,7 +482,7 @@ impl<
     }
 }
 
-impl<S: BosStr, St> SearchPostsSkeletonBuilder<S, St>
+impl<St, S: BosStr> SearchPostsSkeletonBuilder<St, S>
 where
     St: search_posts_skeleton_state::State,
     St::Q: search_posts_skeleton_state::IsSet,

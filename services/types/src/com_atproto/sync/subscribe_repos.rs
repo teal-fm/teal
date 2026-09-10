@@ -664,72 +664,72 @@ pub mod account_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Did;
-        type Time;
-        type Seq;
         type Active;
+        type Did;
+        type Seq;
+        type Time;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Did = Unset;
-        type Time = Unset;
-        type Seq = Unset;
         type Active = Unset;
-    }
-    ///State transition - sets the `did` field to Set
-    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDid<St> {}
-    impl<St: State> State for SetDid<St> {
-        type Did = Set<members::did>;
-        type Time = St::Time;
-        type Seq = St::Seq;
-        type Active = St::Active;
-    }
-    ///State transition - sets the `time` field to Set
-    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTime<St> {}
-    impl<St: State> State for SetTime<St> {
-        type Did = St::Did;
-        type Time = Set<members::time>;
-        type Seq = St::Seq;
-        type Active = St::Active;
-    }
-    ///State transition - sets the `seq` field to Set
-    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSeq<St> {}
-    impl<St: State> State for SetSeq<St> {
-        type Did = St::Did;
-        type Time = St::Time;
-        type Seq = Set<members::seq>;
-        type Active = St::Active;
+        type Did = Unset;
+        type Seq = Unset;
+        type Time = Unset;
     }
     ///State transition - sets the `active` field to Set
     pub struct SetActive<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetActive<St> {}
     impl<St: State> State for SetActive<St> {
-        type Did = St::Did;
-        type Time = St::Time;
-        type Seq = St::Seq;
         type Active = Set<members::active>;
+        type Did = St::Did;
+        type Seq = St::Seq;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `did` field to Set
+    pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDid<St> {}
+    impl<St: State> State for SetDid<St> {
+        type Active = St::Active;
+        type Did = Set<members::did>;
+        type Seq = St::Seq;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `seq` field to Set
+    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSeq<St> {}
+    impl<St: State> State for SetSeq<St> {
+        type Active = St::Active;
+        type Did = St::Did;
+        type Seq = Set<members::seq>;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `time` field to Set
+    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTime<St> {}
+    impl<St: State> State for SetTime<St> {
+        type Active = St::Active;
+        type Did = St::Did;
+        type Seq = St::Seq;
+        type Time = Set<members::time>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `did` field
-        pub struct did(());
-        ///Marker type for the `time` field
-        pub struct time(());
-        ///Marker type for the `seq` field
-        pub struct seq(());
         ///Marker type for the `active` field
         pub struct active(());
+        ///Marker type for the `did` field
+        pub struct did(());
+        ///Marker type for the `seq` field
+        pub struct seq(());
+        ///Marker type for the `time` field
+        pub struct time(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AccountBuilder<S: BosStr, St: account_state::State> {
+pub struct AccountBuilder<St: account_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<bool>,
@@ -741,15 +741,22 @@ pub struct AccountBuilder<S: BosStr, St: account_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Account<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AccountBuilder<S, account_state::Empty> {
+impl Account<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AccountBuilder<account_state::Empty, DefaultStr> {
         AccountBuilder::new()
     }
 }
 
-impl<S: BosStr> AccountBuilder<S, account_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Account<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AccountBuilder<account_state::Empty, S> {
+        AccountBuilder::builder()
+    }
+}
+
+impl AccountBuilder<account_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AccountBuilder {
             _state: PhantomData,
@@ -759,7 +766,18 @@ impl<S: BosStr> AccountBuilder<S, account_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> AccountBuilder<S, St>
+impl<S: BosStr> AccountBuilder<account_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AccountBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> AccountBuilder<St, S>
 where
     St: account_state::State,
     St::Active: account_state::IsUnset,
@@ -768,7 +786,7 @@ where
     pub fn active(
         mut self,
         value: impl Into<bool>,
-    ) -> AccountBuilder<S, account_state::SetActive<St>> {
+    ) -> AccountBuilder<account_state::SetActive<St>, S> {
         self._fields.0 = Option::Some(value.into());
         AccountBuilder {
             _state: PhantomData,
@@ -778,7 +796,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AccountBuilder<S, St>
+impl<St, S: BosStr> AccountBuilder<St, S>
 where
     St: account_state::State,
     St::Did: account_state::IsUnset,
@@ -787,7 +805,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> AccountBuilder<S, account_state::SetDid<St>> {
+    ) -> AccountBuilder<account_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AccountBuilder {
             _state: PhantomData,
@@ -797,7 +815,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AccountBuilder<S, St>
+impl<St, S: BosStr> AccountBuilder<St, S>
 where
     St: account_state::State,
     St::Seq: account_state::IsUnset,
@@ -806,7 +824,7 @@ where
     pub fn seq(
         mut self,
         value: impl Into<i64>,
-    ) -> AccountBuilder<S, account_state::SetSeq<St>> {
+    ) -> AccountBuilder<account_state::SetSeq<St>, S> {
         self._fields.2 = Option::Some(value.into());
         AccountBuilder {
             _state: PhantomData,
@@ -816,7 +834,7 @@ where
     }
 }
 
-impl<S: BosStr, St: account_state::State> AccountBuilder<S, St> {
+impl<St: account_state::State, S: BosStr> AccountBuilder<St, S> {
     /// Set the `status` field (optional)
     pub fn status(mut self, value: impl Into<Option<AccountStatus<S>>>) -> Self {
         self._fields.3 = value.into();
@@ -829,7 +847,7 @@ impl<S: BosStr, St: account_state::State> AccountBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AccountBuilder<S, St>
+impl<St, S: BosStr> AccountBuilder<St, S>
 where
     St: account_state::State,
     St::Time: account_state::IsUnset,
@@ -838,7 +856,7 @@ where
     pub fn time(
         mut self,
         value: impl Into<Datetime>,
-    ) -> AccountBuilder<S, account_state::SetTime<St>> {
+    ) -> AccountBuilder<account_state::SetTime<St>, S> {
         self._fields.4 = Option::Some(value.into());
         AccountBuilder {
             _state: PhantomData,
@@ -848,13 +866,13 @@ where
     }
 }
 
-impl<S: BosStr, St> AccountBuilder<S, St>
+impl<St, S: BosStr> AccountBuilder<St, S>
 where
     St: account_state::State,
-    St::Did: account_state::IsSet,
-    St::Time: account_state::IsSet,
-    St::Seq: account_state::IsSet,
     St::Active: account_state::IsSet,
+    St::Did: account_state::IsSet,
+    St::Seq: account_state::IsSet,
+    St::Time: account_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Account<S> {
@@ -1305,210 +1323,210 @@ pub mod commit_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Ops;
-        type Repo;
-        type TooBig;
-        type Rebase;
-        type Rev;
-        type Time;
-        type Commit;
         type Blobs;
-        type Seq;
         type Blocks;
+        type Commit;
+        type Ops;
+        type Rebase;
+        type Repo;
+        type Rev;
+        type Seq;
+        type Time;
+        type TooBig;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Ops = Unset;
-        type Repo = Unset;
-        type TooBig = Unset;
-        type Rebase = Unset;
-        type Rev = Unset;
-        type Time = Unset;
-        type Commit = Unset;
         type Blobs = Unset;
-        type Seq = Unset;
         type Blocks = Unset;
-    }
-    ///State transition - sets the `ops` field to Set
-    pub struct SetOps<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetOps<St> {}
-    impl<St: State> State for SetOps<St> {
-        type Ops = Set<members::ops>;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Commit = St::Commit;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-    }
-    ///State transition - sets the `repo` field to Set
-    pub struct SetRepo<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRepo<St> {}
-    impl<St: State> State for SetRepo<St> {
-        type Ops = St::Ops;
-        type Repo = Set<members::repo>;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Commit = St::Commit;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-    }
-    ///State transition - sets the `too_big` field to Set
-    pub struct SetTooBig<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTooBig<St> {}
-    impl<St: State> State for SetTooBig<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = Set<members::too_big>;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Commit = St::Commit;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-    }
-    ///State transition - sets the `rebase` field to Set
-    pub struct SetRebase<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRebase<St> {}
-    impl<St: State> State for SetRebase<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = Set<members::rebase>;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Commit = St::Commit;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-    }
-    ///State transition - sets the `rev` field to Set
-    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRev<St> {}
-    impl<St: State> State for SetRev<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = Set<members::rev>;
-        type Time = St::Time;
-        type Commit = St::Commit;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-    }
-    ///State transition - sets the `time` field to Set
-    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTime<St> {}
-    impl<St: State> State for SetTime<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = Set<members::time>;
-        type Commit = St::Commit;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
-    }
-    ///State transition - sets the `commit` field to Set
-    pub struct SetCommit<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCommit<St> {}
-    impl<St: State> State for SetCommit<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Commit = Set<members::commit>;
-        type Blobs = St::Blobs;
-        type Seq = St::Seq;
-        type Blocks = St::Blocks;
+        type Commit = Unset;
+        type Ops = Unset;
+        type Rebase = Unset;
+        type Repo = Unset;
+        type Rev = Unset;
+        type Seq = Unset;
+        type Time = Unset;
+        type TooBig = Unset;
     }
     ///State transition - sets the `blobs` field to Set
     pub struct SetBlobs<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetBlobs<St> {}
     impl<St: State> State for SetBlobs<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Commit = St::Commit;
         type Blobs = Set<members::blobs>;
-        type Seq = St::Seq;
         type Blocks = St::Blocks;
-    }
-    ///State transition - sets the `seq` field to Set
-    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSeq<St> {}
-    impl<St: State> State for SetSeq<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = St::Time;
         type Commit = St::Commit;
-        type Blobs = St::Blobs;
-        type Seq = Set<members::seq>;
-        type Blocks = St::Blocks;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
     }
     ///State transition - sets the `blocks` field to Set
     pub struct SetBlocks<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetBlocks<St> {}
     impl<St: State> State for SetBlocks<St> {
-        type Ops = St::Ops;
-        type Repo = St::Repo;
-        type TooBig = St::TooBig;
-        type Rebase = St::Rebase;
-        type Rev = St::Rev;
-        type Time = St::Time;
-        type Commit = St::Commit;
         type Blobs = St::Blobs;
-        type Seq = St::Seq;
         type Blocks = Set<members::blocks>;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `commit` field to Set
+    pub struct SetCommit<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCommit<St> {}
+    impl<St: State> State for SetCommit<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = Set<members::commit>;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `ops` field to Set
+    pub struct SetOps<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetOps<St> {}
+    impl<St: State> State for SetOps<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = Set<members::ops>;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `rebase` field to Set
+    pub struct SetRebase<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRebase<St> {}
+    impl<St: State> State for SetRebase<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = Set<members::rebase>;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `repo` field to Set
+    pub struct SetRepo<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRepo<St> {}
+    impl<St: State> State for SetRepo<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = Set<members::repo>;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `rev` field to Set
+    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRev<St> {}
+    impl<St: State> State for SetRev<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = Set<members::rev>;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `seq` field to Set
+    pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSeq<St> {}
+    impl<St: State> State for SetSeq<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = Set<members::seq>;
+        type Time = St::Time;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `time` field to Set
+    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTime<St> {}
+    impl<St: State> State for SetTime<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = Set<members::time>;
+        type TooBig = St::TooBig;
+    }
+    ///State transition - sets the `too_big` field to Set
+    pub struct SetTooBig<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTooBig<St> {}
+    impl<St: State> State for SetTooBig<St> {
+        type Blobs = St::Blobs;
+        type Blocks = St::Blocks;
+        type Commit = St::Commit;
+        type Ops = St::Ops;
+        type Rebase = St::Rebase;
+        type Repo = St::Repo;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
+        type TooBig = Set<members::too_big>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `ops` field
-        pub struct ops(());
-        ///Marker type for the `repo` field
-        pub struct repo(());
-        ///Marker type for the `too_big` field
-        pub struct too_big(());
-        ///Marker type for the `rebase` field
-        pub struct rebase(());
-        ///Marker type for the `rev` field
-        pub struct rev(());
-        ///Marker type for the `time` field
-        pub struct time(());
-        ///Marker type for the `commit` field
-        pub struct commit(());
         ///Marker type for the `blobs` field
         pub struct blobs(());
-        ///Marker type for the `seq` field
-        pub struct seq(());
         ///Marker type for the `blocks` field
         pub struct blocks(());
+        ///Marker type for the `commit` field
+        pub struct commit(());
+        ///Marker type for the `ops` field
+        pub struct ops(());
+        ///Marker type for the `rebase` field
+        pub struct rebase(());
+        ///Marker type for the `repo` field
+        pub struct repo(());
+        ///Marker type for the `rev` field
+        pub struct rev(());
+        ///Marker type for the `seq` field
+        pub struct seq(());
+        ///Marker type for the `time` field
+        pub struct time(());
+        ///Marker type for the `too_big` field
+        pub struct too_big(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct CommitBuilder<S: BosStr, St: commit_state::State> {
+pub struct CommitBuilder<St: commit_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Vec<CidLink<S>>>,
@@ -1527,15 +1545,22 @@ pub struct CommitBuilder<S: BosStr, St: commit_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Commit<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> CommitBuilder<S, commit_state::Empty> {
+impl Commit<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> CommitBuilder<commit_state::Empty, DefaultStr> {
         CommitBuilder::new()
     }
 }
 
-impl<S: BosStr> CommitBuilder<S, commit_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Commit<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> CommitBuilder<commit_state::Empty, S> {
+        CommitBuilder::builder()
+    }
+}
+
+impl CommitBuilder<commit_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         CommitBuilder {
             _state: PhantomData,
@@ -1558,7 +1583,31 @@ impl<S: BosStr> CommitBuilder<S, commit_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<S: BosStr> CommitBuilder<commit_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        CommitBuilder {
+            _state: PhantomData,
+            _fields: (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            ),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Blobs: commit_state::IsUnset,
@@ -1567,7 +1616,7 @@ where
     pub fn blobs(
         mut self,
         value: impl Into<Vec<CidLink<S>>>,
-    ) -> CommitBuilder<S, commit_state::SetBlobs<St>> {
+    ) -> CommitBuilder<commit_state::SetBlobs<St>, S> {
         self._fields.0 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1577,7 +1626,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Blocks: commit_state::IsUnset,
@@ -1586,7 +1635,7 @@ where
     pub fn blocks(
         mut self,
         value: impl Into<Bytes>,
-    ) -> CommitBuilder<S, commit_state::SetBlocks<St>> {
+    ) -> CommitBuilder<commit_state::SetBlocks<St>, S> {
         self._fields.1 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1596,7 +1645,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Commit: commit_state::IsUnset,
@@ -1605,7 +1654,7 @@ where
     pub fn commit(
         mut self,
         value: impl Into<CidLink<S>>,
-    ) -> CommitBuilder<S, commit_state::SetCommit<St>> {
+    ) -> CommitBuilder<commit_state::SetCommit<St>, S> {
         self._fields.2 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1615,7 +1664,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Ops: commit_state::IsUnset,
@@ -1624,7 +1673,7 @@ where
     pub fn ops(
         mut self,
         value: impl Into<Vec<subscribe_repos::RepoOp<S>>>,
-    ) -> CommitBuilder<S, commit_state::SetOps<St>> {
+    ) -> CommitBuilder<commit_state::SetOps<St>, S> {
         self._fields.3 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1634,7 +1683,7 @@ where
     }
 }
 
-impl<S: BosStr, St: commit_state::State> CommitBuilder<S, St> {
+impl<St: commit_state::State, S: BosStr> CommitBuilder<St, S> {
     /// Set the `prevData` field (optional)
     pub fn prev_data(mut self, value: impl Into<Option<CidLink<S>>>) -> Self {
         self._fields.4 = value.into();
@@ -1647,7 +1696,7 @@ impl<S: BosStr, St: commit_state::State> CommitBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Rebase: commit_state::IsUnset,
@@ -1656,7 +1705,7 @@ where
     pub fn rebase(
         mut self,
         value: impl Into<bool>,
-    ) -> CommitBuilder<S, commit_state::SetRebase<St>> {
+    ) -> CommitBuilder<commit_state::SetRebase<St>, S> {
         self._fields.5 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1666,7 +1715,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Repo: commit_state::IsUnset,
@@ -1675,7 +1724,7 @@ where
     pub fn repo(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> CommitBuilder<S, commit_state::SetRepo<St>> {
+    ) -> CommitBuilder<commit_state::SetRepo<St>, S> {
         self._fields.6 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1685,7 +1734,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Rev: commit_state::IsUnset,
@@ -1694,7 +1743,7 @@ where
     pub fn rev(
         mut self,
         value: impl Into<Tid>,
-    ) -> CommitBuilder<S, commit_state::SetRev<St>> {
+    ) -> CommitBuilder<commit_state::SetRev<St>, S> {
         self._fields.7 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1704,7 +1753,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Seq: commit_state::IsUnset,
@@ -1713,7 +1762,7 @@ where
     pub fn seq(
         mut self,
         value: impl Into<i64>,
-    ) -> CommitBuilder<S, commit_state::SetSeq<St>> {
+    ) -> CommitBuilder<commit_state::SetSeq<St>, S> {
         self._fields.8 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1723,7 +1772,7 @@ where
     }
 }
 
-impl<S: BosStr, St: commit_state::State> CommitBuilder<S, St> {
+impl<St: commit_state::State, S: BosStr> CommitBuilder<St, S> {
     /// Set the `since` field (optional)
     pub fn since(mut self, value: impl Into<Option<Tid>>) -> Self {
         self._fields.9 = value.into();
@@ -1736,7 +1785,7 @@ impl<S: BosStr, St: commit_state::State> CommitBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::Time: commit_state::IsUnset,
@@ -1745,7 +1794,7 @@ where
     pub fn time(
         mut self,
         value: impl Into<Datetime>,
-    ) -> CommitBuilder<S, commit_state::SetTime<St>> {
+    ) -> CommitBuilder<commit_state::SetTime<St>, S> {
         self._fields.10 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1755,7 +1804,7 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
     St::TooBig: commit_state::IsUnset,
@@ -1764,7 +1813,7 @@ where
     pub fn too_big(
         mut self,
         value: impl Into<bool>,
-    ) -> CommitBuilder<S, commit_state::SetTooBig<St>> {
+    ) -> CommitBuilder<commit_state::SetTooBig<St>, S> {
         self._fields.11 = Option::Some(value.into());
         CommitBuilder {
             _state: PhantomData,
@@ -1774,19 +1823,19 @@ where
     }
 }
 
-impl<S: BosStr, St> CommitBuilder<S, St>
+impl<St, S: BosStr> CommitBuilder<St, S>
 where
     St: commit_state::State,
-    St::Ops: commit_state::IsSet,
-    St::Repo: commit_state::IsSet,
-    St::TooBig: commit_state::IsSet,
-    St::Rebase: commit_state::IsSet,
-    St::Rev: commit_state::IsSet,
-    St::Time: commit_state::IsSet,
-    St::Commit: commit_state::IsSet,
     St::Blobs: commit_state::IsSet,
-    St::Seq: commit_state::IsSet,
     St::Blocks: commit_state::IsSet,
+    St::Commit: commit_state::IsSet,
+    St::Ops: commit_state::IsSet,
+    St::Rebase: commit_state::IsSet,
+    St::Repo: commit_state::IsSet,
+    St::Rev: commit_state::IsSet,
+    St::Seq: commit_state::IsSet,
+    St::Time: commit_state::IsSet,
+    St::TooBig: commit_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Commit<S> {
@@ -1837,69 +1886,76 @@ pub mod identity_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type Did;
-        type Time;
         type Seq;
+        type Time;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type Did = Unset;
-        type Time = Unset;
         type Seq = Unset;
+        type Time = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
         type Did = Set<members::did>;
+        type Seq = St::Seq;
         type Time = St::Time;
-        type Seq = St::Seq;
-    }
-    ///State transition - sets the `time` field to Set
-    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTime<St> {}
-    impl<St: State> State for SetTime<St> {
-        type Did = St::Did;
-        type Time = Set<members::time>;
-        type Seq = St::Seq;
     }
     ///State transition - sets the `seq` field to Set
     pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSeq<St> {}
     impl<St: State> State for SetSeq<St> {
         type Did = St::Did;
-        type Time = St::Time;
         type Seq = Set<members::seq>;
+        type Time = St::Time;
+    }
+    ///State transition - sets the `time` field to Set
+    pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTime<St> {}
+    impl<St: State> State for SetTime<St> {
+        type Did = St::Did;
+        type Seq = St::Seq;
+        type Time = Set<members::time>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `did` field
         pub struct did(());
-        ///Marker type for the `time` field
-        pub struct time(());
         ///Marker type for the `seq` field
         pub struct seq(());
+        ///Marker type for the `time` field
+        pub struct time(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct IdentityBuilder<S: BosStr, St: identity_state::State> {
+pub struct IdentityBuilder<St: identity_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<Handle<S>>, Option<i64>, Option<Datetime>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Identity<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> IdentityBuilder<S, identity_state::Empty> {
+impl Identity<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> IdentityBuilder<identity_state::Empty, DefaultStr> {
         IdentityBuilder::new()
     }
 }
 
-impl<S: BosStr> IdentityBuilder<S, identity_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Identity<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> IdentityBuilder<identity_state::Empty, S> {
+        IdentityBuilder::builder()
+    }
+}
+
+impl IdentityBuilder<identity_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         IdentityBuilder {
             _state: PhantomData,
@@ -1909,7 +1965,18 @@ impl<S: BosStr> IdentityBuilder<S, identity_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> IdentityBuilder<S, St>
+impl<S: BosStr> IdentityBuilder<identity_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        IdentityBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> IdentityBuilder<St, S>
 where
     St: identity_state::State,
     St::Did: identity_state::IsUnset,
@@ -1918,7 +1985,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> IdentityBuilder<S, identity_state::SetDid<St>> {
+    ) -> IdentityBuilder<identity_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         IdentityBuilder {
             _state: PhantomData,
@@ -1928,7 +1995,7 @@ where
     }
 }
 
-impl<S: BosStr, St: identity_state::State> IdentityBuilder<S, St> {
+impl<St: identity_state::State, S: BosStr> IdentityBuilder<St, S> {
     /// Set the `handle` field (optional)
     pub fn handle(mut self, value: impl Into<Option<Handle<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -1941,7 +2008,7 @@ impl<S: BosStr, St: identity_state::State> IdentityBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> IdentityBuilder<S, St>
+impl<St, S: BosStr> IdentityBuilder<St, S>
 where
     St: identity_state::State,
     St::Seq: identity_state::IsUnset,
@@ -1950,7 +2017,7 @@ where
     pub fn seq(
         mut self,
         value: impl Into<i64>,
-    ) -> IdentityBuilder<S, identity_state::SetSeq<St>> {
+    ) -> IdentityBuilder<identity_state::SetSeq<St>, S> {
         self._fields.2 = Option::Some(value.into());
         IdentityBuilder {
             _state: PhantomData,
@@ -1960,7 +2027,7 @@ where
     }
 }
 
-impl<S: BosStr, St> IdentityBuilder<S, St>
+impl<St, S: BosStr> IdentityBuilder<St, S>
 where
     St: identity_state::State,
     St::Time: identity_state::IsUnset,
@@ -1969,7 +2036,7 @@ where
     pub fn time(
         mut self,
         value: impl Into<Datetime>,
-    ) -> IdentityBuilder<S, identity_state::SetTime<St>> {
+    ) -> IdentityBuilder<identity_state::SetTime<St>, S> {
         self._fields.3 = Option::Some(value.into());
         IdentityBuilder {
             _state: PhantomData,
@@ -1979,12 +2046,12 @@ where
     }
 }
 
-impl<S: BosStr, St> IdentityBuilder<S, St>
+impl<St, S: BosStr> IdentityBuilder<St, S>
 where
     St: identity_state::State,
     St::Did: identity_state::IsSet,
-    St::Time: identity_state::IsSet,
     St::Seq: identity_state::IsSet,
+    St::Time: identity_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Identity<S> {
@@ -2041,8 +2108,18 @@ impl SubscribeRepos {
 }
 
 impl SubscribeReposBuilder<subscribe_repos_state::Empty> {
-    /// Create a new builder with all fields unset.
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
+        SubscribeReposBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+        }
+    }
+}
+
+impl SubscribeReposBuilder<subscribe_repos_state::Empty> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
         SubscribeReposBuilder {
             _state: PhantomData,
             _fields: (None,),
@@ -2085,42 +2162,42 @@ pub mod repo_op_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Path;
         type Action;
+        type Path;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Path = Unset;
         type Action = Unset;
-    }
-    ///State transition - sets the `path` field to Set
-    pub struct SetPath<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPath<St> {}
-    impl<St: State> State for SetPath<St> {
-        type Path = Set<members::path>;
-        type Action = St::Action;
+        type Path = Unset;
     }
     ///State transition - sets the `action` field to Set
     pub struct SetAction<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAction<St> {}
     impl<St: State> State for SetAction<St> {
-        type Path = St::Path;
         type Action = Set<members::action>;
+        type Path = St::Path;
+    }
+    ///State transition - sets the `path` field to Set
+    pub struct SetPath<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPath<St> {}
+    impl<St: State> State for SetPath<St> {
+        type Action = St::Action;
+        type Path = Set<members::path>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `path` field
-        pub struct path(());
         ///Marker type for the `action` field
         pub struct action(());
+        ///Marker type for the `path` field
+        pub struct path(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct RepoOpBuilder<S: BosStr, St: repo_op_state::State> {
+pub struct RepoOpBuilder<St: repo_op_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<RepoOpAction<S>>,
@@ -2131,15 +2208,22 @@ pub struct RepoOpBuilder<S: BosStr, St: repo_op_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> RepoOp<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> RepoOpBuilder<S, repo_op_state::Empty> {
+impl RepoOp<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> RepoOpBuilder<repo_op_state::Empty, DefaultStr> {
         RepoOpBuilder::new()
     }
 }
 
-impl<S: BosStr> RepoOpBuilder<S, repo_op_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> RepoOp<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> RepoOpBuilder<repo_op_state::Empty, S> {
+        RepoOpBuilder::builder()
+    }
+}
+
+impl RepoOpBuilder<repo_op_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         RepoOpBuilder {
             _state: PhantomData,
@@ -2149,7 +2233,18 @@ impl<S: BosStr> RepoOpBuilder<S, repo_op_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> RepoOpBuilder<S, St>
+impl<S: BosStr> RepoOpBuilder<repo_op_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        RepoOpBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> RepoOpBuilder<St, S>
 where
     St: repo_op_state::State,
     St::Action: repo_op_state::IsUnset,
@@ -2158,7 +2253,7 @@ where
     pub fn action(
         mut self,
         value: impl Into<RepoOpAction<S>>,
-    ) -> RepoOpBuilder<S, repo_op_state::SetAction<St>> {
+    ) -> RepoOpBuilder<repo_op_state::SetAction<St>, S> {
         self._fields.0 = Option::Some(value.into());
         RepoOpBuilder {
             _state: PhantomData,
@@ -2168,7 +2263,7 @@ where
     }
 }
 
-impl<S: BosStr, St: repo_op_state::State> RepoOpBuilder<S, St> {
+impl<St: repo_op_state::State, S: BosStr> RepoOpBuilder<St, S> {
     /// Set the `cid` field (optional)
     pub fn cid(mut self, value: impl Into<Option<CidLink<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -2181,7 +2276,7 @@ impl<S: BosStr, St: repo_op_state::State> RepoOpBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> RepoOpBuilder<S, St>
+impl<St, S: BosStr> RepoOpBuilder<St, S>
 where
     St: repo_op_state::State,
     St::Path: repo_op_state::IsUnset,
@@ -2190,7 +2285,7 @@ where
     pub fn path(
         mut self,
         value: impl Into<S>,
-    ) -> RepoOpBuilder<S, repo_op_state::SetPath<St>> {
+    ) -> RepoOpBuilder<repo_op_state::SetPath<St>, S> {
         self._fields.2 = Option::Some(value.into());
         RepoOpBuilder {
             _state: PhantomData,
@@ -2200,7 +2295,7 @@ where
     }
 }
 
-impl<S: BosStr, St: repo_op_state::State> RepoOpBuilder<S, St> {
+impl<St: repo_op_state::State, S: BosStr> RepoOpBuilder<St, S> {
     /// Set the `prev` field (optional)
     pub fn prev(mut self, value: impl Into<Option<CidLink<S>>>) -> Self {
         self._fields.3 = value.into();
@@ -2213,11 +2308,11 @@ impl<S: BosStr, St: repo_op_state::State> RepoOpBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> RepoOpBuilder<S, St>
+impl<St, S: BosStr> RepoOpBuilder<St, S>
 where
     St: repo_op_state::State,
-    St::Path: repo_op_state::IsSet,
     St::Action: repo_op_state::IsSet,
+    St::Path: repo_op_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RepoOp<S> {
@@ -2251,104 +2346,111 @@ pub mod sync_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type Blocks;
         type Did;
         type Rev;
         type Seq;
-        type Blocks;
         type Time;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type Blocks = Unset;
         type Did = Unset;
         type Rev = Unset;
         type Seq = Unset;
-        type Blocks = Unset;
         type Time = Unset;
+    }
+    ///State transition - sets the `blocks` field to Set
+    pub struct SetBlocks<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetBlocks<St> {}
+    impl<St: State> State for SetBlocks<St> {
+        type Blocks = Set<members::blocks>;
+        type Did = St::Did;
+        type Rev = St::Rev;
+        type Seq = St::Seq;
+        type Time = St::Time;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
+        type Blocks = St::Blocks;
         type Did = Set<members::did>;
         type Rev = St::Rev;
         type Seq = St::Seq;
-        type Blocks = St::Blocks;
         type Time = St::Time;
     }
     ///State transition - sets the `rev` field to Set
     pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetRev<St> {}
     impl<St: State> State for SetRev<St> {
+        type Blocks = St::Blocks;
         type Did = St::Did;
         type Rev = Set<members::rev>;
         type Seq = St::Seq;
-        type Blocks = St::Blocks;
         type Time = St::Time;
     }
     ///State transition - sets the `seq` field to Set
     pub struct SetSeq<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetSeq<St> {}
     impl<St: State> State for SetSeq<St> {
+        type Blocks = St::Blocks;
         type Did = St::Did;
         type Rev = St::Rev;
         type Seq = Set<members::seq>;
-        type Blocks = St::Blocks;
-        type Time = St::Time;
-    }
-    ///State transition - sets the `blocks` field to Set
-    pub struct SetBlocks<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetBlocks<St> {}
-    impl<St: State> State for SetBlocks<St> {
-        type Did = St::Did;
-        type Rev = St::Rev;
-        type Seq = St::Seq;
-        type Blocks = Set<members::blocks>;
         type Time = St::Time;
     }
     ///State transition - sets the `time` field to Set
     pub struct SetTime<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetTime<St> {}
     impl<St: State> State for SetTime<St> {
+        type Blocks = St::Blocks;
         type Did = St::Did;
         type Rev = St::Rev;
         type Seq = St::Seq;
-        type Blocks = St::Blocks;
         type Time = Set<members::time>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `blocks` field
+        pub struct blocks(());
         ///Marker type for the `did` field
         pub struct did(());
         ///Marker type for the `rev` field
         pub struct rev(());
         ///Marker type for the `seq` field
         pub struct seq(());
-        ///Marker type for the `blocks` field
-        pub struct blocks(());
         ///Marker type for the `time` field
         pub struct time(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SyncBuilder<S: BosStr, St: sync_state::State> {
+pub struct SyncBuilder<St: sync_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Bytes>, Option<Did<S>>, Option<S>, Option<i64>, Option<Datetime>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Sync<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SyncBuilder<S, sync_state::Empty> {
+impl Sync<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SyncBuilder<sync_state::Empty, DefaultStr> {
         SyncBuilder::new()
     }
 }
 
-impl<S: BosStr> SyncBuilder<S, sync_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Sync<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SyncBuilder<sync_state::Empty, S> {
+        SyncBuilder::builder()
+    }
+}
+
+impl SyncBuilder<sync_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SyncBuilder {
             _state: PhantomData,
@@ -2358,7 +2460,18 @@ impl<S: BosStr> SyncBuilder<S, sync_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SyncBuilder<S, St>
+impl<S: BosStr> SyncBuilder<sync_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SyncBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SyncBuilder<St, S>
 where
     St: sync_state::State,
     St::Blocks: sync_state::IsUnset,
@@ -2367,7 +2480,7 @@ where
     pub fn blocks(
         mut self,
         value: impl Into<Bytes>,
-    ) -> SyncBuilder<S, sync_state::SetBlocks<St>> {
+    ) -> SyncBuilder<sync_state::SetBlocks<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SyncBuilder {
             _state: PhantomData,
@@ -2377,7 +2490,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SyncBuilder<S, St>
+impl<St, S: BosStr> SyncBuilder<St, S>
 where
     St: sync_state::State,
     St::Did: sync_state::IsUnset,
@@ -2386,7 +2499,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> SyncBuilder<S, sync_state::SetDid<St>> {
+    ) -> SyncBuilder<sync_state::SetDid<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SyncBuilder {
             _state: PhantomData,
@@ -2396,13 +2509,13 @@ where
     }
 }
 
-impl<S: BosStr, St> SyncBuilder<S, St>
+impl<St, S: BosStr> SyncBuilder<St, S>
 where
     St: sync_state::State,
     St::Rev: sync_state::IsUnset,
 {
     /// Set the `rev` field (required)
-    pub fn rev(mut self, value: impl Into<S>) -> SyncBuilder<S, sync_state::SetRev<St>> {
+    pub fn rev(mut self, value: impl Into<S>) -> SyncBuilder<sync_state::SetRev<St>, S> {
         self._fields.2 = Option::Some(value.into());
         SyncBuilder {
             _state: PhantomData,
@@ -2412,7 +2525,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SyncBuilder<S, St>
+impl<St, S: BosStr> SyncBuilder<St, S>
 where
     St: sync_state::State,
     St::Seq: sync_state::IsUnset,
@@ -2421,7 +2534,7 @@ where
     pub fn seq(
         mut self,
         value: impl Into<i64>,
-    ) -> SyncBuilder<S, sync_state::SetSeq<St>> {
+    ) -> SyncBuilder<sync_state::SetSeq<St>, S> {
         self._fields.3 = Option::Some(value.into());
         SyncBuilder {
             _state: PhantomData,
@@ -2431,7 +2544,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SyncBuilder<S, St>
+impl<St, S: BosStr> SyncBuilder<St, S>
 where
     St: sync_state::State,
     St::Time: sync_state::IsUnset,
@@ -2440,7 +2553,7 @@ where
     pub fn time(
         mut self,
         value: impl Into<Datetime>,
-    ) -> SyncBuilder<S, sync_state::SetTime<St>> {
+    ) -> SyncBuilder<sync_state::SetTime<St>, S> {
         self._fields.4 = Option::Some(value.into());
         SyncBuilder {
             _state: PhantomData,
@@ -2450,13 +2563,13 @@ where
     }
 }
 
-impl<S: BosStr, St> SyncBuilder<S, St>
+impl<St, S: BosStr> SyncBuilder<St, S>
 where
     St: sync_state::State,
+    St::Blocks: sync_state::IsSet,
     St::Did: sync_state::IsSet,
     St::Rev: sync_state::IsSet,
     St::Seq: sync_state::IsSet,
-    St::Blocks: sync_state::IsSet,
     St::Time: sync_state::IsSet,
 {
     /// Build the final struct.

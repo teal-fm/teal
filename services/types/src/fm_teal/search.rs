@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `fm.teal.search` Lexicon namespace/module.
 pub mod get_results;
 
 
@@ -77,72 +78,72 @@ pub mod song_result_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type TrackName;
         type ArtistName;
         type PlayCount;
+        type TrackName;
         type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type TrackName = Unset;
         type ArtistName = Unset;
         type PlayCount = Unset;
+        type TrackName = Unset;
         type Uri = Unset;
-    }
-    ///State transition - sets the `track_name` field to Set
-    pub struct SetTrackName<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTrackName<St> {}
-    impl<St: State> State for SetTrackName<St> {
-        type TrackName = Set<members::track_name>;
-        type ArtistName = St::ArtistName;
-        type PlayCount = St::PlayCount;
-        type Uri = St::Uri;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetArtistName<St> {}
     impl<St: State> State for SetArtistName<St> {
-        type TrackName = St::TrackName;
         type ArtistName = Set<members::artist_name>;
         type PlayCount = St::PlayCount;
+        type TrackName = St::TrackName;
         type Uri = St::Uri;
     }
     ///State transition - sets the `play_count` field to Set
     pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetPlayCount<St> {}
     impl<St: State> State for SetPlayCount<St> {
-        type TrackName = St::TrackName;
         type ArtistName = St::ArtistName;
         type PlayCount = Set<members::play_count>;
+        type TrackName = St::TrackName;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `track_name` field to Set
+    pub struct SetTrackName<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTrackName<St> {}
+    impl<St: State> State for SetTrackName<St> {
+        type ArtistName = St::ArtistName;
+        type PlayCount = St::PlayCount;
+        type TrackName = Set<members::track_name>;
         type Uri = St::Uri;
     }
     ///State transition - sets the `uri` field to Set
     pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetUri<St> {}
     impl<St: State> State for SetUri<St> {
-        type TrackName = St::TrackName;
         type ArtistName = St::ArtistName;
         type PlayCount = St::PlayCount;
+        type TrackName = St::TrackName;
         type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `track_name` field
-        pub struct track_name(());
         ///Marker type for the `artist_name` field
         pub struct artist_name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
+        ///Marker type for the `track_name` field
+        pub struct track_name(());
         ///Marker type for the `uri` field
         pub struct uri(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SongResultBuilder<S: BosStr, St: song_result_state::State> {
+pub struct SongResultBuilder<St: song_result_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<S>,
@@ -156,15 +157,22 @@ pub struct SongResultBuilder<S: BosStr, St: song_result_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SongResult<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SongResultBuilder<S, song_result_state::Empty> {
+impl SongResult<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SongResultBuilder<song_result_state::Empty, DefaultStr> {
         SongResultBuilder::new()
     }
 }
 
-impl<S: BosStr> SongResultBuilder<S, song_result_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SongResult<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SongResultBuilder<song_result_state::Empty, S> {
+        SongResultBuilder::builder()
+    }
+}
+
+impl SongResultBuilder<song_result_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SongResultBuilder {
             _state: PhantomData,
@@ -174,7 +182,18 @@ impl<S: BosStr> SongResultBuilder<S, song_result_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> SongResultBuilder<S, St>
+impl<S: BosStr> SongResultBuilder<song_result_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SongResultBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SongResultBuilder<St, S>
 where
     St: song_result_state::State,
     St::ArtistName: song_result_state::IsUnset,
@@ -183,7 +202,7 @@ where
     pub fn artist_name(
         mut self,
         value: impl Into<S>,
-    ) -> SongResultBuilder<S, song_result_state::SetArtistName<St>> {
+    ) -> SongResultBuilder<song_result_state::SetArtistName<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SongResultBuilder {
             _state: PhantomData,
@@ -193,7 +212,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SongResultBuilder<S, St>
+impl<St, S: BosStr> SongResultBuilder<St, S>
 where
     St: song_result_state::State,
     St::PlayCount: song_result_state::IsUnset,
@@ -202,7 +221,7 @@ where
     pub fn play_count(
         mut self,
         value: impl Into<i64>,
-    ) -> SongResultBuilder<S, song_result_state::SetPlayCount<St>> {
+    ) -> SongResultBuilder<song_result_state::SetPlayCount<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SongResultBuilder {
             _state: PhantomData,
@@ -212,7 +231,7 @@ where
     }
 }
 
-impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
+impl<St: song_result_state::State, S: BosStr> SongResultBuilder<St, S> {
     /// Set the `recordingMbId` field (optional)
     pub fn recording_mb_id(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -225,7 +244,7 @@ impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
+impl<St: song_result_state::State, S: BosStr> SongResultBuilder<St, S> {
     /// Set the `releaseMbId` field (optional)
     pub fn release_mb_id(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
         self._fields.3 = value.into();
@@ -238,7 +257,7 @@ impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
+impl<St: song_result_state::State, S: BosStr> SongResultBuilder<St, S> {
     /// Set the `releaseName` field (optional)
     pub fn release_name(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.4 = value.into();
@@ -251,7 +270,7 @@ impl<S: BosStr, St: song_result_state::State> SongResultBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> SongResultBuilder<S, St>
+impl<St, S: BosStr> SongResultBuilder<St, S>
 where
     St: song_result_state::State,
     St::TrackName: song_result_state::IsUnset,
@@ -260,7 +279,7 @@ where
     pub fn track_name(
         mut self,
         value: impl Into<S>,
-    ) -> SongResultBuilder<S, song_result_state::SetTrackName<St>> {
+    ) -> SongResultBuilder<song_result_state::SetTrackName<St>, S> {
         self._fields.5 = Option::Some(value.into());
         SongResultBuilder {
             _state: PhantomData,
@@ -270,7 +289,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SongResultBuilder<S, St>
+impl<St, S: BosStr> SongResultBuilder<St, S>
 where
     St: song_result_state::State,
     St::Uri: song_result_state::IsUnset,
@@ -279,7 +298,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> SongResultBuilder<S, song_result_state::SetUri<St>> {
+    ) -> SongResultBuilder<song_result_state::SetUri<St>, S> {
         self._fields.6 = Option::Some(value.into());
         SongResultBuilder {
             _state: PhantomData,
@@ -289,12 +308,12 @@ where
     }
 }
 
-impl<S: BosStr, St> SongResultBuilder<S, St>
+impl<St, S: BosStr> SongResultBuilder<St, S>
 where
     St: song_result_state::State,
-    St::TrackName: song_result_state::IsSet,
     St::ArtistName: song_result_state::IsSet,
     St::PlayCount: song_result_state::IsSet,
+    St::TrackName: song_result_state::IsSet,
     St::Uri: song_result_state::IsSet,
 {
     /// Build the final struct.

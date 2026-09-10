@@ -33,7 +33,9 @@ pub struct GetProfilesOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.actor.getProfiles
+/** Response marker for the `fm.teal.actor.getProfiles` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetProfilesOutput<S>` for this endpoint.*/
 pub struct GetProfilesResponse;
 impl jacquard_common::xrpc::XrpcResp for GetProfilesResponse {
     const NSID: &'static str = "fm.teal.actor.getProfiles";
@@ -48,7 +50,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetProfiles<S> {
     type Response = GetProfilesResponse;
 }
 
-/// Endpoint type for fm.teal.actor.getProfiles
+/** Endpoint marker for the `fm.teal.actor.getProfiles` query.
+
+Path: `/xrpc/fm.teal.actor.getProfiles`. The request payload type is `GetProfiles<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetProfilesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetProfilesRequest {
     const PATH: &'static str = "/xrpc/fm.teal.actor.getProfiles";
@@ -90,21 +94,28 @@ pub mod get_profiles_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetProfilesBuilder<S: BosStr, St: get_profiles_state::State> {
+pub struct GetProfilesBuilder<St: get_profiles_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<AtIdentifier<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetProfiles<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetProfilesBuilder<S, get_profiles_state::Empty> {
+impl GetProfiles<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetProfilesBuilder<get_profiles_state::Empty, DefaultStr> {
         GetProfilesBuilder::new()
     }
 }
 
-impl<S: BosStr> GetProfilesBuilder<S, get_profiles_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetProfiles<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetProfilesBuilder<get_profiles_state::Empty, S> {
+        GetProfilesBuilder::builder()
+    }
+}
+
+impl GetProfilesBuilder<get_profiles_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetProfilesBuilder {
             _state: PhantomData,
@@ -114,7 +125,18 @@ impl<S: BosStr> GetProfilesBuilder<S, get_profiles_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetProfilesBuilder<S, St>
+impl<S: BosStr> GetProfilesBuilder<get_profiles_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetProfilesBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetProfilesBuilder<St, S>
 where
     St: get_profiles_state::State,
     St::Actors: get_profiles_state::IsUnset,
@@ -123,7 +145,7 @@ where
     pub fn actors(
         mut self,
         value: impl Into<Vec<AtIdentifier<S>>>,
-    ) -> GetProfilesBuilder<S, get_profiles_state::SetActors<St>> {
+    ) -> GetProfilesBuilder<get_profiles_state::SetActors<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetProfilesBuilder {
             _state: PhantomData,
@@ -133,7 +155,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetProfilesBuilder<S, St>
+impl<St, S: BosStr> GetProfilesBuilder<St, S>
 where
     St: get_profiles_state::State,
     St::Actors: get_profiles_state::IsSet,

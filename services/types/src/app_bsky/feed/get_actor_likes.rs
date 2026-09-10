@@ -24,7 +24,7 @@ pub struct GetActorLikes<S: BosStr = DefaultStr> {
     pub actor: AtIdentifier<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -92,7 +92,9 @@ impl core::fmt::Display for GetActorLikesError {
     }
 }
 
-/// Response type for app.bsky.feed.getActorLikes
+/** Response marker for the `app.bsky.feed.getActorLikes` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetActorLikesOutput<S>` for this endpoint.*/
 pub struct GetActorLikesResponse;
 impl jacquard_common::xrpc::XrpcResp for GetActorLikesResponse {
     const NSID: &'static str = "app.bsky.feed.getActorLikes";
@@ -107,7 +109,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetActorLikes<S> {
     type Response = GetActorLikesResponse;
 }
 
-/// Endpoint type for app.bsky.feed.getActorLikes
+/** Endpoint marker for the `app.bsky.feed.getActorLikes` query.
+
+Path: `/xrpc/app.bsky.feed.getActorLikes`. The request payload type is `GetActorLikes<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetActorLikesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetActorLikesRequest {
     const PATH: &'static str = "/xrpc/app.bsky.feed.getActorLikes";
@@ -153,21 +157,31 @@ pub mod get_actor_likes_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetActorLikesBuilder<S: BosStr, St: get_actor_likes_state::State> {
+pub struct GetActorLikesBuilder<
+    St: get_actor_likes_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>, Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetActorLikes<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetActorLikesBuilder<S, get_actor_likes_state::Empty> {
+impl GetActorLikes<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetActorLikesBuilder<get_actor_likes_state::Empty, DefaultStr> {
         GetActorLikesBuilder::new()
     }
 }
 
-impl<S: BosStr> GetActorLikesBuilder<S, get_actor_likes_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetActorLikes<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetActorLikesBuilder<get_actor_likes_state::Empty, S> {
+        GetActorLikesBuilder::builder()
+    }
+}
+
+impl GetActorLikesBuilder<get_actor_likes_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetActorLikesBuilder {
             _state: PhantomData,
@@ -177,7 +191,18 @@ impl<S: BosStr> GetActorLikesBuilder<S, get_actor_likes_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetActorLikesBuilder<S, St>
+impl<S: BosStr> GetActorLikesBuilder<get_actor_likes_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetActorLikesBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetActorLikesBuilder<St, S>
 where
     St: get_actor_likes_state::State,
     St::Actor: get_actor_likes_state::IsUnset,
@@ -186,7 +211,7 @@ where
     pub fn actor(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> GetActorLikesBuilder<S, get_actor_likes_state::SetActor<St>> {
+    ) -> GetActorLikesBuilder<get_actor_likes_state::SetActor<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetActorLikesBuilder {
             _state: PhantomData,
@@ -196,7 +221,7 @@ where
     }
 }
 
-impl<S: BosStr, St: get_actor_likes_state::State> GetActorLikesBuilder<S, St> {
+impl<St: get_actor_likes_state::State, S: BosStr> GetActorLikesBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -209,7 +234,7 @@ impl<S: BosStr, St: get_actor_likes_state::State> GetActorLikesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_actor_likes_state::State> GetActorLikesBuilder<S, St> {
+impl<St: get_actor_likes_state::State, S: BosStr> GetActorLikesBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.2 = value.into();
@@ -222,7 +247,7 @@ impl<S: BosStr, St: get_actor_likes_state::State> GetActorLikesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetActorLikesBuilder<S, St>
+impl<St, S: BosStr> GetActorLikesBuilder<St, S>
 where
     St: get_actor_likes_state::State,
     St::Actor: get_actor_likes_state::IsSet,

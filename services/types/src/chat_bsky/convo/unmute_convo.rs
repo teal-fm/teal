@@ -76,7 +76,9 @@ impl core::fmt::Display for UnmuteConvoError {
     }
 }
 
-/// Response type for chat.bsky.convo.unmuteConvo
+/** Response marker for the `chat.bsky.convo.unmuteConvo` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `UnmuteConvoOutput<S>` for this endpoint.*/
 pub struct UnmuteConvoResponse;
 impl jacquard_common::xrpc::XrpcResp for UnmuteConvoResponse {
     const NSID: &'static str = "chat.bsky.convo.unmuteConvo";
@@ -93,7 +95,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UnmuteConvo<S> {
     type Response = UnmuteConvoResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.unmuteConvo
+/** Endpoint marker for the `chat.bsky.convo.unmuteConvo` procedure.
+
+Path: `/xrpc/chat.bsky.convo.unmuteConvo`. The request payload type is `UnmuteConvo<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UnmuteConvoRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UnmuteConvoRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.unmuteConvo";

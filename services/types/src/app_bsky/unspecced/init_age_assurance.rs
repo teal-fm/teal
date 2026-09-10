@@ -100,7 +100,9 @@ impl core::fmt::Display for InitAgeAssuranceError {
     }
 }
 
-/// Response type for app.bsky.unspecced.initAgeAssurance
+/** Response marker for the `app.bsky.unspecced.initAgeAssurance` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `InitAgeAssuranceOutput<S>` for this endpoint.*/
 pub struct InitAgeAssuranceResponse;
 impl jacquard_common::xrpc::XrpcResp for InitAgeAssuranceResponse {
     const NSID: &'static str = "app.bsky.unspecced.initAgeAssurance";
@@ -117,7 +119,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for InitAgeAssurance<S> {
     type Response = InitAgeAssuranceResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.initAgeAssurance
+/** Endpoint marker for the `app.bsky.unspecced.initAgeAssurance` procedure.
+
+Path: `/xrpc/app.bsky.unspecced.initAgeAssurance`. The request payload type is `InitAgeAssurance<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct InitAgeAssuranceRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for InitAgeAssuranceRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.initAgeAssurance";

@@ -24,7 +24,9 @@ pub struct RevokeAppPassword<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.server.revokeAppPassword
+/** Response marker for the `com.atproto.server.revokeAppPassword` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct RevokeAppPasswordResponse;
 impl jacquard_common::xrpc::XrpcResp for RevokeAppPasswordResponse {
     const NSID: &'static str = "com.atproto.server.revokeAppPassword";
@@ -41,7 +43,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RevokeAppPassword<S> {
     type Response = RevokeAppPasswordResponse;
 }
 
-/// Endpoint type for com.atproto.server.revokeAppPassword
+/** Endpoint marker for the `com.atproto.server.revokeAppPassword` procedure.
+
+Path: `/xrpc/com.atproto.server.revokeAppPassword`. The request payload type is `RevokeAppPassword<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RevokeAppPasswordRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RevokeAppPasswordRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.revokeAppPassword";

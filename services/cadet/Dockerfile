@@ -35,8 +35,11 @@ COPY ./ .
 # Setup lexicons and install dependencies
 RUN ./scripts/setup-lexicons.sh
 
-# Rust lexicon bindings are generated before commits and checked in under
-# services/types/src. Keep Docker builds focused on compiling the service.
+# Generate Rust lexicon bindings inside the image build. The generated source
+# tree is intentionally ignored locally, so a clean Docker context must build
+# it before compiling Cadet.
+RUN cargo install jacquard-lexgen --version 0.12.1 && \
+    jacquard-codegen --input lexicons --output services/types/src
 
 # Install cross-compilation toolchains
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu

@@ -20,7 +20,7 @@ use crate::app_bsky::graph::StarterPackView;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase")]
 pub struct GetSuggestedStarterPacks {
-    ///Defaults to `10`. Min: 1. Max: 25.
+    /// Defaults to `10`. Min: 1. Max: 25.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -35,7 +35,9 @@ pub struct GetSuggestedStarterPacksOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.unspecced.getSuggestedStarterPacks
+/** Response marker for the `app.bsky.unspecced.getSuggestedStarterPacks` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSuggestedStarterPacksOutput<S>` for this endpoint.*/
 pub struct GetSuggestedStarterPacksResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSuggestedStarterPacksResponse {
     const NSID: &'static str = "app.bsky.unspecced.getSuggestedStarterPacks";
@@ -50,7 +52,9 @@ impl jacquard_common::xrpc::XrpcRequest for GetSuggestedStarterPacks {
     type Response = GetSuggestedStarterPacksResponse;
 }
 
-/// Endpoint type for app.bsky.unspecced.getSuggestedStarterPacks
+/** Endpoint marker for the `app.bsky.unspecced.getSuggestedStarterPacks` query.
+
+Path: `/xrpc/app.bsky.unspecced.getSuggestedStarterPacks`. The request payload type is `GetSuggestedStarterPacks`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSuggestedStarterPacksRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSuggestedStarterPacksRequest {
     const PATH: &'static str = "/xrpc/app.bsky.unspecced.getSuggestedStarterPacks";
@@ -100,8 +104,18 @@ impl GetSuggestedStarterPacks {
 }
 
 impl GetSuggestedStarterPacksBuilder<get_suggested_starter_packs_state::Empty> {
-    /// Create a new builder with all fields unset.
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
+        GetSuggestedStarterPacksBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+        }
+    }
+}
+
+impl GetSuggestedStarterPacksBuilder<get_suggested_starter_packs_state::Empty> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
         GetSuggestedStarterPacksBuilder {
             _state: PhantomData,
             _fields: (None,),

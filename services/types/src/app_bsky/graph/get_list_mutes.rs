@@ -22,7 +22,7 @@ use crate::app_bsky::graph::ListView;
 pub struct GetListMutes<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -39,7 +39,9 @@ pub struct GetListMutesOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.graph.getListMutes
+/** Response marker for the `app.bsky.graph.getListMutes` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetListMutesOutput<S>` for this endpoint.*/
 pub struct GetListMutesResponse;
 impl jacquard_common::xrpc::XrpcResp for GetListMutesResponse {
     const NSID: &'static str = "app.bsky.graph.getListMutes";
@@ -54,7 +56,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetListMutes<S> {
     type Response = GetListMutesResponse;
 }
 
-/// Endpoint type for app.bsky.graph.getListMutes
+/** Endpoint marker for the `app.bsky.graph.getListMutes` query.
+
+Path: `/xrpc/app.bsky.graph.getListMutes`. The request payload type is `GetListMutes<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetListMutesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetListMutesRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.getListMutes";
@@ -87,21 +91,28 @@ pub mod get_list_mutes_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetListMutesBuilder<S: BosStr, St: get_list_mutes_state::State> {
+pub struct GetListMutesBuilder<St: get_list_mutes_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetListMutes<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetListMutesBuilder<S, get_list_mutes_state::Empty> {
+impl GetListMutes<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetListMutesBuilder<get_list_mutes_state::Empty, DefaultStr> {
         GetListMutesBuilder::new()
     }
 }
 
-impl<S: BosStr> GetListMutesBuilder<S, get_list_mutes_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetListMutes<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetListMutesBuilder<get_list_mutes_state::Empty, S> {
+        GetListMutesBuilder::builder()
+    }
+}
+
+impl GetListMutesBuilder<get_list_mutes_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetListMutesBuilder {
             _state: PhantomData,
@@ -111,7 +122,18 @@ impl<S: BosStr> GetListMutesBuilder<S, get_list_mutes_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_list_mutes_state::State> GetListMutesBuilder<S, St> {
+impl<S: BosStr> GetListMutesBuilder<get_list_mutes_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetListMutesBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_list_mutes_state::State, S: BosStr> GetListMutesBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -124,7 +146,7 @@ impl<S: BosStr, St: get_list_mutes_state::State> GetListMutesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_list_mutes_state::State> GetListMutesBuilder<S, St> {
+impl<St: get_list_mutes_state::State, S: BosStr> GetListMutesBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -137,7 +159,7 @@ impl<S: BosStr, St: get_list_mutes_state::State> GetListMutesBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetListMutesBuilder<S, St>
+impl<St, S: BosStr> GetListMutesBuilder<St, S>
 where
     St: get_list_mutes_state::State,
 {

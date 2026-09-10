@@ -23,11 +23,15 @@ pub struct ExportAccountDataOutput {
     pub body: Bytes,
 }
 
-/// XRPC request marker type.
+/** Request marker for the `chat.bsky.actor.exportAccountData` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct ExportAccountData;
-/// Response type for chat.bsky.actor.exportAccountData
+/** Response marker for the `chat.bsky.actor.exportAccountData` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ExportAccountDataOutput` for this endpoint.*/
 pub struct ExportAccountDataResponse;
 impl jacquard_common::xrpc::XrpcResp for ExportAccountDataResponse {
     const NSID: &'static str = "chat.bsky.actor.exportAccountData";
@@ -61,7 +65,9 @@ impl jacquard_common::xrpc::XrpcRequest for ExportAccountData {
     type Response = ExportAccountDataResponse;
 }
 
-/// Endpoint type for chat.bsky.actor.exportAccountData
+/** Endpoint marker for the `chat.bsky.actor.exportAccountData` query.
+
+Path: `/xrpc/chat.bsky.actor.exportAccountData`. The request payload type is `ExportAccountData`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct ExportAccountDataRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ExportAccountDataRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.actor.exportAccountData";

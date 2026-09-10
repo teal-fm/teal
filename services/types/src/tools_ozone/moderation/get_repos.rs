@@ -45,7 +45,9 @@ pub enum GetReposOutputReposItem<S: BosStr = DefaultStr> {
     RepoViewNotFound(Box<RepoViewNotFound<S>>),
 }
 
-/// Response type for tools.ozone.moderation.getRepos
+/** Response marker for the `tools.ozone.moderation.getRepos` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetReposOutput<S>` for this endpoint.*/
 pub struct GetReposResponse;
 impl jacquard_common::xrpc::XrpcResp for GetReposResponse {
     const NSID: &'static str = "tools.ozone.moderation.getRepos";
@@ -60,7 +62,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetRepos<S> {
     type Response = GetReposResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.getRepos
+/** Endpoint marker for the `tools.ozone.moderation.getRepos` query.
+
+Path: `/xrpc/tools.ozone.moderation.getRepos`. The request payload type is `GetRepos<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetReposRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetReposRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.getRepos";
@@ -102,21 +106,28 @@ pub mod get_repos_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetReposBuilder<S: BosStr, St: get_repos_state::State> {
+pub struct GetReposBuilder<St: get_repos_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Vec<Did<S>>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetRepos<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetReposBuilder<S, get_repos_state::Empty> {
+impl GetRepos<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetReposBuilder<get_repos_state::Empty, DefaultStr> {
         GetReposBuilder::new()
     }
 }
 
-impl<S: BosStr> GetReposBuilder<S, get_repos_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetRepos<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetReposBuilder<get_repos_state::Empty, S> {
+        GetReposBuilder::builder()
+    }
+}
+
+impl GetReposBuilder<get_repos_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetReposBuilder {
             _state: PhantomData,
@@ -126,7 +137,18 @@ impl<S: BosStr> GetReposBuilder<S, get_repos_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetReposBuilder<S, St>
+impl<S: BosStr> GetReposBuilder<get_repos_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetReposBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetReposBuilder<St, S>
 where
     St: get_repos_state::State,
     St::Dids: get_repos_state::IsUnset,
@@ -135,7 +157,7 @@ where
     pub fn dids(
         mut self,
         value: impl Into<Vec<Did<S>>>,
-    ) -> GetReposBuilder<S, get_repos_state::SetDids<St>> {
+    ) -> GetReposBuilder<get_repos_state::SetDids<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetReposBuilder {
             _state: PhantomData,
@@ -145,7 +167,7 @@ where
     }
 }
 
-impl<S: BosStr, St> GetReposBuilder<S, St>
+impl<St, S: BosStr> GetReposBuilder<St, S>
 where
     St: get_repos_state::State,
     St::Dids: get_repos_state::IsSet,

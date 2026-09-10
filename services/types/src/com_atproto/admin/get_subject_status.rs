@@ -58,7 +58,9 @@ pub enum GetSubjectStatusOutputSubject<S: BosStr = DefaultStr> {
     RepoBlobRef(Box<RepoBlobRef<S>>),
 }
 
-/// Response type for com.atproto.admin.getSubjectStatus
+/** Response marker for the `com.atproto.admin.getSubjectStatus` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSubjectStatusOutput<S>` for this endpoint.*/
 pub struct GetSubjectStatusResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSubjectStatusResponse {
     const NSID: &'static str = "com.atproto.admin.getSubjectStatus";
@@ -73,7 +75,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetSubjectStatus<S> {
     type Response = GetSubjectStatusResponse;
 }
 
-/// Endpoint type for com.atproto.admin.getSubjectStatus
+/** Endpoint marker for the `com.atproto.admin.getSubjectStatus` query.
+
+Path: `/xrpc/com.atproto.admin.getSubjectStatus`. The request payload type is `GetSubjectStatus<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSubjectStatusRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSubjectStatusRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.getSubjectStatus";
@@ -102,21 +106,34 @@ pub mod get_subject_status_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetSubjectStatusBuilder<S: BosStr, St: get_subject_status_state::State> {
+pub struct GetSubjectStatusBuilder<
+    St: get_subject_status_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Cid<S>>, Option<Did<S>>, Option<AtUri<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetSubjectStatus<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetSubjectStatusBuilder<S, get_subject_status_state::Empty> {
+impl GetSubjectStatus<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetSubjectStatusBuilder<
+        get_subject_status_state::Empty,
+        DefaultStr,
+    > {
         GetSubjectStatusBuilder::new()
     }
 }
 
-impl<S: BosStr> GetSubjectStatusBuilder<S, get_subject_status_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetSubjectStatus<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetSubjectStatusBuilder<get_subject_status_state::Empty, S> {
+        GetSubjectStatusBuilder::builder()
+    }
+}
+
+impl GetSubjectStatusBuilder<get_subject_status_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetSubjectStatusBuilder {
             _state: PhantomData,
@@ -126,7 +143,18 @@ impl<S: BosStr> GetSubjectStatusBuilder<S, get_subject_status_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_subject_status_state::State> GetSubjectStatusBuilder<S, St> {
+impl<S: BosStr> GetSubjectStatusBuilder<get_subject_status_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetSubjectStatusBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_subject_status_state::State, S: BosStr> GetSubjectStatusBuilder<St, S> {
     /// Set the `blob` field (optional)
     pub fn blob(mut self, value: impl Into<Option<Cid<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -139,7 +167,7 @@ impl<S: BosStr, St: get_subject_status_state::State> GetSubjectStatusBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: get_subject_status_state::State> GetSubjectStatusBuilder<S, St> {
+impl<St: get_subject_status_state::State, S: BosStr> GetSubjectStatusBuilder<St, S> {
     /// Set the `did` field (optional)
     pub fn did(mut self, value: impl Into<Option<Did<S>>>) -> Self {
         self._fields.1 = value.into();
@@ -152,7 +180,7 @@ impl<S: BosStr, St: get_subject_status_state::State> GetSubjectStatusBuilder<S, 
     }
 }
 
-impl<S: BosStr, St: get_subject_status_state::State> GetSubjectStatusBuilder<S, St> {
+impl<St: get_subject_status_state::State, S: BosStr> GetSubjectStatusBuilder<St, S> {
     /// Set the `uri` field (optional)
     pub fn uri(mut self, value: impl Into<Option<AtUri<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -165,7 +193,7 @@ impl<S: BosStr, St: get_subject_status_state::State> GetSubjectStatusBuilder<S, 
     }
 }
 
-impl<S: BosStr, St> GetSubjectStatusBuilder<S, St>
+impl<St, S: BosStr> GetSubjectStatusBuilder<St, S>
 where
     St: get_subject_status_state::State,
 {

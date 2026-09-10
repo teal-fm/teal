@@ -183,21 +183,28 @@ pub mod playlist_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct PlaylistBuilder<S: BosStr, St: playlist_state::State> {
+pub struct PlaylistBuilder<St: playlist_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<S>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Playlist<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> PlaylistBuilder<S, playlist_state::Empty> {
+impl Playlist<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> PlaylistBuilder<playlist_state::Empty, DefaultStr> {
         PlaylistBuilder::new()
     }
 }
 
-impl<S: BosStr> PlaylistBuilder<S, playlist_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Playlist<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> PlaylistBuilder<playlist_state::Empty, S> {
+        PlaylistBuilder::builder()
+    }
+}
+
+impl PlaylistBuilder<playlist_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         PlaylistBuilder {
             _state: PhantomData,
@@ -207,7 +214,18 @@ impl<S: BosStr> PlaylistBuilder<S, playlist_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> PlaylistBuilder<S, St>
+impl<S: BosStr> PlaylistBuilder<playlist_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        PlaylistBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> PlaylistBuilder<St, S>
 where
     St: playlist_state::State,
     St::CreatedAt: playlist_state::IsUnset,
@@ -216,7 +234,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> PlaylistBuilder<S, playlist_state::SetCreatedAt<St>> {
+    ) -> PlaylistBuilder<playlist_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         PlaylistBuilder {
             _state: PhantomData,
@@ -226,7 +244,7 @@ where
     }
 }
 
-impl<S: BosStr, St: playlist_state::State> PlaylistBuilder<S, St> {
+impl<St: playlist_state::State, S: BosStr> PlaylistBuilder<St, S> {
     /// Set the `description` field (optional)
     pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -239,7 +257,7 @@ impl<S: BosStr, St: playlist_state::State> PlaylistBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> PlaylistBuilder<S, St>
+impl<St, S: BosStr> PlaylistBuilder<St, S>
 where
     St: playlist_state::State,
     St::Name: playlist_state::IsUnset,
@@ -248,7 +266,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> PlaylistBuilder<S, playlist_state::SetName<St>> {
+    ) -> PlaylistBuilder<playlist_state::SetName<St>, S> {
         self._fields.2 = Option::Some(value.into());
         PlaylistBuilder {
             _state: PhantomData,
@@ -258,7 +276,7 @@ where
     }
 }
 
-impl<S: BosStr, St> PlaylistBuilder<S, St>
+impl<St, S: BosStr> PlaylistBuilder<St, S>
 where
     St: playlist_state::State,
     St::CreatedAt: playlist_state::IsSet,

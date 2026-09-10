@@ -22,7 +22,7 @@ use crate::app_bsky::feed::GeneratorView;
 pub struct GetSuggestedFeeds<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -39,7 +39,9 @@ pub struct GetSuggestedFeedsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.feed.getSuggestedFeeds
+/** Response marker for the `app.bsky.feed.getSuggestedFeeds` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetSuggestedFeedsOutput<S>` for this endpoint.*/
 pub struct GetSuggestedFeedsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetSuggestedFeedsResponse {
     const NSID: &'static str = "app.bsky.feed.getSuggestedFeeds";
@@ -54,7 +56,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetSuggestedFeeds<S> {
     type Response = GetSuggestedFeedsResponse;
 }
 
-/// Endpoint type for app.bsky.feed.getSuggestedFeeds
+/** Endpoint marker for the `app.bsky.feed.getSuggestedFeeds` query.
+
+Path: `/xrpc/app.bsky.feed.getSuggestedFeeds`. The request payload type is `GetSuggestedFeeds<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetSuggestedFeedsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetSuggestedFeedsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.feed.getSuggestedFeeds";
@@ -87,21 +91,34 @@ pub mod get_suggested_feeds_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetSuggestedFeedsBuilder<S: BosStr, St: get_suggested_feeds_state::State> {
+pub struct GetSuggestedFeedsBuilder<
+    St: get_suggested_feeds_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetSuggestedFeeds<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetSuggestedFeedsBuilder<S, get_suggested_feeds_state::Empty> {
+impl GetSuggestedFeeds<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetSuggestedFeedsBuilder<
+        get_suggested_feeds_state::Empty,
+        DefaultStr,
+    > {
         GetSuggestedFeedsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetSuggestedFeedsBuilder<S, get_suggested_feeds_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetSuggestedFeeds<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetSuggestedFeedsBuilder<get_suggested_feeds_state::Empty, S> {
+        GetSuggestedFeedsBuilder::builder()
+    }
+}
+
+impl GetSuggestedFeedsBuilder<get_suggested_feeds_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetSuggestedFeedsBuilder {
             _state: PhantomData,
@@ -111,7 +128,18 @@ impl<S: BosStr> GetSuggestedFeedsBuilder<S, get_suggested_feeds_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_suggested_feeds_state::State> GetSuggestedFeedsBuilder<S, St> {
+impl<S: BosStr> GetSuggestedFeedsBuilder<get_suggested_feeds_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetSuggestedFeedsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_suggested_feeds_state::State, S: BosStr> GetSuggestedFeedsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -124,7 +152,7 @@ impl<S: BosStr, St: get_suggested_feeds_state::State> GetSuggestedFeedsBuilder<S
     }
 }
 
-impl<S: BosStr, St: get_suggested_feeds_state::State> GetSuggestedFeedsBuilder<S, St> {
+impl<St: get_suggested_feeds_state::State, S: BosStr> GetSuggestedFeedsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -137,7 +165,7 @@ impl<S: BosStr, St: get_suggested_feeds_state::State> GetSuggestedFeedsBuilder<S
     }
 }
 
-impl<S: BosStr, St> GetSuggestedFeedsBuilder<S, St>
+impl<St, S: BosStr> GetSuggestedFeedsBuilder<St, S>
 where
     St: get_suggested_feeds_state::State,
 {

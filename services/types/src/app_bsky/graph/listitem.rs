@@ -115,70 +115,77 @@ pub mod listitem_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type CreatedAt;
         type List;
         type Subject;
-        type CreatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type CreatedAt = Unset;
         type List = Unset;
         type Subject = Unset;
-        type CreatedAt = Unset;
-    }
-    ///State transition - sets the `list` field to Set
-    pub struct SetList<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetList<St> {}
-    impl<St: State> State for SetList<St> {
-        type List = Set<members::list>;
-        type Subject = St::Subject;
-        type CreatedAt = St::CreatedAt;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type List = St::List;
-        type Subject = Set<members::subject>;
-        type CreatedAt = St::CreatedAt;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
     impl<St: State> State for SetCreatedAt<St> {
+        type CreatedAt = Set<members::created_at>;
         type List = St::List;
         type Subject = St::Subject;
-        type CreatedAt = Set<members::created_at>;
+    }
+    ///State transition - sets the `list` field to Set
+    pub struct SetList<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetList<St> {}
+    impl<St: State> State for SetList<St> {
+        type CreatedAt = St::CreatedAt;
+        type List = Set<members::list>;
+        type Subject = St::Subject;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type CreatedAt = St::CreatedAt;
+        type List = St::List;
+        type Subject = Set<members::subject>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `created_at` field
+        pub struct created_at(());
         ///Marker type for the `list` field
         pub struct list(());
         ///Marker type for the `subject` field
         pub struct subject(());
-        ///Marker type for the `created_at` field
-        pub struct created_at(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ListitemBuilder<S: BosStr, St: listitem_state::State> {
+pub struct ListitemBuilder<St: listitem_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<AtUri<S>>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Listitem<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ListitemBuilder<S, listitem_state::Empty> {
+impl Listitem<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListitemBuilder<listitem_state::Empty, DefaultStr> {
         ListitemBuilder::new()
     }
 }
 
-impl<S: BosStr> ListitemBuilder<S, listitem_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Listitem<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListitemBuilder<listitem_state::Empty, S> {
+        ListitemBuilder::builder()
+    }
+}
+
+impl ListitemBuilder<listitem_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ListitemBuilder {
             _state: PhantomData,
@@ -188,7 +195,18 @@ impl<S: BosStr> ListitemBuilder<S, listitem_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ListitemBuilder<S, St>
+impl<S: BosStr> ListitemBuilder<listitem_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListitemBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ListitemBuilder<St, S>
 where
     St: listitem_state::State,
     St::CreatedAt: listitem_state::IsUnset,
@@ -197,7 +215,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> ListitemBuilder<S, listitem_state::SetCreatedAt<St>> {
+    ) -> ListitemBuilder<listitem_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ListitemBuilder {
             _state: PhantomData,
@@ -207,7 +225,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ListitemBuilder<S, St>
+impl<St, S: BosStr> ListitemBuilder<St, S>
 where
     St: listitem_state::State,
     St::List: listitem_state::IsUnset,
@@ -216,7 +234,7 @@ where
     pub fn list(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> ListitemBuilder<S, listitem_state::SetList<St>> {
+    ) -> ListitemBuilder<listitem_state::SetList<St>, S> {
         self._fields.1 = Option::Some(value.into());
         ListitemBuilder {
             _state: PhantomData,
@@ -226,7 +244,7 @@ where
     }
 }
 
-impl<S: BosStr, St> ListitemBuilder<S, St>
+impl<St, S: BosStr> ListitemBuilder<St, S>
 where
     St: listitem_state::State,
     St::Subject: listitem_state::IsUnset,
@@ -235,7 +253,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> ListitemBuilder<S, listitem_state::SetSubject<St>> {
+    ) -> ListitemBuilder<listitem_state::SetSubject<St>, S> {
         self._fields.2 = Option::Some(value.into());
         ListitemBuilder {
             _state: PhantomData,
@@ -245,12 +263,12 @@ where
     }
 }
 
-impl<S: BosStr, St> ListitemBuilder<S, St>
+impl<St, S: BosStr> ListitemBuilder<St, S>
 where
     St: listitem_state::State,
+    St::CreatedAt: listitem_state::IsSet,
     St::List: listitem_state::IsSet,
     St::Subject: listitem_state::IsSet,
-    St::CreatedAt: listitem_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Listitem<S> {

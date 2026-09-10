@@ -93,7 +93,9 @@ impl core::fmt::Display for GetRelationshipsError {
     }
 }
 
-/// Response type for app.bsky.graph.getRelationships
+/** Response marker for the `app.bsky.graph.getRelationships` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetRelationshipsOutput<S>` for this endpoint.*/
 pub struct GetRelationshipsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetRelationshipsResponse {
     const NSID: &'static str = "app.bsky.graph.getRelationships";
@@ -108,7 +110,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetRelationships<S> {
     type Response = GetRelationshipsResponse;
 }
 
-/// Endpoint type for app.bsky.graph.getRelationships
+/** Endpoint marker for the `app.bsky.graph.getRelationships` query.
+
+Path: `/xrpc/app.bsky.graph.getRelationships`. The request payload type is `GetRelationships<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetRelationshipsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetRelationshipsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.graph.getRelationships";
@@ -150,21 +154,31 @@ pub mod get_relationships_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetRelationshipsBuilder<S: BosStr, St: get_relationships_state::State> {
+pub struct GetRelationshipsBuilder<
+    St: get_relationships_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtIdentifier<S>>, Option<Vec<AtIdentifier<S>>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetRelationships<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetRelationshipsBuilder<S, get_relationships_state::Empty> {
+impl GetRelationships<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetRelationshipsBuilder<get_relationships_state::Empty, DefaultStr> {
         GetRelationshipsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetRelationshipsBuilder<S, get_relationships_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetRelationships<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetRelationshipsBuilder<get_relationships_state::Empty, S> {
+        GetRelationshipsBuilder::builder()
+    }
+}
+
+impl GetRelationshipsBuilder<get_relationships_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetRelationshipsBuilder {
             _state: PhantomData,
@@ -174,7 +188,18 @@ impl<S: BosStr> GetRelationshipsBuilder<S, get_relationships_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetRelationshipsBuilder<S, St>
+impl<S: BosStr> GetRelationshipsBuilder<get_relationships_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetRelationshipsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetRelationshipsBuilder<St, S>
 where
     St: get_relationships_state::State,
     St::Actor: get_relationships_state::IsUnset,
@@ -183,7 +208,7 @@ where
     pub fn actor(
         mut self,
         value: impl Into<AtIdentifier<S>>,
-    ) -> GetRelationshipsBuilder<S, get_relationships_state::SetActor<St>> {
+    ) -> GetRelationshipsBuilder<get_relationships_state::SetActor<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetRelationshipsBuilder {
             _state: PhantomData,
@@ -193,7 +218,7 @@ where
     }
 }
 
-impl<S: BosStr, St: get_relationships_state::State> GetRelationshipsBuilder<S, St> {
+impl<St: get_relationships_state::State, S: BosStr> GetRelationshipsBuilder<St, S> {
     /// Set the `others` field (optional)
     pub fn others(mut self, value: impl Into<Option<Vec<AtIdentifier<S>>>>) -> Self {
         self._fields.1 = value.into();
@@ -206,7 +231,7 @@ impl<S: BosStr, St: get_relationships_state::State> GetRelationshipsBuilder<S, S
     }
 }
 
-impl<S: BosStr, St> GetRelationshipsBuilder<S, St>
+impl<St, S: BosStr> GetRelationshipsBuilder<St, S>
 where
     St: get_relationships_state::State,
     St::Actor: get_relationships_state::IsSet,

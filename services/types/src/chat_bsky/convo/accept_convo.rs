@@ -77,7 +77,9 @@ impl core::fmt::Display for AcceptConvoError {
     }
 }
 
-/// Response type for chat.bsky.convo.acceptConvo
+/** Response marker for the `chat.bsky.convo.acceptConvo` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `AcceptConvoOutput<S>` for this endpoint.*/
 pub struct AcceptConvoResponse;
 impl jacquard_common::xrpc::XrpcResp for AcceptConvoResponse {
     const NSID: &'static str = "chat.bsky.convo.acceptConvo";
@@ -94,7 +96,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for AcceptConvo<S> {
     type Response = AcceptConvoResponse;
 }
 
-/// Endpoint type for chat.bsky.convo.acceptConvo
+/** Endpoint marker for the `chat.bsky.convo.acceptConvo` procedure.
+
+Path: `/xrpc/chat.bsky.convo.acceptConvo`. The request payload type is `AcceptConvo<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct AcceptConvoRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for AcceptConvoRequest {
     const PATH: &'static str = "/xrpc/chat.bsky.convo.acceptConvo";

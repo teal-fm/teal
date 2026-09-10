@@ -70,7 +70,9 @@ impl core::fmt::Display for DeleteValuesError {
     }
 }
 
-/// Response type for tools.ozone.set.deleteValues
+/** Response marker for the `tools.ozone.set.deleteValues` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DeleteValuesResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteValuesResponse {
     const NSID: &'static str = "tools.ozone.set.deleteValues";
@@ -87,7 +89,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeleteValues<S> {
     type Response = DeleteValuesResponse;
 }
 
-/// Endpoint type for tools.ozone.set.deleteValues
+/** Endpoint marker for the `tools.ozone.set.deleteValues` procedure.
+
+Path: `/xrpc/tools.ozone.set.deleteValues`. The request payload type is `DeleteValues<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DeleteValuesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteValuesRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.set.deleteValues";
@@ -143,21 +147,28 @@ pub mod delete_values_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct DeleteValuesBuilder<S: BosStr, St: delete_values_state::State> {
+pub struct DeleteValuesBuilder<St: delete_values_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Vec<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> DeleteValues<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> DeleteValuesBuilder<S, delete_values_state::Empty> {
+impl DeleteValues<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> DeleteValuesBuilder<delete_values_state::Empty, DefaultStr> {
         DeleteValuesBuilder::new()
     }
 }
 
-impl<S: BosStr> DeleteValuesBuilder<S, delete_values_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> DeleteValues<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> DeleteValuesBuilder<delete_values_state::Empty, S> {
+        DeleteValuesBuilder::builder()
+    }
+}
+
+impl DeleteValuesBuilder<delete_values_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         DeleteValuesBuilder {
             _state: PhantomData,
@@ -167,7 +178,18 @@ impl<S: BosStr> DeleteValuesBuilder<S, delete_values_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> DeleteValuesBuilder<S, St>
+impl<S: BosStr> DeleteValuesBuilder<delete_values_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        DeleteValuesBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> DeleteValuesBuilder<St, S>
 where
     St: delete_values_state::State,
     St::Name: delete_values_state::IsUnset,
@@ -176,7 +198,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> DeleteValuesBuilder<S, delete_values_state::SetName<St>> {
+    ) -> DeleteValuesBuilder<delete_values_state::SetName<St>, S> {
         self._fields.0 = Option::Some(value.into());
         DeleteValuesBuilder {
             _state: PhantomData,
@@ -186,7 +208,7 @@ where
     }
 }
 
-impl<S: BosStr, St> DeleteValuesBuilder<S, St>
+impl<St, S: BosStr> DeleteValuesBuilder<St, S>
 where
     St: delete_values_state::State,
     St::Values: delete_values_state::IsUnset,
@@ -195,7 +217,7 @@ where
     pub fn values(
         mut self,
         value: impl Into<Vec<S>>,
-    ) -> DeleteValuesBuilder<S, delete_values_state::SetValues<St>> {
+    ) -> DeleteValuesBuilder<delete_values_state::SetValues<St>, S> {
         self._fields.1 = Option::Some(value.into());
         DeleteValuesBuilder {
             _state: PhantomData,
@@ -205,7 +227,7 @@ where
     }
 }
 
-impl<S: BosStr, St> DeleteValuesBuilder<S, St>
+impl<St, S: BosStr> DeleteValuesBuilder<St, S>
 where
     St: delete_values_state::State,
     St::Name: delete_values_state::IsSet,

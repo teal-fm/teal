@@ -143,7 +143,9 @@ pub struct QueryRulesOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.safelink.queryRules
+/** Response marker for the `tools.ozone.safelink.queryRules` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `QueryRulesOutput<S>` for this endpoint.*/
 pub struct QueryRulesResponse;
 impl jacquard_common::xrpc::XrpcResp for QueryRulesResponse {
     const NSID: &'static str = "tools.ozone.safelink.queryRules";
@@ -160,7 +162,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for QueryRules<S> {
     type Response = QueryRulesResponse;
 }
 
-/// Endpoint type for tools.ozone.safelink.queryRules
+/** Endpoint marker for the `tools.ozone.safelink.queryRules` procedure.
+
+Path: `/xrpc/tools.ozone.safelink.queryRules`. The request payload type is `QueryRules<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct QueryRulesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for QueryRulesRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.safelink.queryRules";

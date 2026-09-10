@@ -22,11 +22,11 @@ use crate::fm_teal::stats::ArtistView;
 pub struct GetTopArtists<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
-    ///Defaults to `"all"`.
+    /// Defaults to `"all"`.
     #[serde(default = "_default_period")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub period: Option<S>,
@@ -44,7 +44,9 @@ pub struct GetTopArtistsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.stats.getTopArtists
+/** Response marker for the `fm.teal.stats.getTopArtists` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetTopArtistsOutput<S>` for this endpoint.*/
 pub struct GetTopArtistsResponse;
 impl jacquard_common::xrpc::XrpcResp for GetTopArtistsResponse {
     const NSID: &'static str = "fm.teal.stats.getTopArtists";
@@ -59,7 +61,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetTopArtists<S> {
     type Response = GetTopArtistsResponse;
 }
 
-/// Endpoint type for fm.teal.stats.getTopArtists
+/** Endpoint marker for the `fm.teal.stats.getTopArtists` query.
+
+Path: `/xrpc/fm.teal.stats.getTopArtists`. The request payload type is `GetTopArtists<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetTopArtistsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetTopArtistsRequest {
     const PATH: &'static str = "/xrpc/fm.teal.stats.getTopArtists";
@@ -96,21 +100,31 @@ pub mod get_top_artists_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetTopArtistsBuilder<S: BosStr, St: get_top_artists_state::State> {
+pub struct GetTopArtistsBuilder<
+    St: get_top_artists_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetTopArtists<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetTopArtistsBuilder<S, get_top_artists_state::Empty> {
+impl GetTopArtists<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetTopArtistsBuilder<get_top_artists_state::Empty, DefaultStr> {
         GetTopArtistsBuilder::new()
     }
 }
 
-impl<S: BosStr> GetTopArtistsBuilder<S, get_top_artists_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetTopArtists<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetTopArtistsBuilder<get_top_artists_state::Empty, S> {
+        GetTopArtistsBuilder::builder()
+    }
+}
+
+impl GetTopArtistsBuilder<get_top_artists_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetTopArtistsBuilder {
             _state: PhantomData,
@@ -120,7 +134,18 @@ impl<S: BosStr> GetTopArtistsBuilder<S, get_top_artists_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: get_top_artists_state::State> GetTopArtistsBuilder<S, St> {
+impl<S: BosStr> GetTopArtistsBuilder<get_top_artists_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetTopArtistsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: get_top_artists_state::State, S: BosStr> GetTopArtistsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -133,7 +158,7 @@ impl<S: BosStr, St: get_top_artists_state::State> GetTopArtistsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_top_artists_state::State> GetTopArtistsBuilder<S, St> {
+impl<St: get_top_artists_state::State, S: BosStr> GetTopArtistsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -146,7 +171,7 @@ impl<S: BosStr, St: get_top_artists_state::State> GetTopArtistsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_top_artists_state::State> GetTopArtistsBuilder<S, St> {
+impl<St: get_top_artists_state::State, S: BosStr> GetTopArtistsBuilder<St, S> {
     /// Set the `period` field (optional)
     pub fn period(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -159,7 +184,7 @@ impl<S: BosStr, St: get_top_artists_state::State> GetTopArtistsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetTopArtistsBuilder<S, St>
+impl<St, S: BosStr> GetTopArtistsBuilder<St, S>
 where
     St: get_top_artists_state::State,
 {

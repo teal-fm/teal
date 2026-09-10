@@ -26,7 +26,9 @@ pub struct UpdateAccountPassword<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.admin.updateAccountPassword
+/** Response marker for the `com.atproto.admin.updateAccountPassword` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct UpdateAccountPasswordResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateAccountPasswordResponse {
     const NSID: &'static str = "com.atproto.admin.updateAccountPassword";
@@ -43,7 +45,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateAccountPassword<S> 
     type Response = UpdateAccountPasswordResponse;
 }
 
-/// Endpoint type for com.atproto.admin.updateAccountPassword
+/** Endpoint marker for the `com.atproto.admin.updateAccountPassword` procedure.
+
+Path: `/xrpc/com.atproto.admin.updateAccountPassword`. The request payload type is `UpdateAccountPassword<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateAccountPasswordRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateAccountPasswordRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.updateAccountPassword";
@@ -64,62 +68,72 @@ pub mod update_account_password_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Password;
         type Did;
+        type Password;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Password = Unset;
         type Did = Unset;
-    }
-    ///State transition - sets the `password` field to Set
-    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPassword<St> {}
-    impl<St: State> State for SetPassword<St> {
-        type Password = Set<members::password>;
-        type Did = St::Did;
+        type Password = Unset;
     }
     ///State transition - sets the `did` field to Set
     pub struct SetDid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetDid<St> {}
     impl<St: State> State for SetDid<St> {
-        type Password = St::Password;
         type Did = Set<members::did>;
+        type Password = St::Password;
+    }
+    ///State transition - sets the `password` field to Set
+    pub struct SetPassword<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPassword<St> {}
+    impl<St: State> State for SetPassword<St> {
+        type Did = St::Did;
+        type Password = Set<members::password>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `password` field
-        pub struct password(());
         ///Marker type for the `did` field
         pub struct did(());
+        ///Marker type for the `password` field
+        pub struct password(());
     }
 }
 
 /// Builder for constructing an instance of this type.
 pub struct UpdateAccountPasswordBuilder<
-    S: BosStr,
     St: update_account_password_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpdateAccountPassword<S> {
-    /// Create a new builder for this type.
+impl UpdateAccountPassword<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> UpdateAccountPasswordBuilder<
-        S,
         update_account_password_state::Empty,
+        DefaultStr,
     > {
         UpdateAccountPasswordBuilder::new()
     }
 }
 
-impl<S: BosStr> UpdateAccountPasswordBuilder<S, update_account_password_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpdateAccountPassword<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpdateAccountPasswordBuilder<
+        update_account_password_state::Empty,
+        S,
+    > {
+        UpdateAccountPasswordBuilder::builder()
+    }
+}
+
+impl UpdateAccountPasswordBuilder<update_account_password_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpdateAccountPasswordBuilder {
             _state: PhantomData,
@@ -129,7 +143,18 @@ impl<S: BosStr> UpdateAccountPasswordBuilder<S, update_account_password_state::E
     }
 }
 
-impl<S: BosStr, St> UpdateAccountPasswordBuilder<S, St>
+impl<S: BosStr> UpdateAccountPasswordBuilder<update_account_password_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpdateAccountPasswordBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> UpdateAccountPasswordBuilder<St, S>
 where
     St: update_account_password_state::State,
     St::Did: update_account_password_state::IsUnset,
@@ -138,7 +163,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> UpdateAccountPasswordBuilder<S, update_account_password_state::SetDid<St>> {
+    ) -> UpdateAccountPasswordBuilder<update_account_password_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         UpdateAccountPasswordBuilder {
             _state: PhantomData,
@@ -148,7 +173,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateAccountPasswordBuilder<S, St>
+impl<St, S: BosStr> UpdateAccountPasswordBuilder<St, S>
 where
     St: update_account_password_state::State,
     St::Password: update_account_password_state::IsUnset,
@@ -158,8 +183,8 @@ where
         mut self,
         value: impl Into<S>,
     ) -> UpdateAccountPasswordBuilder<
-        S,
         update_account_password_state::SetPassword<St>,
+        S,
     > {
         self._fields.1 = Option::Some(value.into());
         UpdateAccountPasswordBuilder {
@@ -170,11 +195,11 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateAccountPasswordBuilder<S, St>
+impl<St, S: BosStr> UpdateAccountPasswordBuilder<St, S>
 where
     St: update_account_password_state::State,
-    St::Password: update_account_password_state::IsSet,
     St::Did: update_account_password_state::IsSet,
+    St::Password: update_account_password_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> UpdateAccountPassword<S> {

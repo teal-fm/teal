@@ -22,7 +22,7 @@ use crate::com_atproto::admin::AccountView;
 pub struct SearchAccounts<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<S>,
-    ///Defaults to `50`. Min: 1. Max: 100.
+    /// Defaults to `50`. Min: 1. Max: 100.
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -40,7 +40,9 @@ pub struct SearchAccountsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.signature.searchAccounts
+/** Response marker for the `tools.ozone.signature.searchAccounts` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SearchAccountsOutput<S>` for this endpoint.*/
 pub struct SearchAccountsResponse;
 impl jacquard_common::xrpc::XrpcResp for SearchAccountsResponse {
     const NSID: &'static str = "tools.ozone.signature.searchAccounts";
@@ -55,7 +57,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SearchAccounts<S> {
     type Response = SearchAccountsResponse;
 }
 
-/// Endpoint type for tools.ozone.signature.searchAccounts
+/** Endpoint marker for the `tools.ozone.signature.searchAccounts` query.
+
+Path: `/xrpc/tools.ozone.signature.searchAccounts`. The request payload type is `SearchAccounts<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SearchAccountsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SearchAccountsRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.signature.searchAccounts";
@@ -101,21 +105,31 @@ pub mod search_accounts_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SearchAccountsBuilder<S: BosStr, St: search_accounts_state::State> {
+pub struct SearchAccountsBuilder<
+    St: search_accounts_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>, Option<Vec<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SearchAccounts<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SearchAccountsBuilder<S, search_accounts_state::Empty> {
+impl SearchAccounts<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SearchAccountsBuilder<search_accounts_state::Empty, DefaultStr> {
         SearchAccountsBuilder::new()
     }
 }
 
-impl<S: BosStr> SearchAccountsBuilder<S, search_accounts_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SearchAccounts<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SearchAccountsBuilder<search_accounts_state::Empty, S> {
+        SearchAccountsBuilder::builder()
+    }
+}
+
+impl SearchAccountsBuilder<search_accounts_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SearchAccountsBuilder {
             _state: PhantomData,
@@ -125,7 +139,18 @@ impl<S: BosStr> SearchAccountsBuilder<S, search_accounts_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: search_accounts_state::State> SearchAccountsBuilder<S, St> {
+impl<S: BosStr> SearchAccountsBuilder<search_accounts_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SearchAccountsBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: search_accounts_state::State, S: BosStr> SearchAccountsBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.0 = value.into();
@@ -138,7 +163,7 @@ impl<S: BosStr, St: search_accounts_state::State> SearchAccountsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: search_accounts_state::State> SearchAccountsBuilder<S, St> {
+impl<St: search_accounts_state::State, S: BosStr> SearchAccountsBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -151,7 +176,7 @@ impl<S: BosStr, St: search_accounts_state::State> SearchAccountsBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> SearchAccountsBuilder<S, St>
+impl<St, S: BosStr> SearchAccountsBuilder<St, S>
 where
     St: search_accounts_state::State,
     St::Values: search_accounts_state::IsUnset,
@@ -160,7 +185,7 @@ where
     pub fn values(
         mut self,
         value: impl Into<Vec<S>>,
-    ) -> SearchAccountsBuilder<S, search_accounts_state::SetValues<St>> {
+    ) -> SearchAccountsBuilder<search_accounts_state::SetValues<St>, S> {
         self._fields.2 = Option::Some(value.into());
         SearchAccountsBuilder {
             _state: PhantomData,
@@ -170,7 +195,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SearchAccountsBuilder<S, St>
+impl<St, S: BosStr> SearchAccountsBuilder<St, S>
 where
     St: search_accounts_state::State,
     St::Values: search_accounts_state::IsSet,

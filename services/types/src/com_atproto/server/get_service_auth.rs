@@ -79,7 +79,9 @@ impl core::fmt::Display for GetServiceAuthError {
     }
 }
 
-/// Response type for com.atproto.server.getServiceAuth
+/** Response marker for the `com.atproto.server.getServiceAuth` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetServiceAuthOutput<S>` for this endpoint.*/
 pub struct GetServiceAuthResponse;
 impl jacquard_common::xrpc::XrpcResp for GetServiceAuthResponse {
     const NSID: &'static str = "com.atproto.server.getServiceAuth";
@@ -94,7 +96,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetServiceAuth<S> {
     type Response = GetServiceAuthResponse;
 }
 
-/// Endpoint type for com.atproto.server.getServiceAuth
+/** Endpoint marker for the `com.atproto.server.getServiceAuth` query.
+
+Path: `/xrpc/com.atproto.server.getServiceAuth`. The request payload type is `GetServiceAuth<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetServiceAuthRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetServiceAuthRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.getServiceAuth";
@@ -136,21 +140,31 @@ pub mod get_service_auth_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetServiceAuthBuilder<S: BosStr, St: get_service_auth_state::State> {
+pub struct GetServiceAuthBuilder<
+    St: get_service_auth_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<i64>, Option<Nsid<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetServiceAuth<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetServiceAuthBuilder<S, get_service_auth_state::Empty> {
+impl GetServiceAuth<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetServiceAuthBuilder<get_service_auth_state::Empty, DefaultStr> {
         GetServiceAuthBuilder::new()
     }
 }
 
-impl<S: BosStr> GetServiceAuthBuilder<S, get_service_auth_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetServiceAuth<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetServiceAuthBuilder<get_service_auth_state::Empty, S> {
+        GetServiceAuthBuilder::builder()
+    }
+}
+
+impl GetServiceAuthBuilder<get_service_auth_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetServiceAuthBuilder {
             _state: PhantomData,
@@ -160,7 +174,18 @@ impl<S: BosStr> GetServiceAuthBuilder<S, get_service_auth_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetServiceAuthBuilder<S, St>
+impl<S: BosStr> GetServiceAuthBuilder<get_service_auth_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetServiceAuthBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetServiceAuthBuilder<St, S>
 where
     St: get_service_auth_state::State,
     St::Aud: get_service_auth_state::IsUnset,
@@ -169,7 +194,7 @@ where
     pub fn aud(
         mut self,
         value: impl Into<S>,
-    ) -> GetServiceAuthBuilder<S, get_service_auth_state::SetAud<St>> {
+    ) -> GetServiceAuthBuilder<get_service_auth_state::SetAud<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetServiceAuthBuilder {
             _state: PhantomData,
@@ -179,7 +204,7 @@ where
     }
 }
 
-impl<S: BosStr, St: get_service_auth_state::State> GetServiceAuthBuilder<S, St> {
+impl<St: get_service_auth_state::State, S: BosStr> GetServiceAuthBuilder<St, S> {
     /// Set the `exp` field (optional)
     pub fn exp(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.1 = value.into();
@@ -192,7 +217,7 @@ impl<S: BosStr, St: get_service_auth_state::State> GetServiceAuthBuilder<S, St> 
     }
 }
 
-impl<S: BosStr, St: get_service_auth_state::State> GetServiceAuthBuilder<S, St> {
+impl<St: get_service_auth_state::State, S: BosStr> GetServiceAuthBuilder<St, S> {
     /// Set the `lxm` field (optional)
     pub fn lxm(mut self, value: impl Into<Option<Nsid<S>>>) -> Self {
         self._fields.2 = value.into();
@@ -205,7 +230,7 @@ impl<S: BosStr, St: get_service_auth_state::State> GetServiceAuthBuilder<S, St> 
     }
 }
 
-impl<S: BosStr, St> GetServiceAuthBuilder<S, St>
+impl<St, S: BosStr> GetServiceAuthBuilder<St, S>
 where
     St: get_service_auth_state::State,
     St::Aud: get_service_auth_state::IsSet,

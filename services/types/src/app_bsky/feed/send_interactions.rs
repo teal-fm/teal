@@ -36,7 +36,9 @@ pub struct SendInteractionsOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.feed.sendInteractions
+/** Response marker for the `app.bsky.feed.sendInteractions` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `SendInteractionsOutput<S>` for this endpoint.*/
 pub struct SendInteractionsResponse;
 impl jacquard_common::xrpc::XrpcResp for SendInteractionsResponse {
     const NSID: &'static str = "app.bsky.feed.sendInteractions";
@@ -53,7 +55,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SendInteractions<S> {
     type Response = SendInteractionsResponse;
 }
 
-/// Endpoint type for app.bsky.feed.sendInteractions
+/** Endpoint marker for the `app.bsky.feed.sendInteractions` procedure.
+
+Path: `/xrpc/app.bsky.feed.sendInteractions`. The request payload type is `SendInteractions<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SendInteractionsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SendInteractionsRequest {
     const PATH: &'static str = "/xrpc/app.bsky.feed.sendInteractions";
@@ -97,21 +101,31 @@ pub mod send_interactions_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SendInteractionsBuilder<S: BosStr, St: send_interactions_state::State> {
+pub struct SendInteractionsBuilder<
+    St: send_interactions_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>, Option<Vec<Interaction<S>>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SendInteractions<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SendInteractionsBuilder<S, send_interactions_state::Empty> {
+impl SendInteractions<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SendInteractionsBuilder<send_interactions_state::Empty, DefaultStr> {
         SendInteractionsBuilder::new()
     }
 }
 
-impl<S: BosStr> SendInteractionsBuilder<S, send_interactions_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SendInteractions<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SendInteractionsBuilder<send_interactions_state::Empty, S> {
+        SendInteractionsBuilder::builder()
+    }
+}
+
+impl SendInteractionsBuilder<send_interactions_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SendInteractionsBuilder {
             _state: PhantomData,
@@ -121,7 +135,18 @@ impl<S: BosStr> SendInteractionsBuilder<S, send_interactions_state::Empty> {
     }
 }
 
-impl<S: BosStr, St: send_interactions_state::State> SendInteractionsBuilder<S, St> {
+impl<S: BosStr> SendInteractionsBuilder<send_interactions_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SendInteractionsBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: send_interactions_state::State, S: BosStr> SendInteractionsBuilder<St, S> {
     /// Set the `feed` field (optional)
     pub fn feed(mut self, value: impl Into<Option<AtUri<S>>>) -> Self {
         self._fields.0 = value.into();
@@ -134,7 +159,7 @@ impl<S: BosStr, St: send_interactions_state::State> SendInteractionsBuilder<S, S
     }
 }
 
-impl<S: BosStr, St> SendInteractionsBuilder<S, St>
+impl<St, S: BosStr> SendInteractionsBuilder<St, S>
 where
     St: send_interactions_state::State,
     St::Interactions: send_interactions_state::IsUnset,
@@ -143,7 +168,7 @@ where
     pub fn interactions(
         mut self,
         value: impl Into<Vec<Interaction<S>>>,
-    ) -> SendInteractionsBuilder<S, send_interactions_state::SetInteractions<St>> {
+    ) -> SendInteractionsBuilder<send_interactions_state::SetInteractions<St>, S> {
         self._fields.1 = Option::Some(value.into());
         SendInteractionsBuilder {
             _state: PhantomData,
@@ -153,7 +178,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SendInteractionsBuilder<S, St>
+impl<St, S: BosStr> SendInteractionsBuilder<St, S>
 where
     St: send_interactions_state::State,
     St::Interactions: send_interactions_state::IsSet,

@@ -15,11 +15,15 @@ use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use serde::{Serialize, Deserialize};
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.identity.requestPlcOperationSignature` procedure.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct RequestPlcOperationSignature;
-/// Response type for com.atproto.identity.requestPlcOperationSignature
+/** Response marker for the `com.atproto.identity.requestPlcOperationSignature` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct RequestPlcOperationSignatureResponse;
 impl jacquard_common::xrpc::XrpcResp for RequestPlcOperationSignatureResponse {
     const NSID: &'static str = "com.atproto.identity.requestPlcOperationSignature";
@@ -36,7 +40,9 @@ impl jacquard_common::xrpc::XrpcRequest for RequestPlcOperationSignature {
     type Response = RequestPlcOperationSignatureResponse;
 }
 
-/// Endpoint type for com.atproto.identity.requestPlcOperationSignature
+/** Endpoint marker for the `com.atproto.identity.requestPlcOperationSignature` procedure.
+
+Path: `/xrpc/com.atproto.identity.requestPlcOperationSignature`. The request payload type is `RequestPlcOperationSignature`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct RequestPlcOperationSignatureRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RequestPlcOperationSignatureRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.requestPlcOperationSignature";

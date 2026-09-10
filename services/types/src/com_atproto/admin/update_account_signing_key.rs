@@ -27,7 +27,9 @@ pub struct UpdateAccountSigningKey<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.admin.updateAccountSigningKey
+/** Response marker for the `com.atproto.admin.updateAccountSigningKey` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct UpdateAccountSigningKeyResponse;
 impl jacquard_common::xrpc::XrpcResp for UpdateAccountSigningKeyResponse {
     const NSID: &'static str = "com.atproto.admin.updateAccountSigningKey";
@@ -44,7 +46,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for UpdateAccountSigningKey<S
     type Response = UpdateAccountSigningKeyResponse;
 }
 
-/// Endpoint type for com.atproto.admin.updateAccountSigningKey
+/** Endpoint marker for the `com.atproto.admin.updateAccountSigningKey` procedure.
+
+Path: `/xrpc/com.atproto.admin.updateAccountSigningKey`. The request payload type is `UpdateAccountSigningKey<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct UpdateAccountSigningKeyRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for UpdateAccountSigningKeyRequest {
     const PATH: &'static str = "/xrpc/com.atproto.admin.updateAccountSigningKey";
@@ -101,28 +105,39 @@ pub mod update_account_signing_key_state {
 
 /// Builder for constructing an instance of this type.
 pub struct UpdateAccountSigningKeyBuilder<
-    S: BosStr,
     St: update_account_signing_key_state::State,
+    S: BosStr = DefaultStr,
 > {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<Did<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> UpdateAccountSigningKey<S> {
-    /// Create a new builder for this type.
+impl UpdateAccountSigningKey<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
     pub fn new() -> UpdateAccountSigningKeyBuilder<
-        S,
         update_account_signing_key_state::Empty,
+        DefaultStr,
     > {
         UpdateAccountSigningKeyBuilder::new()
     }
 }
 
-impl<
-    S: BosStr,
-> UpdateAccountSigningKeyBuilder<S, update_account_signing_key_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> UpdateAccountSigningKey<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> UpdateAccountSigningKeyBuilder<
+        update_account_signing_key_state::Empty,
+        S,
+    > {
+        UpdateAccountSigningKeyBuilder::builder()
+    }
+}
+
+impl UpdateAccountSigningKeyBuilder<
+    update_account_signing_key_state::Empty,
+    DefaultStr,
+> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         UpdateAccountSigningKeyBuilder {
             _state: PhantomData,
@@ -132,7 +147,20 @@ impl<
     }
 }
 
-impl<S: BosStr, St> UpdateAccountSigningKeyBuilder<S, St>
+impl<
+    S: BosStr,
+> UpdateAccountSigningKeyBuilder<update_account_signing_key_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        UpdateAccountSigningKeyBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> UpdateAccountSigningKeyBuilder<St, S>
 where
     St: update_account_signing_key_state::State,
     St::Did: update_account_signing_key_state::IsUnset,
@@ -142,8 +170,8 @@ where
         mut self,
         value: impl Into<Did<S>>,
     ) -> UpdateAccountSigningKeyBuilder<
-        S,
         update_account_signing_key_state::SetDid<St>,
+        S,
     > {
         self._fields.0 = Option::Some(value.into());
         UpdateAccountSigningKeyBuilder {
@@ -154,7 +182,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateAccountSigningKeyBuilder<S, St>
+impl<St, S: BosStr> UpdateAccountSigningKeyBuilder<St, S>
 where
     St: update_account_signing_key_state::State,
     St::SigningKey: update_account_signing_key_state::IsUnset,
@@ -164,8 +192,8 @@ where
         mut self,
         value: impl Into<Did<S>>,
     ) -> UpdateAccountSigningKeyBuilder<
-        S,
         update_account_signing_key_state::SetSigningKey<St>,
+        S,
     > {
         self._fields.1 = Option::Some(value.into());
         UpdateAccountSigningKeyBuilder {
@@ -176,7 +204,7 @@ where
     }
 }
 
-impl<S: BosStr, St> UpdateAccountSigningKeyBuilder<S, St>
+impl<St, S: BosStr> UpdateAccountSigningKeyBuilder<St, S>
 where
     St: update_account_signing_key_state::State,
     St::Did: update_account_signing_key_state::IsSet,

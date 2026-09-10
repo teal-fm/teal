@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `com.atproto.sync` Lexicon namespace/module.
 pub mod get_blob;
 pub mod get_blocks;
 pub mod get_checkout;

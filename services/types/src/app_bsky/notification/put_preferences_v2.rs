@@ -63,7 +63,9 @@ pub struct PutPreferencesV2Output<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for app.bsky.notification.putPreferencesV2
+/** Response marker for the `app.bsky.notification.putPreferencesV2` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `PutPreferencesV2Output<S>` for this endpoint.*/
 pub struct PutPreferencesV2Response;
 impl jacquard_common::xrpc::XrpcResp for PutPreferencesV2Response {
     const NSID: &'static str = "app.bsky.notification.putPreferencesV2";
@@ -80,7 +82,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for PutPreferencesV2<S> {
     type Response = PutPreferencesV2Response;
 }
 
-/// Endpoint type for app.bsky.notification.putPreferencesV2
+/** Endpoint marker for the `app.bsky.notification.putPreferencesV2` procedure.
+
+Path: `/xrpc/app.bsky.notification.putPreferencesV2`. The request payload type is `PutPreferencesV2<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct PutPreferencesV2Request;
 impl jacquard_common::xrpc::XrpcEndpoint for PutPreferencesV2Request {
     const PATH: &'static str = "/xrpc/app.bsky.notification.putPreferencesV2";

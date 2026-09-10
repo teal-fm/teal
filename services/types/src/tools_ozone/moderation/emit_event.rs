@@ -226,7 +226,9 @@ pub struct ReportAction<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.moderation.emitEvent
+/** Response marker for the `tools.ozone.moderation.emitEvent` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `EmitEventOutput<S>` for this endpoint.*/
 pub struct EmitEventResponse;
 impl jacquard_common::xrpc::XrpcResp for EmitEventResponse {
     const NSID: &'static str = "tools.ozone.moderation.emitEvent";
@@ -243,7 +245,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for EmitEvent<S> {
     type Response = EmitEventResponse;
 }
 
-/// Endpoint type for tools.ozone.moderation.emitEvent
+/** Endpoint marker for the `tools.ozone.moderation.emitEvent` procedure.
+
+Path: `/xrpc/tools.ozone.moderation.emitEvent`. The request payload type is `EmitEvent<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct EmitEventRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for EmitEventRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.moderation.emitEvent";
@@ -279,56 +283,56 @@ pub mod emit_event_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Subject;
         type CreatedBy;
         type Event;
+        type Subject;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Subject = Unset;
         type CreatedBy = Unset;
         type Event = Unset;
-    }
-    ///State transition - sets the `subject` field to Set
-    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetSubject<St> {}
-    impl<St: State> State for SetSubject<St> {
-        type Subject = Set<members::subject>;
-        type CreatedBy = St::CreatedBy;
-        type Event = St::Event;
+        type Subject = Unset;
     }
     ///State transition - sets the `created_by` field to Set
     pub struct SetCreatedBy<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCreatedBy<St> {}
     impl<St: State> State for SetCreatedBy<St> {
-        type Subject = St::Subject;
         type CreatedBy = Set<members::created_by>;
         type Event = St::Event;
+        type Subject = St::Subject;
     }
     ///State transition - sets the `event` field to Set
     pub struct SetEvent<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetEvent<St> {}
     impl<St: State> State for SetEvent<St> {
-        type Subject = St::Subject;
         type CreatedBy = St::CreatedBy;
         type Event = Set<members::event>;
+        type Subject = St::Subject;
+    }
+    ///State transition - sets the `subject` field to Set
+    pub struct SetSubject<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetSubject<St> {}
+    impl<St: State> State for SetSubject<St> {
+        type CreatedBy = St::CreatedBy;
+        type Event = St::Event;
+        type Subject = Set<members::subject>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `subject` field
-        pub struct subject(());
         ///Marker type for the `created_by` field
         pub struct created_by(());
         ///Marker type for the `event` field
         pub struct event(());
+        ///Marker type for the `subject` field
+        pub struct subject(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct EmitEventBuilder<S: BosStr, St: emit_event_state::State> {
+pub struct EmitEventBuilder<St: emit_event_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<Did<S>>,
@@ -342,15 +346,22 @@ pub struct EmitEventBuilder<S: BosStr, St: emit_event_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> EmitEvent<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> EmitEventBuilder<S, emit_event_state::Empty> {
+impl EmitEvent<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> EmitEventBuilder<emit_event_state::Empty, DefaultStr> {
         EmitEventBuilder::new()
     }
 }
 
-impl<S: BosStr> EmitEventBuilder<S, emit_event_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> EmitEvent<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> EmitEventBuilder<emit_event_state::Empty, S> {
+        EmitEventBuilder::builder()
+    }
+}
+
+impl EmitEventBuilder<emit_event_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         EmitEventBuilder {
             _state: PhantomData,
@@ -360,7 +371,18 @@ impl<S: BosStr> EmitEventBuilder<S, emit_event_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> EmitEventBuilder<S, St>
+impl<S: BosStr> EmitEventBuilder<emit_event_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        EmitEventBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> EmitEventBuilder<St, S>
 where
     St: emit_event_state::State,
     St::CreatedBy: emit_event_state::IsUnset,
@@ -369,7 +391,7 @@ where
     pub fn created_by(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> EmitEventBuilder<S, emit_event_state::SetCreatedBy<St>> {
+    ) -> EmitEventBuilder<emit_event_state::SetCreatedBy<St>, S> {
         self._fields.0 = Option::Some(value.into());
         EmitEventBuilder {
             _state: PhantomData,
@@ -379,7 +401,7 @@ where
     }
 }
 
-impl<S: BosStr, St> EmitEventBuilder<S, St>
+impl<St, S: BosStr> EmitEventBuilder<St, S>
 where
     St: emit_event_state::State,
     St::Event: emit_event_state::IsUnset,
@@ -388,7 +410,7 @@ where
     pub fn event(
         mut self,
         value: impl Into<EmitEventEvent<S>>,
-    ) -> EmitEventBuilder<S, emit_event_state::SetEvent<St>> {
+    ) -> EmitEventBuilder<emit_event_state::SetEvent<St>, S> {
         self._fields.1 = Option::Some(value.into());
         EmitEventBuilder {
             _state: PhantomData,
@@ -398,7 +420,7 @@ where
     }
 }
 
-impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
+impl<St: emit_event_state::State, S: BosStr> EmitEventBuilder<St, S> {
     /// Set the `externalId` field (optional)
     pub fn external_id(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.2 = value.into();
@@ -411,7 +433,7 @@ impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
+impl<St: emit_event_state::State, S: BosStr> EmitEventBuilder<St, S> {
     /// Set the `modTool` field (optional)
     pub fn mod_tool(mut self, value: impl Into<Option<ModTool<S>>>) -> Self {
         self._fields.3 = value.into();
@@ -424,7 +446,7 @@ impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
+impl<St: emit_event_state::State, S: BosStr> EmitEventBuilder<St, S> {
     /// Set the `reportAction` field (optional)
     pub fn report_action(
         mut self,
@@ -443,7 +465,7 @@ impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> EmitEventBuilder<S, St>
+impl<St, S: BosStr> EmitEventBuilder<St, S>
 where
     St: emit_event_state::State,
     St::Subject: emit_event_state::IsUnset,
@@ -452,7 +474,7 @@ where
     pub fn subject(
         mut self,
         value: impl Into<EmitEventSubject<S>>,
-    ) -> EmitEventBuilder<S, emit_event_state::SetSubject<St>> {
+    ) -> EmitEventBuilder<emit_event_state::SetSubject<St>, S> {
         self._fields.5 = Option::Some(value.into());
         EmitEventBuilder {
             _state: PhantomData,
@@ -462,7 +484,7 @@ where
     }
 }
 
-impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
+impl<St: emit_event_state::State, S: BosStr> EmitEventBuilder<St, S> {
     /// Set the `subjectBlobCids` field (optional)
     pub fn subject_blob_cids(mut self, value: impl Into<Option<Vec<Cid<S>>>>) -> Self {
         self._fields.6 = value.into();
@@ -475,12 +497,12 @@ impl<S: BosStr, St: emit_event_state::State> EmitEventBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> EmitEventBuilder<S, St>
+impl<St, S: BosStr> EmitEventBuilder<St, S>
 where
     St: emit_event_state::State,
-    St::Subject: emit_event_state::IsSet,
     St::CreatedBy: emit_event_state::IsSet,
     St::Event: emit_event_state::IsSet,
+    St::Subject: emit_event_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> EmitEvent<S> {

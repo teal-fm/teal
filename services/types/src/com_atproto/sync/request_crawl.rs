@@ -67,7 +67,9 @@ impl core::fmt::Display for RequestCrawlError {
     }
 }
 
-/// Response type for com.atproto.sync.requestCrawl
+/** Response marker for the `com.atproto.sync.requestCrawl` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct RequestCrawlResponse;
 impl jacquard_common::xrpc::XrpcResp for RequestCrawlResponse {
     const NSID: &'static str = "com.atproto.sync.requestCrawl";
@@ -84,7 +86,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for RequestCrawl<S> {
     type Response = RequestCrawlResponse;
 }
 
-/// Endpoint type for com.atproto.sync.requestCrawl
+/** Endpoint marker for the `com.atproto.sync.requestCrawl` procedure.
+
+Path: `/xrpc/com.atproto.sync.requestCrawl`. The request payload type is `RequestCrawl<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct RequestCrawlRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for RequestCrawlRequest {
     const PATH: &'static str = "/xrpc/com.atproto.sync.requestCrawl";

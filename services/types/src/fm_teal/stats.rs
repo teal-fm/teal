@@ -5,6 +5,7 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
+//! Generated bindings for the `fm.teal.stats` Lexicon namespace/module.
 pub mod get_latest;
 pub mod get_top_artists;
 pub mod get_top_releases;

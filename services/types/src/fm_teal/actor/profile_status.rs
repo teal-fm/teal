@@ -239,7 +239,10 @@ pub mod profile_status_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ProfileStatusBuilder<S: BosStr, St: profile_status_state::State> {
+pub struct ProfileStatusBuilder<
+    St: profile_status_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (
         Option<ProfileStatusCompletedOnboarding<S>>,
@@ -249,15 +252,22 @@ pub struct ProfileStatusBuilder<S: BosStr, St: profile_status_state::State> {
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> ProfileStatus<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> ProfileStatusBuilder<S, profile_status_state::Empty> {
+impl ProfileStatus<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ProfileStatusBuilder<profile_status_state::Empty, DefaultStr> {
         ProfileStatusBuilder::new()
     }
 }
 
-impl<S: BosStr> ProfileStatusBuilder<S, profile_status_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> ProfileStatus<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ProfileStatusBuilder<profile_status_state::Empty, S> {
+        ProfileStatusBuilder::builder()
+    }
+}
+
+impl ProfileStatusBuilder<profile_status_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         ProfileStatusBuilder {
             _state: PhantomData,
@@ -267,7 +277,18 @@ impl<S: BosStr> ProfileStatusBuilder<S, profile_status_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> ProfileStatusBuilder<S, St>
+impl<S: BosStr> ProfileStatusBuilder<profile_status_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ProfileStatusBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ProfileStatusBuilder<St, S>
 where
     St: profile_status_state::State,
     St::CompletedOnboarding: profile_status_state::IsUnset,
@@ -276,7 +297,7 @@ where
     pub fn completed_onboarding(
         mut self,
         value: impl Into<ProfileStatusCompletedOnboarding<S>>,
-    ) -> ProfileStatusBuilder<S, profile_status_state::SetCompletedOnboarding<St>> {
+    ) -> ProfileStatusBuilder<profile_status_state::SetCompletedOnboarding<St>, S> {
         self._fields.0 = Option::Some(value.into());
         ProfileStatusBuilder {
             _state: PhantomData,
@@ -286,7 +307,7 @@ where
     }
 }
 
-impl<S: BosStr, St: profile_status_state::State> ProfileStatusBuilder<S, St> {
+impl<St: profile_status_state::State, S: BosStr> ProfileStatusBuilder<St, S> {
     /// Set the `createdAt` field (optional)
     pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.1 = value.into();
@@ -299,7 +320,7 @@ impl<S: BosStr, St: profile_status_state::State> ProfileStatusBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: profile_status_state::State> ProfileStatusBuilder<S, St> {
+impl<St: profile_status_state::State, S: BosStr> ProfileStatusBuilder<St, S> {
     /// Set the `updatedAt` field (optional)
     pub fn updated_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
         self._fields.2 = value.into();
@@ -312,7 +333,7 @@ impl<S: BosStr, St: profile_status_state::State> ProfileStatusBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> ProfileStatusBuilder<S, St>
+impl<St, S: BosStr> ProfileStatusBuilder<St, S>
 where
     St: profile_status_state::State,
     St::CompletedOnboarding: profile_status_state::IsSet,

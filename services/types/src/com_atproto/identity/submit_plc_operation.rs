@@ -24,7 +24,9 @@ pub struct SubmitPlcOperation<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for com.atproto.identity.submitPlcOperation
+/** Response marker for the `com.atproto.identity.submitPlcOperation` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct SubmitPlcOperationResponse;
 impl jacquard_common::xrpc::XrpcResp for SubmitPlcOperationResponse {
     const NSID: &'static str = "com.atproto.identity.submitPlcOperation";
@@ -41,7 +43,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for SubmitPlcOperation<S> {
     type Response = SubmitPlcOperationResponse;
 }
 
-/// Endpoint type for com.atproto.identity.submitPlcOperation
+/** Endpoint marker for the `com.atproto.identity.submitPlcOperation` procedure.
+
+Path: `/xrpc/com.atproto.identity.submitPlcOperation`. The request payload type is `SubmitPlcOperation<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct SubmitPlcOperationRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for SubmitPlcOperationRequest {
     const PATH: &'static str = "/xrpc/com.atproto.identity.submitPlcOperation";
@@ -85,21 +89,34 @@ pub mod submit_plc_operation_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct SubmitPlcOperationBuilder<S: BosStr, St: submit_plc_operation_state::State> {
+pub struct SubmitPlcOperationBuilder<
+    St: submit_plc_operation_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Data<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> SubmitPlcOperation<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> SubmitPlcOperationBuilder<S, submit_plc_operation_state::Empty> {
+impl SubmitPlcOperation<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> SubmitPlcOperationBuilder<
+        submit_plc_operation_state::Empty,
+        DefaultStr,
+    > {
         SubmitPlcOperationBuilder::new()
     }
 }
 
-impl<S: BosStr> SubmitPlcOperationBuilder<S, submit_plc_operation_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> SubmitPlcOperation<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> SubmitPlcOperationBuilder<submit_plc_operation_state::Empty, S> {
+        SubmitPlcOperationBuilder::builder()
+    }
+}
+
+impl SubmitPlcOperationBuilder<submit_plc_operation_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         SubmitPlcOperationBuilder {
             _state: PhantomData,
@@ -109,7 +126,18 @@ impl<S: BosStr> SubmitPlcOperationBuilder<S, submit_plc_operation_state::Empty> 
     }
 }
 
-impl<S: BosStr, St> SubmitPlcOperationBuilder<S, St>
+impl<S: BosStr> SubmitPlcOperationBuilder<submit_plc_operation_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        SubmitPlcOperationBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> SubmitPlcOperationBuilder<St, S>
 where
     St: submit_plc_operation_state::State,
     St::Operation: submit_plc_operation_state::IsUnset,
@@ -118,7 +146,7 @@ where
     pub fn operation(
         mut self,
         value: impl Into<Data<S>>,
-    ) -> SubmitPlcOperationBuilder<S, submit_plc_operation_state::SetOperation<St>> {
+    ) -> SubmitPlcOperationBuilder<submit_plc_operation_state::SetOperation<St>, S> {
         self._fields.0 = Option::Some(value.into());
         SubmitPlcOperationBuilder {
             _state: PhantomData,
@@ -128,7 +156,7 @@ where
     }
 }
 
-impl<S: BosStr, St> SubmitPlcOperationBuilder<S, St>
+impl<St, S: BosStr> SubmitPlcOperationBuilder<St, S>
 where
     St: submit_plc_operation_state::State,
     St::Operation: submit_plc_operation_state::IsSet,

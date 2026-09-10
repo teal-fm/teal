@@ -24,7 +24,9 @@ pub struct DeleteTemplate<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for tools.ozone.communication.deleteTemplate
+/** Response marker for the `tools.ozone.communication.deleteTemplate` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DeleteTemplateResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteTemplateResponse {
     const NSID: &'static str = "tools.ozone.communication.deleteTemplate";
@@ -41,7 +43,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeleteTemplate<S> {
     type Response = DeleteTemplateResponse;
 }
 
-/// Endpoint type for tools.ozone.communication.deleteTemplate
+/** Endpoint marker for the `tools.ozone.communication.deleteTemplate` procedure.
+
+Path: `/xrpc/tools.ozone.communication.deleteTemplate`. The request payload type is `DeleteTemplate<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DeleteTemplateRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteTemplateRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.communication.deleteTemplate";

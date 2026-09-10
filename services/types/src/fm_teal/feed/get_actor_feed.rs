@@ -40,7 +40,9 @@ pub struct GetActorFeedOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// Response type for fm.teal.feed.getActorFeed
+/** Response marker for the `fm.teal.feed.getActorFeed` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `GetActorFeedOutput<S>` for this endpoint.*/
 pub struct GetActorFeedResponse;
 impl jacquard_common::xrpc::XrpcResp for GetActorFeedResponse {
     const NSID: &'static str = "fm.teal.feed.getActorFeed";
@@ -55,7 +57,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetActorFeed<S> {
     type Response = GetActorFeedResponse;
 }
 
-/// Endpoint type for fm.teal.feed.getActorFeed
+/** Endpoint marker for the `fm.teal.feed.getActorFeed` query.
+
+Path: `/xrpc/fm.teal.feed.getActorFeed`. The request payload type is `GetActorFeed<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct GetActorFeedRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for GetActorFeedRequest {
     const PATH: &'static str = "/xrpc/fm.teal.feed.getActorFeed";
@@ -97,21 +101,28 @@ pub mod get_actor_feed_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct GetActorFeedBuilder<S: BosStr, St: get_actor_feed_state::State> {
+pub struct GetActorFeedBuilder<St: get_actor_feed_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>, Option<S>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> GetActorFeed<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> GetActorFeedBuilder<S, get_actor_feed_state::Empty> {
+impl GetActorFeed<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> GetActorFeedBuilder<get_actor_feed_state::Empty, DefaultStr> {
         GetActorFeedBuilder::new()
     }
 }
 
-impl<S: BosStr> GetActorFeedBuilder<S, get_actor_feed_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> GetActorFeed<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> GetActorFeedBuilder<get_actor_feed_state::Empty, S> {
+        GetActorFeedBuilder::builder()
+    }
+}
+
+impl GetActorFeedBuilder<get_actor_feed_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         GetActorFeedBuilder {
             _state: PhantomData,
@@ -121,7 +132,18 @@ impl<S: BosStr> GetActorFeedBuilder<S, get_actor_feed_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> GetActorFeedBuilder<S, St>
+impl<S: BosStr> GetActorFeedBuilder<get_actor_feed_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        GetActorFeedBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> GetActorFeedBuilder<St, S>
 where
     St: get_actor_feed_state::State,
     St::AuthorDid: get_actor_feed_state::IsUnset,
@@ -130,7 +152,7 @@ where
     pub fn author_did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> GetActorFeedBuilder<S, get_actor_feed_state::SetAuthorDid<St>> {
+    ) -> GetActorFeedBuilder<get_actor_feed_state::SetAuthorDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         GetActorFeedBuilder {
             _state: PhantomData,
@@ -140,7 +162,7 @@ where
     }
 }
 
-impl<S: BosStr, St: get_actor_feed_state::State> GetActorFeedBuilder<S, St> {
+impl<St: get_actor_feed_state::State, S: BosStr> GetActorFeedBuilder<St, S> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
         self._fields.1 = value.into();
@@ -153,7 +175,7 @@ impl<S: BosStr, St: get_actor_feed_state::State> GetActorFeedBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St: get_actor_feed_state::State> GetActorFeedBuilder<S, St> {
+impl<St: get_actor_feed_state::State, S: BosStr> GetActorFeedBuilder<St, S> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
         self._fields.2 = value.into();
@@ -166,7 +188,7 @@ impl<S: BosStr, St: get_actor_feed_state::State> GetActorFeedBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> GetActorFeedBuilder<S, St>
+impl<St, S: BosStr> GetActorFeedBuilder<St, S>
 where
     St: get_actor_feed_state::State,
     St::AuthorDid: get_actor_feed_state::IsSet,

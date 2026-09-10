@@ -28,11 +28,15 @@ pub struct CheckSignupQueueOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.temp.checkSignupQueue` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct CheckSignupQueue;
-/// Response type for com.atproto.temp.checkSignupQueue
+/** Response marker for the `com.atproto.temp.checkSignupQueue` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CheckSignupQueueOutput<S>` for this endpoint.*/
 pub struct CheckSignupQueueResponse;
 impl jacquard_common::xrpc::XrpcResp for CheckSignupQueueResponse {
     const NSID: &'static str = "com.atproto.temp.checkSignupQueue";
@@ -47,7 +51,9 @@ impl jacquard_common::xrpc::XrpcRequest for CheckSignupQueue {
     type Response = CheckSignupQueueResponse;
 }
 
-/// Endpoint type for com.atproto.temp.checkSignupQueue
+/** Endpoint marker for the `com.atproto.temp.checkSignupQueue` query.
+
+Path: `/xrpc/com.atproto.temp.checkSignupQueue`. The request payload type is `CheckSignupQueue`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct CheckSignupQueueRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CheckSignupQueueRequest {
     const PATH: &'static str = "/xrpc/com.atproto.temp.checkSignupQueue";

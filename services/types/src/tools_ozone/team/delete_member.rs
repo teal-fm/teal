@@ -78,7 +78,9 @@ impl core::fmt::Display for DeleteMemberError {
     }
 }
 
-/// Response type for tools.ozone.team.deleteMember
+/** Response marker for the `tools.ozone.team.deleteMember` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `()` for this endpoint.*/
 pub struct DeleteMemberResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteMemberResponse {
     const NSID: &'static str = "tools.ozone.team.deleteMember";
@@ -95,7 +97,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeleteMember<S> {
     type Response = DeleteMemberResponse;
 }
 
-/// Endpoint type for tools.ozone.team.deleteMember
+/** Endpoint marker for the `tools.ozone.team.deleteMember` procedure.
+
+Path: `/xrpc/tools.ozone.team.deleteMember`. The request payload type is `DeleteMember<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct DeleteMemberRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DeleteMemberRequest {
     const PATH: &'static str = "/xrpc/tools.ozone.team.deleteMember";
@@ -139,21 +143,28 @@ pub mod delete_member_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct DeleteMemberBuilder<S: BosStr, St: delete_member_state::State> {
+pub struct DeleteMemberBuilder<St: delete_member_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Did<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> DeleteMember<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> DeleteMemberBuilder<S, delete_member_state::Empty> {
+impl DeleteMember<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> DeleteMemberBuilder<delete_member_state::Empty, DefaultStr> {
         DeleteMemberBuilder::new()
     }
 }
 
-impl<S: BosStr> DeleteMemberBuilder<S, delete_member_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> DeleteMember<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> DeleteMemberBuilder<delete_member_state::Empty, S> {
+        DeleteMemberBuilder::builder()
+    }
+}
+
+impl DeleteMemberBuilder<delete_member_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         DeleteMemberBuilder {
             _state: PhantomData,
@@ -163,7 +174,18 @@ impl<S: BosStr> DeleteMemberBuilder<S, delete_member_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> DeleteMemberBuilder<S, St>
+impl<S: BosStr> DeleteMemberBuilder<delete_member_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        DeleteMemberBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> DeleteMemberBuilder<St, S>
 where
     St: delete_member_state::State,
     St::Did: delete_member_state::IsUnset,
@@ -172,7 +194,7 @@ where
     pub fn did(
         mut self,
         value: impl Into<Did<S>>,
-    ) -> DeleteMemberBuilder<S, delete_member_state::SetDid<St>> {
+    ) -> DeleteMemberBuilder<delete_member_state::SetDid<St>, S> {
         self._fields.0 = Option::Some(value.into());
         DeleteMemberBuilder {
             _state: PhantomData,
@@ -182,7 +204,7 @@ where
     }
 }
 
-impl<S: BosStr, St> DeleteMemberBuilder<S, St>
+impl<St, S: BosStr> DeleteMemberBuilder<St, S>
 where
     St: delete_member_state::State,
     St::Did: delete_member_state::IsSet,

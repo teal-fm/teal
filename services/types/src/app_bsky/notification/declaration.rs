@@ -225,21 +225,28 @@ pub mod declaration_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct DeclarationBuilder<S: BosStr, St: declaration_state::State> {
+pub struct DeclarationBuilder<St: declaration_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<DeclarationAllowSubscriptions<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Declaration<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> DeclarationBuilder<S, declaration_state::Empty> {
+impl Declaration<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> DeclarationBuilder<declaration_state::Empty, DefaultStr> {
         DeclarationBuilder::new()
     }
 }
 
-impl<S: BosStr> DeclarationBuilder<S, declaration_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Declaration<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> DeclarationBuilder<declaration_state::Empty, S> {
+        DeclarationBuilder::builder()
+    }
+}
+
+impl DeclarationBuilder<declaration_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         DeclarationBuilder {
             _state: PhantomData,
@@ -249,7 +256,18 @@ impl<S: BosStr> DeclarationBuilder<S, declaration_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> DeclarationBuilder<S, St>
+impl<S: BosStr> DeclarationBuilder<declaration_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        DeclarationBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> DeclarationBuilder<St, S>
 where
     St: declaration_state::State,
     St::AllowSubscriptions: declaration_state::IsUnset,
@@ -258,7 +276,7 @@ where
     pub fn allow_subscriptions(
         mut self,
         value: impl Into<DeclarationAllowSubscriptions<S>>,
-    ) -> DeclarationBuilder<S, declaration_state::SetAllowSubscriptions<St>> {
+    ) -> DeclarationBuilder<declaration_state::SetAllowSubscriptions<St>, S> {
         self._fields.0 = Option::Some(value.into());
         DeclarationBuilder {
             _state: PhantomData,
@@ -268,7 +286,7 @@ where
     }
 }
 
-impl<S: BosStr, St> DeclarationBuilder<S, St>
+impl<St, S: BosStr> DeclarationBuilder<St, S>
 where
     St: declaration_state::State,
     St::AllowSubscriptions: declaration_state::IsSet,

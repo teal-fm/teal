@@ -88,11 +88,15 @@ impl<S: BosStr> LexiconSchema for Links<S> {
     }
 }
 
-/// XRPC request marker type.
+/** Request marker for the `app.bsky.feed.describeFeedGenerator` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct DescribeFeedGenerator;
-/// Response type for app.bsky.feed.describeFeedGenerator
+/** Response marker for the `app.bsky.feed.describeFeedGenerator` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `DescribeFeedGeneratorOutput<S>` for this endpoint.*/
 pub struct DescribeFeedGeneratorResponse;
 impl jacquard_common::xrpc::XrpcResp for DescribeFeedGeneratorResponse {
     const NSID: &'static str = "app.bsky.feed.describeFeedGenerator";
@@ -107,7 +111,9 @@ impl jacquard_common::xrpc::XrpcRequest for DescribeFeedGenerator {
     type Response = DescribeFeedGeneratorResponse;
 }
 
-/// Endpoint type for app.bsky.feed.describeFeedGenerator
+/** Endpoint marker for the `app.bsky.feed.describeFeedGenerator` query.
+
+Path: `/xrpc/app.bsky.feed.describeFeedGenerator`. The request payload type is `DescribeFeedGenerator`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct DescribeFeedGeneratorRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for DescribeFeedGeneratorRequest {
     const PATH: &'static str = "/xrpc/app.bsky.feed.describeFeedGenerator";
@@ -149,21 +155,28 @@ pub mod feed_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct FeedBuilder<S: BosStr, St: feed_state::State> {
+pub struct FeedBuilder<St: feed_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<AtUri<S>>,),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> Feed<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> FeedBuilder<S, feed_state::Empty> {
+impl Feed<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> FeedBuilder<feed_state::Empty, DefaultStr> {
         FeedBuilder::new()
     }
 }
 
-impl<S: BosStr> FeedBuilder<S, feed_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> Feed<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> FeedBuilder<feed_state::Empty, S> {
+        FeedBuilder::builder()
+    }
+}
+
+impl FeedBuilder<feed_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         FeedBuilder {
             _state: PhantomData,
@@ -173,7 +186,18 @@ impl<S: BosStr> FeedBuilder<S, feed_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> FeedBuilder<S, St>
+impl<S: BosStr> FeedBuilder<feed_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        FeedBuilder {
+            _state: PhantomData,
+            _fields: (None,),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> FeedBuilder<St, S>
 where
     St: feed_state::State,
     St::Uri: feed_state::IsUnset,
@@ -182,7 +206,7 @@ where
     pub fn uri(
         mut self,
         value: impl Into<AtUri<S>>,
-    ) -> FeedBuilder<S, feed_state::SetUri<St>> {
+    ) -> FeedBuilder<feed_state::SetUri<St>, S> {
         self._fields.0 = Option::Some(value.into());
         FeedBuilder {
             _state: PhantomData,
@@ -192,7 +216,7 @@ where
     }
 }
 
-impl<S: BosStr, St> FeedBuilder<S, St>
+impl<St, S: BosStr> FeedBuilder<St, S>
 where
     St: feed_state::State,
     St::Uri: feed_state::IsSet,

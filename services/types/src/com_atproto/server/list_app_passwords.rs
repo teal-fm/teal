@@ -103,11 +103,15 @@ impl<S: BosStr> LexiconSchema for AppPassword<S> {
     }
 }
 
-/// XRPC request marker type.
+/** Request marker for the `com.atproto.server.listAppPasswords` query.
+
+This endpoint has no request parameters or input body; send this marker with `jacquard::Client`.*/
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
 pub struct ListAppPasswords;
-/// Response type for com.atproto.server.listAppPasswords
+/** Response marker for the `com.atproto.server.listAppPasswords` query.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `ListAppPasswordsOutput<S>` for this endpoint.*/
 pub struct ListAppPasswordsResponse;
 impl jacquard_common::xrpc::XrpcResp for ListAppPasswordsResponse {
     const NSID: &'static str = "com.atproto.server.listAppPasswords";
@@ -122,7 +126,9 @@ impl jacquard_common::xrpc::XrpcRequest for ListAppPasswords {
     type Response = ListAppPasswordsResponse;
 }
 
-/// Endpoint type for com.atproto.server.listAppPasswords
+/** Endpoint marker for the `com.atproto.server.listAppPasswords` query.
+
+Path: `/xrpc/com.atproto.server.listAppPasswords`. The request payload type is `ListAppPasswords`; use this marker with lower-level `XrpcEndpoint` APIs when you need endpoint metadata.*/
 pub struct ListAppPasswordsRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for ListAppPasswordsRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.listAppPasswords";
@@ -176,21 +182,28 @@ pub mod app_password_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AppPasswordBuilder<S: BosStr, St: app_password_state::State> {
+pub struct AppPasswordBuilder<St: app_password_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<Datetime>, Option<S>, Option<bool>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AppPassword<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AppPasswordBuilder<S, app_password_state::Empty> {
+impl AppPassword<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AppPasswordBuilder<app_password_state::Empty, DefaultStr> {
         AppPasswordBuilder::new()
     }
 }
 
-impl<S: BosStr> AppPasswordBuilder<S, app_password_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AppPassword<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AppPasswordBuilder<app_password_state::Empty, S> {
+        AppPasswordBuilder::builder()
+    }
+}
+
+impl AppPasswordBuilder<app_password_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AppPasswordBuilder {
             _state: PhantomData,
@@ -200,7 +213,18 @@ impl<S: BosStr> AppPasswordBuilder<S, app_password_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> AppPasswordBuilder<S, St>
+impl<S: BosStr> AppPasswordBuilder<app_password_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AppPasswordBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> AppPasswordBuilder<St, S>
 where
     St: app_password_state::State,
     St::CreatedAt: app_password_state::IsUnset,
@@ -209,7 +233,7 @@ where
     pub fn created_at(
         mut self,
         value: impl Into<Datetime>,
-    ) -> AppPasswordBuilder<S, app_password_state::SetCreatedAt<St>> {
+    ) -> AppPasswordBuilder<app_password_state::SetCreatedAt<St>, S> {
         self._fields.0 = Option::Some(value.into());
         AppPasswordBuilder {
             _state: PhantomData,
@@ -219,7 +243,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AppPasswordBuilder<S, St>
+impl<St, S: BosStr> AppPasswordBuilder<St, S>
 where
     St: app_password_state::State,
     St::Name: app_password_state::IsUnset,
@@ -228,7 +252,7 @@ where
     pub fn name(
         mut self,
         value: impl Into<S>,
-    ) -> AppPasswordBuilder<S, app_password_state::SetName<St>> {
+    ) -> AppPasswordBuilder<app_password_state::SetName<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AppPasswordBuilder {
             _state: PhantomData,
@@ -238,7 +262,7 @@ where
     }
 }
 
-impl<S: BosStr, St: app_password_state::State> AppPasswordBuilder<S, St> {
+impl<St: app_password_state::State, S: BosStr> AppPasswordBuilder<St, S> {
     /// Set the `privileged` field (optional)
     pub fn privileged(mut self, value: impl Into<Option<bool>>) -> Self {
         self._fields.2 = value.into();
@@ -251,7 +275,7 @@ impl<S: BosStr, St: app_password_state::State> AppPasswordBuilder<S, St> {
     }
 }
 
-impl<S: BosStr, St> AppPasswordBuilder<S, St>
+impl<St, S: BosStr> AppPasswordBuilder<St, S>
 where
     St: app_password_state::State,
     St::CreatedAt: app_password_state::IsSet,

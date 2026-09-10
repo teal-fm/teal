@@ -73,7 +73,9 @@ impl<S: BosStr> LexiconSchema for AccountCodes<S> {
     }
 }
 
-/// Response type for com.atproto.server.createInviteCodes
+/** Response marker for the `com.atproto.server.createInviteCodes` procedure.
+
+Implements `jacquard_common::xrpc::XrpcResp`; successful bodies decode as `Self::Output<S>`, which is `CreateInviteCodesOutput<S>` for this endpoint.*/
 pub struct CreateInviteCodesResponse;
 impl jacquard_common::xrpc::XrpcResp for CreateInviteCodesResponse {
     const NSID: &'static str = "com.atproto.server.createInviteCodes";
@@ -90,7 +92,9 @@ impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for CreateInviteCodes<S> {
     type Response = CreateInviteCodesResponse;
 }
 
-/// Endpoint type for com.atproto.server.createInviteCodes
+/** Endpoint marker for the `com.atproto.server.createInviteCodes` procedure.
+
+Path: `/xrpc/com.atproto.server.createInviteCodes`. The request payload type is `CreateInviteCodes<S>`; send that request with `jacquard::Client` or use this marker through lower-level `XrpcEndpoint` APIs.*/
 pub struct CreateInviteCodesRequest;
 impl jacquard_common::xrpc::XrpcEndpoint for CreateInviteCodesRequest {
     const PATH: &'static str = "/xrpc/com.atproto.server.createInviteCodes";
@@ -146,21 +150,28 @@ pub mod account_codes_state {
 }
 
 /// Builder for constructing an instance of this type.
-pub struct AccountCodesBuilder<S: BosStr, St: account_codes_state::State> {
+pub struct AccountCodesBuilder<St: account_codes_state::State, S: BosStr = DefaultStr> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<S>, Option<Vec<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> AccountCodes<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> AccountCodesBuilder<S, account_codes_state::Empty> {
+impl AccountCodes<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> AccountCodesBuilder<account_codes_state::Empty, DefaultStr> {
         AccountCodesBuilder::new()
     }
 }
 
-impl<S: BosStr> AccountCodesBuilder<S, account_codes_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> AccountCodes<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> AccountCodesBuilder<account_codes_state::Empty, S> {
+        AccountCodesBuilder::builder()
+    }
+}
+
+impl AccountCodesBuilder<account_codes_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         AccountCodesBuilder {
             _state: PhantomData,
@@ -170,7 +181,18 @@ impl<S: BosStr> AccountCodesBuilder<S, account_codes_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> AccountCodesBuilder<S, St>
+impl<S: BosStr> AccountCodesBuilder<account_codes_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        AccountCodesBuilder {
+            _state: PhantomData,
+            _fields: (None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> AccountCodesBuilder<St, S>
 where
     St: account_codes_state::State,
     St::Account: account_codes_state::IsUnset,
@@ -179,7 +201,7 @@ where
     pub fn account(
         mut self,
         value: impl Into<S>,
-    ) -> AccountCodesBuilder<S, account_codes_state::SetAccount<St>> {
+    ) -> AccountCodesBuilder<account_codes_state::SetAccount<St>, S> {
         self._fields.0 = Option::Some(value.into());
         AccountCodesBuilder {
             _state: PhantomData,
@@ -189,7 +211,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AccountCodesBuilder<S, St>
+impl<St, S: BosStr> AccountCodesBuilder<St, S>
 where
     St: account_codes_state::State,
     St::Codes: account_codes_state::IsUnset,
@@ -198,7 +220,7 @@ where
     pub fn codes(
         mut self,
         value: impl Into<Vec<S>>,
-    ) -> AccountCodesBuilder<S, account_codes_state::SetCodes<St>> {
+    ) -> AccountCodesBuilder<account_codes_state::SetCodes<St>, S> {
         self._fields.1 = Option::Some(value.into());
         AccountCodesBuilder {
             _state: PhantomData,
@@ -208,7 +230,7 @@ where
     }
 }
 
-impl<S: BosStr, St> AccountCodesBuilder<S, St>
+impl<St, S: BosStr> AccountCodesBuilder<St, S>
 where
     St: account_codes_state::State,
     St::Account: account_codes_state::IsSet,
@@ -342,56 +364,69 @@ pub mod create_invite_codes_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type UseCount;
         type CodeCount;
+        type UseCount;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type UseCount = Unset;
         type CodeCount = Unset;
-    }
-    ///State transition - sets the `use_count` field to Set
-    pub struct SetUseCount<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUseCount<St> {}
-    impl<St: State> State for SetUseCount<St> {
-        type UseCount = Set<members::use_count>;
-        type CodeCount = St::CodeCount;
+        type UseCount = Unset;
     }
     ///State transition - sets the `code_count` field to Set
     pub struct SetCodeCount<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCodeCount<St> {}
     impl<St: State> State for SetCodeCount<St> {
-        type UseCount = St::UseCount;
         type CodeCount = Set<members::code_count>;
+        type UseCount = St::UseCount;
+    }
+    ///State transition - sets the `use_count` field to Set
+    pub struct SetUseCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUseCount<St> {}
+    impl<St: State> State for SetUseCount<St> {
+        type CodeCount = St::CodeCount;
+        type UseCount = Set<members::use_count>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `use_count` field
-        pub struct use_count(());
         ///Marker type for the `code_count` field
         pub struct code_count(());
+        ///Marker type for the `use_count` field
+        pub struct use_count(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct CreateInviteCodesBuilder<S: BosStr, St: create_invite_codes_state::State> {
+pub struct CreateInviteCodesBuilder<
+    St: create_invite_codes_state::State,
+    S: BosStr = DefaultStr,
+> {
     _state: PhantomData<fn() -> St>,
     _fields: (Option<i64>, Option<Vec<Did<S>>>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> CreateInviteCodes<S> {
-    /// Create a new builder for this type.
-    pub fn new() -> CreateInviteCodesBuilder<S, create_invite_codes_state::Empty> {
+impl CreateInviteCodes<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> CreateInviteCodesBuilder<
+        create_invite_codes_state::Empty,
+        DefaultStr,
+    > {
         CreateInviteCodesBuilder::new()
     }
 }
 
-impl<S: BosStr> CreateInviteCodesBuilder<S, create_invite_codes_state::Empty> {
-    /// Create a new builder with all fields unset.
+impl<S: BosStr> CreateInviteCodes<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> CreateInviteCodesBuilder<create_invite_codes_state::Empty, S> {
+        CreateInviteCodesBuilder::builder()
+    }
+}
+
+impl CreateInviteCodesBuilder<create_invite_codes_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
     pub fn new() -> Self {
         CreateInviteCodesBuilder {
             _state: PhantomData,
@@ -401,7 +436,18 @@ impl<S: BosStr> CreateInviteCodesBuilder<S, create_invite_codes_state::Empty> {
     }
 }
 
-impl<S: BosStr, St> CreateInviteCodesBuilder<S, St>
+impl<S: BosStr> CreateInviteCodesBuilder<create_invite_codes_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        CreateInviteCodesBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> CreateInviteCodesBuilder<St, S>
 where
     St: create_invite_codes_state::State,
     St::CodeCount: create_invite_codes_state::IsUnset,
@@ -410,7 +456,7 @@ where
     pub fn code_count(
         mut self,
         value: impl Into<i64>,
-    ) -> CreateInviteCodesBuilder<S, create_invite_codes_state::SetCodeCount<St>> {
+    ) -> CreateInviteCodesBuilder<create_invite_codes_state::SetCodeCount<St>, S> {
         self._fields.0 = Option::Some(value.into());
         CreateInviteCodesBuilder {
             _state: PhantomData,
@@ -420,7 +466,7 @@ where
     }
 }
 
-impl<S: BosStr, St: create_invite_codes_state::State> CreateInviteCodesBuilder<S, St> {
+impl<St: create_invite_codes_state::State, S: BosStr> CreateInviteCodesBuilder<St, S> {
     /// Set the `forAccounts` field (optional)
     pub fn for_accounts(mut self, value: impl Into<Option<Vec<Did<S>>>>) -> Self {
         self._fields.1 = value.into();
@@ -433,7 +479,7 @@ impl<S: BosStr, St: create_invite_codes_state::State> CreateInviteCodesBuilder<S
     }
 }
 
-impl<S: BosStr, St> CreateInviteCodesBuilder<S, St>
+impl<St, S: BosStr> CreateInviteCodesBuilder<St, S>
 where
     St: create_invite_codes_state::State,
     St::UseCount: create_invite_codes_state::IsUnset,
@@ -442,7 +488,7 @@ where
     pub fn use_count(
         mut self,
         value: impl Into<i64>,
-    ) -> CreateInviteCodesBuilder<S, create_invite_codes_state::SetUseCount<St>> {
+    ) -> CreateInviteCodesBuilder<create_invite_codes_state::SetUseCount<St>, S> {
         self._fields.2 = Option::Some(value.into());
         CreateInviteCodesBuilder {
             _state: PhantomData,
@@ -452,11 +498,11 @@ where
     }
 }
 
-impl<S: BosStr, St> CreateInviteCodesBuilder<S, St>
+impl<St, S: BosStr> CreateInviteCodesBuilder<St, S>
 where
     St: create_invite_codes_state::State,
-    St::UseCount: create_invite_codes_state::IsSet,
     St::CodeCount: create_invite_codes_state::IsSet,
+    St::UseCount: create_invite_codes_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> CreateInviteCodes<S> {
