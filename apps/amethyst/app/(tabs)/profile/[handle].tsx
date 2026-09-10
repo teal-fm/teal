@@ -39,6 +39,7 @@ import {
   getGraphFollows,
   getGraphSummary,
   getProfile,
+  getUserTopReleases,
   getSocialFeed,
   coverArtUrl,
   displayArtists,
@@ -47,12 +48,14 @@ import {
   type SocialBadgeAssignmentView,
   type SocialPostView,
   type SocialPlaylistView,
+  type StatsPeriod,
   XrpcError,
 } from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
-import { playlistHref } from "@/lib/teal/routes";
+import { musicAlbumHref, playlistHref } from "@/lib/teal/routes";
 import type { AppBskyActorDefs } from "@atproto/api";
 import {
+  Disc3,
   Info,
   Pencil,
   UserMinus,
@@ -66,6 +69,7 @@ import type {
   ProfileView,
 } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { ReleaseView } from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
 
 type DisplayProfile = Pick<
   ProfileView,
@@ -106,6 +110,100 @@ function needsBlueskyFallback(profile: DisplayProfile) {
 
 function rkeyFromUri(uri?: string) {
   return uri?.split("/").pop();
+}
+
+function normalizeStatsPeriod(value?: string): StatsPeriod {
+  return ["7days", "30days", "90days", "180days", "365days", "all"].includes(
+    value || "",
+  )
+    ? (value as StatsPeriod)
+    : "90days";
+}
+
+function ProfileAlbumTile({
+  release,
+  index,
+}: {
+  release: ReleaseView;
+  index: number;
+}) {
+  const [failed, setFailed] = useState(false);
+  const art = failed ? undefined : coverArtUrl(release.mbid, 100);
+  const href = release.mbid
+    ? musicAlbumHref("music", release.name || "Unknown album", release.mbid)
+    : undefined;
+  const positions = [
+    { left: 4, top: 2, transform: [{ rotate: "-8deg" }] },
+    { left: 0, top: 76, transform: [{ rotate: "7deg" }] },
+    { right: 14, top: 0, transform: [{ rotate: "9deg" }] },
+    { right: 0, top: 82, transform: [{ rotate: "-6deg" }] },
+  ];
+  const content = (
+    <Pressable
+      accessibilityLabel={`${release.name || "Album"}: ${release.playCount || 0} plays`}
+      className="absolute h-14 w-14 items-center justify-center overflow-hidden rounded-md border-2 border-background bg-muted shadow-sm web:transition-transform web:hover:scale-105"
+      style={positions[index]}
+    >
+      {art ? (
+        <Image
+          source={{ uri: art }}
+          className="h-full w-full"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Icon icon={Disc3} size={22} className="text-muted-foreground" />
+      )}
+    </Pressable>
+  );
+
+  return href ? (
+    <Link href={href as any} asChild>
+      {content}
+    </Link>
+  ) : (
+    content
+  );
+}
+
+function ProfileAvatarCluster({
+  avatarUrl,
+  fallback,
+  topReleases,
+}: {
+  avatarUrl?: string;
+  fallback: string;
+  topReleases: ReleaseView[];
+}) {
+  const albumTiles = topReleases.slice(0, 4);
+  const avatar = avatarUrl ? (
+    <Image
+      source={{ uri: avatarUrl }}
+      className="h-24 w-24 rounded-lg border-4 border-background bg-primary"
+    />
+  ) : (
+    <View className="h-24 w-24 items-center justify-center rounded-lg border-4 border-background bg-primary">
+      <Text className="text-4xl font-black text-primary-foreground">
+        {fallback.slice(0, 1)}
+      </Text>
+    </View>
+  );
+
+  if (albumTiles.length === 0) {
+    return avatar;
+  }
+
+  return (
+    <View className="relative h-36 w-56">
+      {albumTiles.map((release, index) => (
+        <ProfileAlbumTile
+          key={`${release.mbid || release.name}-${index}`}
+          release={release}
+          index={index}
+        />
+      ))}
+      <View className="absolute left-[4.25rem] top-5">{avatar}</View>
+    </View>
+  );
 }
 
 function GraphActorRow({ actor }: { actor: MiniProfileView }) {
@@ -175,6 +273,7 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
   const [badges, setBadges] = useState<SocialBadgeAssignmentView[]>([]);
   const [playlists, setPlaylists] = useState<SocialPlaylistView[]>([]);
+  const [topReleases, setTopReleases] = useState<ReleaseView[]>([]);
   const [graphSummary, setGraphSummary] = useState<GraphSummaryView>({
     followersCount: 0,
     followsCount: 0,
@@ -205,6 +304,7 @@ export default function ProfileScreen() {
         setProfile(null);
         setBadges([]);
         setPlaylists([]);
+        setTopReleases([]);
         setGraphSummary({ followersCount: 0, followsCount: 0 });
         setFollowers([]);
         setFollows([]);
@@ -284,9 +384,18 @@ export default function ProfileScreen() {
         }
 
         if (!mounted) return;
+        const topReleaseRes = await getUserTopReleases(
+          resolved,
+          normalizeStatsPeriod(nextProfile?.statsDefaultPeriod),
+          4,
+        ).catch(() => ({
+          releases: [],
+        }));
+        if (!mounted) return;
         setProfile(nextProfile);
         setBadges(badgeRes.items);
         setPlaylists(playlistRes.items);
+        setTopReleases(topReleaseRes.releases);
         setGraphSummary(graphSummaryRes);
         setFollowers(followersRes.actors);
         setFollows(followsRes.actors);
@@ -414,19 +523,12 @@ export default function ProfileScreen() {
               )}
             </View>
             <View className="-mt-12 px-6 pb-6">
-              {avatarUrl ? (
-                <Image
-                  source={{ uri: avatarUrl }}
-                  className="h-24 w-24 rounded-lg border-4 border-background bg-primary"
-                />
-              ) : (
-                <View className="h-24 w-24 items-center justify-center rounded-lg border-4 border-background bg-primary">
-                  <Text className="text-4xl font-black text-primary-foreground">
-                    {(profile?.displayName || actor || "T").slice(0, 1)}
-                  </Text>
-                </View>
-              )}
-              <Text className="mt-3 font-sans text-3xl font-black">
+              <ProfileAvatarCluster
+                avatarUrl={avatarUrl}
+                fallback={profile?.displayName || actor || "T"}
+                topReleases={topReleases}
+              />
+              <Text className="mt-1 font-sans text-3xl font-black">
                 {profile?.displayName || actor}
               </Text>
               {profile?.handle && (

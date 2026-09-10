@@ -15,9 +15,10 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 ## Local Open Work
 
 - [ ] Complete ATProto OAuth sign-in and callback QA through `https://sigilyph.teal.fm`.
-- [ ] Drain the in-flight CAR import backfill queue for users with stale ingestion from the 2026-06-07 through 2026-06-10 Cadet outage. Track via Redis `LLEN car_import_jobs` and Cadet logs.
-- [ ] Backfill the 381 current `fm.teal.alpha.feed.play` records present in `did:plc:tas6hj2xjrqben5653v5kohk`'s PDS repo but missing from the preview Postgres index. URI-set comparison on 2026-06-11 showed 10,193 repo records, 9,812 indexed DB rows, and no stale extra DB URIs.
-- [ ] Handle Jetstream account lifecycle events in Cadet, including deletes, takedowns, suspensions, activations, and tombstones. Decide how each state should affect indexed profiles, social records, and plays.
+  - Verified on 2026-06-15 that `https://sigilyph.teal.fm/client-metadata.json` serves the stable-origin `client_id` and callback URI, and that same-origin latest plays XRPC returns live data. Remaining QA requires an interactive ATProto login/callback with a real account session.
+- [x] Drain the in-flight CAR import backfill queue for users with stale ingestion from the 2026-06-07 through 2026-06-10 Cadet outage. Redis/Garnet `LLEN car_import_jobs` returned `0` on 2026-06-14, local Cadet was running, and recent Cadet logs showed no CAR import job failures.
+- [x] Backfill the `fm.teal.alpha.feed.play` records present in `did:plc:tas6hj2xjrqben5653v5kohk`'s PDS repo but missing from the preview Postgres index. A focused CAR backfill completed on 2026-06-15 via `lightrail-backfill`; the preview index now has 10,215 plays for that DID, up from 10,172 immediately before the run and above the older 10,193-record comparison from 2026-06-11.
+- [x] Handle Jetstream account lifecycle events in Cadet, including deletes, takedowns, suspensions, activations, and tombstones. Cadet now tracks upstream account state, purges indexed public profile/social/play rows when an account becomes inactive, treats activation as the gate for future commit ingestion, and ignores legacy tombstone event kinds because modern Jetstream/account-hosting statuses replace them.
 
 ## Tracker Issues
 
@@ -25,21 +26,25 @@ Last synced with GitHub and Linear issues: 2026-06-14.
   - Linear: `Backlog`, no priority
   - Create Popfeed records when a listener plays a track or album for the first time.
   - Consider follow-on flows for completing Popfeed reviews of songs and albums from Teal.
-- [ ] [#57](https://github.com/teal-fm/teal/issues/57) / [TEAL-30](https://linear.app/tealfm/issue/TEAL-30/top-albums-around-profile-pic) top albums around profile pic
+  - Blocked locally: no Popfeed lexicons, service endpoint, auth flow, or record schema are present in this repo yet.
+- [x] [#57](https://github.com/teal-fm/teal/issues/57) / [TEAL-30](https://linear.app/tealfm/issue/TEAL-30/top-albums-around-profile-pic) top albums around profile pic
   - Linear: `In Progress`, low priority
   - Labels: `API`, `Frontend`, `Legacy Songish Feature`
   - Assignee: `mmattbtw`
+  - Done in Amethyst profile headers: top releases for the profile's default stats period render as linked cover tiles around the avatar, with desktop and mobile visual QA against live preview data.
 - [ ] [#29](https://github.com/teal-fm/teal/issues/29) / [TEAL-21](https://linear.app/tealfm/issue/TEAL-21/mass-editing-scrobbles) mass editing scrobbles
   - Linear: `Backlog`, low priority
   - Labels: `Improvement`, `API`
+  - Implementation note: Cadet already reindexes updated `fm.teal.alpha.feed.play` records and deletes tombstoned plays. Remaining work is authenticated Amethyst/Aqua product flow for selecting multiple records and writing `putRecord`/`deleteRecord` changes to the user's PDS.
 - [ ] [#28](https://github.com/teal-fm/teal/issues/28) / [TEAL-20](https://linear.app/tealfm/issue/TEAL-20/editing-scrobbles) editing scrobbles
   - Linear: `Todo`, medium priority
   - Labels: `Feature`, `API`
-- [ ] [#16](https://github.com/teal-fm/teal/issues/16) / [TEAL-16](https://linear.app/tealfm/issue/TEAL-16/live-scrobble-view) Live Scrobble View
+  - Implementation note: single-play edits can build on the existing Cadet upsert path; still needs authenticated UI/API design for loading the original record, editing fields, and writing it back to the PDS.
+- [x] [#16](https://github.com/teal-fm/teal/issues/16) / [TEAL-16](https://linear.app/tealfm/issue/TEAL-16/live-scrobble-view) Live Scrobble View
   - Linear: `Todo`, low priority
   - Labels: `Frontend`
   - Assignee: `mmattbtw`
-  - Build a live feed of scrobbles from everyone.
+  - Done in Amethyst Home: the `Listens` feed uses Aqua `fm.teal.alpha.stats.getLatest`, supports cursor loading, and shows only live indexed records.
 
 ## Verification Commands
 

@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use cadet::{
+    account,
     cursor::{self, resolve_startup_cursor},
     db, identity, ingestors, redis_client, teal_ingestors,
 };
@@ -242,6 +243,14 @@ async fn main() {
             if let Ok(text) = message.to_text() {
                 if let Err(e) = identity::ingest_identity_event(&pool, text).await {
                     error!("Error processing identity event: {}", e);
+                }
+                if let Err(e) = account::ingest_account_event(&pool, text).await {
+                    error!("Error processing account event: {}", e);
+                }
+                match account::should_ingest_commit(&pool, text).await {
+                    Ok(false) => continue,
+                    Ok(true) => {}
+                    Err(e) => error!("Error checking account state: {}", e),
                 }
             }
             if let Err(e) =
