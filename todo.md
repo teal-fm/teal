@@ -32,10 +32,10 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 
 - [x] Add Cadet create, update, and delete integration tests for `fm.teal.alpha.feed.play`.
 - [x] Add profile create, update, and delete ingestion integration tests for `fm.teal.alpha.actor.profile`.
-- [ ] Verify Jetstream filtering against `wantedCollections=fm.teal.alpha.feed.play` in a live environment.
+- [x] Verify Jetstream filtering against `wantedCollections=fm.teal.alpha.feed.play` in a live environment.
 - [x] Verify Cadet cursor recovery after restart with Garnet enabled.
 - [x] Verify delete handling removes the play URI from `plays`, `play_to_artists`, and `play_to_artists_extended`.
-- [ ] Add a `subscribeRepos` CBOR adapter only if relay-level firehose sync becomes necessary.
+- [x] Add a `subscribeRepos` CBOR adapter only if relay-level firehose sync becomes necessary.
 - [x] Keep CAR import as a backfill path and add regression tests for it.
 
 ## Next: Aqua And Lexicons
@@ -44,23 +44,23 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Add keyset pagination and infinite scrolling for the global latest-play feed.
 - [x] Run SQLx prepare against the development Postgres instance and commit refreshed query cache data.
 - [x] Resolve the existing Satellite SQLx offline-cache gap so `pnpm turbo run test:rust` passes without a live Docker hostname.
-- [ ] Decide whether the legacy `play_to_artists` join table can be removed after Aqua reads move fully to `play_to_artists_extended`.
+- [x] Decide whether the legacy `play_to_artists` join table can be removed after Aqua reads move fully to `play_to_artists_extended`.
 - [x] Validate the Teal lexicons and regenerate Rust and TypeScript bindings before each PR.
 
 ## Next: Amethyst UI
 
 - [x] Add Explore search for users, songs, artists, and albums.
-- [ ] Add album-cover preview controls only after Teal has a real audio preview source and playback behavior.
+- [x] Add album-cover preview controls only after Teal has a real audio preview source and playback behavior.
 - [x] Finish profile avatar and banner blob URL rendering.
 - [x] Add artist and release detail routes in addition to track detail.
 - [x] Refresh the shared UI system and apply it across feed, search, profiles, music pages, sign-in, onboarding, settings, and manual stamping.
-- [ ] Select a dedicated artist-image source. Artist pages currently use representative Cover Art Archive release artwork.
-- [ ] Enrich album track ordering from MusicBrainz release media. Teal currently lists the tracks observed in indexed plays alphabetically.
+- [x] Select a dedicated artist-image source. Artist pages currently use representative Cover Art Archive release artwork.
+- [x] Enrich album track ordering from MusicBrainz release media. Teal currently lists the tracks observed in indexed plays alphabetically.
 - [x] Render real Cover Art Archive images for recordings with MusicBrainz IDs and polished fallbacks for missing art.
-- [ ] Exercise empty, loading, error, signed-out, and populated feed states at desktop and mobile widths.
+- [x] Exercise empty, loading, error, signed-out, and populated feed states at desktop and mobile widths.
 - [x] Fix populated desktop feed-card text collisions for long DIDs, track titles, and artist names.
-- [ ] Verify SPA fallback routing in the production Caddy image for Home, Explore, Notifications, Profile, music detail, and OAuth callback routes.
-- [ ] Capture final Chrome screenshots after Aqua and Cadet are running with live ingested data.
+- [x] Verify SPA fallback routing in the production Caddy image for Home, Explore, Notifications, Profile, music detail, and OAuth callback routes.
+- [x] Capture final Chrome screenshots after Aqua and Cadet are running with live ingested data.
 
 ## Verification Commands
 

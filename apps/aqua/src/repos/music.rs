@@ -1,6 +1,10 @@
+use std::collections::HashMap;
+use std::time::Duration as StdDuration;
+
 use async_trait::async_trait;
 use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
+use serde::Deserialize;
 use types::fm_teal::alpha::feed::PlayView;
 use types::fm_teal::alpha::music::{AlbumSummary, AlbumView, ArtistView, TrackSummary};
 use uuid::Uuid;
@@ -31,6 +35,113 @@ pub trait MusicRepo: Send + Sync {
 
 fn parse_mbid(mbid: &str) -> anyhow::Result<Uuid> {
     Ok(Uuid::parse_str(mbid.strip_prefix("mbid:").unwrap_or(mbid))?)
+}
+
+#[derive(Debug, Default)]
+struct MusicBrainzTrackOrder {
+    by_recording_mbid: HashMap<Uuid, (i32, i32)>,
+    by_title: HashMap<String, (i32, i32)>,
+}
+
+impl MusicBrainzTrackOrder {
+    fn position_for(&self, recording_mbid: Option<Uuid>, title: &str) -> Option<(i32, i32)> {
+        recording_mbid
+            .and_then(|mbid| self.by_recording_mbid.get(&mbid).copied())
+            .or_else(|| self.by_title.get(&normalize_track_title(title)).copied())
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct MusicBrainzRelease {
+    #[serde(default)]
+    media: Vec<MusicBrainzMedium>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MusicBrainzMedium {
+    position: Option<i32>,
+    #[serde(default)]
+    tracks: Vec<MusicBrainzTrack>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MusicBrainzTrack {
+    position: Option<i32>,
+    title: Option<String>,
+    recording: Option<MusicBrainzRecording>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MusicBrainzRecording {
+    id: Option<Uuid>,
+}
+
+#[derive(Debug)]
+struct ObservedAlbumTrack {
+    uri: String,
+    recording_mbid: Option<Uuid>,
+    name: String,
+    artist_name: String,
+    play_count: i64,
+}
+
+fn normalize_track_title(title: &str) -> String {
+    title.trim().to_lowercase()
+}
+
+async fn fetch_musicbrainz_track_order(
+    release_mbid: Uuid,
+) -> anyhow::Result<MusicBrainzTrackOrder> {
+    let url =
+        format!("https://musicbrainz.org/ws/2/release/{release_mbid}?inc=recordings&fmt=json");
+    let release = reqwest::Client::builder()
+        .timeout(StdDuration::from_secs(3))
+        .user_agent("teal-aqua/0.1 (https://teal.fm)")
+        .build()?
+        .get(url)
+        .send()
+        .await?
+        .error_for_status()?
+        .json::<MusicBrainzRelease>()
+        .await?;
+
+    let mut order = MusicBrainzTrackOrder::default();
+    for (medium_index, medium) in release.media.into_iter().enumerate() {
+        let medium_position = medium.position.unwrap_or((medium_index + 1) as i32);
+        for (track_index, track) in medium.tracks.into_iter().enumerate() {
+            let track_position = track.position.unwrap_or((track_index + 1) as i32);
+            if let Some(recording_mbid) = track.recording.and_then(|recording| recording.id) {
+                order
+                    .by_recording_mbid
+                    .entry(recording_mbid)
+                    .or_insert((medium_position, track_position));
+            }
+            if let Some(title) = track.title {
+                order
+                    .by_title
+                    .entry(normalize_track_title(&title))
+                    .or_insert((medium_position, track_position));
+            }
+        }
+    }
+
+    Ok(order)
+}
+
+fn sort_tracks_by_release_order(tracks: &mut [ObservedAlbumTrack], order: &MusicBrainzTrackOrder) {
+    tracks.sort_by(|a, b| {
+        match (
+            order.position_for(a.recording_mbid, &a.name),
+            order.position_for(b.recording_mbid, &b.name),
+        ) {
+            (Some(a_position), Some(b_position)) => a_position
+                .cmp(&b_position)
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+        }
+    });
 }
 
 #[async_trait]
@@ -183,20 +294,35 @@ impl MusicRepo for PgDataSource {
         .fetch_all(&self.db)
         .await?;
 
-        let mut tracks = track_rows
+        let mut observed_tracks = track_rows
             .into_iter()
             .filter_map(|row| {
-                Some(TrackSummary {
-                    uri: AtUri::try_from(row.uri).ok()?,
-                    recording_mbid: row.recording_mbid.map(mbid_uri),
-                    name: row.track_name.into(),
-                    artist_name: row.artist_name?.into(),
+                Some(ObservedAlbumTrack {
+                    uri: row.uri,
+                    recording_mbid: row.recording_mbid,
+                    name: row.track_name,
+                    artist_name: row.artist_name?,
                     play_count: row.play_count,
-                    extra_data: Default::default(),
                 })
             })
             .collect::<Vec<_>>();
-        tracks.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        let track_order = fetch_musicbrainz_track_order(mbid)
+            .await
+            .unwrap_or_default();
+        sort_tracks_by_release_order(&mut observed_tracks, &track_order);
+        let tracks = observed_tracks
+            .into_iter()
+            .filter_map(|track| {
+                Some(TrackSummary {
+                    uri: AtUri::try_from(track.uri).ok()?,
+                    recording_mbid: track.recording_mbid.map(mbid_uri),
+                    name: track.name.into(),
+                    artist_name: track.artist_name.into(),
+                    play_count: track.play_count,
+                    extra_data: Default::default(),
+                })
+            })
+            .collect();
 
         let rows = sqlx::query!(
             r#"
@@ -303,5 +429,68 @@ impl MusicRepo for PgDataSource {
                 None
             },
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{MusicBrainzTrackOrder, ObservedAlbumTrack, sort_tracks_by_release_order};
+    use uuid::Uuid;
+
+    fn observed_track(name: &str, recording_mbid: Option<Uuid>) -> ObservedAlbumTrack {
+        ObservedAlbumTrack {
+            uri: format!("at://did:plc:test/fm.teal.alpha.feed.play/{name}"),
+            recording_mbid,
+            name: name.to_string(),
+            artist_name: "Test Artist".to_string(),
+            play_count: 1,
+        }
+    }
+
+    #[test]
+    fn sorts_album_tracks_by_musicbrainz_recording_position() {
+        let first = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+        let second = Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap();
+        let mut order = MusicBrainzTrackOrder::default();
+        order.by_recording_mbid.insert(first, (1, 1));
+        order.by_recording_mbid.insert(second, (1, 2));
+
+        let mut tracks = vec![
+            observed_track("Second Song", Some(second)),
+            observed_track("First Song", Some(first)),
+        ];
+
+        sort_tracks_by_release_order(&mut tracks, &order);
+
+        assert_eq!(tracks[0].name, "First Song");
+        assert_eq!(tracks[1].name, "Second Song");
+    }
+
+    #[test]
+    fn sorts_album_tracks_by_musicbrainz_title_when_recording_mbid_is_missing() {
+        let mut order = MusicBrainzTrackOrder::default();
+        order.by_title.insert("opener".to_string(), (1, 1));
+        order.by_title.insert("closer".to_string(), (1, 2));
+
+        let mut tracks = vec![
+            observed_track("Closer", None),
+            observed_track("Opener", None),
+        ];
+
+        sort_tracks_by_release_order(&mut tracks, &order);
+
+        assert_eq!(tracks[0].name, "Opener");
+        assert_eq!(tracks[1].name, "Closer");
+    }
+
+    #[test]
+    fn falls_back_to_alphabetical_order_for_unmatched_tracks() {
+        let order = MusicBrainzTrackOrder::default();
+        let mut tracks = vec![observed_track("Zulu", None), observed_track("Alpha", None)];
+
+        sort_tracks_by_release_order(&mut tracks, &order);
+
+        assert_eq!(tracks[0].name, "Alpha");
+        assert_eq!(tracks[1].name, "Zulu");
     }
 }

@@ -3,11 +3,11 @@
   "private": true,
   "scripts": {
     "install": ":",
-    "build": "cargo build --release --manifest-path ../../Cargo.toml -p aqua",
-    "build:rust": "cargo build --release --manifest-path ../../Cargo.toml -p aqua",
+    "build": "SQLX_OFFLINE=true cargo build --release --manifest-path ../../Cargo.toml -p aqua",
+    "build:rust": "SQLX_OFFLINE=true cargo build --release --manifest-path ../../Cargo.toml -p aqua",
     "dev": "cargo watch -x 'run -p aqua'",
-    "test": "cargo test -p aqua",
-    "test:rust": "cargo test -p aqua"
+    "test": "SQLX_OFFLINE=true cargo test -p aqua",
+    "test:rust": "SQLX_OFFLINE=true cargo test -p aqua"
   },
   "packageManager": "pnpm@10.18.0",
   "dependencies": {
