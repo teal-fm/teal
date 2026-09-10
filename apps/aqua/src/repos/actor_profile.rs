@@ -1,5 +1,11 @@
+use std::collections::BTreeMap;
+
 use async_trait::async_trait;
-use jacquard_common::from_json_value;
+use jacquard_common::{
+    deps::smol_str::SmolStr,
+    from_json_value,
+    types::{string::AtprotoStr, value::Data},
+};
 use serde_json::Value;
 use types::{
     app_bsky::richtext::facet::Facet,
@@ -27,12 +33,21 @@ pub struct PgProfileRepoRows {
     pub description_facets: Option<Value>,
     pub did: Option<String>,
     pub display_name: Option<String>,
+    pub handle: Option<String>,
     pub profile_status: Option<Value>,
     pub status: Option<Value>,
 }
 
 impl From<PgProfileRepoRows> for ProfileView {
     fn from(row: PgProfileRepoRows) -> Self {
+        let mut extra_data = BTreeMap::new();
+        if let Some(handle) = row.handle {
+            extra_data.insert(
+                SmolStr::new_static("handle"),
+                Data::String(AtprotoStr::new(SmolStr::new(handle))),
+            );
+        }
+
         Self {
             avatar: row.avatar.map(Into::into),
             banner: row.banner.map(Into::into),
@@ -53,7 +68,11 @@ impl From<PgProfileRepoRows> for ProfileView {
             status: row
                 .status
                 .and_then(|v| from_json_value::<StatusView>(v).ok()),
-            extra_data: Default::default(),
+            extra_data: if extra_data.is_empty() {
+                None
+            } else {
+                Some(extra_data)
+            },
         }
     }
 }
@@ -89,6 +108,7 @@ impl ActorProfileRepo for PgDataSource {
                 p.description_facets,
                 p.did,
                 p.display_name,
+                p.handle,
                 ps.record as profile_status,
                 s.record as status
             FROM profiles p

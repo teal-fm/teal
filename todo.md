@@ -9,18 +9,24 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, indexed search, artist discographies, and albums with track lists plus cursor-paginated listens.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
-- Amethyst Home includes a Teal social composer entry point. Signed-in users can open a modal, attach a song from MusicBrainz search or their indexed recent plays, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
+- Amethyst Home uses one inline Teal social composer. Signed-in users get their most recent indexed play attached automatically, can click the attached song to change it with recent plays or MusicBrainz search, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
+- Amethyst profile headers show display name, handle, bio, images, and current listening only; protocol internals like DID and onboarding status are hidden from the public profile UI.
+- Amethyst profiles show a minimal current-listening row only when an active status exists, with album art resolved from release MBID and recording fallback.
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
+- Cadet has a TAP backfill consumer and `pnpm backfill` command. The command discovers Teal repos with `TAP_SIGNAL_COLLECTION=fm.teal.alpha.feed.play`, filters delivered records with `TAP_COLLECTION_FILTERS=fm.teal.*`, and consumes TAP record events through the existing Teal ingestors. Full-network TAP backfill remains an explicit env override.
+- Cadet normalizes historical play MBID fields during ingestion: empty optional MBIDs are treated as missing, and bare MusicBrainz UUIDs are canonicalized to `mbid:<uuid>` before storage.
+- Cadet indexes Jetstream identity handle changes into `profiles.handle`; Aqua includes that handle on profile responses, and Amethyst falls back to public Bluesky handles when an existing Teal profile row has not received an identity event yet.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
 - Development Compose includes an optional Cloudflare Tunnel profile.
-- Current temporary UI preview: `https://architects-trips-sql-wildlife.trycloudflare.com`
+- Current temporary UI preview: `https://performing-readily-peace-payment.trycloudflare.com`
   - This is an account-less Cloudflare quick tunnel. It remains available while the local tunnel process is running and its hostname will change after restart.
-  - The preview serves the current Amethyst export and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
-  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://architects-trips-sql-wildlife.trycloudflare.com` and serves a matching `/client-metadata.json` OAuth redirect.
+  - The preview serves the current Amethyst export through a local static/proxy server on port 8787 and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
+  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://performing-readily-peace-payment.trycloudflare.com` and `EXPO_PUBLIC_AQUA_URL=https://performing-readily-peace-payment.trycloudflare.com`; `/client-metadata.json` serves a matching OAuth redirect.
+  - The preview API is pointed at the OrbStack/Docker Postgres and Garnet services so it serves the existing indexed play corpus.
   - OAuth callback testing still requires the stable-host work below.
 
 ## Next: Public Demo And OAuth
@@ -56,6 +62,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 
 ## Next: Firehose Ingestion
 
+- [ ] Handle Jetstream account lifecycle events in Cadet, including deletes, takedowns, suspensions, activations, and tombstones, and decide how each state should affect indexed profiles, social records, and plays.
 - [x] Add Cadet create, update, and delete integration tests for `fm.teal.alpha.feed.play`.
 - [x] Add profile create, update, and delete ingestion integration tests for `fm.teal.alpha.actor.profile`.
 - [x] Verify Jetstream filtering against `wantedCollections=fm.teal.alpha.feed.play` in a live environment.
@@ -63,6 +70,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Verify delete handling removes the play URI from `plays`, `play_to_artists`, and `play_to_artists_extended`.
 - [x] Add a `subscribeRepos` CBOR adapter only if relay-level firehose sync becomes necessary.
 - [x] Keep CAR import as a backfill path and add regression tests for it.
+- [x] Add TAP backfill setup for signal-collection `fm.teal.*` sync and a repeatable `pnpm backfill` command.
 
 ## Next: Aqua And Lexicons
 

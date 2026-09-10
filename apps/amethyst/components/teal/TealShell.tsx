@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import {
+  Image,
   Pressable,
   ScrollView,
   View,
@@ -8,6 +9,7 @@ import {
 import { Link, usePathname } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import { getProfileImageUrl, normalizeHandle } from "@/lib/teal/actors";
 import { useStore } from "@/stores/mainStore";
 import {
   Bell,
@@ -82,6 +84,21 @@ function LeftRail() {
   const pathname = usePathname();
   const status = useStore((state) => state.status);
   const agent = useStore((state) => state.pdsAgent);
+  const profiles = useStore((state) => state.profiles);
+  const profile = agent?.did ? profiles[agent.did] : undefined;
+  const displayName =
+    profile?.teal?.displayName ||
+    profile?.bsky?.displayName ||
+    normalizeHandle(profile?.bsky?.handle) ||
+    "Your profile";
+  const handle = normalizeHandle(profile?.bsky?.handle);
+  const avatar = agent?.did
+    ? getProfileImageUrl(
+        agent.did,
+        profile?.teal?.avatar || profile?.bsky?.avatar,
+        "avatar",
+      )
+    : undefined;
 
   return (
     <View className="hidden w-[16rem] shrink-0 border-r border-border bg-background/95 px-5 py-7 lg:flex">
@@ -114,23 +131,29 @@ function LeftRail() {
           asChild
         >
           <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card p-3 web:hover:border-primary/50">
-            <View className="h-9 w-9 items-center justify-center rounded-full bg-primary">
-              <Icon
-                icon={status === "loggedIn" ? CircleUserRound : LogIn}
-                size={18}
-                className="text-primary-foreground"
-              />
+            <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary">
+              {status === "loggedIn" && avatar ? (
+                <Image source={{ uri: avatar }} className="h-full w-full" />
+              ) : (
+                <Icon
+                  icon={status === "loggedIn" ? CircleUserRound : LogIn}
+                  size={18}
+                  className="text-primary-foreground"
+                />
+              )}
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="text-sm font-black">
-                {status === "loggedIn" ? "Your profile" : "Sign in"}
+              <Text className="text-sm font-black" numberOfLines={1}>
+                {status === "loggedIn" ? displayName : "Sign in"}
               </Text>
               <Text
                 className="font-mono text-[10px] text-muted-foreground"
                 numberOfLines={1}
               >
                 {status === "loggedIn"
-                  ? "Manage your Teal identity"
+                  ? handle
+                    ? `@${handle}`
+                    : "Manage your Teal identity"
                   : "with ATProto"}
               </Text>
             </View>

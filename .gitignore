@@ -40,6 +40,8 @@ yarn-error.log*
 # vercel
 .vercel
 .turbo
+.teal-tap/
+.codex-run/
 
 **/*.trace
 **/*.zip
