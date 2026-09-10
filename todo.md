@@ -10,10 +10,12 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
 - Amethyst Home uses one inline Teal social composer. Signed-in users get their most recent indexed play attached automatically, can click the attached song to change it with recent plays or MusicBrainz search, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
+- Teal has a native social graph lexicon, `fm.teal.alpha.graph.follow`, plus Aqua graph summary/followers/follows read APIs and Cadet ingestion for live, CAR, and TAP follow records.
 - Amethyst Home has a single inline social composer followed by a Posts/Listens feed toggle without count badges. Posts show only Teal social posts, Listens show only indexed plays, and each tab paginates its own cursor. The global shell top bar shows the early-WIP/database-wipes warning.
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst profile headers show display name, handle, bio, images, and current listening only; protocol internals like DID and onboarding status are hidden from the public profile UI.
+- Amethyst profile pages show Teal social graph counts, first-page followers/following lists, and signed-in follow/unfollow controls backed by `fm.teal.alpha.graph.follow` records.
 - Amethyst profiles show a minimal current-listening row only when an active status exists, including status-backed profiles that have no Teal profile record and render Bluesky identity as a fallback, with album art resolved from release MBID and recording fallback.
 - Amethyst listens have stable permalink pages at `/listen/:did/:rkey`; feed cards link their listen timestamps to the activity page while song titles still link to the music page.
 - Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
@@ -39,6 +41,13 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [ ] Complete ATProto OAuth sign-in and callback QA through the stable public hostname.
 - [x] Document the stable tunnel token or named-tunnel setup without committing secrets.
 
+## Next: Current User-Reported Fixes
+
+- [ ] Use the signed-in viewer's Teal profile display name and images in the bottom-left desktop account control instead of the viewer's Bluesky profile data.
+- [ ] Add standalone permalink pages for Teal social posts so posts can be linked directly.
+- [ ] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
+- [ ] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
+
 ## Next: New Lexicon Implementation
 
 - [x] Add Cadet Jetstream collection filters and ingestors for `fm.teal.alpha.actor.profileStatus`, `fm.teal.alpha.feed.social.post`, `like`, `repost`, `playlist`, `playlistItem`, `badge`, and `badgeAssignment`.
@@ -52,6 +61,8 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Add Aqua social read APIs or lexicons for post feeds, post detail, replies, likes, reposts, playlists, playlist items, badge catalogs, actor badges, and notifications.
 - [x] Add Amethyst compose/publish flows for Teal social posts with `trackView`, replies, tags, langs, and `fm.teal.alpha.richtext.facet` mention/link rendering.
 - [x] Add Amethyst like and repost actions with optimistic viewer state, counts, undo/delete behavior, and signed-out affordances.
+- [x] Add Teal social graph follow lexicon, migration, Cadet ingestion, and Aqua graph summary/list APIs.
+- [x] Add Amethyst profile follow/unfollow controls plus followers/following list surfaces.
 - [x] Add Amethyst playlist creation, playlist editing, playlist detail routes, ordered playlist item management, cover uploads, and collaborator-author handling.
 - [x] Add Amethyst badge display on profiles plus badge definition and assignment management for authorized creators/admin flows.
 - [x] Replace placeholder Notifications copy with real social notifications for likes, reposts, replies, badge assignments, playlist collaboration, and relevant status/profile events.

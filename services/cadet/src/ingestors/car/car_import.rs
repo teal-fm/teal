@@ -302,6 +302,7 @@ impl CarImportIngestor {
             "fm.teal.alpha.feed.social.post"
             | "fm.teal.alpha.feed.social.like"
             | "fm.teal.alpha.feed.social.repost"
+            | "fm.teal.alpha.graph.follow"
             | "fm.teal.alpha.feed.social.playlist"
             | "fm.teal.alpha.feed.social.playlistItem"
             | "fm.teal.alpha.feed.social.badge"
@@ -448,6 +449,7 @@ impl CarImportIngestor {
             "fm.teal.alpha.feed.social.repost" => {
                 super::super::teal::social::SocialCollection::Repost
             }
+            "fm.teal.alpha.graph.follow" => super::super::teal::social::SocialCollection::Follow,
             "fm.teal.alpha.feed.social.playlist" => {
                 super::super::teal::social::SocialCollection::Playlist
             }

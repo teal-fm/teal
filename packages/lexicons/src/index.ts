@@ -14,6 +14,9 @@ import * as FmTealAlphaActorGetProfiles from './types/fm/teal/alpha/actor/getPro
 import * as FmTealAlphaActorSearchActors from './types/fm/teal/alpha/actor/searchActors'
 import * as FmTealAlphaFeedGetActorFeed from './types/fm/teal/alpha/feed/getActorFeed'
 import * as FmTealAlphaFeedGetPlay from './types/fm/teal/alpha/feed/getPlay'
+import * as FmTealAlphaGraphGetFollowers from './types/fm/teal/alpha/graph/getFollowers'
+import * as FmTealAlphaGraphGetFollows from './types/fm/teal/alpha/graph/getFollows'
+import * as FmTealAlphaGraphGetSummary from './types/fm/teal/alpha/graph/getSummary'
 import * as FmTealAlphaMusicGetAlbum from './types/fm/teal/alpha/music/getAlbum'
 import * as FmTealAlphaMusicGetArtist from './types/fm/teal/alpha/music/getArtist'
 import * as FmTealAlphaSearchGetResults from './types/fm/teal/alpha/search/getResults'
@@ -63,6 +66,7 @@ export class FmTealAlphaNS {
   _server: Server
   actor: FmTealAlphaActorNS
   feed: FmTealAlphaFeedNS
+  graph: FmTealAlphaGraphNS
   music: FmTealAlphaMusicNS
   richtext: FmTealAlphaRichtextNS
   search: FmTealAlphaSearchNS
@@ -72,6 +76,7 @@ export class FmTealAlphaNS {
     this._server = server
     this.actor = new FmTealAlphaActorNS(server)
     this.feed = new FmTealAlphaFeedNS(server)
+    this.graph = new FmTealAlphaGraphNS(server)
     this.music = new FmTealAlphaMusicNS(server)
     this.richtext = new FmTealAlphaRichtextNS(server)
     this.search = new FmTealAlphaSearchNS(server)
@@ -157,6 +162,47 @@ export class FmTealAlphaFeedSocialNS {
 
   constructor(server: Server) {
     this._server = server
+  }
+}
+
+export class FmTealAlphaGraphNS {
+  _server: Server
+
+  constructor(server: Server) {
+    this._server = server
+  }
+
+  getFollowers<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaGraphGetFollowers.Handler<ExtractAuth<AV>>,
+      FmTealAlphaGraphGetFollowers.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.graph.getFollowers' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getFollows<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaGraphGetFollows.Handler<ExtractAuth<AV>>,
+      FmTealAlphaGraphGetFollows.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.graph.getFollows' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getSummary<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaGraphGetSummary.Handler<ExtractAuth<AV>>,
+      FmTealAlphaGraphGetSummary.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.graph.getSummary' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
   }
 }
 

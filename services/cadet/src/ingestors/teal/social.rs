@@ -12,6 +12,7 @@ pub enum SocialCollection {
     Post,
     Like,
     Repost,
+    Follow,
     Playlist,
     PlaylistItem,
     Badge,
@@ -24,6 +25,7 @@ impl SocialCollection {
             Self::Post => "fm.teal.alpha.feed.social.post",
             Self::Like => "fm.teal.alpha.feed.social.like",
             Self::Repost => "fm.teal.alpha.feed.social.repost",
+            Self::Follow => "fm.teal.alpha.graph.follow",
             Self::Playlist => "fm.teal.alpha.feed.social.playlist",
             Self::PlaylistItem => "fm.teal.alpha.feed.social.playlistItem",
             Self::Badge => "fm.teal.alpha.feed.social.badge",
@@ -58,6 +60,9 @@ impl SocialRecordIngestor {
             SocialCollection::Like => insert_like(&mut tx, &uri, did, rkey, cid, record).await?,
             SocialCollection::Repost => {
                 insert_repost(&mut tx, &uri, did, rkey, cid, record).await?
+            }
+            SocialCollection::Follow => {
+                insert_follow(&mut tx, &uri, did, rkey, cid, record).await?
             }
             SocialCollection::Playlist => {
                 insert_playlist(&mut tx, &uri, did, rkey, cid, record).await?
@@ -96,6 +101,7 @@ impl SocialRecordIngestor {
             SocialCollection::Repost => {
                 remove_reaction(tx, uri, "social_reposts", "repost_count").await
             }
+            SocialCollection::Follow => remove_follow(tx, uri).await,
             SocialCollection::Playlist => remove_playlist(tx, uri).await,
             SocialCollection::PlaylistItem => remove_playlist_item(tx, uri).await,
             SocialCollection::Badge => remove_badge(tx, uri).await,
@@ -200,6 +206,40 @@ async fn insert_repost(
     let subject_uri = required_ref_uri(record, "subject")?;
     increment_count(tx, &subject_uri, "repost_count", 1).await?;
     insert_notification(tx, did, "repost", uri, Some(&subject_uri), record).await
+}
+
+async fn insert_follow(
+    tx: &mut Transaction<'_, Postgres>,
+    uri: &str,
+    did: &str,
+    rkey: &str,
+    cid: &str,
+    record: &Value,
+) -> anyhow::Result<()> {
+    let subject = required_str(record, "subject")?;
+    if subject == did {
+        return Err(anyhow!("cannot follow yourself"));
+    }
+
+    sqlx::query(
+        r#"
+            INSERT INTO social_follows (
+                uri, did, rkey, cid, subject_did, created_at, record
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        "#,
+    )
+    .bind(uri)
+    .bind(did)
+    .bind(rkey)
+    .bind(cid)
+    .bind(subject)
+    .bind(required_datetime(record, "createdAt")?)
+    .bind(record.clone())
+    .execute(&mut **tx)
+    .await?;
+
+    insert_notification(tx, did, "follow", uri, None, record).await
 }
 
 async fn insert_reaction(
@@ -411,6 +451,14 @@ async fn remove_reaction(
     {
         increment_count(tx, &row.0, count_column, -1).await?;
     }
+    cleanup_record_indexes(tx, uri).await
+}
+
+async fn remove_follow(tx: &mut Transaction<'_, Postgres>, uri: &str) -> anyhow::Result<()> {
+    sqlx::query("DELETE FROM social_follows WHERE uri = $1")
+        .bind(uri)
+        .execute(&mut **tx)
+        .await?;
     cleanup_record_indexes(tx, uri).await
 }
 
@@ -667,6 +715,13 @@ fn notification_recipient(subject_uri: Option<&str>, record: &Value) -> Option<S
     if let Some(assignee) = record.get("assignee").and_then(Value::as_str) {
         return Some(assignee.to_string());
     }
+    if let Some(subject_did) = record
+        .get("subject")
+        .and_then(Value::as_str)
+        .filter(|value| value.starts_with("did:"))
+    {
+        return Some(subject_did.to_string());
+    }
     subject_uri.and_then(did_from_at_uri)
 }
 
@@ -743,6 +798,12 @@ mod tests {
         assert_eq!(
             notification_recipient(None, &assignment).as_deref(),
             Some("did:plc:badge-recipient")
+        );
+
+        let follow = json!({ "subject": "did:plc:followed-actor" });
+        assert_eq!(
+            notification_recipient(None, &follow).as_deref(),
+            Some("did:plc:followed-actor")
         );
 
         let reaction = json!({});

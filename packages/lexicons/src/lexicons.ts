@@ -1181,6 +1181,187 @@ export const schemaDict = {
       },
     },
   },
+  FmTealAlphaGraphFollow: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.graph.follow',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | The action of following another actor on Teal.',
+    defs: {
+      main: {
+        type: 'record',
+        description:
+          'Record declaring that the repo owner follows another actor.',
+        key: 'tid',
+        record: {
+          type: 'object',
+          required: ['subject', 'createdAt'],
+          properties: {
+            subject: {
+              type: 'string',
+              format: 'did',
+              description: 'DID of the actor being followed.',
+            },
+            createdAt: {
+              type: 'string',
+              format: 'datetime',
+              description:
+                'Client-declared timestamp when this follow was created.',
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaGraphGetFollowers: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.graph.getFollowers',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves actors who follow an actor.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actor'],
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+              description: 'The actor DID or handle.',
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 50,
+            },
+            cursor: {
+              type: 'string',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['actors'],
+            properties: {
+              actors: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                },
+              },
+              cursor: {
+                type: 'string',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaGraphGetFollows: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.graph.getFollows',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves actors followed by an actor.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actor'],
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+              description: 'The actor DID or handle.',
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 50,
+            },
+            cursor: {
+              type: 'string',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['actors'],
+            properties: {
+              actors: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.alpha.actor.defs#miniProfileView',
+                },
+              },
+              cursor: {
+                type: 'string',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  FmTealAlphaGraphGetSummary: {
+    lexicon: 1,
+    id: 'fm.teal.alpha.graph.getSummary',
+    description:
+      'This lexicon is in a not officially released state. It is subject to change. | Retrieves Teal social graph counts and viewer state for an actor.',
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actor'],
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+              description: 'The actor DID or handle.',
+            },
+            viewer: {
+              type: 'string',
+              format: 'did',
+              description: 'Optional viewer DID for follow state.',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['followersCount', 'followsCount'],
+            properties: {
+              followersCount: {
+                type: 'integer',
+                minimum: 0,
+              },
+              followsCount: {
+                type: 'integer',
+                minimum: 0,
+              },
+              viewerFollowing: {
+                type: 'string',
+                format: 'at-uri',
+                description:
+                  'Follow record URI if the viewer follows the actor.',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   FmTealAlphaMusicDefs: {
     lexicon: 1,
     id: 'fm.teal.alpha.music.defs',
@@ -1956,6 +2137,10 @@ export const ids = {
   FmTealAlphaFeedSocialPlaylistItem: 'fm.teal.alpha.feed.social.playlistItem',
   FmTealAlphaFeedSocialPost: 'fm.teal.alpha.feed.social.post',
   FmTealAlphaFeedSocialRepost: 'fm.teal.alpha.feed.social.repost',
+  FmTealAlphaGraphFollow: 'fm.teal.alpha.graph.follow',
+  FmTealAlphaGraphGetFollowers: 'fm.teal.alpha.graph.getFollowers',
+  FmTealAlphaGraphGetFollows: 'fm.teal.alpha.graph.getFollows',
+  FmTealAlphaGraphGetSummary: 'fm.teal.alpha.graph.getSummary',
   FmTealAlphaMusicDefs: 'fm.teal.alpha.music.defs',
   FmTealAlphaMusicGetAlbum: 'fm.teal.alpha.music.getAlbum',
   FmTealAlphaMusicGetArtist: 'fm.teal.alpha.music.getArtist',
