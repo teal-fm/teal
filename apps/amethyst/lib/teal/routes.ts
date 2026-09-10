@@ -30,3 +30,7 @@ export function musicTrackHref(
 ) {
   return `/:o/music/${routePart(artistName)}/${routePart(releaseName)}/${routePart(trackName)}?uri=${encodeURIComponent(uri)}`;
 }
+
+export function playlistHref(name: string, uri: string) {
+  return `/playlist/${routePart(name)}?uri=${encodeURIComponent(uri)}`;
+}

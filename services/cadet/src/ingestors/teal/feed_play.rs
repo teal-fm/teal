@@ -1718,10 +1718,7 @@ mod tests {
         .fetch_one(&pool)
         .await?;
         assert_eq!(updated.0, "Updated Cadet Test Track");
-        assert_eq!(
-            updated.1,
-            Some(json!(["Updated Cadet Test Artist"]))
-        );
+        assert_eq!(updated.1, Some(json!(["Updated Cadet Test Artist"])));
 
         let extended_artist_links = sqlx::query_as::<_, (i64, Option<String>)>(
             "SELECT COUNT(*), MAX(artist_name) FROM play_to_artists_extended WHERE play_uri = $1",
@@ -1757,16 +1754,18 @@ mod tests {
                 .bind(&uri)
                 .fetch_one(&pool)
                 .await?;
-        let remaining_legacy_links =
-            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM play_to_artists WHERE play_uri = $1")
-                .bind(&uri)
-                .fetch_one(&pool)
-                .await?;
-        let remaining_extended_links =
-            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM play_to_artists_extended WHERE play_uri = $1")
-                .bind(&uri)
-                .fetch_one(&pool)
-                .await?;
+        let remaining_legacy_links = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM play_to_artists WHERE play_uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
+        let remaining_extended_links = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM play_to_artists_extended WHERE play_uri = $1",
+        )
+        .bind(&uri)
+        .fetch_one(&pool)
+        .await?;
 
         assert_eq!(remaining_plays, 0);
         assert_eq!(remaining_legacy_links, 0);

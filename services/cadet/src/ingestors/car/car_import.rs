@@ -292,7 +292,10 @@ impl CarImportIngestor {
                 if result.is_ok() {
                     info!("   ✅ Successfully processed profile status record");
                 } else {
-                    warn!("   ❌ Failed to process profile status record: {:?}", result);
+                    warn!(
+                        "   ❌ Failed to process profile status record: {:?}",
+                        result
+                    );
                 }
                 result
             }
@@ -440,12 +443,8 @@ impl CarImportIngestor {
         rkey: &str,
     ) -> Result<()> {
         let kind = match collection {
-            "fm.teal.alpha.feed.social.post" => {
-                super::super::teal::social::SocialCollection::Post
-            }
-            "fm.teal.alpha.feed.social.like" => {
-                super::super::teal::social::SocialCollection::Like
-            }
+            "fm.teal.alpha.feed.social.post" => super::super::teal::social::SocialCollection::Post,
+            "fm.teal.alpha.feed.social.like" => super::super::teal::social::SocialCollection::Like,
             "fm.teal.alpha.feed.social.repost" => {
                 super::super::teal::social::SocialCollection::Repost
             }

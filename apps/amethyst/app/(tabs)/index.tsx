@@ -8,20 +8,32 @@ import {
 import { Stack } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
+import SocialComposer from "@/components/teal/SocialComposer";
+import SocialPostCard from "@/components/teal/SocialPostCard";
 import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
-import { getLatestPlays } from "@/lib/teal/api";
+import {
+  displayArtists,
+  getLatestPlays,
+  getProfile,
+  getSocialFeed,
+  type SocialPostView,
+} from "@/lib/teal/api";
+import { useStore } from "@/stores/mainStore";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 export default function HomeScreen() {
   const [plays, setPlays] = useState<PlayView[] | null>(null);
+  const [socialPosts, setSocialPosts] = useState<SocialPostView[]>([]);
+  const [currentStatus, setCurrentStatus] = useState<PlayView | null>(null);
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
+  const pdsAgent = useStore((state) => state.pdsAgent);
 
   useEffect(() => {
     let mounted = true;
@@ -41,6 +53,38 @@ export default function HomeScreen() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    getSocialFeed(10)
+      .then((res) => {
+        if (mounted) setSocialPosts(res.items);
+      })
+      .catch(() => {
+        if (mounted) setSocialPosts([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!pdsAgent?.did) {
+      setCurrentStatus(null);
+      return;
+    }
+    getProfile(pdsAgent.did)
+      .then((res) => {
+        if (mounted) setCurrentStatus(res.profile.status?.item || null);
+      })
+      .catch(() => {
+        if (mounted) setCurrentStatus(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [pdsAgent?.did]);
 
   const loadMore = useCallback(() => {
     if (!cursor || loadingMoreRef.current) return;
@@ -87,6 +131,51 @@ export default function HomeScreen() {
         title="Recently listened"
         detail="LIVE INDEX"
       />
+      {currentStatus && (
+        <View className="mb-6 gap-3">
+          <View className="rounded-lg border border-primary/25 bg-primary/10 p-4">
+            <Text className="font-mono text-[10px] uppercase text-primary">
+              Your current listening status
+            </Text>
+            <Text className="mt-1 font-sans text-2xl font-black">
+              {currentStatus.trackName}
+            </Text>
+            <Text className="text-sm font-bold text-muted-foreground">
+              {displayArtists(currentStatus) || "Unknown artist"}
+            </Text>
+          </View>
+          <SocialComposer
+            track={currentStatus}
+            onPublished={(post) =>
+              setSocialPosts((current) => [post, ...current])
+            }
+          />
+        </View>
+      )}
+      {pdsAgent?.did && !currentStatus && (
+        <View className="mb-6 rounded-lg border border-border bg-card p-4">
+          <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+            Your current listening status
+          </Text>
+          <Text className="mt-1 font-bold">No active status</Text>
+          <Text className="text-sm text-muted-foreground">
+            Statuses expire automatically when their Teal record expires or no
+            current-listening record has been indexed yet.
+          </Text>
+        </View>
+      )}
+      {socialPosts.length > 0 && (
+        <View className="mb-8 gap-3">
+          <SectionHeading
+            eyebrow="Social feed"
+            title="Posts with tracks"
+            detail="NEW LEXICONS"
+          />
+          {socialPosts.map((post) => (
+            <SocialPostCard key={post.uri} post={post} />
+          ))}
+        </View>
+      )}
       {!plays && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />

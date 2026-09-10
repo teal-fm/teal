@@ -33,7 +33,7 @@
     "db:create": "sqlx database create",
     "db:drop": "sqlx database drop",
     "db:reset": "sqlx database drop && sqlx database create && sqlx migrate run",
-    "db:prepare": "sqlx prepare",
+    "db:prepare": "cargo sqlx prepare --workspace",
     "eval:auth": "tsx scripts/eval/evaluate.ts --auth-only",
     "eval:run": "tsx scripts/eval/evaluate.ts",
     "eval:resolve-lb": "tsx scripts/eval/listenbrainz-resolve.ts",

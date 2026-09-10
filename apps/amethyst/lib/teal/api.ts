@@ -36,6 +36,80 @@ export class XrpcError extends Error {
   }
 }
 
+export type SocialNotificationView = {
+  id: number;
+  actorDid: string;
+  actor?: MiniProfileView;
+  reason: string;
+  recordUri: string;
+  subjectUri?: string;
+  createdAt: string;
+};
+
+export type SocialPostView = {
+  uri: string;
+  cid: string;
+  authorDid: string;
+  author?: MiniProfileView;
+  text: string;
+  track: unknown;
+  replyRootUri?: string;
+  replyRootCid?: string;
+  replyParentUri?: string;
+  replyParentCid?: string;
+  facets?: unknown[];
+  langs?: string[];
+  tags?: string[];
+  createdAt: string;
+  likeCount: number;
+  repostCount: number;
+  replyCount: number;
+};
+
+export type SocialBadgeView = {
+  uri: string;
+  cid: string;
+  name: string;
+  description: string;
+  descriptionFacets?: unknown;
+  imageCid: string;
+  creator: string;
+  badgeType: string;
+  createdAt: string;
+};
+
+export type SocialBadgeAssignmentView = {
+  uri: string;
+  cid: string;
+  badge: SocialBadgeView;
+  assignee: string;
+  assigner: string;
+  createdAt: string;
+};
+
+export type SocialPlaylistView = {
+  uri: string;
+  cid: string;
+  authorDid: string;
+  author?: MiniProfileView;
+  name: string;
+  description?: string;
+  descriptionFacets?: unknown;
+  authors: string[];
+  coverCid?: string;
+  createdAt: string;
+  itemCount: number;
+};
+
+export type SocialPlaylistItemView = {
+  uri: string;
+  cid: string;
+  authorDid: string;
+  track: unknown;
+  order?: number;
+  createdAt: string;
+};
+
 async function getXrpc<T>(
   method: string,
   params: Record<string, string | number | undefined> = {},
@@ -141,6 +215,49 @@ export function getSearchResults(q: string, limit = 8) {
     q,
     limit,
   });
+}
+
+export function getSocialFeed(limit = 30, cursor?: string) {
+  return getXrpc<{ items: SocialPostView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getFeed",
+    { limit, cursor },
+  );
+}
+
+export function getNotifications(actor: string, limit = 30, cursor?: string) {
+  return getXrpc<{ items: SocialNotificationView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getNotifications",
+    { actor, limit, cursor },
+  );
+}
+
+export function getActorBadges(actor: string, limit = 20, cursor?: string) {
+  return getXrpc<{ items: SocialBadgeAssignmentView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getActorBadges",
+    { actor, limit, cursor },
+  );
+}
+
+export function getBadgeCatalog(limit = 50, cursor?: string) {
+  return getXrpc<{ items: SocialBadgeView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getBadgeCatalog",
+    { limit, cursor },
+  );
+}
+
+export function getActorPlaylists(actor: string, limit = 20, cursor?: string) {
+  return getXrpc<{ items: SocialPlaylistView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.social.getActorPlaylists",
+    { actor, limit, cursor },
+  );
+}
+
+export function getPlaylist(uri: string, limit = 100, cursor?: string) {
+  return getXrpc<{
+    playlist: SocialPlaylistView;
+    items: SocialPlaylistItemView[];
+    cursor?: string;
+  }>("fm.teal.alpha.feed.social.getPlaylist", { uri, limit, cursor });
 }
 
 export async function searchBlueskyUsers(q: string, limit = 8) {
