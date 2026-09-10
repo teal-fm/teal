@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
-  "id": "fm.teal.alpha.stats.getUserTopReleases",
-  "description": "Get a user's top releases/albums by play count",
+  "id": "fm.teal.alpha.stats.getUserTopRecordings",
+  "description": "Get a user's top recordings/tracks by play count",
   "defs": {
     "main": {
       "type": "query",
@@ -18,14 +18,14 @@
             "type": "string",
             "enum": ["7days", "30days", "90days", "180days", "365days", "all"],
             "default": "90days",
-            "description": "Time period for top releases"
+            "description": "Time period for top recordings"
           },
           "limit": {
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
             "default": 50,
-            "description": "Number of releases to return"
+            "description": "Number of recordings to return"
           },
           "cursor": {
             "type": "string",
@@ -37,13 +37,13 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["releases"],
+          "required": ["recordings"],
           "properties": {
-            "releases": {
+            "recordings": {
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "fm.teal.alpha.stats.defs#releaseView"
+                "ref": "fm.teal.alpha.stats.defs#recordingView"
               }
             },
             "cursor": {

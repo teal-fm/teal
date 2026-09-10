@@ -1,12 +1,12 @@
-use async_trait::async_trait;
 use anyhow::anyhow;
+use async_trait::async_trait;
 use base64::Engine;
 use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
+use types::fm_teal::alpha::stats::{ArtistView, RecordingView, ReleaseView};
 
 use super::{mbid_uri, mini_profile, pg::PgDataSource, utc_to_atrium_datetime};
 
@@ -41,21 +41,33 @@ pub(crate) fn encode_latest_cursor(cursor: &LatestPlaysCursor) -> anyhow::Result
 pub enum StatsPeriod {
     SevenDays,
     ThirtyDays,
+    NinetyDays,
+    OneHundredEightyDays,
+    ThreeHundredSixtyFiveDays,
+    All,
 }
 
 impl StatsPeriod {
     fn parse(period: Option<&str>) -> anyhow::Result<Self> {
-        match period.unwrap_or("30days") {
+        match period.unwrap_or("90days") {
             "7days" => Ok(Self::SevenDays),
             "30days" => Ok(Self::ThirtyDays),
+            "90days" => Ok(Self::NinetyDays),
+            "180days" => Ok(Self::OneHundredEightyDays),
+            "365days" => Ok(Self::ThreeHundredSixtyFiveDays),
+            "all" => Ok(Self::All),
             other => Err(anyhow!("unsupported period: {other}")),
         }
     }
 
-    fn interval_sql(self) -> &'static str {
+    fn where_sql(self) -> &'static str {
         match self {
-            Self::SevenDays => "INTERVAL '7 days'",
-            Self::ThirtyDays => "INTERVAL '30 days'",
+            Self::SevenDays => "AND p.played_time >= NOW() - INTERVAL '7 days'",
+            Self::ThirtyDays => "AND p.played_time >= NOW() - INTERVAL '30 days'",
+            Self::NinetyDays => "AND p.played_time >= NOW() - INTERVAL '90 days'",
+            Self::OneHundredEightyDays => "AND p.played_time >= NOW() - INTERVAL '180 days'",
+            Self::ThreeHundredSixtyFiveDays => "AND p.played_time >= NOW() - INTERVAL '365 days'",
+            Self::All => "",
         }
     }
 }
@@ -72,6 +84,11 @@ pub struct UserTopArtistsPage {
 
 pub struct UserTopReleasesPage {
     pub releases: Vec<ReleaseView>,
+    pub cursor: Option<String>,
+}
+
+pub struct UserTopRecordingsPage {
+    pub recordings: Vec<RecordingView>,
     pub cursor: Option<String>,
 }
 
@@ -123,6 +140,13 @@ pub trait StatsRepo: Send + Sync {
         limit: Option<i32>,
         cursor: Option<&str>,
     ) -> anyhow::Result<UserTopReleasesPage>;
+    async fn get_user_top_recordings(
+        &self,
+        actor: &str,
+        period: Option<&str>,
+        limit: Option<i32>,
+        cursor: Option<&str>,
+    ) -> anyhow::Result<UserTopRecordingsPage>;
     async fn get_latest(
         &self,
         limit: Option<i32>,
@@ -225,21 +249,21 @@ impl StatsRepo for PgDataSource {
             INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri
             INNER JOIN artists_extended ae ON ptae.artist_id = ae.id
             WHERE p.did = $1
-              AND p.played_time >= NOW() - {}
+              {}
               AND ptae.artist_name IS NOT NULL
             GROUP BY ae.mbid, ptae.artist_name
             ORDER BY play_count DESC, ptae.artist_name ASC, ae.mbid ASC
             LIMIT $2 OFFSET $3
             "#,
-            period.interval_sql()
+            period.where_sql()
         );
 
         let rows = sqlx::query_as::<_, (Option<Uuid>, String, i64)>(&sql)
             .bind(did)
             .bind(query_limit)
             .bind(offset)
-        .fetch_all(&self.db)
-        .await?;
+            .fetch_all(&self.db)
+            .await?;
 
         let has_more = rows.len() > limit as usize;
         let mut artists = Vec::with_capacity(rows.len().min(limit as usize));
@@ -282,22 +306,22 @@ impl StatsRepo for PgDataSource {
                 COUNT(*)::bigint as play_count
             FROM plays p
             WHERE p.did = $1
-              AND p.played_time >= NOW() - {}
+              {}
               AND p.release_mbid IS NOT NULL
               AND p.release_name IS NOT NULL
             GROUP BY p.release_mbid, p.release_name
             ORDER BY play_count DESC, p.release_name ASC, p.release_mbid ASC
             LIMIT $2 OFFSET $3
             "#,
-            period.interval_sql()
+            period.where_sql()
         );
 
         let rows = sqlx::query_as::<_, (Option<Uuid>, Option<String>, i64)>(&sql)
             .bind(did)
             .bind(query_limit)
             .bind(offset)
-        .fetch_all(&self.db)
-        .await?;
+            .fetch_all(&self.db)
+            .await?;
 
         let has_more = rows.len() > limit as usize;
         let mut releases = Vec::with_capacity(rows.len().min(limit as usize));
@@ -314,6 +338,63 @@ impl StatsRepo for PgDataSource {
 
         Ok(UserTopReleasesPage {
             releases,
+            cursor: if has_more {
+                Some(encode_offset_cursor(offset + limit)?)
+            } else {
+                None
+            },
+        })
+    }
+
+    async fn get_user_top_recordings(
+        &self,
+        actor: &str,
+        period: Option<&str>,
+        limit: Option<i32>,
+        cursor: Option<&str>,
+    ) -> anyhow::Result<UserTopRecordingsPage> {
+        let did = self.resolve_actor_to_did(actor).await?;
+        let period = StatsPeriod::parse(period)?;
+        let limit = normalize_limit(limit);
+        let offset = decode_offset_cursor(cursor)?;
+        let query_limit = limit + 1;
+        let sql = format!(
+            r#"
+            SELECT
+                p.recording_mbid as mbid,
+                p.track_name as name,
+                COUNT(*)::bigint as play_count
+            FROM plays p
+            WHERE p.did = $1
+              {}
+              AND p.track_name IS NOT NULL
+            GROUP BY p.recording_mbid, p.track_name
+            ORDER BY play_count DESC, p.track_name ASC, p.recording_mbid ASC
+            LIMIT $2 OFFSET $3
+            "#,
+            period.where_sql()
+        );
+
+        let rows = sqlx::query_as::<_, (Option<Uuid>, String, i64)>(&sql)
+            .bind(did)
+            .bind(query_limit)
+            .bind(offset)
+            .fetch_all(&self.db)
+            .await?;
+
+        let has_more = rows.len() > limit as usize;
+        let mut recordings = Vec::with_capacity(rows.len().min(limit as usize));
+        for (mbid, name, play_count) in rows.into_iter().take(limit as usize) {
+            recordings.push(RecordingView {
+                mbid: mbid.map(mbid_uri),
+                name: Some(name.into()),
+                play_count: Some(play_count),
+                extra_data: Default::default(),
+            });
+        }
+
+        Ok(UserTopRecordingsPage {
+            recordings,
             cursor: if has_more {
                 Some(encode_offset_cursor(offset + limit)?)
             } else {
@@ -510,12 +591,29 @@ mod tests {
 
     #[test]
     fn stats_period_accepts_only_lexicon_values() {
-        assert_eq!(StatsPeriod::parse(None).unwrap(), StatsPeriod::ThirtyDays);
+        assert_eq!(StatsPeriod::parse(None).unwrap(), StatsPeriod::NinetyDays);
         assert_eq!(
             StatsPeriod::parse(Some("7days")).unwrap(),
             StatsPeriod::SevenDays
         );
-        assert!(StatsPeriod::parse(Some("all")).is_err());
+        assert_eq!(
+            StatsPeriod::parse(Some("30days")).unwrap(),
+            StatsPeriod::ThirtyDays
+        );
+        assert_eq!(
+            StatsPeriod::parse(Some("90days")).unwrap(),
+            StatsPeriod::NinetyDays
+        );
+        assert_eq!(
+            StatsPeriod::parse(Some("180days")).unwrap(),
+            StatsPeriod::OneHundredEightyDays
+        );
+        assert_eq!(
+            StatsPeriod::parse(Some("365days")).unwrap(),
+            StatsPeriod::ThreeHundredSixtyFiveDays
+        );
+        assert_eq!(StatsPeriod::parse(Some("all")).unwrap(), StatsPeriod::All);
+        assert!(StatsPeriod::parse(Some("forever")).is_err());
     }
 
     #[test]

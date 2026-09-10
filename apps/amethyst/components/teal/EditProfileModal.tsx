@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { getProfileImageUrl } from "@/lib/teal/actors";
+import type { StatsPeriod } from "@/lib/teal/api";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { ImagePlus, Save, UserRoundPen, X } from "lucide-react-native";
@@ -23,7 +24,12 @@ import type { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/a
 
 type EditableProfile = Pick<
   ProfileView,
-  "displayName" | "description" | "descriptionFacets" | "avatar" | "banner"
+  | "displayName"
+  | "description"
+  | "descriptionFacets"
+  | "avatar"
+  | "banner"
+  | "statsDefaultPeriod"
 >;
 
 type EditProfileModalProps = {
@@ -35,6 +41,21 @@ type EditProfileModalProps = {
 };
 
 type BlobRef = NonNullable<ProfileRecord["avatar"]>;
+
+const STATS_PERIOD_OPTIONS: Array<{ label: string; value: StatsPeriod }> = [
+  { label: "7 days", value: "7days" },
+  { label: "30 days", value: "30days" },
+  { label: "90 days", value: "90days" },
+  { label: "180 days", value: "180days" },
+  { label: "365 days", value: "365days" },
+  { label: "All time", value: "all" },
+];
+
+function normalizeStatsPeriod(value?: string): StatsPeriod {
+  return STATS_PERIOD_OPTIONS.some((item) => item.value === value)
+    ? (value as StatsPeriod)
+    : "90days";
+}
 
 function blobCid(blob?: BlobRef) {
   if (!blob) return undefined;
@@ -82,6 +103,8 @@ export default function EditProfileModal({
 }: EditProfileModalProps) {
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
+  const [statsDefaultPeriod, setStatsDefaultPeriod] =
+    useState<StatsPeriod>("90days");
   const [avatarUri, setAvatarUri] = useState("");
   const [bannerUri, setBannerUri] = useState("");
   const [saving, setSaving] = useState(false);
@@ -102,6 +125,7 @@ export default function EditProfileModal({
     if (!visible) return;
     setDisplayName(profile?.displayName || "");
     setDescription(profile?.description || "");
+    setStatsDefaultPeriod(normalizeStatsPeriod(profile?.statsDefaultPeriod));
     setAvatarUri(currentAvatarUrl || "");
     setBannerUri(currentBannerUrl || "");
     setError(null);
@@ -159,11 +183,13 @@ export default function EditProfileModal({
         currentBannerUrl,
       );
       const record: ProfileRecord = {
+        ...currentRecord,
         displayName: displayName.trim(),
         description: description.trim(),
         descriptionFacets: richText.facets,
         avatar,
         banner,
+        statsDefaultPeriod,
       };
 
       if (swapRecord) {
@@ -197,6 +223,7 @@ export default function EditProfileModal({
         descriptionFacets: record.descriptionFacets,
         avatar: blobCid(avatar) || profile?.avatar,
         banner: blobCid(banner) || profile?.banner,
+        statsDefaultPeriod: record.statsDefaultPeriod,
       });
       onClose();
     } catch (e) {
@@ -302,6 +329,27 @@ export default function EditProfileModal({
                   numberOfLines={5}
                   maxLength={512}
                 />
+              </View>
+              <View className="gap-2">
+                <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                  Default stats range
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {STATS_PERIOD_OPTIONS.map((item) => (
+                    <Button
+                      key={item.value}
+                      size="sm"
+                      variant={
+                        statsDefaultPeriod === item.value
+                          ? "default"
+                          : "outline"
+                      }
+                      onPress={() => setStatsDefaultPeriod(item.value)}
+                    >
+                      <Text>{item.label}</Text>
+                    </Button>
+                  ))}
+                </View>
               </View>
               {error && (
                 <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">

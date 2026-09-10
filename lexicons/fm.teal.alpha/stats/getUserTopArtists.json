@@ -16,8 +16,8 @@
           },
           "period": {
             "type": "string",
-            "enum": ["30days", "7days"],
-            "default": "30days",
+            "enum": ["7days", "30days", "90days", "180days", "365days", "all"],
+            "default": "90days",
             "description": "Time period for top artists"
           },
           "limit": {

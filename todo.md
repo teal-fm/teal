@@ -7,6 +7,7 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst has a Teal-branded Teal-native shell with desktop navigation, mobile navigation, Home, searchable Explore, Notifications, Profile, and music detail views.
 - Amethyst uses the teal.fm landing-page brand system: DM Sans body type, serif `.fm` accent type, neutral `#262626` text, `#14b8a6` teal accents, pale lavender/ice-blue gradient chrome, and translucent white surfaces across the main shell and feed.
 - Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, indexed search, artist discographies, and albums with track lists plus cursor-paginated listens.
+- Aqua exposes an artist listener leaderboard XRPC, and Amethyst artist pages show top listeners with all-time, 30-day, and 7-day views plus a full paginated listener leaderboard route.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
 - Amethyst Home uses one inline Teal social composer. Signed-in users get their most recent indexed play attached automatically, can click the attached song to change it with recent plays or MusicBrainz search, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
@@ -15,6 +16,8 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
 - Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
 - Amethyst profile headers show display name, handle, bio, images, and current listening only; protocol internals like DID and onboarding status are hidden from the public profile UI.
+- Amethyst profile pages show a 10-play recent listening snapshot followed by Last.fm-style Top Artists, Top Albums, and Top Tracks stats with 7/30/90/180/365/all-time period controls and dedicated full-list pages.
+- Teal profile records can configure `statsDefaultPeriod`; Cadet indexes it into Postgres and Aqua returns it on profile views, with Amethyst falling back to 90 days when absent.
 - Amethyst profile pages show Teal social graph counts, first-page followers/following lists, and signed-in follow/unfollow controls backed by `fm.teal.alpha.graph.follow` records.
 - Amethyst profiles show a minimal current-listening row only when an active status exists, including status-backed profiles that have no Teal profile record and render Bluesky identity as a fallback, with album art resolved from release MBID and recording fallback.
 - Amethyst listens have stable permalink pages at `/listen/:did/:rkey`; feed cards link their listen timestamps to the activity page while song titles still link to the music page.
@@ -50,6 +53,9 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - [x] Fix persisted post liked-state hydration so posts already liked by the signed-in viewer still render as liked after refresh.
 - [x] Fix cover art rendering on social posts, including posts whose attached tracks only have MusicBrainz IDs or legacy track metadata.
 - [x] Prune Docker builder cache and redeploy the stable preview with rebuilt Aqua and Amethyst containers.
+- [x] Add artist listener leaderboards to Aqua and Amethyst artist pages.
+- [x] Redeploy the stable preview and QA artist listener leaderboards against live indexed data.
+- [x] Add profile listening stats for top artists, albums, and tracks with configurable default period and dedicated More pages.
 
 ## Next: New Lexicon Implementation
 

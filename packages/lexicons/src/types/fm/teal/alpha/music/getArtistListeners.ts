@@ -7,14 +7,16 @@ import { lexicons } from '../../../../../lexicons'
 import { isObj, hasProp } from '../../../../../util'
 import { CID } from 'multiformats/cid'
 import { HandlerAuth, HandlerPipeThrough } from '@atproto/xrpc-server'
-import * as FmTealAlphaStatsDefs from './defs'
+import * as FmTealAlphaMusicDefs from './defs'
 
 export interface QueryParams {
-  /** The user's DID or handle */
-  actor: string
-  /** Time period for top releases */
-  period: '7days' | '30days' | '90days' | '180days' | '365days' | 'all'
-  /** Number of releases to return */
+  /** MusicBrainz artist ID URI, formatted as mbid:<uuid> */
+  mbid?: string
+  /** Artist name fallback when no MusicBrainz ID is available */
+  name?: string
+  /** Time period for the leaderboard */
+  period: 'all' | '30days' | '7days'
+  /** Number of listeners to return */
   limit: number
   /** Pagination cursor */
   cursor?: string
@@ -23,7 +25,7 @@ export interface QueryParams {
 export type InputSchema = undefined
 
 export interface OutputSchema {
-  releases: FmTealAlphaStatsDefs.ReleaseView[]
+  listeners: FmTealAlphaMusicDefs.ArtistListenerView[]
   /** Next page cursor */
   cursor?: string
   [k: string]: unknown

@@ -14,6 +14,17 @@ export function musicArtistHref(name: string, mbid?: string) {
   return `/:o/music/${routePart(name)}?${query.toString()}`;
 }
 
+export function musicArtistListenersHref(
+  name: string,
+  mbid?: string,
+  period?: string,
+) {
+  const query = new URLSearchParams({ name });
+  if (mbid) query.set("mbid", mbid);
+  if (period) query.set("period", period);
+  return `/:o/music/${routePart(name)}/listeners?${query.toString()}`;
+}
+
 export function musicAlbumHref(
   artistName: string,
   releaseName: string,

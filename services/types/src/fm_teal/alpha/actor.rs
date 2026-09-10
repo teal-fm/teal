@@ -81,6 +81,9 @@ pub struct ProfileView<S: BosStr = DefaultStr> {
     ///The actor's Teal onboarding state as indexed by the appview.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_status: Option<ProfileStatus<S>>,
+    ///Default time period for profile listening statistics.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stats_default_period: Option<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<actor::StatusView<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
@@ -278,6 +281,17 @@ fn lexicon_doc_fm_teal_alpha_actor_defs() -> LexiconDoc<'static> {
                             LexObjectProperty::Ref(LexRef {
                                 r#ref: CowStr::new_static(
                                     "fm.teal.alpha.actor.profileStatus",
+                                ),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("statsDefaultPeriod"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "Default time period for profile listening statistics.",
+                                    ),
                                 ),
                                 ..Default::default()
                             }),

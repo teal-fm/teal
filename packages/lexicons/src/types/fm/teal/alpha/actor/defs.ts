@@ -25,6 +25,14 @@ export interface ProfileView {
   banner?: string
   status?: StatusView
   profileStatus?: FmTealAlphaActorProfileStatus.Main
+  /** Default time period for profile listening statistics. */
+  statsDefaultPeriod?:
+    | '7days'
+    | '30days'
+    | '90days'
+    | '180days'
+    | '365days'
+    | 'all'
   createdAt?: string
   [k: string]: unknown
 }

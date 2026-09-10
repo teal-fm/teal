@@ -19,11 +19,13 @@ import * as FmTealAlphaGraphGetFollows from './types/fm/teal/alpha/graph/getFoll
 import * as FmTealAlphaGraphGetSummary from './types/fm/teal/alpha/graph/getSummary'
 import * as FmTealAlphaMusicGetAlbum from './types/fm/teal/alpha/music/getAlbum'
 import * as FmTealAlphaMusicGetArtist from './types/fm/teal/alpha/music/getArtist'
+import * as FmTealAlphaMusicGetArtistListeners from './types/fm/teal/alpha/music/getArtistListeners'
 import * as FmTealAlphaSearchGetResults from './types/fm/teal/alpha/search/getResults'
 import * as FmTealAlphaStatsGetLatest from './types/fm/teal/alpha/stats/getLatest'
 import * as FmTealAlphaStatsGetTopArtists from './types/fm/teal/alpha/stats/getTopArtists'
 import * as FmTealAlphaStatsGetTopReleases from './types/fm/teal/alpha/stats/getTopReleases'
 import * as FmTealAlphaStatsGetUserTopArtists from './types/fm/teal/alpha/stats/getUserTopArtists'
+import * as FmTealAlphaStatsGetUserTopRecordings from './types/fm/teal/alpha/stats/getUserTopRecordings'
 import * as FmTealAlphaStatsGetUserTopReleases from './types/fm/teal/alpha/stats/getUserTopReleases'
 
 export function createServer(options?: XrpcOptions): Server {
@@ -234,6 +236,17 @@ export class FmTealAlphaMusicNS {
     const nsid = 'fm.teal.alpha.music.getArtist' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
+
+  getArtistListeners<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaMusicGetArtistListeners.Handler<ExtractAuth<AV>>,
+      FmTealAlphaMusicGetArtistListeners.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.music.getArtistListeners' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
 }
 
 export class FmTealAlphaRichtextNS {
@@ -311,6 +324,17 @@ export class FmTealAlphaStatsNS {
     >,
   ) {
     const nsid = 'fm.teal.alpha.stats.getUserTopArtists' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getUserTopRecordings<AV extends AuthVerifier>(
+    cfg: ConfigOf<
+      AV,
+      FmTealAlphaStatsGetUserTopRecordings.Handler<ExtractAuth<AV>>,
+      FmTealAlphaStatsGetUserTopRecordings.HandlerReqCtx<ExtractAuth<AV>>
+    >,
+  ) {
+    const nsid = 'fm.teal.alpha.stats.getUserTopRecordings' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 

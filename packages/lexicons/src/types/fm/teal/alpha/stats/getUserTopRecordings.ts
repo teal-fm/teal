@@ -12,9 +12,9 @@ import * as FmTealAlphaStatsDefs from './defs'
 export interface QueryParams {
   /** The user's DID or handle */
   actor: string
-  /** Time period for top releases */
+  /** Time period for top recordings */
   period: '7days' | '30days' | '90days' | '180days' | '365days' | 'all'
-  /** Number of releases to return */
+  /** Number of recordings to return */
   limit: number
   /** Pagination cursor */
   cursor?: string
@@ -23,7 +23,7 @@ export interface QueryParams {
 export type InputSchema = undefined
 
 export interface OutputSchema {
-  releases: FmTealAlphaStatsDefs.ReleaseView[]
+  recordings: FmTealAlphaStatsDefs.RecordingView[]
   /** Next page cursor */
   cursor?: string
   [k: string]: unknown

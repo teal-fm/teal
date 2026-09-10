@@ -1,24 +1,46 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import {
+  ArtistLeaderboardList,
+  ArtistListenerPeriodTabs,
+  normalizeArtistListenerPeriod,
+} from "@/components/teal/ArtistLeaderboard";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { coverArtUrl, getArtist, getArtistImageUrl } from "@/lib/teal/api";
-import { musicAlbumHref } from "@/lib/teal/routes";
-import { ChevronRight, Disc3, Mic2 } from "lucide-react-native";
+import {
+  coverArtUrl,
+  getArtist,
+  getArtistImageUrl,
+  getArtistListeners,
+  type ArtistListenerPeriod,
+} from "@/lib/teal/api";
+import { musicAlbumHref, musicArtistListenersHref } from "@/lib/teal/routes";
+import { ChevronRight, Disc3, Mic2, Trophy } from "lucide-react-native";
 
 import type { ArtistView } from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
+import type { ArtistListenerView } from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
 
 export default function ArtistDetail() {
   const params = useLocalSearchParams();
   const mbid = Array.isArray(params.mbid) ? params.mbid[0] : params.mbid;
   const name = Array.isArray(params.name) ? params.name[0] : params.name;
+  const initialPeriod = Array.isArray(params.period)
+    ? params.period[0]
+    : params.period;
   const [artist, setArtist] = useState<ArtistView | null>(null);
+  const [listeners, setListeners] = useState<ArtistListenerView[]>([]);
+  const [listenerPeriod, setListenerPeriod] = useState<ArtistListenerPeriod>(
+    normalizeArtistListenerPeriod(initialPeriod),
+  );
   const [error, setError] = useState<string>();
+  const [listenerError, setListenerError] = useState<string>();
+  const [listenersLoading, setListenersLoading] = useState(false);
   const [artFailed, setArtFailed] = useState(false);
   const [artistImage, setArtistImage] = useState<string>();
 
@@ -39,6 +61,30 @@ export default function ArtistDetail() {
       mounted = false;
     };
   }, [mbid, name]);
+
+  useEffect(() => {
+    let mounted = true;
+    setListenersLoading(true);
+    setListenerError(undefined);
+    getArtistListeners(mbid, name, listenerPeriod, 5)
+      .then(({ listeners }) => {
+        if (mounted) setListeners(listeners);
+      })
+      .catch((loadError) => {
+        if (mounted) {
+          setListeners([]);
+          setListenerError(
+            loadError instanceof Error ? loadError.message : String(loadError),
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setListenersLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [mbid, name, listenerPeriod]);
 
   useEffect(() => {
     let mounted = true;
@@ -122,6 +168,57 @@ export default function ArtistDetail() {
                 </Text>
               </View>
             </View>
+          </View>
+
+          <View className="mb-8">
+            <View className="mb-4 gap-3 md:flex-row md:items-end md:justify-between">
+              <SectionHeading
+                eyebrow="Community"
+                title="Top listeners"
+                detail={listenerPeriod === "all" ? "ALL TIME" : listenerPeriod}
+              />
+              <ArtistListenerPeriodTabs
+                period={listenerPeriod}
+                onChange={setListenerPeriod}
+              />
+            </View>
+            {listenersLoading && listeners.length === 0 ? (
+              <View className="min-h-[8rem] items-center justify-center rounded-lg border border-border bg-card">
+                <ActivityIndicator />
+              </View>
+            ) : listenerError ? (
+              <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                <Text className="font-bold text-destructive">
+                  Could not load listeners: {listenerError}
+                </Text>
+              </View>
+            ) : listeners.length === 0 ? (
+              <View className="items-center gap-2 rounded-lg border border-border bg-card p-6">
+                <Icon icon={Trophy} size={24} className="text-muted-foreground" />
+                <Text className="text-center text-muted-foreground">
+                  No indexed listeners for this period yet.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <ArtistLeaderboardList listeners={listeners} />
+                <Link
+                  href={
+                    musicArtistListenersHref(
+                      artist.name,
+                      artist.mbid,
+                      listenerPeriod,
+                    ) as any
+                  }
+                  asChild
+                >
+                  <Button variant="outline" className="mt-3 flex-row gap-2">
+                    <Icon icon={Trophy} size={16} />
+                    <Text>View more listeners</Text>
+                  </Button>
+                </Link>
+              </>
+            )}
           </View>
 
           <SectionHeading

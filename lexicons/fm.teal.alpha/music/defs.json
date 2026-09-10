@@ -28,6 +28,21 @@
         }
       }
     },
+    "artistListenerView": {
+      "type": "object",
+      "required": ["actor", "playCount"],
+      "properties": {
+        "actor": {
+          "type": "ref",
+          "ref": "fm.teal.alpha.actor.defs#miniProfileView",
+          "description": "The listener ranked on this artist leaderboard"
+        },
+        "playCount": {
+          "type": "integer",
+          "description": "Number of indexed listens by this actor for the artist"
+        }
+      }
+    },
     "albumView": {
       "type": "object",
       "required": ["mbid", "name", "artistName", "playCount", "tracks"],

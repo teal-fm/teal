@@ -65,6 +65,10 @@ CREATE TABLE profiles (
     description_facets JSONB,
     avatar TEXT, -- IPLD of the image, bafy...
     banner TEXT,
+    stats_default_period TEXT CHECK (
+        stats_default_period IS NULL
+        OR stats_default_period IN ('7days', '30days', '90days', '180days', '365days', 'all')
+    ),
     created_at TIMESTAMP WITH TIME ZONE
 );
 
