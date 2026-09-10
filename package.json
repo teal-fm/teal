@@ -15,7 +15,7 @@
     "tunnel:status": "./scripts/dev-tunnel.sh status",
     "tunnel:logs": "./scripts/dev-tunnel.sh logs",
     "tunnel:verify": "./scripts/dev-tunnel.sh verify",
-    "typecheck": "pnpm -r --filter='!./vendor/*' exec tsc --noEmit",
+    "typecheck": "pnpm --filter=@teal/amethyst exec tsc --noEmit && pnpm --filter=@teal/lexicon-cli exec tsc --noEmit",
     "test": "turbo run test test:rust",
     "rust:fmt": "pnpm rust:fmt:services && pnpm rust:fmt:apps",
     "rust:clippy": "pnpm rust:clippy:services && pnpm rust:clippy:apps",

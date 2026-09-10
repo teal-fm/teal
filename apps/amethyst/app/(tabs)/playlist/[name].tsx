@@ -109,7 +109,7 @@ export default function PlaylistDetailScreen() {
         ),
       );
       if (!authors.includes(playlist.authorDid)) authors.unshift(playlist.authorDid);
-      const current = await pdsAgent
+      const current: { cover?: unknown } = await pdsAgent
         .call("com.atproto.repo.getRecord", {
           repo: playlist.authorDid,
           collection: "fm.teal.alpha.feed.social.playlist",

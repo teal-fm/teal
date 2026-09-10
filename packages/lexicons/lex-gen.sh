@@ -27,6 +27,9 @@ done
 echo "Generating lexicons from: $lexicon_paths"
 pnpm exec lex gen-server ./src $lexicon_paths --yes
 
+perl -0pi -e 's/profileStatus\?: FmTealAlphaActorProfileStatus\.Main/profileStatus?: FmTealAlphaActorProfileStatus.Record/' \
+  ./src/types/fm/teal/alpha/actor/defs.ts
+
 mkdir -p ./src/types/app/bsky/richtext
 cat > ./src/types/app/bsky/richtext/facet.ts <<'EOF'
 import type { AppBskyRichtextFacet } from "@atproto/api";

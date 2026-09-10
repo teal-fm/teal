@@ -53,7 +53,7 @@ export const schemaDict = {
             type: 'ref',
             description:
               "The actor's Teal onboarding state as indexed by the appview.",
-            ref: 'lex:fm.teal.alpha.actor.profileStatus',
+            ref: 'lex:fm.teal.alpha.actor.profileStatus#main',
           },
           statsDefaultPeriod: {
             type: 'string',
