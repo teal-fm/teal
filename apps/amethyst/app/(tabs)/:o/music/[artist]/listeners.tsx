@@ -32,8 +32,12 @@ import type {
 
 export default function ArtistListenersScreen() {
   const params = useLocalSearchParams();
+  const artistSlug = Array.isArray(params.artist)
+    ? params.artist[0]
+    : params.artist;
   const mbid = Array.isArray(params.mbid) ? params.mbid[0] : params.mbid;
   const name = Array.isArray(params.name) ? params.name[0] : params.name;
+  const artistLookup = name || artistSlug;
   const periodParam = Array.isArray(params.period)
     ? params.period[0]
     : params.period;
@@ -54,7 +58,7 @@ export default function ArtistListenersScreen() {
     let mounted = true;
     setError(undefined);
     setArtist(null);
-    getArtist(mbid, name)
+    getArtist(mbid, artistLookup)
       .then(({ artist }) => {
         if (mounted) setArtist(artist);
       })
@@ -68,7 +72,7 @@ export default function ArtistListenersScreen() {
     return () => {
       mounted = false;
     };
-  }, [mbid, name]);
+  }, [artistLookup, mbid]);
 
   useEffect(() => {
     let mounted = true;
@@ -76,7 +80,7 @@ export default function ArtistListenersScreen() {
     setError(undefined);
     setListeners([]);
     setCursor(undefined);
-    getArtistListeners(mbid, name, period, 50)
+    getArtistListeners(mbid, artistLookup, period, 50)
       .then((page) => {
         if (!mounted) return;
         setListeners(page.listeners);
@@ -95,7 +99,7 @@ export default function ArtistListenersScreen() {
     return () => {
       mounted = false;
     };
-  }, [mbid, name, period]);
+  }, [artistLookup, mbid, period]);
 
   useEffect(() => {
     let mounted = true;
@@ -114,7 +118,7 @@ export default function ArtistListenersScreen() {
     if (!cursor || loadingMoreRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
-    getArtistListeners(mbid, name, period, 50, cursor)
+    getArtistListeners(mbid, artistLookup, period, 50, cursor)
       .then((page) => {
         setListeners((current) => {
           const knownDids = new Set(
@@ -139,7 +143,7 @@ export default function ArtistListenersScreen() {
         loadingMoreRef.current = false;
         setLoadingMore(false);
       });
-  }, [cursor, mbid, name, period]);
+  }, [artistLookup, cursor, mbid, period]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {

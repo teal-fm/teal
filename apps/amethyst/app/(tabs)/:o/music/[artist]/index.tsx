@@ -28,8 +28,12 @@ import type { ArtistListenerView } from "@teal/lexicons/src/types/fm/teal/alpha/
 
 export default function ArtistDetail() {
   const params = useLocalSearchParams();
+  const artistSlug = Array.isArray(params.artist)
+    ? params.artist[0]
+    : params.artist;
   const mbid = Array.isArray(params.mbid) ? params.mbid[0] : params.mbid;
   const name = Array.isArray(params.name) ? params.name[0] : params.name;
+  const artistLookup = name || artistSlug;
   const initialPeriod = Array.isArray(params.period)
     ? params.period[0]
     : params.period;
@@ -46,7 +50,7 @@ export default function ArtistDetail() {
 
   useEffect(() => {
     let mounted = true;
-    getArtist(mbid, name)
+    getArtist(mbid, artistLookup)
       .then(({ artist }) => {
         if (mounted) setArtist(artist);
       })
@@ -60,13 +64,13 @@ export default function ArtistDetail() {
     return () => {
       mounted = false;
     };
-  }, [mbid, name]);
+  }, [artistLookup, mbid]);
 
   useEffect(() => {
     let mounted = true;
     setListenersLoading(true);
     setListenerError(undefined);
-    getArtistListeners(mbid, name, listenerPeriod, 5)
+    getArtistListeners(mbid, artistLookup, listenerPeriod, 5)
       .then(({ listeners }) => {
         if (mounted) setListeners(listeners);
       })
@@ -84,7 +88,7 @@ export default function ArtistDetail() {
     return () => {
       mounted = false;
     };
-  }, [mbid, name, listenerPeriod]);
+  }, [artistLookup, mbid, listenerPeriod]);
 
   useEffect(() => {
     let mounted = true;
@@ -155,18 +159,29 @@ export default function ArtistDetail() {
     ? [
         {
           title: "Albums",
-          releases: artist.albums.filter(
-            (release) => release.releaseType !== "single",
-          ),
+          releases: artist.albums.filter((release) => release.releaseType === "album"),
+        },
+        {
+          title: "EPs",
+          releases: artist.albums.filter((release) => release.releaseType === "ep"),
         },
         {
           title: "Singles",
+          releases: artist.albums.filter((release) => release.releaseType === "single"),
+        },
+        {
+          title: "Other releases",
           releases: artist.albums.filter(
-            (release) => release.releaseType === "single",
+            (release) =>
+              release.releaseType !== "album" &&
+              release.releaseType !== "ep" &&
+              release.releaseType !== "single",
           ),
         },
       ]
     : [];
+  const albumCount =
+    artist?.albums.filter((release) => release.releaseType === "album").length ?? 0;
 
   return (
     <TealShell rightRail={<RightRail />}>
@@ -284,7 +299,7 @@ export default function ArtistDetail() {
           <SectionHeading
             eyebrow="Catalog"
             title="Discography"
-            detail={`${artist.albums.length} RELEASES`}
+            detail={`${albumCount} ALBUMS`}
           />
           {discographyGroups.map(({ title, releases }) =>
             releases.length > 0 ? (
