@@ -1,9 +1,14 @@
 import { ReactNode } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  View,
+  type ScrollViewProps,
+} from "react-native";
 import { Link, usePathname } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
-import { useStore } from "@/stores/mainStore";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import { useStore } from "@/stores/mainStore";
 import { Bell, Home, LogIn, Search, UserCircle } from "lucide-react-native";
 
 import { Text } from "../ui/text";
@@ -12,6 +17,7 @@ type SongishShellProps = {
   children: ReactNode;
   rightRail?: ReactNode;
   title?: string;
+  onScroll?: ScrollViewProps["onScroll"];
 };
 
 function RecordLogo() {
@@ -122,7 +128,9 @@ function MobileNav() {
           <Icon
             icon={Home}
             size={34}
-            className={pathname === "/" ? "text-foreground" : "text-muted-foreground"}
+            className={
+              pathname === "/" ? "text-foreground" : "text-muted-foreground"
+            }
           />
         </Pressable>
       </Link>
@@ -144,7 +152,11 @@ function MobileNav() {
           <Icon
             icon={Search}
             size={38}
-            className={pathname.includes("search") ? "text-foreground" : "text-muted-foreground"}
+            className={
+              pathname.includes("search")
+                ? "text-foreground"
+                : "text-muted-foreground"
+            }
           />
         </Pressable>
       </Link>
@@ -161,6 +173,7 @@ export default function SongishShell({
   children,
   rightRail,
   title,
+  onScroll,
 }: SongishShellProps) {
   const isMobile = useIsMobile();
 
@@ -168,13 +181,16 @@ export default function SongishShell({
     <View className="min-h-screen flex-1 bg-background">
       <View className="absolute inset-0 bg-[linear-gradient(110deg,#ffffff_0%,#ffffff_34%,#8fb4ff_60%,#0a43ff_100%)] dark:bg-[linear-gradient(110deg,#08040b_0%,#13091a_38%,#26356f_68%,#0f49ff_100%)]" />
       <Text className="z-20 h-7 text-center text-sm font-black">
-        teal is in active development: expect bugs, missing features, and regular index rebuilds
+        teal is in active development: expect bugs, missing features, and
+        regular index rebuilds
       </Text>
       <View className="z-10 flex-1 flex-row">
         <LeftRail />
         <ScrollView
           className="flex-1"
           contentContainerClassName="items-center pb-28 lg:pb-10"
+          onScroll={onScroll}
+          scrollEventThrottle={onScroll ? 200 : undefined}
         >
           <View className="min-h-screen w-full max-w-[42rem] rounded-t-3xl bg-background/60 px-3 py-8 backdrop-blur-xl md:px-8">
             {title && (
