@@ -12,7 +12,7 @@ use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
 use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
-use jacquard_common::types::string::{Did, Nsid};
+use jacquard_common::types::string::Nsid;
 use jacquard_common::types::value::Data;
 use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
@@ -20,7 +20,7 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetServiceAuth<S: BosStr = DefaultStr> {
-    pub aud: Did<S>,
+    pub aud: S,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exp: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -138,7 +138,7 @@ pub mod get_service_auth_state {
 /// Builder for constructing an instance of this type.
 pub struct GetServiceAuthBuilder<S: BosStr, St: get_service_auth_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<Did<S>>, Option<i64>, Option<Nsid<S>>),
+    _fields: (Option<S>, Option<i64>, Option<Nsid<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -168,7 +168,7 @@ where
     /// Set the `aud` field (required)
     pub fn aud(
         mut self,
-        value: impl Into<Did<S>>,
+        value: impl Into<S>,
     ) -> GetServiceAuthBuilder<S, get_service_auth_state::SetAud<St>> {
         self._fields.0 = Option::Some(value.into());
         GetServiceAuthBuilder {

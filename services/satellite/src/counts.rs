@@ -20,7 +20,7 @@ pub async fn get_global_play_count(
     State(state): State<AppState>,
 ) -> Result<Json<GlobalPlayCount>, (axum::http::StatusCode, String)> {
     let result = sqlx::query_as::<_, GlobalPlayCount>(
-        "SELECT play_count FROM mv_global_play_count WHERE id = 1",
+        "SELECT total_plays AS play_count FROM mv_global_play_count",
     )
     .fetch_one(&state.db_pool)
     .await;
@@ -106,7 +106,7 @@ pub async fn get_latest_plays(
             LEFT JOIN play_to_artists_extended AS ptae ON ptae.play_uri = p.uri
             LEFT JOIN artists_extended AS ae ON ae.id = ptae.artist_id
             GROUP BY p.did, p.track_name, p.release_name, p.played_time, p.duration, p.uri, p.recording_mbid, p.release_mbid
-            ORDER BY p.played_time DESC
+            ORDER BY COALESCE(p.played_time, p.processed_time) DESC, p.uri DESC
             LIMIT $1
         "#,
     )

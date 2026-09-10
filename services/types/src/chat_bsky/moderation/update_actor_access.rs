@@ -66,37 +66,37 @@ pub mod update_actor_access_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Actor;
         type AllowAccess;
+        type Actor;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Actor = Unset;
         type AllowAccess = Unset;
-    }
-    ///State transition - sets the `actor` field to Set
-    pub struct SetActor<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetActor<St> {}
-    impl<St: State> State for SetActor<St> {
-        type Actor = Set<members::actor>;
-        type AllowAccess = St::AllowAccess;
+        type Actor = Unset;
     }
     ///State transition - sets the `allow_access` field to Set
     pub struct SetAllowAccess<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAllowAccess<St> {}
     impl<St: State> State for SetAllowAccess<St> {
-        type Actor = St::Actor;
         type AllowAccess = Set<members::allow_access>;
+        type Actor = St::Actor;
+    }
+    ///State transition - sets the `actor` field to Set
+    pub struct SetActor<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetActor<St> {}
+    impl<St: State> State for SetActor<St> {
+        type AllowAccess = St::AllowAccess;
+        type Actor = Set<members::actor>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `actor` field
-        pub struct actor(());
         ///Marker type for the `allow_access` field
         pub struct allow_access(());
+        ///Marker type for the `actor` field
+        pub struct actor(());
     }
 }
 
@@ -179,8 +179,8 @@ impl<S: BosStr, St: update_actor_access_state::State> UpdateActorAccessBuilder<S
 impl<S: BosStr, St> UpdateActorAccessBuilder<S, St>
 where
     St: update_actor_access_state::State,
-    St::Actor: update_actor_access_state::IsSet,
     St::AllowAccess: update_actor_access_state::IsSet,
+    St::Actor: update_actor_access_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> UpdateActorAccess<S> {

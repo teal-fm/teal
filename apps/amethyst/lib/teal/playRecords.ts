@@ -1,9 +1,9 @@
 import type { Agent } from "@atproto/api";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
-import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/alpha/feed/play";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
+import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
 
-export const PLAY_COLLECTION = "fm.teal.alpha.feed.play";
+export const PLAY_COLLECTION = "fm.teal.feed.play";
 
 export type EditablePlayRecord = Pick<
   PlayRecord,
@@ -16,8 +16,8 @@ export type EditablePlayRecord = Pick<
   | "trackMbId"
   | "duration"
   | "isrc"
-  | "originUrl"
-  | "musicServiceBaseDomain"
+  | "originUri"
+  | "musicServiceUri"
   | "submissionClientAgent"
   | "trackDiscriminant"
   | "releaseDiscriminant"
@@ -76,8 +76,8 @@ export function editableRecordFromPlay(play: PlayView): EditablePlayRecord {
     trackMbId: play.trackMbId,
     duration: play.duration,
     isrc: play.isrc,
-    originUrl: play.originUrl,
-    musicServiceBaseDomain: play.musicServiceBaseDomain,
+    originUri: play.originUri,
+    musicServiceUri: play.musicServiceUri,
     submissionClientAgent: play.submissionClientAgent,
   };
 }

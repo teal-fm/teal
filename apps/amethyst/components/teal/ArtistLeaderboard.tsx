@@ -15,7 +15,7 @@ import type { ArtistListenerPeriod } from "@/lib/teal/api";
 import { Headphones } from "lucide-react-native";
 import { Icon } from "@/lib/icons/iconWithClassName";
 
-import type { ArtistListenerView } from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
+import type { ArtistListenerView } from "@teal/lexicons/src/types/fm/teal/music/defs";
 
 export const ARTIST_LISTENER_PERIODS: Array<{
   label: string;

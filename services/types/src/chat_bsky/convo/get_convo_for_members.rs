@@ -10,11 +10,11 @@ use alloc::collections::BTreeMap;
 
 #[allow(unused_imports)]
 use core::marker::PhantomData;
-use jacquard_common::{BosStr, DefaultStr, FromStaticStr};
+use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::string::Did;
 use jacquard_common::types::value::Data;
-use jacquard_derive::IntoStatic;
+use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
 use crate::chat_bsky::convo::ConvoView;
 
@@ -33,13 +33,100 @@ pub struct GetConvoForMembersOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
+
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    thiserror::Error,
+    miette::Diagnostic
+)]
+
+#[serde(tag = "error", content = "message")]
+pub enum GetConvoForMembersError {
+    #[serde(rename = "AccountSuspended")]
+    AccountSuspended(Option<SmolStr>),
+    #[serde(rename = "BlockedActor")]
+    BlockedActor(Option<SmolStr>),
+    #[serde(rename = "BlockedSubject")]
+    BlockedSubject(Option<SmolStr>),
+    #[serde(rename = "MessagesDisabled")]
+    MessagesDisabled(Option<SmolStr>),
+    #[serde(rename = "NotFollowedBySender")]
+    NotFollowedBySender(Option<SmolStr>),
+    #[serde(rename = "RecipientNotFound")]
+    RecipientNotFound(Option<SmolStr>),
+    /// Catch-all for unknown error codes.
+    #[serde(untagged)]
+    Other { error: SmolStr, message: Option<SmolStr> },
+}
+
+impl core::fmt::Display for GetConvoForMembersError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::AccountSuspended(msg) => {
+                write!(f, "AccountSuspended")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::BlockedActor(msg) => {
+                write!(f, "BlockedActor")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::BlockedSubject(msg) => {
+                write!(f, "BlockedSubject")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::MessagesDisabled(msg) => {
+                write!(f, "MessagesDisabled")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::NotFollowedBySender(msg) => {
+                write!(f, "NotFollowedBySender")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::RecipientNotFound(msg) => {
+                write!(f, "RecipientNotFound")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::Other { error, message } => {
+                write!(f, "{}", error)?;
+                if let Some(msg) = message {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
 /// Response type for chat.bsky.convo.getConvoForMembers
 pub struct GetConvoForMembersResponse;
 impl jacquard_common::xrpc::XrpcResp for GetConvoForMembersResponse {
     const NSID: &'static str = "chat.bsky.convo.getConvoForMembers";
     const ENCODING: &'static str = "application/json";
     type Output<S: BosStr> = GetConvoForMembersOutput<S>;
-    type Err = jacquard_common::xrpc::GenericError;
+    type Err = GetConvoForMembersError;
 }
 
 impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for GetConvoForMembers<S> {

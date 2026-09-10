@@ -1,0 +1,6 @@
+  <svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120" role="img" aria-labelledby="title description">
+  <title id="title">teal.fm</title>
+  <desc id="description">teal.fm logo</desc>
+
+  <text x="2" y="87" fill="#ffffff" font-family="DM Sans, sans-serif" font-size="96" font-weight="600" letter-spacing="-2.4">teal<tspan fill="#14b8a6" font-family="Crimson Pro, serif" font-size="96" font-style="italic" font-weight="600">.fm</tspan></text>
+</svg>

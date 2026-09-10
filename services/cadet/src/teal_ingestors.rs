@@ -22,8 +22,18 @@ pub fn build_ingestors_with_retry(
         Some(retry_store) => Box::new(DurableRetryPlayIngestor::new(pool.clone(), retry_store)),
         None => Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
     };
-    ingestors.insert("fm.teal.alpha.feed.play".to_string(), play_ingestor);
+    ingestors.insert("fm.teal.feed.play".to_string(), play_ingestor);
+    ingestors.insert(
+        "fm.teal.alpha.feed.play".to_string(),
+        Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
+    );
 
+    ingestors.insert(
+        "fm.teal.actor.profile".to_string(),
+        Box::new(ingestors::teal::actor_profile::ActorProfileIngestor::new(
+            pool.clone(),
+        )),
+    );
     ingestors.insert(
         "fm.teal.alpha.actor.profile".to_string(),
         Box::new(ingestors::teal::actor_profile::ActorProfileIngestor::new(
@@ -32,12 +42,24 @@ pub fn build_ingestors_with_retry(
     );
 
     ingestors.insert(
+        "fm.teal.actor.status".to_string(),
+        Box::new(ingestors::teal::actor_status::ActorStatusIngestor::new(
+            pool.clone(),
+        )),
+    );
+    ingestors.insert(
         "fm.teal.alpha.actor.status".to_string(),
         Box::new(ingestors::teal::actor_status::ActorStatusIngestor::new(
             pool.clone(),
         )),
     );
 
+    ingestors.insert(
+        "fm.teal.actor.profileStatus".to_string(),
+        Box::new(
+            ingestors::teal::actor_profile_status::ActorProfileStatusIngestor::new(pool.clone()),
+        ),
+    );
     ingestors.insert(
         "fm.teal.alpha.actor.profileStatus".to_string(),
         Box::new(
@@ -47,35 +69,35 @@ pub fn build_ingestors_with_retry(
 
     for (collection, kind) in [
         (
-            "fm.teal.alpha.feed.social.post",
+            "fm.teal.feed.social.post",
             ingestors::teal::social::SocialCollection::Post,
         ),
         (
-            "fm.teal.alpha.feed.social.like",
+            "fm.teal.feed.social.like",
             ingestors::teal::social::SocialCollection::Like,
         ),
         (
-            "fm.teal.alpha.feed.social.repost",
+            "fm.teal.feed.social.repost",
             ingestors::teal::social::SocialCollection::Repost,
         ),
         (
-            "fm.teal.alpha.graph.follow",
+            "fm.teal.graph.follow",
             ingestors::teal::social::SocialCollection::Follow,
         ),
         (
-            "fm.teal.alpha.feed.social.playlist",
+            "fm.teal.feed.social.playlist",
             ingestors::teal::social::SocialCollection::Playlist,
         ),
         (
-            "fm.teal.alpha.feed.social.playlistItem",
+            "fm.teal.feed.social.playlistItem",
             ingestors::teal::social::SocialCollection::PlaylistItem,
         ),
         (
-            "fm.teal.alpha.feed.social.badge",
+            "fm.teal.feed.social.badge",
             ingestors::teal::social::SocialCollection::Badge,
         ),
         (
-            "fm.teal.alpha.feed.social.badgeAssignment",
+            "fm.teal.feed.social.badgeAssignment",
             ingestors::teal::social::SocialCollection::BadgeAssignment,
         ),
     ] {
@@ -110,17 +132,17 @@ pub fn supported_teal_collections() -> Vec<String> {
 
 fn build_ingestors_for_names() -> Vec<String> {
     vec![
-        "fm.teal.alpha.feed.play".to_string(),
-        "fm.teal.alpha.actor.profile".to_string(),
-        "fm.teal.alpha.actor.status".to_string(),
-        "fm.teal.alpha.actor.profileStatus".to_string(),
-        "fm.teal.alpha.feed.social.post".to_string(),
-        "fm.teal.alpha.feed.social.like".to_string(),
-        "fm.teal.alpha.feed.social.repost".to_string(),
-        "fm.teal.alpha.graph.follow".to_string(),
-        "fm.teal.alpha.feed.social.playlist".to_string(),
-        "fm.teal.alpha.feed.social.playlistItem".to_string(),
-        "fm.teal.alpha.feed.social.badge".to_string(),
-        "fm.teal.alpha.feed.social.badgeAssignment".to_string(),
+        "fm.teal.feed.play".to_string(),
+        "fm.teal.actor.profile".to_string(),
+        "fm.teal.actor.status".to_string(),
+        "fm.teal.actor.profileStatus".to_string(),
+        "fm.teal.feed.social.post".to_string(),
+        "fm.teal.feed.social.like".to_string(),
+        "fm.teal.feed.social.repost".to_string(),
+        "fm.teal.graph.follow".to_string(),
+        "fm.teal.feed.social.playlist".to_string(),
+        "fm.teal.feed.social.playlistItem".to_string(),
+        "fm.teal.feed.social.badge".to_string(),
+        "fm.teal.feed.social.badgeAssignment".to_string(),
     ]
 }

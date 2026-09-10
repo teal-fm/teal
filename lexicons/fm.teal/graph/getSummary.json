@@ -1,0 +1,48 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.graph.getSummary",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves Teal social graph counts and viewer state for an actor.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["actor"],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "The actor DID or handle."
+          },
+          "viewer": {
+            "type": "string",
+            "format": "did",
+            "description": "Optional viewer DID for follow state."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["followersCount", "followsCount"],
+          "properties": {
+            "followersCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "followsCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "viewerFollowing": {
+              "type": "string",
+              "format": "at-uri",
+              "description": "Follow record URI if the viewer follows the actor."
+            }
+          }
+        }
+      }
+    }
+  }
+}

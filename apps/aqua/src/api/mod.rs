@@ -280,17 +280,13 @@ pub async fn store_car_import_request(
     _car_data: &[u8],
     _description: Option<&str>,
 ) -> Result<()> {
-    // TODO: Implement database storage once tables are created
-    info!("CAR import storage temporarily disabled - tables not yet created");
-    Ok(())
+    Err(anyhow::anyhow!(
+        "CAR import storage is unavailable; no import queue is configured"
+    ))
 }
 
 async fn get_import_status(_ctx: &Context, _import_id: &str) -> Result<Option<ImportStatus>> {
-    // TODO: Implement once database tables are created
-    Ok(Some(ImportStatus {
-        status: "pending".to_string(),
-        message: "Database tables not yet created".to_string(),
-    }))
+    Ok(None)
 }
 
 pub async fn fetch_car_from_user(
@@ -461,18 +457,25 @@ async fn resolve_did_to_pds(did: &str) -> Result<String> {
 
 /// Fetch CAR file from PDS using com.atproto.sync.getRepo
 pub async fn fetch_car_from_pds(pds_host: &str, did: &str, since: Option<&str>) -> Result<Vec<u8>> {
-    let mut url = format!(
-        "https://{}/xrpc/com.atproto.sync.getRepo?did={}",
-        pds_host, did
-    );
+    validate_public_pds_host(pds_host).await?;
+
+    const MAX_CAR_BYTES: u64 = 256 * 1024 * 1024;
+    let mut url = url::Url::parse(&format!(
+        "https://{pds_host}/xrpc/com.atproto.sync.getRepo"
+    ))?;
+    url.query_pairs_mut().append_pair("did", did);
 
     if let Some(since_rev) = since {
-        url.push_str(&format!("&since={}", since_rev));
+        url.query_pairs_mut().append_pair("since", since_rev);
     }
 
     info!("Fetching CAR file from: {}", url);
 
-    let response = reqwest::get(&url).await?;
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .timeout(std::time::Duration::from_secs(60))
+        .build()?;
+    let mut response = client.get(url).send().await?;
     if !response.status().is_success() {
         return Err(anyhow::anyhow!(
             "Failed to fetch CAR from PDS {}: {}",
@@ -492,8 +495,66 @@ pub async fn fetch_car_from_pds(pds_host: &str, did: &str, since: Option<&str>) 
         return Err(anyhow::anyhow!("Unexpected content type: {}", content_type));
     }
 
-    let car_data = response.bytes().await?;
-    Ok(car_data.to_vec())
+    if response
+        .content_length()
+        .is_some_and(|length| length > MAX_CAR_BYTES)
+    {
+        return Err(anyhow::anyhow!(
+            "CAR file exceeds the {} byte limit",
+            MAX_CAR_BYTES
+        ));
+    }
+
+    let mut car_data = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        if car_data.len() as u64 + chunk.len() as u64 > MAX_CAR_BYTES {
+            return Err(anyhow::anyhow!(
+                "CAR file exceeds the {} byte limit",
+                MAX_CAR_BYTES
+            ));
+        }
+        car_data.extend_from_slice(&chunk);
+    }
+    Ok(car_data)
+}
+
+async fn validate_public_pds_host(host: &str) -> Result<()> {
+    if host.eq_ignore_ascii_case("localhost") || host.ends_with(".localhost") {
+        return Err(anyhow::anyhow!("PDS host is not publicly routable"));
+    }
+
+    let addresses = tokio::net::lookup_host((host, 443)).await?;
+    let mut found = false;
+    for address in addresses {
+        found = true;
+        if is_private_ip(address.ip()) {
+            return Err(anyhow::anyhow!("PDS host resolves to a private address"));
+        }
+    }
+    if !found {
+        return Err(anyhow::anyhow!("PDS host did not resolve to an address"));
+    }
+    Ok(())
+}
+
+fn is_private_ip(ip: std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(ip) => {
+            ip.is_private()
+                || ip.is_loopback()
+                || ip.is_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
+                || ip.is_broadcast()
+        }
+        std::net::IpAddr::V6(ip) => {
+            ip.is_loopback()
+                || ip.is_unique_local()
+                || ip.is_unicast_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
+        }
+    }
 }
 
 /// Generate a DID document for did:web

@@ -46,7 +46,11 @@ async function validateTypeScriptGeneration(workspaceRoot: string) {
   const sourceFiles = await glob('**/*.json', { cwd: lexiconsPath });
   
   for (const sourceFile of sourceFiles) {
-    const namespace = sourceFile.replace('.json', '').replace(/\//g, '/');
+    const namespace: string = sourceFile
+      .replace(/\.json$/, '')
+      .split('/')
+      .flatMap((segment) => segment.split('.'))
+      .join('/');
     const expectedTypeFile = join(typesPath, namespace + '.ts');
     
     if (!existsSync(expectedTypeFile)) {

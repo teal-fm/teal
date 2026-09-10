@@ -174,7 +174,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
           {},
           {
             repo: pdsAgent.did,
-            collection: `fm.teal.alpha.feed.social.${kind}`,
+            collection: `fm.teal.feed.social.${kind}`,
             rkey: current.rkey || rkeyFromAtUri(current.uri)!,
           },
         );
@@ -188,9 +188,9 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
         {},
         {
           repo: pdsAgent.did,
-          collection: `fm.teal.alpha.feed.social.${kind}`,
+          collection: `fm.teal.feed.social.${kind}`,
           record: {
-            $type: `fm.teal.alpha.feed.social.${kind}`,
+            $type: `fm.teal.feed.social.${kind}`,
             subject: { uri: post.uri, cid: post.cid },
             createdAt: new Date().toISOString(),
           },

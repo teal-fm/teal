@@ -22,7 +22,7 @@ import {
 import { useStore } from "@/stores/mainStore";
 import { Check, Disc3, Search } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 
 type SocialComposerProps = {
   track?: PlayView | null;
@@ -93,7 +93,7 @@ function musicBrainzToPlayView(
       ? `mbid:${selectedRelease.id}`
       : undefined,
     isrc: recording.isrcs?.[0],
-    originUrl: recording.id
+    originUri: recording.id
       ? `https://musicbrainz.org/recording/${recording.id}`
       : undefined,
   };
@@ -297,7 +297,7 @@ export default function SocialComposer({
       const rt = new AtprotoRichText({ text: postText });
       await rt.detectFacets(pdsAgent);
       const record = {
-        $type: "fm.teal.alpha.feed.social.post",
+        $type: "fm.teal.feed.social.post",
         text: postText,
         track: playViewToTrackView(selectedTrack),
         reply: replyTo
@@ -319,7 +319,7 @@ export default function SocialComposer({
         {},
         {
           repo: pdsAgent.did,
-          collection: "fm.teal.alpha.feed.social.post",
+          collection: "fm.teal.feed.social.post",
           record,
         },
       );

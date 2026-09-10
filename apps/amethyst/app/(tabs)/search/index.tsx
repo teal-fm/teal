@@ -31,12 +31,12 @@ import {
   X,
 } from "lucide-react-native";
 
-import type { MiniProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
-import type { SongResult } from "@teal/lexicons/src/types/fm/teal/alpha/search/defs";
+import type { MiniProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
+import type { SongResult } from "@teal/lexicons/src/types/fm/teal/search/defs";
 import type {
   ArtistView,
   ReleaseView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
+} from "@teal/lexicons/src/types/fm/teal/stats/defs";
 
 type SearchTab = "users" | "songs" | "artists" | "albums";
 type UserResult = MiniProfileView & { avatarUrl?: string };

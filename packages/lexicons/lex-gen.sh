@@ -9,7 +9,7 @@ bash "$repo_root/packages/lexicons/lex-validate.sh"
 # The current HTTP server consumes the legacy gen-server shape. Keep this
 # compatibility output until Aqua's XRPC bindings migrate to @atproto/lex.
 cd "$repo_root/packages/lexicons"
-json_files=$(find "$lexicons_root/fm.teal.alpha" -name "*.json" -type f | sort)
+json_files=$(find "$lexicons_root/fm.teal" -name "*.json" -type f | sort)
 json_files="$json_files $lexicons_root/app/bsky/richtext/facet.json"
 lexicon_paths=""
 for file in $json_files; do
@@ -24,8 +24,8 @@ pnpm exec lex gen-server ./src $lexicon_paths --yes
 # TypeScript is compiled, so keep internal generated imports extensionless.
 find ./src -type f -name "*.ts" -exec perl -pi -e "s{(from ['\"](?:\./|\.\./)[^'\"]*)\.js(['\"])}{\$1\$2}g" {} +
 
-perl -0pi -e 's/profileStatus\?: FmTealAlphaActorProfileStatus\.Main/profileStatus?: FmTealAlphaActorProfileStatus.Record/' \
-  ./src/types/fm/teal/alpha/actor/defs.ts
+perl -0pi -e 's/profileStatus\?: FmTealActorProfileStatus\.Main/profileStatus?: FmTealActorProfileStatus.Record/' \
+  ./src/types/fm/teal/actor/defs.ts
 
 mkdir -p ./src/types/app/bsky/richtext
 cat > ./src/types/app/bsky/richtext/facet.ts <<'EOF'

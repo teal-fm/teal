@@ -103,7 +103,7 @@ The tool integrates with the existing Turbo build pipeline:
 
 ## Lexicon Sources
 
-### Teal Lexicons (`fm.teal.alpha.*`)
+### Teal Lexicons (`fm.teal.*`)
 - **Actor**: Profile management, status tracking, search
 - **Feed**: Music play tracking, artist/track data  
 - **Stats**: Top artists, releases, user statistics

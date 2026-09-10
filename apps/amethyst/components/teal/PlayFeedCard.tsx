@@ -19,7 +19,7 @@ import { listenHref, musicTrackHref } from "@/lib/teal/routes";
 import { cn, timeAgo } from "@/lib/utils";
 import { Disc3 } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 
 import { Text } from "../ui/text";
 

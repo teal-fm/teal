@@ -10,11 +10,62 @@ use alloc::collections::BTreeMap;
 
 #[allow(unused_imports)]
 use core::marker::PhantomData;
-use jacquard_common::{BosStr, DefaultStr, FromStaticStr};
+use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
-use jacquard_derive::IntoStatic;
+use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
+
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    thiserror::Error,
+    miette::Diagnostic
+)]
+
+#[serde(tag = "error", content = "message")]
+pub enum DeleteSessionError {
+    #[serde(rename = "InvalidToken")]
+    InvalidToken(Option<SmolStr>),
+    #[serde(rename = "ExpiredToken")]
+    ExpiredToken(Option<SmolStr>),
+    /// Catch-all for unknown error codes.
+    #[serde(untagged)]
+    Other { error: SmolStr, message: Option<SmolStr> },
+}
+
+impl core::fmt::Display for DeleteSessionError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::InvalidToken(msg) => {
+                write!(f, "InvalidToken")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::ExpiredToken(msg) => {
+                write!(f, "ExpiredToken")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::Other { error, message } => {
+                write!(f, "{}", error)?;
+                if let Some(msg) = message {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
 /// XRPC request marker type.
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Copy)]
@@ -25,7 +76,7 @@ impl jacquard_common::xrpc::XrpcResp for DeleteSessionResponse {
     const NSID: &'static str = "com.atproto.server.deleteSession";
     const ENCODING: &'static str = "application/json";
     type Output<S: BosStr> = ();
-    type Err = jacquard_common::xrpc::GenericError;
+    type Err = DeleteSessionError;
 }
 
 impl jacquard_common::xrpc::XrpcRequest for DeleteSession {

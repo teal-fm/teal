@@ -9,8 +9,8 @@ use jacquard_common::{
 use serde_json::Value;
 use types::{
     app_bsky::richtext::facet::Facet,
-    fm_teal::alpha::actor::profile_status::ProfileStatus,
-    fm_teal::alpha::actor::{ProfileView, StatusView},
+    fm_teal::actor::profile_status::ProfileStatus,
+    fm_teal::actor::{ProfileView, StatusView},
 };
 
 use super::{pg::PgDataSource, utc_to_atrium_datetime};

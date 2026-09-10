@@ -28,6 +28,8 @@ pub struct QueryEvents<S: BosStr = DefaultStr> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub age_assurance_state: Option<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub batch_id: Option<S>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub collections: Option<Vec<Nsid<S>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<S>,
@@ -69,6 +71,8 @@ pub struct QueryEvents<S: BosStr = DefaultStr> {
     pub subject_type: Option<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub types: Option<Vec<S>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub with_strike: Option<bool>,
 }
 
 
@@ -144,6 +148,7 @@ pub struct QueryEventsBuilder<S: BosStr, St: query_events_state::State> {
         Option<Vec<S>>,
         Option<Vec<S>>,
         Option<S>,
+        Option<S>,
         Option<Vec<Nsid<S>>>,
         Option<S>,
         Option<Datetime>,
@@ -162,6 +167,7 @@ pub struct QueryEventsBuilder<S: BosStr, St: query_events_state::State> {
         Option<UriValue<S>>,
         Option<S>,
         Option<Vec<S>>,
+        Option<bool>,
     ),
     _type: PhantomData<fn() -> S>,
 }
@@ -179,6 +185,8 @@ impl<S: BosStr> QueryEventsBuilder<S, query_events_state::Empty> {
         QueryEventsBuilder {
             _state: PhantomData,
             _fields: (
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -246,14 +254,27 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 }
 
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
+    /// Set the `batchId` field (optional)
+    pub fn batch_id(mut self, value: impl Into<Option<S>>) -> Self {
+        self._fields.3 = value.into();
+        self
+    }
+    /// Set the `batchId` field to an Option value (optional)
+    pub fn maybe_batch_id(mut self, value: Option<S>) -> Self {
+        self._fields.3 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `collections` field (optional)
     pub fn collections(mut self, value: impl Into<Option<Vec<Nsid<S>>>>) -> Self {
-        self._fields.3 = value.into();
+        self._fields.4 = value.into();
         self
     }
     /// Set the `collections` field to an Option value (optional)
     pub fn maybe_collections(mut self, value: Option<Vec<Nsid<S>>>) -> Self {
-        self._fields.3 = value;
+        self._fields.4 = value;
         self
     }
 }
@@ -261,12 +282,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `comment` field (optional)
     pub fn comment(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.4 = value.into();
+        self._fields.5 = value.into();
         self
     }
     /// Set the `comment` field to an Option value (optional)
     pub fn maybe_comment(mut self, value: Option<S>) -> Self {
-        self._fields.4 = value;
+        self._fields.5 = value;
         self
     }
 }
@@ -274,12 +295,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `createdAfter` field (optional)
     pub fn created_after(mut self, value: impl Into<Option<Datetime>>) -> Self {
-        self._fields.5 = value.into();
+        self._fields.6 = value.into();
         self
     }
     /// Set the `createdAfter` field to an Option value (optional)
     pub fn maybe_created_after(mut self, value: Option<Datetime>) -> Self {
-        self._fields.5 = value;
+        self._fields.6 = value;
         self
     }
 }
@@ -287,12 +308,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `createdBefore` field (optional)
     pub fn created_before(mut self, value: impl Into<Option<Datetime>>) -> Self {
-        self._fields.6 = value.into();
+        self._fields.7 = value.into();
         self
     }
     /// Set the `createdBefore` field to an Option value (optional)
     pub fn maybe_created_before(mut self, value: Option<Datetime>) -> Self {
-        self._fields.6 = value;
+        self._fields.7 = value;
         self
     }
 }
@@ -300,12 +321,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `createdBy` field (optional)
     pub fn created_by(mut self, value: impl Into<Option<Did<S>>>) -> Self {
-        self._fields.7 = value.into();
+        self._fields.8 = value.into();
         self
     }
     /// Set the `createdBy` field to an Option value (optional)
     pub fn maybe_created_by(mut self, value: Option<Did<S>>) -> Self {
-        self._fields.7 = value;
+        self._fields.8 = value;
         self
     }
 }
@@ -313,12 +334,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `cursor` field (optional)
     pub fn cursor(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.8 = value.into();
+        self._fields.9 = value.into();
         self
     }
     /// Set the `cursor` field to an Option value (optional)
     pub fn maybe_cursor(mut self, value: Option<S>) -> Self {
-        self._fields.8 = value;
+        self._fields.9 = value;
         self
     }
 }
@@ -326,12 +347,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `hasComment` field (optional)
     pub fn has_comment(mut self, value: impl Into<Option<bool>>) -> Self {
-        self._fields.9 = value.into();
+        self._fields.10 = value.into();
         self
     }
     /// Set the `hasComment` field to an Option value (optional)
     pub fn maybe_has_comment(mut self, value: Option<bool>) -> Self {
-        self._fields.9 = value;
+        self._fields.10 = value;
         self
     }
 }
@@ -339,12 +360,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `includeAllUserRecords` field (optional)
     pub fn include_all_user_records(mut self, value: impl Into<Option<bool>>) -> Self {
-        self._fields.10 = value.into();
+        self._fields.11 = value.into();
         self
     }
     /// Set the `includeAllUserRecords` field to an Option value (optional)
     pub fn maybe_include_all_user_records(mut self, value: Option<bool>) -> Self {
-        self._fields.10 = value;
+        self._fields.11 = value;
         self
     }
 }
@@ -352,12 +373,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `limit` field (optional)
     pub fn limit(mut self, value: impl Into<Option<i64>>) -> Self {
-        self._fields.11 = value.into();
+        self._fields.12 = value.into();
         self
     }
     /// Set the `limit` field to an Option value (optional)
     pub fn maybe_limit(mut self, value: Option<i64>) -> Self {
-        self._fields.11 = value;
+        self._fields.12 = value;
         self
     }
 }
@@ -365,12 +386,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `modTool` field (optional)
     pub fn mod_tool(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
-        self._fields.12 = value.into();
+        self._fields.13 = value.into();
         self
     }
     /// Set the `modTool` field to an Option value (optional)
     pub fn maybe_mod_tool(mut self, value: Option<Vec<S>>) -> Self {
-        self._fields.12 = value;
+        self._fields.13 = value;
         self
     }
 }
@@ -378,12 +399,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `policies` field (optional)
     pub fn policies(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
-        self._fields.13 = value.into();
+        self._fields.14 = value.into();
         self
     }
     /// Set the `policies` field to an Option value (optional)
     pub fn maybe_policies(mut self, value: Option<Vec<S>>) -> Self {
-        self._fields.13 = value;
+        self._fields.14 = value;
         self
     }
 }
@@ -391,12 +412,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `removedLabels` field (optional)
     pub fn removed_labels(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
-        self._fields.14 = value.into();
+        self._fields.15 = value.into();
         self
     }
     /// Set the `removedLabels` field to an Option value (optional)
     pub fn maybe_removed_labels(mut self, value: Option<Vec<S>>) -> Self {
-        self._fields.14 = value;
+        self._fields.15 = value;
         self
     }
 }
@@ -404,12 +425,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `removedTags` field (optional)
     pub fn removed_tags(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
-        self._fields.15 = value.into();
+        self._fields.16 = value.into();
         self
     }
     /// Set the `removedTags` field to an Option value (optional)
     pub fn maybe_removed_tags(mut self, value: Option<Vec<S>>) -> Self {
-        self._fields.15 = value;
+        self._fields.16 = value;
         self
     }
 }
@@ -417,12 +438,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `reportTypes` field (optional)
     pub fn report_types(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
-        self._fields.16 = value.into();
+        self._fields.17 = value.into();
         self
     }
     /// Set the `reportTypes` field to an Option value (optional)
     pub fn maybe_report_types(mut self, value: Option<Vec<S>>) -> Self {
-        self._fields.16 = value;
+        self._fields.17 = value;
         self
     }
 }
@@ -430,12 +451,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `sortDirection` field (optional)
     pub fn sort_direction(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.17 = value.into();
+        self._fields.18 = value.into();
         self
     }
     /// Set the `sortDirection` field to an Option value (optional)
     pub fn maybe_sort_direction(mut self, value: Option<S>) -> Self {
-        self._fields.17 = value;
+        self._fields.18 = value;
         self
     }
 }
@@ -443,12 +464,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `subject` field (optional)
     pub fn subject(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
-        self._fields.18 = value.into();
+        self._fields.19 = value.into();
         self
     }
     /// Set the `subject` field to an Option value (optional)
     pub fn maybe_subject(mut self, value: Option<UriValue<S>>) -> Self {
-        self._fields.18 = value;
+        self._fields.19 = value;
         self
     }
 }
@@ -456,12 +477,12 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `subjectType` field (optional)
     pub fn subject_type(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.19 = value.into();
+        self._fields.20 = value.into();
         self
     }
     /// Set the `subjectType` field to an Option value (optional)
     pub fn maybe_subject_type(mut self, value: Option<S>) -> Self {
-        self._fields.19 = value;
+        self._fields.20 = value;
         self
     }
 }
@@ -469,12 +490,25 @@ impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
 impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
     /// Set the `types` field (optional)
     pub fn types(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
-        self._fields.20 = value.into();
+        self._fields.21 = value.into();
         self
     }
     /// Set the `types` field to an Option value (optional)
     pub fn maybe_types(mut self, value: Option<Vec<S>>) -> Self {
-        self._fields.20 = value;
+        self._fields.21 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: query_events_state::State> QueryEventsBuilder<S, St> {
+    /// Set the `withStrike` field (optional)
+    pub fn with_strike(mut self, value: impl Into<Option<bool>>) -> Self {
+        self._fields.22 = value.into();
+        self
+    }
+    /// Set the `withStrike` field to an Option value (optional)
+    pub fn maybe_with_strike(mut self, value: Option<bool>) -> Self {
+        self._fields.22 = value;
         self
     }
 }
@@ -489,24 +523,26 @@ where
             added_labels: self._fields.0,
             added_tags: self._fields.1,
             age_assurance_state: self._fields.2,
-            collections: self._fields.3,
-            comment: self._fields.4,
-            created_after: self._fields.5,
-            created_before: self._fields.6,
-            created_by: self._fields.7,
-            cursor: self._fields.8,
-            has_comment: self._fields.9,
-            include_all_user_records: self._fields.10,
-            limit: self._fields.11,
-            mod_tool: self._fields.12,
-            policies: self._fields.13,
-            removed_labels: self._fields.14,
-            removed_tags: self._fields.15,
-            report_types: self._fields.16,
-            sort_direction: self._fields.17,
-            subject: self._fields.18,
-            subject_type: self._fields.19,
-            types: self._fields.20,
+            batch_id: self._fields.3,
+            collections: self._fields.4,
+            comment: self._fields.5,
+            created_after: self._fields.6,
+            created_before: self._fields.7,
+            created_by: self._fields.8,
+            cursor: self._fields.9,
+            has_comment: self._fields.10,
+            include_all_user_records: self._fields.11,
+            limit: self._fields.12,
+            mod_tool: self._fields.13,
+            policies: self._fields.14,
+            removed_labels: self._fields.15,
+            removed_tags: self._fields.16,
+            report_types: self._fields.17,
+            sort_direction: self._fields.18,
+            subject: self._fields.19,
+            subject_type: self._fields.20,
+            types: self._fields.21,
+            with_strike: self._fields.22,
         }
     }
 }

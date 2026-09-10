@@ -1,0 +1,39 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.feed.getPlay",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Retrieves a play given an author DID and record key.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["authorDID", "rkey"],
+        "properties": {
+          "authorDID": {
+            "type": "string",
+            "format": "did",
+            "description": "The author's DID for the play"
+          },
+          "rkey": {
+            "type": "string",
+            "format": "record-key",
+            "description": "The record key of the play"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["play"],
+          "properties": {
+            "play": {
+              "type": "ref",
+              "ref": "fm.teal.feed.defs#playView"
+            }
+          }
+        }
+      }
+    }
+  }
+}

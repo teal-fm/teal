@@ -35,6 +35,12 @@ pub struct GetSuggestedUsersSkeleton<S: BosStr = DefaultStr> {
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetSuggestedUsersSkeletonOutput<S: BosStr = DefaultStr> {
     pub dids: Vec<Did<S>>,
+    ///DEPRECATED: use recIdStr instead.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rec_id: Option<S>,
+    ///Snowflake for this recommendation, use when submitting recommendation events.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rec_id_str: Option<S>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }

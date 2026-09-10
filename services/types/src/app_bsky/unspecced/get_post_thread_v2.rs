@@ -47,10 +47,6 @@ pub struct GetPostThreadV2<S: BosStr = DefaultStr> {
     #[serde(default = "_default_branching_factor")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub branching_factor: Option<i64>,
-    /// Defaults to `false`.
-    #[serde(default = "_default_prioritize_followed_users")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub prioritize_followed_users: Option<bool>,
     ///Defaults to `"oldest"`.
     #[serde(default = "_default_sort")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -149,10 +145,6 @@ fn _default_branching_factor() -> Option<i64> {
     Some(10i64)
 }
 
-fn _default_prioritize_followed_users() -> Option<bool> {
-    Some(false)
-}
-
 fn _default_sort<S: jacquard_common::FromStaticStr>() -> Option<S> {
     Some(S::from_static("oldest"))
 }
@@ -192,14 +184,7 @@ pub mod get_post_thread_v2_state {
 /// Builder for constructing an instance of this type.
 pub struct GetPostThreadV2Builder<S: BosStr, St: get_post_thread_v2_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (
-        Option<bool>,
-        Option<AtUri<S>>,
-        Option<i64>,
-        Option<i64>,
-        Option<bool>,
-        Option<S>,
-    ),
+    _fields: (Option<bool>, Option<AtUri<S>>, Option<i64>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -215,7 +200,7 @@ impl<S: BosStr> GetPostThreadV2Builder<S, get_post_thread_v2_state::Empty> {
     pub fn new() -> Self {
         GetPostThreadV2Builder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None),
+            _fields: (None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -280,27 +265,14 @@ impl<S: BosStr, St: get_post_thread_v2_state::State> GetPostThreadV2Builder<S, S
 }
 
 impl<S: BosStr, St: get_post_thread_v2_state::State> GetPostThreadV2Builder<S, St> {
-    /// Set the `prioritizeFollowedUsers` field (optional)
-    pub fn prioritize_followed_users(mut self, value: impl Into<Option<bool>>) -> Self {
-        self._fields.4 = value.into();
-        self
-    }
-    /// Set the `prioritizeFollowedUsers` field to an Option value (optional)
-    pub fn maybe_prioritize_followed_users(mut self, value: Option<bool>) -> Self {
-        self._fields.4 = value;
-        self
-    }
-}
-
-impl<S: BosStr, St: get_post_thread_v2_state::State> GetPostThreadV2Builder<S, St> {
     /// Set the `sort` field (optional)
     pub fn sort(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.5 = value.into();
+        self._fields.4 = value.into();
         self
     }
     /// Set the `sort` field to an Option value (optional)
     pub fn maybe_sort(mut self, value: Option<S>) -> Self {
-        self._fields.5 = value;
+        self._fields.4 = value;
         self
     }
 }
@@ -317,8 +289,7 @@ where
             anchor: self._fields.1.unwrap(),
             below: self._fields.2,
             branching_factor: self._fields.3,
-            prioritize_followed_users: self._fields.4,
-            sort: self._fields.5,
+            sort: self._fields.4,
         }
     }
 }
@@ -333,51 +304,51 @@ pub mod thread_item_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Depth;
-        type Uri;
         type Value;
+        type Uri;
+        type Depth;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Depth = Unset;
-        type Uri = Unset;
         type Value = Unset;
-    }
-    ///State transition - sets the `depth` field to Set
-    pub struct SetDepth<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDepth<St> {}
-    impl<St: State> State for SetDepth<St> {
-        type Depth = Set<members::depth>;
-        type Uri = St::Uri;
-        type Value = St::Value;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type Depth = St::Depth;
-        type Uri = Set<members::uri>;
-        type Value = St::Value;
+        type Uri = Unset;
+        type Depth = Unset;
     }
     ///State transition - sets the `value` field to Set
     pub struct SetValue<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetValue<St> {}
     impl<St: State> State for SetValue<St> {
-        type Depth = St::Depth;
-        type Uri = St::Uri;
         type Value = Set<members::value>;
+        type Uri = St::Uri;
+        type Depth = St::Depth;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type Value = St::Value;
+        type Uri = Set<members::uri>;
+        type Depth = St::Depth;
+    }
+    ///State transition - sets the `depth` field to Set
+    pub struct SetDepth<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDepth<St> {}
+    impl<St: State> State for SetDepth<St> {
+        type Value = St::Value;
+        type Uri = St::Uri;
+        type Depth = Set<members::depth>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `depth` field
-        pub struct depth(());
-        ///Marker type for the `uri` field
-        pub struct uri(());
         ///Marker type for the `value` field
         pub struct value(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
+        ///Marker type for the `depth` field
+        pub struct depth(());
     }
 }
 
@@ -466,9 +437,9 @@ where
 impl<S: BosStr, St> ThreadItemBuilder<S, St>
 where
     St: thread_item_state::State,
-    St::Depth: thread_item_state::IsSet,
-    St::Uri: thread_item_state::IsSet,
     St::Value: thread_item_state::IsSet,
+    St::Uri: thread_item_state::IsSet,
+    St::Depth: thread_item_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ThreadItem<S> {
@@ -539,12 +510,6 @@ fn lexicon_doc_app_bsky_unspecced_getPostThreadV2() -> LexiconDoc<'static> {
                                 map.insert(
                                     SmolStr::new_static("branchingFactor"),
                                     LexXrpcParametersProperty::Integer(LexInteger {
-                                        ..Default::default()
-                                    }),
-                                );
-                                map.insert(
-                                    SmolStr::new_static("prioritizeFollowedUsers"),
-                                    LexXrpcParametersProperty::Boolean(LexBoolean {
                                         ..Default::default()
                                     }),
                                 );

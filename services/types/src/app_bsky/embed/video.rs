@@ -48,10 +48,92 @@ pub struct Video<S: BosStr = DefaultStr> {
     pub aspect_ratio: Option<AspectRatio<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub captions: Option<Vec<video::Caption<S>>>,
+    ///A hint to the client about how to present the video.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<VideoPresentation<S>>,
     ///The mp4 video file. May be up to 100mb, formerly limited to 50mb.
     pub video: BlobRef<S>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+/// A hint to the client about how to present the video.
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum VideoPresentation<S: BosStr = DefaultStr> {
+    Default,
+    Gif,
+    Other(S),
+}
+
+impl<S: BosStr> VideoPresentation<S> {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Default => "default",
+            Self::Gif => "gif",
+            Self::Other(s) => s.as_ref(),
+        }
+    }
+    /// Construct from a string-like value, matching known values.
+    pub fn from_value(s: S) -> Self {
+        match s.as_ref() {
+            "default" => Self::Default,
+            "gif" => Self::Gif,
+            _ => Self::Other(s),
+        }
+    }
+}
+
+impl<S: BosStr> core::fmt::Display for VideoPresentation<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl<S: BosStr> AsRef<str> for VideoPresentation<S> {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl<S: BosStr> Serialize for VideoPresentation<S> {
+    fn serialize<Ser>(&self, serializer: Ser) -> Result<Ser::Ok, Ser::Error>
+    where
+        Ser: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de, S: Deserialize<'de> + BosStr> Deserialize<'de> for VideoPresentation<S> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = S::deserialize(deserializer)?;
+        Ok(Self::from_value(s))
+    }
+}
+
+impl<S: BosStr + Default> Default for VideoPresentation<S> {
+    fn default() -> Self {
+        Self::Other(Default::default())
+    }
+}
+
+impl<S: BosStr> jacquard_common::IntoStatic for VideoPresentation<S>
+where
+    S: BosStr + jacquard_common::IntoStatic,
+    S::Output: BosStr,
+{
+    type Output = VideoPresentation<S::Output>;
+    fn into_static(self) -> Self::Output {
+        match self {
+            VideoPresentation::Default => VideoPresentation::Default,
+            VideoPresentation::Gif => VideoPresentation::Gif,
+            VideoPresentation::Other(v) => VideoPresentation::Other(v.into_static()),
+        }
+    }
 }
 
 
@@ -64,10 +146,92 @@ pub struct View<S: BosStr = DefaultStr> {
     pub aspect_ratio: Option<AspectRatio<S>>,
     pub cid: Cid<S>,
     pub playlist: UriValue<S>,
+    ///A hint to the client about how to present the video.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<ViewPresentation<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thumbnail: Option<UriValue<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+/// A hint to the client about how to present the video.
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ViewPresentation<S: BosStr = DefaultStr> {
+    Default,
+    Gif,
+    Other(S),
+}
+
+impl<S: BosStr> ViewPresentation<S> {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Default => "default",
+            Self::Gif => "gif",
+            Self::Other(s) => s.as_ref(),
+        }
+    }
+    /// Construct from a string-like value, matching known values.
+    pub fn from_value(s: S) -> Self {
+        match s.as_ref() {
+            "default" => Self::Default,
+            "gif" => Self::Gif,
+            _ => Self::Other(s),
+        }
+    }
+}
+
+impl<S: BosStr> core::fmt::Display for ViewPresentation<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl<S: BosStr> AsRef<str> for ViewPresentation<S> {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl<S: BosStr> Serialize for ViewPresentation<S> {
+    fn serialize<Ser>(&self, serializer: Ser) -> Result<Ser::Ok, Ser::Error>
+    where
+        Ser: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de, S: Deserialize<'de> + BosStr> Deserialize<'de> for ViewPresentation<S> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = S::deserialize(deserializer)?;
+        Ok(Self::from_value(s))
+    }
+}
+
+impl<S: BosStr + Default> Default for ViewPresentation<S> {
+    fn default() -> Self {
+        Self::Other(Default::default())
+    }
+}
+
+impl<S: BosStr> jacquard_common::IntoStatic for ViewPresentation<S>
+where
+    S: BosStr + jacquard_common::IntoStatic,
+    S::Output: BosStr,
+{
+    type Output = ViewPresentation<S::Output>;
+    fn into_static(self) -> Self::Output {
+        match self {
+            ViewPresentation::Default => ViewPresentation::Default,
+            ViewPresentation::Gif => ViewPresentation::Gif,
+            ViewPresentation::Other(v) => ViewPresentation::Other(v.into_static()),
+        }
+    }
 }
 
 impl<S: BosStr> LexiconSchema for Caption<S> {
@@ -259,37 +423,37 @@ pub mod caption_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type File;
         type Lang;
+        type File;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type File = Unset;
         type Lang = Unset;
-    }
-    ///State transition - sets the `file` field to Set
-    pub struct SetFile<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetFile<St> {}
-    impl<St: State> State for SetFile<St> {
-        type File = Set<members::file>;
-        type Lang = St::Lang;
+        type File = Unset;
     }
     ///State transition - sets the `lang` field to Set
     pub struct SetLang<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetLang<St> {}
     impl<St: State> State for SetLang<St> {
-        type File = St::File;
         type Lang = Set<members::lang>;
+        type File = St::File;
+    }
+    ///State transition - sets the `file` field to Set
+    pub struct SetFile<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetFile<St> {}
+    impl<St: State> State for SetFile<St> {
+        type Lang = St::Lang;
+        type File = Set<members::file>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `file` field
-        pub struct file(());
         ///Marker type for the `lang` field
         pub struct lang(());
+        ///Marker type for the `file` field
+        pub struct file(());
     }
 }
 
@@ -359,8 +523,8 @@ where
 impl<S: BosStr, St> CaptionBuilder<S, St>
 where
     St: caption_state::State,
-    St::File: caption_state::IsSet,
     St::Lang: caption_state::IsSet,
+    St::File: caption_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Caption<S> {
@@ -456,6 +620,17 @@ fn lexicon_doc_app_bsky_embed_video() -> LexiconDoc<'static> {
                             }),
                         );
                         map.insert(
+                            SmolStr::new_static("presentation"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "A hint to the client about how to present the video.",
+                                    ),
+                                ),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
                             SmolStr::new_static("video"),
                             LexObjectProperty::Blob(LexBlob { ..Default::default() }),
                         );
@@ -501,6 +676,17 @@ fn lexicon_doc_app_bsky_embed_video() -> LexiconDoc<'static> {
                             SmolStr::new_static("playlist"),
                             LexObjectProperty::String(LexString {
                                 format: Some(LexStringFormat::Uri),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("presentation"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "A hint to the client about how to present the video.",
+                                    ),
+                                ),
                                 ..Default::default()
                             }),
                         );
@@ -561,6 +747,7 @@ pub struct VideoBuilder<S: BosStr, St: video_state::State> {
         Option<S>,
         Option<AspectRatio<S>>,
         Option<Vec<video::Caption<S>>>,
+        Option<VideoPresentation<S>>,
         Option<BlobRef<S>>,
     ),
     _type: PhantomData<fn() -> S>,
@@ -578,7 +765,7 @@ impl<S: BosStr> VideoBuilder<S, video_state::Empty> {
     pub fn new() -> Self {
         VideoBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None),
+            _fields: (None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -623,6 +810,22 @@ impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
     }
 }
 
+impl<S: BosStr, St: video_state::State> VideoBuilder<S, St> {
+    /// Set the `presentation` field (optional)
+    pub fn presentation(
+        mut self,
+        value: impl Into<Option<VideoPresentation<S>>>,
+    ) -> Self {
+        self._fields.3 = value.into();
+        self
+    }
+    /// Set the `presentation` field to an Option value (optional)
+    pub fn maybe_presentation(mut self, value: Option<VideoPresentation<S>>) -> Self {
+        self._fields.3 = value;
+        self
+    }
+}
+
 impl<S: BosStr, St> VideoBuilder<S, St>
 where
     St: video_state::State,
@@ -633,7 +836,7 @@ where
         mut self,
         value: impl Into<BlobRef<S>>,
     ) -> VideoBuilder<S, video_state::SetVideo<St>> {
-        self._fields.3 = Option::Some(value.into());
+        self._fields.4 = Option::Some(value.into());
         VideoBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -653,7 +856,8 @@ where
             alt: self._fields.0,
             aspect_ratio: self._fields.1,
             captions: self._fields.2,
-            video: self._fields.3.unwrap(),
+            presentation: self._fields.3,
+            video: self._fields.4.unwrap(),
             extra_data: Default::default(),
         }
     }
@@ -663,7 +867,8 @@ where
             alt: self._fields.0,
             aspect_ratio: self._fields.1,
             captions: self._fields.2,
-            video: self._fields.3.unwrap(),
+            presentation: self._fields.3,
+            video: self._fields.4.unwrap(),
             extra_data: Some(extra_data),
         }
     }
@@ -721,6 +926,7 @@ pub struct ViewBuilder<S: BosStr, St: view_state::State> {
         Option<AspectRatio<S>>,
         Option<Cid<S>>,
         Option<UriValue<S>>,
+        Option<ViewPresentation<S>>,
         Option<UriValue<S>>,
     ),
     _type: PhantomData<fn() -> S>,
@@ -738,7 +944,7 @@ impl<S: BosStr> ViewBuilder<S, view_state::Empty> {
     pub fn new() -> Self {
         ViewBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None),
+            _fields: (None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -809,14 +1015,30 @@ where
 }
 
 impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
+    /// Set the `presentation` field (optional)
+    pub fn presentation(
+        mut self,
+        value: impl Into<Option<ViewPresentation<S>>>,
+    ) -> Self {
+        self._fields.4 = value.into();
+        self
+    }
+    /// Set the `presentation` field to an Option value (optional)
+    pub fn maybe_presentation(mut self, value: Option<ViewPresentation<S>>) -> Self {
+        self._fields.4 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
     /// Set the `thumbnail` field (optional)
     pub fn thumbnail(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
-        self._fields.4 = value.into();
+        self._fields.5 = value.into();
         self
     }
     /// Set the `thumbnail` field to an Option value (optional)
     pub fn maybe_thumbnail(mut self, value: Option<UriValue<S>>) -> Self {
-        self._fields.4 = value;
+        self._fields.5 = value;
         self
     }
 }
@@ -834,7 +1056,8 @@ where
             aspect_ratio: self._fields.1,
             cid: self._fields.2.unwrap(),
             playlist: self._fields.3.unwrap(),
-            thumbnail: self._fields.4,
+            presentation: self._fields.4,
+            thumbnail: self._fields.5,
             extra_data: Default::default(),
         }
     }
@@ -845,7 +1068,8 @@ where
             aspect_ratio: self._fields.1,
             cid: self._fields.2.unwrap(),
             playlist: self._fields.3.unwrap(),
-            thumbnail: self._fields.4,
+            presentation: self._fields.4,
+            thumbnail: self._fields.5,
             extra_data: Some(extra_data),
         }
     }

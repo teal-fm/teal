@@ -15,8 +15,8 @@ use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
 use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
-use crate::chat_bsky::convo::DeletedMessageView;
 use crate::chat_bsky::convo::MessageView;
+use crate::chat_bsky::convo::SystemMessageView;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
@@ -31,6 +31,10 @@ pub struct GetMessageContext<S: BosStr = DefaultStr> {
     pub before: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub convo_id: Option<S>,
+    ///Defaults to `10`. Min: 0. Max: 1000.
+    #[serde(default = "_default_max_interleaved_system_messages")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_interleaved_system_messages: Option<i64>,
     pub message_id: S,
 }
 
@@ -50,8 +54,8 @@ pub struct GetMessageContextOutput<S: BosStr = DefaultStr> {
 pub enum GetMessageContextOutputMessagesItem<S: BosStr = DefaultStr> {
     #[serde(rename = "chat.bsky.convo.defs#messageView")]
     MessageView(Box<MessageView<S>>),
-    #[serde(rename = "chat.bsky.convo.defs#deletedMessageView")]
-    DeletedMessageView(Box<DeletedMessageView<S>>),
+    #[serde(rename = "chat.bsky.convo.defs#systemMessageView")]
+    SystemMessageView(Box<SystemMessageView<S>>),
 }
 
 /// Response type for chat.bsky.moderation.getMessageContext
@@ -84,6 +88,10 @@ fn _default_after() -> Option<i64> {
 
 fn _default_before() -> Option<i64> {
     Some(5i64)
+}
+
+fn _default_max_interleaved_system_messages() -> Option<i64> {
+    Some(10i64)
 }
 
 pub mod get_message_context_state {
@@ -121,7 +129,7 @@ pub mod get_message_context_state {
 /// Builder for constructing an instance of this type.
 pub struct GetMessageContextBuilder<S: BosStr, St: get_message_context_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<i64>, Option<i64>, Option<S>, Option<S>),
+    _fields: (Option<i64>, Option<i64>, Option<S>, Option<i64>, Option<S>),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -137,7 +145,7 @@ impl<S: BosStr> GetMessageContextBuilder<S, get_message_context_state::Empty> {
     pub fn new() -> Self {
         GetMessageContextBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None),
+            _fields: (None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -182,6 +190,22 @@ impl<S: BosStr, St: get_message_context_state::State> GetMessageContextBuilder<S
     }
 }
 
+impl<S: BosStr, St: get_message_context_state::State> GetMessageContextBuilder<S, St> {
+    /// Set the `maxInterleavedSystemMessages` field (optional)
+    pub fn max_interleaved_system_messages(
+        mut self,
+        value: impl Into<Option<i64>>,
+    ) -> Self {
+        self._fields.3 = value.into();
+        self
+    }
+    /// Set the `maxInterleavedSystemMessages` field to an Option value (optional)
+    pub fn maybe_max_interleaved_system_messages(mut self, value: Option<i64>) -> Self {
+        self._fields.3 = value;
+        self
+    }
+}
+
 impl<S: BosStr, St> GetMessageContextBuilder<S, St>
 where
     St: get_message_context_state::State,
@@ -192,7 +216,7 @@ where
         mut self,
         value: impl Into<S>,
     ) -> GetMessageContextBuilder<S, get_message_context_state::SetMessageId<St>> {
-        self._fields.3 = Option::Some(value.into());
+        self._fields.4 = Option::Some(value.into());
         GetMessageContextBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -212,7 +236,8 @@ where
             after: self._fields.0,
             before: self._fields.1,
             convo_id: self._fields.2,
-            message_id: self._fields.3.unwrap(),
+            max_interleaved_system_messages: self._fields.3,
+            message_id: self._fields.4.unwrap(),
         }
     }
 }

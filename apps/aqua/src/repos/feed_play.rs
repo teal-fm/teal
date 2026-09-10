@@ -1,13 +1,13 @@
 use async_trait::async_trait;
 use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
-use types::fm_teal::alpha::feed::{Artist, PlayView};
+use types::fm_teal::feed::{Artist, PlayView};
 
 use super::{
     mbid_uri, mini_profile,
     pg::PgDataSource,
-    stats::{LatestPlaysCursor, decode_latest_cursor, encode_latest_cursor},
-    utc_to_atrium_datetime,
+    stats::{decode_latest_cursor, encode_latest_cursor, LatestPlaysCursor},
+    uri_value, utc_to_atrium_datetime,
 };
 
 pub struct ActorFeedPage {
@@ -94,8 +94,8 @@ impl FeedPlayRepo for PgDataSource {
             release_name: row.release_name.clone().map(|s| s.into()),
             release_mb_id: row.release_mbid.map(mbid_uri),
             isrc: row.isrc.map(|s| s.into()),
-            origin_url: row.origin_url.map(|s| s.into()),
-            music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+            origin_uri: row.origin_url.map(uri_value),
+            music_service_uri: row.music_service_base_domain.map(uri_value),
             submission_client_agent: row.submission_client_agent.map(|s| s.into()),
             played_time: row
                 .played_time
@@ -197,8 +197,8 @@ impl FeedPlayRepo for PgDataSource {
                 release_name: row.release_name.clone().map(|s| s.into()),
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
-                origin_url: row.origin_url.map(|s| s.into()),
-                music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+                origin_uri: row.origin_url.map(uri_value),
+                music_service_uri: row.music_service_base_domain.map(uri_value),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time
@@ -281,8 +281,8 @@ impl FeedPlayRepo for PgDataSource {
                 release_name: row.release_name.clone().map(|s| s.into()),
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
-                origin_url: row.origin_url.map(|s| s.into()),
-                music_service_base_domain: row.music_service_base_domain.map(|s| s.into()),
+                origin_uri: row.origin_url.map(uri_value),
+                music_service_uri: row.music_service_base_domain.map(uri_value),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time

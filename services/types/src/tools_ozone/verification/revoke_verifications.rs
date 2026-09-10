@@ -234,37 +234,37 @@ pub mod revoke_error_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Error;
         type Uri;
+        type Error;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Error = Unset;
         type Uri = Unset;
-    }
-    ///State transition - sets the `error` field to Set
-    pub struct SetError<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetError<St> {}
-    impl<St: State> State for SetError<St> {
-        type Error = Set<members::error>;
-        type Uri = St::Uri;
+        type Error = Unset;
     }
     ///State transition - sets the `uri` field to Set
     pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetUri<St> {}
     impl<St: State> State for SetUri<St> {
-        type Error = St::Error;
         type Uri = Set<members::uri>;
+        type Error = St::Error;
+    }
+    ///State transition - sets the `error` field to Set
+    pub struct SetError<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetError<St> {}
+    impl<St: State> State for SetError<St> {
+        type Uri = St::Uri;
+        type Error = Set<members::error>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `error` field
-        pub struct error(());
         ///Marker type for the `uri` field
         pub struct uri(());
+        ///Marker type for the `error` field
+        pub struct error(());
     }
 }
 
@@ -334,8 +334,8 @@ where
 impl<S: BosStr, St> RevokeErrorBuilder<S, St>
 where
     St: revoke_error_state::State,
-    St::Error: revoke_error_state::IsSet,
     St::Uri: revoke_error_state::IsSet,
+    St::Error: revoke_error_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RevokeError<S> {

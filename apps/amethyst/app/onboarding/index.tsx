@@ -9,8 +9,8 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { ArrowLeft, Check, Disc3, Music2, Sparkles } from "lucide-react-native";
 
-import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
-import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profileStatus";
+import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
+import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/actor/profileStatus";
 
 import DescriptionPage from "./descriptionPage";
 import DisplayNamePage from "./displayNamePage";
@@ -61,7 +61,7 @@ export default function OnboardingPage() {
       try {
         const res = await agent.call("com.atproto.repo.getRecord", {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
+          collection: "fm.teal.actor.profileStatus",
           rkey: "self",
         });
         setProfileStatus(res.data.value as ProfileStatusRecord);
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
     try {
       const res = await agent.call("com.atproto.repo.getRecord", {
         repo: agent.did,
-        collection: "fm.teal.alpha.actor.profile",
+        collection: "fm.teal.actor.profile",
         rkey: "self",
       });
       currentUser = res.data.value;
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
     setSubmissionStep(4);
 
     let record: ProfileRecord = {
-      $type: "fm.teal.alpha.actor.profile",
+      $type: "fm.teal.actor.profile",
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
       avatar: newAvatarBlob,
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
           swapRecord: cid,
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
         },
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
 
     // Update profile status to mark onboarding as completed
     const profileStatusRecord: ProfileStatusRecord = {
-      $type: "fm.teal.alpha.actor.profileStatus",
+      $type: "fm.teal.actor.profileStatus",
       completedOnboarding: "profileOnboarding",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -194,7 +194,7 @@ export default function OnboardingPage() {
         {},
         {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profileStatus",
+          collection: "fm.teal.actor.profileStatus",
           rkey: "self",
           record: profileStatusRecord,
         },
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
           {},
           {
             repo: agent.did,
-            collection: "fm.teal.alpha.actor.profileStatus",
+            collection: "fm.teal.actor.profileStatus",
             rkey: "self",
             record: {
               ...profileStatusRecord,
@@ -364,7 +364,7 @@ export default function OnboardingPage() {
           <View className="flex-row items-center gap-2">
             <Icon icon={Music2} size={18} className="text-secondary" />
             <Text className="font-mono text-xs text-background/55">
-              fm.teal.alpha.actor.profile
+              fm.teal.actor.profile
             </Text>
           </View>
         </View>

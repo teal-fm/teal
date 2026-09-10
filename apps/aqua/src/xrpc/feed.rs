@@ -1,15 +1,15 @@
 use crate::ctx::Context;
-use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm_teal::alpha::feed::PlayView;
+use types::fm_teal::feed::PlayView;
 
 // mount feed routes
 pub fn feed_routes() -> axum::Router {
     axum::Router::new()
-        .route("/fm.teal.alpha.feed.getPlay", get(get_feed_play))
-        .route("/fm.teal.alpha.feed.getActorFeed", get(get_actor_feed))
-        .route("/fm.teal.alpha.feed.getPlays", get(get_feed_plays))
+        .route("/fm.teal.feed.getPlay", get(get_feed_play))
+        .route("/fm.teal.feed.getActorFeed", get(get_actor_feed))
+        .route("/fm.teal.feed.getPlays", get(get_feed_plays))
 }
 
 #[derive(Deserialize)]
@@ -33,7 +33,7 @@ pub async fn get_feed_play(
     let uri = match (query.uri, query.author_did, query.rkey) {
         (Some(uri), _, _) => uri,
         (None, Some(author_did), Some(rkey)) => {
-            format!("at://{author_did}/fm.teal.alpha.feed.play/{rkey}")
+            format!("at://{author_did}/fm.teal.feed.play/{rkey}")
         }
         _ => {
             return Err((

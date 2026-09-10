@@ -35,6 +35,7 @@ pub struct Image<S: BosStr = DefaultStr> {
     pub alt: S,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub aspect_ratio: Option<AspectRatio<S>>,
+    ///The raw image file. May be up to 2 MB, formerly limited to 1 MB.
     pub image: BlobRef<S>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
@@ -89,10 +90,10 @@ impl<S: BosStr> LexiconSchema for Image<S> {
             let value = &self.image;
             {
                 let size = value.blob().size;
-                if size > 1000000usize {
+                if size > 2000000usize {
                     return Err(ConstraintError::BlobTooLarge {
                         path: ValidationPath::from_field("image"),
-                        max: 1000000usize,
+                        max: 2000000usize,
                         actual: size,
                     });
                 }
@@ -708,50 +709,50 @@ pub mod view_image_state {
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
         type Alt;
-        type Fullsize;
         type Thumb;
+        type Fullsize;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
         type Alt = Unset;
-        type Fullsize = Unset;
         type Thumb = Unset;
+        type Fullsize = Unset;
     }
     ///State transition - sets the `alt` field to Set
     pub struct SetAlt<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetAlt<St> {}
     impl<St: State> State for SetAlt<St> {
         type Alt = Set<members::alt>;
+        type Thumb = St::Thumb;
         type Fullsize = St::Fullsize;
-        type Thumb = St::Thumb;
-    }
-    ///State transition - sets the `fullsize` field to Set
-    pub struct SetFullsize<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetFullsize<St> {}
-    impl<St: State> State for SetFullsize<St> {
-        type Alt = St::Alt;
-        type Fullsize = Set<members::fullsize>;
-        type Thumb = St::Thumb;
     }
     ///State transition - sets the `thumb` field to Set
     pub struct SetThumb<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetThumb<St> {}
     impl<St: State> State for SetThumb<St> {
         type Alt = St::Alt;
-        type Fullsize = St::Fullsize;
         type Thumb = Set<members::thumb>;
+        type Fullsize = St::Fullsize;
+    }
+    ///State transition - sets the `fullsize` field to Set
+    pub struct SetFullsize<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetFullsize<St> {}
+    impl<St: State> State for SetFullsize<St> {
+        type Alt = St::Alt;
+        type Thumb = St::Thumb;
+        type Fullsize = Set<members::fullsize>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
         ///Marker type for the `alt` field
         pub struct alt(());
-        ///Marker type for the `fullsize` field
-        pub struct fullsize(());
         ///Marker type for the `thumb` field
         pub struct thumb(());
+        ///Marker type for the `fullsize` field
+        pub struct fullsize(());
     }
 }
 
@@ -859,8 +860,8 @@ impl<S: BosStr, St> ViewImageBuilder<S, St>
 where
     St: view_image_state::State,
     St::Alt: view_image_state::IsSet,
-    St::Fullsize: view_image_state::IsSet,
     St::Thumb: view_image_state::IsSet,
+    St::Fullsize: view_image_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ViewImage<S> {

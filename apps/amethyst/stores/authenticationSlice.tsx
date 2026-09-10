@@ -3,7 +3,7 @@ import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
 import * as Lexicons from "@teal/lexicons/src/lexicons";
-import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
+import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { pdsHostFromOAuthIssuer } from "../lib/atp/oauthIssuer";

@@ -58,6 +58,8 @@ ENV PKG_CONFIG_PATH_aarch64_unknown_linux_gnu=/usr/lib/aarch64-linux-gnu/pkgconf
 ENV OPENSSL_DIR_aarch64_unknown_linux_gnu=/usr
 ENV OPENSSL_LIB_DIR_aarch64_unknown_linux_gnu=/usr/lib/aarch64-linux-gnu
 ENV OPENSSL_INCLUDE_DIR_aarch64_unknown_linux_gnu=/usr/include/openssl
+ENV SQLX_OFFLINE=true
+ENV SQLX_OFFLINE_DIR=/buildah/.sqlx
 
 
 # Debug platform detection and run build

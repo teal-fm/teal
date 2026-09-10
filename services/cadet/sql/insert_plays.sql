@@ -20,7 +20,7 @@ INSERT INTO plays (
     processed_time, release_mbid, release_name, recording_mbid,
     submission_client_agent, music_service_base_domain
 ) VALUES (
-    'at://did:plc:k644h4rq5bjfzcetgsa6tuby/fm.teal.alpha.feed.play/3liubcmz4sy2a',
+    'at://did:plc:k644h4rq5bjfzcetgsa6tuby/fm.teal.feed.play/3liubcmz4sy2a',
     'bafyreialbenvvxzje463gg3l7zgv52motum2nx32in5fvosmay527wc2vy',
     'did:plc:k644h4rq5bjfzcetgsa6tuby',
     '3liubcmz4sy2a',
@@ -39,7 +39,7 @@ s
 -- insert plays into join table
 INSERT INTO play_to_artists (play_uri, artist_mbid, artist_name) VALUES
 (
-    'at://did:plc:k644h4rq5bjfzcetgsa6tuby/fm.teal.alpha.feed.play/3liubcmz4sy2a',
+    'at://did:plc:k644h4rq5bjfzcetgsa6tuby/fm.teal.feed.play/3liubcmz4sy2a',
     '95015b4c-1aef-4e28-9d36-c9546c194f0c',
     'Bad Suns'
 )

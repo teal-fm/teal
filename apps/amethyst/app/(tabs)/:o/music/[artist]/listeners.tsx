@@ -28,7 +28,7 @@ import { Mic2, Trophy } from "lucide-react-native";
 import type {
   ArtistListenerView,
   ArtistView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/music/defs";
+} from "@teal/lexicons/src/types/fm/teal/music/defs";
 
 export default function ArtistListenersScreen() {
   const params = useLocalSearchParams();

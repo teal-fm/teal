@@ -19,8 +19,8 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { ImagePlus, Save, UserRoundPen, X } from "lucide-react-native";
 
-import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
-import type { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/alpha/actor/profile";
+import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
+import type { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
 
 type EditableProfile = Pick<
   ProfileView,
@@ -159,7 +159,7 @@ export default function EditProfileModal({
       try {
         const existing = await agent.call("com.atproto.repo.getRecord", {
           repo: agent.did,
-          collection: "fm.teal.alpha.actor.profile",
+          collection: "fm.teal.actor.profile",
           rkey: "self",
         });
         currentRecord = existing.data.value as ProfileRecord;
@@ -184,7 +184,7 @@ export default function EditProfileModal({
       );
       const record: ProfileRecord = {
         ...currentRecord,
-        $type: "fm.teal.alpha.actor.profile",
+        $type: "fm.teal.actor.profile",
         displayName: displayName.trim(),
         description: description.trim(),
         descriptionFacets: richText.facets,
@@ -199,7 +199,7 @@ export default function EditProfileModal({
           {},
           {
             repo: agent.did,
-            collection: "fm.teal.alpha.actor.profile",
+            collection: "fm.teal.actor.profile",
             rkey: "self",
             record,
             swapRecord,
@@ -211,7 +211,7 @@ export default function EditProfileModal({
           {},
           {
             repo: agent.did,
-            collection: "fm.teal.alpha.actor.profile",
+            collection: "fm.teal.actor.profile",
             rkey: "self",
             record,
           },

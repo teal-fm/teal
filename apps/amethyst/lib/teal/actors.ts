@@ -1,6 +1,6 @@
 import { getBlueskyProfile } from "@/lib/teal/api";
 
-import type { MiniProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
+import type { MiniProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
 
 export type DisplayActor = {
   avatar?: string;

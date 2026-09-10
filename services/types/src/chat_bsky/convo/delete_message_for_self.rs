@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
-use jacquard_derive::IntoStatic;
+use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
 use crate::chat_bsky::convo::DeletedMessageView;
 
@@ -36,13 +36,65 @@ pub struct DeleteMessageForSelfOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
+
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    thiserror::Error,
+    miette::Diagnostic
+)]
+
+#[serde(tag = "error", content = "message")]
+pub enum DeleteMessageForSelfError {
+    #[serde(rename = "InvalidConvo")]
+    InvalidConvo(Option<SmolStr>),
+    /// Indicates that this message cannot be deleted, e.g. because it is a system message.
+    #[serde(rename = "MessageDeleteNotAllowed")]
+    MessageDeleteNotAllowed(Option<SmolStr>),
+    /// Catch-all for unknown error codes.
+    #[serde(untagged)]
+    Other { error: SmolStr, message: Option<SmolStr> },
+}
+
+impl core::fmt::Display for DeleteMessageForSelfError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::InvalidConvo(msg) => {
+                write!(f, "InvalidConvo")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::MessageDeleteNotAllowed(msg) => {
+                write!(f, "MessageDeleteNotAllowed")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::Other { error, message } => {
+                write!(f, "{}", error)?;
+                if let Some(msg) = message {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
 /// Response type for chat.bsky.convo.deleteMessageForSelf
 pub struct DeleteMessageForSelfResponse;
 impl jacquard_common::xrpc::XrpcResp for DeleteMessageForSelfResponse {
     const NSID: &'static str = "chat.bsky.convo.deleteMessageForSelf";
     const ENCODING: &'static str = "application/json";
     type Output<S: BosStr> = DeleteMessageForSelfOutput<S>;
-    type Err = jacquard_common::xrpc::GenericError;
+    type Err = DeleteMessageForSelfError;
 }
 
 impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for DeleteMessageForSelf<S> {

@@ -1,14 +1,14 @@
 use crate::ctx::Context;
-use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm_teal::alpha::actor::MiniProfileView;
+use types::fm_teal::actor::MiniProfileView;
 
 pub fn graph_routes() -> axum::Router {
     axum::Router::new()
-        .route("/fm.teal.alpha.graph.getSummary", get(get_summary))
-        .route("/fm.teal.alpha.graph.getFollowers", get(get_followers))
-        .route("/fm.teal.alpha.graph.getFollows", get(get_follows))
+        .route("/fm.teal.graph.getSummary", get(get_summary))
+        .route("/fm.teal.graph.getFollowers", get(get_followers))
+        .route("/fm.teal.graph.getFollows", get(get_follows))
 }
 
 #[derive(Deserialize)]

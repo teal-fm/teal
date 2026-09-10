@@ -16,7 +16,7 @@ use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::codegen::unicode_segmentation::UnicodeSegmentation;
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::blob::BlobRef;
-use jacquard_common::types::string::UriValue;
+use jacquard_common::types::string::{Datetime, UriValue};
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use jacquard_lexicon::lexicon::LexiconDoc;
@@ -25,11 +25,29 @@ use jacquard_lexicon::schema::LexiconSchema;
 #[allow(unused_imports)]
 use jacquard_lexicon::validation::{ConstraintError, ValidationPath};
 use serde::{Serialize, Deserialize};
+use crate::app_bsky::actor::ProfileViewBasic;
+use crate::com_atproto::label::Label;
+use crate::com_atproto::repo::strong_ref::StrongRef;
 use crate::app_bsky::embed::external;
+/// RGB color definition, inspired by site.standard.theme.color#rgb
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct ColorRgb<S: BosStr = DefaultStr> {
+    pub b: i64,
+    pub g: i64,
+    pub r: i64,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct External<S: BosStr = DefaultStr> {
+    ///StrongRefs (uri+cid) of the Atmosphere records that backed this view.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub associated_refs: Option<Vec<StrongRef<S>>>,
     pub description: S,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thumb: Option<BlobRef<S>>,
@@ -62,13 +80,143 @@ pub struct View<S: BosStr = DefaultStr> {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct ViewExternal<S: BosStr = DefaultStr> {
+    ///Profiles of the owners of the Atmosphere records that backed this view.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub associated_profiles: Option<Vec<ProfileViewBasic<S>>>,
+    ///StrongRefs (uri+cid) of the Atmosphere records that backed this view.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub associated_refs: Option<Vec<StrongRef<S>>>,
+    ///When the external content was created, if available. Example: a publication date, for an article.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<Datetime>,
     pub description: S,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub labels: Option<Vec<Label<S>>>,
+    ///Estimated reading time in minutes, if applicable and available.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reading_time: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<external::ViewExternalSource<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thumb: Option<UriValue<S>>,
     pub title: S,
+    ///When the external content was updated, if available.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<Datetime>,
     pub uri: UriValue<S>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+/// The source of an external embed, such as a standard.site publication.
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct ViewExternalSource<S: BosStr = DefaultStr> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<S>,
+    ///Fully-qualified URL where an icon representing the source can be fetched. For example, CDN location provided by the App View.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<UriValue<S>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub theme: Option<external::ViewExternalSourceTheme<S>>,
+    pub title: S,
+    ///URI of the source, if available. Example: the https:// URL of a site.standard.publication record.
+    pub uri: UriValue<S>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+/// The theme colors of an external source, such as a site.standard.publication. These colors may be used when rendering an embed from that source.
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct ViewExternalSourceTheme<S: BosStr = DefaultStr> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accent_foreground_rgb: Option<external::ColorRgb<S>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accent_rgb: Option<external::ColorRgb<S>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_rgb: Option<external::ColorRgb<S>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub foreground_rgb: Option<external::ColorRgb<S>>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+impl<S: BosStr> LexiconSchema for ColorRgb<S> {
+    fn nsid() -> &'static str {
+        "app.bsky.embed.external"
+    }
+    fn def_name() -> &'static str {
+        "colorRGB"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_app_bsky_embed_external()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        {
+            let value = &self.b;
+            if *value > 255i64 {
+                return Err(ConstraintError::Maximum {
+                    path: ValidationPath::from_field("b"),
+                    max: 255i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.b;
+            if *value < 0i64 {
+                return Err(ConstraintError::Minimum {
+                    path: ValidationPath::from_field("b"),
+                    min: 0i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.g;
+            if *value > 255i64 {
+                return Err(ConstraintError::Maximum {
+                    path: ValidationPath::from_field("g"),
+                    max: 255i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.g;
+            if *value < 0i64 {
+                return Err(ConstraintError::Minimum {
+                    path: ValidationPath::from_field("g"),
+                    min: 0i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.r;
+            if *value > 255i64 {
+                return Err(ConstraintError::Maximum {
+                    path: ValidationPath::from_field("r"),
+                    max: 255i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.r;
+            if *value < 0i64 {
+                return Err(ConstraintError::Minimum {
+                    path: ValidationPath::from_field("r"),
+                    min: 0i64,
+                    actual: *value,
+                });
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<S: BosStr> LexiconSchema for External<S> {
@@ -169,7 +317,37 @@ impl<S: BosStr> LexiconSchema for ViewExternal<S> {
     }
 }
 
-pub mod external_state {
+impl<S: BosStr> LexiconSchema for ViewExternalSource<S> {
+    fn nsid() -> &'static str {
+        "app.bsky.embed.external"
+    }
+    fn def_name() -> &'static str {
+        "viewExternalSource"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_app_bsky_embed_external()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        Ok(())
+    }
+}
+
+impl<S: BosStr> LexiconSchema for ViewExternalSourceTheme<S> {
+    fn nsid() -> &'static str {
+        "app.bsky.embed.external"
+    }
+    fn def_name() -> &'static str {
+        "viewExternalSourceTheme"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_app_bsky_embed_external()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        Ok(())
+    }
+}
+
+pub mod color_rgb_state {
 
     pub use crate::builder_types::{Set, Unset, IsSet, IsUnset};
     #[allow(unused)]
@@ -179,91 +357,91 @@ pub mod external_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Description;
-        type Title;
-        type Uri;
+        type G;
+        type R;
+        type B;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Description = Unset;
-        type Title = Unset;
-        type Uri = Unset;
+        type G = Unset;
+        type R = Unset;
+        type B = Unset;
     }
-    ///State transition - sets the `description` field to Set
-    pub struct SetDescription<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDescription<St> {}
-    impl<St: State> State for SetDescription<St> {
-        type Description = Set<members::description>;
-        type Title = St::Title;
-        type Uri = St::Uri;
+    ///State transition - sets the `g` field to Set
+    pub struct SetG<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetG<St> {}
+    impl<St: State> State for SetG<St> {
+        type G = Set<members::g>;
+        type R = St::R;
+        type B = St::B;
     }
-    ///State transition - sets the `title` field to Set
-    pub struct SetTitle<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTitle<St> {}
-    impl<St: State> State for SetTitle<St> {
-        type Description = St::Description;
-        type Title = Set<members::title>;
-        type Uri = St::Uri;
+    ///State transition - sets the `r` field to Set
+    pub struct SetR<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetR<St> {}
+    impl<St: State> State for SetR<St> {
+        type G = St::G;
+        type R = Set<members::r>;
+        type B = St::B;
     }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type Description = St::Description;
-        type Title = St::Title;
-        type Uri = Set<members::uri>;
+    ///State transition - sets the `b` field to Set
+    pub struct SetB<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetB<St> {}
+    impl<St: State> State for SetB<St> {
+        type G = St::G;
+        type R = St::R;
+        type B = Set<members::b>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `description` field
-        pub struct description(());
-        ///Marker type for the `title` field
-        pub struct title(());
-        ///Marker type for the `uri` field
-        pub struct uri(());
+        ///Marker type for the `g` field
+        pub struct g(());
+        ///Marker type for the `r` field
+        pub struct r(());
+        ///Marker type for the `b` field
+        pub struct b(());
     }
 }
 
 /// Builder for constructing an instance of this type.
-pub struct ExternalBuilder<S: BosStr, St: external_state::State> {
+pub struct ColorRgbBuilder<S: BosStr, St: color_rgb_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<S>, Option<BlobRef<S>>, Option<S>, Option<UriValue<S>>),
+    _fields: (Option<i64>, Option<i64>, Option<i64>),
     _type: PhantomData<fn() -> S>,
 }
 
-impl<S: BosStr> External<S> {
+impl<S: BosStr> ColorRgb<S> {
     /// Create a new builder for this type.
-    pub fn new() -> ExternalBuilder<S, external_state::Empty> {
-        ExternalBuilder::new()
+    pub fn new() -> ColorRgbBuilder<S, color_rgb_state::Empty> {
+        ColorRgbBuilder::new()
     }
 }
 
-impl<S: BosStr> ExternalBuilder<S, external_state::Empty> {
+impl<S: BosStr> ColorRgbBuilder<S, color_rgb_state::Empty> {
     /// Create a new builder with all fields unset.
     pub fn new() -> Self {
-        ExternalBuilder {
+        ColorRgbBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None),
+            _fields: (None, None, None),
             _type: PhantomData,
         }
     }
 }
 
-impl<S: BosStr, St> ExternalBuilder<S, St>
+impl<S: BosStr, St> ColorRgbBuilder<S, St>
 where
-    St: external_state::State,
-    St::Description: external_state::IsUnset,
+    St: color_rgb_state::State,
+    St::B: color_rgb_state::IsUnset,
 {
-    /// Set the `description` field (required)
-    pub fn description(
+    /// Set the `b` field (required)
+    pub fn b(
         mut self,
-        value: impl Into<S>,
-    ) -> ExternalBuilder<S, external_state::SetDescription<St>> {
+        value: impl Into<i64>,
+    ) -> ColorRgbBuilder<S, color_rgb_state::SetB<St>> {
         self._fields.0 = Option::Some(value.into());
-        ExternalBuilder {
+        ColorRgbBuilder {
             _state: PhantomData,
             _fields: self._fields,
             _type: PhantomData,
@@ -271,31 +449,37 @@ where
     }
 }
 
-impl<S: BosStr, St: external_state::State> ExternalBuilder<S, St> {
-    /// Set the `thumb` field (optional)
-    pub fn thumb(mut self, value: impl Into<Option<BlobRef<S>>>) -> Self {
-        self._fields.1 = value.into();
-        self
-    }
-    /// Set the `thumb` field to an Option value (optional)
-    pub fn maybe_thumb(mut self, value: Option<BlobRef<S>>) -> Self {
-        self._fields.1 = value;
-        self
+impl<S: BosStr, St> ColorRgbBuilder<S, St>
+where
+    St: color_rgb_state::State,
+    St::G: color_rgb_state::IsUnset,
+{
+    /// Set the `g` field (required)
+    pub fn g(
+        mut self,
+        value: impl Into<i64>,
+    ) -> ColorRgbBuilder<S, color_rgb_state::SetG<St>> {
+        self._fields.1 = Option::Some(value.into());
+        ColorRgbBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
     }
 }
 
-impl<S: BosStr, St> ExternalBuilder<S, St>
+impl<S: BosStr, St> ColorRgbBuilder<S, St>
 where
-    St: external_state::State,
-    St::Title: external_state::IsUnset,
+    St: color_rgb_state::State,
+    St::R: color_rgb_state::IsUnset,
 {
-    /// Set the `title` field (required)
-    pub fn title(
+    /// Set the `r` field (required)
+    pub fn r(
         mut self,
-        value: impl Into<S>,
-    ) -> ExternalBuilder<S, external_state::SetTitle<St>> {
+        value: impl Into<i64>,
+    ) -> ColorRgbBuilder<S, color_rgb_state::SetR<St>> {
         self._fields.2 = Option::Some(value.into());
-        ExternalBuilder {
+        ColorRgbBuilder {
             _state: PhantomData,
             _fields: self._fields,
             _type: PhantomData,
@@ -303,49 +487,28 @@ where
     }
 }
 
-impl<S: BosStr, St> ExternalBuilder<S, St>
+impl<S: BosStr, St> ColorRgbBuilder<S, St>
 where
-    St: external_state::State,
-    St::Uri: external_state::IsUnset,
-{
-    /// Set the `uri` field (required)
-    pub fn uri(
-        mut self,
-        value: impl Into<UriValue<S>>,
-    ) -> ExternalBuilder<S, external_state::SetUri<St>> {
-        self._fields.3 = Option::Some(value.into());
-        ExternalBuilder {
-            _state: PhantomData,
-            _fields: self._fields,
-            _type: PhantomData,
-        }
-    }
-}
-
-impl<S: BosStr, St> ExternalBuilder<S, St>
-where
-    St: external_state::State,
-    St::Description: external_state::IsSet,
-    St::Title: external_state::IsSet,
-    St::Uri: external_state::IsSet,
+    St: color_rgb_state::State,
+    St::G: color_rgb_state::IsSet,
+    St::R: color_rgb_state::IsSet,
+    St::B: color_rgb_state::IsSet,
 {
     /// Build the final struct.
-    pub fn build(self) -> External<S> {
-        External {
-            description: self._fields.0.unwrap(),
-            thumb: self._fields.1,
-            title: self._fields.2.unwrap(),
-            uri: self._fields.3.unwrap(),
+    pub fn build(self) -> ColorRgb<S> {
+        ColorRgb {
+            b: self._fields.0.unwrap(),
+            g: self._fields.1.unwrap(),
+            r: self._fields.2.unwrap(),
             extra_data: Default::default(),
         }
     }
     /// Build the final struct with custom extra_data.
-    pub fn build_with_data(self, extra_data: BTreeMap<SmolStr, Data<S>>) -> External<S> {
-        External {
-            description: self._fields.0.unwrap(),
-            thumb: self._fields.1,
-            title: self._fields.2.unwrap(),
-            uri: self._fields.3.unwrap(),
+    pub fn build_with_data(self, extra_data: BTreeMap<SmolStr, Data<S>>) -> ColorRgb<S> {
+        ColorRgb {
+            b: self._fields.0.unwrap(),
+            g: self._fields.1.unwrap(),
+            r: self._fields.2.unwrap(),
             extra_data: Some(extra_data),
         }
     }
@@ -362,6 +525,52 @@ fn lexicon_doc_app_bsky_embed_external() -> LexiconDoc<'static> {
         defs: {
             let mut map = BTreeMap::new();
             map.insert(
+                SmolStr::new_static("colorRGB"),
+                LexUserType::Object(LexObject {
+                    description: Some(
+                        CowStr::new_static(
+                            "RGB color definition, inspired by site.standard.theme.color#rgb",
+                        ),
+                    ),
+                    required: Some(
+                        vec![
+                            SmolStr::new_static("r"), SmolStr::new_static("g"),
+                            SmolStr::new_static("b")
+                        ],
+                    ),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("b"),
+                            LexObjectProperty::Integer(LexInteger {
+                                minimum: Some(0i64),
+                                maximum: Some(255i64),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("g"),
+                            LexObjectProperty::Integer(LexInteger {
+                                minimum: Some(0i64),
+                                maximum: Some(255i64),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("r"),
+                            LexObjectProperty::Integer(LexInteger {
+                                minimum: Some(0i64),
+                                maximum: Some(255i64),
+                                ..Default::default()
+                            }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map.insert(
                 SmolStr::new_static("external"),
                 LexUserType::Object(LexObject {
                     required: Some(
@@ -373,6 +582,21 @@ fn lexicon_doc_app_bsky_embed_external() -> LexiconDoc<'static> {
                     properties: {
                         #[allow(unused_mut)]
                         let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("associatedRefs"),
+                            LexObjectProperty::Array(LexArray {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "StrongRefs (uri+cid) of the Atmosphere records that backed this view.",
+                                    ),
+                                ),
+                                items: LexArrayItem::Ref(LexRef {
+                                    r#ref: CowStr::new_static("com.atproto.repo.strongRef"),
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            }),
+                        );
                         map.insert(
                             SmolStr::new_static("description"),
                             LexObjectProperty::String(LexString { ..Default::default() }),
@@ -453,8 +677,75 @@ fn lexicon_doc_app_bsky_embed_external() -> LexiconDoc<'static> {
                         #[allow(unused_mut)]
                         let mut map = BTreeMap::new();
                         map.insert(
+                            SmolStr::new_static("associatedProfiles"),
+                            LexObjectProperty::Array(LexArray {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "Profiles of the owners of the Atmosphere records that backed this view.",
+                                    ),
+                                ),
+                                items: LexArrayItem::Ref(LexRef {
+                                    r#ref: CowStr::new_static(
+                                        "app.bsky.actor.defs#profileViewBasic",
+                                    ),
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("associatedRefs"),
+                            LexObjectProperty::Array(LexArray {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "StrongRefs (uri+cid) of the Atmosphere records that backed this view.",
+                                    ),
+                                ),
+                                items: LexArrayItem::Ref(LexRef {
+                                    r#ref: CowStr::new_static("com.atproto.repo.strongRef"),
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("createdAt"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "When the external content was created, if available. Example: a publication date, for an article.",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::Datetime),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
                             SmolStr::new_static("description"),
                             LexObjectProperty::String(LexString { ..Default::default() }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("labels"),
+                            LexObjectProperty::Array(LexArray {
+                                items: LexArrayItem::Ref(LexRef {
+                                    r#ref: CowStr::new_static("com.atproto.label.defs#label"),
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("readingTime"),
+                            LexObjectProperty::Integer(LexInteger {
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("source"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#viewExternalSource"),
+                                ..Default::default()
+                            }),
                         );
                         map.insert(
                             SmolStr::new_static("thumb"),
@@ -468,6 +759,18 @@ fn lexicon_doc_app_bsky_embed_external() -> LexiconDoc<'static> {
                             LexObjectProperty::String(LexString { ..Default::default() }),
                         );
                         map.insert(
+                            SmolStr::new_static("updatedAt"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "When the external content was updated, if available.",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::Datetime),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
                             SmolStr::new_static("uri"),
                             LexObjectProperty::String(LexString {
                                 format: Some(LexStringFormat::Uri),
@@ -479,9 +782,317 @@ fn lexicon_doc_app_bsky_embed_external() -> LexiconDoc<'static> {
                     ..Default::default()
                 }),
             );
+            map.insert(
+                SmolStr::new_static("viewExternalSource"),
+                LexUserType::Object(LexObject {
+                    description: Some(
+                        CowStr::new_static(
+                            "The source of an external embed, such as a standard.site publication.",
+                        ),
+                    ),
+                    required: Some(
+                        vec![SmolStr::new_static("uri"), SmolStr::new_static("title")],
+                    ),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("description"),
+                            LexObjectProperty::String(LexString { ..Default::default() }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("icon"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "Fully-qualified URL where an icon representing the source can be fetched. For example, CDN location provided by the App View.",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::Uri),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("theme"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#viewExternalSourceTheme"),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("title"),
+                            LexObjectProperty::String(LexString { ..Default::default() }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("uri"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "URI of the source, if available. Example: the https:// URL of a site.standard.publication record.",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::Uri),
+                                ..Default::default()
+                            }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map.insert(
+                SmolStr::new_static("viewExternalSourceTheme"),
+                LexUserType::Object(LexObject {
+                    description: Some(
+                        CowStr::new_static(
+                            "The theme colors of an external source, such as a site.standard.publication. These colors may be used when rendering an embed from that source.",
+                        ),
+                    ),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("accentForegroundRGB"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#colorRGB"),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("accentRGB"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#colorRGB"),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("backgroundRGB"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#colorRGB"),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("foregroundRGB"),
+                            LexObjectProperty::Ref(LexRef {
+                                r#ref: CowStr::new_static("#colorRGB"),
+                                ..Default::default()
+                            }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
             map
         },
         ..Default::default()
+    }
+}
+
+pub mod external_state {
+
+    pub use crate::builder_types::{Set, Unset, IsSet, IsUnset};
+    #[allow(unused)]
+    use ::core::marker::PhantomData;
+    mod sealed {
+        pub trait Sealed {}
+    }
+    /// State trait tracking which required fields have been set
+    pub trait State: sealed::Sealed {
+        type Title;
+        type Uri;
+        type Description;
+    }
+    /// Empty state - all required fields are unset
+    pub struct Empty(());
+    impl sealed::Sealed for Empty {}
+    impl State for Empty {
+        type Title = Unset;
+        type Uri = Unset;
+        type Description = Unset;
+    }
+    ///State transition - sets the `title` field to Set
+    pub struct SetTitle<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTitle<St> {}
+    impl<St: State> State for SetTitle<St> {
+        type Title = Set<members::title>;
+        type Uri = St::Uri;
+        type Description = St::Description;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type Title = St::Title;
+        type Uri = Set<members::uri>;
+        type Description = St::Description;
+    }
+    ///State transition - sets the `description` field to Set
+    pub struct SetDescription<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDescription<St> {}
+    impl<St: State> State for SetDescription<St> {
+        type Title = St::Title;
+        type Uri = St::Uri;
+        type Description = Set<members::description>;
+    }
+    /// Marker types for field names
+    #[allow(non_camel_case_types)]
+    pub mod members {
+        ///Marker type for the `title` field
+        pub struct title(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
+        ///Marker type for the `description` field
+        pub struct description(());
+    }
+}
+
+/// Builder for constructing an instance of this type.
+pub struct ExternalBuilder<S: BosStr, St: external_state::State> {
+    _state: PhantomData<fn() -> St>,
+    _fields: (
+        Option<Vec<StrongRef<S>>>,
+        Option<S>,
+        Option<BlobRef<S>>,
+        Option<S>,
+        Option<UriValue<S>>,
+    ),
+    _type: PhantomData<fn() -> S>,
+}
+
+impl<S: BosStr> External<S> {
+    /// Create a new builder for this type.
+    pub fn new() -> ExternalBuilder<S, external_state::Empty> {
+        ExternalBuilder::new()
+    }
+}
+
+impl<S: BosStr> ExternalBuilder<S, external_state::Empty> {
+    /// Create a new builder with all fields unset.
+    pub fn new() -> Self {
+        ExternalBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St: external_state::State> ExternalBuilder<S, St> {
+    /// Set the `associatedRefs` field (optional)
+    pub fn associated_refs(
+        mut self,
+        value: impl Into<Option<Vec<StrongRef<S>>>>,
+    ) -> Self {
+        self._fields.0 = value.into();
+        self
+    }
+    /// Set the `associatedRefs` field to an Option value (optional)
+    pub fn maybe_associated_refs(mut self, value: Option<Vec<StrongRef<S>>>) -> Self {
+        self._fields.0 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St> ExternalBuilder<S, St>
+where
+    St: external_state::State,
+    St::Description: external_state::IsUnset,
+{
+    /// Set the `description` field (required)
+    pub fn description(
+        mut self,
+        value: impl Into<S>,
+    ) -> ExternalBuilder<S, external_state::SetDescription<St>> {
+        self._fields.1 = Option::Some(value.into());
+        ExternalBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St: external_state::State> ExternalBuilder<S, St> {
+    /// Set the `thumb` field (optional)
+    pub fn thumb(mut self, value: impl Into<Option<BlobRef<S>>>) -> Self {
+        self._fields.2 = value.into();
+        self
+    }
+    /// Set the `thumb` field to an Option value (optional)
+    pub fn maybe_thumb(mut self, value: Option<BlobRef<S>>) -> Self {
+        self._fields.2 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St> ExternalBuilder<S, St>
+where
+    St: external_state::State,
+    St::Title: external_state::IsUnset,
+{
+    /// Set the `title` field (required)
+    pub fn title(
+        mut self,
+        value: impl Into<S>,
+    ) -> ExternalBuilder<S, external_state::SetTitle<St>> {
+        self._fields.3 = Option::Some(value.into());
+        ExternalBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St> ExternalBuilder<S, St>
+where
+    St: external_state::State,
+    St::Uri: external_state::IsUnset,
+{
+    /// Set the `uri` field (required)
+    pub fn uri(
+        mut self,
+        value: impl Into<UriValue<S>>,
+    ) -> ExternalBuilder<S, external_state::SetUri<St>> {
+        self._fields.4 = Option::Some(value.into());
+        ExternalBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St> ExternalBuilder<S, St>
+where
+    St: external_state::State,
+    St::Title: external_state::IsSet,
+    St::Uri: external_state::IsSet,
+    St::Description: external_state::IsSet,
+{
+    /// Build the final struct.
+    pub fn build(self) -> External<S> {
+        External {
+            associated_refs: self._fields.0,
+            description: self._fields.1.unwrap(),
+            thumb: self._fields.2,
+            title: self._fields.3.unwrap(),
+            uri: self._fields.4.unwrap(),
+            extra_data: Default::default(),
+        }
+    }
+    /// Build the final struct with custom extra_data.
+    pub fn build_with_data(self, extra_data: BTreeMap<SmolStr, Data<S>>) -> External<S> {
+        External {
+            associated_refs: self._fields.0,
+            description: self._fields.1.unwrap(),
+            thumb: self._fields.2,
+            title: self._fields.3.unwrap(),
+            uri: self._fields.4.unwrap(),
+            extra_data: Some(extra_data),
+        }
     }
 }
 
@@ -692,58 +1303,70 @@ pub mod view_external_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Description;
-        type Title;
         type Uri;
+        type Title;
+        type Description;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Description = Unset;
-        type Title = Unset;
         type Uri = Unset;
-    }
-    ///State transition - sets the `description` field to Set
-    pub struct SetDescription<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetDescription<St> {}
-    impl<St: State> State for SetDescription<St> {
-        type Description = Set<members::description>;
-        type Title = St::Title;
-        type Uri = St::Uri;
-    }
-    ///State transition - sets the `title` field to Set
-    pub struct SetTitle<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetTitle<St> {}
-    impl<St: State> State for SetTitle<St> {
-        type Description = St::Description;
-        type Title = Set<members::title>;
-        type Uri = St::Uri;
+        type Title = Unset;
+        type Description = Unset;
     }
     ///State transition - sets the `uri` field to Set
     pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetUri<St> {}
     impl<St: State> State for SetUri<St> {
-        type Description = St::Description;
-        type Title = St::Title;
         type Uri = Set<members::uri>;
+        type Title = St::Title;
+        type Description = St::Description;
+    }
+    ///State transition - sets the `title` field to Set
+    pub struct SetTitle<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTitle<St> {}
+    impl<St: State> State for SetTitle<St> {
+        type Uri = St::Uri;
+        type Title = Set<members::title>;
+        type Description = St::Description;
+    }
+    ///State transition - sets the `description` field to Set
+    pub struct SetDescription<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetDescription<St> {}
+    impl<St: State> State for SetDescription<St> {
+        type Uri = St::Uri;
+        type Title = St::Title;
+        type Description = Set<members::description>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `description` field
-        pub struct description(());
-        ///Marker type for the `title` field
-        pub struct title(());
         ///Marker type for the `uri` field
         pub struct uri(());
+        ///Marker type for the `title` field
+        pub struct title(());
+        ///Marker type for the `description` field
+        pub struct description(());
     }
 }
 
 /// Builder for constructing an instance of this type.
 pub struct ViewExternalBuilder<S: BosStr, St: view_external_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<S>, Option<UriValue<S>>, Option<S>, Option<UriValue<S>>),
+    _fields: (
+        Option<Vec<ProfileViewBasic<S>>>,
+        Option<Vec<StrongRef<S>>>,
+        Option<Datetime>,
+        Option<S>,
+        Option<Vec<Label<S>>>,
+        Option<i64>,
+        Option<external::ViewExternalSource<S>>,
+        Option<UriValue<S>>,
+        Option<S>,
+        Option<Datetime>,
+        Option<UriValue<S>>,
+    ),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -759,9 +1382,57 @@ impl<S: BosStr> ViewExternalBuilder<S, view_external_state::Empty> {
     pub fn new() -> Self {
         ViewExternalBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None),
+            _fields: (None, None, None, None, None, None, None, None, None, None, None),
             _type: PhantomData,
         }
+    }
+}
+
+impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
+    /// Set the `associatedProfiles` field (optional)
+    pub fn associated_profiles(
+        mut self,
+        value: impl Into<Option<Vec<ProfileViewBasic<S>>>>,
+    ) -> Self {
+        self._fields.0 = value.into();
+        self
+    }
+    /// Set the `associatedProfiles` field to an Option value (optional)
+    pub fn maybe_associated_profiles(
+        mut self,
+        value: Option<Vec<ProfileViewBasic<S>>>,
+    ) -> Self {
+        self._fields.0 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
+    /// Set the `associatedRefs` field (optional)
+    pub fn associated_refs(
+        mut self,
+        value: impl Into<Option<Vec<StrongRef<S>>>>,
+    ) -> Self {
+        self._fields.1 = value.into();
+        self
+    }
+    /// Set the `associatedRefs` field to an Option value (optional)
+    pub fn maybe_associated_refs(mut self, value: Option<Vec<StrongRef<S>>>) -> Self {
+        self._fields.1 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
+    /// Set the `createdAt` field (optional)
+    pub fn created_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
+        self._fields.2 = value.into();
+        self
+    }
+    /// Set the `createdAt` field to an Option value (optional)
+    pub fn maybe_created_at(mut self, value: Option<Datetime>) -> Self {
+        self._fields.2 = value;
+        self
     }
 }
 
@@ -775,7 +1446,7 @@ where
         mut self,
         value: impl Into<S>,
     ) -> ViewExternalBuilder<S, view_external_state::SetDescription<St>> {
-        self._fields.0 = Option::Some(value.into());
+        self._fields.3 = Option::Some(value.into());
         ViewExternalBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -785,14 +1456,59 @@ where
 }
 
 impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
+    /// Set the `labels` field (optional)
+    pub fn labels(mut self, value: impl Into<Option<Vec<Label<S>>>>) -> Self {
+        self._fields.4 = value.into();
+        self
+    }
+    /// Set the `labels` field to an Option value (optional)
+    pub fn maybe_labels(mut self, value: Option<Vec<Label<S>>>) -> Self {
+        self._fields.4 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
+    /// Set the `readingTime` field (optional)
+    pub fn reading_time(mut self, value: impl Into<Option<i64>>) -> Self {
+        self._fields.5 = value.into();
+        self
+    }
+    /// Set the `readingTime` field to an Option value (optional)
+    pub fn maybe_reading_time(mut self, value: Option<i64>) -> Self {
+        self._fields.5 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
+    /// Set the `source` field (optional)
+    pub fn source(
+        mut self,
+        value: impl Into<Option<external::ViewExternalSource<S>>>,
+    ) -> Self {
+        self._fields.6 = value.into();
+        self
+    }
+    /// Set the `source` field to an Option value (optional)
+    pub fn maybe_source(
+        mut self,
+        value: Option<external::ViewExternalSource<S>>,
+    ) -> Self {
+        self._fields.6 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
     /// Set the `thumb` field (optional)
     pub fn thumb(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
-        self._fields.1 = value.into();
+        self._fields.7 = value.into();
         self
     }
     /// Set the `thumb` field to an Option value (optional)
     pub fn maybe_thumb(mut self, value: Option<UriValue<S>>) -> Self {
-        self._fields.1 = value;
+        self._fields.7 = value;
         self
     }
 }
@@ -807,12 +1523,25 @@ where
         mut self,
         value: impl Into<S>,
     ) -> ViewExternalBuilder<S, view_external_state::SetTitle<St>> {
-        self._fields.2 = Option::Some(value.into());
+        self._fields.8 = Option::Some(value.into());
         ViewExternalBuilder {
             _state: PhantomData,
             _fields: self._fields,
             _type: PhantomData,
         }
+    }
+}
+
+impl<S: BosStr, St: view_external_state::State> ViewExternalBuilder<S, St> {
+    /// Set the `updatedAt` field (optional)
+    pub fn updated_at(mut self, value: impl Into<Option<Datetime>>) -> Self {
+        self._fields.9 = value.into();
+        self
+    }
+    /// Set the `updatedAt` field to an Option value (optional)
+    pub fn maybe_updated_at(mut self, value: Option<Datetime>) -> Self {
+        self._fields.9 = value;
+        self
     }
 }
 
@@ -826,7 +1555,7 @@ where
         mut self,
         value: impl Into<UriValue<S>>,
     ) -> ViewExternalBuilder<S, view_external_state::SetUri<St>> {
-        self._fields.3 = Option::Some(value.into());
+        self._fields.10 = Option::Some(value.into());
         ViewExternalBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -838,17 +1567,24 @@ where
 impl<S: BosStr, St> ViewExternalBuilder<S, St>
 where
     St: view_external_state::State,
-    St::Description: view_external_state::IsSet,
-    St::Title: view_external_state::IsSet,
     St::Uri: view_external_state::IsSet,
+    St::Title: view_external_state::IsSet,
+    St::Description: view_external_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> ViewExternal<S> {
         ViewExternal {
-            description: self._fields.0.unwrap(),
-            thumb: self._fields.1,
-            title: self._fields.2.unwrap(),
-            uri: self._fields.3.unwrap(),
+            associated_profiles: self._fields.0,
+            associated_refs: self._fields.1,
+            created_at: self._fields.2,
+            description: self._fields.3.unwrap(),
+            labels: self._fields.4,
+            reading_time: self._fields.5,
+            source: self._fields.6,
+            thumb: self._fields.7,
+            title: self._fields.8.unwrap(),
+            updated_at: self._fields.9,
+            uri: self._fields.10.unwrap(),
             extra_data: Default::default(),
         }
     }
@@ -858,10 +1594,208 @@ where
         extra_data: BTreeMap<SmolStr, Data<S>>,
     ) -> ViewExternal<S> {
         ViewExternal {
-            description: self._fields.0.unwrap(),
-            thumb: self._fields.1,
-            title: self._fields.2.unwrap(),
-            uri: self._fields.3.unwrap(),
+            associated_profiles: self._fields.0,
+            associated_refs: self._fields.1,
+            created_at: self._fields.2,
+            description: self._fields.3.unwrap(),
+            labels: self._fields.4,
+            reading_time: self._fields.5,
+            source: self._fields.6,
+            thumb: self._fields.7,
+            title: self._fields.8.unwrap(),
+            updated_at: self._fields.9,
+            uri: self._fields.10.unwrap(),
+            extra_data: Some(extra_data),
+        }
+    }
+}
+
+pub mod view_external_source_state {
+
+    pub use crate::builder_types::{Set, Unset, IsSet, IsUnset};
+    #[allow(unused)]
+    use ::core::marker::PhantomData;
+    mod sealed {
+        pub trait Sealed {}
+    }
+    /// State trait tracking which required fields have been set
+    pub trait State: sealed::Sealed {
+        type Uri;
+        type Title;
+    }
+    /// Empty state - all required fields are unset
+    pub struct Empty(());
+    impl sealed::Sealed for Empty {}
+    impl State for Empty {
+        type Uri = Unset;
+        type Title = Unset;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type Uri = Set<members::uri>;
+        type Title = St::Title;
+    }
+    ///State transition - sets the `title` field to Set
+    pub struct SetTitle<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetTitle<St> {}
+    impl<St: State> State for SetTitle<St> {
+        type Uri = St::Uri;
+        type Title = Set<members::title>;
+    }
+    /// Marker types for field names
+    #[allow(non_camel_case_types)]
+    pub mod members {
+        ///Marker type for the `uri` field
+        pub struct uri(());
+        ///Marker type for the `title` field
+        pub struct title(());
+    }
+}
+
+/// Builder for constructing an instance of this type.
+pub struct ViewExternalSourceBuilder<S: BosStr, St: view_external_source_state::State> {
+    _state: PhantomData<fn() -> St>,
+    _fields: (
+        Option<S>,
+        Option<UriValue<S>>,
+        Option<external::ViewExternalSourceTheme<S>>,
+        Option<S>,
+        Option<UriValue<S>>,
+    ),
+    _type: PhantomData<fn() -> S>,
+}
+
+impl<S: BosStr> ViewExternalSource<S> {
+    /// Create a new builder for this type.
+    pub fn new() -> ViewExternalSourceBuilder<S, view_external_source_state::Empty> {
+        ViewExternalSourceBuilder::new()
+    }
+}
+
+impl<S: BosStr> ViewExternalSourceBuilder<S, view_external_source_state::Empty> {
+    /// Create a new builder with all fields unset.
+    pub fn new() -> Self {
+        ViewExternalSourceBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St: view_external_source_state::State> ViewExternalSourceBuilder<S, St> {
+    /// Set the `description` field (optional)
+    pub fn description(mut self, value: impl Into<Option<S>>) -> Self {
+        self._fields.0 = value.into();
+        self
+    }
+    /// Set the `description` field to an Option value (optional)
+    pub fn maybe_description(mut self, value: Option<S>) -> Self {
+        self._fields.0 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_external_source_state::State> ViewExternalSourceBuilder<S, St> {
+    /// Set the `icon` field (optional)
+    pub fn icon(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
+        self._fields.1 = value.into();
+        self
+    }
+    /// Set the `icon` field to an Option value (optional)
+    pub fn maybe_icon(mut self, value: Option<UriValue<S>>) -> Self {
+        self._fields.1 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: view_external_source_state::State> ViewExternalSourceBuilder<S, St> {
+    /// Set the `theme` field (optional)
+    pub fn theme(
+        mut self,
+        value: impl Into<Option<external::ViewExternalSourceTheme<S>>>,
+    ) -> Self {
+        self._fields.2 = value.into();
+        self
+    }
+    /// Set the `theme` field to an Option value (optional)
+    pub fn maybe_theme(
+        mut self,
+        value: Option<external::ViewExternalSourceTheme<S>>,
+    ) -> Self {
+        self._fields.2 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St> ViewExternalSourceBuilder<S, St>
+where
+    St: view_external_source_state::State,
+    St::Title: view_external_source_state::IsUnset,
+{
+    /// Set the `title` field (required)
+    pub fn title(
+        mut self,
+        value: impl Into<S>,
+    ) -> ViewExternalSourceBuilder<S, view_external_source_state::SetTitle<St>> {
+        self._fields.3 = Option::Some(value.into());
+        ViewExternalSourceBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St> ViewExternalSourceBuilder<S, St>
+where
+    St: view_external_source_state::State,
+    St::Uri: view_external_source_state::IsUnset,
+{
+    /// Set the `uri` field (required)
+    pub fn uri(
+        mut self,
+        value: impl Into<UriValue<S>>,
+    ) -> ViewExternalSourceBuilder<S, view_external_source_state::SetUri<St>> {
+        self._fields.4 = Option::Some(value.into());
+        ViewExternalSourceBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr, St> ViewExternalSourceBuilder<S, St>
+where
+    St: view_external_source_state::State,
+    St::Uri: view_external_source_state::IsSet,
+    St::Title: view_external_source_state::IsSet,
+{
+    /// Build the final struct.
+    pub fn build(self) -> ViewExternalSource<S> {
+        ViewExternalSource {
+            description: self._fields.0,
+            icon: self._fields.1,
+            theme: self._fields.2,
+            title: self._fields.3.unwrap(),
+            uri: self._fields.4.unwrap(),
+            extra_data: Default::default(),
+        }
+    }
+    /// Build the final struct with custom extra_data.
+    pub fn build_with_data(
+        self,
+        extra_data: BTreeMap<SmolStr, Data<S>>,
+    ) -> ViewExternalSource<S> {
+        ViewExternalSource {
+            description: self._fields.0,
+            icon: self._fields.1,
+            theme: self._fields.2,
+            title: self._fields.3.unwrap(),
+            uri: self._fields.4.unwrap(),
             extra_data: Some(extra_data),
         }
     }

@@ -9,7 +9,7 @@ import { ArrowUpRight, Radio } from "lucide-react-native";
 import type {
   ArtistView,
   ReleaseView,
-} from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
+} from "@teal/lexicons/src/types/fm/teal/stats/defs";
 
 import { Text } from "../ui/text";
 

@@ -17,7 +17,7 @@ use jacquard_common::deps::codegen::unicode_segmentation::UnicodeSegmentation;
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::blob::BlobRef;
 use jacquard_common::types::collection::{Collection, RecordError};
-use jacquard_common::types::string::{AtUri, Cid, Datetime};
+use jacquard_common::types::string::{AtUri, Cid, Datetime, UriValue};
 use jacquard_common::types::uri::{RecordUri, UriError};
 use jacquard_common::types::value::Data;
 use jacquard_common::xrpc::XrpcResp;
@@ -60,6 +60,11 @@ pub struct Profile<S: BosStr = DefaultStr> {
     pub labels: Option<SelfLabels<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pinned_post: Option<StrongRef<S>>,
+    ///Free-form pronouns text.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pronouns: Option<S>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub website: Option<UriValue<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
@@ -243,6 +248,28 @@ impl<S: BosStr> LexiconSchema for Profile<S> {
                 }
             }
         }
+        if let Some(ref value) = self.pronouns {
+            #[allow(unused_comparisons)]
+            if <str>::len(value.as_ref()) > 200usize {
+                return Err(ConstraintError::MaxLength {
+                    path: ValidationPath::from_field("pronouns"),
+                    max: 200usize,
+                    actual: <str>::len(value.as_ref()),
+                });
+            }
+        }
+        if let Some(ref value) = self.pronouns {
+            {
+                let count = UnicodeSegmentation::graphemes(value.as_ref(), true).count();
+                if count > 20usize {
+                    return Err(ConstraintError::MaxGraphemes {
+                        path: ValidationPath::from_field("pronouns"),
+                        max: 20usize,
+                        actual: count,
+                    });
+                }
+            }
+        }
         Ok(())
     }
 }
@@ -278,6 +305,8 @@ pub struct ProfileBuilder<S: BosStr, St: profile_state::State> {
         Option<StrongRef<S>>,
         Option<SelfLabels<S>>,
         Option<StrongRef<S>>,
+        Option<S>,
+        Option<UriValue<S>>,
     ),
     _type: PhantomData<fn() -> S>,
 }
@@ -294,7 +323,7 @@ impl<S: BosStr> ProfileBuilder<S, profile_state::Empty> {
     pub fn new() -> Self {
         ProfileBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -407,6 +436,32 @@ impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
     }
 }
 
+impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+    /// Set the `pronouns` field (optional)
+    pub fn pronouns(mut self, value: impl Into<Option<S>>) -> Self {
+        self._fields.8 = value.into();
+        self
+    }
+    /// Set the `pronouns` field to an Option value (optional)
+    pub fn maybe_pronouns(mut self, value: Option<S>) -> Self {
+        self._fields.8 = value;
+        self
+    }
+}
+
+impl<S: BosStr, St: profile_state::State> ProfileBuilder<S, St> {
+    /// Set the `website` field (optional)
+    pub fn website(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
+        self._fields.9 = value.into();
+        self
+    }
+    /// Set the `website` field to an Option value (optional)
+    pub fn maybe_website(mut self, value: Option<UriValue<S>>) -> Self {
+        self._fields.9 = value;
+        self
+    }
+}
+
 impl<S: BosStr, St> ProfileBuilder<S, St>
 where
     St: profile_state::State,
@@ -422,6 +477,8 @@ where
             joined_via_starter_pack: self._fields.5,
             labels: self._fields.6,
             pinned_post: self._fields.7,
+            pronouns: self._fields.8,
+            website: self._fields.9,
             extra_data: Default::default(),
         }
     }
@@ -436,6 +493,8 @@ where
             joined_via_starter_pack: self._fields.5,
             labels: self._fields.6,
             pinned_post: self._fields.7,
+            pronouns: self._fields.8,
+            website: self._fields.9,
             extra_data: Some(extra_data),
         }
     }
@@ -521,6 +580,24 @@ fn lexicon_doc_app_bsky_actor_profile() -> LexiconDoc<'static> {
                                 SmolStr::new_static("pinnedPost"),
                                 LexObjectProperty::Ref(LexRef {
                                     r#ref: CowStr::new_static("com.atproto.repo.strongRef"),
+                                    ..Default::default()
+                                }),
+                            );
+                            map.insert(
+                                SmolStr::new_static("pronouns"),
+                                LexObjectProperty::String(LexString {
+                                    description: Some(
+                                        CowStr::new_static("Free-form pronouns text."),
+                                    ),
+                                    max_length: Some(200usize),
+                                    max_graphemes: Some(20usize),
+                                    ..Default::default()
+                                }),
+                            );
+                            map.insert(
+                                SmolStr::new_static("website"),
+                                LexObjectProperty::String(LexString {
+                                    format: Some(LexStringFormat::Uri),
                                     ..Default::default()
                                 }),
                             );

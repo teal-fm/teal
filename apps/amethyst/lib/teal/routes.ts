@@ -54,7 +54,7 @@ export function listenHref(authorDid?: string, rkey?: string) {
 
 export function listenHrefFromUri(uri?: string) {
   const parsed = parseAtUri(uri);
-  if (!parsed || parsed.collection !== "fm.teal.alpha.feed.play") {
+  if (!parsed || parsed.collection !== "fm.teal.feed.play") {
     return undefined;
   }
   return listenHref(parsed.did, parsed.rkey);
@@ -71,7 +71,7 @@ export function rkeyFromAtUri(uri?: string) {
 
 export function postHrefFromUri(uri?: string) {
   const parsed = parseAtUri(uri);
-  if (!parsed || parsed.collection !== "fm.teal.alpha.feed.social.post") {
+  if (!parsed || parsed.collection !== "fm.teal.feed.social.post") {
     return undefined;
   }
   return postHref(parsed.did, parsed.rkey);
@@ -125,7 +125,7 @@ export function profileHrefFromAtUri(uri?: string) {
   if (!parsed) return undefined;
   if (!parsed.collection) return `/profile/${encodeURIComponent(parsed.did)}`;
   if (
-    parsed.collection === "fm.teal.alpha.actor.profile" ||
+    parsed.collection === "fm.teal.actor.profile" ||
     parsed.collection === "app.bsky.actor.profile"
   ) {
     return `/profile/${encodeURIComponent(parsed.did)}`;

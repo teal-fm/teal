@@ -1,19 +1,19 @@
-use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
-use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::music::{AlbumView, ArtistListenerView, ArtistView};
+use types::fm_teal::feed::PlayView;
+use types::fm_teal::music::{AlbumView, ArtistListenerView, ArtistView};
 
 use crate::ctx::Context;
 
 pub fn music_routes() -> axum::Router {
     axum::Router::new()
-        .route("/fm.teal.alpha.music.getArtist", get(get_artist))
+        .route("/fm.teal.music.getArtist", get(get_artist))
         .route(
-            "/fm.teal.alpha.music.getArtistListeners",
+            "/fm.teal.music.getArtistListeners",
             get(get_artist_listeners),
         )
-        .route("/fm.teal.alpha.music.getAlbum", get(get_album))
+        .route("/fm.teal.music.getAlbum", get(get_album))
 }
 
 #[derive(Deserialize)]

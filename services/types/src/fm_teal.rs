@@ -3,4 +3,10 @@
 // This file was automatically generated from Lexicon schemas.
 // Any manual changes will be overwritten on the next regeneration.
 
-pub mod alpha;
+pub mod actor;
+pub mod feed;
+pub mod graph;
+pub mod music;
+pub mod richtext;
+pub mod search;
+pub mod stats;

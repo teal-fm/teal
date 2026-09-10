@@ -4,20 +4,20 @@ use std::time::Duration as StdDuration;
 use async_trait::async_trait;
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::from_json_value;
-use jacquard_common::types::string::{AtprotoStr, AtUri, Did};
+use jacquard_common::types::string::{AtUri, AtprotoStr, Did};
 use jacquard_common::types::value::Data;
 use serde::Deserialize;
-use types::fm_teal::alpha::feed::PlayView;
-use types::fm_teal::alpha::music::{
-    AlbumSummary, AlbumView, ArtistListenerView, ArtistView, TrackSummary,
+use types::fm_teal::feed::PlayView;
+use types::fm_teal::music::{
+    AlbumSummary, AlbumSummaryReleaseType, AlbumView, ArtistListenerView, ArtistView, TrackSummary,
 };
 use uuid::Uuid;
 
 use super::stats::{
-    LatestPlaysCursor, decode_latest_cursor, decode_offset_cursor, encode_latest_cursor,
-    encode_offset_cursor,
+    decode_latest_cursor, decode_offset_cursor, encode_latest_cursor, encode_offset_cursor,
+    LatestPlaysCursor,
 };
-use super::{mbid_uri, mini_profile, pg::PgDataSource, utc_to_atrium_datetime};
+use super::{mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime};
 
 pub struct AlbumPage {
     pub album: AlbumView,
@@ -397,6 +397,12 @@ impl MusicRepo for PgDataSource {
                 mbid: mbid_uri(row.mbid),
                 name: row.name.into(),
                 play_count: row.play_count,
+                release_type: Some(AlbumSummaryReleaseType::from_value(SmolStr::new(
+                    release_types
+                        .get(&row.mbid)
+                        .map(String::as_str)
+                        .unwrap_or("other"),
+                ))),
                 extra_data: Some(BTreeMap::from([(
                     SmolStr::new_static("releaseType"),
                     Data::String(AtprotoStr::new(SmolStr::new(
@@ -680,9 +686,7 @@ impl MusicRepo for PgDataSource {
             });
             let artists = row
                 .artists
-                .and_then(|value| {
-                    from_json_value::<Vec<types::fm_teal::alpha::feed::Artist>>(value).ok()
-                })
+                .and_then(|value| from_json_value::<Vec<types::fm_teal::feed::Artist>>(value).ok())
                 .unwrap_or_default();
 
             plays.push(PlayView {
@@ -707,8 +711,8 @@ impl MusicRepo for PgDataSource {
                 release_name: row.release_name.map(Into::into),
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(Into::into),
-                origin_url: row.origin_url.map(Into::into),
-                music_service_base_domain: row.music_service_base_domain.map(Into::into),
+                origin_uri: row.origin_url.map(uri_value),
+                music_service_uri: row.music_service_base_domain.map(uri_value),
                 submission_client_agent: row.submission_client_agent.map(Into::into),
                 played_time: row
                     .played_time
@@ -746,15 +750,15 @@ impl MusicRepo for PgDataSource {
 #[cfg(test)]
 mod tests {
     use super::{
-        ArtistListenersPeriod, MusicBrainzArtistReleases, MusicBrainzTrackOrder,
-        ObservedAlbumTrack, normalize_release_type, sort_tracks_by_release_order,
+        normalize_release_type, sort_tracks_by_release_order, ArtistListenersPeriod,
+        MusicBrainzArtistReleases, MusicBrainzTrackOrder, ObservedAlbumTrack,
     };
     use serde_json::json;
     use uuid::Uuid;
 
     fn observed_track(name: &str, recording_mbid: Option<Uuid>) -> ObservedAlbumTrack {
         ObservedAlbumTrack {
-            uri: format!("at://did:plc:test/fm.teal.alpha.feed.play/{name}"),
+            uri: format!("at://did:plc:test/fm.teal.feed.play/{name}"),
             recording_mbid,
             name: name.to_string(),
             artist_name: "Test Artist".to_string(),

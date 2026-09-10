@@ -18,6 +18,10 @@ pub mod chat_bsky;
 pub mod com_atproto;
 
 
+#[cfg(feature = "com_germnetwork")]
+pub mod com_germnetwork;
+
+
 #[cfg(feature = "fm_teal")]
 pub mod fm_teal;
 

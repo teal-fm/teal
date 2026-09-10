@@ -1,5 +1,5 @@
 import { playViewToTrackView, trackViewToPlayView } from "../teal/social";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 
 describe("Teal social track normalization", () => {
   it("normalizes new trackView artists into play artists", () => {

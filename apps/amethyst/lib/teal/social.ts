@@ -1,4 +1,4 @@
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
 
 type TrackArtist = {
   artistName?: string;
@@ -18,7 +18,7 @@ export type TrackViewLike = {
   releaseName?: string;
   releaseMbId?: string;
   isrc?: string;
-  originUrl?: string;
+  originUri?: string;
 };
 
 export function trackViewToPlayView(track: unknown): PlayView {
@@ -47,7 +47,7 @@ export function trackViewToPlayView(track: unknown): PlayView {
     releaseName: value.releaseName,
     releaseMbId: value.releaseMbId,
     isrc: value.isrc,
-    originUrl: value.originUrl,
+    originUri: value.originUri,
   } as PlayView;
 }
 
@@ -68,6 +68,6 @@ export function playViewToTrackView(play: PlayView): TrackViewLike {
     releaseName: play.releaseName,
     releaseMbId: play.releaseMbId,
     isrc: play.isrc,
-    originUrl: play.originUrl,
+    originUri: play.originUri,
   };
 }

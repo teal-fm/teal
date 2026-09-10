@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
 use jacquard_common::types::value::Data;
-use jacquard_derive::IntoStatic;
+use jacquard_derive::{IntoStatic, open_union};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
@@ -34,13 +34,65 @@ pub struct LeaveConvoOutput<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
+
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    thiserror::Error,
+    miette::Diagnostic
+)]
+
+#[serde(tag = "error", content = "message")]
+pub enum LeaveConvoError {
+    #[serde(rename = "InvalidConvo")]
+    InvalidConvo(Option<SmolStr>),
+    /// The owner of a group conversation cannot leave before locking the group.
+    #[serde(rename = "OwnerCannotLeave")]
+    OwnerCannotLeave(Option<SmolStr>),
+    /// Catch-all for unknown error codes.
+    #[serde(untagged)]
+    Other { error: SmolStr, message: Option<SmolStr> },
+}
+
+impl core::fmt::Display for LeaveConvoError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::InvalidConvo(msg) => {
+                write!(f, "InvalidConvo")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::OwnerCannotLeave(msg) => {
+                write!(f, "OwnerCannotLeave")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::Other { error, message } => {
+                write!(f, "{}", error)?;
+                if let Some(msg) = message {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
 /// Response type for chat.bsky.convo.leaveConvo
 pub struct LeaveConvoResponse;
 impl jacquard_common::xrpc::XrpcResp for LeaveConvoResponse {
     const NSID: &'static str = "chat.bsky.convo.leaveConvo";
     const ENCODING: &'static str = "application/json";
     type Output<S: BosStr> = LeaveConvoOutput<S>;
-    type Err = jacquard_common::xrpc::GenericError;
+    type Err = LeaveConvoError;
 }
 
 impl<S: BosStr> jacquard_common::xrpc::XrpcRequest for LeaveConvo<S> {

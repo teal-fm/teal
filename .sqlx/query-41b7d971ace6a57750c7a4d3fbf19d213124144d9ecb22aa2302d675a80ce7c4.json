@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT avatar, did, display_name, handle\n            FROM profiles\n            WHERE display_name ILIKE '%' || $1 || '%' ESCAPE '!'\n               OR description ILIKE '%' || $1 || '%' ESCAPE '!'\n               OR handle ILIKE '%' || $1 || '%' ESCAPE '!'\n            ORDER BY display_name NULLS LAST, did\n            LIMIT $2 OFFSET $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "avatar",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "did",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "display_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "handle",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "41b7d971ace6a57750c7a4d3fbf19d213124144d9ecb22aa2302d675a80ce7c4"
+}

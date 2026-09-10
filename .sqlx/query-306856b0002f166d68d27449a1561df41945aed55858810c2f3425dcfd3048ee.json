@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH grouped AS (\n                SELECT\n                    p.uri,\n                    p.track_name,\n                    p.release_name,\n                    p.release_mbid,\n                    p.recording_mbid,\n                    p.processed_time,\n                    COALESCE(\n                        STRING_AGG(DISTINCT ptae.artist_name, ', ' ORDER BY ptae.artist_name),\n                        'Unknown artist'\n                    ) AS artist_name,\n                    COALESCE(\n                        STRING_AGG(DISTINCT LOWER(ptae.artist_name), chr(31) ORDER BY LOWER(ptae.artist_name)),\n                        ''\n                    ) AS artist_key\n                FROM plays p\n                LEFT JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri\n                WHERE p.track_name ILIKE $1 ESCAPE E'\\\\'\n                  AND ($5::text IS NULL OR p.did = $5)\n                GROUP BY p.uri, p.track_name, p.release_name, p.release_mbid, p.processed_time,\n                         p.recording_mbid\n            ), matched AS (\n                SELECT\n                    uri,\n                    track_name,\n                    release_name,\n                    release_mbid,\n                    recording_mbid,\n                    processed_time,\n                    artist_name,\n                    COUNT(*) OVER (\n                        PARTITION BY LOWER(track_name), COALESCE(recording_mbid::text, artist_key)\n                    ) AS play_count,\n                    ROW_NUMBER() OVER (\n                        PARTITION BY LOWER(track_name), COALESCE(recording_mbid::text, artist_key)\n                        ORDER BY processed_time DESC, uri\n                    ) AS row_number\n                FROM grouped\n            )\n            SELECT uri, track_name, release_name, release_mbid, recording_mbid, artist_name, play_count\n            FROM matched\n            WHERE row_number = 1\n            ORDER BY\n                CASE\n                    WHEN LOWER(track_name) = LOWER($2) THEN 0\n                    WHEN track_name ILIKE $3 ESCAPE E'\\\\' THEN 1\n                    ELSE 2\n                END,\n                play_count DESC,\n                track_name\n            LIMIT $4\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "uri",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "track_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "release_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "release_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "recording_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "artist_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "play_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "306856b0002f166d68d27449a1561df41945aed55858810c2f3425dcfd3048ee"
+}

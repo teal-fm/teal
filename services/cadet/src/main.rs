@@ -60,28 +60,22 @@ async fn main() {
 
     let retry_store = ingestion_retry::IngestionRetryStore::new(pool.clone());
 
+    let mut wanted_collections = teal_ingestors::supported_teal_collections();
+    wanted_collections.extend(
+        [
+            "fm.teal.alpha.feed.play",
+            "fm.teal.alpha.actor.profile",
+            "fm.teal.alpha.actor.status",
+            "fm.teal.alpha.actor.profileStatus",
+            "com.atproto.repo.importRepo",
+        ]
+        .into_iter()
+        .map(str::to_string),
+    );
+
     let opts = JetstreamOptions::builder()
         .ws_url(JetstreamEndpoints::Custom(jetstream_url.clone()))
-        .wanted_collections(
-            [
-                "fm.teal.alpha.feed.play",
-                "fm.teal.alpha.actor.profile",
-                "fm.teal.alpha.actor.status",
-                "fm.teal.alpha.actor.profileStatus",
-                "fm.teal.alpha.feed.social.post",
-                "fm.teal.alpha.feed.social.like",
-                "fm.teal.alpha.feed.social.repost",
-                "fm.teal.alpha.graph.follow",
-                "fm.teal.alpha.feed.social.playlist",
-                "fm.teal.alpha.feed.social.playlistItem",
-                "fm.teal.alpha.feed.social.badge",
-                "fm.teal.alpha.feed.social.badgeAssignment",
-                "com.atproto.repo.importRepo",
-            ]
-            .iter()
-            .map(|collection| collection.to_string())
-            .collect(),
-        )
+        .wanted_collections(wanted_collections)
         .build();
 
     let jetstream = JetstreamConnection::new(opts);
@@ -101,13 +95,13 @@ async fn main() {
         .unwrap_or(6 * 60 * 60);
     let consolidation_pool = pool.clone();
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(
-            consolidation_interval_secs,
-        ));
+        let mut interval =
+            tokio::time::interval(std::time::Duration::from_secs(consolidation_interval_secs));
         interval.tick().await;
 
         loop {
-            let ingestor = ingestors::teal::feed_play::PlayIngestor::new(consolidation_pool.clone());
+            let ingestor =
+                ingestors::teal::feed_play::PlayIngestor::new(consolidation_pool.clone());
             if let Err(error) = ingestor.run_full_consolidation().await {
                 error!("Automatic catalog consolidation failed: {}", error);
             }

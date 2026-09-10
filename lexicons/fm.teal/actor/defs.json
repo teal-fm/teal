@@ -1,0 +1,100 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.actor.defs",
+  "defs": {
+    "profileView": {
+      "type": "object",
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did",
+          "description": "The decentralized identifier of the actor"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-form profile description text."
+        },
+        "descriptionFacets": {
+          "type": "array",
+          "description": "Annotations of text in the profile description (mentions, URLs, hashtags, etc). May be changed to another (backwards compatible) lexicon.",
+          "items": { "type": "ref", "ref": "app.bsky.richtext.facet" }
+        },
+        "featuredItem": {
+          "type": "ref",
+          "description": "The user's most recent item featured on their profile.",
+          "ref": "fm.teal.actor.profile#featuredItem"
+        },
+        "avatar": {
+          "type": "string",
+          "format": "cid",
+          "description": "IPLD of the avatar"
+        },
+        "banner": {
+          "type": "string",
+          "format": "cid",
+          "description": "IPLD of the banner image"
+        },
+        "status": {
+          "type": "ref",
+          "ref": "#statusView"
+        },
+        "profileStatus": {
+          "type": "ref",
+          "description": "The actor's Teal onboarding state as indexed by the appview.",
+          "ref": "fm.teal.actor.profileStatus#main"
+        },
+        "statsDefaultPeriod": {
+          "type": "string",
+          "enum": ["7days", "30days", "90days", "180days", "365days", "all"],
+          "description": "Default time period for profile listening statistics."
+        },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    },
+    "miniProfileView": {
+      "type": "object",
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did",
+          "description": "The decentralized identifier of the actor"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "handle": {
+          "type": "string",
+          "format": "handle"
+        },
+        "avatar": {
+          "type": "string",
+          "format": "cid",
+          "description": "IPLD of the avatar"
+        }
+      }
+    },
+    "statusView": {
+      "type": "object",
+      "description": "A declaration of the status of the actor.",
+      "properties": {
+        "time": {
+          "type": "string",
+          "format": "datetime",
+          "description": "The datetime at which the status was recorded."
+        },
+        "expiry": {
+          "type": "string",
+          "format": "datetime",
+          "description": "The datetime after which the status is no longer current."
+        },
+        "item": {
+          "type": "ref",
+          "ref": "fm.teal.feed.defs#playView"
+        }
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@ use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
 use jacquard_common::{BosStr, DefaultStr, FromStaticStr};
 use jacquard_common::deps::smol_str::SmolStr;
+use jacquard_common::types::string::AtUri;
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use serde::{Serialize, Deserialize};
@@ -20,6 +21,8 @@ use crate::app_bsky::feed::Interaction;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct SendInteractions<S: BosStr = DefaultStr> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feed: Option<AtUri<S>>,
     pub interactions: Vec<Interaction<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
@@ -96,7 +99,7 @@ pub mod send_interactions_state {
 /// Builder for constructing an instance of this type.
 pub struct SendInteractionsBuilder<S: BosStr, St: send_interactions_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<Vec<Interaction<S>>>,),
+    _fields: (Option<AtUri<S>>, Option<Vec<Interaction<S>>>),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -112,9 +115,22 @@ impl<S: BosStr> SendInteractionsBuilder<S, send_interactions_state::Empty> {
     pub fn new() -> Self {
         SendInteractionsBuilder {
             _state: PhantomData,
-            _fields: (None,),
+            _fields: (None, None),
             _type: PhantomData,
         }
+    }
+}
+
+impl<S: BosStr, St: send_interactions_state::State> SendInteractionsBuilder<S, St> {
+    /// Set the `feed` field (optional)
+    pub fn feed(mut self, value: impl Into<Option<AtUri<S>>>) -> Self {
+        self._fields.0 = value.into();
+        self
+    }
+    /// Set the `feed` field to an Option value (optional)
+    pub fn maybe_feed(mut self, value: Option<AtUri<S>>) -> Self {
+        self._fields.0 = value;
+        self
     }
 }
 
@@ -128,7 +144,7 @@ where
         mut self,
         value: impl Into<Vec<Interaction<S>>>,
     ) -> SendInteractionsBuilder<S, send_interactions_state::SetInteractions<St>> {
-        self._fields.0 = Option::Some(value.into());
+        self._fields.1 = Option::Some(value.into());
         SendInteractionsBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -145,7 +161,8 @@ where
     /// Build the final struct.
     pub fn build(self) -> SendInteractions<S> {
         SendInteractions {
-            interactions: self._fields.0.unwrap(),
+            feed: self._fields.0,
+            interactions: self._fields.1.unwrap(),
             extra_data: Default::default(),
         }
     }
@@ -155,7 +172,8 @@ where
         extra_data: BTreeMap<SmolStr, Data<S>>,
     ) -> SendInteractions<S> {
         SendInteractions {
-            interactions: self._fields.0.unwrap(),
+            feed: self._fields.0,
+            interactions: self._fields.1.unwrap(),
             extra_data: Some(extra_data),
         }
     }

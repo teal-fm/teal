@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use types::fm_teal::alpha::actor::MiniProfileView;
+use types::fm_teal::actor::MiniProfileView;
 
 use super::{mini_profile, pg::PgDataSource};
 

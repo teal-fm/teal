@@ -28,6 +28,7 @@ use jacquard_lexicon::schema::LexiconSchema;
 use jacquard_lexicon::validation::{ConstraintError, ValidationPath};
 use serde::{Serialize, Deserialize};
 use crate::app_bsky::embed::external::ExternalRecord;
+use crate::app_bsky::embed::gallery::Gallery;
 use crate::app_bsky::embed::images::Images;
 use crate::app_bsky::embed::record::Record;
 use crate::app_bsky::embed::record_with_media::RecordWithMedia;
@@ -95,6 +96,8 @@ pub enum PostEmbed<S: BosStr = DefaultStr> {
     Images(Box<Images<S>>),
     #[serde(rename = "app.bsky.embed.video")]
     Video(Box<Video<S>>),
+    #[serde(rename = "app.bsky.embed.gallery")]
+    Gallery(Box<Gallery<S>>),
     #[serde(rename = "app.bsky.embed.external")]
     External(Box<ExternalRecord<S>>),
     #[serde(rename = "app.bsky.embed.record")]
@@ -302,51 +305,51 @@ pub mod entity_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
+        type Value;
         type Index;
         type Type;
-        type Value;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
+        type Value = Unset;
         type Index = Unset;
         type Type = Unset;
-        type Value = Unset;
-    }
-    ///State transition - sets the `index` field to Set
-    pub struct SetIndex<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetIndex<St> {}
-    impl<St: State> State for SetIndex<St> {
-        type Index = Set<members::index>;
-        type Type = St::Type;
-        type Value = St::Value;
-    }
-    ///State transition - sets the `type` field to Set
-    pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetType<St> {}
-    impl<St: State> State for SetType<St> {
-        type Index = St::Index;
-        type Type = Set<members::r#type>;
-        type Value = St::Value;
     }
     ///State transition - sets the `value` field to Set
     pub struct SetValue<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetValue<St> {}
     impl<St: State> State for SetValue<St> {
+        type Value = Set<members::value>;
         type Index = St::Index;
         type Type = St::Type;
-        type Value = Set<members::value>;
+    }
+    ///State transition - sets the `index` field to Set
+    pub struct SetIndex<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetIndex<St> {}
+    impl<St: State> State for SetIndex<St> {
+        type Value = St::Value;
+        type Index = Set<members::index>;
+        type Type = St::Type;
+    }
+    ///State transition - sets the `type` field to Set
+    pub struct SetType<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetType<St> {}
+    impl<St: State> State for SetType<St> {
+        type Value = St::Value;
+        type Index = St::Index;
+        type Type = Set<members::r#type>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
+        ///Marker type for the `value` field
+        pub struct value(());
         ///Marker type for the `index` field
         pub struct index(());
         ///Marker type for the `type` field
         pub struct r#type(());
-        ///Marker type for the `value` field
-        pub struct value(());
     }
 }
 
@@ -435,9 +438,9 @@ where
 impl<S: BosStr, St> EntityBuilder<S, St>
 where
     St: entity_state::State,
+    St::Value: entity_state::IsSet,
     St::Index: entity_state::IsSet,
     St::Type: entity_state::IsSet,
-    St::Value: entity_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Entity<S> {
@@ -546,6 +549,7 @@ fn lexicon_doc_app_bsky_feed_post() -> LexiconDoc<'static> {
                                     refs: vec![
                                         CowStr::new_static("app.bsky.embed.images"),
                                         CowStr::new_static("app.bsky.embed.video"),
+                                        CowStr::new_static("app.bsky.embed.gallery"),
                                         CowStr::new_static("app.bsky.embed.external"),
                                         CowStr::new_static("app.bsky.embed.record"),
                                         CowStr::new_static("app.bsky.embed.recordWithMedia")
@@ -734,37 +738,37 @@ pub mod post_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type CreatedAt;
         type Text;
+        type CreatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type CreatedAt = Unset;
         type Text = Unset;
-    }
-    ///State transition - sets the `created_at` field to Set
-    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
-    impl<St: State> State for SetCreatedAt<St> {
-        type CreatedAt = Set<members::created_at>;
-        type Text = St::Text;
+        type CreatedAt = Unset;
     }
     ///State transition - sets the `text` field to Set
     pub struct SetText<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetText<St> {}
     impl<St: State> State for SetText<St> {
-        type CreatedAt = St::CreatedAt;
         type Text = Set<members::text>;
+        type CreatedAt = St::CreatedAt;
+    }
+    ///State transition - sets the `created_at` field to Set
+    pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCreatedAt<St> {}
+    impl<St: State> State for SetCreatedAt<St> {
+        type Text = St::Text;
+        type CreatedAt = Set<members::created_at>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `created_at` field
-        pub struct created_at(());
         ///Marker type for the `text` field
         pub struct text(());
+        ///Marker type for the `created_at` field
+        pub struct created_at(());
     }
 }
 
@@ -935,8 +939,8 @@ where
 impl<S: BosStr, St> PostBuilder<S, St>
 where
     St: post_state::State,
-    St::CreatedAt: post_state::IsSet,
     St::Text: post_state::IsSet,
+    St::CreatedAt: post_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Post<S> {

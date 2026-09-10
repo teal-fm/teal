@@ -128,7 +128,7 @@ if metadata.get("dpop_bound_access_tokens") is not True:
     raise SystemExit("dpop_bound_access_tokens must be true")
 ' "$PUBLIC_ORIGIN"
   echo "Verifying latest plays..."
-  fetch_preview "$PUBLIC_ORIGIN/xrpc/fm.teal.alpha.stats.getLatest?limit=1" | python3 -c '
+  fetch_preview "$PUBLIC_ORIGIN/xrpc/fm.teal.stats.getLatest?limit=1" | python3 -c '
 import json
 import sys
 

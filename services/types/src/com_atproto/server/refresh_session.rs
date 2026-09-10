@@ -26,6 +26,12 @@ pub struct RefreshSessionOutput<S: BosStr = DefaultStr> {
     pub did: Did<S>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub did_doc: Option<Data<S>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<S>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email_auth_factor: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email_confirmed: Option<bool>,
     pub handle: Handle<S>,
     pub refresh_jwt: S,
     ///Hosting status of the account. If not specified, then assume 'active'.
@@ -143,6 +149,10 @@ where
 pub enum RefreshSessionError {
     #[serde(rename = "AccountTakedown")]
     AccountTakedown(Option<SmolStr>),
+    #[serde(rename = "InvalidToken")]
+    InvalidToken(Option<SmolStr>),
+    #[serde(rename = "ExpiredToken")]
+    ExpiredToken(Option<SmolStr>),
     /// Catch-all for unknown error codes.
     #[serde(untagged)]
     Other { error: SmolStr, message: Option<SmolStr> },
@@ -153,6 +163,20 @@ impl core::fmt::Display for RefreshSessionError {
         match self {
             Self::AccountTakedown(msg) => {
                 write!(f, "AccountTakedown")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::InvalidToken(msg) => {
+                write!(f, "InvalidToken")?;
+                if let Some(msg) = msg {
+                    write!(f, ": {}", msg)?;
+                }
+                Ok(())
+            }
+            Self::ExpiredToken(msg) => {
+                write!(f, "ExpiredToken")?;
                 if let Some(msg) = msg {
                     write!(f, ": {}", msg)?;
                 }

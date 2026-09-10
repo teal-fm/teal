@@ -1,6 +1,6 @@
 use actor_profile::ActorProfileRepo;
 use jacquard_common::{deps::smol_str::SmolStr, types::string::UriValue};
-use types::fm_teal::alpha::actor::MiniProfileView;
+use types::fm_teal::actor::MiniProfileView;
 use uuid::Uuid;
 
 use crate::repos::feed_play::FeedPlayRepo;
@@ -55,6 +55,10 @@ pub fn mbid_uri(mbid: Uuid) -> UriValue {
     UriValue::Any(SmolStr::new(format!("mbid:{mbid}")))
 }
 
+pub fn uri_value(value: String) -> UriValue {
+    UriValue::Any(SmolStr::new(value))
+}
+
 pub fn mini_profile(
     did: Option<String>,
     handle: Option<String>,
@@ -63,7 +67,7 @@ pub fn mini_profile(
 ) -> Option<MiniProfileView> {
     did.map(|did| MiniProfileView {
         did: Some(did.into()),
-        handle: handle.map(|handle| handle.trim_start_matches("at://").into()),
+        handle: handle.map(|handle| handle.trim_start_matches("at://").to_string().into()),
         display_name: display_name.map(Into::into),
         avatar: avatar.map(Into::into),
         extra_data: Default::default(),

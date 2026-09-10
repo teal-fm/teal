@@ -5,7 +5,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 use tracing::info;
 
-use super::assemble_at_uri;
+use super::{assemble_at_uri, normalize_legacy_record_type};
 
 pub struct ActorProfileStatusIngestor {
     sql: PgPool,
@@ -21,9 +21,9 @@ impl ActorProfileStatusIngestor {
         did: &str,
         rkey: &str,
         cid: &str,
-        status: &types::fm_teal::alpha::actor::profile_status::ProfileStatus,
+        status: &types::fm_teal::actor::profile_status::ProfileStatus,
     ) -> anyhow::Result<()> {
-        let uri = assemble_at_uri(did, "fm.teal.alpha.actor.profileStatus", rkey);
+        let uri = assemble_at_uri(did, "fm.teal.actor.profileStatus", rkey);
         let created_at = status.created_at.as_ref().and_then(datetime_to_time);
         let updated_at = status.updated_at.as_ref().and_then(datetime_to_time);
         let record_json = serde_json::to_value(status)?;
@@ -87,10 +87,10 @@ impl LexiconIngestor for ActorProfileStatusIngestor {
             .ok_or_else(|| anyhow::anyhow!("Message has no commit"))?;
 
         if let Some(record) = &commit.record {
-            let record: types::fm_teal::alpha::actor::profile_status::ProfileStatus =
-                value::from_json_value::<
-                    types::fm_teal::alpha::actor::profile_status::ProfileStatus,
-                >(record.clone())?;
+            let record: types::fm_teal::actor::profile_status::ProfileStatus =
+                value::from_json_value::<types::fm_teal::actor::profile_status::ProfileStatus>(
+                    normalize_legacy_record_type(record),
+                )?;
             if let Some(cid) = &commit.cid {
                 self.insert_profile_status(&message.did, &commit.rkey, cid, &record)
                     .await?;

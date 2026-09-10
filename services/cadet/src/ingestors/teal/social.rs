@@ -22,14 +22,14 @@ pub enum SocialCollection {
 impl SocialCollection {
     pub fn nsid(self) -> &'static str {
         match self {
-            Self::Post => "fm.teal.alpha.feed.social.post",
-            Self::Like => "fm.teal.alpha.feed.social.like",
-            Self::Repost => "fm.teal.alpha.feed.social.repost",
-            Self::Follow => "fm.teal.alpha.graph.follow",
-            Self::Playlist => "fm.teal.alpha.feed.social.playlist",
-            Self::PlaylistItem => "fm.teal.alpha.feed.social.playlistItem",
-            Self::Badge => "fm.teal.alpha.feed.social.badge",
-            Self::BadgeAssignment => "fm.teal.alpha.feed.social.badgeAssignment",
+            Self::Post => "fm.teal.feed.social.post",
+            Self::Like => "fm.teal.feed.social.like",
+            Self::Repost => "fm.teal.feed.social.repost",
+            Self::Follow => "fm.teal.graph.follow",
+            Self::Playlist => "fm.teal.feed.social.playlist",
+            Self::PlaylistItem => "fm.teal.feed.social.playlistItem",
+            Self::Badge => "fm.teal.feed.social.badge",
+            Self::BadgeAssignment => "fm.teal.feed.social.badgeAssignment",
         }
     }
 }

@@ -140,67 +140,67 @@ pub mod add_rule_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Action;
-        type Pattern;
-        type Reason;
         type Url;
+        type Pattern;
+        type Action;
+        type Reason;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Action = Unset;
-        type Pattern = Unset;
-        type Reason = Unset;
         type Url = Unset;
-    }
-    ///State transition - sets the `action` field to Set
-    pub struct SetAction<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetAction<St> {}
-    impl<St: State> State for SetAction<St> {
-        type Action = Set<members::action>;
-        type Pattern = St::Pattern;
-        type Reason = St::Reason;
-        type Url = St::Url;
-    }
-    ///State transition - sets the `pattern` field to Set
-    pub struct SetPattern<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPattern<St> {}
-    impl<St: State> State for SetPattern<St> {
-        type Action = St::Action;
-        type Pattern = Set<members::pattern>;
-        type Reason = St::Reason;
-        type Url = St::Url;
-    }
-    ///State transition - sets the `reason` field to Set
-    pub struct SetReason<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetReason<St> {}
-    impl<St: State> State for SetReason<St> {
-        type Action = St::Action;
-        type Pattern = St::Pattern;
-        type Reason = Set<members::reason>;
-        type Url = St::Url;
+        type Pattern = Unset;
+        type Action = Unset;
+        type Reason = Unset;
     }
     ///State transition - sets the `url` field to Set
     pub struct SetUrl<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetUrl<St> {}
     impl<St: State> State for SetUrl<St> {
-        type Action = St::Action;
-        type Pattern = St::Pattern;
-        type Reason = St::Reason;
         type Url = Set<members::url>;
+        type Pattern = St::Pattern;
+        type Action = St::Action;
+        type Reason = St::Reason;
+    }
+    ///State transition - sets the `pattern` field to Set
+    pub struct SetPattern<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPattern<St> {}
+    impl<St: State> State for SetPattern<St> {
+        type Url = St::Url;
+        type Pattern = Set<members::pattern>;
+        type Action = St::Action;
+        type Reason = St::Reason;
+    }
+    ///State transition - sets the `action` field to Set
+    pub struct SetAction<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetAction<St> {}
+    impl<St: State> State for SetAction<St> {
+        type Url = St::Url;
+        type Pattern = St::Pattern;
+        type Action = Set<members::action>;
+        type Reason = St::Reason;
+    }
+    ///State transition - sets the `reason` field to Set
+    pub struct SetReason<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetReason<St> {}
+    impl<St: State> State for SetReason<St> {
+        type Url = St::Url;
+        type Pattern = St::Pattern;
+        type Action = St::Action;
+        type Reason = Set<members::reason>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `action` field
-        pub struct action(());
-        ///Marker type for the `pattern` field
-        pub struct pattern(());
-        ///Marker type for the `reason` field
-        pub struct reason(());
         ///Marker type for the `url` field
         pub struct url(());
+        ///Marker type for the `pattern` field
+        pub struct pattern(());
+        ///Marker type for the `action` field
+        pub struct action(());
+        ///Marker type for the `reason` field
+        pub struct reason(());
     }
 }
 
@@ -341,10 +341,10 @@ where
 impl<S: BosStr, St> AddRuleBuilder<S, St>
 where
     St: add_rule_state::State,
-    St::Action: add_rule_state::IsSet,
-    St::Pattern: add_rule_state::IsSet,
-    St::Reason: add_rule_state::IsSet,
     St::Url: add_rule_state::IsSet,
+    St::Pattern: add_rule_state::IsSet,
+    St::Action: add_rule_state::IsSet,
+    St::Reason: add_rule_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AddRule<S> {

@@ -31,6 +31,7 @@
 //! and use the original rkey from the AT Protocol MST structure.
 
 use crate::ingestors::car::jobs::{queue_keys, CarImportJob};
+use crate::ingestors::teal::normalize_legacy_record_type;
 use crate::redis_client::RedisClient;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -42,6 +43,7 @@ use redis::AsyncCommands;
 use rocketman::{ingestion::LexiconIngestor, types::event::Event};
 use serde_json::Value;
 use sqlx::PgPool;
+use std::collections::HashMap;
 use tracing::{info, warn};
 
 /// Helper struct for extracted records
@@ -51,6 +53,83 @@ pub struct ExtractedRecord {
     pub rkey: String,
     pub cid: String,
     pub data: serde_json::Value,
+}
+
+fn stable_collection_for(collection: &str) -> Option<&'static str> {
+    match collection {
+        "fm.teal.feed.play" | "fm.teal.alpha.feed.play" => Some("fm.teal.feed.play"),
+        "fm.teal.actor.profile" | "fm.teal.alpha.actor.profile" => Some("fm.teal.actor.profile"),
+        "fm.teal.actor.status" | "fm.teal.alpha.actor.status" => Some("fm.teal.actor.status"),
+        "fm.teal.actor.profileStatus" | "fm.teal.alpha.actor.profileStatus" => {
+            Some("fm.teal.actor.profileStatus")
+        }
+        "fm.teal.feed.social.post" | "fm.teal.alpha.feed.social.post" => {
+            Some("fm.teal.feed.social.post")
+        }
+        "fm.teal.feed.social.like" | "fm.teal.alpha.feed.social.like" => {
+            Some("fm.teal.feed.social.like")
+        }
+        "fm.teal.feed.social.repost" | "fm.teal.alpha.feed.social.repost" => {
+            Some("fm.teal.feed.social.repost")
+        }
+        "fm.teal.graph.follow" | "fm.teal.alpha.graph.follow" => Some("fm.teal.graph.follow"),
+        "fm.teal.feed.social.playlist" | "fm.teal.alpha.feed.social.playlist" => {
+            Some("fm.teal.feed.social.playlist")
+        }
+        "fm.teal.feed.social.playlistItem" | "fm.teal.alpha.feed.social.playlistItem" => {
+            Some("fm.teal.feed.social.playlistItem")
+        }
+        "fm.teal.feed.social.badge" | "fm.teal.alpha.feed.social.badge" => {
+            Some("fm.teal.feed.social.badge")
+        }
+        "fm.teal.feed.social.badgeAssignment" | "fm.teal.alpha.feed.social.badgeAssignment" => {
+            Some("fm.teal.feed.social.badgeAssignment")
+        }
+        _ => None,
+    }
+}
+
+fn is_legacy_collection(collection: &str) -> bool {
+    collection.starts_with("fm.teal.alpha.")
+}
+
+/// Drop duplicate stable/alpha records from a repository snapshot.
+///
+/// Records are duplicates when their canonical collection, rkey, and
+/// normalized JSON are identical. Stable records win when both namespace
+/// variants are present.
+fn deduplicate_records(records: Vec<ExtractedRecord>) -> Vec<ExtractedRecord> {
+    let mut deduplicated: Vec<(ExtractedRecord, Value)> = Vec::with_capacity(records.len());
+    let mut positions_by_key: HashMap<(&'static str, String), Vec<usize>> = HashMap::new();
+
+    for record in records {
+        let normalized_data = normalize_legacy_record_type(&record.data);
+        let Some(canonical_collection) = stable_collection_for(&record.collection) else {
+            deduplicated.push((record, normalized_data));
+            continue;
+        };
+        let key = (canonical_collection, record.rkey.clone());
+        let duplicate_index = positions_by_key.get(&key).and_then(|positions| {
+            positions
+                .iter()
+                .copied()
+                .find(|&index| deduplicated[index].1 == normalized_data)
+        });
+
+        if let Some(index) = duplicate_index {
+            if is_legacy_collection(&deduplicated[index].0.collection)
+                && !is_legacy_collection(&record.collection)
+            {
+                deduplicated[index] = (record, normalized_data);
+            }
+        } else {
+            let index = deduplicated.len();
+            deduplicated.push((record, normalized_data));
+            positions_by_key.entry(key).or_default().push(index);
+        }
+    }
+
+    deduplicated.into_iter().map(|(record, _)| record).collect()
 }
 
 /// CAR Import Ingestor handles importing Teal records from CAR files using atmst
@@ -116,8 +195,14 @@ impl CarImportIngestor {
         let records = self
             .extract_records_from_mst(&mst, &data_importer, did)
             .await?;
+        let extracted_count = records.len();
+        let records = deduplicate_records(records);
 
-        info!("Extracted {} records from MST", records.len());
+        info!(
+            "Extracted {} records from MST ({} after namespace deduplication)",
+            extracted_count,
+            records.len()
+        );
 
         // Process each record through the appropriate ingestor
         let mut processed_count = 0_usize;
@@ -249,8 +334,8 @@ impl CarImportIngestor {
             "🔄 Processing {} record: {}",
             record.collection, record.rkey
         );
-        match record.collection.as_str() {
-            "fm.teal.alpha.feed.play" => {
+        match stable_collection_for(&record.collection) {
+            Some("fm.teal.feed.play") => {
                 info!("   📀 Processing play record...");
                 let result = self
                     .process_play_record(&record.data, did, &record.rkey, &record.cid)
@@ -262,7 +347,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.profile" => {
+            Some("fm.teal.actor.profile") => {
                 info!("   👤 Processing profile record...");
                 let result = self
                     .process_profile_record(&record.data, did, &record.rkey)
@@ -274,7 +359,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.status" => {
+            Some("fm.teal.actor.status") => {
                 info!("   📢 Processing status record...");
                 let result = self
                     .process_status_record(&record.data, did, &record.rkey, &record.cid)
@@ -286,7 +371,7 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.actor.profileStatus" => {
+            Some("fm.teal.actor.profileStatus") => {
                 info!("   🧭 Processing profile status record...");
                 let result = self
                     .process_profile_status_record(&record.data, did, &record.rkey, &record.cid)
@@ -301,14 +386,14 @@ impl CarImportIngestor {
                 }
                 result
             }
-            "fm.teal.alpha.feed.social.post"
-            | "fm.teal.alpha.feed.social.like"
-            | "fm.teal.alpha.feed.social.repost"
-            | "fm.teal.alpha.graph.follow"
-            | "fm.teal.alpha.feed.social.playlist"
-            | "fm.teal.alpha.feed.social.playlistItem"
-            | "fm.teal.alpha.feed.social.badge"
-            | "fm.teal.alpha.feed.social.badgeAssignment" => {
+            Some("fm.teal.feed.social.post")
+            | Some("fm.teal.feed.social.like")
+            | Some("fm.teal.feed.social.repost")
+            | Some("fm.teal.graph.follow")
+            | Some("fm.teal.feed.social.playlist")
+            | Some("fm.teal.feed.social.playlistItem")
+            | Some("fm.teal.feed.social.badge")
+            | Some("fm.teal.feed.social.badgeAssignment") => {
                 info!("   💬 Processing social record...");
                 let result = self
                     .process_social_record(
@@ -335,7 +420,10 @@ impl CarImportIngestor {
 
     /// Check if a key represents a Teal record
     fn is_teal_record_key(&self, key: &str) -> bool {
-        key.starts_with("fm.teal.alpha.") && key.contains("/")
+        let Some((collection, rkey)) = key.rsplit_once('/') else {
+            return false;
+        };
+        !rkey.is_empty() && stable_collection_for(collection).is_some()
     }
 
     /// Parse a Teal MST key to extract collection and rkey
@@ -357,12 +445,12 @@ impl CarImportIngestor {
         rkey: &str,
         cid: &str,
     ) -> Result<()> {
-        let data = Self::normalize_play_record_json(data.clone());
-        let play_record: types::fm_teal::alpha::feed::play::Play =
-            value::from_json_value::<types::fm_teal::alpha::feed::play::Play>(data)?;
+        let data = Self::normalize_play_record_json(normalize_legacy_record_type(data));
+        let play_record: types::fm_teal::feed::play::Play =
+            value::from_json_value::<types::fm_teal::feed::play::Play>(data)?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
-        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.alpha.feed.play", rkey);
+        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.feed.play", rkey);
 
         play_ingestor
             .insert_play(&play_record, &uri, cid, did, rkey)
@@ -417,8 +505,10 @@ impl CarImportIngestor {
         rkey: &str,
         cid: &str,
     ) -> Result<()> {
-        let status_record: types::fm_teal::alpha::actor::status::Status =
-            value::from_json_value::<types::fm_teal::alpha::actor::status::Status>(data.clone())?;
+        let status_record: types::fm_teal::actor::status::Status =
+            value::from_json_value::<types::fm_teal::actor::status::Status>(
+                normalize_legacy_record_type(data),
+            )?;
 
         let status_ingestor =
             super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());
@@ -439,9 +529,9 @@ impl CarImportIngestor {
         rkey: &str,
         cid: &str,
     ) -> Result<()> {
-        let profile_status_record: types::fm_teal::alpha::actor::profile_status::ProfileStatus =
-            value::from_json_value::<types::fm_teal::alpha::actor::profile_status::ProfileStatus>(
-                data.clone(),
+        let profile_status_record: types::fm_teal::actor::profile_status::ProfileStatus =
+            value::from_json_value::<types::fm_teal::actor::profile_status::ProfileStatus>(
+                normalize_legacy_record_type(data),
             )?;
 
         let profile_status_ingestor =
@@ -467,22 +557,28 @@ impl CarImportIngestor {
         cid: &str,
     ) -> Result<()> {
         let kind = match collection {
-            "fm.teal.alpha.feed.social.post" => super::super::teal::social::SocialCollection::Post,
-            "fm.teal.alpha.feed.social.like" => super::super::teal::social::SocialCollection::Like,
-            "fm.teal.alpha.feed.social.repost" => {
+            "fm.teal.feed.social.post" | "fm.teal.alpha.feed.social.post" => {
+                super::super::teal::social::SocialCollection::Post
+            }
+            "fm.teal.feed.social.like" | "fm.teal.alpha.feed.social.like" => {
+                super::super::teal::social::SocialCollection::Like
+            }
+            "fm.teal.feed.social.repost" | "fm.teal.alpha.feed.social.repost" => {
                 super::super::teal::social::SocialCollection::Repost
             }
-            "fm.teal.alpha.graph.follow" => super::super::teal::social::SocialCollection::Follow,
-            "fm.teal.alpha.feed.social.playlist" => {
+            "fm.teal.graph.follow" | "fm.teal.alpha.graph.follow" => {
+                super::super::teal::social::SocialCollection::Follow
+            }
+            "fm.teal.feed.social.playlist" | "fm.teal.alpha.feed.social.playlist" => {
                 super::super::teal::social::SocialCollection::Playlist
             }
-            "fm.teal.alpha.feed.social.playlistItem" => {
+            "fm.teal.feed.social.playlistItem" | "fm.teal.alpha.feed.social.playlistItem" => {
                 super::super::teal::social::SocialCollection::PlaylistItem
             }
-            "fm.teal.alpha.feed.social.badge" => {
+            "fm.teal.feed.social.badge" | "fm.teal.alpha.feed.social.badge" => {
                 super::super::teal::social::SocialCollection::Badge
             }
-            "fm.teal.alpha.feed.social.badgeAssignment" => {
+            "fm.teal.feed.social.badgeAssignment" | "fm.teal.alpha.feed.social.badgeAssignment" => {
                 super::super::teal::social::SocialCollection::BadgeAssignment
             }
             _ => return Err(anyhow!("Unsupported social collection: {}", collection)),
@@ -586,8 +682,23 @@ impl CarImportIngestor {
 
     /// Fetch CAR file from PDS
     async fn fetch_car_from_pds(&self, pds_url: &str, did: &str) -> Result<Vec<u8>> {
-        let url = format!("{}/xrpc/com.atproto.sync.getRepo?did={}", pds_url, did);
-        let response = reqwest::get(&url).await?;
+        const MAX_CAR_BYTES: u64 = 256 * 1024 * 1024;
+        let base_url = url::Url::parse(pds_url)?;
+        if base_url.scheme() != "https" {
+            return Err(anyhow!("PDS endpoint must use HTTPS"));
+        }
+        let host = base_url
+            .host_str()
+            .ok_or_else(|| anyhow!("PDS endpoint has no host"))?;
+        validate_public_host(host).await?;
+
+        let mut url = base_url.join("/xrpc/com.atproto.sync.getRepo")?;
+        url.query_pairs_mut().append_pair("did", did);
+        let client = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(std::time::Duration::from_secs(60))
+            .build()?;
+        let response = client.get(url).send().await?;
 
         if !response.status().is_success() {
             return Err(anyhow!(
@@ -596,7 +707,22 @@ impl CarImportIngestor {
             ));
         }
 
-        let car_data = response.bytes().await?.to_vec();
+        if response
+            .content_length()
+            .is_some_and(|length| length > MAX_CAR_BYTES)
+        {
+            return Err(anyhow!("CAR file exceeds the {} byte limit", MAX_CAR_BYTES));
+        }
+
+        let mut car_data = Vec::new();
+        let mut stream = response.bytes_stream();
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk?;
+            if car_data.len() as u64 + chunk.len() as u64 > MAX_CAR_BYTES {
+                return Err(anyhow!("CAR file exceeds the {} byte limit", MAX_CAR_BYTES));
+            }
+            car_data.extend_from_slice(&chunk);
+        }
         info!("Fetched CAR file: {} bytes", car_data.len());
 
         Ok(car_data)
@@ -641,6 +767,45 @@ impl CarImportIngestor {
                 Ok(Value::Object(json_map))
             }
             Ipld::Link(cid) => Ok(Value::String(cid.to_string())),
+        }
+    }
+}
+
+async fn validate_public_host(host: &str) -> Result<()> {
+    if host.eq_ignore_ascii_case("localhost") || host.ends_with(".localhost") {
+        return Err(anyhow!("PDS host is not publicly routable"));
+    }
+
+    let addresses = tokio::net::lookup_host((host, 443)).await?;
+    let mut found = false;
+    for address in addresses {
+        found = true;
+        if is_private_ip(address.ip()) {
+            return Err(anyhow!("PDS host resolves to a private address"));
+        }
+    }
+    if !found {
+        return Err(anyhow!("PDS host did not resolve to an address"));
+    }
+    Ok(())
+}
+
+fn is_private_ip(ip: std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(ip) => {
+            ip.is_private()
+                || ip.is_loopback()
+                || ip.is_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
+                || ip.is_broadcast()
+        }
+        std::net::IpAddr::V6(ip) => {
+            ip.is_loopback()
+                || ip.is_unique_local()
+                || ip.is_unicast_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
         }
     }
 }
@@ -831,6 +996,72 @@ mod tests {
         assert!(is_teal_record_key("fm.teal.alpha.profile/def456"));
         assert!(!is_teal_record_key("app.bsky.feed.post/xyz789"));
         assert!(!is_teal_record_key("fm.teal.alpha.feed.play")); // No rkey
+    }
+
+    #[test]
+    fn test_deduplicate_identical_alpha_and_stable_records_prefers_stable() {
+        let record_fields = serde_json::json!({
+            "trackName": "Same recording",
+            "playedTime": "2024-01-01T00:00:00Z"
+        });
+        let mut legacy_data = record_fields.clone();
+        legacy_data["$type"] = serde_json::json!("fm.teal.alpha.feed.play");
+        let mut stable_data = record_fields;
+        stable_data["$type"] = serde_json::json!("fm.teal.feed.play");
+
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: "fm.teal.alpha.feed.play".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "legacy-cid".to_string(),
+                data: legacy_data,
+            },
+            ExtractedRecord {
+                collection: "fm.teal.feed.play".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "stable-cid".to_string(),
+                data: stable_data,
+            },
+        ]);
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].collection, "fm.teal.feed.play");
+        assert_eq!(records[0].cid, "stable-cid");
+    }
+
+    #[test]
+    fn test_deduplicate_compares_only_matching_collection_and_rkey() {
+        let records = deduplicate_records(vec![
+            ExtractedRecord {
+                collection: "fm.teal.alpha.actor.status".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "status-cid".to_string(),
+                data: serde_json::json!({
+                    "$type": "fm.teal.alpha.actor.status",
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: "fm.teal.feed.play".to_string(),
+                rkey: "same-rkey".to_string(),
+                cid: "play-cid".to_string(),
+                data: serde_json::json!({
+                    "$type": "fm.teal.feed.play",
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+            ExtractedRecord {
+                collection: "fm.teal.actor.status".to_string(),
+                rkey: "different-rkey".to_string(),
+                cid: "other-status-cid".to_string(),
+                data: serde_json::json!({
+                    "$type": "fm.teal.actor.status",
+                    "time": "2024-01-01T00:00:00Z"
+                }),
+            },
+        ]);
+
+        assert_eq!(records.len(), 3);
     }
 
     #[test]

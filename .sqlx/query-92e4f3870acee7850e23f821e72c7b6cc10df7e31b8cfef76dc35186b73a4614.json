@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT ae.mbid, ae.name, COUNT(DISTINCT p.uri) AS play_count\n            FROM artists_extended ae\n            LEFT JOIN play_to_artists_extended ptae ON ae.id = ptae.artist_id\n            LEFT JOIN plays p ON p.uri = ptae.play_uri\n            WHERE ae.name ILIKE $1 ESCAPE E'\\\\'\n              AND ($5::text IS NULL OR p.did = $5)\n            GROUP BY ae.id, ae.mbid, ae.name\n            ORDER BY\n                CASE\n                    WHEN LOWER(ae.name) = LOWER($2) THEN 0\n                    WHEN ae.name ILIKE $3 ESCAPE E'\\\\' THEN 1\n                    ELSE 2\n                END,\n                play_count DESC,\n                ae.name\n            LIMIT $4\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "play_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "92e4f3870acee7850e23f821e72c7b6cc10df7e31b8cfef76dc35186b73a4614"
+}

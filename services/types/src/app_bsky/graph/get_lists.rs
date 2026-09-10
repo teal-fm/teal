@@ -28,6 +28,8 @@ pub struct GetLists<S: BosStr = DefaultStr> {
     #[serde(default = "_default_limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub purposes: Option<Vec<S>>,
 }
 
 
@@ -104,7 +106,7 @@ pub mod get_lists_state {
 /// Builder for constructing an instance of this type.
 pub struct GetListsBuilder<S: BosStr, St: get_lists_state::State> {
     _state: PhantomData<fn() -> St>,
-    _fields: (Option<AtIdentifier<S>>, Option<S>, Option<i64>),
+    _fields: (Option<AtIdentifier<S>>, Option<S>, Option<i64>, Option<Vec<S>>),
     _type: PhantomData<fn() -> S>,
 }
 
@@ -120,7 +122,7 @@ impl<S: BosStr> GetListsBuilder<S, get_lists_state::Empty> {
     pub fn new() -> Self {
         GetListsBuilder {
             _state: PhantomData,
-            _fields: (None, None, None),
+            _fields: (None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -171,6 +173,19 @@ impl<S: BosStr, St: get_lists_state::State> GetListsBuilder<S, St> {
     }
 }
 
+impl<S: BosStr, St: get_lists_state::State> GetListsBuilder<S, St> {
+    /// Set the `purposes` field (optional)
+    pub fn purposes(mut self, value: impl Into<Option<Vec<S>>>) -> Self {
+        self._fields.3 = value.into();
+        self
+    }
+    /// Set the `purposes` field to an Option value (optional)
+    pub fn maybe_purposes(mut self, value: Option<Vec<S>>) -> Self {
+        self._fields.3 = value;
+        self
+    }
+}
+
 impl<S: BosStr, St> GetListsBuilder<S, St>
 where
     St: get_lists_state::State,
@@ -182,6 +197,7 @@ where
             actor: self._fields.0.unwrap(),
             cursor: self._fields.1,
             limit: self._fields.2,
+            purposes: self._fields.3,
         }
     }
 }
