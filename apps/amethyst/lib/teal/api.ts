@@ -153,6 +153,13 @@ export function getPlayByUri(uri: string) {
   return getXrpc<{ play: PlayView }>("fm.teal.alpha.feed.getPlay", { uri });
 }
 
+export function getPlayByAuthorRkey(authorDID: string, rkey: string) {
+  return getXrpc<{ play: PlayView }>("fm.teal.alpha.feed.getPlay", {
+    authorDID,
+    rkey,
+  });
+}
+
 export function getArtist(mbid?: string, name?: string) {
   return getXrpc<{ artist: MusicArtistView }>("fm.teal.alpha.music.getArtist", {
     mbid,

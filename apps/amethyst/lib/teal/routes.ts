@@ -31,6 +31,11 @@ export function musicTrackHref(
   return `/:o/music/${routePart(artistName)}/${routePart(releaseName)}/${routePart(trackName)}?uri=${encodeURIComponent(uri)}`;
 }
 
+export function listenHref(authorDid?: string, rkey?: string) {
+  if (!authorDid || !rkey) return undefined;
+  return `/listen/${encodeURIComponent(authorDid)}/${encodeURIComponent(rkey)}`;
+}
+
 export function playlistHref(name: string, uri: string) {
   return `/playlist/${routePart(name)}?uri=${encodeURIComponent(uri)}`;
 }

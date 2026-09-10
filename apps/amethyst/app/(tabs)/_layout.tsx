@@ -111,6 +111,13 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="listen/[did]/[rkey]"
+        options={{
+          title: "Listen",
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

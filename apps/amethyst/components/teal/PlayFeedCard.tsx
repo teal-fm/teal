@@ -15,7 +15,7 @@ import {
   normalizeHandle,
   type DisplayActor,
 } from "@/lib/teal/actors";
-import { musicTrackHref } from "@/lib/teal/routes";
+import { listenHref, musicTrackHref } from "@/lib/teal/routes";
 import { cn, timeAgo } from "@/lib/utils";
 import { Disc3 } from "lucide-react-native";
 
@@ -93,6 +93,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
   const when = play.playedTime
     ? timeAgo(new Date(play.playedTime))
     : "recently";
+  const permalink = listenHref(play.authorDid, play.rkey);
 
   return (
     <View
@@ -125,9 +126,19 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
               @{authorHandle}
             </Text>
           )}
-          <Text className="text-xs font-light text-muted-foreground">
-            listened {when}
-          </Text>
+          {permalink ? (
+            <Link href={permalink as any} asChild>
+              <Pressable>
+                <Text className="text-xs font-light text-muted-foreground">
+                  listened {when}
+                </Text>
+              </Pressable>
+            </Link>
+          ) : (
+            <Text className="text-xs font-light text-muted-foreground">
+              listened {when}
+            </Text>
+          )}
         </View>
       </View>
 
