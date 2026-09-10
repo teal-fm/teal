@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
-import PlayFeedCard from "@/components/songish/PlayFeedCard";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell from "@/components/songish/SongishShell";
+import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
+  SectionHeading,
+} from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import {
   coverArtUrl,
@@ -21,6 +23,7 @@ export default function MusicDetail() {
   const [play, setPlay] = useState<PlayView | null>(null);
   const [related, setRelated] = useState<PlayView[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [artFailed, setArtFailed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -51,7 +54,7 @@ export default function MusicDetail() {
   }, [uri]);
 
   return (
-    <SongishShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{ title: play?.trackName || "Music", headerShown: false }}
       />
@@ -61,7 +64,7 @@ export default function MusicDetail() {
         </View>
       )}
       {error && (
-        <View className="rounded-2xl bg-destructive/15 p-4">
+        <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="font-bold text-destructive">
             Could not load music detail: {error}
           </Text>
@@ -69,27 +72,29 @@ export default function MusicDetail() {
       )}
       {play && (
         <>
-          <View className="mb-10 overflow-hidden rounded-3xl bg-background/70">
+          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
             <View className="h-44 bg-muted">
-              {coverArtUrl(play.releaseMbId, 500) && (
+              {!artFailed && coverArtUrl(play.releaseMbId, 500) && (
                 <Image
                   source={{ uri: coverArtUrl(play.releaseMbId, 500) }}
                   className="h-full w-full opacity-40"
+                  onError={() => setArtFailed(true)}
                 />
               )}
             </View>
             <View className="-mt-8 flex-row gap-4 px-5 pb-8">
-              {coverArtUrl(play.releaseMbId) ? (
+              {!artFailed && coverArtUrl(play.releaseMbId) ? (
                 <Image
                   source={{ uri: coverArtUrl(play.releaseMbId) }}
-                  className="h-24 w-24 rounded-2xl bg-muted md:h-28 md:w-28"
+                  className="h-24 w-24 rounded-lg bg-muted md:h-28 md:w-28"
+                  onError={() => setArtFailed(true)}
                 />
               ) : (
-                <View className="h-24 w-24 rounded-2xl bg-muted md:h-28 md:w-28" />
+                <View className="h-24 w-24 rounded-lg bg-muted md:h-28 md:w-28" />
               )}
               <View className="min-w-0 flex-1 justify-end pb-2">
                 <Text
-                  className="font-serif text-2xl font-black"
+                  className="font-sans text-2xl font-black"
                   numberOfLines={3}
                 >
                   {play.trackName}
@@ -141,7 +146,7 @@ export default function MusicDetail() {
               </View>
             </View>
           </View>
-          <Text className="mb-4 text-2xl font-black">Plays</Text>
+          <SectionHeading eyebrow="Listening history" title="Plays" />
           {(related.length ? related : [play]).map((item, index) => (
             <PlayFeedCard
               key={item.uri || `${item.trackName}-${index}`}
@@ -150,6 +155,6 @@ export default function MusicDetail() {
           ))}
         </>
       )}
-    </SongishShell>
+    </TealShell>
   );
 }

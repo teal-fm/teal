@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, type ColorValue } from "react-native";
+import { Platform, Pressable, type ColorValue } from "react-native";
 import { Link, Tabs } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
@@ -26,7 +26,7 @@ export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const authStatus = useStore((state) => state.status);
   const isMobile = useIsMobile();
-  const hideTabBar = !isMobile;
+  const hideTabBar = !isMobile || Platform.OS === "web";
 
   return (
     <Tabs

@@ -19,15 +19,19 @@ export default function ModalScreen() {
       className="flex h-screen w-full items-center justify-center bg-muted/60 backdrop-blur-sm animate-in fade-in"
       onPress={() => handleGoBack()}
     >
-      <View className="relative max-h-80 w-full max-w-96 flex-1 items-center justify-center gap-2 rounded-xl bg-background shadow-xl">
+      <View className="relative max-h-72 w-full max-w-96 flex-1 items-center justify-center gap-3 rounded-lg border border-border bg-background px-7 shadow-xl">
         <Icon
           icon={X}
           className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
           name="x"
         />
-        <Text className="text-4xl">Surprise!</Text>
-        <Text className="text-xl">You can sign out here!</Text>
-        <Text className="-mt-2 text-xl">but... are you sure?</Text>
+        <Text className="font-sans text-3xl font-black">
+          Sign out of Teal?
+        </Text>
+        <Text className="text-center text-sm leading-5 text-muted-foreground">
+          Your records stay in your ATProto repository. This only clears your
+          local session.
+        </Text>
         <Button
           onPress={() => {
             logOut();

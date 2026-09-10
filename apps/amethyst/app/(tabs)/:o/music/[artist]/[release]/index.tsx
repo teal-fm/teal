@@ -8,9 +8,11 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
-import PlayFeedCard from "@/components/songish/PlayFeedCard";
-import RightRail from "@/components/songish/RightRail";
-import SongishShell from "@/components/songish/SongishShell";
+import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import RightRail from "@/components/teal/RightRail";
+import TealShell, {
+  SectionHeading,
+} from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, getAlbum } from "@/lib/teal/api";
@@ -101,7 +103,7 @@ export default function AlbumDetail() {
   const art = artFailed ? undefined : coverArtUrl(album?.mbid, 500);
 
   return (
-    <SongishShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
       <Stack.Screen
         options={{ title: album?.name || "Album", headerShown: false }}
       />
@@ -111,7 +113,7 @@ export default function AlbumDetail() {
         </View>
       )}
       {error && (
-        <View className="mb-6 rounded-2xl bg-destructive/15 p-4">
+        <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="font-bold text-destructive">
             Could not load album: {error}
           </Text>
@@ -119,7 +121,7 @@ export default function AlbumDetail() {
       )}
       {album && (
         <>
-          <View className="mb-10 overflow-hidden rounded-2xl bg-background/75">
+          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
             <View className="h-40 bg-muted">
               {art && (
                 <Image
@@ -130,7 +132,7 @@ export default function AlbumDetail() {
               )}
             </View>
             <View className="-mt-10 flex-row items-end gap-4 px-5 pb-7">
-              <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-muted md:h-28 md:w-28">
+              <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-muted md:h-28 md:w-28">
                 {art ? (
                   <Image
                     source={{ uri: art }}
@@ -150,7 +152,7 @@ export default function AlbumDetail() {
                   Album
                 </Text>
                 <Text
-                  className="font-serif text-2xl font-black md:text-3xl"
+                  className="font-sans text-2xl font-black md:text-3xl"
                   numberOfLines={3}
                 >
                   {album.name}
@@ -180,8 +182,12 @@ export default function AlbumDetail() {
             </View>
           </View>
 
-          <Text className="mb-4 text-2xl font-black">Track list</Text>
-          <View className="mb-10 overflow-hidden rounded-2xl bg-background/75 px-4">
+          <SectionHeading
+            eyebrow="Release"
+            title="Track list"
+            detail={`${album.tracks.length} TRACKS`}
+          />
+          <View className="mb-10 overflow-hidden rounded-lg border border-border bg-card px-3">
             {album.tracks.map((track) => (
               <Link
                 key={`${track.recordingMbid}-${track.uri}`}
@@ -227,7 +233,11 @@ export default function AlbumDetail() {
             ))}
           </View>
 
-          <Text className="mb-4 text-2xl font-black">Listens</Text>
+          <SectionHeading
+            eyebrow="Across the network"
+            title="Listens"
+            detail={`${album.playCount} TOTAL`}
+          />
           {plays.map((play, index) => (
             <PlayFeedCard
               key={play.uri || `${play.trackName}-${index}`}
@@ -246,6 +256,6 @@ export default function AlbumDetail() {
           )}
         </>
       )}
-    </SongishShell>
+    </TealShell>
   );
 }
