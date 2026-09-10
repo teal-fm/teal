@@ -5,6 +5,7 @@ import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
 import {
   FilePen,
+  Disc3,
   Home,
   LogOut,
   Search,
@@ -73,6 +74,14 @@ export default function TabLayout() {
         options={{
           title: "Explore",
           tabBarIcon: ({ color }) => <TabBarIcon name={Search} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="manual-listens"
+        options={{
+          title: "Add listens",
+          href: authStatus === "loggedIn" ? undefined : null,
+          tabBarIcon: ({ color }) => <TabBarIcon name={Disc3} color={color} />,
         }}
       />
       <Tabs.Screen

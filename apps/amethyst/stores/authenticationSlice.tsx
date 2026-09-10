@@ -136,8 +136,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     restorePdsAgent: async () => {
       let did = get().oauthSession?.sub;
       if (!did) {
-        //
-        // throw new Error("No session");
+        set({ status: "loggedOut" });
         return;
       }
       try {

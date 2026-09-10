@@ -46,16 +46,30 @@ pub async fn ingest_account_event(pool: &PgPool, text: &str) -> anyhow::Result<b
         return Ok(false);
     };
 
-    upsert_account_state(pool, &envelope.did, &account).await?;
+    let mut tx = pool.begin().await?;
+    lock_account(&mut tx, &envelope.did).await?;
+    upsert_account_state(&mut tx, &envelope.did, &account).await?;
     if !account.active {
-        purge_indexed_account_data(pool, &envelope.did).await?;
+        purge_indexed_account_data(&mut tx, &envelope.did).await?;
     }
+    tx.commit().await?;
 
     info!(
         "Indexed account lifecycle event for {}: active={}, status={:?}",
         envelope.did, account.active, account.status
     );
     Ok(true)
+}
+
+/// Serialize account lifecycle transitions with writes that can publish records
+/// for the same DID. The lock is transaction-scoped so it is released on both
+/// commit and rollback.
+pub async fn lock_account(tx: &mut Transaction<'_, Postgres>, did: &str) -> anyhow::Result<()> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+        .bind(did)
+        .execute(&mut **tx)
+        .await?;
+    Ok(())
 }
 
 pub async fn should_ingest_commit(pool: &PgPool, text: &str) -> anyhow::Result<bool> {
@@ -87,7 +101,7 @@ pub async fn should_ingest_commit(pool: &PgPool, text: &str) -> anyhow::Result<b
 }
 
 async fn upsert_account_state(
-    pool: &PgPool,
+    tx: &mut Transaction<'_, Postgres>,
     did: &str,
     account: &AccountDetails,
 ) -> anyhow::Result<()> {
@@ -108,20 +122,20 @@ async fn upsert_account_state(
     .bind(account.status.as_deref())
     .bind(account.time.as_deref())
     .bind(account.seq)
-    .execute(pool)
+    .execute(&mut **tx)
     .await?;
 
     Ok(())
 }
 
-async fn purge_indexed_account_data(pool: &PgPool, did: &str) -> anyhow::Result<()> {
-    let mut tx = pool.begin().await?;
+async fn purge_indexed_account_data(
+    tx: &mut Transaction<'_, Postgres>,
+    did: &str,
+) -> anyhow::Result<()> {
+    delete_plays(&mut *tx, did).await?;
+    delete_profile_records(&mut *tx, did).await?;
+    delete_social_records(&mut *tx, did).await?;
 
-    delete_plays(&mut tx, did).await?;
-    delete_profile_records(&mut tx, did).await?;
-    delete_social_records(&mut tx, did).await?;
-
-    tx.commit().await?;
     info!("Purged indexed records for inactive account {}", did);
     Ok(())
 }

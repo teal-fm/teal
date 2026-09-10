@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use cadet::{
     account,
     cursor::{self, resolve_startup_cursor},
-    db, identity, ingestors, redis_client, teal_ingestors,
+    db, identity, ingestion_retry, ingestors, redis_client, teal_ingestors,
 };
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tracing::{error, info};
@@ -58,6 +58,8 @@ async fn main() {
         .await
         .expect("Could not get PostgreSQL pool");
 
+    let retry_store = ingestion_retry::IngestionRetryStore::new(pool.clone());
+
     let opts = JetstreamOptions::builder()
         .ws_url(JetstreamEndpoints::Custom(jetstream_url.clone()))
         .wanted_collections(
@@ -84,7 +86,11 @@ async fn main() {
 
     let jetstream = JetstreamConnection::new(opts);
 
-    let ingestors = teal_ingestors::build_ingestors(pool.clone());
+    let ingestors =
+        teal_ingestors::build_ingestors_with_retry(pool.clone(), Some(retry_store.clone()));
+
+    let retry_ingestor = ingestors::teal::feed_play::PlayIngestor::new(pool.clone());
+    tokio::spawn(ingestion_retry::run_worker(retry_store, retry_ingestor));
 
     // Keep the indexed catalog normalized as new clients introduce alternate
     // release/recording IDs for the same artist and title.

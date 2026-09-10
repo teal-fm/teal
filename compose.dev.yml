@@ -8,6 +8,8 @@ services:
         EXPO_PUBLIC_BASE_URL: ${EXPO_PUBLIC_BASE_URL:-http://localhost:8081}
         EXPO_PUBLIC_AQUA_URL: ${EXPO_PUBLIC_AQUA_URL:-http://localhost:3000}
         EXPO_PUBLIC_DID_WEB: ${EXPO_PUBLIC_DID_WEB:-did:web:localhost}
+        EXPO_PUBLIC_GIT_BRANCH: ${EXPO_PUBLIC_GIT_BRANCH:-unknown}
+        EXPO_PUBLIC_GIT_COMMIT: ${EXPO_PUBLIC_GIT_COMMIT:-unknown}
     ports:
       - "8081:80"
     environment:

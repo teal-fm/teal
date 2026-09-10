@@ -63,6 +63,8 @@ export_preview_env() {
   export EXPO_PUBLIC_BASE_URL="${EXPO_PUBLIC_BASE_URL:-$PUBLIC_ORIGIN}"
   export EXPO_PUBLIC_AQUA_URL="${EXPO_PUBLIC_AQUA_URL:-$PUBLIC_ORIGIN}"
   export EXPO_PUBLIC_DID_WEB="${EXPO_PUBLIC_DID_WEB:-did:web:${TUNNEL_HOST}}"
+  export EXPO_PUBLIC_GIT_BRANCH="$(git symbolic-ref --short -q HEAD || echo detached)"
+  export EXPO_PUBLIC_GIT_COMMIT="$(git rev-parse HEAD)"
 }
 
 curl_preview() {
