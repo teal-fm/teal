@@ -65,37 +65,37 @@ pub mod add_values_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Values;
         type Name;
+        type Values;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Values = Unset;
         type Name = Unset;
-    }
-    ///State transition - sets the `values` field to Set
-    pub struct SetValues<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetValues<St> {}
-    impl<St: State> State for SetValues<St> {
-        type Values = Set<members::values>;
-        type Name = St::Name;
+        type Values = Unset;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetName<St> {}
     impl<St: State> State for SetName<St> {
-        type Values = St::Values;
         type Name = Set<members::name>;
+        type Values = St::Values;
+    }
+    ///State transition - sets the `values` field to Set
+    pub struct SetValues<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetValues<St> {}
+    impl<St: State> State for SetValues<St> {
+        type Name = St::Name;
+        type Values = Set<members::values>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `values` field
-        pub struct values(());
         ///Marker type for the `name` field
         pub struct name(());
+        ///Marker type for the `values` field
+        pub struct values(());
     }
 }
 
@@ -165,8 +165,8 @@ where
 impl<S: BosStr, St> AddValuesBuilder<S, St>
 where
     St: add_values_state::State,
-    St::Values: add_values_state::IsSet,
     St::Name: add_values_state::IsSet,
+    St::Values: add_values_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> AddValues<S> {

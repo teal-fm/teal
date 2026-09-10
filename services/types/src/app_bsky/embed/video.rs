@@ -259,37 +259,37 @@ pub mod caption_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Lang;
         type File;
+        type Lang;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Lang = Unset;
         type File = Unset;
-    }
-    ///State transition - sets the `lang` field to Set
-    pub struct SetLang<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetLang<St> {}
-    impl<St: State> State for SetLang<St> {
-        type Lang = Set<members::lang>;
-        type File = St::File;
+        type Lang = Unset;
     }
     ///State transition - sets the `file` field to Set
     pub struct SetFile<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetFile<St> {}
     impl<St: State> State for SetFile<St> {
-        type Lang = St::Lang;
         type File = Set<members::file>;
+        type Lang = St::Lang;
+    }
+    ///State transition - sets the `lang` field to Set
+    pub struct SetLang<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetLang<St> {}
+    impl<St: State> State for SetLang<St> {
+        type File = St::File;
+        type Lang = Set<members::lang>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `lang` field
-        pub struct lang(());
         ///Marker type for the `file` field
         pub struct file(());
+        ///Marker type for the `lang` field
+        pub struct lang(());
     }
 }
 
@@ -359,8 +359,8 @@ where
 impl<S: BosStr, St> CaptionBuilder<S, St>
 where
     St: caption_state::State,
-    St::Lang: caption_state::IsSet,
     St::File: caption_state::IsSet,
+    St::Lang: caption_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Caption<S> {
@@ -679,37 +679,37 @@ pub mod view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Playlist;
         type Cid;
+        type Playlist;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Playlist = Unset;
         type Cid = Unset;
-    }
-    ///State transition - sets the `playlist` field to Set
-    pub struct SetPlaylist<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetPlaylist<St> {}
-    impl<St: State> State for SetPlaylist<St> {
-        type Playlist = Set<members::playlist>;
-        type Cid = St::Cid;
+        type Playlist = Unset;
     }
     ///State transition - sets the `cid` field to Set
     pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCid<St> {}
     impl<St: State> State for SetCid<St> {
-        type Playlist = St::Playlist;
         type Cid = Set<members::cid>;
+        type Playlist = St::Playlist;
+    }
+    ///State transition - sets the `playlist` field to Set
+    pub struct SetPlaylist<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetPlaylist<St> {}
+    impl<St: State> State for SetPlaylist<St> {
+        type Cid = St::Cid;
+        type Playlist = Set<members::playlist>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `playlist` field
-        pub struct playlist(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `playlist` field
+        pub struct playlist(());
     }
 }
 
@@ -824,8 +824,8 @@ impl<S: BosStr, St: view_state::State> ViewBuilder<S, St> {
 impl<S: BosStr, St> ViewBuilder<S, St>
 where
     St: view_state::State,
-    St::Playlist: view_state::IsSet,
     St::Cid: view_state::IsSet,
+    St::Playlist: view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> View<S> {

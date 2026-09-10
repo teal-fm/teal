@@ -593,37 +593,37 @@ pub mod suggestion_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Method;
         type Handle;
+        type Method;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Method = Unset;
         type Handle = Unset;
-    }
-    ///State transition - sets the `method` field to Set
-    pub struct SetMethod<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetMethod<St> {}
-    impl<St: State> State for SetMethod<St> {
-        type Method = Set<members::method>;
-        type Handle = St::Handle;
+        type Method = Unset;
     }
     ///State transition - sets the `handle` field to Set
     pub struct SetHandle<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetHandle<St> {}
     impl<St: State> State for SetHandle<St> {
-        type Method = St::Method;
         type Handle = Set<members::handle>;
+        type Method = St::Method;
+    }
+    ///State transition - sets the `method` field to Set
+    pub struct SetMethod<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetMethod<St> {}
+    impl<St: State> State for SetMethod<St> {
+        type Handle = St::Handle;
+        type Method = Set<members::method>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `method` field
-        pub struct method(());
         ///Marker type for the `handle` field
         pub struct handle(());
+        ///Marker type for the `method` field
+        pub struct method(());
     }
 }
 
@@ -693,8 +693,8 @@ where
 impl<S: BosStr, St> SuggestionBuilder<S, St>
 where
     St: suggestion_state::State,
-    St::Method: suggestion_state::IsSet,
     St::Handle: suggestion_state::IsSet,
+    St::Method: suggestion_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> Suggestion<S> {

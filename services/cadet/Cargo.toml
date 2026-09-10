@@ -7,6 +7,10 @@ edition = "2021"
 name = "tap-backfill"
 path = "src/bin/tap_backfill.rs"
 
+[[bin]]
+name = "lightrail-backfill"
+path = "src/bin/lightrail_backfill.rs"
+
 [dependencies]
 tokio.workspace = true
 tokio-tungstenite.workspace = true

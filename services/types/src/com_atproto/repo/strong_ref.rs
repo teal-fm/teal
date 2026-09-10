@@ -59,37 +59,37 @@ pub mod strong_ref_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Uri;
         type Cid;
+        type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Uri = Unset;
         type Cid = Unset;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type Uri = Set<members::uri>;
-        type Cid = St::Cid;
+        type Uri = Unset;
     }
     ///State transition - sets the `cid` field to Set
     pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCid<St> {}
     impl<St: State> State for SetCid<St> {
-        type Uri = St::Uri;
         type Cid = Set<members::cid>;
+        type Uri = St::Uri;
+    }
+    ///State transition - sets the `uri` field to Set
+    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUri<St> {}
+    impl<St: State> State for SetUri<St> {
+        type Cid = St::Cid;
+        type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `uri` field
-        pub struct uri(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `uri` field
+        pub struct uri(());
     }
 }
 
@@ -159,8 +159,8 @@ where
 impl<S: BosStr, St> StrongRefBuilder<S, St>
 where
     St: strong_ref_state::State,
-    St::Uri: strong_ref_state::IsSet,
     St::Cid: strong_ref_state::IsSet,
+    St::Uri: strong_ref_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> StrongRef<S> {

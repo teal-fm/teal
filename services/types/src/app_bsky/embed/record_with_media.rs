@@ -117,37 +117,37 @@ pub mod record_with_media_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Record;
         type Media;
+        type Record;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Record = Unset;
         type Media = Unset;
-    }
-    ///State transition - sets the `record` field to Set
-    pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRecord<St> {}
-    impl<St: State> State for SetRecord<St> {
-        type Record = Set<members::record>;
-        type Media = St::Media;
+        type Record = Unset;
     }
     ///State transition - sets the `media` field to Set
     pub struct SetMedia<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMedia<St> {}
     impl<St: State> State for SetMedia<St> {
-        type Record = St::Record;
         type Media = Set<members::media>;
+        type Record = St::Record;
+    }
+    ///State transition - sets the `record` field to Set
+    pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRecord<St> {}
+    impl<St: State> State for SetRecord<St> {
+        type Media = St::Media;
+        type Record = Set<members::record>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `record` field
-        pub struct record(());
         ///Marker type for the `media` field
         pub struct media(());
+        ///Marker type for the `record` field
+        pub struct record(());
     }
 }
 
@@ -217,8 +217,8 @@ where
 impl<S: BosStr, St> RecordWithMediaBuilder<S, St>
 where
     St: record_with_media_state::State,
-    St::Record: record_with_media_state::IsSet,
     St::Media: record_with_media_state::IsSet,
+    St::Record: record_with_media_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> RecordWithMedia<S> {
@@ -331,37 +331,37 @@ pub mod view_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Record;
         type Media;
+        type Record;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Record = Unset;
         type Media = Unset;
-    }
-    ///State transition - sets the `record` field to Set
-    pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRecord<St> {}
-    impl<St: State> State for SetRecord<St> {
-        type Record = Set<members::record>;
-        type Media = St::Media;
+        type Record = Unset;
     }
     ///State transition - sets the `media` field to Set
     pub struct SetMedia<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetMedia<St> {}
     impl<St: State> State for SetMedia<St> {
-        type Record = St::Record;
         type Media = Set<members::media>;
+        type Record = St::Record;
+    }
+    ///State transition - sets the `record` field to Set
+    pub struct SetRecord<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRecord<St> {}
+    impl<St: State> State for SetRecord<St> {
+        type Media = St::Media;
+        type Record = Set<members::record>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `record` field
-        pub struct record(());
         ///Marker type for the `media` field
         pub struct media(());
+        ///Marker type for the `record` field
+        pub struct record(());
     }
 }
 
@@ -431,8 +431,8 @@ where
 impl<S: BosStr, St> ViewBuilder<S, St>
 where
     St: view_state::State,
-    St::Record: view_state::IsSet,
     St::Media: view_state::IsSet,
+    St::Record: view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> View<S> {

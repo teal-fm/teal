@@ -41,6 +41,7 @@ yarn-error.log*
 .vercel
 .turbo
 .teal-tap/
+.teal-lightrail-backfill-*.txt
 .codex-run/
 
 **/*.trace

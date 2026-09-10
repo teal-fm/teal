@@ -53,6 +53,9 @@ services:
       CADET_STREAM_MODE: ${CADET_STREAM_MODE:-jetstream}
       JETSTREAM_URL: ${JETSTREAM_URL:-wss://jetstream1.us-east.bsky.network/subscribe}
       CADET_CURSOR_REDIS_KEY: ${CADET_CURSOR_REDIS_KEY:-cadet:jetstream:cursor}
+      CURSOR_FILE: ${CURSOR_FILE:-/var/lib/cadet/cursor.txt}
+    volumes:
+      - cadet_state:/var/lib/cadet
     networks:
       - app_network
     depends_on:
@@ -105,3 +108,4 @@ volumes:
   caddy_config:
   garnet_data:
   postgres_data:
+  cadet_state:

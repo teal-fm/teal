@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use cadet::{
-    cursor::{self, load_cursor},
+    cursor::{self, resolve_startup_cursor},
     db, identity, ingestors, redis_client, teal_ingestors,
 };
 use metrics_exporter_prometheus::PrometheusBuilder;
@@ -222,8 +222,13 @@ async fn main() {
     }
 
     // tracks the last message we've processed
-    // TODO: read from db/config so we can resume from where we left off in case of crash
-    let cursor: Arc<Mutex<Option<u64>>> = Arc::new(Mutex::new(load_cursor().await));
+    // Always start cursor as Some(_) so rocketman::handler can advance it; an
+    // unset Mutex<Option<u64>> stays None forever and the jetstream offset is
+    // never persisted on subsequent restarts. resolve_startup_cursor falls back
+    // to "now" when no stored cursor exists, and clamps stale stored cursors so
+    // we don't try to replay history jetstream no longer retains.
+    let startup_cursor = resolve_startup_cursor().await;
+    let cursor: Arc<Mutex<Option<u64>>> = Arc::new(Mutex::new(Some(startup_cursor)));
 
     // get channels
     let msg_rx = jetstream.get_msg_rx();

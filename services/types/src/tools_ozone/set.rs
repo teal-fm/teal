@@ -285,8 +285,8 @@ pub mod set_view_state {
     pub trait State: sealed::Sealed {
         type CreatedAt;
         type Name;
-        type UpdatedAt;
         type SetSize;
+        type UpdatedAt;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
@@ -294,8 +294,8 @@ pub mod set_view_state {
     impl State for Empty {
         type CreatedAt = Unset;
         type Name = Unset;
-        type UpdatedAt = Unset;
         type SetSize = Unset;
+        type UpdatedAt = Unset;
     }
     ///State transition - sets the `created_at` field to Set
     pub struct SetCreatedAt<St: State = Empty>(PhantomData<fn() -> St>);
@@ -303,8 +303,8 @@ pub mod set_view_state {
     impl<St: State> State for SetCreatedAt<St> {
         type CreatedAt = Set<members::created_at>;
         type Name = St::Name;
-        type UpdatedAt = St::UpdatedAt;
         type SetSize = St::SetSize;
+        type UpdatedAt = St::UpdatedAt;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
@@ -312,17 +312,8 @@ pub mod set_view_state {
     impl<St: State> State for SetName<St> {
         type CreatedAt = St::CreatedAt;
         type Name = Set<members::name>;
+        type SetSize = St::SetSize;
         type UpdatedAt = St::UpdatedAt;
-        type SetSize = St::SetSize;
-    }
-    ///State transition - sets the `updated_at` field to Set
-    pub struct SetUpdatedAt<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUpdatedAt<St> {}
-    impl<St: State> State for SetUpdatedAt<St> {
-        type CreatedAt = St::CreatedAt;
-        type Name = St::Name;
-        type UpdatedAt = Set<members::updated_at>;
-        type SetSize = St::SetSize;
     }
     ///State transition - sets the `set_size` field to Set
     pub struct SetSetSize<St: State = Empty>(PhantomData<fn() -> St>);
@@ -330,8 +321,17 @@ pub mod set_view_state {
     impl<St: State> State for SetSetSize<St> {
         type CreatedAt = St::CreatedAt;
         type Name = St::Name;
-        type UpdatedAt = St::UpdatedAt;
         type SetSize = Set<members::set_size>;
+        type UpdatedAt = St::UpdatedAt;
+    }
+    ///State transition - sets the `updated_at` field to Set
+    pub struct SetUpdatedAt<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetUpdatedAt<St> {}
+    impl<St: State> State for SetUpdatedAt<St> {
+        type CreatedAt = St::CreatedAt;
+        type Name = St::Name;
+        type SetSize = St::SetSize;
+        type UpdatedAt = Set<members::updated_at>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
@@ -340,10 +340,10 @@ pub mod set_view_state {
         pub struct created_at(());
         ///Marker type for the `name` field
         pub struct name(());
-        ///Marker type for the `updated_at` field
-        pub struct updated_at(());
         ///Marker type for the `set_size` field
         pub struct set_size(());
+        ///Marker type for the `updated_at` field
+        pub struct updated_at(());
     }
 }
 
@@ -466,8 +466,8 @@ where
     St: set_view_state::State,
     St::CreatedAt: set_view_state::IsSet,
     St::Name: set_view_state::IsSet,
-    St::UpdatedAt: set_view_state::IsSet,
     St::SetSize: set_view_state::IsSet,
+    St::UpdatedAt: set_view_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> SetView<S> {

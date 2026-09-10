@@ -3,6 +3,7 @@ import { join } from "path";
 import { execa } from "execa";
 import pc from "picocolors";
 
+import { canonicalizeGeneratedRust } from "../utils/canonicalize-rust.js";
 import { findWorkspaceRoot } from "../utils/workspace.js";
 
 interface GenerateOptions {
@@ -136,6 +137,8 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
         stdio: "inherit",
       },
     );
+
+    canonicalizeGeneratedRust(join(typesPath, "src"));
 
     console.log(pc.green("    ✓ Rust types generated"));
   } catch (error) {

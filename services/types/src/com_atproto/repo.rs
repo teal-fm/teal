@@ -72,37 +72,37 @@ pub mod commit_meta_state {
     }
     /// State trait tracking which required fields have been set
     pub trait State: sealed::Sealed {
-        type Rev;
         type Cid;
+        type Rev;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
     impl sealed::Sealed for Empty {}
     impl State for Empty {
-        type Rev = Unset;
         type Cid = Unset;
-    }
-    ///State transition - sets the `rev` field to Set
-    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetRev<St> {}
-    impl<St: State> State for SetRev<St> {
-        type Rev = Set<members::rev>;
-        type Cid = St::Cid;
+        type Rev = Unset;
     }
     ///State transition - sets the `cid` field to Set
     pub struct SetCid<St: State = Empty>(PhantomData<fn() -> St>);
     impl<St: State> sealed::Sealed for SetCid<St> {}
     impl<St: State> State for SetCid<St> {
-        type Rev = St::Rev;
         type Cid = Set<members::cid>;
+        type Rev = St::Rev;
+    }
+    ///State transition - sets the `rev` field to Set
+    pub struct SetRev<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetRev<St> {}
+    impl<St: State> State for SetRev<St> {
+        type Cid = St::Cid;
+        type Rev = Set<members::rev>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
     pub mod members {
-        ///Marker type for the `rev` field
-        pub struct rev(());
         ///Marker type for the `cid` field
         pub struct cid(());
+        ///Marker type for the `rev` field
+        pub struct rev(());
     }
 }
 
@@ -172,8 +172,8 @@ where
 impl<S: BosStr, St> CommitMetaBuilder<S, St>
 where
     St: commit_meta_state::State,
-    St::Rev: commit_meta_state::IsSet,
     St::Cid: commit_meta_state::IsSet,
+    St::Rev: commit_meta_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> CommitMeta<S> {
