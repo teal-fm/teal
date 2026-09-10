@@ -302,7 +302,7 @@ export function SearchResult({
     >
       <View className={`flex-row items-center justify-between gap-4`}>
         <Image
-          className="h-16 w-16 rounded-lg bg-gray-500/50"
+          className="h-16 w-16 rounded-lg bg-muted"
           source={{
             uri: `https://coverartarchive.org/release/${currentRelease?.id}/front-250`,
           }}
@@ -320,7 +320,7 @@ export function SearchResult({
               className="flex w-full items-start justify-between rounded-lg bg-secondary/10 p-1 md:flex-row md:items-center md:gap-1"
             >
               <View className="flex w-full flex-1 items-start gap-1 overflow-hidden md:flex-row">
-                <Text className="whitespace-nowrap text-sm text-gray-500">
+                <Text className="whitespace-nowrap text-sm text-muted-foreground">
                   Release:
                 </Text>
                 <Text className="line-clamp-1 text-sm">
@@ -372,7 +372,7 @@ export function SearchResult({
           {result.releases?.map((release) => (
             <TouchableOpacity
               key={release.id}
-              className={`border-b border-gray-100 p-4 ${
+              className={`border-b border-border p-4 ${
                 selectedRelease?.id === release.id ? "bg-primary/10" : ""
               }`}
               onPress={() => {
@@ -383,21 +383,21 @@ export function SearchResult({
               <Text className="font-medium">{release.title}</Text>
               <View className="flex-row gap-2">
                 {release.date && (
-                  <Text className="text-sm text-gray-500">{release.date}</Text>
+                  <Text className="text-sm text-muted-foreground">{release.date}</Text>
                 )}
                 {release.country && (
-                  <Text className="text-sm text-gray-500">
+                  <Text className="text-sm text-muted-foreground">
                     {release.country}
                   </Text>
                 )}
                 {release.status && (
-                  <Text className="text-sm text-gray-500">
+                  <Text className="text-sm text-muted-foreground">
                     {release.status}
                   </Text>
                 )}
               </View>
               {release.disambiguation && (
-                <Text className="text-sm italic text-gray-400">
+                <Text className="text-sm italic text-muted-foreground">
                   {release.disambiguation}
                 </Text>
               )}

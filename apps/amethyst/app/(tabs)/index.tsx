@@ -185,7 +185,7 @@ export default function HomeScreen() {
           }}
         />
       </View>
-      <View className="mb-5 overflow-hidden rounded-lg border border-border bg-white/75">
+      <View className="mb-5 overflow-hidden rounded-lg border border-border bg-card/80">
         <View className="flex-row overflow-hidden">
           <HomeFeedTabButton
             active={activeFeed === "posts"}

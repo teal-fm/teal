@@ -70,7 +70,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
                   source={{ uri: bannerUri }}
                   className="h-full w-full rounded-lg object-cover"
                 />
-                <View className="absolute -bottom-2 -right-2 rounded-full bg-gray-500/50 p-1">
+                <View className="absolute -bottom-2 -right-2 rounded-full bg-muted/70 p-1">
                   <Icon icon={Pen} size={18} className="fill-white" />
                 </View>
               </>
@@ -89,7 +89,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
               {avatarUri ? (
                 <>
                   <AvatarImage source={{ uri: avatarUri }} />
-                  <View className="absolute bottom-0 right-0 rounded-full bg-gray-500/50 p-1">
+                <View className="absolute bottom-0 right-0 rounded-full bg-muted/70 p-1">
                     <Icon icon={Pen} size={18} className="fill-white" />
                   </View>
                 </>

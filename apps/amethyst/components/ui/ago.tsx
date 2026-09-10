@@ -2,7 +2,7 @@ import { Text } from "./text";
 
 const Ago = ({ time }: { time: Date }) => {
   return (
-    <Text className="text-sm text-gray-500">{timeAgoSinceDate(time)}</Text>
+    <Text className="text-sm text-muted-foreground">{timeAgoSinceDate(time)}</Text>
   );
 };
 

@@ -51,7 +51,7 @@ export default function VerticalPlayView({
       <Image
         className={cn(
           imageSizes[size], // Apply image size based on variant
-          "rounded-lg bg-gray-500/50",
+          "rounded-lg bg-muted",
           marginBottoms[size], // Apply margin bottom based on variant
         )}
         source={{
