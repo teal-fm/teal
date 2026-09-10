@@ -97,7 +97,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
   return (
     <View
       className={cn(
-        "mb-4 w-full rounded-lg border border-border bg-card p-4 web:transition-colors web:hover:border-primary/45",
+        "mb-4 w-full rounded-lg border border-border bg-white/75 p-4 web:transition-colors web:hover:border-primary/45",
         compact ? "max-w-[34rem]" : "w-full",
       )}
     >
@@ -114,7 +114,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
           </Pressable>
         </Link>
         <View className="min-w-0 flex-1 justify-center">
-          <Text className="max-w-full font-black" numberOfLines={1}>
+          <Text className="max-w-full font-semibold" numberOfLines={1}>
             {authorName}
           </Text>
           {authorHandle && (
@@ -125,7 +125,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
               @{authorHandle}
             </Text>
           )}
-          <Text className="font-mono text-[10px] text-muted-foreground">
+          <Text className="text-xs font-light text-muted-foreground">
             listened {when}
           </Text>
         </View>
@@ -136,7 +136,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
           <Pressable className="flex-row items-center justify-between gap-3">
             <View className="min-w-0 flex-1 pr-1">
               <Text
-                className="max-w-full font-sans text-xl font-black leading-tight"
+                className="max-w-full font-sans text-xl font-semibold leading-tight"
                 numberOfLines={2}
               >
                 {play.trackName}
@@ -171,7 +171,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
 
       {play.releaseName && (
         <Text
-          className="mt-3 max-w-full font-mono text-[10px] uppercase text-muted-foreground"
+          className="mt-3 max-w-full text-xs font-light text-primary"
           numberOfLines={2}
         >
           from {play.releaseName}

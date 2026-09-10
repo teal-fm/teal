@@ -164,7 +164,7 @@ function TrackOption({
     >
       <TrackArtwork play={play} />
       <View className="min-w-0 flex-1">
-        <Text className="font-black" numberOfLines={1}>
+        <Text className="font-semibold" numberOfLines={1}>
           {play.trackName}
         </Text>
         <Text
@@ -350,8 +350,8 @@ export default function SocialComposer({
 
   if (status !== "loggedIn") {
     return (
-      <View className="rounded-lg border border-border bg-card p-4">
-        <Text className="font-bold">
+      <View className="rounded-lg border border-border bg-white/75 p-4">
+        <Text className="font-semibold">
           Sign in to {replyTo ? "reply" : "post"} about what you hear.
         </Text>
         <Text className="mt-1 text-sm text-muted-foreground">
@@ -362,21 +362,21 @@ export default function SocialComposer({
   }
 
   return (
-    <View className="rounded-lg border border-border bg-card p-4">
-      <Text className="font-mono text-[10px] uppercase text-primary">
+    <View className="rounded-lg border border-border bg-white/75 p-4">
+      <Text className="text-xs font-light text-primary">
         {replyTo ? "Reply to post" : "Create post"}
       </Text>
       {selectedTrack ? (
         <Pressable
           disabled={!canChangeTrack}
           onPress={() => setPickerOpen((open) => !open)}
-          className={`mt-2 flex-row items-center gap-3 rounded-lg border border-border bg-background p-2 ${
+          className={`mt-2 flex-row items-center gap-3 rounded-lg border border-border bg-white/55 p-2 ${
             canChangeTrack ? "web:hover:border-primary/50" : ""
           }`}
         >
           <TrackArtwork play={selectedTrack} size={38} />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold" numberOfLines={1}>
+            <Text className="font-semibold" numberOfLines={1}>
               {selectedTrack.trackName}
             </Text>
             <Text className="text-xs text-muted-foreground" numberOfLines={1}>
@@ -384,7 +384,7 @@ export default function SocialComposer({
             </Text>
           </View>
           {canChangeTrack && (
-            <Text className="font-mono text-[10px] uppercase text-primary">
+            <Text className="text-xs font-light text-primary">
               Change
             </Text>
           )}
@@ -393,9 +393,9 @@ export default function SocialComposer({
         <Pressable
           disabled={!canChangeTrack}
           onPress={() => setPickerOpen(true)}
-          className="mt-2 rounded-lg border border-dashed border-border bg-background p-3"
+          className="mt-2 rounded-lg border border-dashed border-border bg-white/55 p-3"
         >
-          <Text className="font-bold">
+          <Text className="font-semibold">
             {loadingRecent ? "Finding your latest listen..." : "Choose a song"}
           </Text>
           <Text className="text-sm text-muted-foreground">
@@ -404,7 +404,7 @@ export default function SocialComposer({
         </Pressable>
       )}
       {pickerOpen && canChangeTrack && (
-        <View className="mt-3 gap-3 rounded-lg border border-border bg-background p-3">
+        <View className="mt-3 gap-3 rounded-lg border border-border bg-white/55 p-3">
           <View className="gap-2 md:flex-row">
             <Input
               className="md:flex-1"

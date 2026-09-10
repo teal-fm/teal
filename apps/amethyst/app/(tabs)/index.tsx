@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -14,29 +15,73 @@ import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   getLatestPlays,
   getSocialFeed,
   type SocialPostView,
 } from "@/lib/teal/api";
+import { MessageCircle, Music2 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+
+type HomeFeed = "posts" | "listens";
+
+function HomeFeedTabButton({
+  active,
+  icon,
+  label,
+  onPress,
+}: {
+  active: boolean;
+  icon: typeof Music2;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={`min-w-0 flex-1 flex-row items-center justify-center gap-2 border-b-2 px-2 py-3 ${
+        active ? "border-foreground" : "border-transparent"
+      }`}
+    >
+      <Icon
+        icon={icon}
+        size={17}
+        className={active ? "text-foreground" : "text-muted-foreground"}
+      />
+      <Text
+        className={
+          active
+            ? "text-sm font-semibold"
+            : "text-sm font-medium text-muted-foreground"
+        }
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 export default function HomeScreen() {
   const [plays, setPlays] = useState<PlayView[] | null>(null);
   const [socialPosts, setSocialPosts] = useState<SocialPostView[]>([]);
-  const [cursor, setCursor] = useState<string>();
+  const [activeFeed, setActiveFeed] = useState<HomeFeed>("posts");
+  const [playCursor, setPlayCursor] = useState<string>();
+  const [postCursor, setPostCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
-    getLatestPlays(30)
-      .then((res) => {
+    Promise.all([getLatestPlays(30), getSocialFeed(30)])
+      .then(([playRes, postRes]) => {
         if (!mounted) return;
-        setPlays(res.plays);
-        setCursor(res.cursor);
+        setPlays(playRes.plays);
+        setPlayCursor(playRes.cursor);
+        setSocialPosts(postRes.items);
+        setPostCursor(postRes.cursor);
       })
       .catch((e) => {
         if (mounted) {
@@ -49,36 +94,46 @@ export default function HomeScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    getSocialFeed(10)
-      .then((res) => {
-        if (mounted) setSocialPosts(res.items);
-      })
-      .catch(() => {
-        if (mounted) setSocialPosts([]);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const visiblePlays = plays || [];
+  const activeItemsCount =
+    activeFeed === "posts" ? socialPosts.length : visiblePlays.length;
+  const activeCursor = activeFeed === "posts" ? postCursor : playCursor;
 
   const loadMore = useCallback(() => {
+    const cursor = activeFeed === "posts" ? postCursor : playCursor;
     if (!cursor || loadingMoreRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
-    getLatestPlays(30, cursor)
+    const request =
+      activeFeed === "posts"
+        ? getSocialFeed(30, cursor)
+        : getLatestPlays(30, cursor);
+    request
       .then((res) => {
+        if (activeFeed === "posts") {
+          const postRes = res as Awaited<ReturnType<typeof getSocialFeed>>;
+          setSocialPosts((current) => {
+            const knownUris = new Set(current.map((post) => post.uri));
+            return [
+              ...current,
+              ...postRes.items.filter((post) => !knownUris.has(post.uri)),
+            ];
+          });
+          setPostCursor(postRes.cursor);
+          return;
+        }
+
+        const playRes = res as Awaited<ReturnType<typeof getLatestPlays>>;
         setPlays((current) => {
           const knownUris = new Set(current?.map((play) => play.uri) || []);
           return [
             ...(current || []),
-            ...res.plays.filter(
+            ...playRes.plays.filter(
               (play) => !play.uri || !knownUris.has(play.uri),
             ),
           ];
         });
-        setCursor(res.cursor);
+        setPlayCursor(playRes.cursor);
       })
       .catch((e) => {
         setError(e instanceof Error ? e.message : String(e));
@@ -87,7 +142,7 @@ export default function HomeScreen() {
         loadingMoreRef.current = false;
         setLoadingMore(false);
       });
-  }, [cursor]);
+  }, [activeFeed, playCursor, postCursor]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -105,29 +160,33 @@ export default function HomeScreen() {
       <Stack.Screen options={{ title: "Teal", headerShown: false }} />
       <SectionHeading
         eyebrow="Global feed"
-        title="Recently listened"
-        detail="LIVE INDEX"
+        title="Posts and listens"
       />
       <View className="mb-6">
         <SocialComposer
           allowTrackChange
-          onPublished={(post) =>
-            setSocialPosts((current) => [post, ...current])
-          }
+          onPublished={(post) => {
+            setSocialPosts((current) => [post, ...current]);
+            setActiveFeed("posts");
+          }}
         />
       </View>
-      {socialPosts.length > 0 && (
-        <View className="mb-8 gap-3">
-          <SectionHeading
-            eyebrow="Social feed"
-            title="Posts with tracks"
-            detail="NEW LEXICONS"
+      <View className="mb-5 overflow-hidden rounded-lg border border-border bg-white/75">
+        <View className="flex-row overflow-hidden">
+          <HomeFeedTabButton
+            active={activeFeed === "posts"}
+            icon={MessageCircle}
+            label="Posts"
+            onPress={() => setActiveFeed("posts")}
           />
-          {socialPosts.map((post) => (
-            <SocialPostCard key={post.uri} post={post} />
-          ))}
+          <HomeFeedTabButton
+            active={activeFeed === "listens"}
+            icon={Music2}
+            label="Listens"
+            onPress={() => setActiveFeed("listens")}
+          />
         </View>
-      )}
+      </View>
       {!plays && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
@@ -140,30 +199,39 @@ export default function HomeScreen() {
           </Text>
         </View>
       )}
-      {plays?.length === 0 && !error && (
+      {plays && activeItemsCount === 0 && !error && (
         <View className="min-h-[24rem] items-center justify-center rounded-lg border border-border bg-card p-8">
           <Text className="text-center text-2xl font-black">
-            No plays indexed yet.
+            {activeFeed === "posts"
+              ? "No posts indexed yet."
+              : "No listens indexed yet."}
           </Text>
           <Text className="mt-2 text-center text-muted-foreground">
-            Cadet will fill this feed as ATProto firehose records arrive.
+            Cadet will fill this view as ATProto records arrive.
           </Text>
         </View>
       )}
-      {plays?.map((play, index) => (
-        <PlayFeedCard
-          key={play.uri || `${play.trackName}-${play.playedTime}-${index}`}
-          play={play}
-        />
-      ))}
+      {activeFeed === "posts" &&
+        socialPosts.map((post) => (
+          <View key={post.uri} className="mb-4">
+            <SocialPostCard post={post} />
+          </View>
+        ))}
+      {activeFeed === "listens" &&
+        visiblePlays.map((play, index) => (
+          <PlayFeedCard
+            key={play.uri || `${play.trackName}-${play.playedTime}-${index}`}
+            play={play}
+          />
+        ))}
       {loadingMore && (
         <View className="items-center justify-center py-5">
           <ActivityIndicator />
         </View>
       )}
-      {plays && plays.length > 0 && !cursor && (
+      {plays && activeItemsCount > 0 && !activeCursor && (
         <Text className="pb-6 text-center font-mono text-xs text-muted-foreground">
-          You reached the beginning of the indexed feed.
+          You reached the beginning of this feed.
         </Text>
       )}
     </TealShell>

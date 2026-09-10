@@ -8,6 +8,9 @@ export const theme = {
   extend: {
     fontFamily: {
       sans: "DM Sans",
+      accent: "Fraunces",
+      crimson: "Crimson Pro",
+      "crimson-italic": "Crimson Pro Italic",
       mono: "PlexMono",
     },
     colors: {

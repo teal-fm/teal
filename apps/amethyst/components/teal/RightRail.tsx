@@ -39,21 +39,21 @@ export default function RightRail() {
     <View className="gap-8">
       <View>
         <View className="mb-3 flex-row items-center gap-2">
-          <Icon icon={Radio} size={14} className="text-secondary" />
-          <Text className="font-mono text-[10px] uppercase text-background/60">
+          <Icon icon={Radio} size={14} className="text-primary" />
+          <Text className="text-xs font-light text-primary">
             Trending now
           </Text>
         </View>
-        <Text className="font-sans text-3xl font-black text-background">
+        <Text className="font-sans text-3xl font-semibold text-foreground">
           Live from the network
         </Text>
-        <Text className="mt-2 text-sm leading-5 text-background/65">
+        <Text className="mt-2 text-sm leading-5 text-muted-foreground">
           Music activity indexed from Teal records across ATProto.
         </Text>
       </View>
 
       <View>
-        <Text className="mb-3 font-mono text-[10px] uppercase text-secondary">
+        <Text className="mb-3 text-xs font-light text-primary">
           Top artists
         </Text>
         {artists.map((artist, index) => (
@@ -62,25 +62,25 @@ export default function RightRail() {
             href={musicArtistHref(artist.name || "Unknown", artist.mbid) as any}
             asChild
           >
-            <Pressable className="flex-row items-center gap-3 border-t border-background/15 py-3">
-              <Text className="w-5 font-mono text-xs text-background/45">
+            <Pressable className="flex-row items-center gap-3 border-t border-border py-3">
+              <Text className="w-5 font-mono text-xs text-muted-foreground">
                 {String(index + 1).padStart(2, "0")}
               </Text>
               <View className="min-w-0 flex-1">
                 <Text
-                  className="text-sm font-black text-background"
+                  className="text-sm font-semibold text-foreground"
                   numberOfLines={1}
                 >
                   {artist.name || "Unknown artist"}
                 </Text>
-                <Text className="font-mono text-[10px] text-background/55">
+                <Text className="font-mono text-[10px] text-muted-foreground">
                   {artist.playCount || 0} listens
                 </Text>
               </View>
               <Icon
                 icon={ArrowUpRight}
                 size={14}
-                className="text-background/45"
+                className="text-primary"
               />
             </Pressable>
           </Link>
@@ -88,27 +88,29 @@ export default function RightRail() {
       </View>
 
       <View>
-        <Text className="mb-3 font-mono text-[10px] uppercase text-secondary">
+        <Text className="mb-3 text-xs font-light text-primary">
           Releases
         </Text>
         {releases.length === 0 ? (
-          <Text className="text-sm text-background/60">Waiting for plays.</Text>
+          <Text className="text-sm text-muted-foreground">
+            Waiting for plays.
+          </Text>
         ) : (
           releases.map((release, index) => (
             <View
               key={`${release.mbid}-${release.name}`}
-              className="flex-row items-center gap-3 border-t border-background/15 py-3"
+              className="flex-row items-center gap-3 border-t border-border py-3"
             >
-              <Text className="w-5 font-mono text-xs text-background/45">
+              <Text className="w-5 font-mono text-xs text-muted-foreground">
                 {String(index + 1).padStart(2, "0")}
               </Text>
               <Text
-                className="min-w-0 flex-1 text-sm font-bold text-background"
+                className="min-w-0 flex-1 text-sm font-medium text-foreground"
                 numberOfLines={1}
               >
                 {release.name}
               </Text>
-              <Text className="font-mono text-[10px] text-background/55">
+              <Text className="font-mono text-[10px] text-muted-foreground">
                 {release.playCount}
               </Text>
             </View>

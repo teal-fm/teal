@@ -346,6 +346,7 @@ impl StatsRepo for PgDataSource {
                 p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,
                 p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,
                 p.submission_client_agent, p.music_service_base_domain, p.origin_url,
+                COALESCE(p.played_time, p.processed_time) AS "sort_time?",
                 profile.did AS "profile_did?", profile.handle AS profile_handle,
                 profile.display_name AS profile_display_name, profile.avatar AS profile_avatar,
                 COALESCE(
@@ -361,12 +362,15 @@ impl StatsRepo for PgDataSource {
             LEFT JOIN profiles profile ON p.did = profile.did
             LEFT JOIN play_to_artists_extended as ptae ON p.uri = ptae.play_uri
             LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id
-            WHERE ($1::timestamptz IS NULL OR (p.processed_time, p.uri) < ($1, $2))
+            WHERE (
+                $1::timestamptz IS NULL
+                OR (COALESCE(p.played_time, p.processed_time), p.uri) < ($1, $2)
+            )
             GROUP BY p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,
                      p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,
                      p.submission_client_agent, p.music_service_base_domain, p.origin_url,
                      profile.did, profile.handle, profile.display_name, profile.avatar
-            ORDER BY p.processed_time DESC
+            ORDER BY COALESCE(p.played_time, p.processed_time) DESC, p.uri DESC
             LIMIT $3
             "#,
             cursor_time,
@@ -382,7 +386,8 @@ impl StatsRepo for PgDataSource {
         for row in rows.into_iter().take(limit as usize) {
             next_cursor = Some(LatestPlaysCursor {
                 processed_time: row
-                    .processed_time
+                    .sort_time
+                    .or(row.processed_time)
                     .unwrap_or_else(time::OffsetDateTime::now_utc)
                     .format(&time::format_description::well_known::Rfc3339)?,
                 uri: row.uri.clone(),

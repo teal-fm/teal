@@ -181,7 +181,6 @@ export default function Notifications() {
       <SectionHeading
         eyebrow="Social"
         title="Notifications"
-        detail="LIVE INDEX"
       />
       {!items && (
         <View className="min-h-[24rem] items-center justify-center">
