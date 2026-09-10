@@ -165,6 +165,7 @@ pub trait SocialRepo {
         limit: Option<i32>,
         cursor: Option<&str>,
         viewer: Option<&str>,
+        actor: Option<&str>,
     ) -> anyhow::Result<Page<SocialPostView>>;
     async fn get_post(
         &self,
@@ -228,16 +229,22 @@ impl SocialRepo for PgDataSource {
         limit: Option<i32>,
         cursor: Option<&str>,
         viewer: Option<&str>,
+        actor: Option<&str>,
     ) -> anyhow::Result<Page<SocialPostView>> {
         let limit = normalize_limit(limit);
         let offset = decode_offset(cursor)?;
+        let actor_did = match actor {
+            Some(actor) => Some(resolve_actor_to_did(self, actor).await?),
+            None => None,
+        };
         let rows = fetch_posts(
             self,
-            "WHERE $3::text IS NULL AND p.reply_parent_uri IS NULL ORDER BY p.created_at DESC LIMIT $1 OFFSET $2",
+            "WHERE p.reply_parent_uri IS NULL AND ($5::text IS NULL OR p.did = $5) ORDER BY p.created_at DESC LIMIT $1 OFFSET $2",
             limit,
             offset,
             None,
             viewer,
+            actor_did.as_deref(),
         )
         .await?;
         let cursor = page_cursor(&rows, limit, offset)?;
@@ -252,7 +259,16 @@ impl SocialRepo for PgDataSource {
         uri: &str,
         viewer: Option<&str>,
     ) -> anyhow::Result<Option<SocialPostView>> {
-        let rows = fetch_posts(self, "WHERE p.uri = $3 LIMIT 1", 1, 0, Some(uri), viewer).await?;
+        let rows = fetch_posts(
+            self,
+            "WHERE p.uri = $3 LIMIT 1",
+            1,
+            0,
+            Some(uri),
+            viewer,
+            None,
+        )
+        .await?;
         Ok(rows.into_iter().next())
     }
 
@@ -272,6 +288,7 @@ impl SocialRepo for PgDataSource {
             offset,
             Some(uri),
             viewer,
+            None,
         )
         .await?;
         let cursor = page_cursor(&rows, limit, offset)?;
@@ -538,6 +555,7 @@ async fn fetch_posts(
     offset: i64,
     uri: Option<&str>,
     viewer: Option<&str>,
+    actor: Option<&str>,
 ) -> anyhow::Result<Vec<SocialPostView>> {
     let sql = format!(
         r#"
@@ -574,6 +592,7 @@ async fn fetch_posts(
         .bind(offset)
         .bind(uri)
         .bind(viewer)
+        .bind(actor)
         .fetch_all(&repo.db)
         .await?;
 

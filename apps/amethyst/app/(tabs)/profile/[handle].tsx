@@ -13,6 +13,7 @@ import { PlaylistCreator } from "@/components/teal/PlaylistControls";
 import { ProfileStatsSections } from "@/components/teal/ProfileStats";
 import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
+import SocialPostCard from "@/components/teal/SocialPostCard";
 import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
@@ -38,11 +39,13 @@ import {
   getGraphFollows,
   getGraphSummary,
   getProfile,
+  getSocialFeed,
   coverArtUrl,
   displayArtists,
   getRecordingCoverArtUrl,
   type GraphSummaryView,
   type SocialBadgeAssignmentView,
+  type SocialPostView,
   type SocialPlaylistView,
   XrpcError,
 } from "@/lib/teal/api";
@@ -181,6 +184,7 @@ export default function ProfileScreen() {
   const [graphTab, setGraphTab] = useState<"followers" | "following">(
     "followers",
   );
+  const [posts, setPosts] = useState<SocialPostView[]>([]);
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [followBusy, setFollowBusy] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -204,6 +208,7 @@ export default function ProfileScreen() {
         setGraphSummary({ followersCount: 0, followsCount: 0 });
         setFollowers([]);
         setFollows([]);
+        setPosts([]);
         setPlays([]);
         const resolved = actor.startsWith("did:")
           ? actor
@@ -211,6 +216,14 @@ export default function ProfileScreen() {
         if (!mounted) return;
         setDid(resolved);
         const feedRes = await getActorFeed(resolved, 10);
+        const postsRes = await getSocialFeed(
+          10,
+          undefined,
+          pdsAgent?.did,
+          resolved,
+        ).catch(() => ({
+          items: [],
+        }));
         const badgeRes = await getActorBadges(resolved, 12).catch(() => ({
           items: [],
         }));
@@ -278,6 +291,7 @@ export default function ProfileScreen() {
         setFollowers(followersRes.actors);
         setFollows(followsRes.actors);
         setIsBlueskyFallback(nextIsBlueskyFallback);
+        setPosts(postsRes.items);
         setPlays(feedRes.plays);
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
@@ -555,6 +569,20 @@ export default function ProfileScreen() {
               }}
             />
           )}
+          <View className="mb-8">
+            <SectionHeading eyebrow="Posts" title="Recent posts" />
+            {posts.length === 0 ? (
+              <Text className="text-muted-foreground">
+                No indexed posts yet.
+              </Text>
+            ) : (
+              <View className="gap-3">
+                {posts.map((post) => (
+                  <SocialPostCard key={post.uri} post={post} />
+                ))}
+              </View>
+            )}
+          </View>
           <View className="mb-8">
             <SectionHeading eyebrow="Listening history" title="Recent plays" />
             {plays.length === 0 ? (
