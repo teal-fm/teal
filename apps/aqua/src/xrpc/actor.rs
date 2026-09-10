@@ -26,16 +26,12 @@ pub async fn get_actor(
     axum::extract::Query(query): axum::extract::Query<GetProfileQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let repo = &ctx.db; // assuming ctx.db is Box<dyn ActorProfileRepo + Send + Sync>
-    let identity = &query.actor;
+    let identity = query
+        .actor
+        .as_deref()
+        .ok_or_else(|| (StatusCode::BAD_REQUEST, "actor is required".to_string()))?;
 
-    if identity.is_none() {
-        return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
-    }
-
-    match repo
-        .get_actor_profile(identity.as_ref().expect("actor is not none").as_str())
-        .await
-    {
+    match repo.get_actor_profile(identity).await {
         Ok(Some(profile)) => Ok(axum::Json(GetProfileResponse {
             profile: profile.into_static(),
         })),

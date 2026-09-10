@@ -120,12 +120,12 @@ impl CarImportIngestor {
         info!("Extracted {} records from MST", records.len());
 
         // Process each record through the appropriate ingestor
-        let mut processed_count = 0;
+        let mut processed_count = 0_usize;
         for record in records {
             match self.process_extracted_record(&record, import_id, did).await {
                 Ok(()) => {
                     processed_count += 1;
-                    if processed_count % 10 == 0 {
+                    if processed_count.is_multiple_of(10) {
                         info!("Processed {} records so far", processed_count);
                     }
                 }

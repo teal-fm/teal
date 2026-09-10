@@ -146,6 +146,7 @@ export default function OnboardingPage() {
     setSubmissionStep(4);
 
     let record: ProfileRecord = {
+      $type: "fm.teal.alpha.actor.profile",
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
       avatar: newAvatarBlob,
@@ -181,6 +182,7 @@ export default function OnboardingPage() {
 
     // Update profile status to mark onboarding as completed
     const profileStatusRecord: ProfileStatusRecord = {
+      $type: "fm.teal.alpha.actor.profileStatus",
       completedOnboarding: "profileOnboarding",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

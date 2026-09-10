@@ -2,11 +2,12 @@
  * GENERATED CODE - DO NOT MODIFY
  */
 import {
-  createServer as createXrpcServer,
+  type Auth,
+  type Options as XrpcOptions,
   Server as XrpcServer,
-  Options as XrpcOptions,
-  AuthVerifier,
-  StreamAuthVerifier,
+  type StreamConfigOrHandler,
+  type MethodConfigOrHandler,
+  createServer as createXrpcServer,
 } from '@atproto/xrpc-server'
 import { schemas } from './lexicons'
 import * as FmTealAlphaActorGetProfile from './types/fm/teal/alpha/actor/getProfile'
@@ -34,13 +35,41 @@ export function createServer(options?: XrpcOptions): Server {
 
 export class Server {
   xrpc: XrpcServer
-  fm: FmNS
   app: AppNS
+  fm: FmNS
 
   constructor(options?: XrpcOptions) {
     this.xrpc = createXrpcServer(schemas, options)
-    this.fm = new FmNS(this)
     this.app = new AppNS(this)
+    this.fm = new FmNS(this)
+  }
+}
+
+export class AppNS {
+  _server: Server
+  bsky: AppBskyNS
+
+  constructor(server: Server) {
+    this._server = server
+    this.bsky = new AppBskyNS(server)
+  }
+}
+
+export class AppBskyNS {
+  _server: Server
+  richtext: AppBskyRichtextNS
+
+  constructor(server: Server) {
+    this._server = server
+    this.richtext = new AppBskyRichtextNS(server)
+  }
+}
+
+export class AppBskyRichtextNS {
+  _server: Server
+
+  constructor(server: Server) {
+    this._server = server
   }
 }
 
@@ -93,33 +122,36 @@ export class FmTealAlphaActorNS {
     this._server = server
   }
 
-  getProfile<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaActorGetProfile.Handler<ExtractAuth<AV>>,
-      FmTealAlphaActorGetProfile.HandlerReqCtx<ExtractAuth<AV>>
+  getProfile<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaActorGetProfile.QueryParams,
+      FmTealAlphaActorGetProfile.HandlerInput,
+      FmTealAlphaActorGetProfile.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.actor.getProfile' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getProfiles<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaActorGetProfiles.Handler<ExtractAuth<AV>>,
-      FmTealAlphaActorGetProfiles.HandlerReqCtx<ExtractAuth<AV>>
+  getProfiles<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaActorGetProfiles.QueryParams,
+      FmTealAlphaActorGetProfiles.HandlerInput,
+      FmTealAlphaActorGetProfiles.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.actor.getProfiles' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  searchActors<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaActorSearchActors.Handler<ExtractAuth<AV>>,
-      FmTealAlphaActorSearchActors.HandlerReqCtx<ExtractAuth<AV>>
+  searchActors<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaActorSearchActors.QueryParams,
+      FmTealAlphaActorSearchActors.HandlerInput,
+      FmTealAlphaActorSearchActors.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.actor.searchActors' // @ts-ignore
@@ -136,22 +168,24 @@ export class FmTealAlphaFeedNS {
     this.social = new FmTealAlphaFeedSocialNS(server)
   }
 
-  getActorFeed<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaFeedGetActorFeed.Handler<ExtractAuth<AV>>,
-      FmTealAlphaFeedGetActorFeed.HandlerReqCtx<ExtractAuth<AV>>
+  getActorFeed<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaFeedGetActorFeed.QueryParams,
+      FmTealAlphaFeedGetActorFeed.HandlerInput,
+      FmTealAlphaFeedGetActorFeed.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.feed.getActorFeed' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getPlay<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaFeedGetPlay.Handler<ExtractAuth<AV>>,
-      FmTealAlphaFeedGetPlay.HandlerReqCtx<ExtractAuth<AV>>
+  getPlay<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaFeedGetPlay.QueryParams,
+      FmTealAlphaFeedGetPlay.HandlerInput,
+      FmTealAlphaFeedGetPlay.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.feed.getPlay' // @ts-ignore
@@ -174,33 +208,36 @@ export class FmTealAlphaGraphNS {
     this._server = server
   }
 
-  getFollowers<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaGraphGetFollowers.Handler<ExtractAuth<AV>>,
-      FmTealAlphaGraphGetFollowers.HandlerReqCtx<ExtractAuth<AV>>
+  getFollowers<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaGraphGetFollowers.QueryParams,
+      FmTealAlphaGraphGetFollowers.HandlerInput,
+      FmTealAlphaGraphGetFollowers.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.graph.getFollowers' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getFollows<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaGraphGetFollows.Handler<ExtractAuth<AV>>,
-      FmTealAlphaGraphGetFollows.HandlerReqCtx<ExtractAuth<AV>>
+  getFollows<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaGraphGetFollows.QueryParams,
+      FmTealAlphaGraphGetFollows.HandlerInput,
+      FmTealAlphaGraphGetFollows.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.graph.getFollows' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getSummary<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaGraphGetSummary.Handler<ExtractAuth<AV>>,
-      FmTealAlphaGraphGetSummary.HandlerReqCtx<ExtractAuth<AV>>
+  getSummary<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaGraphGetSummary.QueryParams,
+      FmTealAlphaGraphGetSummary.HandlerInput,
+      FmTealAlphaGraphGetSummary.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.graph.getSummary' // @ts-ignore
@@ -215,33 +252,36 @@ export class FmTealAlphaMusicNS {
     this._server = server
   }
 
-  getAlbum<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaMusicGetAlbum.Handler<ExtractAuth<AV>>,
-      FmTealAlphaMusicGetAlbum.HandlerReqCtx<ExtractAuth<AV>>
+  getAlbum<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaMusicGetAlbum.QueryParams,
+      FmTealAlphaMusicGetAlbum.HandlerInput,
+      FmTealAlphaMusicGetAlbum.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.music.getAlbum' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getArtist<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaMusicGetArtist.Handler<ExtractAuth<AV>>,
-      FmTealAlphaMusicGetArtist.HandlerReqCtx<ExtractAuth<AV>>
+  getArtist<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaMusicGetArtist.QueryParams,
+      FmTealAlphaMusicGetArtist.HandlerInput,
+      FmTealAlphaMusicGetArtist.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.music.getArtist' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getArtistListeners<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaMusicGetArtistListeners.Handler<ExtractAuth<AV>>,
-      FmTealAlphaMusicGetArtistListeners.HandlerReqCtx<ExtractAuth<AV>>
+  getArtistListeners<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaMusicGetArtistListeners.QueryParams,
+      FmTealAlphaMusicGetArtistListeners.HandlerInput,
+      FmTealAlphaMusicGetArtistListeners.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.music.getArtistListeners' // @ts-ignore
@@ -264,11 +304,12 @@ export class FmTealAlphaSearchNS {
     this._server = server
   }
 
-  getResults<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaSearchGetResults.Handler<ExtractAuth<AV>>,
-      FmTealAlphaSearchGetResults.HandlerReqCtx<ExtractAuth<AV>>
+  getResults<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaSearchGetResults.QueryParams,
+      FmTealAlphaSearchGetResults.HandlerInput,
+      FmTealAlphaSearchGetResults.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.search.getResults' // @ts-ignore
@@ -283,123 +324,75 @@ export class FmTealAlphaStatsNS {
     this._server = server
   }
 
-  getLatest<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaStatsGetLatest.Handler<ExtractAuth<AV>>,
-      FmTealAlphaStatsGetLatest.HandlerReqCtx<ExtractAuth<AV>>
+  getLatest<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaStatsGetLatest.QueryParams,
+      FmTealAlphaStatsGetLatest.HandlerInput,
+      FmTealAlphaStatsGetLatest.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.stats.getLatest' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getTopArtists<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaStatsGetTopArtists.Handler<ExtractAuth<AV>>,
-      FmTealAlphaStatsGetTopArtists.HandlerReqCtx<ExtractAuth<AV>>
+  getTopArtists<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaStatsGetTopArtists.QueryParams,
+      FmTealAlphaStatsGetTopArtists.HandlerInput,
+      FmTealAlphaStatsGetTopArtists.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.stats.getTopArtists' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getTopReleases<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaStatsGetTopReleases.Handler<ExtractAuth<AV>>,
-      FmTealAlphaStatsGetTopReleases.HandlerReqCtx<ExtractAuth<AV>>
+  getTopReleases<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaStatsGetTopReleases.QueryParams,
+      FmTealAlphaStatsGetTopReleases.HandlerInput,
+      FmTealAlphaStatsGetTopReleases.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.stats.getTopReleases' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getUserTopArtists<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaStatsGetUserTopArtists.Handler<ExtractAuth<AV>>,
-      FmTealAlphaStatsGetUserTopArtists.HandlerReqCtx<ExtractAuth<AV>>
+  getUserTopArtists<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaStatsGetUserTopArtists.QueryParams,
+      FmTealAlphaStatsGetUserTopArtists.HandlerInput,
+      FmTealAlphaStatsGetUserTopArtists.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.stats.getUserTopArtists' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getUserTopRecordings<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaStatsGetUserTopRecordings.Handler<ExtractAuth<AV>>,
-      FmTealAlphaStatsGetUserTopRecordings.HandlerReqCtx<ExtractAuth<AV>>
+  getUserTopRecordings<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaStatsGetUserTopRecordings.QueryParams,
+      FmTealAlphaStatsGetUserTopRecordings.HandlerInput,
+      FmTealAlphaStatsGetUserTopRecordings.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.stats.getUserTopRecordings' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 
-  getUserTopReleases<AV extends AuthVerifier>(
-    cfg: ConfigOf<
-      AV,
-      FmTealAlphaStatsGetUserTopReleases.Handler<ExtractAuth<AV>>,
-      FmTealAlphaStatsGetUserTopReleases.HandlerReqCtx<ExtractAuth<AV>>
+  getUserTopReleases<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealAlphaStatsGetUserTopReleases.QueryParams,
+      FmTealAlphaStatsGetUserTopReleases.HandlerInput,
+      FmTealAlphaStatsGetUserTopReleases.HandlerOutput
     >,
   ) {
     const nsid = 'fm.teal.alpha.stats.getUserTopReleases' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
-
-export class AppNS {
-  _server: Server
-  bsky: AppBskyNS
-
-  constructor(server: Server) {
-    this._server = server
-    this.bsky = new AppBskyNS(server)
-  }
-}
-
-export class AppBskyNS {
-  _server: Server
-  richtext: AppBskyRichtextNS
-
-  constructor(server: Server) {
-    this._server = server
-    this.richtext = new AppBskyRichtextNS(server)
-  }
-}
-
-export class AppBskyRichtextNS {
-  _server: Server
-
-  constructor(server: Server) {
-    this._server = server
-  }
-}
-
-type SharedRateLimitOpts<T> = {
-  name: string
-  calcKey?: (ctx: T) => string | null
-  calcPoints?: (ctx: T) => number
-}
-type RouteRateLimitOpts<T> = {
-  durationMs: number
-  points: number
-  calcKey?: (ctx: T) => string | null
-  calcPoints?: (ctx: T) => number
-}
-type HandlerOpts = { blobLimit?: number }
-type HandlerRateLimitOpts<T> = SharedRateLimitOpts<T> | RouteRateLimitOpts<T>
-type ConfigOf<Auth, Handler, ReqCtx> =
-  | Handler
-  | {
-      auth?: Auth
-      opts?: HandlerOpts
-      rateLimit?: HandlerRateLimitOpts<ReqCtx> | HandlerRateLimitOpts<ReqCtx>[]
-      handler: Handler
-    }
-type ExtractAuth<AV extends AuthVerifier | StreamAuthVerifier> = Extract<
-  Awaited<ReturnType<AV>>,
-  { credentials: unknown }
->

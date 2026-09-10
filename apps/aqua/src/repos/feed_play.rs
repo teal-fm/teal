@@ -61,10 +61,14 @@ impl FeedPlayRepo for PgDataSource {
                      profile.did, profile.handle, profile.display_name, profile.avatar
             ORDER BY p.processed_time desc
             "#,
-            &uri.to_string()
+            uri
         )
-        .fetch_one(&self.db)
+        .fetch_optional(&self.db)
         .await?;
+
+        let Some(row) = row else {
+            return Ok(None);
+        };
 
         let artists: Vec<Artist> = match row.artists {
             Some(value) => from_json_value::<Vec<Artist>>(value).unwrap_or_default(),

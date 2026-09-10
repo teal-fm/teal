@@ -184,6 +184,7 @@ export default function EditProfileModal({
       );
       const record: ProfileRecord = {
         ...currentRecord,
+        $type: "fm.teal.alpha.actor.profile",
         displayName: displayName.trim(),
         description: description.trim(),
         descriptionFacets: richText.facets,

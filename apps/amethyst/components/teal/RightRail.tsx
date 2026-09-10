@@ -19,17 +19,19 @@ export default function RightRail() {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([getTopArtists(4), getTopReleases(6)])
-      .then(([artistRes, releaseRes]) => {
+    Promise.allSettled([getTopArtists(4), getTopReleases(6)]).then(
+      ([artistResult, releaseResult]) => {
         if (!mounted) return;
-        setArtists(artistRes.artists);
-        setReleases(releaseRes.releases);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setArtists([]);
-        setReleases([]);
-      });
+        setArtists(
+          artistResult.status === "fulfilled" ? artistResult.value.artists : [],
+        );
+        setReleases(
+          releaseResult.status === "fulfilled"
+            ? releaseResult.value.releases
+            : [],
+        );
+      },
+    );
     return () => {
       mounted = false;
     };

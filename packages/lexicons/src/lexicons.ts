@@ -1,9 +1,96 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { LexiconDoc, Lexicons } from '@atproto/lexicon'
+import {
+  type LexiconDoc,
+  Lexicons,
+  ValidationError,
+  type ValidationResult,
+} from '@atproto/lexicon'
+import { type $Typed, is$typed, maybe$typed } from './util'
 
 export const schemaDict = {
+  AppBskyRichtextFacet: {
+    lexicon: 1,
+    id: 'app.bsky.richtext.facet',
+    defs: {
+      main: {
+        type: 'object',
+        description: 'Annotation of a sub-string within rich text.',
+        required: ['index', 'features'],
+        properties: {
+          index: {
+            type: 'ref',
+            ref: 'lex:app.bsky.richtext.facet#byteSlice',
+          },
+          features: {
+            type: 'array',
+            items: {
+              type: 'union',
+              refs: [
+                'lex:app.bsky.richtext.facet#mention',
+                'lex:app.bsky.richtext.facet#link',
+                'lex:app.bsky.richtext.facet#tag',
+              ],
+            },
+          },
+        },
+      },
+      mention: {
+        type: 'object',
+        description:
+          "Facet feature for mention of another account. The text is usually a handle, including a '@' prefix, but the facet reference is a DID.",
+        required: ['did'],
+        properties: {
+          did: {
+            type: 'string',
+            format: 'did',
+          },
+        },
+      },
+      link: {
+        type: 'object',
+        description:
+          'Facet feature for a URL. The text URL may have been simplified or truncated, but the facet reference should be a complete URL.',
+        required: ['uri'],
+        properties: {
+          uri: {
+            type: 'string',
+            format: 'uri',
+          },
+        },
+      },
+      tag: {
+        type: 'object',
+        description:
+          "Facet feature for a hashtag. The text usually includes a '#' prefix, but the facet reference should not (except in the case of 'double hash tags').",
+        required: ['tag'],
+        properties: {
+          tag: {
+            type: 'string',
+            maxLength: 640,
+            maxGraphemes: 64,
+          },
+        },
+      },
+      byteSlice: {
+        type: 'object',
+        description:
+          'Specifies the sub-string range a facet feature applies to. Start index is inclusive, end index is exclusive. Indices are zero-indexed, counting bytes of the UTF-8 encoded text. NOTE: some languages, like Javascript, use UTF-16 or Unicode codepoints for string slice indexing; in these languages, convert to byte arrays before working with facets.',
+        required: ['byteStart', 'byteEnd'],
+        properties: {
+          byteStart: {
+            type: 'integer',
+            minimum: 0,
+          },
+          byteEnd: {
+            type: 'integer',
+            minimum: 0,
+          },
+        },
+      },
+    },
+  },
   FmTealAlphaActorDefs: {
     lexicon: 1,
     id: 'fm.teal.alpha.actor.defs',
@@ -2181,92 +2268,40 @@ export const schemaDict = {
       },
     },
   },
-  AppBskyRichtextFacet: {
-    lexicon: 1,
-    id: 'app.bsky.richtext.facet',
-    defs: {
-      main: {
-        type: 'object',
-        description: 'Annotation of a sub-string within rich text.',
-        required: ['index', 'features'],
-        properties: {
-          index: {
-            type: 'ref',
-            ref: 'lex:app.bsky.richtext.facet#byteSlice',
-          },
-          features: {
-            type: 'array',
-            items: {
-              type: 'union',
-              refs: [
-                'lex:app.bsky.richtext.facet#mention',
-                'lex:app.bsky.richtext.facet#link',
-                'lex:app.bsky.richtext.facet#tag',
-              ],
-            },
-          },
-        },
-      },
-      mention: {
-        type: 'object',
-        description:
-          "Facet feature for mention of another account. The text is usually a handle, including a '@' prefix, but the facet reference is a DID.",
-        required: ['did'],
-        properties: {
-          did: {
-            type: 'string',
-            format: 'did',
-          },
-        },
-      },
-      link: {
-        type: 'object',
-        description:
-          'Facet feature for a URL. The text URL may have been simplified or truncated, but the facet reference should be a complete URL.',
-        required: ['uri'],
-        properties: {
-          uri: {
-            type: 'string',
-            format: 'uri',
-          },
-        },
-      },
-      tag: {
-        type: 'object',
-        description:
-          "Facet feature for a hashtag. The text usually includes a '#' prefix, but the facet reference should not (except in the case of 'double hash tags').",
-        required: ['tag'],
-        properties: {
-          tag: {
-            type: 'string',
-            maxLength: 640,
-            maxGraphemes: 64,
-          },
-        },
-      },
-      byteSlice: {
-        type: 'object',
-        description:
-          'Specifies the sub-string range a facet feature applies to. Start index is inclusive, end index is exclusive. Indices are zero-indexed, counting bytes of the UTF-8 encoded text. NOTE: some languages, like Javascript, use UTF-16 or Unicode codepoints for string slice indexing; in these languages, convert to byte arrays before working with facets.',
-        required: ['byteStart', 'byteEnd'],
-        properties: {
-          byteStart: {
-            type: 'integer',
-            minimum: 0,
-          },
-          byteEnd: {
-            type: 'integer',
-            minimum: 0,
-          },
-        },
-      },
-    },
-  },
 } as const satisfies Record<string, LexiconDoc>
-
-export const schemas = Object.values(schemaDict)
+export const schemas = Object.values(schemaDict) satisfies LexiconDoc[]
 export const lexicons: Lexicons = new Lexicons(schemas)
+
+export function validate<T extends { $type: string }>(
+  v: unknown,
+  id: string,
+  hash: string,
+  requiredType: true,
+): ValidationResult<T>
+export function validate<T extends { $type?: string }>(
+  v: unknown,
+  id: string,
+  hash: string,
+  requiredType?: false,
+): ValidationResult<T>
+export function validate(
+  v: unknown,
+  id: string,
+  hash: string,
+  requiredType?: boolean,
+): ValidationResult {
+  return (requiredType ? is$typed : maybe$typed)(v, id, hash)
+    ? lexicons.validate(`${id}#${hash}`, v)
+    : {
+        success: false,
+        error: new ValidationError(
+          `Must be an object with "${hash === 'main' ? id : `${id}#${hash}`}" $type property`,
+        ),
+      }
+}
+
 export const ids = {
+  AppBskyRichtextFacet: 'app.bsky.richtext.facet',
   FmTealAlphaActorDefs: 'fm.teal.alpha.actor.defs',
   FmTealAlphaActorGetProfile: 'fm.teal.alpha.actor.getProfile',
   FmTealAlphaActorGetProfiles: 'fm.teal.alpha.actor.getProfiles',
@@ -2306,5 +2341,4 @@ export const ids = {
   FmTealAlphaStatsGetUserTopRecordings:
     'fm.teal.alpha.stats.getUserTopRecordings',
   FmTealAlphaStatsGetUserTopReleases: 'fm.teal.alpha.stats.getUserTopReleases',
-  AppBskyRichtextFacet: 'app.bsky.richtext.facet',
-}
+} as const

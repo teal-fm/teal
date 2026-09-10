@@ -77,20 +77,32 @@ export default function HomeScreen() {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([getLatestPlays(30), getSocialFeed(30, undefined, viewerDid)])
-      .then(([playRes, postRes]) => {
-        if (!mounted) return;
-        setPlays(playRes.plays);
-        setPlayCursor(playRes.cursor);
-        setSocialPosts(postRes.items);
-        setPostCursor(postRes.cursor);
-      })
-      .catch((e) => {
-        if (mounted) {
-          setError(e instanceof Error ? e.message : String(e));
-          setPlays([]);
-        }
-      });
+    Promise.allSettled([
+      getLatestPlays(30),
+      getSocialFeed(30, undefined, viewerDid),
+    ]).then(([playResult, postResult]) => {
+      if (!mounted) return;
+
+      const errors: string[] = [];
+      if (playResult.status === "fulfilled") {
+        setPlays(playResult.value.plays);
+        setPlayCursor(playResult.value.cursor);
+      } else {
+        setPlays([]);
+        errors.push(
+          `Could not load listens: ${errorMessage(playResult.reason)}`,
+        );
+      }
+
+      if (postResult.status === "fulfilled") {
+        setSocialPosts(postResult.value.items);
+        setPostCursor(postResult.value.cursor);
+      } else {
+        errors.push(`Could not load posts: ${errorMessage(postResult.reason)}`);
+      }
+
+      setError(errors.length > 0 ? errors.join(" ") : null);
+    });
     return () => {
       mounted = false;
     };
@@ -197,7 +209,7 @@ export default function HomeScreen() {
       {error && (
         <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="font-bold text-destructive">
-            Could not load the Teal play feed: {error}
+            {error}
           </Text>
         </View>
       )}
@@ -238,4 +250,8 @@ export default function HomeScreen() {
       )}
     </TealShell>
   );
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }

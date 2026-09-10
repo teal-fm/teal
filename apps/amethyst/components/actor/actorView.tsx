@@ -117,6 +117,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     }
 
     let record: ProfileRecord = {
+      $type: "fm.teal.alpha.actor.profile",
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
       avatar: newAvatarBlob,

@@ -1,15 +1,24 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
-import * as FmTealAlphaFeedSocialDefs from './defs'
-import * as FmTealAlphaRichtextFacet from '../../richtext/facet'
-import * as ComAtprotoRepoStrongRef from '../../../../../com/atproto/repo/strongRef'
+import { validate as _validate } from '../../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../../util'
+import type * as FmTealAlphaFeedSocialDefs from './defs'
+import type * as FmTealAlphaRichtextFacet from '../../richtext/facet'
+import type * as ComAtprotoRepoStrongRef from '../../../../../com/atproto/repo/strongRef'
 
-export interface Record {
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.feed.social.post'
+
+export interface Main {
+  $type: 'fm.teal.alpha.feed.social.post'
   /** The primary post content. May be an empty string, if there are embeds. */
   text: string
   track: FmTealAlphaFeedSocialDefs.TrackView
@@ -25,33 +34,34 @@ export interface Record {
   [k: string]: unknown
 }
 
-export function isRecord(v: unknown): v is Record {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    (v.$type === 'fm.teal.alpha.feed.social.post#main' ||
-      v.$type === 'fm.teal.alpha.feed.social.post')
-  )
+const hashMain = 'main'
+
+export function isMain<V>(v: V) {
+  return is$typed(v, id, hashMain)
 }
 
-export function validateRecord(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.feed.social.post#main', v)
+export function validateMain<V>(v: V) {
+  return validate<Main & V>(v, id, hashMain, true)
+}
+
+export {
+  type Main as Record,
+  isMain as isRecord,
+  validateMain as validateRecord,
 }
 
 export interface ReplyRef {
+  $type?: 'fm.teal.alpha.feed.social.post#replyRef'
   root: ComAtprotoRepoStrongRef.Main
   parent: ComAtprotoRepoStrongRef.Main
-  [k: string]: unknown
 }
 
-export function isReplyRef(v: unknown): v is ReplyRef {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.feed.social.post#replyRef'
-  )
+const hashReplyRef = 'replyRef'
+
+export function isReplyRef<V>(v: V) {
+  return is$typed(v, id, hashReplyRef)
 }
 
-export function validateReplyRef(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.feed.social.post#replyRef', v)
+export function validateReplyRef<V>(v: V) {
+  return validate<ReplyRef & V>(v, id, hashReplyRef)
 }

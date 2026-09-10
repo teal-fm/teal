@@ -98,7 +98,9 @@ function LeftRail() {
   const agent = useStore((state) => state.pdsAgent);
   const profiles = useStore((state) => state.profiles);
   const profile = agent?.did ? profiles[agent.did] : undefined;
-  const tealHandle = normalizeHandle(profile?.teal?.handle as string | undefined);
+  const tealHandle = normalizeHandle(
+    (profile?.teal as { handle?: string } | null | undefined)?.handle,
+  );
   const bskyHandle = normalizeHandle(profile?.bsky?.handle);
   const displayName =
     profile?.teal?.displayName ||

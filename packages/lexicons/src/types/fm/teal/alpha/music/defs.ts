@@ -1,13 +1,22 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
-import * as FmTealAlphaActorDefs from '../actor/defs'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
+import type * as FmTealAlphaActorDefs from '../actor/defs'
+
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.music.defs'
 
 export interface ArtistView {
+  $type?: 'fm.teal.alpha.music.defs#artistView'
   /** MusicBrainz artist ID URI, formatted as mbid:<uuid> */
   mbid?: string
   /** Artist name */
@@ -15,41 +24,37 @@ export interface ArtistView {
   /** Total indexed listens for this artist */
   playCount: number
   albums: AlbumSummary[]
-  [k: string]: unknown
 }
 
-export function isArtistView(v: unknown): v is ArtistView {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.music.defs#artistView'
-  )
+const hashArtistView = 'artistView'
+
+export function isArtistView<V>(v: V) {
+  return is$typed(v, id, hashArtistView)
 }
 
-export function validateArtistView(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.music.defs#artistView', v)
+export function validateArtistView<V>(v: V) {
+  return validate<ArtistView & V>(v, id, hashArtistView)
 }
 
 export interface ArtistListenerView {
+  $type?: 'fm.teal.alpha.music.defs#artistListenerView'
   actor: FmTealAlphaActorDefs.MiniProfileView
   /** Number of indexed listens by this actor for the artist */
   playCount: number
-  [k: string]: unknown
 }
 
-export function isArtistListenerView(v: unknown): v is ArtistListenerView {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.music.defs#artistListenerView'
-  )
+const hashArtistListenerView = 'artistListenerView'
+
+export function isArtistListenerView<V>(v: V) {
+  return is$typed(v, id, hashArtistListenerView)
 }
 
-export function validateArtistListenerView(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.music.defs#artistListenerView', v)
+export function validateArtistListenerView<V>(v: V) {
+  return validate<ArtistListenerView & V>(v, id, hashArtistListenerView)
 }
 
 export interface AlbumView {
+  $type?: 'fm.teal.alpha.music.defs#albumView'
   /** MusicBrainz release ID URI, formatted as mbid:<uuid> */
   mbid: string
   /** Release title */
@@ -61,60 +66,53 @@ export interface AlbumView {
   /** Total indexed listens for tracks on this release */
   playCount: number
   tracks: TrackSummary[]
-  [k: string]: unknown
 }
 
-export function isAlbumView(v: unknown): v is AlbumView {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.music.defs#albumView'
-  )
+const hashAlbumView = 'albumView'
+
+export function isAlbumView<V>(v: V) {
+  return is$typed(v, id, hashAlbumView)
 }
 
-export function validateAlbumView(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.music.defs#albumView', v)
+export function validateAlbumView<V>(v: V) {
+  return validate<AlbumView & V>(v, id, hashAlbumView)
 }
 
 export interface AlbumSummary {
+  $type?: 'fm.teal.alpha.music.defs#albumSummary'
   mbid: string
   name: string
   artistMbid?: string
   artistName: string
   playCount: number
-  [k: string]: unknown
 }
 
-export function isAlbumSummary(v: unknown): v is AlbumSummary {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.music.defs#albumSummary'
-  )
+const hashAlbumSummary = 'albumSummary'
+
+export function isAlbumSummary<V>(v: V) {
+  return is$typed(v, id, hashAlbumSummary)
 }
 
-export function validateAlbumSummary(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.music.defs#albumSummary', v)
+export function validateAlbumSummary<V>(v: V) {
+  return validate<AlbumSummary & V>(v, id, hashAlbumSummary)
 }
 
 export interface TrackSummary {
+  $type?: 'fm.teal.alpha.music.defs#trackSummary'
   /** Representative listen URI for opening the track page */
   uri: string
   recordingMbid?: string
   name: string
   artistName: string
   playCount: number
-  [k: string]: unknown
 }
 
-export function isTrackSummary(v: unknown): v is TrackSummary {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.music.defs#trackSummary'
-  )
+const hashTrackSummary = 'trackSummary'
+
+export function isTrackSummary<V>(v: V) {
+  return is$typed(v, id, hashTrackSummary)
 }
 
-export function validateTrackSummary(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.music.defs#trackSummary', v)
+export function validateTrackSummary<V>(v: V) {
+  return validate<TrackSummary & V>(v, id, hashTrackSummary)
 }

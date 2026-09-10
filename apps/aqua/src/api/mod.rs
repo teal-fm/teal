@@ -127,12 +127,6 @@ pub async fn get_car_import_job_status(
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CarImportRequest {
-    pub import_id: Option<String>,
-    pub description: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct CarImportResponse {
     pub import_id: String,
     pub status: String,

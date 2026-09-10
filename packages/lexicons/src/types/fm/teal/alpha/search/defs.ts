@@ -1,12 +1,21 @@
 /**
  * GENERATED CODE - DO NOT MODIFY
  */
-import { ValidationResult, BlobRef } from '@atproto/lexicon'
-import { lexicons } from '../../../../../lexicons'
-import { isObj, hasProp } from '../../../../../util'
+import { type ValidationResult, BlobRef } from '@atproto/lexicon'
 import { CID } from 'multiformats/cid'
+import { validate as _validate } from '../../../../../lexicons'
+import {
+  type $Typed,
+  is$typed as _is$typed,
+  type OmitKey,
+} from '../../../../../util'
+
+const is$typed = _is$typed,
+  validate = _validate
+const id = 'fm.teal.alpha.search.defs'
 
 export interface SongResult {
+  $type?: 'fm.teal.alpha.search.defs#songResult'
   /** Representative indexed play URI for this song */
   uri: string
   /** Track name */
@@ -19,17 +28,14 @@ export interface SongResult {
   releaseMbId?: string
   /** Number of indexed plays for this song */
   playCount: number
-  [k: string]: unknown
 }
 
-export function isSongResult(v: unknown): v is SongResult {
-  return (
-    isObj(v) &&
-    hasProp(v, '$type') &&
-    v.$type === 'fm.teal.alpha.search.defs#songResult'
-  )
+const hashSongResult = 'songResult'
+
+export function isSongResult<V>(v: V) {
+  return is$typed(v, id, hashSongResult)
 }
 
-export function validateSongResult(v: unknown): ValidationResult {
-  return lexicons.validate('fm.teal.alpha.search.defs#songResult', v)
+export function validateSongResult<V>(v: V) {
+  return validate<SongResult & V>(v, id, hashSongResult)
 }
