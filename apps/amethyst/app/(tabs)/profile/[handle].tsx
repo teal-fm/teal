@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
@@ -8,6 +14,7 @@ import TealShell, {
 } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { resolveHandle } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
@@ -34,14 +41,23 @@ function isHttpUrl(value?: string) {
   return value?.startsWith("http://") || value?.startsWith("https://");
 }
 
+function profileImageUrl(did: string, value?: string) {
+  if (!value) return undefined;
+  if (isHttpUrl(value) || value.startsWith("data:")) return value;
+  return getImageCdnLink({ did, hash: value });
+}
+
 export default function ProfileScreen() {
   const { handle } = useLocalSearchParams();
   const actor = Array.isArray(handle) ? handle[0] : handle;
   const [did, setDid] = useState<string | null>(null);
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
   const [plays, setPlays] = useState<PlayView[]>([]);
+  const [cursor, setCursor] = useState<string>();
+  const [loadingMore, setLoadingMore] = useState(false);
   const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loadingMoreRef = useRef(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
 
   useEffect(() => {
@@ -49,12 +65,17 @@ export default function ProfileScreen() {
     async function load() {
       if (!actor) return;
       try {
+        setError(null);
+        setDid(null);
+        setProfile(null);
+        setPlays([]);
+        setCursor(undefined);
         const resolved = actor.startsWith("did:")
           ? actor
           : await resolveHandle(actor);
         if (!mounted) return;
         setDid(resolved);
-        const feedRes = await getActorFeed(resolved, 50);
+        const feedRes = await getActorFeed(resolved, 30);
         let nextProfile: DisplayProfile | null = null;
         let nextIsBlueskyFallback = false;
 
@@ -78,6 +99,7 @@ export default function ProfileScreen() {
         setProfile(nextProfile);
         setIsBlueskyFallback(nextIsBlueskyFallback);
         setPlays(feedRes.plays);
+        setCursor(feedRes.cursor);
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
       }
@@ -88,10 +110,49 @@ export default function ProfileScreen() {
     };
   }, [actor]);
 
+  const loadMore = useCallback(() => {
+    if (!did || !cursor || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    getActorFeed(did, 30, cursor)
+      .then((feedRes) => {
+        setPlays((current) => {
+          const knownUris = new Set(current.map((play) => play.uri));
+          return [
+            ...current,
+            ...feedRes.plays.filter(
+              (play) => !play.uri || !knownUris.has(play.uri),
+            ),
+          ];
+        });
+        setCursor(feedRes.cursor);
+      })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      });
+  }, [cursor, did]);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } =
+        event.nativeEvent;
+      const remaining =
+        contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      if (remaining < 800) loadMore();
+    },
+    [loadMore],
+  );
+
   const isSelf = did === pdsAgent?.did;
+  const avatarUrl = did ? profileImageUrl(did, profile?.avatar) : undefined;
+  const bannerUrl = did ? profileImageUrl(did, profile?.banner) : undefined;
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
       <Stack.Screen
         options={{ title: actor || "Profile", headerShown: false }}
       />
@@ -111,17 +172,17 @@ export default function ProfileScreen() {
         <>
           <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
             <View className="h-40 bg-primary/30">
-              {profile?.banner && isHttpUrl(profile.banner) && (
+              {bannerUrl && (
                 <Image
-                  source={{ uri: profile.banner }}
+                  source={{ uri: bannerUrl }}
                   className="h-full w-full"
                 />
               )}
             </View>
             <View className="-mt-12 px-6 pb-6">
-              {profile?.avatar && isHttpUrl(profile.avatar) ? (
+              {avatarUrl ? (
                 <Image
-                  source={{ uri: profile.avatar }}
+                  source={{ uri: avatarUrl }}
                   className="h-24 w-24 rounded-lg border-4 border-background bg-primary"
                 />
               ) : (
@@ -177,6 +238,16 @@ export default function ProfileScreen() {
                 play={play}
               />
             ))
+          )}
+          {loadingMore && (
+            <View className="items-center justify-center py-5">
+              <ActivityIndicator />
+            </View>
+          )}
+          {plays.length > 0 && !cursor && (
+            <Text className="pb-6 text-center font-mono text-xs text-muted-foreground">
+              You reached the beginning of this listener's indexed plays.
+            </Text>
           )}
         </>
       )}

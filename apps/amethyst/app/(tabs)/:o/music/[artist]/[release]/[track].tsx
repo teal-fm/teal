@@ -7,13 +7,16 @@ import TealShell, {
   SectionHeading,
 } from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
+import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   coverArtUrl,
   displayArtists,
   getLatestPlays,
   getPlayByUri,
+  getRecordingCoverArtUrl,
 } from "@/lib/teal/api";
 import { musicAlbumHref, musicArtistHref } from "@/lib/teal/routes";
+import { Disc3 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
@@ -24,6 +27,7 @@ export default function MusicDetail() {
   const [related, setRelated] = useState<PlayView[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [artFailed, setArtFailed] = useState(false);
+  const [recordingArt, setRecordingArt] = useState<string>();
 
   useEffect(() => {
     let mounted = true;
@@ -53,6 +57,24 @@ export default function MusicDetail() {
     };
   }, [uri]);
 
+  const releaseArt = coverArtUrl(play?.releaseMbId, 500);
+  const art = artFailed ? undefined : releaseArt || recordingArt;
+
+  useEffect(() => {
+    let mounted = true;
+    setArtFailed(false);
+    if (releaseArt || !play?.recordingMbId) {
+      setRecordingArt(undefined);
+      return;
+    }
+    getRecordingCoverArtUrl(play.recordingMbId, 500).then((url) => {
+      if (mounted) setRecordingArt(url);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [play?.recordingMbId, releaseArt]);
+
   return (
     <TealShell rightRail={<RightRail />}>
       <Stack.Screen
@@ -74,23 +96,29 @@ export default function MusicDetail() {
         <>
           <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
             <View className="h-44 bg-muted">
-              {!artFailed && coverArtUrl(play.releaseMbId, 500) && (
+              {art && (
                 <Image
-                  source={{ uri: coverArtUrl(play.releaseMbId, 500) }}
+                  source={{ uri: art }}
                   className="h-full w-full opacity-40"
                   onError={() => setArtFailed(true)}
                 />
               )}
             </View>
             <View className="-mt-8 flex-row gap-4 px-5 pb-8">
-              {!artFailed && coverArtUrl(play.releaseMbId) ? (
+              {art ? (
                 <Image
-                  source={{ uri: coverArtUrl(play.releaseMbId) }}
+                  source={{ uri: art }}
                   className="h-24 w-24 rounded-lg bg-muted md:h-28 md:w-28"
                   onError={() => setArtFailed(true)}
                 />
               ) : (
-                <View className="h-24 w-24 rounded-lg bg-muted md:h-28 md:w-28" />
+                <View className="h-24 w-24 items-center justify-center rounded-lg bg-muted md:h-28 md:w-28">
+                  <Icon
+                    icon={Disc3}
+                    size={42}
+                    className="text-muted-foreground"
+                  />
+                </View>
               )}
               <View className="min-w-0 flex-1 justify-end pb-2">
                 <Text

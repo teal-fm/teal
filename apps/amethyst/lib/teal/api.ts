@@ -64,11 +64,15 @@ export function getLatestPlays(limit = 50, cursor?: string) {
   );
 }
 
-export function getActorFeed(authorDID: string, limit = 50) {
-  return getXrpc<{ plays: PlayView[] }>("fm.teal.alpha.feed.getActorFeed", {
-    authorDID,
-    limit,
-  });
+export function getActorFeed(authorDID: string, limit = 30, cursor?: string) {
+  return getXrpc<{ plays: PlayView[]; cursor?: string }>(
+    "fm.teal.alpha.feed.getActorFeed",
+    {
+      authorDID,
+      limit,
+      cursor,
+    },
+  );
 }
 
 export function getPlayByUri(uri: string) {
@@ -161,6 +165,29 @@ export function coverArtUrl(releaseMbId?: string, size = 250) {
   return mbid
     ? `https://coverartarchive.org/release/${mbid}/front-${size}`
     : undefined;
+}
+
+const recordingCoverArtCache = new Map<string, Promise<string | undefined>>();
+
+export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
+  const mbid = recordingMbId?.replace(/^mbid:/, "");
+  if (!mbid) return Promise.resolve(undefined);
+
+  const cacheKey = `${mbid}:${size}`;
+  let cached = recordingCoverArtCache.get(cacheKey);
+  if (!cached) {
+    cached = fetch(
+      `https://musicbrainz.org/ws/2/recording/${encodeURIComponent(mbid)}?inc=releases&fmt=json`,
+    )
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((recording?: { releases?: Array<{ id?: string }> }) => {
+        const releaseId = recording?.releases?.find((release) => release.id)?.id;
+        return releaseId ? coverArtUrl(releaseId, size) : undefined;
+      })
+      .catch(() => undefined);
+    recordingCoverArtCache.set(cacheKey, cached);
+  }
+  return cached;
 }
 
 export function displayArtists(play: PlayView) {
