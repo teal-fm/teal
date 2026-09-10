@@ -49,6 +49,7 @@ services:
       JETSTREAM_URL: ${JETSTREAM_URL:-wss://jetstream1.us-east.bsky.network/subscribe}
       CADET_CURSOR_REDIS_KEY: ${CADET_CURSOR_REDIS_KEY:-cadet:jetstream:cursor}
       CURSOR_FILE: ${CURSOR_FILE:-/var/lib/cadet/cursor.txt}
+      CADET_DEFER_MATERIALIZED_VIEW_REFRESH: ${CADET_DEFER_MATERIALIZED_VIEW_REFRESH:-1}
     volumes:
       - cadet_state:/var/lib/cadet
     networks:

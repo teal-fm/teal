@@ -9,7 +9,7 @@
       "key": "tid",
       "record": {
         "type": "object",
-        "required": ["text", "track", "createdAt"],
+        "required": ["text", "createdAt"],
         "properties": {
           "text": {
             "type": "string",
@@ -17,10 +17,54 @@
             "maxGraphemes": 300,
             "description": "The primary post content. May be an empty string, if there are embeds."
           },
-          "track": {
-            "type": "ref",
-            "ref": "fm.teal.alpha.feed.social.defs#trackView",
-            "description": "The track associated with this post."
+
+          "trackName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "maxGraphemes": 2560,
+            "description": "The name of the track"
+          },
+          "trackMbId": {
+            "type": "string",
+            "description": "The Musicbrainz ID of the track"
+          },
+          "recordingMbId": {
+            "type": "string",
+            "description": "The Musicbrainz recording ID of the track"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "The duration of the track in seconds"
+          },
+          "artistNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "maxGraphemes": 2560
+            },
+            "description": "The names of the artists"
+          },
+          "artistMbIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The Musicbrainz IDs of the artists"
+          },
+          "releaseName": {
+            "type": "string",
+            "maxLength": 256,
+            "maxGraphemes": 2560,
+            "description": "The name of the release/album"
+          },
+          "releaseMbId": {
+            "type": "string",
+            "description": "The Musicbrainz ID of the release/album"
+          },
+          "isrc": {
+            "type": "string",
+            "description": "The ISRC code associated with the recording"
           },
           "reply": { "type": "ref", "ref": "#replyRef" },
           "facets": {

@@ -37,9 +37,14 @@ export function musicTrackHref(
   artistName: string,
   releaseName: string | undefined,
   trackName: string,
-  uri: string,
+  uri?: string,
+  postUri?: string,
 ) {
-  return `/:o/music/${routePart(artistName)}/${routePart(releaseName)}/${routePart(trackName)}?uri=${encodeURIComponent(uri)}`;
+  const query = new URLSearchParams();
+  if (uri) query.set("uri", uri);
+  if (postUri) query.set("postUri", postUri);
+  const suffix = query.size ? `?${query.toString()}` : "";
+  return `/:o/music/${routePart(artistName)}/${routePart(releaseName)}/${routePart(trackName)}${suffix}`;
 }
 
 export function listenHref(authorDid?: string, rkey?: string) {
