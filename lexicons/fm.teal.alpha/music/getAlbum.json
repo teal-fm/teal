@@ -1,0 +1,54 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.alpha.music.getAlbum",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get an indexed release, its tracks, and a page of listens",
+      "parameters": {
+        "type": "params",
+        "required": ["mbid"],
+        "properties": {
+          "mbid": {
+            "type": "string",
+            "description": "MusicBrainz release ID URI or UUID"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 30
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next page of listens"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["album", "plays"],
+          "properties": {
+            "album": {
+              "type": "ref",
+              "ref": "fm.teal.alpha.music.defs#albumView"
+            },
+            "plays": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.alpha.feed.defs#playView"
+              }
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Opaque cursor for the next page of listens"
+            }
+          }
+        }
+      }
+    }
+  }
+}

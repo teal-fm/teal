@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                p.release_mbid AS \"mbid!\",\n                COALESCE(MAX(p.release_name), 'Unknown release') AS \"name!\",\n                COUNT(DISTINCT p.uri) AS \"play_count!\",\n                COALESCE(\n                    (ARRAY_AGG(ptae.artist_name ORDER BY ptae.artist_name)\n                        FILTER (WHERE ptae.artist_name IS NOT NULL))[1],\n                    'Unknown artist'\n                ) AS \"artist_name!\",\n                (ARRAY_AGG(ae.mbid ORDER BY ptae.artist_name)\n                    FILTER (WHERE ae.mbid IS NOT NULL))[1] AS artist_mbid\n            FROM plays p\n            LEFT JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri\n            LEFT JOIN artists_extended ae ON ptae.artist_id = ae.id\n            WHERE p.release_mbid = $1\n            GROUP BY p.release_mbid\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "play_count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "artist_name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "artist_mbid",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "c06c1576352568580ef9a4284b4607311fe73a06606146de92f109d2ce5dedb6"
+}

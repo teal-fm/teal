@@ -4,18 +4,20 @@ use types::fm_teal::alpha::actor::MiniProfileView;
 use uuid::Uuid;
 
 use crate::repos::feed_play::FeedPlayRepo;
+use crate::repos::music::MusicRepo;
 use crate::repos::search::SearchRepo;
 use crate::repos::stats::StatsRepo;
 
 pub mod actor_profile;
 pub mod feed_play;
+pub mod music;
 pub mod pg;
 pub mod search;
 pub mod stats;
 
 #[async_trait::async_trait]
 pub trait DataSource:
-    ActorProfileRepo + FeedPlayRepo + SearchRepo + StatsRepo + Send + Sync
+    ActorProfileRepo + FeedPlayRepo + MusicRepo + SearchRepo + StatsRepo + Send + Sync
 {
     fn boxed(self) -> Box<dyn DataSource>
     where

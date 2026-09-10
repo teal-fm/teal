@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH track_plays AS (\n                SELECT\n                    p.uri,\n                    p.recording_mbid,\n                    p.track_name,\n                    p.processed_time,\n                    COALESCE(\n                        STRING_AGG(DISTINCT ptae.artist_name, ', ' ORDER BY ptae.artist_name),\n                        'Unknown artist'\n                    ) AS artist_name\n                FROM plays p\n                LEFT JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri\n                WHERE p.release_mbid = $1\n                GROUP BY p.uri, p.recording_mbid, p.track_name, p.processed_time\n            )\n            SELECT DISTINCT ON (COALESCE(recording_mbid::text, LOWER(track_name)))\n                uri,\n                recording_mbid,\n                track_name,\n                artist_name,\n                COUNT(*) OVER (\n                    PARTITION BY COALESCE(recording_mbid::text, LOWER(track_name))\n                ) AS \"play_count!\"\n            FROM track_plays\n            ORDER BY COALESCE(recording_mbid::text, LOWER(track_name)), processed_time DESC, uri\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "uri",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "recording_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "track_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "artist_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "play_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "50705a996b6048f8d9d145e27b34c62d8ead70b840deb29957ec60d2988b4ac9"
+}

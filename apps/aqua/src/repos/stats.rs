@@ -13,12 +13,14 @@ pub struct LatestPlaysPage {
 }
 
 #[derive(Deserialize, Serialize)]
-struct LatestPlaysCursor {
-    processed_time: String,
-    uri: String,
+pub(crate) struct LatestPlaysCursor {
+    pub processed_time: String,
+    pub uri: String,
 }
 
-fn decode_latest_cursor(cursor: Option<&str>) -> anyhow::Result<Option<LatestPlaysCursor>> {
+pub(crate) fn decode_latest_cursor(
+    cursor: Option<&str>,
+) -> anyhow::Result<Option<LatestPlaysCursor>> {
     cursor
         .map(|cursor| {
             let bytes =
@@ -28,7 +30,7 @@ fn decode_latest_cursor(cursor: Option<&str>) -> anyhow::Result<Option<LatestPla
         .transpose()
 }
 
-fn encode_latest_cursor(cursor: &LatestPlaysCursor) -> anyhow::Result<String> {
+pub(crate) fn encode_latest_cursor(cursor: &LatestPlaysCursor) -> anyhow::Result<String> {
     Ok(base64::Engine::encode(
         &base64::engine::general_purpose::URL_SAFE_NO_PAD,
         serde_json::to_vec(cursor)?,

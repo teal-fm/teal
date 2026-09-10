@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, View } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { ActivityIndicator, Image, Pressable, View } from "react-native";
+import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/songish/PlayFeedCard";
 import RightRail from "@/components/songish/RightRail";
 import SongishShell from "@/components/songish/SongishShell";
 import { Text } from "@/components/ui/text";
-import { coverArtUrl, displayArtists, getLatestPlays, getPlayByUri } from "@/lib/teal/api";
+import {
+  coverArtUrl,
+  displayArtists,
+  getLatestPlays,
+  getPlayByUri,
+} from "@/lib/teal/api";
+import { musicAlbumHref, musicArtistHref } from "@/lib/teal/routes";
+
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 export default function MusicDetail() {
@@ -45,7 +52,9 @@ export default function MusicDetail() {
 
   return (
     <SongishShell rightRail={<RightRail />}>
-      <Stack.Screen options={{ title: play?.trackName || "Music", headerShown: false }} />
+      <Stack.Screen
+        options={{ title: play?.trackName || "Music", headerShown: false }}
+      />
       {!play && !error && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
@@ -53,7 +62,9 @@ export default function MusicDetail() {
       )}
       {error && (
         <View className="rounded-2xl bg-destructive/15 p-4">
-          <Text className="font-bold text-destructive">Could not load music detail: {error}</Text>
+          <Text className="font-bold text-destructive">
+            Could not load music detail: {error}
+          </Text>
         </View>
       )}
       {play && (
@@ -71,27 +82,71 @@ export default function MusicDetail() {
               {coverArtUrl(play.releaseMbId) ? (
                 <Image
                   source={{ uri: coverArtUrl(play.releaseMbId) }}
-                  className="h-36 w-36 rounded-2xl bg-muted"
+                  className="h-24 w-24 rounded-2xl bg-muted md:h-28 md:w-28"
                 />
               ) : (
-                <View className="h-36 w-36 rounded-2xl bg-muted" />
+                <View className="h-24 w-24 rounded-2xl bg-muted md:h-28 md:w-28" />
               )}
               <View className="min-w-0 flex-1 justify-end pb-2">
-                <Text className="font-serif text-3xl font-black" numberOfLines={2}>
+                <Text
+                  className="font-serif text-2xl font-black"
+                  numberOfLines={3}
+                >
                   {play.trackName}
                 </Text>
-                <Text className="text-lg font-bold text-muted-foreground">
-                  {displayArtists(play) || "Unknown artist"}
-                </Text>
-                {play.releaseName && (
-                  <Text className="text-muted-foreground">{play.releaseName}</Text>
+                {play.artists[0]?.artistMbId ? (
+                  <Link
+                    href={
+                      musicArtistHref(
+                        displayArtists(play),
+                        play.artists[0].artistMbId,
+                      ) as any
+                    }
+                    asChild
+                  >
+                    <Pressable>
+                      <Text className="font-bold text-muted-foreground">
+                        {displayArtists(play) || "Unknown artist"}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                ) : (
+                  <Text className="font-bold text-muted-foreground">
+                    {displayArtists(play) || "Unknown artist"}
+                  </Text>
                 )}
+                {play.releaseName &&
+                  (play.releaseMbId ? (
+                    <Link
+                      href={
+                        musicAlbumHref(
+                          displayArtists(play),
+                          play.releaseName,
+                          play.releaseMbId,
+                        ) as any
+                      }
+                      asChild
+                    >
+                      <Pressable>
+                        <Text className="text-muted-foreground">
+                          {play.releaseName}
+                        </Text>
+                      </Pressable>
+                    </Link>
+                  ) : (
+                    <Text className="text-muted-foreground">
+                      {play.releaseName}
+                    </Text>
+                  ))}
               </View>
             </View>
           </View>
           <Text className="mb-4 text-2xl font-black">Plays</Text>
           {(related.length ? related : [play]).map((item, index) => (
-            <PlayFeedCard key={item.uri || `${item.trackName}-${index}`} play={item} />
+            <PlayFeedCard
+              key={item.uri || `${item.trackName}-${index}`}
+              play={item}
+            />
           ))}
         </>
       )}
