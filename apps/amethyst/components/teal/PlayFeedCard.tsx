@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
 import { Image, Pressable, View } from "react-native";
 import { Link } from "expo-router";
-import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   coverArtUrl,
   displayArtists,
-  getBlueskyProfile,
   getRecordingCoverArtUrl,
 } from "@/lib/teal/api";
+import {
+  actorAvatarUrl,
+  actorProfileHref,
+  displayActorName,
+  getCachedBlueskyProfile,
+  normalizeHandle,
+  type DisplayActor,
+} from "@/lib/teal/actors";
 import { musicTrackHref } from "@/lib/teal/routes";
 import { cn, timeAgo } from "@/lib/utils";
 import { Disc3 } from "lucide-react-native";
@@ -22,31 +28,6 @@ type PlayFeedCardProps = {
   compact?: boolean;
 };
 
-type FeedAuthor = {
-  avatar?: string;
-  did?: string;
-  displayName?: string;
-  handle?: string;
-};
-
-const blueskyProfileCache = new Map<string, Promise<FeedAuthor | undefined>>();
-
-function getCachedBlueskyProfile(did: string) {
-  let profile = blueskyProfileCache.get(did);
-  if (!profile) {
-    profile = getBlueskyProfile(did)
-      .then(({ avatar, displayName, handle }) => ({
-        avatar,
-        did,
-        displayName,
-        handle,
-      }))
-      .catch(() => undefined);
-    blueskyProfileCache.set(did, profile);
-  }
-  return profile;
-}
-
 export function musicHref(play: PlayView) {
   return musicTrackHref(
     displayArtists(play),
@@ -57,18 +38,28 @@ export function musicHref(play: PlayView) {
 }
 
 export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
-  const [blueskyAuthor, setBlueskyAuthor] = useState<FeedAuthor>();
+  const [blueskyAuthor, setBlueskyAuthor] = useState<DisplayActor>();
   const [artFailed, setArtFailed] = useState(false);
   const [recordingArt, setRecordingArt] = useState<string>();
-  const indexedAuthor = play.author as FeedAuthor | undefined;
-  const authorProfile = indexedAuthor || blueskyAuthor;
+  const indexedAuthor = play.author as DisplayActor | undefined;
+  const authorProfile = indexedAuthor
+    ? {
+        ...blueskyAuthor,
+        ...indexedAuthor,
+        avatar: indexedAuthor.avatar || blueskyAuthor?.avatar,
+        displayName: indexedAuthor.displayName || blueskyAuthor?.displayName,
+        handle: indexedAuthor.handle || blueskyAuthor?.handle,
+      }
+    : blueskyAuthor;
   const authorDid = authorProfile?.did || play.authorDid;
   const releaseArt = coverArtUrl(play.releaseMbId);
   const art = artFailed ? undefined : releaseArt || recordingArt;
 
   useEffect(() => {
     let mounted = true;
-    if (!authorDid || indexedAuthor) {
+    const needsBlueskyFallback =
+      !indexedAuthor?.displayName || !indexedAuthor?.handle;
+    if (!authorDid || !needsBlueskyFallback) {
       setBlueskyAuthor(undefined);
       return;
     }
@@ -95,19 +86,10 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
     };
   }, [play.recordingMbId, releaseArt]);
 
-  const authorHandle = authorProfile?.handle?.replace(/^at:\/\//, "");
-  const authorName =
-    authorProfile?.displayName ||
-    authorHandle ||
-    authorDid ||
-    "Unknown listener";
-  const authorHref = authorHandle || authorDid || "unknown";
-  const authorAvatar =
-    authorDid && indexedAuthor?.avatar
-      ? getImageCdnLink({ did: authorDid, hash: indexedAuthor.avatar })
-      : authorProfile?.avatar
-        ? authorProfile.avatar
-        : undefined;
+  const authorHandle = normalizeHandle(authorProfile?.handle);
+  const authorName = displayActorName(authorProfile, authorDid);
+  const authorHref = actorProfileHref(authorProfile, authorDid);
+  const authorAvatar = actorAvatarUrl(authorProfile, authorDid);
   const when = play.playedTime
     ? timeAgo(new Date(play.playedTime))
     : "recently";

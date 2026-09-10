@@ -9,14 +9,18 @@ This file is the working handoff for the Teal-native Teal clone. Keep it updated
 - Aqua exposes Teal XRPC routes for cursor-paginated latest plays, individual plays, actor feeds, profiles, stats, indexed search, artist discographies, and albums with track lists plus cursor-paginated listens.
 - Cadet consumes Teal records from Jetstream, stores a durable cursor in Redis with file fallback, and ingests create, update, and delete events for profiles and plays.
 - The public Amethyst feed uses only live Aqua XRPC data. There is no seeded, mocked, demo, or backup play feed.
+- Amethyst Home includes a Teal social composer entry point. Signed-in users can open a modal, attach a song from MusicBrainz search or their indexed recent plays, write rich text, and publish `fm.teal.alpha.feed.social.post` records.
+- Amethyst social posts and recent listens merge indexed Teal actor data with Bluesky fallback handle/display-name/avatar data when the appview only has partial profile rows.
+- Amethyst profile images use the Bluesky CDN avatar/banner transforms for indexed Teal blob CIDs, and signed-in users can edit their Teal display name, bio, avatar, and banner from their own profile page.
+- Amethyst music track pretty URLs resolve from artist/release/track slugs when no play URI query string is present, instead of falling back to the latest global play.
 - Live Jetstream ingestion has been verified end-to-end through Cadet, Postgres, Aqua, and the public preview URL.
 - Missing Teal profiles fall back to public Bluesky profile data with an in-app disclaimer, and signed-in listeners can publish a Teal profile through the onboarding wizard.
 - Development and production Compose files include Amethyst, Aqua, Cadet, Satellite, Postgres, and Garnet.
 - Development Compose includes an optional Cloudflare Tunnel profile.
-- Current temporary UI preview: `https://directory-extensive-viewer-agreement.trycloudflare.com`
+- Current temporary UI preview: `https://architects-trips-sql-wildlife.trycloudflare.com`
   - This is an account-less Cloudflare quick tunnel. It remains available while the local tunnel process is running and its hostname will change after restart.
   - The preview serves the current Amethyst export and proxies `/xrpc/*` to the locally running Aqua API through the same public hostname.
-  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://directory-extensive-viewer-agreement.trycloudflare.com` and serves a matching `/client-metadata.json` OAuth redirect.
+  - The current preview build embeds `EXPO_PUBLIC_BASE_URL=https://architects-trips-sql-wildlife.trycloudflare.com` and serves a matching `/client-metadata.json` OAuth redirect.
   - OAuth callback testing still requires the stable-host work below.
 
 ## Next: Public Demo And OAuth

@@ -1,10 +1,18 @@
-import { useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Image, Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { displayArtists, type SocialPostView } from "@/lib/teal/api";
+import {
+  actorAvatarUrl,
+  actorProfileHref,
+  displayActorName,
+  getCachedBlueskyProfile,
+  normalizeHandle,
+  type DisplayActor,
+} from "@/lib/teal/actors";
 import { musicHref } from "@/components/teal/PlayFeedCard";
 import RichText from "@/components/teal/RichText";
 import SocialComposer from "@/components/teal/SocialComposer";
@@ -32,14 +40,43 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   const [repostCount, setRepostCount] = useState(post.repostCount);
   const [replyCount, setReplyCount] = useState(post.replyCount);
   const [replyOpen, setReplyOpen] = useState(false);
+  const [blueskyAuthor, setBlueskyAuthor] = useState<DisplayActor>();
   const [like, setLike] = useState<ActionState>({ active: false, busy: false });
   const [repost, setRepost] = useState<ActionState>({
     active: false,
     busy: false,
   });
-  const authorLabel =
-    post.author?.displayName || post.author?.handle || post.authorDid;
-  const authorHref = post.author?.handle || post.authorDid;
+  const indexedAuthor = post.author as DisplayActor | undefined;
+  const authorProfile = indexedAuthor
+    ? {
+        ...blueskyAuthor,
+        ...indexedAuthor,
+        avatar: indexedAuthor.avatar || blueskyAuthor?.avatar,
+        displayName: indexedAuthor.displayName || blueskyAuthor?.displayName,
+        handle: indexedAuthor.handle || blueskyAuthor?.handle,
+      }
+    : blueskyAuthor;
+  const authorDid = authorProfile?.did || post.authorDid;
+  const authorHandle = normalizeHandle(authorProfile?.handle);
+  const authorLabel = displayActorName(authorProfile, authorDid);
+  const authorHref = actorProfileHref(authorProfile, authorDid);
+  const authorAvatar = actorAvatarUrl(authorProfile, authorDid);
+
+  useEffect(() => {
+    let mounted = true;
+    const needsBlueskyFallback =
+      !indexedAuthor?.displayName || !indexedAuthor?.handle;
+    if (!authorDid || !needsBlueskyFallback) {
+      setBlueskyAuthor(undefined);
+      return;
+    }
+    getCachedBlueskyProfile(authorDid).then((profile) => {
+      if (mounted) setBlueskyAuthor(profile);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [authorDid, indexedAuthor]);
 
   async function toggleAction(kind: "like" | "repost") {
     if (!pdsAgent?.did || status !== "loggedIn") return;
@@ -95,17 +132,41 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   return (
     <View className="rounded-lg border border-border bg-card p-4">
       <View className="flex-row items-start justify-between gap-3">
-        <View className="min-w-0 flex-1">
+        <View className="min-w-0 flex-1 flex-row gap-3">
           <Link href={`/profile/${authorHref}` as any} asChild>
-            <Pressable>
-              <Text className="font-black" numberOfLines={1}>
-                {authorLabel}
-              </Text>
+            <Pressable className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary">
+              {authorAvatar ? (
+                <Image
+                  source={{ uri: authorAvatar }}
+                  className="h-full w-full"
+                />
+              ) : (
+                <Text className="text-lg font-black text-primary-foreground">
+                  {authorLabel.slice(0, 1).toUpperCase()}
+                </Text>
+              )}
             </Pressable>
           </Link>
-          <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-            posted {timeAgo(new Date(post.createdAt))}
-          </Text>
+          <View className="min-w-0 flex-1">
+            <Link href={`/profile/${authorHref}` as any} asChild>
+              <Pressable>
+                <Text className="font-black" numberOfLines={1}>
+                  {authorLabel}
+                </Text>
+              </Pressable>
+            </Link>
+            {authorHandle && (
+              <Text
+                className="max-w-full font-mono text-xs text-muted-foreground"
+                numberOfLines={1}
+              >
+                @{authorHandle}
+              </Text>
+            )}
+            <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+              posted {timeAgo(new Date(post.createdAt))}
+            </Text>
+          </View>
         </View>
         <View className="rounded-full bg-accent px-2 py-1">
           <Text className="font-mono text-[10px] uppercase text-primary">

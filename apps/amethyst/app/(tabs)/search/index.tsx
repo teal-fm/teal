@@ -7,8 +7,8 @@ import TealShell, {
 } from "@/components/teal/TealShell";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import { getProfileImageUrl } from "@/lib/teal/actors";
 import {
   coverArtUrl,
   getSearchResults,
@@ -78,7 +78,7 @@ function mergeUsers(
       handle: user.handle?.replace(/^at:\/\//, ""),
       avatarUrl:
         user.avatar && user.did
-          ? getImageCdnLink({ did: user.did, hash: user.avatar })
+          ? getProfileImageUrl(user.did, user.avatar, "avatar")
           : merged.get(user.did)?.avatarUrl,
     });
   });

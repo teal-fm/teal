@@ -14,8 +14,9 @@ import {
   getLatestPlays,
   getPlayByUri,
   getRecordingCoverArtUrl,
+  getSearchResults,
 } from "@/lib/teal/api";
-import { musicAlbumHref, musicArtistHref } from "@/lib/teal/routes";
+import { musicAlbumHref, musicArtistHref, routePart } from "@/lib/teal/routes";
 import { Disc3 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
@@ -23,6 +24,13 @@ import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs"
 export default function MusicDetail() {
   const params = useLocalSearchParams();
   const uri = Array.isArray(params.uri) ? params.uri[0] : params.uri;
+  const artistSlug = Array.isArray(params.artist)
+    ? params.artist[0]
+    : params.artist;
+  const releaseSlug = Array.isArray(params.release)
+    ? params.release[0]
+    : params.release;
+  const trackSlug = Array.isArray(params.track) ? params.track[0] : params.track;
   const [play, setPlay] = useState<PlayView | null>(null);
   const [related, setRelated] = useState<PlayView[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +39,33 @@ export default function MusicDetail() {
 
   useEffect(() => {
     let mounted = true;
+    async function resolvePlayFromSlugs() {
+      if (!trackSlug) {
+        throw new Error("Missing track slug");
+      }
+      const query = trackSlug.replace(/-/g, " ");
+      const results = await getSearchResults(query, 25);
+      const match = results.songs.find((song) => {
+        const trackMatches = routePart(song.trackName) === trackSlug;
+        const releaseMatches =
+          !releaseSlug || routePart(song.releaseName) === releaseSlug;
+        const artistMatches =
+          !artistSlug || routePart(song.artistName) === artistSlug;
+        return trackMatches && releaseMatches && artistMatches;
+      });
+
+      if (!match) {
+        throw new Error("No indexed play matches this music URL");
+      }
+
+      return (await getPlayByUri(match.uri)).play;
+    }
+
     async function load() {
       try {
         const selected = uri
           ? (await getPlayByUri(uri)).play
-          : (await getLatestPlays(1)).plays[0];
+          : await resolvePlayFromSlugs();
         const latest = await getLatestPlays(20);
         if (!mounted) return;
         setPlay(selected);
@@ -55,7 +85,7 @@ export default function MusicDetail() {
     return () => {
       mounted = false;
     };
-  }, [uri]);
+  }, [artistSlug, releaseSlug, trackSlug, uri]);
 
   const releaseArt = coverArtUrl(play?.releaseMbId, 500);
   const art = artFailed ? undefined : releaseArt || recordingArt;

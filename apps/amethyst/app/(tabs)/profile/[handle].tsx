@@ -9,6 +9,7 @@ import {
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import BadgeManager from "@/components/teal/BadgeManager";
+import EditProfileModal from "@/components/teal/EditProfileModal";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
 import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
@@ -17,9 +18,9 @@ import TealShell, {
 } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { resolveHandle } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import { getProfileImageUrl } from "@/lib/teal/actors";
 import {
   getActorFeed,
   getActorBadges,
@@ -34,7 +35,7 @@ import {
 import { useStore } from "@/stores/mainStore";
 import { playlistHref } from "@/lib/teal/routes";
 import type { AppBskyActorDefs } from "@atproto/api";
-import { Info, UserRoundPlus } from "lucide-react-native";
+import { Info, Pencil, UserRoundPlus } from "lucide-react-native";
 
 import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
@@ -52,16 +53,6 @@ type DisplayProfile = Pick<
   handle?: string;
 };
 
-function isHttpUrl(value?: string) {
-  return value?.startsWith("http://") || value?.startsWith("https://");
-}
-
-function profileImageUrl(did: string, value?: string) {
-  if (!value) return undefined;
-  if (isHttpUrl(value) || value.startsWith("data:")) return value;
-  return getImageCdnLink({ did, hash: value });
-}
-
 export default function ProfileScreen() {
   const { handle } = useLocalSearchParams();
   const actor = Array.isArray(handle) ? handle[0] : handle;
@@ -72,6 +63,7 @@ export default function ProfileScreen() {
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [loadingMore, setLoadingMore] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loadingMoreRef = useRef(false);
@@ -116,7 +108,13 @@ export default function ProfileScreen() {
 
           const bskyProfile: AppBskyActorDefs.ProfileViewDetailed =
             await getBlueskyProfile(resolved);
-          nextProfile = bskyProfile;
+          nextProfile = {
+            displayName: bskyProfile.displayName,
+            description: bskyProfile.description,
+            avatar: bskyProfile.avatar,
+            banner: bskyProfile.banner,
+            handle: bskyProfile.handle,
+          };
           nextIsBlueskyFallback = true;
         }
 
@@ -175,8 +173,12 @@ export default function ProfileScreen() {
   );
 
   const isSelf = did === pdsAgent?.did;
-  const avatarUrl = did ? profileImageUrl(did, profile?.avatar) : undefined;
-  const bannerUrl = did ? profileImageUrl(did, profile?.banner) : undefined;
+  const avatarUrl = did
+    ? getProfileImageUrl(did, profile?.avatar, "avatar")
+    : undefined;
+  const bannerUrl = did
+    ? getProfileImageUrl(did, profile?.banner, "banner")
+    : undefined;
   const currentStatus = profile?.status?.item;
   const onboarding = profile?.profileStatus?.completedOnboarding;
 
@@ -232,6 +234,16 @@ export default function ProfileScreen() {
               <Text className="font-mono text-sm text-muted-foreground">
                 {did}
               </Text>
+              {isSelf && (
+                <Button
+                  className="mt-5 flex-row gap-2 self-start"
+                  variant="outline"
+                  onPress={() => setEditProfileOpen(true)}
+                >
+                  <Icon icon={Pencil} size={16} />
+                  <Text>Edit profile</Text>
+                </Button>
+              )}
               {isBlueskyFallback && (
                 <View className="mt-4 flex-row gap-3 rounded-lg border border-bsky/30 bg-bsky/10 p-3">
                   <Icon icon={Info} size={18} className="mt-0.5 text-bsky" />
@@ -312,6 +324,21 @@ export default function ProfileScreen() {
               )}
             </View>
           </View>
+          {isSelf && (
+            <EditProfileModal
+              did={did}
+              profile={profile}
+              visible={editProfileOpen}
+              onClose={() => setEditProfileOpen(false)}
+              onSaved={(updatedProfile) => {
+                setProfile((current) => ({
+                  ...(current || {}),
+                  ...updatedProfile,
+                }));
+                setIsBlueskyFallback(false);
+              }}
+            />
+          )}
           <View className="mb-8">
             <SectionHeading eyebrow="Collections" title="Playlists" />
             {isSelf && (
