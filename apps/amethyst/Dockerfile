@@ -27,6 +27,7 @@ COPY packages ./packages
 COPY tools ./tools
 COPY lexicons ./lexicons
 COPY vendor/atproto/lexicons/app/bsky/richtext/facet.json ./vendor/atproto/lexicons/app/bsky/richtext/facet.json
+COPY vendor/atproto/lexicons/com/atproto/repo/strongRef.json ./vendor/atproto/lexicons/com/atproto/repo/strongRef.json
 COPY apps/amethyst ./apps/amethyst
 
 RUN pnpm rebuild esbuild unrs-resolver

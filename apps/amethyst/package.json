@@ -12,7 +12,7 @@
     "build:web": "expo export --output-dir ./build --platform web --clear",
     "build:ios": "expo export --output-dir ./build --platform ios --clear",
     "test": "CI=1 jest --config jest.lib.config.ts --runInBand --watchAll=false",
-    "lexgen": "lex gen-server ./lexicons/generated/server/ ./lexicons/src/",
+    "lexgen": "pnpm --filter=@teal/lexicons lex:gen-server",
     "prebuild:native": "CI=1 EXPO_NO_TELEMETRY=1 expo prebuild --no-install",
     "install": ":"
   },
@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@atproto/api": "^0.20.27",
-    "@atproto/lex-cli": "^0.10.5",
     "@atproto/oauth-client": "^0.7.9",
     "@atproto/oauth-client-expo": "^0.1.6",
     "@babel/plugin-transform-export-namespace-from": "^7.29.7",

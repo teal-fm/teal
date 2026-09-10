@@ -18,7 +18,7 @@ const id = 'fm.teal.alpha.feed.social.like'
 export interface Main {
   $type: 'fm.teal.alpha.feed.social.like'
   subject: ComAtprotoRepoStrongRef.Main
-  /** Client-declared timestamp when this like was originally created. */
+  /** Client-declared timestamp when this post was originally created. */
   createdAt: string
   [k: string]: unknown
 }

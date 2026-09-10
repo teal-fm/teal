@@ -6,7 +6,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import { Link, Stack } from "expo-router";
+import { Link, Stack, useRouter } from "expo-router";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   getNotifications,
   type SocialNotificationView,
 } from "@/lib/teal/api";
+import { postHrefFromUri } from "@/lib/teal/routes";
 import { timeAgo } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import { Bell, Heart, MessageCircle, Repeat2 } from "lucide-react-native";
@@ -47,14 +48,27 @@ function reasonIcon(reason: string) {
 }
 
 function NotificationRow({ notification }: { notification: SocialNotificationView }) {
+  const router = useRouter();
   const actor = notification.actor;
   const actorLabel =
     actor?.displayName || actor?.handle || notification.actorDid || "Someone";
   const actorHref = actor?.handle || notification.actorDid;
   const IconForReason = reasonIcon(notification.reason);
+  const subjectHref =
+    notification.reason === "like" || notification.reason === "repost"
+      ? postHrefFromUri(notification.subjectUri)
+      : undefined;
 
   return (
-    <View className="rounded-lg border border-border bg-card p-4">
+    <Pressable
+      className="rounded-lg border border-border bg-card p-4"
+      disabled={!subjectHref}
+      onPress={() => {
+        if (subjectHref) router.push(subjectHref as any);
+      }}
+      accessibilityRole={subjectHref ? "link" : undefined}
+      accessibilityLabel={subjectHref ? "View the post" : undefined}
+    >
       <View className="flex-row gap-3">
         <View className="h-10 w-10 items-center justify-center rounded-full bg-accent">
           <Icon icon={IconForReason} size={18} className="text-primary" />
@@ -75,7 +89,7 @@ function NotificationRow({ notification }: { notification: SocialNotificationVie
           </Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

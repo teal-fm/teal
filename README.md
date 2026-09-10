@@ -160,4 +160,4 @@ git add vendor/atproto
 git commit -m "Update atproto lexicons to latest"
 ```
 
-See [`tools/lexicon-cli/README.md`](tools/lexicon-cli/README.md) for detailed documentation.
+The TypeScript lexicon package runs `@atproto/lex` validation before generating the compatibility server bindings consumed by the current XRPC layer.

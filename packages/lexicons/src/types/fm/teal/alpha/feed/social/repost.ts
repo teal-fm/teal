@@ -18,7 +18,7 @@ const id = 'fm.teal.alpha.feed.social.repost'
 export interface Main {
   $type: 'fm.teal.alpha.feed.social.repost'
   subject: ComAtprotoRepoStrongRef.Main
-  /** Client-declared timestamp when this repost was originally created. */
+  /** Client-declared timestamp when this post was originally created. */
   createdAt: string
   [k: string]: unknown
 }

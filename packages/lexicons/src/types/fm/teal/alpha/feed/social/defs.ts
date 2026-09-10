@@ -54,7 +54,3 @@ export function isTrackView<V>(v: V) {
 export function validateTrackView<V>(v: V) {
   return validate<TrackView & V>(v, id, hashTrackView)
 }
-
-/** The category of badge. */
-export type BadgeType =
-  'verification' | 'listeningParty' | 'achievement' | (string & {})

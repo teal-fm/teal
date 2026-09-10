@@ -1,30 +1,22 @@
 #!/bin/bash
 set -e
 
-# Navigate to the lexicons directory and find Teal schemas plus the upstream
-# schemas referenced by Teal records. Avoid generating the full ATProto tree:
-# newer upstream lexicons may use syntax unsupported by this repo's lex-cli.
-cd ../../lexicons
-json_files=$(find ./fm.teal.alpha -name "*.json" -type f | sort)
-json_files="$json_files ./app/bsky/richtext/facet.json"
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+lexicons_root="$repo_root/lexicons"
+echo "Validating lexicons with @atproto/lex"
+bash "$repo_root/packages/lexicons/lex-validate.sh"
 
-# Go back to the lexicons package directory
-cd ../packages/lexicons
-
-# Check if we found any lexicon files
-if [ -z "$json_files" ]; then
-    echo "No lexicon files found in ../../lexicons/"
-    exit 1
-fi
-
-# Convert the file list to absolute paths
+# The current HTTP server consumes the legacy gen-server shape. Keep this
+# compatibility output until Aqua's XRPC bindings migrate to @atproto/lex.
+cd "$repo_root/packages/lexicons"
+json_files=$(find "$lexicons_root/fm.teal.alpha" -name "*.json" -type f | sort)
+json_files="$json_files $lexicons_root/app/bsky/richtext/facet.json"
 lexicon_paths=""
 for file in $json_files; do
-    lexicon_paths="$lexicon_paths ../../lexicons/$file"
+  lexicon_paths="$lexicon_paths $file"
 done
 
-# Generate lexicons
-echo "Generating lexicons from: $lexicon_paths"
+echo "Generating compatibility server bindings"
 pnpm exec lex gen-server ./src $lexicon_paths --yes
 
 # lex-cli emits Node ESM `.js` suffixes for generated TypeScript imports.
