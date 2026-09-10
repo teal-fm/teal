@@ -1,6 +1,7 @@
 import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
 import type { ArtistView, ReleaseView } from "@teal/lexicons/src/types/fm/teal/alpha/stats/defs";
+import type { AppBskyActorDefs } from "@atproto/api";
 
 const rawBase =
   process.env.EXPO_PUBLIC_AQUA_URL ||
@@ -12,6 +13,15 @@ const requestBase =
 const xrpcBase = requestBase.endsWith("/xrpc")
   ? requestBase
   : `${requestBase.replace(/\/$/, "")}/xrpc`;
+
+export class XrpcError extends Error {
+  constructor(
+    method: string,
+    public readonly status: number,
+  ) {
+    super(`${method} failed with ${status}`);
+  }
+}
 
 async function getXrpc<T>(
   method: string,
@@ -26,7 +36,7 @@ async function getXrpc<T>(
 
   const response = await fetch(url.toString());
   if (!response.ok) {
-    throw new Error(`${method} failed with ${response.status}`);
+    throw new XrpcError(method, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -52,6 +62,20 @@ export function getProfile(actor: string) {
   return getXrpc<{ profile: ProfileView }>("fm.teal.alpha.actor.getProfile", {
     actor,
   });
+}
+
+export async function getBlueskyProfile(actor: string) {
+  const url = new URL(
+    "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile",
+  );
+  url.searchParams.set("actor", actor);
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    throw new XrpcError("app.bsky.actor.getProfile", response.status);
+  }
+
+  return response.json() as Promise<AppBskyActorDefs.ProfileViewDetailed>;
 }
 
 export function getTopArtists(limit = 5) {

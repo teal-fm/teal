@@ -1,6 +1,5 @@
 import { resolveFromIdentity } from "@/lib/atp/pid";
-import { Agent } from "@atproto/api";
-import { ProfileViewDetailed } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
+import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
 import * as Lexicons from "@teal/lexicons/src/lexicons";
@@ -10,7 +9,7 @@ import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {
-  bsky: null | ProfileViewDetailed;
+  bsky: null | AppBskyActorDefs.ProfileViewDetailed;
   teal: null | GetProfileOutputSchema["actor"];
   // todo: teal profile view
 }

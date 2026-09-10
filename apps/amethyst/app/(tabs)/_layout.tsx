@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable } from "react-native";
+import { Pressable, type ColorValue } from "react-native";
 import { Link, Tabs } from "expo-router";
 import useIsMobile from "@/hooks/useIsMobile";
 import { useStore } from "@/stores/mainStore";
@@ -16,10 +16,10 @@ import { useColorScheme } from "nativewind";
 import Colors from "../../constants/Colors";
 import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
 
-function TabBarIcon(props: { name: LucideIcon; color: string }) {
+function TabBarIcon(props: { name: LucideIcon; color: ColorValue }) {
   const Name = props.name;
   iconWithClassName(Name);
-  return <Name size={28} className="text-muted" {...props} />;
+  return <Name size={28} className="text-muted" {...props} color={String(props.color)} />;
 }
 
 export default function TabLayout() {

@@ -10,18 +10,25 @@ const {
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
+const defaultResolveRequest = config.resolver.resolveRequest;
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (
+    moduleName === "./expo-oauth-client.js" &&
+    context.originModulePath.includes("@atproto/oauth-client-expo")
+  ) {
+    return context.resolveRequest(context, "./expo-oauth-client", platform);
+  }
+
+  return defaultResolveRequest
+    ? defaultResolveRequest(context, moduleName, platform)
+    : context.resolveRequest(context, moduleName, platform);
+};
 
 config.cacheStores = [
   new FileStore({
     root: path.join(__dirname, "node_modules", ".cache", "metro"),
   }),
-];
-
-config.resolver.unstable_enablePackageExports = true;
-config.resolver.unstable_conditionNames = [
-  "browser",
-  "require",
-  "react-native",
 ];
 
 module.exports = wrapWithReanimatedMetroConfig(

@@ -4,7 +4,7 @@ use jacquard_common::types::string::{AtUri, Did};
 use types::fm_teal::alpha::feed::PlayView;
 use types::fm_teal::alpha::stats::{ArtistView, ReleaseView};
 
-use super::{mbid_uri, pg::PgDataSource, utc_to_atrium_datetime};
+use super::{mbid_uri, mini_profile, pg::PgDataSource, utc_to_atrium_datetime};
 
 #[async_trait]
 pub trait StatsRepo: Send + Sync {
@@ -185,9 +185,11 @@ impl StatsRepo for PgDataSource {
         let rows = sqlx::query!(
             r#"
             SELECT
-                uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
-                release_mbid, release_name, recording_mbid, submission_client_agent,
-                music_service_base_domain, origin_url,
+                p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,
+                p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,
+                p.submission_client_agent, p.music_service_base_domain, p.origin_url,
+                profile.did AS "profile_did?", profile.handle AS profile_handle,
+                profile.display_name AS profile_display_name, profile.avatar AS profile_avatar,
                 COALESCE(
                   json_agg(
                     json_build_object(
@@ -198,12 +200,14 @@ impl StatsRepo for PgDataSource {
                   '[]'
                 ) AS artists
             FROM plays p
+            LEFT JOIN profiles profile ON p.did = profile.did
             LEFT JOIN play_to_artists_extended as ptae ON p.uri = ptae.play_uri
             LEFT JOIN artists_extended as ae ON ptae.artist_id = ae.id
-            GROUP BY uri, did, rkey, cid, isrc, duration, track_name, played_time, processed_time,
-                     release_mbid, release_name, recording_mbid, submission_client_agent,
-                     music_service_base_domain, origin_url
-            ORDER BY processed_time DESC
+            GROUP BY p.uri, p.did, p.rkey, p.cid, p.isrc, p.duration, p.track_name, p.played_time,
+                     p.processed_time, p.release_mbid, p.release_name, p.recording_mbid,
+                     p.submission_client_agent, p.music_service_base_domain, p.origin_url,
+                     profile.did, profile.handle, profile.display_name, profile.avatar
+            ORDER BY p.processed_time DESC
             LIMIT $1
             "#,
             limit
@@ -221,6 +225,12 @@ impl StatsRepo for PgDataSource {
 
             result.push(PlayView {
                 track_name: row.track_name.into(),
+                author: mini_profile(
+                    row.profile_did,
+                    row.profile_handle,
+                    row.profile_display_name,
+                    row.profile_avatar,
+                ),
                 uri: AtUri::try_from(row.uri.clone()).ok(),
                 cid: Some(row.cid.clone().into()),
                 author_did: Did::new_owned(&row.did).ok(),

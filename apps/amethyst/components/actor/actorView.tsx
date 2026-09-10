@@ -96,15 +96,15 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     }
 
     // upload blobs if necessary
-    let newAvatarBlob = currentUser?.avatar ?? undefined;
-    let newBannerBlob = currentUser?.banner ?? undefined;
+    let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
+    let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
     if (newAvatarUri) {
       // if it is http/s url then do nothing
       if (!newAvatarUri.startsWith("http")) {
         const data = await fetch(newAvatarUri).then((r) => r.blob());
         const fileType = newAvatarUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob;
+        newAvatarBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["avatar"];
       }
     }
     if (newBannerUri) {
@@ -112,7 +112,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         const data = await fetch(newBannerUri).then((r) => r.blob());
         const fileType = newBannerUri.split(";")[0].split(":")[1];
         const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob;
+        newBannerBlob = (await pdsAgent.uploadBlob(blob, { encoding: fileType })).data.blob as unknown as ProfileRecord["banner"];
       }
     }
 

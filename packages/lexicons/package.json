@@ -3,10 +3,13 @@
   "type": "module",
   "main": "./index.ts",
   "dependencies": {
+    "@atproto/api": "^0.20.5",
     "@atproto/lex-cli": "^0.5.4",
-    "@atproto/lexicon": "^0.4.2",
+    "@atproto/lexicon": "^0.7.1",
     "@atproto/xrpc-server": "^0.7.4",
-    "@teal/tsconfig": "workspace:*"
+    "@types/express": "^4.17.25",
+    "@teal/tsconfig": "workspace:*",
+    "multiformats": "^13.4.2"
   },
   "scripts": {
     "lex:gen-server": "bash ./lex-gen.sh"

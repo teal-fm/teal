@@ -5,18 +5,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { Pen } from "lucide-react-native";
+import { ArrowLeft, ImagePlus, Pen, UserRoundCheck } from "lucide-react-native";
 
 interface ImageSelectionPageProps {
   onComplete: (avatarUri: string | undefined, bannerUri: string | undefined) => void;
   initialAvatar?: string;
   initialBanner?: string;
+  onBack?: () => void;
 }
 
 const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
   onComplete,
   initialAvatar,
   initialBanner,
+  onBack,
 }) => {
   const [avatarUri, setAvatarUri] = useState(initialAvatar || "");
   const [bannerUri, setBannerUri] = useState(initialBanner || "");
@@ -43,15 +45,21 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
   };
 
   return (
-    <View className="h-screen min-h-full flex-1 items-center justify-center px-5">
-      <Text className="mb-5 text-center text-2xl font-bold">
-        What do you look like?
-      </Text>
+    <View className="flex-1 justify-between gap-8">
+      <View className="gap-5">
+        <View className="h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
+          <Icon icon={ImagePlus} size={24} className="text-primary" />
+        </View>
+        <Text className="font-serif text-4xl font-black">Set the artwork.</Text>
+        <Text className="text-base text-muted-foreground">
+          Add an avatar and banner, or keep the images from your Bluesky
+          profile. Both are optional.
+        </Text>
       <Pressable
         onPress={() => pickImage(setBannerUri)}
-        className="mb-5 aspect-[3/1] w-full"
+        className="aspect-[3/1] w-full"
       >
-        <View className="relative flex-1 items-center justify-center rounded-lg bg-gray-200">
+        <View className="relative flex-1 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
           {loading && !bannerUri && <ActivityIndicator />}
           {bannerUri ? (
             <>
@@ -64,11 +72,11 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
               </View>
             </>
           ) : (
-            <Text className="text-gray-500">Add Banner Image</Text>
+            <Text className="text-muted-foreground">Add banner image</Text>
           )}
         </View>
       </Pressable>
-      <Pressable onPress={() => pickImage(setAvatarUri)} className="mb-10">
+      <Pressable onPress={() => pickImage(setAvatarUri)} className="self-start">
         <View className="relative">
           {loading && !avatarUri && <ActivityIndicator />}
           <Avatar className="h-24 w-24" alt="User Avatar">
@@ -87,10 +95,19 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
           </Avatar>
         </View>
       </Pressable>
-
-      <Button onPress={handleNext} className="w-full">
-        <Text>Next</Text>
-      </Button>
+      </View>
+      <View className="w-full flex-row justify-between">
+        {onBack && (
+          <Button variant="outline" onPress={onBack} className="flex-row gap-2">
+            <Icon icon={ArrowLeft} size={18} />
+            <Text>Back</Text>
+          </Button>
+        )}
+        <Button onPress={handleNext} className="flex-row gap-2">
+          <Icon icon={UserRoundCheck} size={18} />
+          <Text>Create profile</Text>
+        </Button>
+      </View>
     </View>
   );
 };

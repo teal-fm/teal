@@ -1,5 +1,6 @@
 use actor_profile::ActorProfileRepo;
 use jacquard_common::{deps::smol_str::SmolStr, types::string::UriValue};
+use types::fm_teal::alpha::actor::MiniProfileView;
 use uuid::Uuid;
 
 use crate::repos::feed_play::FeedPlayRepo;
@@ -34,4 +35,37 @@ pub fn time_to_chrono_utc(dt: time::OffsetDateTime) -> chrono::DateTime<chrono::
 
 pub fn mbid_uri(mbid: Uuid) -> UriValue {
     UriValue::Any(SmolStr::new(format!("mbid:{mbid}")))
+}
+
+pub fn mini_profile(
+    did: Option<String>,
+    handle: Option<String>,
+    display_name: Option<String>,
+    avatar: Option<String>,
+) -> Option<MiniProfileView> {
+    did.map(|did| MiniProfileView {
+        did: Some(did.into()),
+        handle: handle.map(|handle| handle.trim_start_matches("at://").into()),
+        display_name: display_name.map(Into::into),
+        avatar: avatar.map(Into::into),
+        extra_data: Default::default(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mini_profile;
+
+    #[test]
+    fn mini_profile_normalizes_at_uri_handle() {
+        let profile = mini_profile(
+            Some("did:plc:listener".to_string()),
+            Some("at://listener.example".to_string()),
+            Some("Listener".to_string()),
+            None,
+        )
+        .expect("profile should be present");
+
+        assert_eq!(profile.handle.as_deref(), Some("listener.example"));
+    }
 }

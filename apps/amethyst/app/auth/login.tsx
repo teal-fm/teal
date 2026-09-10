@@ -131,7 +131,7 @@ const LoginScreen = () => {
     },
     [isResolvingPds, pdsResolutionError],
   );
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {

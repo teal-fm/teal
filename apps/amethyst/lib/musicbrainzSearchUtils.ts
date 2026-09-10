@@ -240,7 +240,9 @@ export async function searchStage(
         return [];
       }
 
-      const data = await res.json();
+      const data = (await res.json()) as {
+        recordings?: MusicBrainzRecording[];
+      };
       const results: MusicBrainzRecording[] = data.recordings || [];
       setCache(cacheKey, results);
       return results;
@@ -308,7 +310,9 @@ export async function resolveArtistAlias(
 
     if (!res.ok) return null;
 
-    const data = await res.json();
+    const data = (await res.json()) as {
+      artists?: Array<{ name?: string }>;
+    };
     const artists = data.artists || [];
 
     if (artists.length === 0) {

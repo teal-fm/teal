@@ -17,7 +17,7 @@ const ProgressDots: React.FC<ProgressDotsProps> = ({
     dots.push(
       <View
         key={i}
-        className={`m-2 h-4 w-4 rounded-full ${isActive ? `bg-accent` : `bg-muted`} `}
+        className={`mx-1.5 mt-5 h-1.5 rounded-full ${isActive ? `w-10 bg-primary` : `w-5 bg-muted`} `}
       />,
     );
   }

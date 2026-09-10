@@ -1,10 +1,13 @@
+import { useEffect, useState } from "react";
 import { Image, Pressable, View } from "react-native";
 import { Link } from "expo-router";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
+import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import { coverArtUrl, displayArtists, getBlueskyProfile } from "@/lib/teal/api";
 import { cn, timeAgo } from "@/lib/utils";
-import { coverArtUrl, displayArtists } from "@/lib/teal/api";
-import { Disc3, Headphones, MoreVertical, Play } from "lucide-react-native";
+import { Disc3, MoreVertical, Play } from "lucide-react-native";
+
+import type { PlayView } from "@teal/lexicons/src/types/fm/teal/alpha/feed/defs";
 
 import { Text } from "../ui/text";
 
@@ -12,6 +15,31 @@ type PlayFeedCardProps = {
   play: PlayView;
   compact?: boolean;
 };
+
+type FeedAuthor = {
+  avatar?: string;
+  did?: string;
+  displayName?: string;
+  handle?: string;
+};
+
+const blueskyProfileCache = new Map<string, Promise<FeedAuthor | undefined>>();
+
+function getCachedBlueskyProfile(did: string) {
+  let profile = blueskyProfileCache.get(did);
+  if (!profile) {
+    profile = getBlueskyProfile(did)
+      .then(({ avatar, displayName, handle }) => ({
+        avatar,
+        did,
+        displayName,
+        handle,
+      }))
+      .catch(() => undefined);
+    blueskyProfileCache.set(did, profile);
+  }
+  return profile;
+}
 
 function routePart(value?: string) {
   return encodeURIComponent(
@@ -28,9 +56,42 @@ export function musicHref(play: PlayView) {
 }
 
 export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
+  const [blueskyAuthor, setBlueskyAuthor] = useState<FeedAuthor>();
+  const indexedAuthor = play.author;
+  const authorProfile = indexedAuthor || blueskyAuthor;
+  const authorDid = authorProfile?.did || play.authorDid;
+
+  useEffect(() => {
+    let mounted = true;
+    if (!authorDid || indexedAuthor) {
+      setBlueskyAuthor(undefined);
+      return;
+    }
+    getCachedBlueskyProfile(authorDid).then((profile) => {
+      if (mounted) setBlueskyAuthor(profile);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [authorDid, indexedAuthor]);
+
   const art = coverArtUrl(play.releaseMbId);
-  const author = play.authorDid || "unknown listener";
-  const when = play.playedTime ? timeAgo(new Date(play.playedTime)) : "recently";
+  const authorHandle = authorProfile?.handle?.replace(/^at:\/\//, "");
+  const authorName =
+    authorProfile?.displayName ||
+    authorHandle ||
+    authorDid ||
+    "Unknown listener";
+  const authorHref = authorHandle || authorDid || "unknown";
+  const authorAvatar =
+    authorDid && indexedAuthor?.avatar
+      ? getImageCdnLink({ did: authorDid, hash: indexedAuthor.avatar })
+      : authorProfile?.avatar
+        ? authorProfile.avatar
+        : undefined;
+  const when = play.playedTime
+    ? timeAgo(new Date(play.playedTime))
+    : "recently";
 
   return (
     <View
@@ -39,28 +100,45 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
         compact ? "max-w-[34rem]" : "w-full",
       )}
     >
-      <View className="flex-row justify-between gap-3">
-        <View className="min-w-0 flex-1 flex-row gap-3">
-          <Link href={`/profile/${author}` as any} asChild>
-            <Pressable className="h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-primary/60">
-              <Icon icon={Headphones} size={30} className="text-primary-foreground" />
-            </Pressable>
-          </Link>
-          <View className="min-w-0 justify-center">
-            <Text className="font-black" numberOfLines={1}>
-              {author}
+      <View className="flex-row items-center gap-3">
+        <Link href={`/profile/${authorHref}` as any} asChild>
+          <Pressable className="h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-primary/60">
+            {authorAvatar ? (
+              <Image source={{ uri: authorAvatar }} className="h-full w-full" />
+            ) : (
+              <Text className="text-2xl font-black text-primary-foreground">
+                {authorName.slice(0, 1).toUpperCase()}
+              </Text>
+            )}
+          </Pressable>
+        </Link>
+        <View className="min-w-0 flex-1 justify-center">
+          <Text className="font-black" numberOfLines={1}>
+            {authorName}
+          </Text>
+          {authorHandle && (
+            <Text
+              className="font-mono text-xs text-muted-foreground"
+              numberOfLines={1}
+            >
+              @{authorHandle}
             </Text>
-            <Text className="text-sm text-muted-foreground">listened {when}</Text>
-          </View>
+          )}
+          <Text className="text-sm text-muted-foreground">listened {when}</Text>
         </View>
+      </View>
 
+      <View className="mt-4">
         <Link href={musicHref(play) as any} asChild>
-          <Pressable className="max-w-[52%] flex-row items-center justify-end gap-3">
-            <View className="min-w-0 items-end">
-              <Text className="text-right text-lg font-black leading-5" numberOfLines={2}>
+          <Pressable className="flex-row items-center justify-between gap-3">
+            <View className="min-w-0 flex-1">
+              <Text className="text-lg font-black leading-5" numberOfLines={2}>
                 {play.trackName}
               </Text>
-              <Text className="text-right text-sm font-bold text-muted-foreground" numberOfLines={1}>
+              <Text
+                className="text-sm font-bold text-muted-foreground"
+                numberOfLines={1}
+              >
                 {displayArtists(play) || "Unknown artist"}
               </Text>
             </View>
@@ -72,7 +150,11 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
                 />
               ) : (
                 <View className="h-20 w-20 items-center justify-center rounded-xl bg-muted">
-                  <Icon icon={Disc3} size={34} className="text-muted-foreground" />
+                  <Icon
+                    icon={Disc3}
+                    size={34}
+                    className="text-muted-foreground"
+                  />
                 </View>
               )}
               <View className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full bg-background">
