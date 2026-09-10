@@ -6,6 +6,7 @@ import * as Lexicons from "@teal/lexicons/src/lexicons";
 import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/alpha/actor/defs";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
+import { pdsHostFromOAuthIssuer } from "../lib/atp/oauthIssuer";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {
@@ -16,6 +17,7 @@ export interface AllProfileViews {
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
   status: "start" | "loggedIn" | "loggedOut";
+  oauthIssuer: null | string;
   oauthState: null | string;
   oauthSession: null | OAuthSession;
   pdsAgent: null | Agent;
@@ -52,6 +54,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   return {
     auth: initialAuth,
     status: "start",
+    oauthIssuer: null,
     oauthState: null,
     oauthSession: null,
     pdsAgent: null,
@@ -67,11 +70,12 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     getLoginUrl: async (handle: string) => {
       try {
         // resolve the handle to a PDS URL
-        const r = resolveFromIdentity(handle);
-        let auth = createOAuthClient(baseUrl, (await r).pds.hostname);
+        const resolvedIdentity = await resolveFromIdentity(handle);
+        const auth = createOAuthClient(baseUrl, resolvedIdentity.pds.hostname);
         const url = await auth.authorize(handle);
         set({
           auth,
+          oauthIssuer: `https://${resolvedIdentity.pds.hostname}`,
           pds: {
             url: url.toString(),
             loading: false,
@@ -94,12 +98,22 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         if (get().status === "loggedIn") {
           return;
         }
+        const oauthIssuer = state.get("iss");
+        const callbackAuth = createOAuthClient(
+          baseUrl,
+          pdsHostFromOAuthIssuer(
+            oauthIssuer,
+            pdsHostFromOAuthIssuer(get().oauthIssuer),
+          ),
+        );
         const { session, state: oauthState } =
-          await initialAuth.callback(state);
+          await callbackAuth.callback(state);
         const agent = new Agent(session);
         set({
+          auth: callbackAuth,
           // TODO: fork or update auth lib
           oauthSession: session as any,
+          oauthIssuer: oauthIssuer ?? get().oauthIssuer,
           oauthState,
           status: "loggedIn",
           pdsAgent: addDocs(agent),
@@ -128,7 +142,11 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       }
       try {
         // restore session
-        let sess = await initialAuth.restore(did);
+        const restoreAuth = createOAuthClient(
+          baseUrl,
+          pdsHostFromOAuthIssuer(get().oauthIssuer),
+        );
+        let sess = await restoreAuth.restore(did);
 
         if (!sess) {
           throw new Error("Failed to restore session");
@@ -137,6 +155,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         const agent = new Agent(sess);
 
         set({
+          auth: restoreAuth,
           pdsAgent: addDocs(agent),
           isAgentReady: true,
           status: "loggedIn",
@@ -156,6 +175,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       set({
         status: "loggedOut",
         oauthSession: null,
+        oauthIssuer: null,
         oauthState: null,
         profiles,
         pdsAgent: null,

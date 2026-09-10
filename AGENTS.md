@@ -223,6 +223,7 @@ SQLX_OFFLINE=true cargo run -p cadet
 ```
 
 - Serve Amethyst and proxy `/xrpc/*` to Aqua through the same public hostname.
+- After completing a new feature or overhaul, publish the updated build to the stable public preview at `https://sigilyph.teal.fm` through the Cloudflare tunnel.
 - For temporary demos, a Cloudflare quick tunnel is acceptable. Record the active URL in `todo.md`.
 - Treat quick-tunnel URLs as ephemeral. A tunnel restart changes the hostname.
 

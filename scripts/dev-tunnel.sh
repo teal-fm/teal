@@ -83,11 +83,58 @@ curl_preview() {
   curl --fail --show-error --silent --resolve "$TUNNEL_HOST:443:$ip" "$url" >/dev/null
 }
 
+fetch_preview() {
+  local url="$1"
+
+  if curl --fail --show-error --silent "$url"; then
+    return 0
+  fi
+
+  local ip
+  ip="$(dig +short "$TUNNEL_HOST" @1.1.1.1 | grep -E '^[0-9.]+$' | head -n 1 || true)"
+  if [[ -z "$ip" ]]; then
+    echo "Could not resolve $TUNNEL_HOST with the local resolver or Cloudflare DNS." >&2
+    return 1
+  fi
+
+  echo "Local DNS has not caught up for $TUNNEL_HOST; retrying verification through $ip." >&2
+  curl --fail --show-error --silent --resolve "$TUNNEL_HOST:443:$ip" "$url"
+}
+
 verify_preview() {
   echo "Verifying client metadata..."
-  curl_preview "$PUBLIC_ORIGIN/client-metadata.json"
+  fetch_preview "$PUBLIC_ORIGIN/client-metadata.json" | python3 -c '
+import json
+import sys
+
+origin = sys.argv[1]
+metadata = json.load(sys.stdin)
+expected_client_id = f"{origin}/client-metadata.json"
+expected_redirect_uri = f"{origin}/auth/callback"
+actual_client_id = metadata.get("client_id")
+actual_client_uri = metadata.get("client_uri")
+
+if actual_client_id != expected_client_id:
+    raise SystemExit(f"client_id mismatch: expected {expected_client_id!r}, got {actual_client_id!r}")
+if expected_redirect_uri not in metadata.get("redirect_uris", []):
+    raise SystemExit(f"redirect_uris missing {expected_redirect_uri!r}")
+if actual_client_uri != origin:
+    raise SystemExit(f"client_uri mismatch: expected {origin!r}, got {actual_client_uri!r}")
+if metadata.get("token_endpoint_auth_method") != "none":
+    raise SystemExit("token_endpoint_auth_method must be none")
+if metadata.get("dpop_bound_access_tokens") is not True:
+    raise SystemExit("dpop_bound_access_tokens must be true")
+' "$PUBLIC_ORIGIN"
   echo "Verifying latest plays..."
-  curl_preview "$PUBLIC_ORIGIN/xrpc/fm.teal.alpha.stats.getLatest?limit=1"
+  fetch_preview "$PUBLIC_ORIGIN/xrpc/fm.teal.alpha.stats.getLatest?limit=1" | python3 -c '
+import json
+import sys
+
+payload = json.load(sys.stdin)
+plays = payload.get("plays")
+if not isinstance(plays, list):
+    raise SystemExit("latest plays response must contain a plays array")
+'
 }
 
 case "${1:-}" in

@@ -49,6 +49,11 @@ pnpm tunnel:logs
 pnpm tunnel:verify
 ```
 
+`pnpm tunnel:verify` checks that the public metadata is reachable, that it
+uses the active stable origin for `client_id`, `redirect_uris`, and
+`client_uri`, that DPoP is enabled, and that latest-play XRPC returns a JSON
+`plays` array.
+
 Confirm the OAuth client metadata is served from the stable host:
 
 ```bash
