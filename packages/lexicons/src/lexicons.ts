@@ -1435,6 +1435,12 @@ export const schemaDict = {
             type: 'string',
             description: 'Display name for the release artist',
           },
+          releaseGroupMbid: {
+            type: 'string',
+            format: 'uri',
+            description:
+              'MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions.',
+          },
           playCount: {
             type: 'integer',
             description: 'Total indexed listens for tracks on this release',
@@ -1477,12 +1483,13 @@ export const schemaDict = {
       },
       trackSummary: {
         type: 'object',
-        required: ['uri', 'name', 'artistName', 'playCount'],
+        required: ['name', 'artistName', 'playCount'],
         properties: {
           uri: {
             type: 'string',
             format: 'at-uri',
-            description: 'Representative listen URI for opening the track page',
+            description:
+              'Representative listen URI for opening the track page. Absent when the track has no indexed listens yet.',
           },
           recordingMbid: {
             type: 'string',

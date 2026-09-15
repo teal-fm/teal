@@ -15,7 +15,11 @@ import TealShell, {
 } from "@/components/teal/TealShell";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { coverArtUrl, getAlbum } from "@/lib/teal/api";
+import {
+  coverArtUrl,
+  getAlbum,
+  releaseGroupCoverArtUrl,
+} from "@/lib/teal/api";
 import { musicArtistHref, musicTrackHref } from "@/lib/teal/routes";
 import { ChevronRight, Disc3, Music2 } from "lucide-react-native";
 
@@ -29,7 +33,7 @@ export default function AlbumDetail() {
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string>();
-  const [artFailed, setArtFailed] = useState(false);
+  const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
 
@@ -45,6 +49,7 @@ export default function AlbumDetail() {
         setAlbum(page.album);
         setPlays(page.plays);
         setCursor(page.cursor);
+        setFailedArt(new Set());
       })
       .catch((loadError) => {
         if (mounted) {
@@ -100,7 +105,14 @@ export default function AlbumDetail() {
     [loadMore],
   );
 
-  const art = artFailed ? undefined : coverArtUrl(album?.mbid, 500);
+  const artCandidates = [
+    releaseGroupCoverArtUrl(album?.releaseGroupMbid, 500),
+    coverArtUrl(album?.mbid, 500),
+  ].filter((url): url is string => Boolean(url));
+  const art = artCandidates.find((url) => !failedArt.has(url));
+  const handleArtError = (url: string) => {
+    setFailedArt((previous) => new Set(previous).add(url));
+  };
 
   return (
     <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
@@ -127,7 +139,7 @@ export default function AlbumDetail() {
                 <Image
                   source={{ uri: art }}
                   className="h-full w-full opacity-40"
-                  onError={() => setArtFailed(true)}
+                  onError={() => handleArtError(art)}
                 />
               )}
             </View>
@@ -137,7 +149,7 @@ export default function AlbumDetail() {
                   <Image
                     source={{ uri: art }}
                     className="h-full w-full"
-                    onError={() => setArtFailed(true)}
+                    onError={() => handleArtError(art)}
                   />
                 ) : (
                   <Icon
@@ -188,19 +200,8 @@ export default function AlbumDetail() {
             detail={`${album.tracks.length} TRACKS`}
           />
           <View className="mb-10 overflow-hidden rounded-lg border border-border bg-card px-3">
-            {album.tracks.map((track) => (
-              <Link
-                key={`${track.recordingMbid}-${track.uri}`}
-                href={
-                  musicTrackHref(
-                    track.artistName,
-                    album.name,
-                    track.name,
-                    track.uri,
-                  ) as any
-                }
-                asChild
-              >
+            {album.tracks.map((track) => {
+              const row = (
                 <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-4">
                   <View className="h-10 w-10 items-center justify-center rounded-full bg-muted">
                     <Icon
@@ -223,14 +224,39 @@ export default function AlbumDetail() {
                   <Text className="font-mono text-xs text-muted-foreground">
                     {track.playCount}
                   </Text>
-                  <Icon
-                    icon={ChevronRight}
-                    size={18}
-                    className="text-muted-foreground"
-                  />
+                  {track.uri && (
+                    <Icon
+                      icon={ChevronRight}
+                      size={18}
+                      className="text-muted-foreground"
+                    />
+                  )}
                 </Pressable>
-              </Link>
-            ))}
+              );
+
+              if (!track.uri) {
+                return (
+                  <View key={track.recordingMbid || track.name}>{row}</View>
+                );
+              }
+
+              return (
+                <Link
+                  key={track.uri}
+                  href={
+                    musicTrackHref(
+                      track.artistName,
+                      album.name,
+                      track.name,
+                      track.uri,
+                    ) as any
+                  }
+                  asChild
+                >
+                  {row}
+                </Link>
+              );
+            })}
           </View>
 
           <SectionHeading

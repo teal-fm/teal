@@ -98,8 +98,27 @@ impl MusicBrainzTrackOrder {
     }
 }
 
+#[derive(Debug, Clone)]
+struct CanonicalAlbumTrack {
+    recording_mbid: Option<Uuid>,
+    name: String,
+    artist_name: Option<String>,
+}
+
+#[derive(Debug, Default)]
+struct MusicBrainzReleaseData {
+    order: MusicBrainzTrackOrder,
+    tracks: Vec<CanonicalAlbumTrack>,
+    artist: Option<(Uuid, String)>,
+    title: Option<String>,
+    release_group_mbid: Option<Uuid>,
+}
+
 #[derive(Debug, Deserialize)]
 struct MusicBrainzRelease {
+    title: Option<String>,
+    #[serde(rename = "release-group")]
+    release_group: Option<MusicBrainzReleaseGroup>,
     #[serde(rename = "artist-credit", default)]
     artist_credit: Vec<MusicBrainzArtistCredit>,
     #[serde(default)]
@@ -136,6 +155,7 @@ struct MusicBrainzArtistRelease {
 
 #[derive(Debug, Deserialize)]
 struct MusicBrainzReleaseGroup {
+    id: Option<Uuid>,
     #[serde(rename = "primary-type")]
     primary_type: Option<String>,
 }
@@ -151,6 +171,8 @@ struct MusicBrainzMedium {
 struct MusicBrainzTrack {
     position: Option<i32>,
     title: Option<String>,
+    #[serde(rename = "artist-credit", default)]
+    artist_credit: Vec<MusicBrainzArtistCredit>,
     recording: Option<MusicBrainzRecording>,
 }
 
@@ -160,8 +182,8 @@ struct MusicBrainzRecording {
 }
 
 #[derive(Debug)]
-struct ObservedAlbumTrack {
-    uri: String,
+struct AlbumTrack {
+    uri: Option<String>,
     recording_mbid: Option<Uuid>,
     name: String,
     artist_name: String,
@@ -181,12 +203,12 @@ fn normalize_release_type(primary_type: Option<&str>) -> &'static str {
     }
 }
 
-async fn fetch_musicbrainz_track_order(
+async fn fetch_musicbrainz_release(
     release_mbid: Uuid,
-) -> anyhow::Result<(MusicBrainzTrackOrder, Option<(Uuid, String)>)> {
+) -> anyhow::Result<MusicBrainzReleaseData> {
     let url =
         format!(
-            "https://musicbrainz.org/ws/2/release/{release_mbid}?inc=artist-credits+recordings&fmt=json"
+            "https://musicbrainz.org/ws/2/release/{release_mbid}?inc=artist-credits+recordings+release-groups&fmt=json"
         );
     let release = reqwest::Client::builder()
         .timeout(StdDuration::from_secs(3))
@@ -199,38 +221,57 @@ async fn fetch_musicbrainz_track_order(
         .json::<MusicBrainzRelease>()
         .await?;
 
-    let mut order = MusicBrainzTrackOrder::default();
-    for (medium_index, medium) in release.media.into_iter().enumerate() {
-        let medium_position = medium.position.unwrap_or((medium_index + 1) as i32);
-        for (track_index, track) in medium.tracks.into_iter().enumerate() {
-            let track_position = track.position.unwrap_or((track_index + 1) as i32);
-            if let Some(recording_mbid) = track.recording.and_then(|recording| recording.id) {
-                order
-                    .by_recording_mbid
-                    .entry(recording_mbid)
-                    .or_insert((medium_position, track_position));
-                if let Some(title) = track.title.as_deref() {
-                    order
-                        .canonical_recording_by_title
-                        .entry(normalize_track_title(title))
-                        .or_insert(recording_mbid);
-                }
-            }
-            if let Some(title) = track.title {
-                order
-                    .by_title
-                    .entry(normalize_track_title(&title))
-                    .or_insert((medium_position, track_position));
-            }
-        }
-    }
-
-    let artist = release
+    let release_artist = release
         .artist_credit
         .first()
         .map(|credit| (credit.artist.id, credit.artist.name.clone()));
 
-    Ok((order, artist))
+    let release_group_mbid = release
+        .release_group
+        .and_then(|release_group| release_group.id);
+    let mut data = MusicBrainzReleaseData {
+        artist: release_artist,
+        title: release.title,
+        release_group_mbid,
+        ..Default::default()
+    };
+    for (medium_index, medium) in release.media.into_iter().enumerate() {
+        let medium_position = medium.position.unwrap_or((medium_index + 1) as i32);
+        for (track_index, track) in medium.tracks.into_iter().enumerate() {
+            let track_position = track.position.unwrap_or((track_index + 1) as i32);
+            let artist_name = track
+                .artist_credit
+                .first()
+                .map(|credit| credit.artist.name.clone())
+                .or_else(|| data.artist.as_ref().map(|(_, name)| name.clone()));
+            let recording_mbid = track.recording.and_then(|recording| recording.id);
+            if let Some(recording_mbid) = recording_mbid {
+                data.order
+                    .by_recording_mbid
+                    .entry(recording_mbid)
+                    .or_insert((medium_position, track_position));
+            }
+            if let Some(title) = track.title {
+                if let Some(recording_mbid) = recording_mbid {
+                    data.order
+                        .canonical_recording_by_title
+                        .entry(normalize_track_title(&title))
+                        .or_insert(recording_mbid);
+                }
+                data.order
+                    .by_title
+                    .entry(normalize_track_title(&title))
+                    .or_insert((medium_position, track_position));
+                data.tracks.push(CanonicalAlbumTrack {
+                    recording_mbid,
+                    name: title,
+                    artist_name,
+                });
+            }
+        }
+    }
+
+    Ok(data)
 }
 
 async fn fetch_artist_release_types(artist_mbid: Uuid) -> anyhow::Result<HashMap<Uuid, String>> {
@@ -284,7 +325,7 @@ async fn fetch_artist_release_types(artist_mbid: Uuid) -> anyhow::Result<HashMap
     Ok(release_types)
 }
 
-fn sort_tracks_by_release_order(tracks: &mut [ObservedAlbumTrack], order: &MusicBrainzTrackOrder) {
+fn sort_tracks_by_release_order(tracks: &mut [AlbumTrack], order: &MusicBrainzTrackOrder) {
     tracks.sort_by(|a, b| {
         match (
             order.position_for(a.recording_mbid, &a.name),
@@ -298,6 +339,65 @@ fn sort_tracks_by_release_order(tracks: &mut [ObservedAlbumTrack], order: &Music
             (None, None) => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
         }
     });
+}
+
+fn merge_album_tracks(
+    release: &MusicBrainzReleaseData,
+    observed_tracks: Vec<AlbumTrack>,
+) -> Vec<AlbumTrack> {
+    let mut merged = release
+        .tracks
+        .iter()
+        .map(|track| AlbumTrack {
+            uri: None,
+            recording_mbid: track.recording_mbid,
+            name: track.name.clone(),
+            artist_name: track
+                .artist_name
+                .clone()
+                .unwrap_or_else(|| "Unknown artist".to_string()),
+            play_count: 0,
+        })
+        .collect::<Vec<_>>();
+
+    let index_by_recording = merged
+        .iter()
+        .enumerate()
+        .filter_map(|(index, track)| track.recording_mbid.map(|mbid| (mbid, index)))
+        .collect::<HashMap<_, _>>();
+    let index_by_title = merged
+        .iter()
+        .enumerate()
+        .map(|(index, track)| (normalize_track_title(&track.name), index))
+        .collect::<HashMap<_, _>>();
+
+    let mut unmatched = Vec::new();
+    for observed in observed_tracks {
+        let index = observed
+            .recording_mbid
+            .and_then(|mbid| index_by_recording.get(&mbid).copied())
+            .or_else(|| {
+                index_by_title
+                    .get(&normalize_track_title(&observed.name))
+                    .copied()
+            });
+        match index {
+            Some(index) => {
+                let target = &mut merged[index];
+                target.play_count += observed.play_count;
+                if target.uri.is_none() {
+                    target.uri = observed.uri;
+                }
+                if target.recording_mbid.is_none() {
+                    target.recording_mbid = observed.recording_mbid;
+                }
+            }
+            None => unmatched.push(observed),
+        }
+    }
+
+    merged.extend(unmatched);
+    merged
 }
 
 #[async_trait]
@@ -561,8 +661,12 @@ impl MusicRepo for PgDataSource {
             mbid
         )
         .fetch_optional(&self.db)
-        .await?
-        .ok_or_else(|| anyhow::anyhow!("album not found"))?;
+        .await?;
+
+        let musicbrainz = fetch_musicbrainz_release(mbid).await.unwrap_or_default();
+        if album_row.is_none() && musicbrainz.title.is_none() {
+            anyhow::bail!("album not found");
+        }
 
         let track_rows = sqlx::query!(
             r#"
@@ -600,8 +704,8 @@ impl MusicRepo for PgDataSource {
         let mut observed_tracks = track_rows
             .into_iter()
             .filter_map(|row| {
-                Some(ObservedAlbumTrack {
-                    uri: row.uri,
+                Some(AlbumTrack {
+                    uri: Some(row.uri),
                     recording_mbid: row.recording_mbid,
                     name: row.track_name,
                     artist_name: row.artist_name?,
@@ -609,29 +713,27 @@ impl MusicRepo for PgDataSource {
                 })
             })
             .collect::<Vec<_>>();
-        let (track_order, musicbrainz_artist_name) = fetch_musicbrainz_track_order(mbid)
-            .await
-            .unwrap_or_default();
         for track in &mut observed_tracks {
-            if let Some(recording_mbid) = track_order
+            if let Some(recording_mbid) = musicbrainz
+                .order
                 .canonical_recording_by_title
                 .get(&normalize_track_title(&track.name))
             {
                 track.recording_mbid = Some(*recording_mbid);
             }
         }
-        sort_tracks_by_release_order(&mut observed_tracks, &track_order);
-        let tracks = observed_tracks
+
+        let mut tracks = merge_album_tracks(&musicbrainz, observed_tracks);
+        sort_tracks_by_release_order(&mut tracks, &musicbrainz.order);
+        let tracks = tracks
             .into_iter()
-            .filter_map(|track| {
-                Some(TrackSummary {
-                    uri: AtUri::try_from(track.uri).ok()?,
-                    recording_mbid: track.recording_mbid.map(mbid_uri),
-                    name: track.name.into(),
-                    artist_name: track.artist_name.into(),
-                    play_count: track.play_count,
-                    extra_data: Default::default(),
-                })
+            .map(|track| TrackSummary {
+                uri: track.uri.and_then(|uri| AtUri::try_from(uri).ok()),
+                recording_mbid: track.recording_mbid.map(mbid_uri),
+                name: track.name.into(),
+                artist_name: track.artist_name.into(),
+                play_count: track.play_count,
+                extra_data: Default::default(),
             })
             .collect();
 
@@ -721,19 +823,36 @@ impl MusicRepo for PgDataSource {
             });
         }
 
+        let album_play_count = album_row.as_ref().map(|row| row.play_count).unwrap_or(0);
+        let album_name = album_row
+            .as_ref()
+            .map(|row| row.name.clone())
+            .or_else(|| musicbrainz.title.clone())
+            .unwrap_or_else(|| "Unknown release".to_string());
+        let artist_mbid = musicbrainz
+            .artist
+            .as_ref()
+            .map(|(artist_mbid, _)| mbid_uri(*artist_mbid))
+            .or_else(|| {
+                album_row
+                    .as_ref()
+                    .and_then(|row| row.artist_mbid.map(mbid_uri))
+            });
+        let artist_name = musicbrainz
+            .artist
+            .as_ref()
+            .map(|(_, artist_name)| artist_name.clone())
+            .or_else(|| album_row.as_ref().map(|row| row.artist_name.clone()))
+            .unwrap_or_else(|| "Unknown artist".to_string());
+
         Ok(AlbumPage {
             album: AlbumView {
-                artist_mbid: musicbrainz_artist_name
-                    .as_ref()
-                    .map(|(artist_mbid, _)| mbid_uri(*artist_mbid))
-                    .or_else(|| album_row.artist_mbid.map(mbid_uri)),
-                artist_name: musicbrainz_artist_name
-                    .map(|(_, artist_name)| artist_name)
-                    .unwrap_or(album_row.artist_name)
-                    .into(),
-                mbid: mbid_uri(album_row.mbid),
-                name: album_row.name.into(),
-                play_count: album_row.play_count,
+                artist_mbid,
+                artist_name: artist_name.into(),
+                mbid: mbid_uri(mbid),
+                release_group_mbid: musicbrainz.release_group_mbid.map(mbid_uri),
+                name: album_name.into(),
+                play_count: album_play_count,
                 tracks,
                 extra_data: Default::default(),
             },
@@ -750,20 +869,59 @@ impl MusicRepo for PgDataSource {
 #[cfg(test)]
 mod tests {
     use super::{
-        normalize_release_type, sort_tracks_by_release_order, ArtistListenersPeriod,
-        MusicBrainzArtistReleases, MusicBrainzTrackOrder, ObservedAlbumTrack,
+        merge_album_tracks, normalize_release_type, sort_tracks_by_release_order, AlbumTrack,
+        ArtistListenersPeriod, CanonicalAlbumTrack, MusicBrainzArtistReleases, MusicBrainzRelease,
+        MusicBrainzReleaseData, MusicBrainzTrackOrder,
     };
     use serde_json::json;
     use uuid::Uuid;
 
-    fn observed_track(name: &str, recording_mbid: Option<Uuid>) -> ObservedAlbumTrack {
-        ObservedAlbumTrack {
-            uri: format!("at://did:plc:test/fm.teal.feed.play/{name}"),
+    fn observed_track(name: &str, recording_mbid: Option<Uuid>) -> AlbumTrack {
+        AlbumTrack {
+            uri: Some(format!("at://did:plc:test/fm.teal.feed.play/{name}")),
             recording_mbid,
             name: name.to_string(),
             artist_name: "Test Artist".to_string(),
             play_count: 1,
         }
+    }
+
+    fn canonical_track(
+        name: &str,
+        recording_mbid: Option<Uuid>,
+        position: (i32, i32),
+    ) -> (CanonicalAlbumTrack, MusicBrainzTrackOrder) {
+        let mut order = MusicBrainzTrackOrder::default();
+        if let Some(recording_mbid) = recording_mbid {
+            order.by_recording_mbid.insert(recording_mbid, position);
+        }
+        order
+            .by_title
+            .insert(super::normalize_track_title(name), position);
+        (
+            CanonicalAlbumTrack {
+                recording_mbid,
+                name: name.to_string(),
+                artist_name: Some("Test Artist".to_string()),
+            },
+            order,
+        )
+    }
+
+    fn release_with_tracks(
+        tracks: Vec<(CanonicalAlbumTrack, MusicBrainzTrackOrder)>,
+    ) -> MusicBrainzReleaseData {
+        let mut release = MusicBrainzReleaseData::default();
+        for (track, order) in tracks {
+            release.tracks.push(track);
+            release.order.by_title.extend(order.by_title);
+            release.order.by_recording_mbid.extend(order.by_recording_mbid);
+            release
+                .order
+                .canonical_recording_by_title
+                .extend(order.canonical_recording_by_title);
+        }
+        release
     }
 
     #[test]
@@ -814,6 +972,72 @@ mod tests {
     }
 
     #[test]
+    fn includes_unplayed_canonical_tracks_with_zero_plays() {
+        let played = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+        let unplayed = Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap();
+        let release = release_with_tracks(vec![
+            canonical_track("Opener", Some(played), (1, 1)),
+            canonical_track("B-Side", Some(unplayed), (1, 2)),
+        ]);
+
+        let mut tracks = merge_album_tracks(&release, vec![observed_track("Opener", Some(played))]);
+        sort_tracks_by_release_order(&mut tracks, &release.order);
+
+        assert_eq!(tracks.len(), 2);
+        assert_eq!(tracks[0].name, "Opener");
+        assert_eq!(tracks[0].play_count, 1);
+        assert!(tracks[0].uri.is_some());
+        assert_eq!(tracks[1].name, "B-Side");
+        assert_eq!(tracks[1].play_count, 0);
+        assert!(tracks[1].uri.is_none());
+    }
+
+    #[test]
+    fn matches_observed_plays_to_canonical_tracks_by_title_case_insensitively() {
+        let recording = Uuid::parse_str("00000000-0000-0000-0000-000000000003").unwrap();
+        let release = release_with_tracks(vec![canonical_track(
+            "Ice in My OJ",
+            Some(recording),
+            (1, 1),
+        )]);
+
+        let tracks = merge_album_tracks(
+            &release,
+            vec![observed_track("Ice In My OJ", Some(recording))],
+        );
+
+        assert_eq!(tracks.len(), 1);
+        assert_eq!(tracks[0].play_count, 1);
+        assert!(tracks[0].uri.is_some());
+    }
+
+    #[test]
+    fn keeps_observed_tracks_missing_from_musicbrainz() {
+        let release = release_with_tracks(vec![canonical_track("Album Cut", None, (1, 1))]);
+
+        let tracks = merge_album_tracks(&release, vec![observed_track("Bonus Track", None)]);
+
+        assert_eq!(tracks.len(), 2);
+        assert!(tracks.iter().any(|track| track.name == "Bonus Track"));
+    }
+
+    #[test]
+    fn merges_duplicate_play_counts_onto_one_canonical_track() {
+        let recording = Uuid::parse_str("00000000-0000-0000-0000-000000000004").unwrap();
+        let release = release_with_tracks(vec![canonical_track("Repeat", Some(recording), (1, 1))]);
+
+        let mut first = observed_track("Repeat", Some(recording));
+        first.play_count = 2;
+        let mut second = observed_track("Repeat", Some(recording));
+        second.play_count = 3;
+
+        let tracks = merge_album_tracks(&release, vec![first, second]);
+
+        assert_eq!(tracks.len(), 1);
+        assert_eq!(tracks[0].play_count, 5);
+    }
+
+    #[test]
     fn artist_listeners_period_accepts_lexicon_values() {
         assert_eq!(
             ArtistListenersPeriod::parse(None).unwrap(),
@@ -841,6 +1065,26 @@ mod tests {
         assert_eq!(normalize_release_type(Some("EP")), "ep");
         assert_eq!(normalize_release_type(Some("Other")), "other");
         assert_eq!(normalize_release_type(None), "other");
+    }
+
+    #[test]
+    fn parses_musicbrainz_release_group_id_for_canonical_cover_art() {
+        let release: MusicBrainzRelease = serde_json::from_value(json!({
+            "id": "a5e766b8-650c-40ce-a19f-3dc3c865a3e2",
+            "title": "Ego Death at a Bachelorette Party",
+            "release-group": {
+                "id": "15c3b397-9652-4537-a14b-7eb8489092ff",
+                "primary-type": "Album"
+            },
+            "artist-credit": [],
+            "media": []
+        }))
+        .unwrap();
+
+        assert_eq!(
+            release.release_group.and_then(|group| group.id),
+            Some(Uuid::parse_str("15c3b397-9652-4537-a14b-7eb8489092ff").unwrap())
+        );
     }
 
     #[test]

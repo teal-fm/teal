@@ -369,11 +369,23 @@ export async function searchBlueskyUsers(q: string, limit = 8) {
   }>;
 }
 
-export function coverArtUrl(releaseMbId?: string, size = 250) {
-  const mbid = releaseMbId?.replace(/^mbid:/, "");
+function coverArtUrlFor(
+  entity: "release" | "release-group",
+  mbId?: string,
+  size = 250,
+) {
+  const mbid = mbId?.replace(/^mbid:/, "");
   return mbid
-    ? `https://coverartarchive.org/release/${mbid}/front-${size}`
+    ? `https://coverartarchive.org/${entity}/${mbid}/front-${size}`
     : undefined;
+}
+
+export function coverArtUrl(releaseMbId?: string, size = 250) {
+  return coverArtUrlFor("release", releaseMbId, size);
+}
+
+export function releaseGroupCoverArtUrl(releaseGroupMbId?: string, size = 250) {
+  return coverArtUrlFor("release-group", releaseGroupMbId, size);
 }
 
 const recordingCoverArtCache = new Map<string, Promise<string | undefined>>();

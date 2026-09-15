@@ -151,6 +151,9 @@ pub struct AlbumView<S: BosStr = DefaultStr> {
     pub name: S,
     ///Total indexed listens for tracks on this release
     pub play_count: i64,
+    ///MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub release_group_mbid: Option<UriValue<S>>,
     pub tracks: Vec<music::TrackSummary<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
@@ -193,8 +196,9 @@ pub struct TrackSummary<S: BosStr = DefaultStr> {
     pub play_count: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recording_mbid: Option<UriValue<S>>,
-    ///Representative listen URI for opening the track page
-    pub uri: AtUri<S>,
+    ///Representative listen URI for opening the track page. Absent when the track has no indexed listens yet.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uri: Option<AtUri<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
@@ -664,6 +668,18 @@ fn lexicon_doc_fm_teal_music_defs() -> LexiconDoc<'static> {
                             }),
                         );
                         map.insert(
+                            SmolStr::new_static("releaseGroupMbid"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions.",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::Uri),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
                             SmolStr::new_static("tracks"),
                             LexObjectProperty::Array(LexArray {
                                 items: LexArrayItem::Ref(LexRef {
@@ -768,7 +784,7 @@ fn lexicon_doc_fm_teal_music_defs() -> LexiconDoc<'static> {
                 LexUserType::Object(LexObject {
                     required: Some(
                         vec![
-                            SmolStr::new_static("uri"), SmolStr::new_static("name"),
+                            SmolStr::new_static("name"),
                             SmolStr::new_static("artistName"),
                             SmolStr::new_static("playCount")
                         ],
@@ -802,7 +818,7 @@ fn lexicon_doc_fm_teal_music_defs() -> LexiconDoc<'static> {
                             LexObjectProperty::String(LexString {
                                 description: Some(
                                     CowStr::new_static(
-                                        "Representative listen URI for opening the track page",
+                                        "Representative listen URI for opening the track page. Absent when the track has no indexed listens yet.",
                                     ),
                                 ),
                                 format: Some(LexStringFormat::AtUri),
@@ -921,6 +937,7 @@ pub struct AlbumViewBuilder<St: album_view_state::State, S: BosStr = DefaultStr>
         Option<UriValue<S>>,
         Option<S>,
         Option<i64>,
+        Option<UriValue<S>>,
         Option<Vec<music::TrackSummary<S>>>,
     ),
     _type: PhantomData<fn() -> S>,
@@ -945,7 +962,7 @@ impl AlbumViewBuilder<album_view_state::Empty, DefaultStr> {
     pub fn new() -> Self {
         AlbumViewBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -956,7 +973,7 @@ impl<S: BosStr> AlbumViewBuilder<album_view_state::Empty, S> {
     pub fn builder() -> Self {
         AlbumViewBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -1051,6 +1068,19 @@ where
     }
 }
 
+impl<St: album_view_state::State, S: BosStr> AlbumViewBuilder<St, S> {
+    /// Set the `releaseGroupMbid` field (optional)
+    pub fn release_group_mbid(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
+        self._fields.5 = value.into();
+        self
+    }
+    /// Set the `releaseGroupMbid` field to an Option value (optional)
+    pub fn maybe_release_group_mbid(mut self, value: Option<UriValue<S>>) -> Self {
+        self._fields.5 = value;
+        self
+    }
+}
+
 impl<St, S: BosStr> AlbumViewBuilder<St, S>
 where
     St: album_view_state::State,
@@ -1061,7 +1091,7 @@ where
         mut self,
         value: impl Into<Vec<music::TrackSummary<S>>>,
     ) -> AlbumViewBuilder<album_view_state::SetTracks<St>, S> {
-        self._fields.5 = Option::Some(value.into());
+        self._fields.6 = Option::Some(value.into());
         AlbumViewBuilder {
             _state: PhantomData,
             _fields: self._fields,
@@ -1087,7 +1117,8 @@ where
             mbid: self._fields.2.unwrap(),
             name: self._fields.3.unwrap(),
             play_count: self._fields.4.unwrap(),
-            tracks: self._fields.5.unwrap(),
+            release_group_mbid: self._fields.5,
+            tracks: self._fields.6.unwrap(),
             extra_data: Default::default(),
         }
     }
@@ -1102,7 +1133,8 @@ where
             mbid: self._fields.2.unwrap(),
             name: self._fields.3.unwrap(),
             play_count: self._fields.4.unwrap(),
-            tracks: self._fields.5.unwrap(),
+            release_group_mbid: self._fields.5,
+            tracks: self._fields.6.unwrap(),
             extra_data: Some(extra_data),
         }
     }
@@ -1487,7 +1519,6 @@ pub mod track_summary_state {
         type ArtistName;
         type Name;
         type PlayCount;
-        type Uri;
     }
     /// Empty state - all required fields are unset
     pub struct Empty(());
@@ -1496,7 +1527,6 @@ pub mod track_summary_state {
         type ArtistName = Unset;
         type Name = Unset;
         type PlayCount = Unset;
-        type Uri = Unset;
     }
     ///State transition - sets the `artist_name` field to Set
     pub struct SetArtistName<St: State = Empty>(PhantomData<fn() -> St>);
@@ -1505,7 +1535,6 @@ pub mod track_summary_state {
         type ArtistName = Set<members::artist_name>;
         type Name = St::Name;
         type PlayCount = St::PlayCount;
-        type Uri = St::Uri;
     }
     ///State transition - sets the `name` field to Set
     pub struct SetName<St: State = Empty>(PhantomData<fn() -> St>);
@@ -1514,7 +1543,6 @@ pub mod track_summary_state {
         type ArtistName = St::ArtistName;
         type Name = Set<members::name>;
         type PlayCount = St::PlayCount;
-        type Uri = St::Uri;
     }
     ///State transition - sets the `play_count` field to Set
     pub struct SetPlayCount<St: State = Empty>(PhantomData<fn() -> St>);
@@ -1523,16 +1551,6 @@ pub mod track_summary_state {
         type ArtistName = St::ArtistName;
         type Name = St::Name;
         type PlayCount = Set<members::play_count>;
-        type Uri = St::Uri;
-    }
-    ///State transition - sets the `uri` field to Set
-    pub struct SetUri<St: State = Empty>(PhantomData<fn() -> St>);
-    impl<St: State> sealed::Sealed for SetUri<St> {}
-    impl<St: State> State for SetUri<St> {
-        type ArtistName = St::ArtistName;
-        type Name = St::Name;
-        type PlayCount = St::PlayCount;
-        type Uri = Set<members::uri>;
     }
     /// Marker types for field names
     #[allow(non_camel_case_types)]
@@ -1543,8 +1561,6 @@ pub mod track_summary_state {
         pub struct name(());
         ///Marker type for the `play_count` field
         pub struct play_count(());
-        ///Marker type for the `uri` field
-        pub struct uri(());
     }
 }
 
@@ -1661,22 +1677,16 @@ impl<St: track_summary_state::State, S: BosStr> TrackSummaryBuilder<St, S> {
     }
 }
 
-impl<St, S: BosStr> TrackSummaryBuilder<St, S>
-where
-    St: track_summary_state::State,
-    St::Uri: track_summary_state::IsUnset,
-{
-    /// Set the `uri` field (required)
-    pub fn uri(
-        mut self,
-        value: impl Into<AtUri<S>>,
-    ) -> TrackSummaryBuilder<track_summary_state::SetUri<St>, S> {
-        self._fields.4 = Option::Some(value.into());
-        TrackSummaryBuilder {
-            _state: PhantomData,
-            _fields: self._fields,
-            _type: PhantomData,
-        }
+impl<St: track_summary_state::State, S: BosStr> TrackSummaryBuilder<St, S> {
+    /// Set the `uri` field (optional)
+    pub fn uri(mut self, value: impl Into<Option<AtUri<S>>>) -> Self {
+        self._fields.4 = value.into();
+        self
+    }
+    /// Set the `uri` field to an Option value (optional)
+    pub fn maybe_uri(mut self, value: Option<AtUri<S>>) -> Self {
+        self._fields.4 = value;
+        self
     }
 }
 
@@ -1686,7 +1696,6 @@ where
     St::ArtistName: track_summary_state::IsSet,
     St::Name: track_summary_state::IsSet,
     St::PlayCount: track_summary_state::IsSet,
-    St::Uri: track_summary_state::IsSet,
 {
     /// Build the final struct.
     pub fn build(self) -> TrackSummary<S> {
@@ -1695,7 +1704,7 @@ where
             name: self._fields.1.unwrap(),
             play_count: self._fields.2.unwrap(),
             recording_mbid: self._fields.3,
-            uri: self._fields.4.unwrap(),
+            uri: self._fields.4,
             extra_data: Default::default(),
         }
     }
@@ -1709,7 +1718,7 @@ where
             name: self._fields.1.unwrap(),
             play_count: self._fields.2.unwrap(),
             recording_mbid: self._fields.3,
-            uri: self._fields.4.unwrap(),
+            uri: self._fields.4,
             extra_data: Some(extra_data),
         }
     }
