@@ -6,11 +6,10 @@
 - **Node.js** (>= v21.0.0) - JavaScript runtime
 - **Rust** (latest stable) - For Rust services compilation
 - **pnpm** (package manager) - Workspace management
-- **PostgreSQL** - Database server
+- **Docker** & **Docker Compose** - Local PostgreSQL and Garnet
+- **cargo-watch** - Auto-rebuilding Rust services during development
 
 #### Optional Development Tools
-- **Docker** & **Docker Compose** - Container orchestration (compose files included)
-- **cargo-watch** - Auto-rebuilding Rust services during development
 - **cargo-tarpaulin** - For checking code coverage in Rust
 
 ### Installation
@@ -51,7 +50,7 @@
 4. **Optional: Install development tools**:
    ```bash
    # For Rust file watching during development
-   cargo install cargo-watch
+   cargo install cargo-watch --locked
 
    # optionally, set up docker + docker-compose
    # on Linux
@@ -61,12 +60,6 @@
    # on macOS, you should use colima or orbstack
    brew install colima # or brew install orbstack
    colima start # or use the GUI for orbstack
-   ```
-
-5. **Bring up dependencies** (Docker):
-   ```bash
-   # bring up all dependencies with the compose.dev.yml compose file
-   docker compose up -d -f compose.dev.yml garnet postgres
    ```
 
 ### Database Management
@@ -95,13 +88,26 @@ pnpm db:prepare         # Prepare queries for compile-time verification
 
 ## Development
 
-To start the development server run:
+Start the full development stack with:
 
 ```bash
-turbo dev --filter=@teal/aqua
+pnpm dev
 ```
 
-Open http://localhost:3000/ with your browser to see the home page. Note: if the redirect back to the app after you login isn't working correctly, you may need to replace the `127.0.0.1` with `localhost`, or you may need to set up a publicly accessible endpoint for the app to post to (see below).
+This starts PostgreSQL and Garnet in Docker, runs migrations, and runs Amethyst,
+Aqua, Cadet, Satellite, and the lexicon compiler as local watch-mode processes.
+Open http://localhost:8081. Amethyst runs on port 8082 behind a development proxy
+that sends `/xrpc/*` to Aqua on port 3000.
+
+The default Tailscale origin is `https://tashi.rainbow-alkaid.ts.net:8445`.
+Override it when developing on another machine:
+
+```bash
+DEV_PUBLIC_ORIGIN=https://your-machine.example.ts.net:8445 pnpm dev
+```
+
+The proxy generates OAuth metadata for that origin. `EXPO_PUBLIC_BASE_URL` and
+`EXPO_PUBLIC_AQUA_URL` also use it, so browser requests remain same-origin.
 
 ### Running the full stack in docker for development
 

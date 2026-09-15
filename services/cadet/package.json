@@ -5,7 +5,7 @@
     "install": ":",
     "build": "SQLX_OFFLINE=true cargo build --release --manifest-path ../../Cargo.toml -p cadet",
     "build:rust": "SQLX_OFFLINE=true cargo build --release --manifest-path ../../Cargo.toml -p cadet",
-    "dev": "cargo watch -x 'run -p cadet'",
+    "dev": "cargo watch -x 'run -p cadet --bin cadet'",
     "test": "SQLX_OFFLINE=true cargo test -p cadet",
     "test:rust": "SQLX_OFFLINE=true cargo test -p cadet"
   },

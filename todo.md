@@ -8,6 +8,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 
 - Stable UI preview: `https://sigilyph.teal.fm`
 - Tailnet-only local preview: `https://tashi.rainbow-alkaid.ts.net:8445` proxies to the running Amethyst stack on port 8081. Verified on 2026-09-15 with OAuth metadata and live latest-listen XRPC; OAuth sign-in remains configured for `https://sigilyph.teal.fm`.
+- Local development now uses `pnpm dev`: Compose runs only Postgres and Garnet, Rust services run under `cargo watch`, Expo serves web with live reload on port 8082, and the port 8081 development proxy keeps `/xrpc/*` and OAuth metadata on the same origin. Set `DEV_PUBLIC_ORIGIN` to override the default Tailscale origin.
 - Cloudflare Tunnel `teal-dev-sigilyph` routes `sigilyph.teal.fm` to the Compose `amethyst:80` service.
 - Manual listening feature preview: `https://mimikyu.teal.fm` via Cloudflare Tunnel `teal-dev-mimikyu`; the preview container runs alongside the stable stack and routes to the current `codex/manual-listens` build.
 - The ignored local `.env` should keep `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.
