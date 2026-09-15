@@ -94,22 +94,40 @@ Start the full development stack with:
 pnpm dev
 ```
 
-This starts PostgreSQL and Garnet in Docker, runs migrations, and runs Amethyst,
-Aqua, Cadet, Satellite, and the lexicon compiler as local watch-mode processes.
-Open http://localhost:8081. Amethyst runs on port 8082 behind a development proxy
-that sends `/xrpc/*` to Aqua on port 3000.
+Open https://sigilyph.teal.fm. Keep `pnpm dev` running in your terminal.
+Docker runs PostgreSQL, Garnet, Caddy, and the existing named Cloudflare tunnel.
+Expo runs locally on port 8082 with Fast Refresh; Aqua, Cadet, and Satellite run
+under `cargo watch`. Caddy forwards `/xrpc/*` to Aqua on port 3000 and all other
+app requests, including WebSockets, to Expo. No application images are built.
 
-The default Tailscale origin is `https://tashi.rainbow-alkaid.ts.net:8445`.
-Override it when developing on another machine:
+Set `CLOUDFLARED_TUNNEL_TOKEN` in the ignored root `.env` before starting.
+The tunnel must route the public hostname to `http://amethyst:80`.
+For another public tunnel, use its origin:
 
 ```bash
-DEV_PUBLIC_ORIGIN=https://your-machine.example.ts.net:8445 pnpm dev
+DEV_PUBLIC_ORIGIN=https://your-public-dev.example.com pnpm dev
 ```
 
-The proxy generates OAuth metadata for that origin. `EXPO_PUBLIC_BASE_URL` and
-`EXPO_PUBLIC_AQUA_URL` also use it, so browser requests remain same-origin.
+The origin is applied to OAuth metadata, the browser API URL, and Expo's public
+packager URL together. ATProto OAuth requires publicly reachable metadata, so
+use the public hostname for sign-in. `http://localhost:8081` and the existing
+Tailscale proxy are also useful for reachability checks.
 
-### Running the full stack in docker for development
+`DEV_DATABASE_URL` and `DEV_REDIS_URL` override the default host connections.
+Cadet stores its fallback cursor under ignored `.codex-run/` and defers aggregate
+refreshes to its periodic worker. Rust watches only relevant service/shared files;
+UI edits do not restart ingestion. Debug symbols are disabled to reduce disk use;
+set `CARGO_PROFILE_DEV_DEBUG=2` when debugging Rust with a debugger.
+
+Use `pnpm lex:gen` after schema changes, or `pnpm lex:watch` in another terminal.
+The CLI's TypeScript compiler watcher is not a schema generator.
+
+Ctrl+C stops the host processes. Docker infrastructure and the tunnel remain
+available for the next run. `pnpm tunnel:verify` checks public metadata and XRPC.
+The watch overlay needs Docker Compose 2.24.4 or newer. It uses the Caddy image,
+or reuses the Caddy runtime in an already-installed `teal-amethyst` image.
+
+### Production image preview
 
 _Still a work in progress and may have some hiccups_
 

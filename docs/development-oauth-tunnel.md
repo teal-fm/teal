@@ -29,7 +29,15 @@ export CLOUDFLARED_TUNNEL_TOKEN=<cloudflare-named-tunnel-token>
 
 The Amethyst Caddy image serves the web app and proxies `/xrpc/*` to Aqua, so the same public origin can be used for both `EXPO_PUBLIC_BASE_URL` and `EXPO_PUBLIC_AQUA_URL`.
 
-## Build And Run
+## Daily development
+
+Run `pnpm dev` and open `https://sigilyph.teal.fm`. This starts the host watch
+processes and uses `compose.watch.yml` to turn `amethyst:80` into a Caddy proxy
+to the host Expo and Aqua servers. The existing tunnel route remains valid.
+OAuth metadata and Expo's public origin both use Sigilyph. Changes appear through
+Fast Refresh without an export or image build. See the root README for overrides.
+
+## Production image preview
 
 ```bash
 pnpm tunnel:up
