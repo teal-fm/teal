@@ -1,5 +1,8 @@
 use actor_profile::ActorProfileRepo;
-use jacquard_common::{deps::smol_str::SmolStr, types::string::UriValue};
+use jacquard_common::{
+    deps::smol_str::SmolStr,
+    types::string::{Handle, UriValue},
+};
 use types::fm_teal::actor::MiniProfileView;
 use uuid::Uuid;
 
@@ -67,7 +70,8 @@ pub fn mini_profile(
 ) -> Option<MiniProfileView> {
     did.map(|did| MiniProfileView {
         did: Some(did.into()),
-        handle: handle.map(|handle| handle.trim_start_matches("at://").to_string().into()),
+        handle: handle
+            .and_then(|handle| Handle::new_owned(handle.trim_start_matches("at://")).ok()),
         display_name: display_name.map(Into::into),
         avatar: avatar.map(Into::into),
         extra_data: Default::default(),
@@ -82,12 +86,25 @@ mod tests {
     fn mini_profile_normalizes_at_uri_handle() {
         let profile = mini_profile(
             Some("did:plc:listener".to_string()),
+            Some("at://alice.bsky.social".to_string()),
+            Some("Listener".to_string()),
+            None,
+        )
+        .expect("profile should be present");
+
+        assert_eq!(profile.handle.as_deref(), Some("alice.bsky.social"));
+    }
+
+    #[test]
+    fn mini_profile_drops_invalid_handle_instead_of_panicking() {
+        let profile = mini_profile(
+            Some("did:plc:listener".to_string()),
             Some("at://listener.example".to_string()),
             Some("Listener".to_string()),
             None,
         )
         .expect("profile should be present");
 
-        assert_eq!(profile.handle.as_deref(), Some("listener.example"));
+        assert_eq!(profile.handle, None);
     }
 }
