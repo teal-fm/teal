@@ -6,6 +6,8 @@ import {
   coverArtUrl,
   displayArtists,
   getRecordingCoverArtUrl,
+  getReleaseGroupCoverArtUrl,
+  releaseGroupCoverArtUrl,
 } from "@/lib/teal/api";
 import {
   actorAvatarUrl,
@@ -26,6 +28,7 @@ import { Text } from "../ui/text";
 type PlayFeedCardProps = {
   play: PlayView;
   compact?: boolean;
+  releaseGroupMbId?: string;
 };
 
 export function musicHref(play: PlayView) {
@@ -37,9 +40,15 @@ export function musicHref(play: PlayView) {
   );
 }
 
-export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
+export default function PlayFeedCard({
+  play,
+  compact,
+  releaseGroupMbId,
+}: PlayFeedCardProps) {
   const [blueskyAuthor, setBlueskyAuthor] = useState<DisplayActor>();
-  const [artFailed, setArtFailed] = useState(false);
+  const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
+  const [fetchedReleaseGroupArt, setFetchedReleaseGroupArt] =
+    useState<string>();
   const [recordingArt, setRecordingArt] = useState<string>();
   const indexedAuthor = play.author as DisplayActor | undefined;
   const authorProfile = indexedAuthor
@@ -53,7 +62,14 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
     : blueskyAuthor;
   const authorDid = authorProfile?.did || play.authorDid;
   const releaseArt = coverArtUrl(play.releaseMbId);
-  const art = artFailed ? undefined : releaseArt || recordingArt;
+  const releaseGroupArt =
+    releaseGroupCoverArtUrl(releaseGroupMbId) ?? fetchedReleaseGroupArt;
+  const art = [releaseGroupArt, releaseArt, recordingArt]
+    .filter((url): url is string => Boolean(url))
+    .find((url) => !failedArt.has(url));
+  const handleArtError = (url: string) => {
+    setFailedArt((previous) => new Set(previous).add(url));
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -73,18 +89,23 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
 
   useEffect(() => {
     let mounted = true;
-    setArtFailed(false);
-    if (releaseArt || !play.recordingMbId) {
-      setRecordingArt(undefined);
-      return;
+    setFailedArt(new Set());
+    setFetchedReleaseGroupArt(undefined);
+    setRecordingArt(undefined);
+    if (!releaseGroupMbId) {
+      getReleaseGroupCoverArtUrl(play.releaseMbId).then((url) => {
+        if (mounted && url) setFetchedReleaseGroupArt(url);
+      });
     }
-    getRecordingCoverArtUrl(play.recordingMbId).then((url) => {
-      if (mounted) setRecordingArt(url);
-    });
+    if (!releaseArt && play.recordingMbId) {
+      getRecordingCoverArtUrl(play.recordingMbId).then((url) => {
+        if (mounted) setRecordingArt(url);
+      });
+    }
     return () => {
       mounted = false;
     };
-  }, [play.recordingMbId, releaseArt]);
+  }, [play.releaseMbId, play.recordingMbId, releaseArt, releaseGroupMbId]);
 
   const authorHandle = normalizeHandle(authorProfile?.handle);
   const authorName = displayActorName(authorProfile, authorDid);
@@ -164,7 +185,7 @@ export default function PlayFeedCard({ play, compact }: PlayFeedCardProps) {
                 <Image
                   source={{ uri: art }}
                   className="h-16 w-16 rounded-lg bg-muted"
-                  onError={() => setArtFailed(true)}
+                  onError={() => handleArtError(art)}
                 />
               ) : (
                 <View className="h-16 w-16 items-center justify-center rounded-lg bg-muted">

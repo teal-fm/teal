@@ -88,6 +88,8 @@ export interface AlbumSummary {
   artistName: string
   playCount: number
   releaseType?: 'album' | 'single' | 'ep' | 'other' | (string & {})
+  /** MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions. */
+  releaseGroupMbid?: string
 }
 
 const hashAlbumSummary = 'albumSummary'

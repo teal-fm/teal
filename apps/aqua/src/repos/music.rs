@@ -274,7 +274,15 @@ async fn fetch_musicbrainz_release(
     Ok(data)
 }
 
-async fn fetch_artist_release_types(artist_mbid: Uuid) -> anyhow::Result<HashMap<Uuid, String>> {
+#[derive(Debug, Clone)]
+struct ArtistReleaseMeta {
+    release_type: String,
+    release_group_mbid: Option<Uuid>,
+}
+
+async fn fetch_artist_release_types(
+    artist_mbid: Uuid,
+) -> anyhow::Result<HashMap<Uuid, ArtistReleaseMeta>> {
     const PAGE_SIZE: usize = 100;
 
     let client = reqwest::Client::builder()
@@ -299,15 +307,16 @@ async fn fetch_artist_release_types(artist_mbid: Uuid) -> anyhow::Result<HashMap
         let page_len = page.releases.len();
 
         release_types.extend(page.releases.into_iter().map(|release| {
+            let release_group = release.release_group;
             (
                 release.id,
-                normalize_release_type(
-                    release
-                        .release_group
-                        .and_then(|group| group.primary_type)
-                        .as_deref(),
-                )
-                .to_string(),
+                ArtistReleaseMeta {
+                    release_type: normalize_release_type(
+                        release_group.as_ref().and_then(|group| group.primary_type.as_deref()),
+                    )
+                    .to_string(),
+                    release_group_mbid: release_group.and_then(|group| group.id),
+                },
             )
         }));
 
@@ -491,27 +500,28 @@ impl MusicRepo for PgDataSource {
         let artist_mbid = artist.mbid.map(mbid_uri);
         let albums = rows
             .into_iter()
-            .map(|row| AlbumSummary {
-                artist_mbid: artist_mbid.clone(),
-                artist_name: artist_name.clone().into(),
-                mbid: mbid_uri(row.mbid),
-                name: row.name.into(),
-                play_count: row.play_count,
-                release_type: Some(AlbumSummaryReleaseType::from_value(SmolStr::new(
-                    release_types
-                        .get(&row.mbid)
-                        .map(String::as_str)
-                        .unwrap_or("other"),
-                ))),
-                extra_data: Some(BTreeMap::from([(
-                    SmolStr::new_static("releaseType"),
-                    Data::String(AtprotoStr::new(SmolStr::new(
-                        release_types
-                            .get(&row.mbid)
-                            .map(String::as_str)
-                            .unwrap_or("other"),
+            .map(|row| {
+                let meta = release_types.get(&row.mbid);
+                let release_type = meta
+                    .map(|meta| meta.release_type.as_str())
+                    .unwrap_or("other");
+                AlbumSummary {
+                    artist_mbid: artist_mbid.clone(),
+                    artist_name: artist_name.clone().into(),
+                    mbid: mbid_uri(row.mbid),
+                    name: row.name.into(),
+                    play_count: row.play_count,
+                    release_type: Some(AlbumSummaryReleaseType::from_value(SmolStr::new(
+                        release_type,
                     ))),
-                )])),
+                    release_group_mbid: meta
+                        .and_then(|meta| meta.release_group_mbid)
+                        .map(mbid_uri),
+                    extra_data: Some(BTreeMap::from([(
+                        SmolStr::new_static("releaseType"),
+                        Data::String(AtprotoStr::new(SmolStr::new(release_type))),
+                    )])),
+                }
             })
             .collect();
 

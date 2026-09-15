@@ -42,6 +42,9 @@ pub struct AlbumSummary<S: BosStr = DefaultStr> {
     pub mbid: UriValue<S>,
     pub name: S,
     pub play_count: i64,
+    ///MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub release_group_mbid: Option<UriValue<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub release_type: Option<AlbumSummaryReleaseType<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
@@ -361,6 +364,7 @@ pub struct AlbumSummaryBuilder<St: album_summary_state::State, S: BosStr = Defau
         Option<UriValue<S>>,
         Option<S>,
         Option<i64>,
+        Option<UriValue<S>>,
         Option<AlbumSummaryReleaseType<S>>,
     ),
     _type: PhantomData<fn() -> S>,
@@ -385,7 +389,7 @@ impl AlbumSummaryBuilder<album_summary_state::Empty, DefaultStr> {
     pub fn new() -> Self {
         AlbumSummaryBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -396,7 +400,7 @@ impl<S: BosStr> AlbumSummaryBuilder<album_summary_state::Empty, S> {
     pub fn builder() -> Self {
         AlbumSummaryBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -492,12 +496,25 @@ where
 }
 
 impl<St: album_summary_state::State, S: BosStr> AlbumSummaryBuilder<St, S> {
+    /// Set the `releaseGroupMbid` field (optional)
+    pub fn release_group_mbid(mut self, value: impl Into<Option<UriValue<S>>>) -> Self {
+        self._fields.5 = value.into();
+        self
+    }
+    /// Set the `releaseGroupMbid` field to an Option value (optional)
+    pub fn maybe_release_group_mbid(mut self, value: Option<UriValue<S>>) -> Self {
+        self._fields.5 = value;
+        self
+    }
+}
+
+impl<St: album_summary_state::State, S: BosStr> AlbumSummaryBuilder<St, S> {
     /// Set the `releaseType` field (optional)
     pub fn release_type(
         mut self,
         value: impl Into<Option<AlbumSummaryReleaseType<S>>>,
     ) -> Self {
-        self._fields.5 = value.into();
+        self._fields.6 = value.into();
         self
     }
     /// Set the `releaseType` field to an Option value (optional)
@@ -505,7 +522,7 @@ impl<St: album_summary_state::State, S: BosStr> AlbumSummaryBuilder<St, S> {
         mut self,
         value: Option<AlbumSummaryReleaseType<S>>,
     ) -> Self {
-        self._fields.5 = value;
+        self._fields.6 = value;
         self
     }
 }
@@ -526,7 +543,8 @@ where
             mbid: self._fields.2.unwrap(),
             name: self._fields.3.unwrap(),
             play_count: self._fields.4.unwrap(),
-            release_type: self._fields.5,
+            release_group_mbid: self._fields.5,
+            release_type: self._fields.6,
             extra_data: Default::default(),
         }
     }
@@ -541,7 +559,8 @@ where
             mbid: self._fields.2.unwrap(),
             name: self._fields.3.unwrap(),
             play_count: self._fields.4.unwrap(),
-            release_type: self._fields.5,
+            release_group_mbid: self._fields.5,
+            release_type: self._fields.6,
             extra_data: Some(extra_data),
         }
     }
@@ -595,6 +614,18 @@ fn lexicon_doc_fm_teal_music_defs() -> LexiconDoc<'static> {
                         map.insert(
                             SmolStr::new_static("playCount"),
                             LexObjectProperty::Integer(LexInteger {
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("releaseGroupMbid"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions.",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::Uri),
                                 ..Default::default()
                             }),
                         );

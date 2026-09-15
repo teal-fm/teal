@@ -268,6 +268,7 @@ export default function AlbumDetail() {
             <PlayFeedCard
               key={play.uri || `${play.trackName}-${index}`}
               play={play}
+              releaseGroupMbId={album.releaseGroupMbid}
             />
           ))}
           {loadingMore && (

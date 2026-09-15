@@ -21,6 +21,7 @@ import {
   getArtist,
   getArtistImageUrl,
   getArtistListeners,
+  releaseGroupCoverArtUrl,
   type ArtistListenerPeriod,
 } from "@/lib/teal/api";
 import { Mic2, Trophy } from "lucide-react-native";
@@ -51,7 +52,7 @@ export default function ArtistListenersScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [artistImage, setArtistImage] = useState<string>();
-  const [artFailed, setArtFailed] = useState(false);
+  const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
   const loadingMoreRef = useRef(false);
 
   useEffect(() => {
@@ -104,7 +105,7 @@ export default function ArtistListenersScreen() {
   useEffect(() => {
     let mounted = true;
     setArtistImage(undefined);
-    setArtFailed(false);
+    setFailedArt(new Set());
     if (!artist?.mbid) return;
     getArtistImageUrl(artist.mbid, 500).then((imageUrl) => {
       if (mounted) setArtistImage(imageUrl);
@@ -156,8 +157,20 @@ export default function ArtistListenersScreen() {
     [loadMore],
   );
 
-  const representativeArt = coverArtUrl(artist?.albums[0]?.mbid, 500);
-  const heroArt = artistImage || (artFailed ? undefined : representativeArt);
+  const representativeArt = [
+    releaseGroupCoverArtUrl(artist?.albums[0]?.releaseGroupMbid, 500),
+    coverArtUrl(artist?.albums[0]?.mbid, 500),
+  ]
+    .filter((url): url is string => Boolean(url))
+    .find((url) => !failedArt.has(url));
+  const heroArt = artistImage || representativeArt;
+  const handleHeroArtError = () => {
+    if (artistImage) {
+      setArtistImage(undefined);
+    } else if (representativeArt) {
+      setFailedArt((previous) => new Set(previous).add(representativeArt));
+    }
+  };
   const title = artist?.name || name || "Artist";
 
   return (
@@ -171,7 +184,7 @@ export default function ArtistListenersScreen() {
             <Image
               source={{ uri: heroArt }}
               className="h-full w-full opacity-40"
-              onError={() => setArtFailed(true)}
+              onError={handleHeroArtError}
             />
           )}
         </View>
@@ -181,7 +194,7 @@ export default function ArtistListenersScreen() {
               <Image
                 source={{ uri: heroArt }}
                 className="h-full w-full"
-                onError={() => setArtFailed(true)}
+                onError={handleHeroArtError}
               />
             ) : (
               <Icon icon={Mic2} size={34} className="text-muted-foreground" />

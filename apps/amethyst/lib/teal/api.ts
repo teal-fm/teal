@@ -389,7 +389,32 @@ export function releaseGroupCoverArtUrl(releaseGroupMbId?: string, size = 250) {
 }
 
 const recordingCoverArtCache = new Map<string, Promise<string | undefined>>();
+const releaseGroupCoverArtCache = new Map<
+  string,
+  Promise<string | undefined>
+>();
 const artistImageCache = new Map<string, Promise<string | undefined>>();
+
+export function getReleaseGroupCoverArtUrl(releaseMbId?: string, size = 250) {
+  const mbid = releaseMbId?.replace(/^mbid:/, "");
+  if (!mbid) return Promise.resolve(undefined);
+
+  const cacheKey = `${mbid}:${size}`;
+  let cached = releaseGroupCoverArtCache.get(cacheKey);
+  if (!cached) {
+    cached = fetch(
+      `https://musicbrainz.org/ws/2/release/${encodeURIComponent(mbid)}?inc=release-groups&fmt=json`,
+    )
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then(
+        (release?: { "release-group"?: { id?: string } }) =>
+          releaseGroupCoverArtUrl(release?.["release-group"]?.id, size),
+      )
+      .catch(() => undefined);
+    releaseGroupCoverArtCache.set(cacheKey, cached);
+  }
+  return cached;
+}
 
 export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
   const mbid = recordingMbId?.replace(/^mbid:/, "");

@@ -18,6 +18,7 @@ import {
   getArtist,
   getArtistImageUrl,
   getArtistListeners,
+  releaseGroupCoverArtUrl,
   type ArtistListenerPeriod,
 } from "@/lib/teal/api";
 import { musicAlbumHref, musicArtistListenersHref } from "@/lib/teal/routes";
@@ -45,7 +46,7 @@ export default function ArtistDetail() {
   const [error, setError] = useState<string>();
   const [listenerError, setListenerError] = useState<string>();
   const [listenersLoading, setListenersLoading] = useState(false);
-  const [artFailed, setArtFailed] = useState(false);
+  const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
   const [artistImage, setArtistImage] = useState<string>();
 
   useEffect(() => {
@@ -93,6 +94,7 @@ export default function ArtistDetail() {
   useEffect(() => {
     let mounted = true;
     setArtistImage(undefined);
+    setFailedArt(new Set());
     if (!artist?.mbid) return;
     getArtistImageUrl(artist.mbid, 500).then((imageUrl) => {
       if (mounted) setArtistImage(imageUrl);
@@ -102,18 +104,32 @@ export default function ArtistDetail() {
     };
   }, [artist?.mbid]);
 
-  const representativeArt = coverArtUrl(artist?.albums[0]?.mbid, 500);
-  const heroArt = artistImage || (artFailed ? undefined : representativeArt);
+  const handleArtError = (url: string) => {
+    setFailedArt((previous) => new Set(previous).add(url));
+  };
+
+  const representativeArt = [
+    releaseGroupCoverArtUrl(artist?.albums[0]?.releaseGroupMbid, 500),
+    coverArtUrl(artist?.albums[0]?.mbid, 500),
+  ]
+    .filter((url): url is string => Boolean(url))
+    .find((url) => !failedArt.has(url));
+  const heroArt = artistImage || representativeArt;
   const handleHeroArtError = () => {
     if (artistImage) {
       setArtistImage(undefined);
-    } else {
-      setArtFailed(true);
+    } else if (representativeArt) {
+      handleArtError(representativeArt);
     }
   };
 
   const renderRelease = (album: ArtistView["albums"][number]) => {
-    const art = coverArtUrl(album.mbid);
+    const art = [
+      releaseGroupCoverArtUrl(album.releaseGroupMbid),
+      coverArtUrl(album.mbid),
+    ]
+      .filter((url): url is string => Boolean(url))
+      .find((url) => !failedArt.has(url));
     return (
       <Link
         key={album.mbid}
@@ -125,7 +141,11 @@ export default function ArtistDetail() {
         <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-4">
           <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted">
             {art ? (
-              <Image source={{ uri: art }} className="h-full w-full" />
+              <Image
+                source={{ uri: art }}
+                className="h-full w-full"
+                onError={() => art && handleArtError(art)}
+              />
             ) : (
               <Icon
                 icon={Disc3}

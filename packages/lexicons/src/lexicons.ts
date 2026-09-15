@@ -1479,6 +1479,12 @@ export const schemaDict = {
             type: 'string',
             knownValues: ['album', 'single', 'ep', 'other'],
           },
+          releaseGroupMbid: {
+            type: 'string',
+            format: 'uri',
+            description:
+              'MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions.',
+          },
         },
       },
       trackSummary: {
