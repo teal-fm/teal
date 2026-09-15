@@ -63,6 +63,8 @@ export interface AlbumView {
   artistMbid?: string
   /** Display name for the release artist */
   artistName: string
+  /** MusicBrainz release-group ID URI for the canonical album. Prefer this for cover art shared across editions. */
+  releaseGroupMbid?: string
   /** Total indexed listens for tracks on this release */
   playCount: number
   tracks: TrackSummary[]
@@ -100,8 +102,8 @@ export function validateAlbumSummary<V>(v: V) {
 
 export interface TrackSummary {
   $type?: 'fm.teal.music.defs#trackSummary'
-  /** Representative listen URI for opening the track page */
-  uri: string
+  /** Representative listen URI for opening the track page. Absent when the track has no indexed listens yet. */
+  uri?: string
   recordingMbid?: string
   name: string
   artistName: string
