@@ -50,9 +50,6 @@ function RecordLogo() {
             .fm
           </Text>
         </Text>
-        <Text className="text-[11px] font-light text-primary">
-          listening network
-        </Text>
       </View>
     </View>
   );
@@ -123,7 +120,6 @@ function LeftRail() {
   return (
     <View className="hidden w-[16rem] shrink-0 border-r border-border bg-background/55 px-5 py-7 lg:flex">
       <RecordLogo />
-      <ToggleTheme />
       <View className="mt-12 gap-1">
         <NavItem href="/" icon={Home} label="Home" active={pathname === "/"} />
         <NavItem
@@ -185,6 +181,9 @@ function LeftRail() {
             </View>
           </Pressable>
         </Link>
+        <View className="mt-3">
+          <ToggleTheme />
+        </View>
         <View className="mt-5 gap-1 px-1">
           <Text className="font-mono text-[10px] uppercase tracking-[1.5px] text-muted-foreground">
             Running build
