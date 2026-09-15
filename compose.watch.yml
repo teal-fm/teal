@@ -1,0 +1,14 @@
+# Overlay for host watch processes. The existing tunnel still targets amethyst:80.
+services:
+  amethyst:
+    build: !reset null
+    image: ${DEV_PROXY_IMAGE:-caddy:2.8-alpine}
+    ports: !override
+      - "127.0.0.1:8081:80"
+    environment:
+      DEV_PUBLIC_ORIGIN: ${DEV_PUBLIC_ORIGIN:-https://sigilyph.teal.fm}
+    volumes:
+      - ./scripts/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on: !reset []

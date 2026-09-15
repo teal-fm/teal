@@ -7,8 +7,9 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 ## Current State
 
 - Stable UI preview: `https://sigilyph.teal.fm`
-- Tailnet-only local preview: `https://tashi.rainbow-alkaid.ts.net:8445` proxies to the running Amethyst stack on port 8081. Verified on 2026-09-15 with OAuth metadata and live latest-listen XRPC; OAuth sign-in remains configured for `https://sigilyph.teal.fm`.
-- Local development now uses `pnpm dev`: Compose runs only Postgres and Garnet, Rust services run under `cargo watch`, Expo serves web with live reload on port 8082, and the port 8081 development proxy keeps `/xrpc/*` and OAuth metadata on the same origin. Set `DEV_PUBLIC_ORIGIN` to override the default Tailscale origin.
+- Daily development uses `pnpm dev` at `https://sigilyph.teal.fm`: Expo Fast Refresh on host port 8082, scoped Rust watchers, and Caddy via `compose.watch.yml` forwarding the existing tunnel to host processes. OAuth metadata, browser API calls, and the packager use the same public origin. No app image build is required.
+- The Tailscale endpoint `https://tashi.rainbow-alkaid.ts.net:8445` remains a secondary route to port 8081; use Sigilyph for OAuth. Schema generation is explicit via `pnpm lex:gen` or `pnpm lex:watch`.
+- Public dev workflow review (2026-09-15): corrected tunnel routing and origin overrides, replaced the custom Node proxy with Caddy, restored Cadet deferred refresh settings, scoped Rust watches, added startup checks, and reduced debug-symbol disk usage. Verified public metadata/XRPC, actual Fast Refresh through Sigilyph, the requested sidebar layout, and OAuth authorization reaching the QA account's PDS password screen. Full authenticated callback was not repeated. Recovered about 13 GB of reproducible Rust artifacts after disk pressure stopped OrbStack, then restarted all services.
 - Cloudflare Tunnel `teal-dev-sigilyph` routes `sigilyph.teal.fm` to the Compose `amethyst:80` service.
 - Manual listening feature preview: `https://mimikyu.teal.fm` via Cloudflare Tunnel `teal-dev-mimikyu`; the preview container runs alongside the stable stack and routes to the current `codex/manual-listens` build.
 - The ignored local `.env` should keep `TUNNEL_HOST=sigilyph.teal.fm`, matching `EXPO_PUBLIC_BASE_URL`, `EXPO_PUBLIC_AQUA_URL`, and `CLOUDFLARED_TUNNEL_TOKEN`.

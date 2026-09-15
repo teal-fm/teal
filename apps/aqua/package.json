@@ -5,7 +5,7 @@
     "install": ":",
     "build": "SQLX_OFFLINE=true cargo build --release --manifest-path ../../Cargo.toml -p aqua",
     "build:rust": "SQLX_OFFLINE=true cargo build --release --manifest-path ../../Cargo.toml -p aqua",
-    "dev": "cargo watch -x 'run -p aqua'",
+    "dev": "bash ../../scripts/dev-rust.sh aqua",
     "test": "SQLX_OFFLINE=true cargo test -p aqua",
     "test:rust": "SQLX_OFFLINE=true cargo test -p aqua"
   },

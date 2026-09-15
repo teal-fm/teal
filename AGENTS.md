@@ -1,7 +1,7 @@
 # Teal Development Guidelines
 
 ## Build Commands
-- Dev server: `turbo dev --filter=@teal/aqua`
+- Dev stack: `pnpm dev` at `https://sigilyph.teal.fm`
 - Build all: `pnpm build`
 - Build Rust: `pnpm build:rust`
 - Test: `pnpm test`
@@ -91,9 +91,9 @@ cp apps/aqua/.env.example apps/aqua/.env
 # Start dependencies
 docker compose -f compose.dev.yml up -d garnet postgres
 
-# Run dev server
-turbo dev --filter=@teal/aqua
-# Access: http://localhost:3000
+# Run the host watch processes and public tunnel proxy
+pnpm dev
+# Access: https://sigilyph.teal.fm
 ```
 
 ## Database Operations
@@ -202,6 +202,8 @@ docker compose exec aqua-api pnpm db:migrate
 - **Async-first**: Tokio runtime throughout
 
 ## Public Preview Workflow
+- Use `pnpm dev` for daily development. `compose.watch.yml` runs Caddy as `amethyst:80`, forwarding the existing named tunnel to local Expo and Aqua. Keep the host watch processes running.
+- Do not export production web bundles or rebuild application images for routine edits. Use Fast Refresh and scoped Rust watchers, plus checks relevant to the changed files. Production image builds are for explicit release/image verification.
 - Use OrbStack for local Docker services when available.
 - Start Postgres and Garnet before Aqua and Cadet:
 
@@ -219,20 +221,19 @@ DATABASE_URL=postgres://teal:teal@127.0.0.1:5432/teal \
 REDIS_URL=redis://127.0.0.1:6379 \
 CADET_STREAM_MODE=jetstream \
 JETSTREAM_URL=wss://jetstream1.us-east.bsky.network/subscribe \
-SQLX_OFFLINE=true cargo run -p cadet
+SQLX_OFFLINE=true cargo run -p cadet --bin cadet
 ```
 
 - Serve Amethyst and proxy `/xrpc/*` to Aqua through the same public hostname.
-- After completing a new feature or overhaul, publish the updated build to the stable public preview at `https://sigilyph.teal.fm` through the Cloudflare tunnel.
+- Verify changes on the live development preview at `https://sigilyph.teal.fm` through the Cloudflare tunnel.
 - For temporary demos, a Cloudflare quick tunnel is acceptable. Record the active URL in `todo.md`.
 - Treat quick-tunnel URLs as ephemeral. A tunnel restart changes the hostname.
 
 ## OAuth Tunnel Rule
-- Before testing ATProto OAuth, rebuild Amethyst with the active public origin:
+- Before testing ATProto OAuth, start Expo with the active public origin. Restart `pnpm dev` if the origin changes:
 
 ```bash
-EXPO_PUBLIC_BASE_URL=https://<tunnel-host> \
-pnpm --filter=@teal/amethyst build:web
+DEV_PUBLIC_ORIGIN=https://<tunnel-host> pnpm dev
 ```
 
 - Serve `/client-metadata.json` from the same public hostname.

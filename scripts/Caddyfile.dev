@@ -1,0 +1,18 @@
+:80 {
+	header Cache-Control "no-store"
+
+	handle /client-metadata.json {
+		header Content-Type application/json
+		respond <<JSON
+{"redirect_uris":["{$DEV_PUBLIC_ORIGIN}/auth/callback"],"response_types":["code"],"grant_types":["authorization_code","refresh_token"],"scope":"atproto transition:generic","token_endpoint_auth_method":"none","application_type":"web","client_id":"{$DEV_PUBLIC_ORIGIN}/client-metadata.json","client_name":"teal","client_uri":"{$DEV_PUBLIC_ORIGIN}","dpop_bound_access_tokens":true}
+JSON 200
+	}
+
+	handle /xrpc/* {
+		reverse_proxy host.docker.internal:3000
+	}
+
+	handle {
+		reverse_proxy host.docker.internal:8082
+	}
+}
