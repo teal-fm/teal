@@ -1,7 +1,7 @@
 # Teal Development Guidelines
 
 ## Build Commands
-- Dev stack: `pnpm dev` at `https://sigilyph.teal.fm`
+- Dev stack: `pnpm dev` at `http://localhost:8081` (add `--proxy` for `https://sigilyph.teal.fm`)
 - Build all: `pnpm build`
 - Build Rust: `pnpm build:rust`
 - Test: `pnpm test`
@@ -91,8 +91,12 @@ cp apps/aqua/.env.example apps/aqua/.env
 # Start dependencies
 docker compose -f compose.dev.yml up -d garnet postgres
 
-# Run the host watch processes and public tunnel proxy
+# Run the host watch processes locally
 pnpm dev
+# Access: http://localhost:8081
+
+# Or serve the public preview through the named Cloudflare tunnel
+pnpm dev --proxy
 # Access: https://sigilyph.teal.fm
 ```
 
@@ -202,7 +206,8 @@ docker compose exec aqua-api pnpm db:migrate
 - **Async-first**: Tokio runtime throughout
 
 ## Public Preview Workflow
-- Use `pnpm dev` for daily development. `compose.watch.yml` runs Caddy as `amethyst:80`, forwarding the existing named tunnel to local Expo and Aqua. Keep the host watch processes running.
+- Use `pnpm dev` for daily development at `http://localhost:8081`. `pnpm dev` stays local and never starts the Cloudflare tunnel. `compose.watch.yml` runs Caddy as `amethyst:80` so `/xrpc/*` and OAuth metadata share the local origin. Keep the host watch processes running.
+- Use `pnpm dev --proxy` only when a public origin is needed, such as ATProto OAuth. It starts the named Cloudflare tunnel and serves the stack at `https://sigilyph.teal.fm`.
 - Do not export production web bundles or rebuild application images for routine edits. Use Fast Refresh and scoped Rust watchers, plus checks relevant to the changed files. Production image builds are for explicit release/image verification.
 - Use OrbStack for local Docker services when available.
 - Start Postgres and Garnet before Aqua and Cadet:
@@ -224,16 +229,16 @@ JETSTREAM_URL=wss://jetstream1.us-east.bsky.network/subscribe \
 SQLX_OFFLINE=true cargo run -p cadet --bin cadet
 ```
 
-- Serve Amethyst and proxy `/xrpc/*` to Aqua through the same public hostname.
-- Verify changes on the live development preview at `https://sigilyph.teal.fm` through the Cloudflare tunnel.
+- Serve Amethyst and proxy `/xrpc/*` to Aqua through the same hostname. Local mode uses `http://localhost:8081`; `--proxy` mode uses `https://sigilyph.teal.fm`.
+- Verify public changes on the live development preview at `https://sigilyph.teal.fm` with `pnpm dev --proxy` through the Cloudflare tunnel.
 - For temporary demos, a Cloudflare quick tunnel is acceptable. Record the active URL in `todo.md`.
 - Treat quick-tunnel URLs as ephemeral. A tunnel restart changes the hostname.
 
 ## OAuth Tunnel Rule
-- Before testing ATProto OAuth, start Expo with the active public origin. Restart `pnpm dev` if the origin changes:
+- Before testing ATProto OAuth, start Expo with the active public origin. Restart `pnpm dev --proxy` if the origin changes:
 
 ```bash
-DEV_PUBLIC_ORIGIN=https://<tunnel-host> pnpm dev
+DEV_PUBLIC_ORIGIN=https://<tunnel-host> pnpm dev --proxy
 ```
 
 - Serve `/client-metadata.json` from the same public hostname.

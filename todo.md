@@ -7,7 +7,8 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 ## Current State
 
 - Stable UI preview: `https://sigilyph.teal.fm`
-- Daily development uses `pnpm dev` at `https://sigilyph.teal.fm`: Expo Fast Refresh on host port 8082, scoped Rust watchers, and Caddy via `compose.watch.yml` forwarding the existing tunnel to host processes. OAuth metadata, browser API calls, and the packager use the same public origin. No app image build is required.
+- Daily local development uses `pnpm dev` at `http://localhost:8081`: Expo Fast Refresh on host port 8082, scoped Rust watchers, and Caddy via `compose.watch.yml` proxying `/xrpc/*` and OAuth metadata on one origin. The default never starts the Cloudflare tunnel, so nothing is exposed publicly.
+- Public development uses `pnpm dev --proxy` (or `pnpm dev:proxy`) at `https://sigilyph.teal.fm`: it adds the named Cloudflare tunnel to the same stack and requires `CLOUDFLARED_TUNNEL_TOKEN`. No app image build is required.
 - The Tailscale endpoint `https://tashi.rainbow-alkaid.ts.net:8445` remains a secondary route to port 8081; use Sigilyph for OAuth. Schema generation is explicit via `pnpm lex:gen` or `pnpm lex:watch`.
 - Public dev workflow review (2026-09-15): corrected tunnel routing and origin overrides, replaced the custom Node proxy with Caddy, restored Cadet deferred refresh settings, scoped Rust watches, added startup checks, and reduced debug-symbol disk usage. Verified public metadata/XRPC, actual Fast Refresh through Sigilyph, the requested sidebar layout, and OAuth authorization reaching the QA account's PDS password screen. Full authenticated callback was not repeated. Recovered about 13 GB of reproducible Rust artifacts after disk pressure stopped OrbStack, then restarted all services.
 - Cloudflare Tunnel `teal-dev-sigilyph` routes `sigilyph.teal.fm` to the Compose `amethyst:80` service.

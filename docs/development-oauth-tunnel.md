@@ -31,11 +31,22 @@ The Amethyst Caddy image serves the web app and proxies `/xrpc/*` to Aqua, so th
 
 ## Daily development
 
-Run `pnpm dev` and open `https://sigilyph.teal.fm`. This starts the host watch
-processes and uses `compose.watch.yml` to turn `amethyst:80` into a Caddy proxy
-to the host Expo and Aqua servers. The existing tunnel route remains valid.
-OAuth metadata and Expo's public origin both use Sigilyph. Changes appear through
-Fast Refresh without an export or image build. See the root README for overrides.
+For local-only work, run `pnpm dev` and open `http://localhost:8081`. This starts
+the host watch processes and uses `compose.watch.yml` to turn `amethyst:80` into
+a Caddy proxy to the host Expo and Aqua servers. It does not start the Cloudflare
+tunnel, so nothing is exposed to the open web.
+
+For ATProto OAuth or external testing, run:
+
+```bash
+pnpm dev --proxy
+```
+
+This starts the named Cloudflare tunnel and serves the same stack at
+`https://sigilyph.teal.fm`; OAuth metadata and Expo's public origin both use
+Sigilyph. Changes appear through Fast Refresh without an export or image build.
+The ignored root `.env` must define `CLOUDFLARED_TUNNEL_TOKEN`. See the root
+README for `DEV_PUBLIC_ORIGIN` and other overrides.
 
 ## Production image preview
 

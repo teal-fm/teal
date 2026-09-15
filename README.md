@@ -88,30 +88,45 @@ pnpm db:prepare         # Prepare queries for compile-time verification
 
 ## Development
 
-Start the full development stack with:
+Start the full development stack locally:
 
 ```bash
 pnpm dev
 ```
 
-Open https://sigilyph.teal.fm. Keep `pnpm dev` running in your terminal.
-Docker runs PostgreSQL, Garnet, Caddy, and the existing named Cloudflare tunnel.
-Expo runs locally on port 8082 with Fast Refresh; Aqua, Cadet, and Satellite run
-under `cargo watch`. Caddy forwards `/xrpc/*` to Aqua on port 3000 and all other
-app requests, including WebSockets, to Expo. No application images are built.
+Open http://localhost:8081. Keep `pnpm dev` running in your terminal.
+Docker runs PostgreSQL, Garnet, and Caddy. Expo runs locally on port 8082 with
+Fast Refresh; Aqua, Cadet, and Satellite run under `cargo watch`. Caddy forwards
+`/xrpc/*` to Aqua on port 3000 and all other app requests, including WebSockets,
+to Expo. Nothing is exposed to the internet by default, and no application
+images are built.
 
-Set `CLOUDFLARED_TUNNEL_TOKEN` in the ignored root `.env` before starting.
-The tunnel must route the public hostname to `http://amethyst:80`.
-For another public tunnel, use its origin:
+To serve the same stack through the stable public Cloudflare tunnel for OAuth
+and external testing:
 
 ```bash
-DEV_PUBLIC_ORIGIN=https://your-public-dev.example.com pnpm dev
+pnpm dev --proxy
+# or, equivalently:
+pnpm dev:proxy
+```
+
+This starts the `cloudflared-named` tunnel and serves the app at
+`https://sigilyph.teal.fm`. Set `CLOUDFLARED_TUNNEL_TOKEN` in the ignored root
+`.env` before using it. The tunnel must route the public hostname to
+`http://amethyst:80`.
+
+`DEV_PUBLIC_ORIGIN` overrides the origin in either mode. It must be an origin
+with no path or trailing slash, and `--proxy` requires HTTPS:
+
+```bash
+DEV_PUBLIC_ORIGIN=http://localhost:9000 pnpm dev
+DEV_PUBLIC_ORIGIN=https://your-public-dev.example.com pnpm dev --proxy
 ```
 
 The origin is applied to OAuth metadata, the browser API URL, and Expo's public
 packager URL together. ATProto OAuth requires publicly reachable metadata, so
-use the public hostname for sign-in. `http://localhost:8081` and the existing
-Tailscale proxy are also useful for reachability checks.
+use `pnpm dev --proxy` for sign-in. `http://localhost:8081` is the default for
+local checks that should not be reachable from the open web.
 
 `DEV_DATABASE_URL` and `DEV_REDIS_URL` override the default host connections.
 Cadet stores its fallback cursor under ignored `.codex-run/` and defers aggregate
@@ -122,10 +137,11 @@ set `CARGO_PROFILE_DEV_DEBUG=2` when debugging Rust with a debugger.
 Use `pnpm lex:gen` after schema changes, or `pnpm lex:watch` in another terminal.
 The CLI's TypeScript compiler watcher is not a schema generator.
 
-Ctrl+C stops the host processes. Docker infrastructure and the tunnel remain
-available for the next run. `pnpm tunnel:verify` checks public metadata and XRPC.
-The watch overlay needs Docker Compose 2.24.4 or newer. It uses the Caddy image,
-or reuses the Caddy runtime in an already-installed `teal-amethyst` image.
+Ctrl+C stops the host processes. Docker infrastructure, and in `--proxy` mode the
+tunnel, remain available for the next run. `pnpm tunnel:verify` checks public
+metadata and XRPC. The watch overlay needs Docker Compose 2.24.4 or newer. It
+uses the Caddy image, or reuses the Caddy runtime in an already-installed
+`teal-amethyst` image.
 
 ### Production image preview
 
