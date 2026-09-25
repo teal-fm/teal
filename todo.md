@@ -7,6 +7,7 @@ Last synced with GitHub and Linear issues: 2026-06-14.
 ## Current State
 
 - Stable UI preview: `https://sigilyph.teal.fm`
+- Public development preview started on 2026-09-25 with `pnpm dev --proxy`; the named Cloudflare tunnel is connected, and the homepage, OAuth client metadata, and latest-play XRPC returned successfully. Keep the host watch session running while using this preview.
 - Daily local development uses `pnpm dev` at `http://localhost:8081`: Expo Fast Refresh on host port 8082, scoped Rust watchers, and Caddy via `compose.watch.yml` proxying `/xrpc/*` and OAuth metadata on one origin. The default never starts the Cloudflare tunnel, so nothing is exposed publicly.
 - Public development uses `pnpm dev --proxy` (or `pnpm dev:proxy`) at `https://sigilyph.teal.fm`: it adds the named Cloudflare tunnel to the same stack and requires `CLOUDFLARED_TUNNEL_TOKEN`. No app image build is required.
 - The Tailscale endpoint `https://tashi.rainbow-alkaid.ts.net:8445` remains a secondary route to port 8081; use Sigilyph for OAuth. Schema generation is explicit via `pnpm lex:gen` or `pnpm lex:watch`.
