@@ -311,15 +311,27 @@ function StatsPreviewSection({
 
   return (
     <View className="mb-8">
-      <View className="mb-3 flex-row items-center justify-between gap-3">
+      <View className="mb-3 flex-row flex-wrap items-center justify-between gap-3">
         <Text className="font-sans text-2xl font-black">{title}</Text>
-        <Link href={moreHref(actor, kind, period) as any} asChild>
-          <Button size="sm" variant="outline">
-            <Text>
-              More {kind === "albums" ? "Albums" : kind === "tracks" ? "Tracks" : "Artists"}
-            </Text>
-          </Button>
-        </Link>
+        <View className="flex-row flex-wrap gap-2">
+          {kind === "albums" && (
+            <Link
+              href={`/profile/${encodeURIComponent(actor)}/topster?period=${period}` as any}
+              asChild
+            >
+              <Button size="sm" variant="default">
+                <Text>Make chart</Text>
+              </Button>
+            </Link>
+          )}
+          <Link href={moreHref(actor, kind, period) as any} asChild>
+            <Button size="sm" variant="outline">
+              <Text>
+                More {kind === "albums" ? "Albums" : kind === "tracks" ? "Tracks" : "Artists"}
+              </Text>
+            </Button>
+          </Link>
+        </View>
       </View>
       {loading ? (
         <View className="h-36 items-center justify-center rounded-lg border border-border bg-card/60">
