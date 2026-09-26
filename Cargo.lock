@@ -127,6 +127,7 @@ dependencies = [
  "chrono",
  "clap",
  "dotenvy",
+ "futures",
  "iroh-car",
  "jacquard-common",
  "redis",

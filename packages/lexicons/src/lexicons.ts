@@ -1923,6 +1923,70 @@ export const schemaDict = {
       },
     },
   },
+  FmTealStatsGetRepoTopReleases: {
+    lexicon: 1,
+    id: 'fm.teal.stats.getRepoTopReleases',
+    description: "Get top albums from a user's public repository snapshot",
+    defs: {
+      main: {
+        type: 'query',
+        parameters: {
+          type: 'params',
+          required: ['actor'],
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+            },
+            period: {
+              type: 'string',
+              enum: ['7days', '30days', '90days', '180days', '365days', 'all'],
+              default: '90days',
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 25,
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: [
+              'releases',
+              'sourceCount',
+              'albumPlayCount',
+              'fetchedAt',
+            ],
+            properties: {
+              releases: {
+                type: 'array',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:fm.teal.stats.defs#releaseView',
+                },
+              },
+              sourceCount: {
+                type: 'integer',
+                minimum: 0,
+              },
+              albumPlayCount: {
+                type: 'integer',
+                minimum: 0,
+              },
+              fetchedAt: {
+                type: 'string',
+                format: 'datetime',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   FmTealStatsGetTopArtists: {
     lexicon: 1,
     id: 'fm.teal.stats.getTopArtists',
@@ -2265,6 +2329,7 @@ export const ids = {
   FmTealSearchGetResults: 'fm.teal.search.getResults',
   FmTealStatsDefs: 'fm.teal.stats.defs',
   FmTealStatsGetLatest: 'fm.teal.stats.getLatest',
+  FmTealStatsGetRepoTopReleases: 'fm.teal.stats.getRepoTopReleases',
   FmTealStatsGetTopArtists: 'fm.teal.stats.getTopArtists',
   FmTealStatsGetTopReleases: 'fm.teal.stats.getTopReleases',
   FmTealStatsGetUserTopArtists: 'fm.teal.stats.getUserTopArtists',

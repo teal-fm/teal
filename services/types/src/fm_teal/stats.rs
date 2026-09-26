@@ -7,6 +7,7 @@
 
 //! Generated bindings for the `fm.teal.stats` Lexicon namespace/module.
 pub mod get_latest;
+pub mod get_repo_top_releases;
 pub mod get_top_artists;
 pub mod get_top_releases;
 pub mod get_user_top_artists;

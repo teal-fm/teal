@@ -18,7 +18,7 @@ import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { coverArtUrl, getProfile, getUserTopReleases } from "@/lib/teal/api";
+import { coverArtUrl, getProfile, getRepoTopReleases } from "@/lib/teal/api";
 import { musicAlbumHref } from "@/lib/teal/routes";
 import { ArrowLeft, Copy, Disc3, Download } from "lucide-react-native";
 
@@ -29,6 +29,8 @@ type ChartResult = {
   key: string;
   releases: ReleaseView[];
   displayName?: string;
+  sourceCount?: number;
+  albumPlayCount?: number;
   error?: string;
 };
 
@@ -114,7 +116,7 @@ export default function TopsterScreen() {
     let active = true;
     if (!actor) return;
     Promise.all([
-      getUserTopReleases(actor, period, columns * columns),
+      getRepoTopReleases(actor, period, columns * columns),
       getProfile(actor).catch(() => undefined),
     ])
       .then(([stats, profile]) => {
@@ -122,6 +124,8 @@ export default function TopsterScreen() {
         setResult({
           key: requestKey,
           releases: stats.releases,
+          sourceCount: stats.sourceCount,
+          albumPlayCount: stats.albumPlayCount,
           displayName: profile?.profile.displayName || actor,
         });
       })
@@ -203,7 +207,7 @@ export default function TopsterScreen() {
           Top albums chart
         </Text>
         <Text className="text-muted-foreground">
-          A cover chart ranked by indexed listens. Pick a period and a grid size
+          A cover chart ranked by listens in this listener’s repository. Pick a period and a grid size
           to make it yours.
         </Text>
       </View>
@@ -259,7 +263,7 @@ export default function TopsterScreen() {
             No albums for this period
           </Text>
           <Text className="mt-2 text-muted-foreground">
-            This listener has no indexed album plays here yet. Try a longer
+            This listener has no album plays here yet. Try a longer
             period.
           </Text>
         </View>
@@ -287,6 +291,9 @@ export default function TopsterScreen() {
               {actionMessage}
             </Text>
           )}
+          <Text className="mb-3 text-sm text-muted-foreground">
+            {result?.albumPlayCount?.toLocaleString()} album plays counted from {result?.sourceCount?.toLocaleString()} repository listens in this period.
+          </Text>
           <View
             className="rounded-lg bg-[#102621] p-4 md:p-5"
             onLayout={(event) =>

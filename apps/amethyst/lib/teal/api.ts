@@ -251,6 +251,19 @@ export function getUserTopReleases(
   );
 }
 
+export function getRepoTopReleases(
+  actor: string,
+  period: StatsPeriod = "90days",
+  limit = 25,
+) {
+  return getXrpc<{
+    releases: ReleaseView[];
+    sourceCount: number;
+    albumPlayCount: number;
+    fetchedAt: string;
+  }>("fm.teal.stats.getRepoTopReleases", { actor, period, limit });
+}
+
 export function getUserTopRecordings(
   actor: string,
   period: StatsPeriod = "90days",

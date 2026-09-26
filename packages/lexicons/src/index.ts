@@ -23,6 +23,7 @@ import * as FmTealMusicGetArtist from './types/fm/teal/music/getArtist'
 import * as FmTealMusicGetArtistListeners from './types/fm/teal/music/getArtistListeners'
 import * as FmTealSearchGetResults from './types/fm/teal/search/getResults'
 import * as FmTealStatsGetLatest from './types/fm/teal/stats/getLatest'
+import * as FmTealStatsGetRepoTopReleases from './types/fm/teal/stats/getRepoTopReleases'
 import * as FmTealStatsGetTopArtists from './types/fm/teal/stats/getTopArtists'
 import * as FmTealStatsGetTopReleases from './types/fm/teal/stats/getTopReleases'
 import * as FmTealStatsGetUserTopArtists from './types/fm/teal/stats/getUserTopArtists'
@@ -323,6 +324,18 @@ export class FmTealStatsNS {
     >,
   ) {
     const nsid = 'fm.teal.stats.getLatest' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getRepoTopReleases<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealStatsGetRepoTopReleases.QueryParams,
+      FmTealStatsGetRepoTopReleases.HandlerInput,
+      FmTealStatsGetRepoTopReleases.HandlerOutput
+    >,
+  ) {
+    const nsid = 'fm.teal.stats.getRepoTopReleases' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 

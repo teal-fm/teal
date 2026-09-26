@@ -1,5 +1,7 @@
+mod repo_chart;
+
 use crate::ctx::Context;
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
+use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
 use types::fm_teal::feed::PlayView;
@@ -17,6 +19,10 @@ pub fn stats_routes() -> axum::Router {
         .route(
             "/fm.teal.stats.getUserTopReleases",
             get(get_user_top_releases),
+        )
+        .route(
+            "/fm.teal.stats.getRepoTopReleases",
+            get(repo_chart::get_repo_top_releases),
         )
         .route(
             "/fm.teal.stats.getUserTopRecordings",
