@@ -1,8 +1,10 @@
 use crate::ctx::Context;
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
+use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
 use types::fm_teal::feed::PlayView;
+use types::fm_teal::feed::get_actor_feed::GetActorFeedOutput;
+use types::fm_teal::feed::get_play::GetPlayOutput;
 
 // mount feed routes
 pub fn feed_routes() -> axum::Router {
@@ -18,11 +20,6 @@ pub struct GetFeedPlayQuery {
     pub author_did: Option<String>,
     pub rkey: Option<String>,
     pub uri: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetFeedPlayResponse {
-    play: PlayView,
 }
 
 pub async fn get_feed_play(
@@ -44,7 +41,8 @@ pub async fn get_feed_play(
     };
 
     match repo.get_feed_play(&uri).await {
-        Ok(Some(play)) => Ok(axum::Json(GetFeedPlayResponse {
+        Ok(Some(play)) => Ok(axum::Json(GetPlayOutput {
+            extra_data: Default::default(),
             play: play.into_static(),
         })),
         Ok(None) => Err((StatusCode::NOT_FOUND, "Feed play not found".to_string())),
@@ -58,12 +56,6 @@ pub struct GetActorFeedQuery {
     pub author_did: String,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetActorFeedResponse {
-    plays: Vec<PlayView>,
-    cursor: Option<String>,
 }
 
 pub async fn get_actor_feed(
@@ -80,8 +72,9 @@ pub async fn get_actor_feed(
         .get_actor_feed(&query.author_did, query.limit, query.cursor.as_deref())
         .await
     {
-        Ok(page) => Ok(axum::Json(GetActorFeedResponse {
-            cursor: page.cursor,
+        Ok(page) => Ok(axum::Json(GetActorFeedOutput {
+            extra_data: Default::default(),
+            cursor: page.cursor.map(Into::into),
             plays: page.plays.into_static(),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),

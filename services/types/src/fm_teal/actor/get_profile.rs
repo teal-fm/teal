@@ -28,7 +28,7 @@ pub struct GetProfile<S: BosStr = DefaultStr> {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetProfileOutput<S: BosStr = DefaultStr> {
-    pub actor: ProfileView<S>,
+    pub profile: ProfileView<S>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }

@@ -1,19 +1,19 @@
 import { playViewToTrackView, trackViewToPlayView } from "../teal/social";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 
 describe("Teal social track normalization", () => {
   it("normalizes new trackView artists into play artists", () => {
     const play = trackViewToPlayView({
       trackName: "Ceremony",
       recordingMbId: "recording-1",
-      artists: [{ name: "New Order", mbid: "artist-1" }],
+      artists: [{ name: "New Order", mbid: "mbid:artist-1" }],
       releaseName: "Movement",
     });
 
     expect(play.trackName).toBe("Ceremony");
     expect(play.recordingMbId).toBe("recording-1");
     expect(play.artists).toEqual([
-      { artistName: "New Order", artistMbId: "artist-1" },
+      { artistName: "New Order", artistMbId: "mbid:artist-1" },
     ]);
     expect(play.releaseName).toBe("Movement");
   });
@@ -22,7 +22,7 @@ describe("Teal social track normalization", () => {
     const play: PlayView = {
       trackName: "Age of Consent",
       artists: [
-        { artistName: "New Order", artistMbId: "artist-1" },
+        { artistName: "New Order", artistMbId: "mbid:artist-1" },
         { artistName: "Peter Hook" },
       ],
     };
@@ -30,9 +30,9 @@ describe("Teal social track normalization", () => {
     const track = playViewToTrackView(play);
 
     expect(track.artistNames).toEqual(["New Order", "Peter Hook"]);
-    expect(track.artistMbIds).toEqual(["artist-1"]);
+    expect(track.artistMbIds).toEqual(["mbid:artist-1"]);
     expect(track.artists).toEqual([
-      { artistName: "New Order", artistMbId: "artist-1" },
+      { artistName: "New Order", artistMbId: "mbid:artist-1" },
       { artistName: "Peter Hook", artistMbId: undefined },
     ]);
   });
@@ -41,11 +41,11 @@ describe("Teal social track normalization", () => {
     const play = trackViewToPlayView({
       trackName: "Bizarre Love Triangle",
       artistNames: ["New Order"],
-      artistMbIds: ["artist-1"],
+      artistMbIds: ["mbid:artist-1"],
     });
 
     expect(play.artists).toEqual([
-      { artistName: "New Order", artistMbId: "artist-1" },
+      { artistName: "New Order", artistMbId: "mbid:artist-1" },
     ]);
   });
 });

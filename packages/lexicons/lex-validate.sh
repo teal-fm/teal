@@ -19,4 +19,4 @@ pnpm --dir "$repo_root/packages/lexicons" exec ts-lex build \
   --clear \
   --import-ext "" \
   --default-export=false \
-  --lib @atproto/lexicon
+  --lib @atproto/lex

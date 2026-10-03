@@ -77,18 +77,18 @@ lex diff HEAD~3
 
 ### TypeScript Generation
 - Uses the workspace lexicon script, whose schema validation is powered by `@atproto/lex`
-- Keeps the legacy server binding step isolated in `packages/lexicons` until Aqua migrates its XRPC bindings
-- Sources lexicons from `packages/lexicons/real/`
-- Outputs to `packages/lexicons/src/types/`
+- Generates runtime schemas, types, and validation helpers with `ts-lex build`
+- Sources lexicons from `lexicons/fm.teal/`
+- Outputs to `packages/lexicons/src/`
 
 ### Rust Generation
 - Uses `jacquard-codegen` for Rust code generation 
-- Sources lexicons from `services/types/lexicons/`
+- Sources lexicons from `lexicons/`
 - Outputs to `services/types/src/`
 - Auto-installs jacquard-lexicon if not present (tries cargo-binstall first for speed)
 
 ### File Watching
-- Monitors both lexicon source directories
+- Monitors the central lexicons directory
 - Debounces changes to avoid multiple regenerations
 - Shows clear feedback about what changed
 
@@ -96,7 +96,7 @@ lex diff HEAD~3
 
 The tool integrates with the existing Turbo build pipeline:
 
-- `lex:gen-server` - Legacy TypeScript-only generation (kept for compatibility)
+- `lex:gen-server` - Compatibility alias for TypeScript schema generation
 - `lex:gen` - New unified generation command
 - `lex:watch` - File watching for development
 - `lex:validate` - Type validation
@@ -115,7 +115,7 @@ The tool integrates with the existing Turbo build pipeline:
 
 ## Developer Workflow
 
-1. **Making Lexicon Changes**: Edit files in `packages/lexicons/real/` or `services/types/lexicons/`
+1. **Making Lexicon Changes**: Edit files in `lexicons/fm.teal/` or `lexicons/`
 2. **Regenerate Types**: Run `pnpm lex:gen` or use `pnpm lex:watch` during development
 3. **Validate Changes**: Run `pnpm lex:validate` to check consistency
 4. **Review Impact**: Use `pnpm lex:diff` to see what changed

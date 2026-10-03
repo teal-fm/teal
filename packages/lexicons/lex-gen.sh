@@ -1,48 +1,24 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 lexicons_root="$repo_root/lexicons"
-echo "Validating lexicons with @atproto/lex"
-bash "$repo_root/packages/lexicons/lex-validate.sh"
+source_dir="$(mktemp -d "${TMPDIR:-/tmp}/teal-lexicons.XXXXXX")"
+trap 'rm -rf "$source_dir"' EXIT
 
-# The current HTTP server consumes the legacy gen-server shape. Keep this
-# compatibility output until Aqua's XRPC bindings migrate to @atproto/lex.
-cd "$repo_root/packages/lexicons"
-json_files=$(find "$lexicons_root/fm.teal" -name "*.json" -type f | sort)
-json_files="$json_files $lexicons_root/app/bsky/richtext/facet.json"
-lexicon_paths=""
-for file in $json_files; do
-  lexicon_paths="$lexicon_paths $file"
-done
+mkdir -p "$source_dir/fm/teal" "$source_dir/com/atproto/repo" "$source_dir/app/bsky/richtext"
+cp -R "$lexicons_root/fm.teal" "$source_dir/fm/teal"
+cp "$repo_root/vendor/atproto/lexicons/com/atproto/repo/strongRef.json" \
+  "$source_dir/com/atproto/repo/strongRef.json"
+cp "$repo_root/vendor/atproto/lexicons/app/bsky/richtext/facet.json" \
+  "$source_dir/app/bsky/richtext/facet.json"
 
-echo "Generating compatibility server bindings"
-pnpm exec lex gen-server ./src $lexicon_paths --yes
+pnpm --dir "$repo_root/packages/lexicons" exec ts-lex build \
+  --lexicons "$source_dir" \
+  --out "$repo_root/packages/lexicons/src" \
+  --clear \
+  --import-ext "" \
+  --index-file \
+  --default-export=false
 
-# lex-cli emits Node ESM `.js` suffixes for generated TypeScript imports.
-# Metro resolves source files by extension and cannot follow those paths before
-# TypeScript is compiled, so keep internal generated imports extensionless.
-find ./src -type f -name "*.ts" -exec perl -pi -e "s{(from ['\"](?:\./|\.\./)[^'\"]*)\.js(['\"])}{\$1\$2}g" {} +
-
-perl -0pi -e 's/profileStatus\?: FmTealActorProfileStatus\.Main/profileStatus?: FmTealActorProfileStatus.Record/' \
-  ./src/types/fm/teal/actor/defs.ts
-
-mkdir -p ./src/types/app/bsky/richtext
-cat > ./src/types/app/bsky/richtext/facet.ts <<'EOF'
-import type { AppBskyRichtextFacet } from "@atproto/api";
-import type { ValidationResult } from "@atproto/lexicon";
-
-export type Main = AppBskyRichtextFacet.Main;
-export type Mention = AppBskyRichtextFacet.Mention;
-export type Link = AppBskyRichtextFacet.Link;
-export type Tag = AppBskyRichtextFacet.Tag;
-export type ByteSlice = AppBskyRichtextFacet.ByteSlice;
-
-export function isMain(v: unknown): v is Main {
-  return typeof v === "object" && v !== null;
-}
-
-export function validateMain(v: unknown): ValidationResult<Main> {
-  return { success: true, value: v as Main };
-}
-EOF
+node "$repo_root/packages/lexicons/generate-documents.mjs" "$source_dir"

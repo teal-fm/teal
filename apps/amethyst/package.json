@@ -12,7 +12,7 @@
     "build:web": "expo export --output-dir ./build --platform web --clear",
     "build:ios": "expo export --output-dir ./build --platform ios --clear",
     "test": "CI=1 jest --config jest.lib.config.ts --runInBand --watchAll=false",
-    "lexgen": "pnpm --filter=@teal/lexicons lex:gen-server",
+    "lexgen": "pnpm --filter=@teal/lexicons lex:gen",
     "prebuild:native": "CI=1 EXPO_NO_TELEMETRY=1 expo prebuild --no-install",
     "install": ":"
   },

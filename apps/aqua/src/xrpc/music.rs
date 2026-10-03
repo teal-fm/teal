@@ -1,8 +1,10 @@
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
-use serde::{Deserialize, Serialize};
-use types::fm_teal::feed::PlayView;
-use types::fm_teal::music::{AlbumView, ArtistListenerView, ArtistView};
+use serde::Deserialize;
+use types::fm_teal::music::get_album::GetAlbumOutput;
+use types::fm_teal::music::get_artist::GetArtistOutput;
+use types::fm_teal::music::get_artist_listeners::GetArtistListenersOutput;
+use types::fm_teal::music::get_release_group::GetReleaseGroupOutput;
 
 use crate::ctx::Context;
 
@@ -23,11 +25,6 @@ pub struct GetArtistQuery {
     pub name: Option<String>,
 }
 
-#[derive(Serialize)]
-pub struct GetArtistResponse {
-    artist: ArtistView,
-}
-
 pub async fn get_artist(
     Extension(ctx): Extension<Context>,
     axum::extract::Query(query): axum::extract::Query<GetArtistQuery>,
@@ -44,7 +41,8 @@ pub async fn get_artist(
         .get_artist(query.mbid.as_deref(), query.name.as_deref())
         .await
     {
-        Ok(artist) => Ok(axum::Json(GetArtistResponse {
+        Ok(artist) => Ok(axum::Json(GetArtistOutput {
+            extra_data: Default::default(),
             artist: artist.into_static(),
         })),
         Err(error) if error.to_string() == "artist not found" => {
@@ -61,12 +59,6 @@ pub struct GetArtistListenersQuery {
     pub period: Option<String>,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetArtistListenersResponse {
-    listeners: Vec<ArtistListenerView>,
-    cursor: Option<String>,
 }
 
 pub async fn get_artist_listeners(
@@ -91,9 +83,10 @@ pub async fn get_artist_listeners(
         )
         .await
     {
-        Ok(page) => Ok(axum::Json(GetArtistListenersResponse {
+        Ok(page) => Ok(axum::Json(GetArtistListenersOutput {
+            extra_data: Default::default(),
             listeners: page.listeners.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(error) if error.to_string() == "artist not found" => {
             Err((StatusCode::NOT_FOUND, error.to_string()))
@@ -112,13 +105,6 @@ pub struct GetAlbumQuery {
     pub cursor: Option<String>,
 }
 
-#[derive(Serialize)]
-pub struct GetAlbumResponse {
-    album: AlbumView,
-    plays: Vec<PlayView>,
-    cursor: Option<String>,
-}
-
 pub async fn get_album(
     Extension(ctx): Extension<Context>,
     axum::extract::Query(query): axum::extract::Query<GetAlbumQuery>,
@@ -132,10 +118,11 @@ pub async fn get_album(
         .get_album(&query.mbid, query.limit, query.cursor.as_deref())
         .await
     {
-        Ok(page) => Ok(axum::Json(GetAlbumResponse {
+        Ok(page) => Ok(axum::Json(GetAlbumOutput {
+            extra_data: Default::default(),
             album: page.album.into_static(),
             plays: page.plays.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(error) if error.to_string() == "album not found" => {
             Err((StatusCode::NOT_FOUND, error.to_string()))
@@ -149,13 +136,6 @@ pub struct GetReleaseGroupQuery {
     pub mbid: String,
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GetReleaseGroupResponse {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    release_group_mbid: Option<String>,
-}
-
 pub async fn get_release_group(
     Extension(ctx): Extension<Context>,
     axum::extract::Query(query): axum::extract::Query<GetReleaseGroupQuery>,
@@ -167,7 +147,10 @@ pub async fn get_release_group(
         ));
     }
     match ctx.db.get_release_group(&query.mbid).await {
-        Ok(release_group_mbid) => Ok(axum::Json(GetReleaseGroupResponse { release_group_mbid })),
+        Ok(release_group_mbid) => Ok(axum::Json(GetReleaseGroupOutput {
+            release_group_mbid: release_group_mbid.map(crate::repos::uri_value),
+            extra_data: Default::default(),
+        })),
         Err(error) => {
             tracing::warn!(%error, "MusicBrainz release-group lookup failed");
             Err((

@@ -1,8 +1,11 @@
 use crate::ctx::Context;
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
+use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
-use serde::{Deserialize, Serialize};
-use types::fm_teal::actor::MiniProfileView;
+use jacquard_common::types::string::AtUri;
+use serde::Deserialize;
+use types::fm_teal::graph::{
+    get_followers::GetFollowersOutput, get_follows::GetFollowsOutput, get_summary::GetSummaryOutput,
+};
 
 pub fn graph_routes() -> axum::Router {
     axum::Router::new()
@@ -15,14 +18,6 @@ pub fn graph_routes() -> axum::Router {
 pub struct GraphSummaryQuery {
     pub actor: String,
     pub viewer: Option<String>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GraphSummaryResponse {
-    followers_count: i64,
-    follows_count: i64,
-    viewer_following: Option<String>,
 }
 
 pub async fn get_summary(
@@ -38,10 +33,15 @@ pub async fn get_summary(
         .get_graph_summary(&query.actor, query.viewer.as_deref())
         .await
     {
-        Ok(summary) => Ok(axum::Json(GraphSummaryResponse {
+        Ok(summary) => Ok(axum::Json(GetSummaryOutput {
+            extra_data: Default::default(),
             followers_count: summary.followers_count,
             follows_count: summary.follows_count,
-            viewer_following: summary.viewer_following,
+            viewer_following: summary
+                .viewer_following
+                .map(AtUri::<jacquard_common::DefaultStr>::new_owned)
+                .transpose()
+                .map_err(|error| (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()))?,
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -52,12 +52,6 @@ pub struct GraphListQuery {
     pub actor: String,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GraphListResponse {
-    actors: Vec<MiniProfileView>,
-    cursor: Option<String>,
 }
 
 pub async fn get_followers(
@@ -73,9 +67,10 @@ pub async fn get_followers(
         .get_followers(&query.actor, query.limit, query.cursor.as_deref())
         .await
     {
-        Ok(page) => Ok(axum::Json(GraphListResponse {
+        Ok(page) => Ok(axum::Json(GetFollowersOutput {
+            extra_data: Default::default(),
             actors: page.actors.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -94,9 +89,10 @@ pub async fn get_follows(
         .get_follows(&query.actor, query.limit, query.cursor.as_deref())
         .await
     {
-        Ok(page) => Ok(axum::Json(GraphListResponse {
+        Ok(page) => Ok(axum::Json(GetFollowsOutput {
+            extra_data: Default::default(),
             actors: page.actors.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

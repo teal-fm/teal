@@ -75,9 +75,9 @@ import {
 import type {
   MiniProfileView,
   ProfileView,
-} from "@teal/lexicons/src/types/fm/teal/actor/defs";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
-import type { ReleaseView } from "@teal/lexicons/src/types/fm/teal/stats/defs";
+} from "@teal/lexicons/src/fm/teal/actor/defs";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import type { ReleaseView } from "@teal/lexicons/src/fm/teal/stats/defs";
 
 type DisplayProfile = Pick<
   ProfileView,

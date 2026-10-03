@@ -9,8 +9,8 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { ArrowLeft, Check, Disc3, Music2, Sparkles } from "lucide-react-native";
 
-import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
-import { Record as ProfileStatusRecord } from "@teal/lexicons/src/types/fm/teal/actor/profileStatus";
+import { Main as ProfileRecord } from "@teal/lexicons/src/fm/teal/actor/profile";
+import { Main as ProfileStatusRecord } from "@teal/lexicons/src/fm/teal/actor/profileStatus";
 
 import DescriptionPage from "./descriptionPage";
 import DisplayNamePage from "./displayNamePage";
@@ -184,8 +184,8 @@ export default function OnboardingPage() {
     const profileStatusRecord: ProfileStatusRecord = {
       $type: "fm.teal.actor.profileStatus",
       completedOnboarding: "profileOnboarding",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString() as ProfileStatusRecord["createdAt"],
+      updatedAt: new Date().toISOString() as ProfileStatusRecord["updatedAt"],
     };
 
     try {
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
             record: {
               ...profileStatusRecord,
               completedOnboarding: "profileOnboarding",
-              updatedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString() as ProfileStatusRecord["updatedAt"],
             },
           },
         );

@@ -16,7 +16,7 @@ import {
   RichText,
 } from "@atproto/api";
 
-import { validateRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
+import { $validate as validateRecord } from "@teal/lexicons/src/fm/teal/feed/play";
 
 import { StampContext, StampContextValue, StampStep } from "./_layout";
 import { createPlayRecordFromRecording } from "@/lib/manualListens";
@@ -206,9 +206,6 @@ powered by @teal.fm`;
     try {
       let record = createPlayRecordFromRecording(selectedTrack);
       let result = validateRecord(record);
-      if (result.success === false) {
-        throw new Error("Failed to validate play: " + result.error);
-      }
       console.log("Validated play:", result);
       const res = await agent?.call(
         "com.atproto.repo.createRecord",
