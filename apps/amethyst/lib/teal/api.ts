@@ -404,7 +404,7 @@ export function releaseGroupCoverArtUrl(releaseGroupMbId?: string, size = 250) {
 const recordingCoverArtCache = new Map<string, Promise<string | undefined>>();
 const releaseGroupCoverArtCache = new Map<
   string,
-  Promise<string | undefined>
+  { expiresAt: number; request: Promise<string | undefined> }
 >();
 const artistImageCache = new Map<string, Promise<string | undefined>>();
 
@@ -412,21 +412,35 @@ export function getReleaseGroupCoverArtUrl(releaseMbId?: string, size = 250) {
   const mbid = releaseMbId?.replace(/^mbid:/, "");
   if (!mbid) return Promise.resolve(undefined);
 
-  const cacheKey = `${mbid}:${size}`;
-  let cached = releaseGroupCoverArtCache.get(cacheKey);
-  if (!cached) {
-    cached = fetch(
-      `https://musicbrainz.org/ws/2/release/${encodeURIComponent(mbid)}?inc=release-groups&fmt=json`,
+  let cached = releaseGroupCoverArtCache.get(mbid);
+  if (!cached || cached.expiresAt <= Date.now()) {
+    if (!cached && releaseGroupCoverArtCache.size >= 1024) {
+      const oldestKey = releaseGroupCoverArtCache.keys().next().value;
+      if (oldestKey) releaseGroupCoverArtCache.delete(oldestKey);
+    }
+    const previousRequest = cached?.request;
+    const entry = {
+      expiresAt: Number.POSITIVE_INFINITY,
+      request: Promise.resolve<string | undefined>(undefined),
+    };
+    entry.request = getXrpc<{ releaseGroupMbid?: string }>(
+      "fm.teal.music.getReleaseGroup",
+      { mbid: `mbid:${mbid}` },
     )
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then(
-        (release?: { "release-group"?: { id?: string } }) =>
-          releaseGroupCoverArtUrl(release?.["release-group"]?.id, size),
-      )
-      .catch(() => undefined);
-    releaseGroupCoverArtCache.set(cacheKey, cached);
+      .then(({ releaseGroupMbid }) => {
+        entry.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        return releaseGroupMbid;
+      })
+      .catch(() => {
+        entry.expiresAt = Date.now() + 30 * 1000;
+        return previousRequest ?? undefined;
+      });
+    releaseGroupCoverArtCache.set(mbid, entry);
+    cached = entry;
   }
-  return cached;
+  return cached.request.then((groupMbid) =>
+    releaseGroupCoverArtUrl(groupMbid, size),
+  );
 }
 
 export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {

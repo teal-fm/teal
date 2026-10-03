@@ -1674,6 +1674,43 @@ export const schemaDict = {
       },
     },
   },
+  FmTealMusicGetReleaseGroup: {
+    lexicon: 1,
+    id: 'fm.teal.music.getReleaseGroup',
+    defs: {
+      main: {
+        type: 'query',
+        description:
+          'Resolve a MusicBrainz release to its cached canonical release group for cover art',
+        parameters: {
+          type: 'params',
+          required: ['mbid'],
+          properties: {
+            mbid: {
+              type: 'string',
+              format: 'uri',
+              description:
+                'MusicBrainz release ID URI, formatted as mbid:<uuid>',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            properties: {
+              releaseGroupMbid: {
+                type: 'string',
+                format: 'uri',
+                description:
+                  'Canonical MusicBrainz release-group ID URI, formatted as mbid:<uuid>; absent when no release group exists',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   FmTealRichtextFacet: {
     lexicon: 1,
     id: 'fm.teal.richtext.facet',
@@ -2324,6 +2361,7 @@ export const ids = {
   FmTealMusicGetAlbum: 'fm.teal.music.getAlbum',
   FmTealMusicGetArtist: 'fm.teal.music.getArtist',
   FmTealMusicGetArtistListeners: 'fm.teal.music.getArtistListeners',
+  FmTealMusicGetReleaseGroup: 'fm.teal.music.getReleaseGroup',
   FmTealRichtextFacet: 'fm.teal.richtext.facet',
   FmTealSearchDefs: 'fm.teal.search.defs',
   FmTealSearchGetResults: 'fm.teal.search.getResults',
