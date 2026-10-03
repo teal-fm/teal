@@ -191,7 +191,16 @@ struct AlbumTrack {
 }
 
 fn normalize_track_title(title: &str) -> String {
-    title.trim().to_lowercase()
+    title
+        .trim()
+        .chars()
+        .map(|character| match character {
+            '\u{2018}' | '\u{2019}' => '\'',
+            '\u{201c}' | '\u{201d}' => '"',
+            other => other,
+        })
+        .collect::<String>()
+        .to_lowercase()
 }
 
 fn normalize_release_type(primary_type: Option<&str>) -> &'static str {
@@ -1029,6 +1038,54 @@ mod tests {
 
         assert_eq!(tracks.len(), 2);
         assert!(tracks.iter().any(|track| track.name == "Bonus Track"));
+    }
+
+    #[test]
+    fn matches_typographic_quotes_without_duplicating_canonical_tracks() -> anyhow::Result<()> {
+        let canonical = Uuid::parse_str("d122329b-adb5-419d-b22c-b8564eaa0f35")?;
+        let observed = Uuid::parse_str("140577a1-8cd5-418a-9c0e-5d649179e1d9")?;
+        let release = release_with_tracks(vec![canonical_track(
+            "Tears Don’t Fall",
+            Some(canonical),
+            (1, 11),
+        )]);
+        let mut listen = observed_track("Tears Don't Fall", Some(observed));
+        listen.play_count = 12;
+
+        let tracks = merge_album_tracks(&release, vec![listen]);
+
+        assert_eq!(tracks.len(), 1);
+        assert_eq!(tracks[0].name, "Tears Don’t Fall");
+        assert_eq!(tracks[0].recording_mbid, Some(canonical));
+        assert_eq!(tracks[0].play_count, 12);
+        assert!(tracks[0].uri.is_some());
+        assert_eq!(
+            release
+                .order
+                .position_for(Some(observed), "Tears Don't Fall"),
+            Some((1, 11))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn quote_matching_preserves_title_punctuation_and_versions() {
+        let release = release_with_tracks(vec![
+            canonical_track("“Quoted” Song", None, (1, 1)),
+            canonical_track("Don't Fall", None, (1, 2)),
+        ]);
+        let tracks = merge_album_tracks(
+            &release,
+            vec![
+                observed_track("\"Quoted\" Song", None),
+                observed_track("Dont Fall", None),
+                observed_track("Don't Fall (Live)", None),
+            ],
+        );
+
+        assert_eq!(tracks.len(), 4);
+        assert_eq!(tracks[0].play_count, 1);
+        assert_eq!(tracks[1].play_count, 0);
     }
 
     #[test]
