@@ -122,10 +122,13 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
               "jacquard-lexgen",
               "--version",
               requiredJacquardVersion,
+              "--locked",
             ],
             { stdio: "inherit" },
           );
         } catch {
+          // Lock transitive dependencies too; newer jacquard-lexicon versions
+          // can change generated source without changing the CLI version.
           // Fall back to compiling when cargo-binstall is unavailable.
           await execa(
             "cargo",
@@ -134,6 +137,7 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
               "jacquard-lexgen",
               "--version",
               requiredJacquardVersion,
+              "--locked",
               "--force",
             ],
             { stdio: "inherit" },
@@ -142,7 +146,7 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
         console.log(pc.green("    ✓ jacquard-codegen installed successfully"));
       } catch (installError) {
         throw new Error(
-          `Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version ${requiredJacquardVersion}`,
+          `Failed to install jacquard-codegen. Please install manually: cargo install jacquard-lexgen --version ${requiredJacquardVersion} --locked`,
         );
       }
     }
