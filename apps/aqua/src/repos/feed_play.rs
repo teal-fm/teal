@@ -1,12 +1,11 @@
 use async_trait::async_trait;
-use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
-use types::fm_teal::feed::{Artist, PlayView};
+use types::fm_teal::feed::PlayView;
 
 use super::{
-    mbid_uri, mini_profile,
+    artists_from_json, mbid_uri, mini_profile,
     pg::PgDataSource,
-    stats::{decode_latest_cursor, encode_latest_cursor, LatestPlaysCursor},
+    stats::{LatestPlaysCursor, decode_latest_cursor, encode_latest_cursor},
     uri_value, utc_to_atrium_datetime,
 };
 
@@ -70,10 +69,7 @@ impl FeedPlayRepo for PgDataSource {
             return Ok(None);
         };
 
-        let artists: Vec<Artist> = match row.artists {
-            Some(value) => from_json_value::<Vec<Artist>>(value).unwrap_or_default(),
-            None => vec![],
-        };
+        let artists = artists_from_json(row.artists);
 
         Ok(Some(PlayView {
             track_name: row.track_name.clone().into(),
@@ -173,10 +169,7 @@ impl FeedPlayRepo for PgDataSource {
                 uri: row.uri.clone(),
             });
 
-            let artists: Vec<Artist> = match row.artists {
-                Some(value) => from_json_value::<Vec<Artist>>(value).unwrap_or_default(),
-                None => vec![],
-            };
+            let artists = artists_from_json(row.artists);
 
             plays.push(PlayView {
                 track_name: row.track_name.clone().into(),
@@ -257,10 +250,7 @@ impl FeedPlayRepo for PgDataSource {
         let mut result = Vec::with_capacity(rows.len());
         for row in rows {
             // Deserialize artists JSON array into Vec<Artist>
-            let artists: Vec<Artist> = match row.artists {
-                Some(value) => from_json_value::<Vec<Artist>>(value).unwrap_or_default(),
-                None => vec![],
-            };
+            let artists = artists_from_json(row.artists);
 
             result.push(PlayView {
                 track_name: row.track_name.clone().into(),

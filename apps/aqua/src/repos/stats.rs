@@ -1,14 +1,15 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
 use base64::Engine;
-use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, Did};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use types::fm_teal::feed::PlayView;
 use types::fm_teal::stats::{ArtistView, RecordingView, ReleaseView};
 
-use super::{mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime};
+use super::{
+    artists_from_json, mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime,
+};
 
 pub struct LatestPlaysPage {
     pub plays: Vec<PlayView>,
@@ -483,12 +484,7 @@ impl StatsRepo for PgDataSource {
                     .format(&time::format_description::well_known::Rfc3339)?,
                 uri: row.uri.clone(),
             });
-            let artists = match row.artists {
-                Some(value) => {
-                    from_json_value::<Vec<types::fm_teal::feed::Artist>>(value).unwrap_or_default()
-                }
-                None => vec![],
-            };
+            let artists = artists_from_json(row.artists);
 
             plays.push(PlayView {
                 track_name: row.track_name.into(),
@@ -562,8 +558,8 @@ impl PgDataSource {
 #[cfg(test)]
 mod tests {
     use super::{
-        decode_latest_cursor, decode_offset_cursor, encode_latest_cursor, encode_offset_cursor,
-        normalize_limit, LatestPlaysCursor, OffsetCursor, StatsPeriod,
+        LatestPlaysCursor, OffsetCursor, StatsPeriod, decode_latest_cursor, decode_offset_cursor,
+        encode_latest_cursor, encode_offset_cursor, normalize_limit,
     };
 
     #[test]
