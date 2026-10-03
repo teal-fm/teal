@@ -1,0 +1,36 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.music.getReleaseGroup",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Resolve a MusicBrainz release to its cached canonical release group for cover art",
+      "parameters": {
+        "type": "params",
+        "required": [
+          "mbid"
+        ],
+        "properties": {
+          "mbid": {
+            "type": "string",
+            "format": "uri",
+            "description": "MusicBrainz release ID URI, formatted as mbid:<uuid>"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "releaseGroupMbid": {
+              "type": "string",
+              "format": "uri",
+              "description": "Canonical MusicBrainz release-group ID URI, formatted as mbid:<uuid>; absent when no release group exists"
+            }
+          }
+        }
+      }
+    }
+  }
+}

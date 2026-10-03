@@ -1,5 +1,4 @@
 use std::collections::{BTreeMap, HashMap};
-use std::time::Duration as StdDuration;
 
 use async_trait::async_trait;
 use jacquard_common::deps::smol_str::SmolStr;
@@ -14,10 +13,12 @@ use types::fm_teal::music::{
 use uuid::Uuid;
 
 use super::stats::{
-    decode_latest_cursor, decode_offset_cursor, encode_latest_cursor, encode_offset_cursor,
-    LatestPlaysCursor,
+    LatestPlaysCursor, decode_latest_cursor, decode_offset_cursor, encode_latest_cursor,
+    encode_offset_cursor,
 };
 use super::{mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime};
+
+pub(crate) mod cache;
 
 pub struct AlbumPage {
     pub album: AlbumView,
@@ -58,6 +59,7 @@ impl ArtistListenersPeriod {
 
 #[async_trait]
 pub trait MusicRepo: Send + Sync {
+    async fn get_release_group(&self, mbid: &str) -> anyhow::Result<Option<String>>;
     async fn get_artist(
         &self,
         mbid: Option<&str>,
@@ -83,7 +85,7 @@ fn parse_mbid(mbid: &str) -> anyhow::Result<Uuid> {
     Ok(Uuid::parse_str(mbid.strip_prefix("mbid:").unwrap_or(mbid))?)
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 struct MusicBrainzTrackOrder {
     by_recording_mbid: HashMap<Uuid, (i32, i32)>,
     by_title: HashMap<String, (i32, i32)>,
@@ -105,7 +107,7 @@ struct CanonicalAlbumTrack {
     artist_name: Option<String>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 struct MusicBrainzReleaseData {
     order: MusicBrainzTrackOrder,
     tracks: Vec<CanonicalAlbumTrack>,
@@ -213,22 +215,20 @@ fn normalize_release_type(primary_type: Option<&str>) -> &'static str {
 }
 
 async fn fetch_musicbrainz_release(
+    cache: &cache::MusicBrainzCache,
     release_mbid: Uuid,
 ) -> anyhow::Result<MusicBrainzReleaseData> {
-    let url =
-        format!(
-            "https://musicbrainz.org/ws/2/release/{release_mbid}?inc=artist-credits+recordings+release-groups&fmt=json"
-        );
-    let release = reqwest::Client::builder()
-        .timeout(StdDuration::from_secs(3))
-        .user_agent("teal-aqua/0.1 (https://teal.fm)")
-        .build()?
-        .get(url)
-        .send()
-        .await?
-        .error_for_status()?
-        .json::<MusicBrainzRelease>()
-        .await?;
+    let url = format!(
+        "https://musicbrainz.org/ws/2/release/{release_mbid}?inc=artist-credits+recordings+release-groups&fmt=json"
+    );
+    let release = cache.request::<MusicBrainzRelease>(&url).await?;
+    cache
+        .release_groups
+        .insert(
+            release_mbid,
+            release.release_group.as_ref().and_then(|group| group.id),
+        )
+        .await;
 
     let release_artist = release
         .artist_credit
@@ -290,14 +290,10 @@ struct ArtistReleaseMeta {
 }
 
 async fn fetch_artist_release_types(
+    cache: &cache::MusicBrainzCache,
     artist_mbid: Uuid,
 ) -> anyhow::Result<HashMap<Uuid, ArtistReleaseMeta>> {
     const PAGE_SIZE: usize = 100;
-
-    let client = reqwest::Client::builder()
-        .timeout(StdDuration::from_secs(3))
-        .user_agent("teal-aqua/0.1 (https://teal.fm)")
-        .build()?;
 
     let mut release_types = HashMap::new();
     let mut offset = 0;
@@ -306,28 +302,29 @@ async fn fetch_artist_release_types(
         let url = format!(
             "https://musicbrainz.org/ws/2/release?artist={artist_mbid}&inc=release-groups&fmt=json&limit={PAGE_SIZE}&offset={offset}"
         );
-        let page = client
-            .get(url)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<MusicBrainzArtistReleases>()
-            .await?;
+        let page = cache.request::<MusicBrainzArtistReleases>(&url).await?;
         let page_len = page.releases.len();
 
-        release_types.extend(page.releases.into_iter().map(|release| {
+        for release in page.releases {
             let release_group = release.release_group;
-            (
+            let release_group_mbid = release_group.as_ref().and_then(|group| group.id);
+            cache
+                .release_groups
+                .insert(release.id, release_group_mbid)
+                .await;
+            release_types.insert(
                 release.id,
                 ArtistReleaseMeta {
                     release_type: normalize_release_type(
-                        release_group.as_ref().and_then(|group| group.primary_type.as_deref()),
+                        release_group
+                            .as_ref()
+                            .and_then(|group| group.primary_type.as_deref()),
                     )
                     .to_string(),
-                    release_group_mbid: release_group.and_then(|group| group.id),
+                    release_group_mbid,
                 },
-            )
-        }));
+            );
+        }
 
         if page_len == 0 {
             break;
@@ -420,6 +417,22 @@ fn merge_album_tracks(
 
 #[async_trait]
 impl MusicRepo for PgDataSource {
+    async fn get_release_group(&self, mbid: &str) -> anyhow::Result<Option<String>> {
+        let mbid = parse_mbid(mbid)?;
+        let group = self
+            .musicbrainz
+            .release_groups
+            .get_or_fetch(mbid, || async {
+                let url = format!(
+                    "https://musicbrainz.org/ws/2/release/{mbid}?inc=release-groups&fmt=json"
+                );
+                let release = self.musicbrainz.request::<MusicBrainzRelease>(&url).await?;
+                Ok(release.release_group.and_then(|group| group.id))
+            })
+            .await?;
+        Ok(group.map(|group| format!("mbid:{group}")))
+    }
+
     async fn get_artist(
         &self,
         mbid: Option<&str>,
@@ -501,7 +514,12 @@ impl MusicRepo for PgDataSource {
 
         let artist_name = artist.name;
         let release_types = match artist.mbid {
-            Some(artist_mbid) => fetch_artist_release_types(artist_mbid)
+            Some(artist_mbid) => self
+                .musicbrainz
+                .artist_releases
+                .get_or_fetch(artist_mbid, || {
+                    fetch_artist_release_types(&self.musicbrainz, artist_mbid)
+                })
                 .await
                 .unwrap_or_default(),
             None => HashMap::new(),
@@ -523,9 +541,7 @@ impl MusicRepo for PgDataSource {
                     release_type: Some(AlbumSummaryReleaseType::from_value(SmolStr::new(
                         release_type,
                     ))),
-                    release_group_mbid: meta
-                        .and_then(|meta| meta.release_group_mbid)
-                        .map(mbid_uri),
+                    release_group_mbid: meta.and_then(|meta| meta.release_group_mbid).map(mbid_uri),
                     extra_data: Some(BTreeMap::from([(
                         SmolStr::new_static("releaseType"),
                         Data::String(AtprotoStr::new(SmolStr::new(release_type))),
@@ -682,7 +698,12 @@ impl MusicRepo for PgDataSource {
         .fetch_optional(&self.db)
         .await?;
 
-        let musicbrainz = fetch_musicbrainz_release(mbid).await.unwrap_or_default();
+        let musicbrainz = self
+            .musicbrainz
+            .releases
+            .get_or_fetch(mbid, || fetch_musicbrainz_release(&self.musicbrainz, mbid))
+            .await
+            .unwrap_or_default();
         if album_row.is_none() && musicbrainz.title.is_none() {
             anyhow::bail!("album not found");
         }
@@ -888,9 +909,9 @@ impl MusicRepo for PgDataSource {
 #[cfg(test)]
 mod tests {
     use super::{
-        merge_album_tracks, normalize_release_type, sort_tracks_by_release_order, AlbumTrack,
-        ArtistListenersPeriod, CanonicalAlbumTrack, MusicBrainzArtistReleases, MusicBrainzRelease,
-        MusicBrainzReleaseData, MusicBrainzTrackOrder,
+        AlbumTrack, ArtistListenersPeriod, CanonicalAlbumTrack, MusicBrainzArtistReleases,
+        MusicBrainzRelease, MusicBrainzReleaseData, MusicBrainzTrackOrder, merge_album_tracks,
+        normalize_release_type, sort_tracks_by_release_order,
     };
     use serde_json::json;
     use uuid::Uuid;
@@ -934,7 +955,10 @@ mod tests {
         for (track, order) in tracks {
             release.tracks.push(track);
             release.order.by_title.extend(order.by_title);
-            release.order.by_recording_mbid.extend(order.by_recording_mbid);
+            release
+                .order
+                .by_recording_mbid
+                .extend(order.by_recording_mbid);
             release
                 .order
                 .canonical_recording_by_title

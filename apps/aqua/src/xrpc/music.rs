@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
+use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
 use types::fm_teal::feed::PlayView;
@@ -14,6 +14,7 @@ pub fn music_routes() -> axum::Router {
             get(get_artist_listeners),
         )
         .route("/fm.teal.music.getAlbum", get(get_album))
+        .route("/fm.teal.music.getReleaseGroup", get(get_release_group))
 }
 
 #[derive(Deserialize)]
@@ -140,5 +141,39 @@ pub async fn get_album(
             Err((StatusCode::NOT_FOUND, error.to_string()))
         }
         Err(error) => Err((StatusCode::INTERNAL_SERVER_ERROR, error.to_string())),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct GetReleaseGroupQuery {
+    pub mbid: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetReleaseGroupResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    release_group_mbid: Option<String>,
+}
+
+pub async fn get_release_group(
+    Extension(ctx): Extension<Context>,
+    axum::extract::Query(query): axum::extract::Query<GetReleaseGroupQuery>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    if uuid::Uuid::parse_str(query.mbid.strip_prefix("mbid:").unwrap_or(&query.mbid)).is_err() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "mbid must be a MusicBrainz release UUID".to_string(),
+        ));
+    }
+    match ctx.db.get_release_group(&query.mbid).await {
+        Ok(release_group_mbid) => Ok(axum::Json(GetReleaseGroupResponse { release_group_mbid })),
+        Err(error) => {
+            tracing::warn!(%error, "MusicBrainz release-group lookup failed");
+            Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                "MusicBrainz metadata unavailable; retry later".to_string(),
+            ))
+        }
     }
 }
