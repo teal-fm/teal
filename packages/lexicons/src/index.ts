@@ -21,6 +21,7 @@ import * as FmTealGraphGetSummary from './types/fm/teal/graph/getSummary'
 import * as FmTealMusicGetAlbum from './types/fm/teal/music/getAlbum'
 import * as FmTealMusicGetArtist from './types/fm/teal/music/getArtist'
 import * as FmTealMusicGetArtistListeners from './types/fm/teal/music/getArtistListeners'
+import * as FmTealMusicGetReleaseGroup from './types/fm/teal/music/getReleaseGroup'
 import * as FmTealSearchGetResults from './types/fm/teal/search/getResults'
 import * as FmTealStatsGetLatest from './types/fm/teal/stats/getLatest'
 import * as FmTealStatsGetRepoTopReleases from './types/fm/teal/stats/getRepoTopReleases'
@@ -276,6 +277,18 @@ export class FmTealMusicNS {
     >,
   ) {
     const nsid = 'fm.teal.music.getArtistListeners' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  getReleaseGroup<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      FmTealMusicGetReleaseGroup.QueryParams,
+      FmTealMusicGetReleaseGroup.HandlerInput,
+      FmTealMusicGetReleaseGroup.HandlerOutput
+    >,
+  ) {
+    const nsid = 'fm.teal.music.getReleaseGroup' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
