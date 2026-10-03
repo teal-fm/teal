@@ -146,8 +146,11 @@ pnpm lex:diff      # Show changes
 
 ## Working Handoff
 - Read `todo.md` before starting implementation work.
-- Update `todo.md` whenever implementation state, blockers, public preview URLs, or next steps change.
-- Keep future work concrete: name the service, route, test, or deployment action that remains.
+- Keep `todo.md` short: unfinished tasks and blockers only, one concise bullet per item.
+- Remove completed items immediately. Put implementation history, verification results, and commit/PR summaries in commits and PRs.
+- Do not add a Current State section or repeat setup commands and development guidelines.
+- Name the service, route, test, or deployment action that remains. Update or remove bullets as work changes.
+- Include a preview URL only when needed for an unfinished task; remove it when the task is done or the URL expires.
 - Do not commit secrets, tunnel tokens, OAuth codes, or private credentials.
 
 ## Code Standards
