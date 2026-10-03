@@ -16,7 +16,8 @@ use super::stats::{
     encode_offset_cursor,
 };
 use super::{
-    artists_from_json, mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime,
+    artists_from_json, mbid_uri, mini_profile, music_service_uri, pg::PgDataSource, uri_value,
+    utc_to_atrium_datetime,
 };
 
 pub(crate) mod cache;
@@ -843,7 +844,7 @@ impl MusicRepo for PgDataSource {
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(Into::into),
                 origin_uri: row.origin_url.map(uri_value),
-                music_service_uri: row.music_service_base_domain.map(uri_value),
+                music_service_uri: music_service_uri(row.music_service_base_domain),
                 submission_client_agent: row.submission_client_agent.map(Into::into),
                 played_time: row
                     .played_time

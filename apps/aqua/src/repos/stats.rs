@@ -8,7 +8,8 @@ use types::fm_teal::feed::PlayView;
 use types::fm_teal::stats::{ArtistView, RecordingView, ReleaseView};
 
 use super::{
-    artists_from_json, mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime,
+    artists_from_json, mbid_uri, mini_profile, music_service_uri, pg::PgDataSource, uri_value,
+    utc_to_atrium_datetime,
 };
 
 pub struct LatestPlaysPage {
@@ -506,7 +507,7 @@ impl StatsRepo for PgDataSource {
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
                 origin_uri: row.origin_url.map(uri_value),
-                music_service_uri: row.music_service_base_domain.map(uri_value),
+                music_service_uri: music_service_uri(row.music_service_base_domain),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time
