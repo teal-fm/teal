@@ -3,7 +3,7 @@ use jacquard_common::types::string::{AtUri, Did};
 use types::fm_teal::feed::PlayView;
 
 use super::{
-    artists_from_json, mbid_uri, mini_profile,
+    artists_from_json, mbid_uri, mini_profile, music_service_uri,
     pg::PgDataSource,
     stats::{LatestPlaysCursor, decode_latest_cursor, encode_latest_cursor},
     uri_value, utc_to_atrium_datetime,
@@ -91,7 +91,7 @@ impl FeedPlayRepo for PgDataSource {
             release_mb_id: row.release_mbid.map(mbid_uri),
             isrc: row.isrc.map(|s| s.into()),
             origin_uri: row.origin_url.map(uri_value),
-            music_service_uri: row.music_service_base_domain.map(uri_value),
+            music_service_uri: music_service_uri(row.music_service_base_domain),
             submission_client_agent: row.submission_client_agent.map(|s| s.into()),
             played_time: row
                 .played_time
@@ -191,7 +191,7 @@ impl FeedPlayRepo for PgDataSource {
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
                 origin_uri: row.origin_url.map(uri_value),
-                music_service_uri: row.music_service_base_domain.map(uri_value),
+                music_service_uri: music_service_uri(row.music_service_base_domain),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time
@@ -272,7 +272,7 @@ impl FeedPlayRepo for PgDataSource {
                 release_mb_id: row.release_mbid.map(mbid_uri),
                 isrc: row.isrc.map(|s| s.into()),
                 origin_uri: row.origin_url.map(uri_value),
-                music_service_uri: row.music_service_base_domain.map(uri_value),
+                music_service_uri: music_service_uri(row.music_service_base_domain),
                 submission_client_agent: row.submission_client_agent.map(|s| s.into()),
                 played_time: row
                     .played_time

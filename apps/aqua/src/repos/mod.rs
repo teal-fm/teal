@@ -96,6 +96,27 @@ pub fn uri_value(value: String) -> UriValue {
     UriValue::Any(SmolStr::new(value))
 }
 
+/// Older indexed plays store a service domain rather than a URI.
+pub fn music_service_uri(value: Option<String>) -> Option<UriValue> {
+    let value = value?;
+    if Uri::parse(value.as_str()).is_ok() {
+        return Some(uri_value(value));
+    }
+    let domain = value.trim();
+    let valid_domain = domain.contains('.')
+        && domain.len() <= 253
+        && domain.split('.').all(|label| {
+            !label.is_empty()
+                && label.len() <= 63
+                && !label.starts_with('-')
+                && !label.ends_with('-')
+                && label
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        });
+    valid_domain.then(|| uri_value(format!("https://{domain}")))
+}
+
 pub fn mini_profile(
     did: Option<String>,
     handle: Option<String>,
@@ -114,7 +135,7 @@ pub fn mini_profile(
 
 #[cfg(test)]
 mod tests {
-    use super::{artists_from_json, mini_profile};
+    use super::{artists_from_json, mini_profile, music_service_uri};
     use jacquard_common::deps::fluent_uri::Uri;
     use serde_json::json;
     use types::fm_teal::feed::PlayView;
@@ -214,5 +235,57 @@ mod tests {
     fn missing_artist_json_is_an_empty_list() {
         assert!(artists_from_json(None).is_empty());
         assert!(artists_from_json(Some(json!(null))).is_empty());
+    }
+
+    #[test]
+    fn legacy_music_service_domains_serialize_as_https_uris() {
+        for domain in ["last.fm", "open.spotify.com", "music.example-service.org"] {
+            let play = PlayView::builder()
+                .track_name("Legacy listen")
+                .artists(Vec::new())
+                .music_service_uri(music_service_uri(Some(domain.to_string())))
+                .build();
+            let output = serde_json::to_value(play).unwrap();
+            assert_eq!(output["musicServiceUri"], format!("https://{domain}"));
+            assert!(Uri::parse(output["musicServiceUri"].as_str().unwrap()).is_ok());
+        }
+    }
+
+    #[test]
+    fn music_service_uri_preserves_existing_uri_schemes() {
+        for value in [
+            "https://open.spotify.com/track/example",
+            "local:manual",
+            "custom:service",
+        ] {
+            let uri = music_service_uri(Some(value.to_string())).unwrap();
+            assert_eq!(uri.as_str(), value);
+        }
+    }
+
+    #[test]
+    fn unusable_optional_music_services_are_omitted_from_play_output() {
+        for value in [
+            "",
+            "   ",
+            "not a domain",
+            "localhost",
+            "last..fm",
+            "-bad.fm",
+            "bad-.fm",
+            "last.fm/path",
+        ] {
+            let play = PlayView::builder()
+                .track_name("Legacy listen")
+                .artists(Vec::new())
+                .music_service_uri(music_service_uri(Some(value.to_string())))
+                .build();
+            let output = serde_json::to_value(play).unwrap();
+            assert!(
+                output.get("musicServiceUri").is_none(),
+                "must omit {value:?}"
+            );
+        }
+        assert!(music_service_uri(None).is_none());
     }
 }
