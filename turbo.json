@@ -22,12 +22,24 @@
       "dependsOn": ["build:rust"]
     },
     "lex:gen-server": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/lexicons/fm.teal/**",
+        "$TURBO_ROOT$/vendor/atproto/lexicons/com/atproto/repo/strongRef.json",
+        "$TURBO_ROOT$/vendor/atproto/lexicons/app/bsky/richtext/facet.json"
+      ],
       "dependsOn": [],
       "outputs": ["./src/**"]
     },
     "lex:gen": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/lexicons/fm.teal/**",
+        "$TURBO_ROOT$/vendor/atproto/lexicons/com/atproto/repo/strongRef.json",
+        "$TURBO_ROOT$/vendor/atproto/lexicons/app/bsky/richtext/facet.json"
+      ],
       "dependsOn": [],
-      "outputs": ["./src/types/**", "./src/**/*.rs"]
+      "outputs": ["./src/**"]
     },
     "lex:watch": {
       "persistent": true,
@@ -44,16 +56,19 @@
     "db:migrate": {
       "cache": false
     },
+    "@teal/lexicons#test": {
+      "dependsOn": ["lex:gen"]
+    },
     "@teal/amethyst#build": {
-      "dependsOn": ["@teal/lexicons#lex:gen-server"],
+      "dependsOn": ["@teal/lexicons#lex:gen"],
       "outputs": ["./build/**"]
     },
     "@teal/amethyst#build:web": {
-      "dependsOn": ["@teal/lexicons#lex:gen-server"],
+      "dependsOn": ["@teal/lexicons#lex:gen"],
       "outputs": ["./build/**"]
     },
     "@teal/amethyst#build:ios": {
-      "dependsOn": ["@teal/lexicons#lex:gen-server"],
+      "dependsOn": ["@teal/lexicons#lex:gen"],
       "outputs": ["./build/**"]
     }
   }

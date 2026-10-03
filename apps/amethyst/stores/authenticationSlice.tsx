@@ -2,8 +2,8 @@ import { resolveFromIdentity } from "@/lib/atp/pid";
 import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
-import * as Lexicons from "@teal/lexicons/src/lexicons";
-import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
+import * as Lexicons from "@teal/lexicons/src/documents";
+import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { pdsHostFromOAuthIssuer } from "../lib/atp/oauthIssuer";
@@ -231,7 +231,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
 
 function addDocs(agent: Agent) {
   Lexicons.schemas
-    .filter((schema) => !schema.id.startsWith("app.bsky."))
+    .filter((schema) => schema.id.startsWith("fm.teal."))
     .map((schema) => {
       try {
         agent.lex.add(schema);

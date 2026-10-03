@@ -19,8 +19,8 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { ImagePlus, Save, UserRoundPen, X } from "lucide-react-native";
 
-import type { ProfileView } from "@teal/lexicons/src/types/fm/teal/actor/defs";
-import type { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
+import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
+import { $parse as parseProfileRecord, type Main as ProfileRecord } from "@teal/lexicons/src/fm/teal/actor/profile";
 
 type EditableProfile = Pick<
   ProfileView,
@@ -182,7 +182,7 @@ export default function EditProfileModal({
         currentRecord?.banner,
         currentBannerUrl,
       );
-      const record: ProfileRecord = {
+      const record: ProfileRecord = parseProfileRecord({
         ...currentRecord,
         $type: "fm.teal.actor.profile",
         displayName: displayName.trim(),
@@ -191,7 +191,7 @@ export default function EditProfileModal({
         avatar,
         banner,
         statsDefaultPeriod,
-      };
+      });
 
       if (swapRecord) {
         await agent.call(

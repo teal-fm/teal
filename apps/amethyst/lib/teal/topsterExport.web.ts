@@ -1,4 +1,4 @@
-import type { ReleaseView } from "@teal/lexicons/src/types/fm/teal/stats/defs";
+import type { ReleaseView } from "@teal/lexicons/src/fm/teal/stats/defs";
 
 import { coverArtUrl } from "./api";
 

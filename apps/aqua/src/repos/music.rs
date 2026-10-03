@@ -2,7 +2,6 @@ use std::collections::{BTreeMap, HashMap};
 
 use async_trait::async_trait;
 use jacquard_common::deps::smol_str::SmolStr;
-use jacquard_common::from_json_value;
 use jacquard_common::types::string::{AtUri, AtprotoStr, Did};
 use jacquard_common::types::value::Data;
 use serde::Deserialize;
@@ -16,7 +15,9 @@ use super::stats::{
     LatestPlaysCursor, decode_latest_cursor, decode_offset_cursor, encode_latest_cursor,
     encode_offset_cursor,
 };
-use super::{mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime};
+use super::{
+    artists_from_json, mbid_uri, mini_profile, pg::PgDataSource, uri_value, utc_to_atrium_datetime,
+};
 
 pub(crate) mod cache;
 
@@ -826,10 +827,7 @@ impl MusicRepo for PgDataSource {
                     .format(&time::format_description::well_known::Rfc3339)?,
                 uri: row.uri.clone(),
             });
-            let artists = row
-                .artists
-                .and_then(|value| from_json_value::<Vec<types::fm_teal::feed::Artist>>(value).ok())
-                .unwrap_or_default();
+            let artists = artists_from_json(row.artists);
 
             plays.push(PlayView {
                 track_name: row.track_name.into(),

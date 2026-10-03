@@ -1,19 +1,16 @@
 {
   "name": "@teal/lexicons",
   "type": "module",
-  "main": "./index.ts",
+  "main": "./src/index.ts",
   "dependencies": {
-    "@atproto/api": "^0.20.27",
     "@atproto/lex": "^0.2.3",
-    "@atproto/lex-cli": "^0.10.5",
     "@atproto/lexicon": "^0.7.6",
-    "@atproto/xrpc-server": "^0.11.8",
-    "@teal/tsconfig": "workspace:*",
-    "@types/express": "^5.0.6",
-    "multiformats": "^14.0.4"
+    "@teal/tsconfig": "workspace:*"
   },
   "scripts": {
     "lex:validate": "bash ./lex-validate.sh",
-    "lex:gen-server": "bash ./lex-gen.sh"
+    "lex:gen-server": "pnpm lex:gen",
+    "lex:gen": "bash ./lex-gen.sh",
+    "test": "tsx --test schema-contracts.test.ts"
   }
 }

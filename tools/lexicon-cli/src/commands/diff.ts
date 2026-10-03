@@ -71,7 +71,7 @@ async function showGeneratedDiff(workspaceRoot: string, commit: string) {
       '--name-only',
       commit,
       'HEAD',
-      'packages/lexicons/src/types/',
+      'packages/lexicons/src/',
       'services/types/src/'
     ], {
       cwd: workspaceRoot,
@@ -86,7 +86,7 @@ async function showGeneratedDiff(workspaceRoot: string, commit: string) {
         }
       });
       
-      console.log(pc.cyan(`\n    💡 Run 'git diff ${commit} HEAD -- packages/lexicons/src/types/' to see TypeScript changes`));
+      console.log(pc.cyan(`\n    💡 Run 'git diff ${commit} HEAD -- packages/lexicons/src/' to see TypeScript changes`));
       console.log(pc.cyan(`    💡 Run 'git diff ${commit} HEAD -- services/types/src/' to see Rust changes`));
     } else {
       console.log(pc.green('    ✓ No generated type changes'));

@@ -36,7 +36,7 @@ async function validateTypeScriptGeneration(workspaceRoot: string) {
     return;
   }
   
-  const typesPath = join(packagesLexiconsPath, 'src/types');
+  const typesPath = join(packagesLexiconsPath, 'src');
   
   if (!existsSync(typesPath)) {
     throw new Error('TypeScript types directory not found');
@@ -51,7 +51,7 @@ async function validateTypeScriptGeneration(workspaceRoot: string) {
       .split('/')
       .flatMap((segment) => segment.split('.'))
       .join('/');
-    const expectedTypeFile = join(typesPath, namespace + '.ts');
+    const expectedTypeFile = join(typesPath, namespace + '.defs.ts');
     
     if (!existsSync(expectedTypeFile)) {
       console.log(pc.yellow(`    ⚠️  Missing TypeScript types for: ${sourceFile}`));
@@ -101,7 +101,7 @@ async function validateConsistency(workspaceRoot: string) {
   console.log(pc.gray(`    Lexicon files found: ${lexiconFiles.length} files`));
   
   // Check if TypeScript and Rust generated types exist
-  const tsTypesPath = join(workspaceRoot, 'packages/lexicons/src/types');
+  const tsTypesPath = join(workspaceRoot, 'packages/lexicons/src');
   const rustTypesPath = join(workspaceRoot, 'services/types/src');
   
   let tsExists = existsSync(tsTypesPath);

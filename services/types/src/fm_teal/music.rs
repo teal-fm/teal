@@ -9,6 +9,7 @@
 pub mod get_album;
 pub mod get_artist;
 pub mod get_artist_listeners;
+pub mod get_release_group;
 
 
 #[allow(unused_imports)]

@@ -7,7 +7,9 @@
       "type": "query",
       "parameters": {
         "type": "params",
-        "required": ["actor"],
+        "required": [
+          "actor"
+        ],
         "properties": {
           "actor": {
             "type": "string",
@@ -20,9 +22,11 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["actor"],
+          "required": [
+            "profile"
+          ],
           "properties": {
-            "actor": {
+            "profile": {
               "type": "ref",
               "ref": "fm.teal.actor.defs#profileView"
             }

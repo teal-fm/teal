@@ -16,7 +16,7 @@ use jacquard_common::types::ident::AtIdentifier;
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use serde::{Serialize, Deserialize};
-use crate::fm_teal::actor::MiniProfileView;
+use crate::fm_teal::actor::ProfileView;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
@@ -28,7 +28,7 @@ pub struct GetProfiles<S: BosStr = DefaultStr> {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
 pub struct GetProfilesOutput<S: BosStr = DefaultStr> {
-    pub actors: Vec<MiniProfileView<S>>,
+    pub profiles: Vec<ProfileView<S>>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }

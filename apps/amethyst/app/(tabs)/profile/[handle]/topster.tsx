@@ -22,7 +22,7 @@ import { coverArtUrl, getProfile, getRepoTopReleases } from "@/lib/teal/api";
 import { musicAlbumHref } from "@/lib/teal/routes";
 import { ArrowLeft, Copy, Disc3, Download } from "lucide-react-native";
 
-import type { ReleaseView } from "@teal/lexicons/src/types/fm/teal/stats/defs";
+import type { ReleaseView } from "@teal/lexicons/src/fm/teal/stats/defs";
 
 type GridSize = 3 | 4 | 5;
 type ChartResult = {
