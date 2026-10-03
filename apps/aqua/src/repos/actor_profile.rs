@@ -63,9 +63,7 @@ impl From<PgProfileRepoRows> for ProfileView {
             did: row.did.map(Into::into),
             display_name: row.display_name.map(Into::into),
             featured_item: None,
-            profile_status: row
-                .profile_status
-                .and_then(|v| from_json_value::<ProfileStatus>(v).ok()),
+            profile_status: row.profile_status.and_then(profile_status_from_record),
             stats_default_period: row.stats_default_period.map(Into::into),
             status: row
                 .status
@@ -77,6 +75,20 @@ impl From<PgProfileRepoRows> for ProfileView {
             },
         }
     }
+}
+
+// Serde's flattened extra_data retains the incoming record tag. The generated
+// serializer writes its own stable tag, so retaining this key would emit a
+// duplicate $type and let legacy alpha records override the public schema.
+fn profile_status_from_record(record: Value) -> Option<ProfileStatus> {
+    let mut status = from_json_value::<ProfileStatus>(record).ok()?;
+    if let Some(extra_data) = status.extra_data.as_mut() {
+        extra_data.remove("$type");
+        if extra_data.is_empty() {
+            status.extra_data = None;
+        }
+    }
+    Some(status)
 }
 
 #[async_trait]
@@ -147,5 +159,76 @@ impl ActorProfileRepo for PgDataSource {
         .fetch_all(&self.db)
         .await?;
         Ok(profiles.into_iter().map(|p| p.into()).collect())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PgProfileRepoRows;
+    use serde_json::json;
+    use types::fm_teal::actor::ProfileView;
+
+    fn row_with_status(profile_status: serde_json::Value) -> PgProfileRepoRows {
+        PgProfileRepoRows {
+            avatar: None,
+            banner: None,
+            created_at: None,
+            description: None,
+            description_facets: None,
+            did: Some("did:plc:ewvi7nxzyoun6zhxrhs64oiz".into()),
+            display_name: Some("Teal listener".into()),
+            handle: None,
+            profile_status: Some(profile_status),
+            stats_default_period: None,
+            status: None,
+        }
+    }
+
+    #[test]
+    fn profile_status_emits_one_stable_tag_and_preserves_record_fields() {
+        for record_type in [
+            "fm.teal.alpha.actor.profileStatus",
+            "fm.teal.actor.profileStatus",
+        ] {
+            let profile = ProfileView::from(row_with_status(json!({
+                "$type": record_type,
+                "completedOnboarding": "complete",
+                "createdAt": "2025-06-08T13:10:00Z",
+                "updatedAt": "2026-10-03T01:20:00Z",
+                "client": "teal.amethyst",
+                "onboardingMetadata": { "version": 2, "imported": true }
+            })));
+            let serialized = serde_json::to_string(&profile).expect("profile must serialize");
+            assert_eq!(serialized.matches("\"$type\"").count(), 1);
+            let output: serde_json::Value =
+                serde_json::from_str(&serialized).expect("profile output must be JSON");
+            let status = &output["profileStatus"];
+            assert_eq!(status["$type"], "fm.teal.actor.profileStatus");
+            assert_eq!(status["completedOnboarding"], "complete");
+            assert_eq!(status["createdAt"], "2025-06-08T13:10:00Z");
+            assert_eq!(status["updatedAt"], "2026-10-03T01:20:00Z");
+            assert_eq!(status["client"], "teal.amethyst");
+            assert_eq!(
+                status["onboardingMetadata"],
+                json!({ "version": 2, "imported": true })
+            );
+        }
+    }
+
+    #[test]
+    fn profile_status_without_extensions_serializes_once() {
+        let profile = ProfileView::from(row_with_status(json!({
+            "$type": "fm.teal.actor.profileStatus",
+            "completedOnboarding": "profileOnboarding"
+        })));
+        let status = profile
+            .profile_status
+            .expect("valid status must remain present");
+        let serialized = serde_json::to_string(&status).expect("status must serialize");
+        assert_eq!(serialized.matches("\"$type\"").count(), 1);
+        let output: serde_json::Value =
+            serde_json::from_str(&serialized).expect("status must be JSON");
+        assert_eq!(output["$type"], "fm.teal.actor.profileStatus");
+        assert_eq!(output["completedOnboarding"], "profileOnboarding");
     }
 }
