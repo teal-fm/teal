@@ -4,20 +4,38 @@ name: Build and Push Aqua
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "apps/aqua/**"
+      - "services/types/**"
+      - "lexicons/**"
+      - "vendor/atproto"
+      - "tools/lexicon-cli/**"
+      - "scripts/setup-lexicons.sh"
+      - ".sqlx/**"
+      - ".cargo/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - ".dockerignore"
+      - ".gitmodules"
+      - "target.sh"
       - ".github/workflows/aqua.yml"
+  # Validate every stack layer, including pull requests based on feature branches.
   pull_request:
-    branches:
-      - main
     paths:
       - "apps/aqua/**"
+      - "services/types/**"
+      - "lexicons/**"
+      - "vendor/atproto"
+      - "tools/lexicon-cli/**"
+      - "scripts/setup-lexicons.sh"
+      - ".sqlx/**"
+      - ".cargo/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - ".dockerignore"
+      - ".gitmodules"
+      - "target.sh"
       - ".github/workflows/aqua.yml"
 
 env:
@@ -38,7 +56,7 @@ jobs:
           submodules: recursive
 
       - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -64,7 +82,7 @@ jobs:
         with:
           context: .
           file: ./apps/aqua/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
