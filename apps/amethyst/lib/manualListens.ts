@@ -2,7 +2,7 @@ import type {
   MusicBrainzArtistCredit,
   MusicBrainzRecording,
 } from "./oldStamp";
-import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
+import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
 
 export const PLAY_COLLECTION = "fm.teal.feed.play";
 export const FALLBACK_DURATION_SECONDS = 180;
@@ -276,9 +276,9 @@ export async function getMusicBrainzRelease(
   return parseReleaseDetails(value);
 }
 
-export function normalizeMbid(value?: string) {
+export function normalizeMbid(value?: string): `mbid:${string}` | undefined {
   if (!value) return undefined;
-  return value.startsWith("mbid:") ? value : `mbid:${value}`;
+  return `mbid:${value.replace(/^mbid:/, "")}`;
 }
 
 export function effectiveDurationSeconds(track: MusicBrainzAlbumTrack) {
@@ -352,9 +352,9 @@ export function createPlayRecordFromRecording(
     releaseName: release?.title,
     releaseMbId: normalizeMbid(release?.id),
     isrc: recording.isrcs?.[0],
-    musicServiceUri: "local",
+    musicServiceUri: "local:manual",
     submissionClientAgent: SUBMISSION_CLIENT_AGENT,
-    playedTime,
+    playedTime: playedTime as PlayRecord["playedTime"],
   };
 }
 
@@ -381,9 +381,9 @@ export function createPlayRecordFromAlbumTrack(
     releaseName: release.title,
     releaseMbId: normalizeMbid(release.id),
     isrc: recording.isrcs?.[0],
-    musicServiceUri: "local",
+    musicServiceUri: "local:manual",
     submissionClientAgent: SUBMISSION_CLIENT_AGENT,
-    playedTime,
+    playedTime: playedTime as PlayRecord["playedTime"],
   };
 }
 

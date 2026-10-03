@@ -1,7 +1,7 @@
 import type { Agent } from "@atproto/api";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
-import type { Record as PlayRecord } from "@teal/lexicons/src/types/fm/teal/feed/play";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
 
 export const PLAY_COLLECTION = "fm.teal.feed.play";
 
@@ -96,14 +96,14 @@ export function applyEditableFields(
     throw new Error("Track name is required.");
   }
 
-  let playedTime: string | undefined;
+  let playedTime: PlayRecord["playedTime"];
   const playedTimeText = fields.playedTime.trim();
   if (playedTimeText) {
     const parsed = new Date(playedTimeText);
     if (Number.isNaN(parsed.getTime())) {
       throw new Error("Played time must be a valid date and time.");
     }
-    playedTime = parsed.toISOString();
+    playedTime = parsed.toISOString() as PlayRecord["playedTime"];
   }
 
   return {

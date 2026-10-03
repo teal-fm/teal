@@ -1,11 +1,15 @@
+use types::fm_teal::stats::get_latest::GetLatestOutput;
+use types::fm_teal::stats::get_top_artists::GetTopArtistsOutput;
+use types::fm_teal::stats::get_top_releases::GetTopReleasesOutput;
+use types::fm_teal::stats::get_user_top_artists::GetUserTopArtistsOutput;
+use types::fm_teal::stats::get_user_top_recordings::GetUserTopRecordingsOutput;
+use types::fm_teal::stats::get_user_top_releases::GetUserTopReleasesOutput;
 mod repo_chart;
 
 use crate::ctx::Context;
 use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
-use serde::{Deserialize, Serialize};
-use types::fm_teal::feed::PlayView;
-use types::fm_teal::stats::{ArtistView, RecordingView, ReleaseView};
+use serde::Deserialize;
 
 // mount stats routes
 pub fn stats_routes() -> axum::Router {
@@ -36,11 +40,6 @@ pub struct GetTopArtistsQuery {
     pub limit: Option<i32>,
 }
 
-#[derive(Serialize)]
-pub struct GetTopArtistsResponse {
-    artists: Vec<ArtistView>,
-}
-
 pub async fn get_top_artists(
     Extension(ctx): Extension<Context>,
     axum::extract::Query(query): axum::extract::Query<GetTopArtistsQuery>,
@@ -48,7 +47,9 @@ pub async fn get_top_artists(
     let repo = &ctx.db;
 
     match repo.get_top_artists(query.limit).await {
-        Ok(artists) => Ok(axum::Json(GetTopArtistsResponse {
+        Ok(artists) => Ok(axum::Json(GetTopArtistsOutput {
+            cursor: None,
+            extra_data: Default::default(),
             artists: artists.into_static(),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
@@ -60,11 +61,6 @@ pub struct GetTopReleasesQuery {
     pub limit: Option<i32>,
 }
 
-#[derive(Serialize)]
-pub struct GetTopReleasesResponse {
-    releases: Vec<ReleaseView>,
-}
-
 pub async fn get_top_releases(
     Extension(ctx): Extension<Context>,
     axum::extract::Query(query): axum::extract::Query<GetTopReleasesQuery>,
@@ -72,7 +68,9 @@ pub async fn get_top_releases(
     let repo = &ctx.db;
 
     match repo.get_top_releases(query.limit).await {
-        Ok(releases) => Ok(axum::Json(GetTopReleasesResponse {
+        Ok(releases) => Ok(axum::Json(GetTopReleasesOutput {
+            cursor: None,
+            extra_data: Default::default(),
             releases: releases.into_static(),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
@@ -85,12 +83,6 @@ pub struct GetUserTopRecordingsQuery {
     pub period: Option<String>,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetUserTopRecordingsResponse {
-    recordings: Vec<RecordingView>,
-    cursor: Option<String>,
 }
 
 pub async fn get_user_top_recordings(
@@ -112,9 +104,10 @@ pub async fn get_user_top_recordings(
         )
         .await
     {
-        Ok(page) => Ok(axum::Json(GetUserTopRecordingsResponse {
+        Ok(page) => Ok(axum::Json(GetUserTopRecordingsOutput {
+            extra_data: Default::default(),
             recordings: page.recordings.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(e) if e.to_string().starts_with("unsupported period:") => {
             Err((StatusCode::BAD_REQUEST, e.to_string()))
@@ -129,12 +122,6 @@ pub struct GetUserTopArtistsQuery {
     pub period: Option<String>,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetUserTopArtistsResponse {
-    artists: Vec<ArtistView>,
-    cursor: Option<String>,
 }
 
 pub async fn get_user_top_artists(
@@ -156,9 +143,10 @@ pub async fn get_user_top_artists(
         )
         .await
     {
-        Ok(page) => Ok(axum::Json(GetUserTopArtistsResponse {
+        Ok(page) => Ok(axum::Json(GetUserTopArtistsOutput {
+            extra_data: Default::default(),
             artists: page.artists.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(e) if e.to_string().starts_with("unsupported period:") => {
             Err((StatusCode::BAD_REQUEST, e.to_string()))
@@ -173,12 +161,6 @@ pub struct GetUserTopReleasesQuery {
     pub period: Option<String>,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetUserTopReleasesResponse {
-    releases: Vec<ReleaseView>,
-    cursor: Option<String>,
 }
 
 pub async fn get_user_top_releases(
@@ -200,9 +182,10 @@ pub async fn get_user_top_releases(
         )
         .await
     {
-        Ok(page) => Ok(axum::Json(GetUserTopReleasesResponse {
+        Ok(page) => Ok(axum::Json(GetUserTopReleasesOutput {
+            extra_data: Default::default(),
             releases: page.releases.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(e) if e.to_string().starts_with("unsupported period:") => {
             Err((StatusCode::BAD_REQUEST, e.to_string()))
@@ -217,12 +200,6 @@ pub struct GetLatestQuery {
     pub cursor: Option<String>,
 }
 
-#[derive(Serialize)]
-pub struct GetLatestResponse {
-    plays: Vec<PlayView>,
-    cursor: Option<String>,
-}
-
 pub async fn get_latest(
     Extension(ctx): Extension<Context>,
     axum::extract::Query(query): axum::extract::Query<GetLatestQuery>,
@@ -230,9 +207,10 @@ pub async fn get_latest(
     let repo = &ctx.db;
 
     match repo.get_latest(query.limit, query.cursor.as_deref()).await {
-        Ok(page) => Ok(axum::Json(GetLatestResponse {
+        Ok(page) => Ok(axum::Json(GetLatestOutput {
+            extra_data: Default::default(),
             plays: page.plays.into_static(),
-            cursor: page.cursor,
+            cursor: page.cursor.map(Into::into),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

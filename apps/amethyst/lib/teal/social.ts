@@ -1,4 +1,4 @@
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 
 type TrackArtist = {
   artistName?: string;
@@ -60,7 +60,7 @@ export function playViewToTrackView(play: PlayView): TrackViewLike {
     artistNames: play.artists.map((artist) => artist.artistName),
     artistMbIds: play.artists
       .map((artist) => artist.artistMbId)
-      .filter((mbid): mbid is string => Boolean(mbid)),
+      .filter((mbid): mbid is NonNullable<typeof mbid> => Boolean(mbid)),
     artists: play.artists.map((artist) => ({
       artistName: artist.artistName,
       artistMbId: artist.artistMbId,

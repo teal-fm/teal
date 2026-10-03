@@ -10,8 +10,8 @@ import { useStore } from "@/stores/mainStore";
 import { Agent } from "@atproto/api";
 import { MoreHorizontal, Pen, Plus } from "lucide-react-native";
 
-import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/actor/getProfile";
-import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
+import { $OutputBody as GetProfileOutputSchema } from "@teal/lexicons/src/fm/teal/actor/getProfile";
+import { Main as ProfileRecord } from "@teal/lexicons/src/fm/teal/actor/profile";
 
 import { CardTitle } from "../../components/ui/card";
 import EditProfileModal from "./editProfileView";
@@ -27,7 +27,7 @@ export interface ActorViewProps {
 export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<
-    GetProfileOutputSchema["actor"] | null
+    GetProfileOutputSchema["profile"] | null
   >(null);
 
   const tealDid = useStore((state) => state.tealDid);
@@ -47,7 +47,7 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
           { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
         );
         if (isMounted) {
-          setProfile(res.data["actor"] as GetProfileOutputSchema["actor"]);
+          setProfile(res.data["profile"] as GetProfileOutputSchema["profile"]);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);

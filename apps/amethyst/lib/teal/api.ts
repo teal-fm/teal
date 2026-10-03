@@ -3,19 +3,19 @@ import type { AppBskyActorDefs } from "@atproto/api";
 import type {
   MiniProfileView,
   ProfileView,
-} from "@teal/lexicons/src/types/fm/teal/actor/defs";
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
+} from "@teal/lexicons/src/fm/teal/actor/defs";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 import type {
   AlbumView,
   ArtistListenerView,
   ArtistView as MusicArtistView,
-} from "@teal/lexicons/src/types/fm/teal/music/defs";
-import type { SongResult } from "@teal/lexicons/src/types/fm/teal/search/defs";
+} from "@teal/lexicons/src/fm/teal/music/defs";
+import type { SongResult } from "@teal/lexicons/src/fm/teal/search/defs";
 import type {
   ArtistView,
   RecordingView,
   ReleaseView,
-} from "@teal/lexicons/src/types/fm/teal/stats/defs";
+} from "@teal/lexicons/src/fm/teal/stats/defs";
 
 const rawBase =
   process.env.EXPO_PUBLIC_AQUA_URL || process.env.EXPO_PUBLIC_APPVIEW_URL || "";

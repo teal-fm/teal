@@ -5,9 +5,11 @@ use atmst::{Bytes, CarImporter, Ipld, mst::Mst};
 use axum::{Json, extract::Query, http::StatusCode};
 use chrono::{DateTime, Utc};
 use futures::StreamExt;
+use jacquard_common::types::string::UriValue;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
+use types::fm_teal::stats::{ReleaseView, get_repo_top_releases::GetRepoTopReleasesOutput};
 
 use crate::{api, redis_client::RedisClient};
 
@@ -43,18 +45,39 @@ struct ChartRelease {
     play_count: usize,
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub(super) struct ChartResponse {
+struct ChartResponse {
     releases: Vec<ChartRelease>,
     source_count: usize,
     album_play_count: usize,
     fetched_at: String,
 }
 
+impl ChartResponse {
+    fn into_output(self) -> Result<GetRepoTopReleasesOutput> {
+        Ok(GetRepoTopReleasesOutput {
+            releases: self
+                .releases
+                .into_iter()
+                .map(|release| {
+                    Ok(ReleaseView {
+                        name: Some(release.name.into()),
+                        mbid: release.mbid.map(UriValue::new_owned).transpose()?,
+                        play_count: Some(i64::try_from(release.play_count)?),
+                        extra_data: Default::default(),
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?,
+            source_count: i64::try_from(self.source_count)?,
+            album_play_count: i64::try_from(self.album_play_count)?,
+            fetched_at: self.fetched_at.parse()?,
+            extra_data: Default::default(),
+        })
+    }
+}
+
 pub(super) async fn get_repo_top_releases(
     Query(query): Query<ChartQuery>,
-) -> Result<Json<ChartResponse>, (StatusCode, String)> {
+) -> Result<Json<GetRepoTopReleasesOutput>, (StatusCode, String)> {
     let cutoff = period_cutoff(query.period.as_deref())
         .map_err(|error| (StatusCode::BAD_REQUEST, error.to_string()))?;
     if query.actor.is_empty() {
@@ -64,11 +87,8 @@ pub(super) async fn get_repo_top_releases(
         .await
         .map_err(internal_error)?;
     let snapshot = load_snapshot(&did, &pds).await.map_err(internal_error)?;
-    Ok(Json(chart_from_snapshot(
-        &snapshot,
-        cutoff,
-        query.limit.unwrap_or(25).clamp(1, 100),
-    )))
+    let chart = chart_from_snapshot(&snapshot, cutoff, query.limit.unwrap_or(25).clamp(1, 100));
+    Ok(Json(chart.into_output().map_err(internal_error)?))
 }
 
 fn internal_error(error: anyhow::Error) -> (StatusCode, String) {

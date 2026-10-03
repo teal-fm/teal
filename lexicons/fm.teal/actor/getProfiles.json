@@ -7,7 +7,9 @@
       "type": "query",
       "parameters": {
         "type": "params",
-        "required": ["actors"],
+        "required": [
+          "actors"
+        ],
         "properties": {
           "actors": {
             "type": "array",
@@ -23,13 +25,15 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["actors"],
+          "required": [
+            "profiles"
+          ],
           "properties": {
-            "actors": {
+            "profiles": {
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "fm.teal.actor.defs#miniProfileView"
+                "ref": "fm.teal.actor.defs#profileView"
               }
             }
           }

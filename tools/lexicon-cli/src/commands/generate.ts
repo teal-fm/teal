@@ -57,7 +57,7 @@ async function generateTypeScript(workspaceRoot: string, force?: boolean) {
   console.log(pc.cyan("  📦 Generating TypeScript types..."));
 
   try {
-    await execa("pnpm", ["lex:gen-server"], {
+    await execa("pnpm", ["lex:gen"], {
       cwd: packagesLexiconsPath,
       stdio: "inherit",
     });

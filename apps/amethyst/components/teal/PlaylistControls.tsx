@@ -18,8 +18,8 @@ import { useStore } from "@/stores/mainStore";
 import { RichText as AtprotoRichText } from "@atproto/api";
 import { Music2, Search } from "lucide-react-native";
 
-import type { PlayView } from "@teal/lexicons/src/types/fm/teal/feed/defs";
-import type { SongResult } from "@teal/lexicons/src/types/fm/teal/search/defs";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import type { SongResult } from "@teal/lexicons/src/fm/teal/search/defs";
 
 type SearchSource = "history" | "musicbrainz";
 
