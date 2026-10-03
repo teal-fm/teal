@@ -1,9 +1,11 @@
 use actor_profile::ActorProfileRepo;
 use jacquard_common::{
-    deps::smol_str::SmolStr,
+    deps::{fluent_uri::Uri, smol_str::SmolStr},
+    from_json_value,
     types::string::{Handle, UriValue},
 };
-use types::fm_teal::actor::MiniProfileView;
+use serde_json::Value;
+use types::fm_teal::{actor::MiniProfileView, feed::Artist};
 use uuid::Uuid;
 
 use crate::repos::feed_play::FeedPlayRepo;
@@ -58,6 +60,38 @@ pub fn mbid_uri(mbid: Uuid) -> UriValue {
     UriValue::Any(SmolStr::new(format!("mbid:{mbid}")))
 }
 
+/// SQL JSON aggregates contain bare UUIDs, while play views require URI IDs.
+/// Preserve artist metadata even when its optional identifier cannot be used.
+pub fn artists_from_json(value: Option<Value>) -> Vec<Artist> {
+    let Some(Value::Array(artists)) = value else {
+        return Vec::new();
+    };
+    artists
+        .into_iter()
+        .filter_map(|mut value| {
+            let artist = value.as_object_mut()?;
+            if let Some(id) = artist.get("artistMbId") {
+                let normalized = id.as_str().and_then(|id| {
+                    if Uri::parse(id).is_ok() {
+                        Some(id.to_owned())
+                    } else {
+                        Uuid::parse_str(id).ok().map(|mbid| format!("mbid:{mbid}"))
+                    }
+                });
+                match normalized {
+                    Some(id) => {
+                        artist.insert("artistMbId".into(), Value::String(id));
+                    }
+                    None => {
+                        artist.remove("artistMbId");
+                    }
+                }
+            }
+            from_json_value::<Artist>(value).ok()
+        })
+        .collect()
+}
+
 pub fn uri_value(value: String) -> UriValue {
     UriValue::Any(SmolStr::new(value))
 }
@@ -80,7 +114,10 @@ pub fn mini_profile(
 
 #[cfg(test)]
 mod tests {
-    use super::mini_profile;
+    use super::{artists_from_json, mini_profile};
+    use jacquard_common::deps::fluent_uri::Uri;
+    use serde_json::json;
+    use types::fm_teal::feed::PlayView;
 
     #[test]
     fn mini_profile_normalizes_at_uri_handle() {
@@ -106,5 +143,76 @@ mod tests {
         .expect("profile should be present");
 
         assert_eq!(profile.handle, None);
+    }
+
+    #[test]
+    fn serialized_play_artists_have_uri_ids_and_preserve_unknown_fields() {
+        let raw_mbid = "0517db23-5491-51e6-a76c-079e884463d9";
+        let artists = artists_from_json(Some(json!([
+            { "artistName": "Raw UUID", "artistMbId": raw_mbid, "role": "lead" },
+            { "artistName": "Prefixed UUID", "artistMbId": format!("mbid:{raw_mbid}") },
+            { "artistName": "URI", "artistMbId": "https://musicbrainz.org/artist/example", "source": "external" },
+            { "artistName": "Unknown ID" },
+            { "artistName": "Null ID", "artistMbId": null }
+        ])));
+        let play = PlayView::builder()
+            .track_name("Example track")
+            .artists(artists)
+            .build();
+        let output = serde_json::to_value(play).unwrap();
+        let artists = output["artists"].as_array().unwrap();
+        assert_eq!(artists.len(), 5);
+        assert_eq!(artists[0]["artistMbId"], format!("mbid:{raw_mbid}"));
+        assert_eq!(artists[1]["artistMbId"], format!("mbid:{raw_mbid}"));
+        assert_eq!(
+            artists[2]["artistMbId"],
+            "https://musicbrainz.org/artist/example"
+        );
+        assert_eq!(artists[0]["role"], "lead");
+        assert_eq!(artists[2]["source"], "external");
+        assert!(artists[3].get("artistMbId").is_none());
+        assert!(artists[4].get("artistMbId").is_none());
+        for artist in artists {
+            if let Some(id) = artist.get("artistMbId") {
+                assert!(Uri::parse(id.as_str().unwrap()).is_ok());
+            }
+        }
+    }
+
+    #[test]
+    fn preserves_existing_uri_schemes_including_uuid_urns() {
+        let identifiers = [
+            "mbid:0517db23-5491-51e6-a76c-079e884463d9",
+            "urn:uuid:0517db23-5491-51e6-a76c-079e884463d9",
+            "https://musicbrainz.org/artist/0517db23-5491-51e6-a76c-079e884463d9",
+        ];
+        for id in identifiers {
+            let artists =
+                artists_from_json(Some(json!([{ "artistName": "Artist", "artistMbId": id }])));
+            assert_eq!(serde_json::to_value(artists).unwrap()[0]["artistMbId"], id);
+        }
+    }
+
+    #[test]
+    fn invalid_artist_ids_do_not_drop_names_or_other_artists() {
+        let artists = artists_from_json(Some(json!([
+            { "artistName": "Malformed ID", "artistMbId": "not a URI", "role": "guest" },
+            { "artistName": "Wrong ID type", "artistMbId": 42 },
+            { "artistMbId": "mbid:0517db23-5491-51e6-a76c-079e884463d9" },
+            { "artistName": "Valid artist", "artistMbId": "urn:artist:example" }
+        ])));
+        let output = serde_json::to_value(artists).unwrap();
+        assert_eq!(output.as_array().unwrap().len(), 3);
+        assert_eq!(output[0]["artistName"], "Malformed ID");
+        assert_eq!(output[0]["role"], "guest");
+        assert!(output[0].get("artistMbId").is_none());
+        assert!(output[1].get("artistMbId").is_none());
+        assert_eq!(output[2]["artistMbId"], "urn:artist:example");
+    }
+
+    #[test]
+    fn missing_artist_json_is_an_empty_list() {
+        assert!(artists_from_json(None).is_empty());
+        assert!(artists_from_json(Some(json!(null))).is_empty());
     }
 }
