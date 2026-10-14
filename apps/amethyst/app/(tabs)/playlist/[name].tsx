@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
@@ -8,7 +8,6 @@ import {
   PlaylistTrackPicker,
 } from "@/components/teal/PlaylistControls";
 import RichText from "@/components/teal/RichText";
-import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +22,12 @@ import {
   type SocialPlaylistItemView,
   type SocialPlaylistView,
 } from "@/lib/teal/api";
+import {
+  createPlaylistRouteScope,
+  MAX_PLAYLIST_COLLABORATORS,
+  resolvePlaylistAuthors,
+} from "@/lib/teal/playlistEditing";
+import { playlistHrefFromUri } from "@/lib/teal/routes";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { useStore } from "@/stores/mainStore";
 import { RichText as AtprotoRichText } from "@atproto/api";
@@ -46,18 +51,43 @@ export default function PlaylistDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [addingItem, setAddingItem] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [coverChanged, setCoverChanged] = useState(false);
   const pdsAgent = useStore((state) => state.pdsAgent);
+  const validUri = Boolean(playlistHrefFromUri(uri));
+  const routeScope = useRef(createPlaylistRouteScope());
+  // Invalidate immediately when the URL changes, before a late completion can
+  // reach this render's effect. Returning to the same URI is a new generation.
+  routeScope.current.setUri(uri);
+  const isCurrentRoute = routeScope.current.capture(uri);
+  useEffect(() => () => routeScope.current.invalidate(), []);
 
   useEffect(() => {
     let mounted = true;
-    if (!uri) return;
+    setPlaylist(null);
+    setItems([]);
+    setEditing(false);
+    setError(null);
+    setSaving(false);
+    setAddingItem(false);
+    if (!uri || !validUri) return;
+    const timeout = setTimeout(() => {
+      if (!mounted) return;
+      mounted = false;
+      setError("This playlist is taking too long to load. Try again.");
+    }, 20_000);
     getPlaylist(uri)
       .then((res) => {
         if (!mounted) return;
         setPlaylist(res.playlist);
         setName(res.playlist.name);
         setDescription(res.playlist.description || "");
-        setAuthorsText(res.playlist.authors.join("\n"));
+        setAuthorsText(
+          res.playlist.authors
+            .filter((did) => did !== res.playlist.authorDid)
+            .join("\n"),
+        );
+        setCoverChanged(false);
         setCoverUri(
           res.playlist.coverCid
             ? getImageCdnLink({
@@ -70,11 +100,13 @@ export default function PlaylistDetailScreen() {
       })
       .catch((e) => {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
-      });
+      })
+      .finally(() => clearTimeout(timeout));
     return () => {
       mounted = false;
+      clearTimeout(timeout);
     };
-  }, [uri]);
+  }, [uri, validUri, retry]);
 
   useEffect(() => {
     let mounted = true;
@@ -102,36 +134,49 @@ export default function PlaylistDetailScreen() {
   );
 
   function appendItem(item: SocialPlaylistItemView) {
-    setItems((current) => [...current, item]);
+    if (!isCurrentRoute()) return;
+    setItems((current) => (isCurrentRoute() ? [...current, item] : current));
     setPlaylist((current) =>
-      current ? { ...current, itemCount: current.itemCount + 1 } : current,
+      current && current.uri === uri && isCurrentRoute()
+        ? { ...current, itemCount: current.itemCount + 1 }
+        : current,
     );
   }
 
   async function saveMetadata() {
-    if (!playlist || !pdsAgent?.did || saving) return;
+    if (
+      !playlist ||
+      !pdsAgent?.did ||
+      saving ||
+      playlist.uri !== uri ||
+      !isCurrentRoute()
+    )
+      return;
+    const isCurrentOperation = routeScope.current.capture(playlist.uri);
+    if (!name.trim()) {
+      setError("Give your playlist a name before saving.");
+      return;
+    }
     setSaving(true);
+    setError(null);
     try {
-      const authors = Array.from(
-        new Set(
-          authorsText
-            .split(/[\n,]/)
-            .map((author) => author.trim())
-            .filter(Boolean),
-        ),
+      const authors = await resolvePlaylistAuthors(
+        authorsText,
+        playlist.authorDid,
+        async (handle) => {
+          const response = await pdsAgent.resolveHandle({ handle });
+          return response.data.did;
+        },
       );
-      if (!authors.includes(playlist.authorDid))
-        authors.unshift(playlist.authorDid);
       const current: { cover?: unknown } = await pdsAgent
         .call("com.atproto.repo.getRecord", {
           repo: playlist.authorDid,
           collection: "fm.teal.feed.social.playlist",
           rkey: rkeyFromUri(playlist.uri),
         })
-        .then((res) => res.data.value as { cover?: unknown })
-        .catch(() => ({}));
+        .then((res) => res.data.value as { cover?: unknown });
       let cover = current.cover;
-      if (coverUri && !coverUri.startsWith("http")) {
+      if (coverUri && coverChanged) {
         const data = await fetch(coverUri).then((response) => response.blob());
         const fileType = data.type || "image/jpeg";
         cover = (await pdsAgent.uploadBlob(data, { encoding: fileType })).data
@@ -161,6 +206,7 @@ export default function PlaylistDetailScreen() {
           },
         },
       );
+      if (!isCurrentOperation()) return;
       setPlaylist({
         ...playlist,
         name: name.trim(),
@@ -168,35 +214,66 @@ export default function PlaylistDetailScreen() {
         descriptionFacets,
         authors,
       });
+      setCoverChanged(false);
       setEditing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (isCurrentOperation())
+        setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setSaving(false);
+      if (isCurrentOperation()) setSaving(false);
     }
   }
 
   async function pickCover() {
+    const isCurrentOperation = routeScope.current.capture(uri);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.9,
     });
-    if (!result.canceled) setCoverUri(result.assets[0].uri);
+    if (isCurrentOperation() && !result.canceled) {
+      setCoverUri(result.assets[0].uri);
+      setCoverChanged(true);
+    }
   }
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell>
       <Stack.Screen
         options={{ title: playlist?.name || "Playlist", headerShown: false }}
       />
-      {error && (
-        <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">{error}</Text>
+      {!validUri && (
+        <View className="gap-3 rounded-xl border border-border bg-card p-5">
+          <Text className="text-2xl font-black">
+            This playlist link is incomplete
+          </Text>
+          <Text className="text-muted-foreground">
+            Ask for the full playlist link, or open a playlist from its owner's
+            profile.
+          </Text>
+          <Link href="/" asChild>
+            <Button className="self-start">
+              <Text>Go home</Text>
+            </Button>
+          </Link>
         </View>
       )}
-      {!playlist && !error && (
+      {error && validUri && (
+        <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+          <Text className="font-bold text-destructive">{error}</Text>
+          {!playlist && (
+            <Button
+              variant="outline"
+              className="mt-3 self-start"
+              onPress={() => setRetry((value) => value + 1)}
+            >
+              <Text>Try again</Text>
+            </Button>
+          )}
+        </View>
+      )}
+      {validUri && !playlist && !error && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
         </View>
@@ -206,6 +283,8 @@ export default function PlaylistDetailScreen() {
           <View className="mb-8 rounded-lg border border-border bg-card p-6">
             <View className="flex-row items-start gap-4">
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Change playlist cover"
                 disabled={!canManage || !editing}
                 onPress={pickCover}
                 className="h-14 w-14 overflow-hidden rounded-lg bg-accent"
@@ -221,23 +300,65 @@ export default function PlaylistDetailScreen() {
               <View className="min-w-0 flex-1">
                 {editing ? (
                   <View className="gap-3">
-                    <Input value={name} onChangeText={setName} />
+                    <Text className="text-sm font-semibold">Playlist name</Text>
+                    <Input
+                      accessibilityLabel="Playlist name"
+                      value={name}
+                      onChangeText={setName}
+                      maxLength={50}
+                    />
+                    <Text className="text-sm font-semibold">Description</Text>
                     <Textarea
+                      accessibilityLabel="Playlist description"
                       className="min-h-20"
                       value={description}
                       onChangeText={setDescription}
+                      maxLength={5000}
                     />
+                    <Text className="text-sm font-semibold">Collaborators</Text>
+                    <Text className="text-sm text-muted-foreground">
+                      You own this playlist. Collaborators can add tracks. Enter
+                      up to {MAX_PLAYLIST_COLLABORATORS} handles, one per line;
+                      existing DIDs also work.
+                    </Text>
                     <Textarea
+                      accessibilityLabel="Collaborator handles"
                       className="min-h-20"
                       value={authorsText}
                       onChangeText={setAuthorsText}
-                      placeholder="Collaborator DIDs, one per line"
+                      placeholder="e.g. listener.bsky.social"
                     />
                     <View className="flex-row gap-2">
-                      <Button disabled={saving} onPress={saveMetadata}>
+                      <Button
+                        disabled={saving || !name.trim()}
+                        onPress={saveMetadata}
+                      >
                         <Text>{saving ? "Saving..." : "Save"}</Text>
                       </Button>
-                      <Button variant="ghost" onPress={() => setEditing(false)}>
+                      <Button
+                        disabled={saving}
+                        variant="ghost"
+                        onPress={() => {
+                          setName(playlist.name);
+                          setDescription(playlist.description || "");
+                          setAuthorsText(
+                            playlist.authors
+                              .filter((did) => did !== playlist.authorDid)
+                              .join("\n"),
+                          );
+                          setCoverUri(
+                            playlist.coverCid
+                              ? getImageCdnLink({
+                                  did: playlist.authorDid,
+                                  hash: playlist.coverCid,
+                                })
+                              : undefined,
+                          );
+                          setCoverChanged(false);
+                          setError(null);
+                          setEditing(false);
+                        }}
+                      >
                         <Text>Cancel</Text>
                       </Button>
                     </View>
@@ -255,8 +376,8 @@ export default function PlaylistDetailScreen() {
                       />
                     )}
                     <Text className="mt-2 font-mono text-[10px] uppercase text-muted-foreground">
-                      {items.length} indexed tracks · {playlist.authors.length}{" "}
-                      author
+                      {items.length} tracks · {playlist.authors.length}{" "}
+                      contributor
                       {playlist.authors.length === 1 ? "" : "s"}
                     </Text>
                   </>
@@ -276,8 +397,15 @@ export default function PlaylistDetailScreen() {
                   order={playlist.itemCount}
                   onAdded={appendItem}
                   disabled={addingItem}
-                  onBusyChange={setAddingItem}
+                  onBusyChange={(busy) => {
+                    if (isCurrentRoute()) setAddingItem(busy);
+                  }}
                 />
+                {!currentTrack && (
+                  <Text className="w-full text-sm text-muted-foreground">
+                    No current track to add. Search for one below.
+                  </Text>
+                )}
               </View>
             )}
             {canAddItems && !editing && (
@@ -287,7 +415,9 @@ export default function PlaylistDetailScreen() {
                 order={playlist.itemCount}
                 onAdded={appendItem}
                 disabled={addingItem}
-                onBusyChange={setAddingItem}
+                onBusyChange={(busy) => {
+                  if (isCurrentRoute()) setAddingItem(busy);
+                }}
               />
             )}
           </View>
@@ -295,7 +425,7 @@ export default function PlaylistDetailScreen() {
           <SectionHeading eyebrow="Playlist" title="Tracks" />
           {items.length === 0 ? (
             <Text className="text-muted-foreground">
-              No indexed playlist items yet.
+              This playlist is empty. Add the first track to get it started.
             </Text>
           ) : (
             <View className="gap-3">

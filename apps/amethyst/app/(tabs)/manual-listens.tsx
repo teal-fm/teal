@@ -1,17 +1,23 @@
-import { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  View,
-} from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Redirect, Stack } from "expo-router";
-import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import {
+  buildListenTimeline,
+  buildManualListenRecords,
+  effectiveDurationSeconds,
+  formatDuration,
+  getMusicBrainzRelease,
+  searchMusicBrainzReleases,
+  submitManualListenRecords,
+  type ListenTimestampMode,
+  type MusicBrainzAlbumRelease,
+  type MusicBrainzAlbumTrack,
+} from "@/lib/manualListens";
 import { coverArtUrl } from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
 import {
@@ -24,19 +30,6 @@ import {
   Search,
 } from "lucide-react-native";
 
-import {
-  buildListenTimeline,
-  buildManualListenRecords,
-  effectiveDurationSeconds,
-  formatDuration,
-  getMusicBrainzRelease,
-  type ListenTimestampMode,
-  type MusicBrainzAlbumRelease,
-  type MusicBrainzAlbumTrack,
-  searchMusicBrainzReleases,
-  submitManualListenRecords,
-} from "@/lib/manualListens";
-
 function localDateTimeValue(date = new Date()) {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -48,11 +41,24 @@ function parseLocalDateTime(value: string) {
 }
 
 function releaseArtist(release: MusicBrainzAlbumRelease) {
-  return release.artistCredit?.map((credit) => credit.name || credit.artist.name).join(", ") || "Unknown artist";
+  return (
+    release.artistCredit
+      ?.map((credit) => credit.name || credit.artist.name)
+      .join(", ") || "Unknown artist"
+  );
 }
 
 function releaseDetails(release: MusicBrainzAlbumRelease) {
-  return [release.date?.slice(0, 4), release.country, release.status]
+  const formats = [
+    ...new Set(release.media?.map((medium) => medium.format).filter(Boolean)),
+  ].join(" + ");
+  return [
+    release.date,
+    release.country,
+    formats,
+    release.status,
+    release.disambiguation,
+  ]
     .filter(Boolean)
     .join(" · ");
 }
@@ -92,7 +98,9 @@ function TrackRow({
           {track.recording.title || track.title || "Untitled track"}
         </Text>
         <Text className="text-xs text-muted-foreground" numberOfLines={1}>
-          {track.recording["artist-credit"]?.map((credit) => credit.name || credit.artist.name).join(", ") || "Album artist"}
+          {track.recording["artist-credit"]
+            ?.map((credit) => credit.name || credit.artist.name)
+            .join(", ") || "Album artist"}
         </Text>
       </View>
       <Text className="font-mono text-xs text-muted-foreground">
@@ -108,18 +116,25 @@ export default function ManualListensPage() {
   const agent = useStore((state) => state.pdsAgent);
   const [albumQuery, setAlbumQuery] = useState("");
   const [artistQuery, setArtistQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<MusicBrainzAlbumRelease[]>([]);
+  const [searchResults, setSearchResults] = useState<MusicBrainzAlbumRelease[]>(
+    [],
+  );
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedRelease, setSelectedRelease] = useState<MusicBrainzAlbumRelease>();
+  const [selectedRelease, setSelectedRelease] =
+    useState<MusicBrainzAlbumRelease>();
   const [tracks, setTracks] = useState<MusicBrainzAlbumTrack[]>([]);
-  const [selectedTrackKeys, setSelectedTrackKeys] = useState<Set<string>>(new Set());
-  const [timestampMode, setTimestampMode] = useState<ListenTimestampMode>("now");
+  const [selectedTrackKeys, setSelectedTrackKeys] = useState<Set<string>>(
+    new Set(),
+  );
+  const [timestampMode, setTimestampMode] =
+    useState<ListenTimestampMode>("now");
   const [customStart, setCustomStart] = useState(localDateTimeValue());
   const [loading, setLoading] = useState(false);
   const [loadingRelease, setLoadingRelease] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittedCount, setSubmittedCount] = useState<number>();
   const [error, setError] = useState<string>();
+  const submissionInFlight = useRef(false);
 
   const selectedTracks = useMemo(
     () => tracks.filter((track) => selectedTrackKeys.has(track.key)),
@@ -152,6 +167,7 @@ export default function ManualListensPage() {
   }
 
   async function search() {
+    if (submissionInFlight.current) return;
     if (!albumQuery.trim()) {
       setError("Enter an album name to search.");
       return;
@@ -164,10 +180,16 @@ export default function ManualListensPage() {
     setSelectedTrackKeys(new Set());
     setSubmittedCount(undefined);
     try {
-      setSearchResults(await searchMusicBrainzReleases(albumQuery, artistQuery));
+      setSearchResults(
+        await searchMusicBrainzReleases(albumQuery, artistQuery),
+      );
     } catch (searchError) {
       setSearchResults([]);
-      setError(searchError instanceof Error ? searchError.message : "Album search failed.");
+      setError(
+        searchError instanceof Error
+          ? searchError.message
+          : "Album search failed.",
+      );
     } finally {
       setLoading(false);
     }
@@ -180,14 +202,20 @@ export default function ManualListensPage() {
       const details = await getMusicBrainzRelease(release.id);
       const nextTracks = flattenTracks(details);
       if (nextTracks.length === 0) {
-        throw new Error("MusicBrainz did not return any tracks for this release.");
+        throw new Error(
+          "MusicBrainz did not return any tracks for this release.",
+        );
       }
       setSelectedRelease(details);
       setTracks(nextTracks);
       setSelectedTrackKeys(new Set(nextTracks.map((track) => track.key)));
       setSubmittedCount(undefined);
     } catch (releaseError) {
-      setError(releaseError instanceof Error ? releaseError.message : "Could not load that release.");
+      setError(
+        releaseError instanceof Error
+          ? releaseError.message
+          : "Could not load that release.",
+      );
     } finally {
       setLoadingRelease(false);
     }
@@ -214,6 +242,7 @@ export default function ManualListensPage() {
   }
 
   async function submit() {
+    if (submissionInFlight.current || submittedCount !== undefined) return;
     if (!agent || !selectedRelease || selectedTracks.length === 0) {
       setError("Select at least one track.");
       return;
@@ -223,6 +252,7 @@ export default function ManualListensPage() {
       return;
     }
 
+    submissionInFlight.current = true;
     setSubmitting(true);
     setError(undefined);
     try {
@@ -235,19 +265,31 @@ export default function ManualListensPage() {
       );
       setSubmittedCount(await submitManualListenRecords(agent, records));
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Could not save these listens.");
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Could not save these listens.",
+      );
     } finally {
+      submissionInFlight.current = false;
       setSubmitting(false);
     }
   }
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell>
       <Stack.Screen options={{ title: "Add listens", headerShown: false }} />
-      <SectionHeading
-        eyebrow="MANUAL LISTENING"
-        title="Add an album"
-      />
+      <SectionHeading title="Add listens" />
+      <View className="mb-5 flex-row flex-wrap gap-2">
+        <Button variant="secondary" accessibilityState={{ selected: true }}>
+          <Text>Album</Text>
+        </Button>
+        <Link href="/stamp" asChild>
+          <Button variant="outline">
+            <Text>Single track</Text>
+          </Button>
+        </Link>
+      </View>
       <View className="mb-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <View className="border-b border-border bg-primary px-5 py-4">
           <View className="flex-row items-center gap-3">
@@ -278,8 +320,19 @@ export default function ManualListensPage() {
             onSubmitEditing={search}
             returnKeyType="search"
           />
-          <Button onPress={search} disabled={loading} className="flex-row gap-2">
-            {loading ? <LoaderCircle size={17} className="animate-spin text-primary-foreground" /> : <Search size={17} className="text-primary-foreground" />}
+          <Button
+            onPress={search}
+            disabled={loading || submitting}
+            className="flex-row gap-2"
+          >
+            {loading ? (
+              <LoaderCircle
+                size={17}
+                className="animate-spin text-primary-foreground"
+              />
+            ) : (
+              <Search size={17} className="text-primary-foreground" />
+            )}
             <Text>{loading ? "Searching MusicBrainz…" : "Find album"}</Text>
           </Button>
         </View>
@@ -294,17 +347,24 @@ export default function ManualListensPage() {
 
       {searchResults.length > 0 && !selectedRelease && (
         <View className="mb-6 gap-3">
-          <View className="flex-row items-end justify-between gap-3">
-            <View>
-              <Text className="font-mono text-[10px] font-bold uppercase tracking-[2px] text-primary">Choose a pressing</Text>
-              <Text className="mt-1 text-sm text-muted-foreground">MusicBrainz has several releases for many albums.</Text>
+          <View className="flex-row flex-wrap items-end justify-between gap-3">
+            <View className="min-w-0 flex-1">
+              <Text className="font-semibold">Choose a release</Text>
+              <Text className="mt-1 text-sm text-muted-foreground">
+                MusicBrainz has several releases for many albums.
+              </Text>
             </View>
-            <Text className="font-mono text-xs text-muted-foreground">{searchResults.length} results</Text>
+            <Text className="font-mono text-xs text-muted-foreground">
+              {searchResults.length} results
+            </Text>
           </View>
           <View className="overflow-hidden rounded-xl border border-border bg-card">
             {searchResults.map((release) => (
               <Pressable
                 key={release.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Choose ${release.title} by ${releaseArtist(release)}, ${releaseDetails(release)}`}
+                disabled={loadingRelease}
                 onPress={() => chooseRelease(release)}
                 className="flex-row items-center gap-3 border-b border-border p-3 last:border-b-0 web:hover:bg-accent/30"
               >
@@ -313,9 +373,18 @@ export default function ManualListensPage() {
                   className="h-14 w-14 rounded-md bg-muted"
                 />
                 <View className="min-w-0 flex-1">
-                  <Text className="font-semibold" numberOfLines={1}>{release.title}</Text>
-                  <Text className="text-sm text-muted-foreground" numberOfLines={1}>{releaseArtist(release)}</Text>
-                  <Text className="font-mono text-[10px] uppercase text-muted-foreground">{releaseDetails(release) || "Release details unavailable"}</Text>
+                  <Text className="font-semibold" numberOfLines={1}>
+                    {release.title}
+                  </Text>
+                  <Text
+                    className="text-sm text-muted-foreground"
+                    numberOfLines={1}
+                  >
+                    {releaseArtist(release)}
+                  </Text>
+                  <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                    {releaseDetails(release) || "Release details unavailable"}
+                  </Text>
                 </View>
                 <ChevronRight size={18} className="text-muted-foreground" />
               </Pressable>
@@ -329,7 +398,8 @@ export default function ManualListensPage() {
           <Disc3 size={28} className="mb-3 text-muted-foreground" />
           <Text className="font-semibold">No releases found</Text>
           <Text className="mt-1 text-center text-sm text-muted-foreground">
-            Try a shorter album title, or add the artist name to narrow the search.
+            Try a shorter album title, or add the artist name to narrow the
+            search.
           </Text>
         </View>
       )}
@@ -337,11 +407,13 @@ export default function ManualListensPage() {
       {loadingRelease && (
         <View className="mb-6 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card p-5">
           <ActivityIndicator />
-          <Text className="text-sm text-muted-foreground">Loading tracklist…</Text>
+          <Text className="text-sm text-muted-foreground">
+            Loading tracklist…
+          </Text>
         </View>
       )}
 
-      {selectedRelease && tracks.length > 0 && (
+      {selectedRelease && tracks.length > 0 && submittedCount === undefined && (
         <View className="gap-5">
           <View className="overflow-hidden rounded-xl border border-border bg-card">
             <View className="flex-row gap-4 p-4">
@@ -350,14 +422,28 @@ export default function ManualListensPage() {
                 className="h-24 w-24 rounded-lg bg-muted"
               />
               <View className="min-w-0 flex-1 justify-center">
-                <Text className="font-mono text-[10px] font-bold uppercase tracking-[2px] text-primary">Selected release</Text>
-                <Text className="mt-1 font-sans text-2xl font-black" numberOfLines={2}>{selectedRelease.title}</Text>
-                <Text className="text-sm text-muted-foreground" numberOfLines={1}>{releaseArtist(selectedRelease)}</Text>
-                <Text className="font-mono text-[10px] uppercase text-muted-foreground">{releaseDetails(selectedRelease)} · {tracks.length} tracks</Text>
+                <Text
+                  className="mt-1 font-sans text-2xl font-black"
+                  numberOfLines={2}
+                >
+                  {selectedRelease.title}
+                </Text>
+                <Text
+                  className="text-sm text-muted-foreground"
+                  numberOfLines={1}
+                >
+                  {releaseArtist(selectedRelease)}
+                </Text>
+                <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                  {releaseDetails(selectedRelease)} · {tracks.length} tracks
+                </Text>
               </View>
             </View>
             <View className="border-t border-border px-4 py-2">
               <Pressable
+                accessibilityRole="button"
+                disabled={submitting}
+                className="min-h-11 justify-center"
                 onPress={() => {
                   setSelectedRelease(undefined);
                   setTracks([]);
@@ -365,14 +451,36 @@ export default function ManualListensPage() {
                   setSubmittedCount(undefined);
                 }}
               >
-                <Text className="text-xs font-bold text-primary">Choose a different release</Text>
+                <Text className="text-xs font-bold text-primary">
+                  Choose a different release
+                </Text>
               </Pressable>
             </View>
             <View className="flex-row items-center justify-between border-t border-border bg-muted/30 px-4 py-2">
-              <Text className="text-xs text-muted-foreground">{selectedTracks.length} of {tracks.length} selected</Text>
-              <View className="flex-row gap-3">
-                <Pressable onPress={selectAllTracks}><Text className="text-xs font-bold text-primary">Select all</Text></Pressable>
-                <Pressable onPress={clearTracks}><Text className="text-xs font-bold text-muted-foreground">Clear</Text></Pressable>
+              <Text className="text-xs text-muted-foreground">
+                {selectedTracks.length} of {tracks.length} selected
+              </Text>
+              <View className="flex-row gap-1">
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={submitting}
+                  className="min-h-11 justify-center px-2"
+                  onPress={selectAllTracks}
+                >
+                  <Text className="text-sm font-bold text-primary">
+                    Select all
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={submitting}
+                  className="min-h-11 justify-center px-2"
+                  onPress={clearTracks}
+                >
+                  <Text className="text-sm font-bold text-muted-foreground">
+                    Clear
+                  </Text>
+                </Pressable>
               </View>
             </View>
             <View>
@@ -381,41 +489,71 @@ export default function ManualListensPage() {
                   key={track.key}
                   track={track}
                   selected={selectedTrackKeys.has(track.key)}
-                  onPress={() => toggleTrack(track.key)}
+                  onPress={() => {
+                    if (!submitting) toggleTrack(track.key);
+                  }}
                 />
               ))}
             </View>
-            <Text className="px-4 py-3 font-mono text-[10px] text-muted-foreground">* no duration in MusicBrainz; timing uses 3:00</Text>
+            <Text className="px-4 py-3 font-mono text-[10px] text-muted-foreground">
+              * no duration in MusicBrainz; timing uses 3:00
+            </Text>
           </View>
 
           <View className="rounded-xl border border-border bg-card p-5">
             <View className="mb-4 flex-row items-center gap-3">
               <CalendarClock size={20} className="text-primary" />
-              <View>
+              <View className="min-w-0 flex-1">
                 <Text className="font-semibold">When did you listen?</Text>
-                <Text className="text-sm text-muted-foreground">Choose how to place the selected tracks in your listening history.</Text>
+                <Text className="text-sm text-muted-foreground">
+                  Choose how to place the selected tracks in your listening
+                  history.
+                </Text>
               </View>
             </View>
             <View className="mb-4 flex-row gap-2">
               {(["now", "custom"] as ListenTimestampMode[]).map((mode) => (
                 <Pressable
                   key={mode}
+                  accessibilityRole="radio"
+                  accessibilityState={{
+                    checked: timestampMode === mode,
+                    disabled: submitting,
+                  }}
+                  disabled={submitting}
                   onPress={() => setTimestampMode(mode)}
                   className={`flex-1 rounded-md border px-3 py-3 ${timestampMode === mode ? "border-primary bg-accent" : "border-border bg-background"}`}
                 >
-                  <Text className={timestampMode === mode ? "font-bold text-primary" : "font-semibold"}>{mode === "now" ? "Use current time" : "Choose a time"}</Text>
-                  <Text className="mt-1 text-xs text-muted-foreground">{mode === "now" ? "Newest selected track starts now" : "First selected track starts at this time"}</Text>
+                  <Text
+                    className={
+                      timestampMode === mode
+                        ? "font-bold text-primary"
+                        : "font-semibold"
+                    }
+                  >
+                    {mode === "now" ? "Use current time" : "Choose a time"}
+                  </Text>
+                  <Text className="mt-1 text-xs text-muted-foreground">
+                    {mode === "now"
+                      ? "Newest selected track starts now"
+                      : "First selected track starts at this time"}
+                  </Text>
                 </Pressable>
               ))}
             </View>
             {timestampMode === "custom" && (
               <View className="gap-1">
-                <Text className="text-sm font-semibold">First track start time</Text>
-                <Text className="text-xs text-muted-foreground">Use your local date and time.</Text>
+                <Text className="text-sm font-semibold">
+                  First track start time
+                </Text>
+                <Text className="text-xs text-muted-foreground">
+                  Use your local date and time.
+                </Text>
                 <Input
                   accessibilityLabel="First track start date and time"
                   placeholder="e.g. 2026-07-18T20:30"
                   value={customStart}
+                  editable={!submitting}
                   onChangeText={setCustomStart}
                   inputMode="text"
                 />
@@ -423,21 +561,51 @@ export default function ManualListensPage() {
             )}
             {preview.length > 0 && (
               <View className="mt-4 rounded-lg border border-border bg-muted/30 p-3">
-                <Text className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[2px] text-primary">Preview</Text>
+                <Text className="mb-2 font-semibold">
+                  Review {selectedTracks.length} listen
+                  {selectedTracks.length === 1 ? "" : "s"}
+                </Text>
                 <View className="gap-2">
                   {preview.map(({ track, playedTime }) => (
-                    <View key={`${track.key}-${playedTime}`} className="flex-row items-center gap-3">
-                      <Text className="w-8 font-mono text-[10px] text-muted-foreground">{track.number || track.position || "—"}</Text>
-                      <Text className="min-w-0 flex-1 text-sm" numberOfLines={1}>{track.recording.title}</Text>
-                      <Text className="font-mono text-[10px] text-muted-foreground">{new Date(playedTime).toLocaleString()}</Text>
+                    <View
+                      key={`${track.key}-${playedTime}`}
+                      className="flex-row flex-wrap items-center gap-3"
+                    >
+                      <Text className="w-8 font-mono text-[10px] text-muted-foreground">
+                        {track.number || track.position || "—"}
+                      </Text>
+                      <Text
+                        className="min-w-0 flex-1 text-sm"
+                        numberOfLines={1}
+                      >
+                        {track.recording.title}
+                      </Text>
+                      <Text className="text-xs text-muted-foreground">
+                        {new Date(playedTime).toLocaleString()}
+                      </Text>
                     </View>
                   ))}
                 </View>
               </View>
             )}
-            <Button onPress={submit} disabled={submitting || selectedTracks.length === 0} className="mt-4 flex-row gap-2">
-              {submitting ? <LoaderCircle size={17} className="animate-spin text-primary-foreground" /> : <Disc3 size={17} className="text-primary-foreground" />}
-              <Text>{submitting ? "Saving listens…" : `Add ${selectedTracks.length} listen${selectedTracks.length === 1 ? "" : "s"}`}</Text>
+            <Button
+              onPress={submit}
+              disabled={submitting || selectedTracks.length === 0}
+              className="mt-4 flex-row gap-2"
+            >
+              {submitting ? (
+                <LoaderCircle
+                  size={17}
+                  className="animate-spin text-primary-foreground"
+                />
+              ) : (
+                <Disc3 size={17} className="text-primary-foreground" />
+              )}
+              <Text>
+                {submitting
+                  ? "Saving listens…"
+                  : `Add ${selectedTracks.length} listen${selectedTracks.length === 1 ? "" : "s"}`}
+              </Text>
             </Button>
           </View>
         </View>
@@ -445,13 +613,29 @@ export default function ManualListensPage() {
 
       {submittedCount !== undefined && (
         <View className="mt-5 gap-3 rounded-xl border border-primary/30 bg-accent p-5">
-          <Text className="font-sans text-2xl font-black">Listening history updated.</Text>
-          <Text className="text-sm text-muted-foreground">Added {submittedCount} listen{submittedCount === 1 ? "" : "s"} as one atomic repository update.</Text>
-          <View className="flex-row gap-3">
+          <Text className="font-sans text-2xl font-black">Listens saved</Text>
+          <Text className="text-sm text-muted-foreground">
+            Added {submittedCount} listen{submittedCount === 1 ? "" : "s"}. They
+            may take a moment to appear on your profile.
+          </Text>
+          <View className="flex-row flex-wrap gap-3">
             <Link href={`/profile/${agent.did}` as any} asChild>
-              <Button size="sm"><Text>View profile</Text></Button>
+              <Button>
+                <Text>View listens</Text>
+              </Button>
             </Link>
-            <Button size="sm" variant="outline" onPress={() => setSubmittedCount(undefined)}><Text>Add another</Text></Button>
+            <Button
+              variant="outline"
+              onPress={() => {
+                setSelectedRelease(undefined);
+                setTracks([]);
+                setSelectedTrackKeys(new Set());
+                setSubmittedCount(undefined);
+                setError(undefined);
+              }}
+            >
+              <Text>Add another</Text>
+            </Button>
           </View>
         </View>
       )}

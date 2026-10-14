@@ -1,11 +1,13 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Image, Switch, View } from "react-native";
 import { Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
 import VerticalPlayView from "@/components/play/verticalPlayView";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
+import { createPlayRecordFromRecording } from "@/lib/manualListens";
 import { PlaySubmittedData } from "@/lib/oldStamp";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
@@ -19,7 +21,6 @@ import {
 import { $validate as validateRecord } from "@teal/lexicons/src/fm/teal/feed/play";
 
 import { StampContext, StampContextValue, StampStep } from "./_layout";
-import { createPlayRecordFromRecording } from "@/lib/manualListens";
 
 type CardyBResponse = {
   error: string;
@@ -135,6 +136,8 @@ export default function Submit() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [shareWithBluesky, setShareWithBluesky] = useState<boolean>(false);
   const [blueskyPostText, setBlueskyPostText] = useState<string>("");
+  const [submissionError, setSubmissionError] = useState<string>();
+  const submissionInFlight = useRef(false);
 
   const [blueskyEmbedCard, setBlueskyEmbedCard] = useState<EmbedCard | null>(
     null,
@@ -202,12 +205,15 @@ powered by @teal.fm`;
 
   // TODO: PLEASE refactor me ASAP!!!
   const handleSubmit = async () => {
+    if (submissionInFlight.current) return;
+    submissionInFlight.current = true;
     setIsSubmitting(true);
+    setSubmissionError(undefined);
     try {
+      if (!agent?.did) throw new Error("Sign in before saving a listen.");
       let record = createPlayRecordFromRecording(selectedTrack);
-      let result = validateRecord(record);
-      console.log("Validated play:", result);
-      const res = await agent?.call(
+      validateRecord(record);
+      const res = await agent.call(
         "com.atproto.repo.createRecord",
         {},
         {
@@ -227,42 +233,50 @@ powered by @teal.fm`;
         playRecord: record,
         blueskyPostUrl: null,
       };
+      let shareError: string | undefined;
       if (shareWithBluesky && agent) {
-        // lol this type
-        const rt = new RichText({
-          text: blueskyPostText,
-        });
-        await rt.detectFacets(agent);
-        let embedInfo = await getEmbedInfo(selectedTrack.id);
-        let urlEmbed: string | undefined = embedInfo?.urlEmbed;
-        let customUrl: string | undefined = embedInfo?.customUrl;
+        try {
+          // lol this type
+          const rt = new RichText({
+            text: blueskyPostText,
+          });
+          await rt.detectFacets(agent);
+          let embedInfo = await getEmbedInfo(selectedTrack.id);
+          let urlEmbed: string | undefined = embedInfo?.urlEmbed;
+          let customUrl: string | undefined = embedInfo?.customUrl;
 
-        let releaseYear = selectedTrack.selectedRelease?.date?.split("-")[0];
-        let title = `${record.trackName} by ${record.artists?.map((a) => a.artistName).join(", ")}`;
-        let description = `Song${releaseYear ? " · " + releaseYear : ""}${
-          selectedTrack.length && " · " + ms2hms(selectedTrack.length)
-        }`;
+          let releaseYear = selectedTrack.selectedRelease?.date?.split("-")[0];
+          let title = `${record.trackName} by ${record.artists?.map((a) => a.artistName).join(", ")}`;
+          let description = `Song${releaseYear ? " · " + releaseYear : ""}${
+            selectedTrack.length && " · " + ms2hms(selectedTrack.length)
+          }`;
 
-        const post = await agent.post({
-          text: rt.text,
-          facets: rt.facets,
-          embed: urlEmbed
-            ? ((await getBlueskyEmbedCard(
-                urlEmbed,
-                agent,
-                customUrl,
-                title,
-                description,
-              )) as any)
-            : undefined,
-        });
-        submittedData.blueskyPostUrl = post.uri
-          .replace("at://", "https://bsky.app/profile/")
-          .replace("app.bsky.feed.post", "post");
+          const post = await agent.post({
+            text: rt.text,
+            facets: rt.facets,
+            embed: urlEmbed
+              ? ((await getBlueskyEmbedCard(
+                  urlEmbed,
+                  agent,
+                  customUrl,
+                  title,
+                  description,
+                )) as any)
+              : undefined,
+          });
+          submittedData.blueskyPostUrl = post.uri
+            .replace("at://", "https://bsky.app/profile/")
+            .replace("app.bsky.feed.post", "post");
+        } catch {
+          // The listen is already saved. A cross-post failure must never invite a second listen write.
+          shareError =
+            "Your listen was saved, but the Bluesky post could not be published.";
+        }
       }
       setState({
         step: StampStep.SUBMITTED,
         submittedStamp: submittedData,
+        shareError,
       });
       // wait for state updates
       await Promise.resolve();
@@ -270,20 +284,26 @@ powered by @teal.fm`;
         pathname: "/stamp/success",
       });
     } catch (error) {
-      console.error("Failed to submit play:", error);
+      setSubmissionError(
+        error instanceof Error
+          ? error.message
+          : "Could not save this listen. Try again.",
+      );
+      submissionInFlight.current = false;
     }
     setIsSubmitting(false);
   };
 
   return (
-    <View className="h-screen-safe flex-1 items-center bg-background p-4">
+    <TealShell>
       <Stack.Screen
         options={{
-          title: "Submit Stamp",
+          title: "Review listen",
+          headerShown: false,
         }}
       />
-      <View className="flex min-h-full w-screen max-w-2xl justify-between gap-4 px-4 align-middle">
-        <View />
+      <SectionHeading title="Review listen" />
+      <View className="w-full gap-6">
         <View>
           <VerticalPlayView
             size={blueskyEmbedCard && shareWithBluesky ? "sm" : "md"}
@@ -309,6 +329,9 @@ powered by @teal.fm`;
         </View>
 
         <View className="w-full flex-col items-center gap-4">
+          <Text className="text-sm text-muted-foreground">
+            This listen will use the current time.
+          </Text>
           {blueskyEmbedCard && shareWithBluesky ? (
             <View className="w-full gap-2">
               <Text className="text-center text-sm text-muted-foreground">
@@ -334,7 +357,7 @@ powered by @teal.fm`;
           ) : (
             shareWithBluesky && (
               <Text className="text-center text-sm text-muted-foreground">
-                jsyk: there won't be an embed card on your post.
+                Your Bluesky post will contain text without a music preview.
               </Text>
             )
           )}
@@ -344,15 +367,15 @@ powered by @teal.fm`;
                 className="max-h-[200px] min-h-[100px] w-full rounded-md border border-border bg-card p-2 pb-4 text-card-foreground"
                 multiline
                 value={blueskyPostText}
+                accessibilityLabel="Bluesky post text"
+                editable={!isSubmitting}
                 onChangeText={setBlueskyPostText}
                 placeholder="Enter your Bluesky post text here..."
               />
               <Text
                 className={cn(
                   "absolute bottom-1 right-2 text-center text-sm text-muted-foreground",
-                  blueskyPostText.length > 150
-                  ? "text-foreground"
-                    : "",
+                  blueskyPostText.length > 150 ? "text-foreground" : "",
                   blueskyPostText.length > 290 ? "text-red-500" : "",
                 )}
               >
@@ -362,24 +385,36 @@ powered by @teal.fm`;
           )}
           <View className="flex-row items-center gap-2">
             <Switch
+              accessibilityLabel="Also publish to Bluesky"
+              disabled={isSubmitting}
               value={shareWithBluesky}
               onValueChange={setShareWithBluesky}
             />
             <Text className="text-center text-lg text-muted-foreground">
-              Share with Bluesky?
+              Also publish to Bluesky
             </Text>
           </View>
+          {submissionError && (
+            <Text accessibilityRole="alert" className="w-full text-destructive">
+              {submissionError}
+            </Text>
+          )}
           <View className="w-full flex-row gap-2">
             <Button
               className="flex-1"
               onPress={handleSubmit}
-              disabled={isSubmitting || selectedTrack === null}
+              disabled={
+                isSubmitting ||
+                selectedTrack === null ||
+                (shareWithBluesky &&
+                  (!blueskyPostText.trim() || blueskyPostText.length > 300))
+              }
             >
-              <Text>{isSubmitting ? "Submitting..." : "Submit"}</Text>
+              <Text>{isSubmitting ? "Saving listen…" : "Save listen"}</Text>
             </Button>
           </View>
         </View>
       </View>
-    </View>
+    </TealShell>
   );
 }

@@ -11,7 +11,11 @@ export enum StampStep {
 export type StampContextState =
   | { step: StampStep.IDLE; resetSearchState: boolean }
   | { step: StampStep.SUBMITTING; submittingStamp: MusicBrainzRecording }
-  | { step: StampStep.SUBMITTED; submittedStamp: PlaySubmittedData };
+  | {
+      step: StampStep.SUBMITTED;
+      submittedStamp: PlaySubmittedData;
+      shareError?: string;
+    };
 
 export type StampContextValue = {
   state: StampContextState;

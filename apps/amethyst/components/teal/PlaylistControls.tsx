@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,8 +69,7 @@ function historyTrack(song: SongResult): TrackViewLike {
 function trackKey(track: unknown) {
   const value = (track || {}) as TrackViewLike;
   if (value.recordingMbId) return value.recordingMbId;
-  const artist =
-    value.artists?.[0]?.artistName || value.artistNames?.[0] || "";
+  const artist = value.artists?.[0]?.artistName || value.artistNames?.[0] || "";
   return `${value.trackName || ""}\u0000${artist}`.toLocaleLowerCase();
 }
 
@@ -118,9 +117,11 @@ export function PlaylistCreator({
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
 
   async function create() {
-    if (!pdsAgent?.did || !name.trim() || busy) return;
+    if (!pdsAgent?.did || !name.trim() || inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -162,29 +163,37 @@ export function PlaylistCreator({
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
 
   return (
     <View className="rounded-lg border border-border bg-card p-4">
-      <Text className="font-mono text-[10px] uppercase text-primary">
-        New playlist
-      </Text>
+      <Text className="text-lg font-bold">New playlist</Text>
+      <Text className="mt-3 text-sm font-semibold">Playlist name</Text>
       <Input
-        className="mt-3"
+        accessibilityLabel="Playlist name"
+        maxLength={50}
         placeholder="Playlist name"
         value={name}
         onChangeText={setName}
       />
+      <Text className="mt-3 text-sm font-semibold">Description (optional)</Text>
       <Textarea
-        className="mt-3 min-h-20"
+        accessibilityLabel="Playlist description"
+        maxLength={5000}
+        className="min-h-20"
         placeholder="Description"
         value={description}
         onChangeText={setDescription}
       />
       {error && <Text className="mt-2 text-sm text-destructive">{error}</Text>}
-      <Button className="mt-3 self-start" disabled={busy} onPress={create}>
+      <Button
+        className="mt-3 self-start"
+        disabled={busy || !name.trim()}
+        onPress={create}
+      >
         <Text>{busy ? "Creating..." : "Create playlist"}</Text>
       </Button>
     </View>
@@ -243,9 +252,12 @@ export function AddTrackButton({
   const pdsAgent = useStore((state) => state.pdsAgent);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
 
   async function add() {
-    if (!pdsAgent?.did || !track || busy || disabled) return;
+    if (!pdsAgent?.did || !track || inFlight.current || disabled || isAdded)
+      return;
+    inFlight.current = true;
     setBusy(true);
     onBusyChange?.(true);
     setError(null);
@@ -278,6 +290,7 @@ export function AddTrackButton({
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      inFlight.current = false;
       setBusy(false);
       onBusyChange?.(false);
     }
@@ -352,6 +365,7 @@ export function PlaylistTrackPicker({
   const pdsAgent = useStore((state) => state.pdsAgent);
   const [source, setSource] = useState<SearchSource>("history");
   const [query, setQuery] = useState("");
+  const [artistQuery, setArtistQuery] = useState("");
   const [historyResults, setHistoryResults] = useState<TrackSearchResult[]>([]);
   const [musicBrainzResults, setMusicBrainzResults] = useState<
     TrackSearchResult[]
@@ -368,6 +382,10 @@ export function PlaylistTrackPicker({
   useEffect(() => {
     const trimmed = query.trim();
     if (trimmed.length < 2) {
+      setLoading(false);
+      setError(null);
+      setHistoryResults([]);
+      setMusicBrainzResults([]);
       return;
     }
 
@@ -376,17 +394,18 @@ export function PlaylistTrackPicker({
     }
 
     let mounted = true;
+    setLoading(true);
+    setError(null);
     const timeout = setTimeout(() => {
-      setLoading(true);
-      setError(null);
       const request =
         source === "history"
           ? getSearchResults(trimmed, 12, pdsAgent?.did).then((response) =>
               response.songs.map(resultFromHistory),
             )
-          : searchMusicbrainz({ track: trimmed }, { throwOnError: true }).then((response) =>
-              response.map(resultFromMusicBrainz),
-            );
+          : searchMusicbrainz(
+              { track: trimmed, artist: artistQuery.trim() || undefined },
+              { throwOnError: true },
+            ).then((response) => response.map(resultFromMusicBrainz));
 
       request
         .then((nextResults) => {
@@ -413,15 +432,12 @@ export function PlaylistTrackPicker({
       mounted = false;
       clearTimeout(timeout);
     };
-  }, [pdsAgent?.did, query, source]);
+  }, [pdsAgent?.did, query, source, artistQuery]);
 
   return (
     <View className="mt-5 overflow-hidden rounded-lg border border-primary/25 bg-primary/5">
       <View className="border-b border-primary/15 px-4 pb-4 pt-5">
-        <Text className="font-mono text-[10px] uppercase tracking-[2px] text-primary">
-          Add to playlist
-        </Text>
-        <Text className="mt-1 font-sans text-xl font-black">Find a track</Text>
+        <Text className="font-sans text-xl font-black">Add a track</Text>
         <Text className="mt-1 text-sm leading-5 text-muted-foreground">
           Pull from your listening history or browse the MusicBrainz catalog.
         </Text>
@@ -442,9 +458,11 @@ export function PlaylistTrackPicker({
             <Text>MusicBrainz</Text>
           </Button>
         </View>
+        <Text className="mt-3 text-sm font-semibold">Track name</Text>
         <View className="mt-3 flex-row items-center gap-2 rounded-md border border-border bg-background px-3">
           <Icon icon={Search} size={18} className="text-muted-foreground" />
           <Input
+            accessibilityLabel="Search playlist tracks"
             value={query}
             onChangeText={setQuery}
             placeholder={
@@ -457,6 +475,24 @@ export function PlaylistTrackPicker({
             autoCorrect={false}
           />
         </View>
+        {source === "musicbrainz" && (
+          <View className="mt-3 gap-1">
+            <Text className="text-sm font-semibold">Artist (optional)</Text>
+            <Input
+              accessibilityLabel="Filter catalog by artist"
+              value={artistQuery}
+              onChangeText={setArtistQuery}
+              placeholder="Narrow down versions and artists"
+              autoCapitalize="none"
+            />
+          </View>
+        )}
+        {source === "history" && (
+          <Text className="mt-2 text-sm text-muted-foreground">
+            Recently saved listens may take a moment to appear here. You can
+            also find them in MusicBrainz.
+          </Text>
+        )}
       </View>
 
       <View className="px-2 py-2">

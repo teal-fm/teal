@@ -1,11 +1,11 @@
 import { useContext, useEffect } from "react";
 import { View } from "react-native";
-import { Redirect, Stack, useRouter } from "expo-router";
+import { Link, Redirect, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
-import RightRail from "@/components/teal/RightRail";
 import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { listenHrefFromUri } from "@/lib/teal/routes";
 import { Check, ExternalLinkIcon } from "lucide-react-native";
 
 import { StampContext, StampContextValue, StampStep } from "./_layout";
@@ -26,10 +26,10 @@ export default function StepThree() {
     return <Redirect href="/stamp" />;
   }
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell>
       <Stack.Screen
         options={{
-          title: "Play submitted",
+          title: "Listen saved",
           headerShown: false,
         }}
       />
@@ -37,11 +37,37 @@ export default function StepThree() {
         <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
           <Check size={24} className="text-primary" />
         </View>
-        <Text className="font-sans text-3xl font-black">Play submitted</Text>
-        <Text>
-          You can view your play{" "}
+        <Text className="font-sans text-3xl font-black">Listen saved</Text>
+        <Text className="text-center text-muted-foreground">
+          Your listen is saved. It may take a moment to appear in Teal's
+          listening index.
+        </Text>
+        {state.shareError && (
+          <Text
+            accessibilityRole="alert"
+            className="text-center text-destructive"
+          >
+            {state.shareError}
+          </Text>
+        )}
+        {listenHrefFromUri(state.submittedStamp.playAtUrl || undefined) && (
+          <Link
+            href={
+              listenHrefFromUri(
+                state.submittedStamp.playAtUrl || undefined,
+              ) as any
+            }
+            asChild
+          >
+            <Button>
+              <Text>View listen</Text>
+            </Button>
+          </Link>
+        )}
+        <Text className="text-sm text-muted-foreground">
+          View the saved record{" "}
           <ExternalLink
-            className="text-blue-600 dark:text-blue-400"
+            className="text-primary"
             href={`https://pdsls.dev/${state.submittedStamp.playAtUrl}`}
           >
             on PDSls
@@ -63,14 +89,12 @@ export default function StepThree() {
           className="mt-2"
           onPress={() => {
             setState({ step: StampStep.IDLE, resetSearchState: true });
-            router.back();
-            // in case above doesn't work
             router.replace({
               pathname: "/stamp",
             });
           }}
         >
-          <Text>Submit another</Text>
+          <Text>Add another track</Text>
         </Button>
       </View>
     </TealShell>

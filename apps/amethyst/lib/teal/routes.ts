@@ -137,8 +137,22 @@ export function hrefFromAtUri(uri?: string) {
   return (
     listenHrefFromUri(uri) ||
     postHrefFromUri(uri) ||
+    playlistHrefFromUri(uri) ||
     profileHrefFromAtUri(uri)
   );
+}
+
+export function playlistHrefFromUri(uri?: string) {
+  if (
+    !uri ||
+    !/^at:\/\/[^/\s]+\/fm\.teal\.feed\.social\.playlist\/[^/\s?#]+$/.test(uri)
+  )
+    return undefined;
+  const parsed = parseAtUri(uri);
+  if (!parsed?.rkey || parsed.collection !== "fm.teal.feed.social.playlist") {
+    return undefined;
+  }
+  return playlistHref("playlist", uri);
 }
 
 export function playlistHref(name: string, uri: string) {

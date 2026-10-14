@@ -1,40 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
-import SocialPostCard from "@/components/teal/SocialPostCard";
 import RightRail from "@/components/teal/RightRail";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import SocialPostCard from "@/components/teal/SocialPostCard";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   coverArtUrl,
   displayArtists,
-  getLatestPlays,
+  getAlbum,
   getPlayByUri,
   getRecordingCoverArtUrl,
   getSearchResults,
   getSocialPost,
+  type SocialPostView,
 } from "@/lib/teal/api";
 import { musicAlbumHref, musicArtistHref, routePart } from "@/lib/teal/routes";
+import { appendTrackHistory } from "@/lib/teal/trackHistory";
 import { Disc3 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import type { SocialPostView } from "@/lib/teal/api";
-
-function sameTrack(candidate: PlayView, selected: PlayView) {
-  if (candidate.recordingMbId && selected.recordingMbId) {
-    return candidate.recordingMbId === selected.recordingMbId;
-  }
-
-  return (
-    routePart(candidate.trackName) === routePart(selected.trackName) &&
-    routePart(displayArtists(candidate)) === routePart(displayArtists(selected)) &&
-    routePart(candidate.releaseName) === routePart(selected.releaseName)
-  );
-}
 
 export default function MusicDetail() {
   const params = useLocalSearchParams();
@@ -48,16 +36,32 @@ export default function MusicDetail() {
   const releaseSlug = Array.isArray(params.release)
     ? params.release[0]
     : params.release;
-  const trackSlug = Array.isArray(params.track) ? params.track[0] : params.track;
+  const trackSlug = Array.isArray(params.track)
+    ? params.track[0]
+    : params.track;
   const [play, setPlay] = useState<PlayView | null>(null);
   const [related, setRelated] = useState<PlayView[]>([]);
   const [sourcePost, setSourcePost] = useState<SocialPostView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [artFailed, setArtFailed] = useState(false);
   const [recordingArt, setRecordingArt] = useState<string>();
+  const [historyCursor, setHistoryCursor] = useState<string>();
+  const [historyError, setHistoryError] = useState<string>();
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const historyBusy = useRef(false);
+  const requestVersion = useRef(0);
 
   useEffect(() => {
     let mounted = true;
+    const version = ++requestVersion.current;
+    setPlay(null);
+    setError(null);
+    setRelated([]);
+    setSourcePost(null);
+    setHistoryCursor(undefined);
+    setHistoryError(undefined);
+    setHistoryLoading(false);
+    historyBusy.current = false;
     async function resolvePlayFromSlugs() {
       if (!trackSlug) {
         throw new Error("Missing track slug");
@@ -85,14 +89,34 @@ export default function MusicDetail() {
         const selected = uri
           ? (await getPlayByUri(uri)).play
           : await resolvePlayFromSlugs();
-        const [latest, postResult] = await Promise.all([
-          getLatestPlays(50),
-          postUri ? getSocialPost(postUri) : Promise.resolve(null),
-        ]);
         if (!mounted) return;
         setPlay(selected);
-        setRelated(latest.plays.filter((candidate) => sameTrack(candidate, selected)));
-        setSourcePost(postResult?.post || null);
+        if (postUri)
+          getSocialPost(postUri)
+            .then((result) => {
+              if (mounted) setSourcePost(result.post);
+            })
+            .catch(() => {});
+        if (selected.releaseMbId) {
+          historyBusy.current = true;
+          setHistoryLoading(true);
+          try {
+            const albumPage = await getAlbum(selected.releaseMbId, 100);
+            if (!mounted) return;
+            setRelated(appendTrackHistory([], albumPage.plays, selected));
+            setHistoryCursor(albumPage.cursor);
+          } catch {
+            if (mounted)
+              setHistoryError(
+                "Could not load this album's listening history. Try again.",
+              );
+          } finally {
+            if (mounted && version === requestVersion.current) {
+              historyBusy.current = false;
+              setHistoryLoading(false);
+            }
+          }
+        }
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
       }
@@ -102,6 +126,30 @@ export default function MusicDetail() {
       mounted = false;
     };
   }, [artistSlug, postUri, releaseSlug, trackSlug, uri]);
+
+  async function loadMoreHistory() {
+    if (!play?.releaseMbId || historyBusy.current) return;
+    const version = requestVersion.current;
+    historyBusy.current = true;
+    setHistoryLoading(true);
+    setHistoryError(undefined);
+    try {
+      const page = await getAlbum(play.releaseMbId, 100, historyCursor);
+      if (version !== requestVersion.current) return;
+      setRelated((current) => appendTrackHistory(current, page.plays, play));
+      setHistoryCursor(page.cursor);
+    } catch {
+      if (version === requestVersion.current)
+        setHistoryError(
+          "Could not load this album's listening history. Try again.",
+        );
+    } finally {
+      if (version === requestVersion.current) {
+        historyBusy.current = false;
+        setHistoryLoading(false);
+      }
+    }
+  }
 
   const releaseArt = coverArtUrl(play?.releaseMbId, 500);
   const art = artFailed ? undefined : releaseArt || recordingArt;
@@ -220,13 +268,51 @@ export default function MusicDetail() {
               </View>
             </View>
           </View>
-          <SectionHeading eyebrow="Listening history" title="Plays" />
-          {(related.length ? related : [play]).map((item, index) => (
+          <SectionHeading title="Selected listen" />
+          <PlayFeedCard play={play} />
+          <SectionHeading title="More listens from this album" />
+          <Text className="mb-4 text-sm text-muted-foreground">
+            This track's activity on this album, from Teal's listening index.
+            Other editions are not included.
+          </Text>
+          {related.map((item, index) => (
             <PlayFeedCard
               key={item.uri || `${item.trackName}-${index}`}
               play={item}
             />
           ))}
+          {historyLoading && (
+            <ActivityIndicator
+              accessibilityLabel="Loading album listening history"
+              className="my-4"
+            />
+          )}
+          {historyError && (
+            <Text accessibilityRole="alert" className="my-3 text-destructive">
+              {historyError}
+            </Text>
+          )}
+          {!historyLoading && !historyError && related.length === 0 && (
+            <Text className="my-3 text-muted-foreground">
+              {!play.releaseMbId
+                ? "This listen has no album identity, so album history is unavailable."
+                : historyCursor
+                  ? "No other listens for this track in the loaded album history. Load older activity to keep looking."
+                  : "No other listens for this track on this album yet."}
+            </Text>
+          )}
+          {(historyCursor || historyError) && (
+            <Button
+              variant="outline"
+              className="my-4 self-start"
+              disabled={historyLoading}
+              onPress={loadMoreHistory}
+            >
+              <Text>
+                {historyError ? "Try again" : "Load older album activity"}
+              </Text>
+            </Button>
+          )}
           {sourcePost && (
             <View className="mt-8">
               <SectionHeading eyebrow="Conversation" title="Posts" />
