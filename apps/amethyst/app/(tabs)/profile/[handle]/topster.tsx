@@ -13,12 +13,11 @@ import {
   normalizeStatsPeriod,
   PROFILE_STATS_PERIODS,
 } from "@/components/teal/ProfileStats";
-import RightRail from "@/components/teal/RightRail";
 import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { coverArtUrl, getProfile, getRepoTopReleases } from "@/lib/teal/api";
+import { coverArtUrl, getProfile, getUserTopReleases } from "@/lib/teal/api";
 import { musicAlbumHref } from "@/lib/teal/routes";
 import { ArrowLeft, Copy, Disc3, Download } from "lucide-react-native";
 
@@ -29,8 +28,6 @@ type ChartResult = {
   key: string;
   releases: ReleaseView[];
   displayName?: string;
-  sourceCount?: number;
-  albumPlayCount?: number;
   error?: string;
 };
 
@@ -116,7 +113,7 @@ export default function TopsterScreen() {
     let active = true;
     if (!actor) return;
     Promise.all([
-      getRepoTopReleases(actor, period, columns * columns),
+      getUserTopReleases(actor, period, columns * columns),
       getProfile(actor).catch(() => undefined),
     ])
       .then(([stats, profile]) => {
@@ -124,8 +121,6 @@ export default function TopsterScreen() {
         setResult({
           key: requestKey,
           releases: stats.releases,
-          sourceCount: stats.sourceCount,
-          albumPlayCount: stats.albumPlayCount,
           displayName: profile?.profile.displayName || actor,
         });
       })
@@ -190,25 +185,32 @@ export default function TopsterScreen() {
   }
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell pageTitle="Top albums chart">
       <Stack.Screen
         options={{ title: "Top albums chart", headerShown: false }}
       />
       <View className="mb-7 gap-3">
         {actor && (
-          <Link href={`/profile/${encodeURIComponent(actor)}` as any} asChild>
+          <Link
+            href={`/profile/${encodeURIComponent(actor)}?tab=listening` as any}
+            asChild
+          >
             <Pressable className="flex-row items-center gap-2 self-start py-1">
               <Icon icon={ArrowLeft} size={16} className="text-primary" />
-              <Text className="text-sm text-primary">Back to profile</Text>
+              <Text className="text-sm text-primary">Back to listening</Text>
             </Pressable>
           </Link>
         )}
-        <Text className="font-accent text-4xl text-foreground">
+        <Text
+          accessibilityRole="header"
+          className="font-sans text-3xl font-bold text-foreground"
+        >
           Top albums chart
         </Text>
         <Text className="text-muted-foreground">
-          A cover chart ranked by listens in this listener’s repository. Pick a period and a grid size
-          to make it yours.
+          A cover chart ranked by listens received by Teal, using the same
+          counts as listening stats. Pick a period and a grid size to make it
+          yours.
         </Text>
       </View>
 
@@ -263,8 +265,7 @@ export default function TopsterScreen() {
             No albums for this period
           </Text>
           <Text className="mt-2 text-muted-foreground">
-            This listener has no album plays here yet. Try a longer
-            period.
+            This listener has no album plays here yet. Try a longer period.
           </Text>
         </View>
       ) : (
@@ -292,7 +293,8 @@ export default function TopsterScreen() {
             </Text>
           )}
           <Text className="mb-3 text-sm text-muted-foreground">
-            {result?.albumPlayCount?.toLocaleString()} album plays counted from {result?.sourceCount?.toLocaleString()} repository listens in this period.
+            Counts reflect listens received by Teal. Recent saves may take a
+            moment to appear.
           </Text>
           <View
             className="rounded-lg bg-[#102621] p-4 md:p-5"

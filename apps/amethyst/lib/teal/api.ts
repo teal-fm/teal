@@ -101,12 +101,7 @@ export type GraphSummaryView = {
 
 export type ArtistListenerPeriod = "all" | "30days" | "7days";
 export type StatsPeriod =
-  | "7days"
-  | "30days"
-  | "90days"
-  | "180days"
-  | "365days"
-  | "all";
+  "7days" | "30days" | "90days" | "180days" | "365days" | "all";
 
 async function getXrpc<T>(
   method: string,
@@ -212,19 +207,15 @@ export async function getBlueskyProfile(actor: string) {
 }
 
 export function getTopArtists(limit = 5) {
-  return getXrpc<{ artists: ArtistView[] }>(
-    "fm.teal.stats.getTopArtists",
-    {
-      limit,
-    },
-  );
+  return getXrpc<{ artists: ArtistView[] }>("fm.teal.stats.getTopArtists", {
+    limit,
+  });
 }
 
 export function getTopReleases(limit = 5) {
-  return getXrpc<{ releases: ReleaseView[] }>(
-    "fm.teal.stats.getTopReleases",
-    { limit },
-  );
+  return getXrpc<{ releases: ReleaseView[] }>("fm.teal.stats.getTopReleases", {
+    limit,
+  });
 }
 
 export function getUserTopArtists(
@@ -249,19 +240,6 @@ export function getUserTopReleases(
     "fm.teal.stats.getUserTopReleases",
     { actor, period, limit, cursor },
   );
-}
-
-export function getRepoTopReleases(
-  actor: string,
-  period: StatsPeriod = "90days",
-  limit = 25,
-) {
-  return getXrpc<{
-    releases: ReleaseView[];
-    sourceCount: number;
-    albumPlayCount: number;
-    fetchedAt: string;
-  }>("fm.teal.stats.getRepoTopReleases", { actor, period, limit });
 }
 
 export function getUserTopRecordings(
@@ -455,7 +433,9 @@ export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
     )
       .then((response) => (response.ok ? response.json() : undefined))
       .then((recording?: { releases?: Array<{ id?: string }> }) => {
-        const releaseId = recording?.releases?.find((release) => release.id)?.id;
+        const releaseId = recording?.releases?.find(
+          (release) => release.id,
+        )?.id;
         return releaseId ? coverArtUrl(releaseId, size) : undefined;
       })
       .catch(() => undefined);
@@ -521,11 +501,12 @@ export function getArtistImageUrl(artistMbId?: string, width = 500) {
             )
           : undefined;
       })
-      .then((response) => response?.ok ? response.json() : undefined)
+      .then((response) => (response?.ok ? response.json() : undefined))
       .then((data?: WikidataEntityResponse) => {
-        const entity = data?.entities ? Object.values(data.entities)[0] : undefined;
-        const filename =
-          entity?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+        const entity = data?.entities
+          ? Object.values(data.entities)[0]
+          : undefined;
+        const filename = entity?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
         return filename ? commonsFilePath(filename, width) : undefined;
       })
       .catch(() => undefined);

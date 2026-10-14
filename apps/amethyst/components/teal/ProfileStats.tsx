@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
-import { Link } from "expo-router";
-import useIsMobile from "@/hooks/useIsMobile";
+import { Link, useRouter } from "expo-router";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   coverArtUrl,
+  getActorFeed,
   getArtistImageUrl,
   getRecordingCoverArtUrl,
   getUserTopArtists,
@@ -12,16 +12,19 @@ import {
   getUserTopReleases,
   type StatsPeriod,
 } from "@/lib/teal/api";
+import { indexedStatContext } from "@/lib/teal/profileStats";
 import { musicAlbumHref, musicArtistHref } from "@/lib/teal/routes";
-import { Button } from "../ui/button";
-import { Text } from "../ui/text";
-import { Disc3, ListMusic, Mic2, Music2 } from "lucide-react-native";
+import { Disc3, Mic2, Music2 } from "lucide-react-native";
 
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 import type {
   ArtistView,
   RecordingView,
   ReleaseView,
 } from "@teal/lexicons/src/fm/teal/stats/defs";
+
+import { Button } from "../ui/button";
+import { Text } from "../ui/text";
 
 export type ProfileStatsKind = "artists" | "albums" | "tracks";
 
@@ -40,7 +43,8 @@ export const PROFILE_STATS_PERIODS: Array<{
 const validStatsPeriods = new Set(PROFILE_STATS_PERIODS.map((p) => p.value));
 
 export function normalizeStatsPeriod(value: unknown): StatsPeriod {
-  return typeof value === "string" && validStatsPeriods.has(value as StatsPeriod)
+  return typeof value === "string" &&
+    validStatsPeriods.has(value as StatsPeriod)
     ? (value as StatsPeriod)
     : "90days";
 }
@@ -51,11 +55,9 @@ type StatItem = {
   name: string;
   mbid?: string;
   playCount: number;
+  artist?: string;
+  href?: string;
 };
-
-function mbidId(mbid?: string) {
-  return mbid?.replace(/^mbid:/, "");
-}
 
 function artistToItem(item: ArtistView, index: number): StatItem {
   return {
@@ -88,6 +90,7 @@ function recordingToItem(item: RecordingView, index: number): StatItem {
 }
 
 function itemHref(item: StatItem) {
+  if (item.href) return item.href;
   if (item.kind === "artists") {
     return musicArtistHref(item.name, item.mbid);
   }
@@ -120,6 +123,7 @@ function StatsPeriodTabs({
           key={item.value}
           size="sm"
           variant={period === item.value ? "default" : "outline"}
+          accessibilityState={{ selected: period === item.value }}
           onPress={() => onChange(item.value)}
         >
           <Text>{item.label}</Text>
@@ -129,10 +133,10 @@ function StatsPeriodTabs({
   );
 }
 
-function StatArtwork({ item, large = false }: { item: StatItem; large?: boolean }) {
+function StatArtwork({ item }: { item: StatItem }) {
   const [imageUrl, setImageUrl] = useState<string>();
   const [failed, setFailed] = useState(false);
-  const size = large ? 96 : 72;
+  const size = 48;
   const fallbackIcon =
     item.kind === "artists" ? Mic2 : item.kind === "albums" ? Disc3 : Music2;
 
@@ -141,21 +145,21 @@ function StatArtwork({ item, large = false }: { item: StatItem; large?: boolean 
     setFailed(false);
     setImageUrl(undefined);
     if (item.kind === "albums") {
-      setImageUrl(coverArtUrl(item.mbid, large ? 250 : 100));
+      setImageUrl(coverArtUrl(item.mbid, 100));
       return;
     }
     if (!item.mbid) return;
     const load =
       item.kind === "artists"
-        ? getArtistImageUrl(item.mbid, large ? 320 : 160)
-        : getRecordingCoverArtUrl(item.mbid, large ? 250 : 100);
+        ? getArtistImageUrl(item.mbid, 160)
+        : getRecordingCoverArtUrl(item.mbid, 100);
     load.then((url) => {
       if (mounted) setImageUrl(url);
     });
     return () => {
       mounted = false;
     };
-  }, [item.kind, item.mbid, large]);
+  }, [item.kind, item.mbid]);
 
   return (
     <View
@@ -169,40 +173,7 @@ function StatArtwork({ item, large = false }: { item: StatItem; large?: boolean 
           onError={() => setFailed(true)}
         />
       ) : (
-        <Icon icon={fallbackIcon} size={large ? 36 : 28} className="text-muted-foreground" />
-      )}
-    </View>
-  );
-}
-
-function StatPreviewCard({
-  item,
-  compact,
-}: {
-  item: StatItem;
-  compact: boolean;
-}) {
-  const href = itemHref(item);
-  const content = (
-    <Pressable className="h-full rounded-lg border border-border bg-card/75 p-3 web:transition-colors web:hover:border-primary/45">
-      <StatArtwork item={item} />
-      <Text className="mt-3 font-sans text-base font-black" numberOfLines={2}>
-        {item.name}
-      </Text>
-      <Text className="mt-1 font-mono text-[10px] uppercase text-muted-foreground">
-        {playsLabel(item.playCount)}
-      </Text>
-    </Pressable>
-  );
-  const width = compact ? "48%" : "23.5%";
-  return (
-    <View style={{ width }}>
-      {href ? (
-        <Link href={href as any} asChild>
-          {content}
-        </Link>
-      ) : (
-        content
+        <Icon icon={fallbackIcon} size={24} className="text-muted-foreground" />
       )}
     </View>
   );
@@ -211,32 +182,37 @@ function StatPreviewCard({
 function StatListRow({ item, rank }: { item: StatItem; rank: number }) {
   const href = itemHref(item);
   const content = (
-    <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-3 web:transition-colors web:hover:bg-primary/5">
-      <View className="w-9 items-center">
-        <Text className="font-mono text-xs font-bold text-muted-foreground">
-          #{rank}
-        </Text>
-      </View>
-      <StatArtwork item={item} large />
-      <View className="min-w-0 flex-1">
-        <Text className="font-sans text-lg font-black" numberOfLines={2}>
+    <Pressable
+      disabled={!href}
+      accessibilityRole={href ? "link" : undefined}
+      accessibilityLabel={`${rank}. ${item.name}${item.artist ? ` by ${item.artist}` : ""}, ${playsLabel(item.playCount)}`}
+      className="flex-row items-center gap-2 border-b border-border/70 py-3 web:hover:bg-muted/50"
+    >
+      <Text className="w-5 text-xs text-muted-foreground">{rank}</Text>
+      <StatArtwork item={item} />
+      <View className="min-w-0 flex-1 gap-1">
+        <Text className="font-sans text-sm font-bold" numberOfLines={2}>
           {item.name}
         </Text>
-        {item.mbid && (
-          <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-            {mbidId(item.mbid)}
-          </Text>
-        )}
+        <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+          {item.artist ||
+            (item.kind === "artists"
+              ? "Artist"
+              : item.kind === "albums"
+                ? "Album"
+                : "Track")}
+        </Text>
       </View>
-      <View className="min-w-[5.5rem] items-end">
-        <Text className="font-sans text-lg font-black">{item.playCount}</Text>
-        <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-          plays
+      <View className="items-end pl-1">
+        <Text className="text-sm font-bold">
+          {item.playCount.toLocaleString()}
+        </Text>
+        <Text className="text-xs text-muted-foreground">
+          {item.playCount === 1 ? "listen" : "listens"}
         </Text>
       </View>
     </Pressable>
   );
-
   return href ? (
     <Link href={href as any} asChild>
       {content}
@@ -244,6 +220,14 @@ function StatListRow({ item, rank }: { item: StatItem; rank: number }) {
   ) : (
     content
   );
+}
+
+function attachContext(item: StatItem, plays: PlayView[]): StatItem {
+  if (item.kind === "artists") return item;
+  const context = indexedStatContext(item.kind, item.mbid, plays);
+  return context
+    ? { ...item, artist: context.artist, href: context.href }
+    : item;
 }
 
 async function loadStatsKind(
@@ -279,13 +263,16 @@ function StatsPreviewSection({
   kind,
   title,
   period,
+  compact = false,
+  plays = [],
 }: {
   actor: string;
+  compact?: boolean;
+  plays?: PlayView[];
   kind: ProfileStatsKind;
   title: string;
   period: StatsPeriod;
 }) {
-  const isMobile = useIsMobile();
   const [items, setItems] = useState<StatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -294,7 +281,7 @@ function StatsPreviewSection({
     let mounted = true;
     setLoading(true);
     setError(null);
-    loadStatsKind(actor, kind, period, 8)
+    loadStatsKind(actor, kind, period, compact ? 2 : 5)
       .then((res) => {
         if (mounted) setItems(res.items);
       })
@@ -307,16 +294,24 @@ function StatsPreviewSection({
     return () => {
       mounted = false;
     };
-  }, [actor, kind, period]);
+  }, [actor, kind, period, compact]);
 
   return (
-    <View className="mb-8">
+    <View className="mb-5 min-w-0">
       <View className="mb-3 flex-row flex-wrap items-center justify-between gap-3">
-        <Text className="font-sans text-2xl font-black">{title}</Text>
+        <Text
+          accessibilityRole="header"
+          aria-level={3}
+          className="font-sans text-lg font-bold"
+        >
+          {title}
+        </Text>
         <View className="flex-row flex-wrap gap-2">
-          {kind === "albums" && (
+          {kind === "albums" && !compact && (
             <Link
-              href={`/profile/${encodeURIComponent(actor)}/topster?period=${period}` as any}
+              href={
+                `/profile/${encodeURIComponent(actor)}/topster?period=${period}` as any
+              }
               asChild
             >
               <Button size="sm" variant="default">
@@ -326,15 +321,13 @@ function StatsPreviewSection({
           )}
           <Link href={moreHref(actor, kind, period) as any} asChild>
             <Button size="sm" variant="outline">
-              <Text>
-                More {kind === "albums" ? "Albums" : kind === "tracks" ? "Tracks" : "Artists"}
-              </Text>
+              <Text>View all</Text>
             </Button>
           </Link>
         </View>
       </View>
       {loading ? (
-        <View className="h-36 items-center justify-center rounded-lg border border-border bg-card/60">
+        <View className="h-24 items-center justify-center">
           <ActivityIndicator />
         </View>
       ) : error ? (
@@ -343,12 +336,18 @@ function StatsPreviewSection({
         </View>
       ) : items.length === 0 ? (
         <View className="rounded-lg border border-border bg-card/60 p-4">
-          <Text className="text-muted-foreground">No plays in this period yet.</Text>
+          <Text className="text-muted-foreground">
+            No listens in this period yet.
+          </Text>
         </View>
       ) : (
-        <View className="flex-row flex-wrap gap-3">
-          {items.map((item) => (
-            <StatPreviewCard key={item.id} item={item} compact={isMobile} />
+        <View>
+          {items.map((item, index) => (
+            <StatListRow
+              key={item.id}
+              item={attachContext(item, plays)}
+              rank={index + 1}
+            />
           ))}
         </View>
       )}
@@ -359,32 +358,82 @@ function StatsPreviewSection({
 export function ProfileStatsSections({
   actor,
   defaultPeriod,
+  compact = false,
+  plays = [],
 }: {
   actor: string;
   defaultPeriod?: string;
+  compact?: boolean;
+  plays?: PlayView[];
 }) {
   const [period, setPeriod] = useState<StatsPeriod>(
     normalizeStatsPeriod(defaultPeriod),
   );
-
   useEffect(() => {
     setPeriod(normalizeStatsPeriod(defaultPeriod));
   }, [defaultPeriod]);
-
   return (
-    <View className="mb-2">
-      <View className="mb-5 gap-3 rounded-lg border border-border bg-card/60 p-4">
-        <View className="flex-row items-center gap-2">
-          <Icon icon={ListMusic} size={18} className="text-primary" />
-          <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-            Listening stats
-          </Text>
-        </View>
+    <View className="mb-6">
+      <View className="mb-4 gap-3">
+        <Text
+          accessibilityRole="header"
+          aria-level={2}
+          className="text-xl font-bold"
+        >
+          {compact ? "Listening taste" : "Listening stats"}
+        </Text>
         <StatsPeriodTabs period={period} onChange={setPeriod} />
+        <Text className="text-xs text-muted-foreground">
+          Counts use listens received by Teal. Recent saves may take a moment to
+          appear. Album charts use the same counts.
+        </Text>
       </View>
-      <StatsPreviewSection actor={actor} kind="artists" title="Top Artists" period={period} />
-      <StatsPreviewSection actor={actor} kind="albums" title="Top Albums" period={period} />
-      <StatsPreviewSection actor={actor} kind="tracks" title="Top Tracks" period={period} />
+      <View className={compact ? "gap-4 md:grid md:grid-cols-2" : "gap-2"}>
+        <StatsPreviewSection
+          actor={actor}
+          kind="artists"
+          title="Top artists"
+          period={period}
+          compact={compact}
+          plays={plays}
+        />
+        <StatsPreviewSection
+          actor={actor}
+          kind="albums"
+          title="Top albums"
+          period={period}
+          compact={compact}
+          plays={plays}
+        />
+        {!compact && (
+          <StatsPreviewSection
+            actor={actor}
+            kind="tracks"
+            title="Top tracks"
+            period={period}
+            plays={plays}
+          />
+        )}
+      </View>
+      {compact && (
+        <View className="flex-row flex-wrap gap-2">
+          <Link href={moreHref(actor, "tracks", period) as any} asChild>
+            <Button size="sm" variant="outline">
+              <Text>Top tracks</Text>
+            </Button>
+          </Link>
+          <Link
+            href={
+              `/profile/${encodeURIComponent(actor)}/topster?period=${period}` as any
+            }
+            asChild
+          >
+            <Button size="sm" variant="outline">
+              <Text>Make album chart</Text>
+            </Button>
+          </Link>
+        </View>
+      )}
     </View>
   );
 }
@@ -402,19 +451,35 @@ export function ProfileStatsMorePage({
     normalizeStatsPeriod(initialPeriod),
   );
   const [items, setItems] = useState<StatItem[]>([]);
+  const [contextPlays, setContextPlays] = useState<PlayView[]>([]);
+  const [retryKey, setRetryKey] = useState(0);
+  const requestVersion = useRef(0);
+  const router = useRouter();
   const [cursor, setCursor] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const title =
-    kind === "artists" ? "Top Artists" : kind === "albums" ? "Top Albums" : "Top Tracks";
+    kind === "artists"
+      ? "Top Artists"
+      : kind === "albums"
+        ? "Top Albums"
+        : "Top Tracks";
 
   useEffect(() => {
     let mounted = true;
+    requestVersion.current += 1;
+    setContextPlays([]);
+    setLoadingMore(false);
     setLoading(true);
     setError(null);
     setItems([]);
     setCursor(undefined);
+    getActorFeed(actor, 50)
+      .then((page) => {
+        if (mounted) setContextPlays(page.plays);
+      })
+      .catch(() => undefined);
     loadStatsKind(actor, kind, period, 50)
       .then((res) => {
         if (!mounted) return;
@@ -430,55 +495,104 @@ export function ProfileStatsMorePage({
     return () => {
       mounted = false;
     };
-  }, [actor, kind, period]);
+  }, [actor, kind, period, retryKey]);
 
   const loadMore = useCallback(() => {
     if (!cursor || loadingMore) return;
+    const version = requestVersion.current;
+    setError(null);
     setLoadingMore(true);
     loadStatsKind(actor, kind, period, 50, cursor)
       .then((res) => {
-        setItems((current) => [...current, ...res.items]);
+        if (version !== requestVersion.current) return;
+        setItems((current) => {
+          const known = new Set(current.map((item) => item.id));
+          return [
+            ...current,
+            ...res.items.filter((item) => !known.has(item.id)),
+          ];
+        });
         setCursor(res.cursor);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
-      .finally(() => setLoadingMore(false));
+      .catch(() => {
+        if (version === requestVersion.current)
+          setError("Could not load more stats. Try again.");
+      })
+      .finally(() => {
+        if (version === requestVersion.current) setLoadingMore(false);
+      });
   }, [actor, cursor, kind, loadingMore, period]);
 
   return (
     <View>
       <View className="mb-6 gap-3">
-        <Text className="font-mono text-[10px] uppercase text-primary">
-          Listening stats
+        <Text
+          accessibilityRole="header"
+          aria-level={1}
+          className="font-sans text-3xl font-bold"
+        >
+          {title}
         </Text>
-        <Text className="font-sans text-4xl font-black">{title}</Text>
-        <StatsPeriodTabs period={period} onChange={setPeriod} />
+        <Text className="text-sm text-muted-foreground">
+          Ranked by listens received by Teal. Recent saves may take a moment to
+          appear.
+        </Text>
+        <Link
+          href={`/profile/${encodeURIComponent(actor)}?tab=listening` as any}
+          asChild
+        >
+          <Button variant="ghost" className="self-start">
+            <Text>Back to listening</Text>
+          </Button>
+        </Link>
+        <StatsPeriodTabs
+          period={period}
+          onChange={(next) => {
+            setPeriod(next);
+            router.setParams({ period: next });
+          }}
+        />
       </View>
       {loading ? (
         <View className="min-h-[18rem] items-center justify-center">
           <ActivityIndicator size="large" />
         </View>
-      ) : error ? (
+      ) : error && items.length === 0 ? (
         <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">{error}</Text>
+          <Text className="font-bold text-destructive">
+            Could not load listening stats.
+          </Text>
+          <Button
+            variant="outline"
+            className="mt-3 self-start"
+            onPress={() => setRetryKey((key) => key + 1)}
+          >
+            <Text>Try again</Text>
+          </Button>
         </View>
       ) : items.length === 0 ? (
         <View className="rounded-lg border border-border bg-card/60 p-4">
-          <Text className="text-muted-foreground">No plays in this period yet.</Text>
+          <Text className="text-muted-foreground">
+            No listens in this period yet.
+          </Text>
         </View>
       ) : (
         <View className="overflow-hidden rounded-lg border border-border bg-card px-3">
           {items.map((item, index) => (
-            <StatListRow key={`${item.id}-${index}`} item={item} rank={index + 1} />
+            <StatListRow
+              key={`${item.id}-${index}`}
+              item={attachContext(item, contextPlays)}
+              rank={index + 1}
+            />
           ))}
         </View>
       )}
+      {error && items.length > 0 && (
+        <Text className="mt-3 text-destructive">{error}</Text>
+      )}
       {cursor && (
         <View className="items-center py-5">
-          <Button
-            variant="outline"
-            onPress={loadMore}
-            disabled={loadingMore}
-          >
+          <Button variant="outline" onPress={loadMore} disabled={loadingMore}>
             <Text>{loadingMore ? "Loading" : "Load more"}</Text>
           </Button>
         </View>
