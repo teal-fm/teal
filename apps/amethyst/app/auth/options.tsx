@@ -20,12 +20,12 @@ export default function AuthOptions() {
           Welcome to Teal
         </Text>
         <Text className="leading-6 text-muted-foreground">
-          A music listening network built on ATProto. Use an existing account or
-          create one through Bluesky.
+          Share the music you listen to. Use your Bluesky or other Atmosphere
+          account, or create one to get started.
         </Text>
         <Link href="/auth/login" asChild>
           <Button className="flex-row gap-2" size="lg">
-            <Text>Sign in with ATProto</Text>
+            <Text>Sign in</Text>
           </Button>
         </Link>
         <Link href="/auth/signup" asChild>

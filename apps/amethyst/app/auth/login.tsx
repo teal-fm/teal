@@ -1,24 +1,30 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"; // Added useCallback, useRef
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Pressable, TextInput, View } from "react-native";
 import Animated, {
-  interpolate,
   useAnimatedKeyboard,
   useAnimatedStyle,
-  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router, Stack } from "expo-router";
 import { openAuthSessionAsync } from "expo-web-browser";
+import { useWebDialog } from "@/components/auth/useWebDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { resolveFromIdentity } from "@/lib/atp/pid";
+import { normalizeAuthHandle } from "@/lib/authHandle";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { capFirstLetter, cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { AlertCircle, AtSign, Check, ChevronRight, X } from "lucide-react-native";
+import {
+  AlertCircle,
+  AtSign,
+  Check,
+  ChevronRight,
+  X,
+} from "lucide-react-native";
 
 type Url = URL;
 
@@ -34,7 +40,6 @@ const LoginScreen = () => {
   const [err, setErr] = useState<string | undefined>();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
 
   const [pdsUrl, setPdsUrl] = useState<Url | null>(null);
   const [isResolvingPds, setIsResolvingPds] = useState(false);
@@ -45,36 +50,14 @@ const LoginScreen = () => {
   const kb = useAnimatedKeyboard();
 
   const handleInputRef = useRef<TextInput>(null);
+  const resolutionVersion = useRef(0);
+  const closeLogin = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/");
+  }, []);
+  const dialogRef = useWebDialog(closeLogin, "teal-login-title", "/auth/login");
 
   const { getLoginUrl, oauthCallback } = useStore((state) => state);
-
-  const messageAnimation = useSharedValue(0);
-
-  // focus on load
-  useEffect(() => {
-    if (handleInputRef.current) {
-      handleInputRef.current.focus();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isResolvingPds || pdsResolutionError || pdsUrl) {
-      messageAnimation.value = withTiming(1, { duration: 500 });
-    } else {
-      messageAnimation.value = withTiming(0, { duration: 400 });
-    }
-  }, [isResolvingPds, pdsResolutionError, messageAnimation, pdsUrl]);
-
-  const messageContainerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: messageAnimation.value,
-      maxHeight: interpolate(messageAnimation.value, [0, 1], [0, 100]),
-      marginTop: -8,
-      paddingTop: 8,
-      overflow: "hidden",
-      zIndex: -1,
-    };
-  });
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     const isKeyboardOpen = kb.height.value > 0;
@@ -93,43 +76,35 @@ const LoginScreen = () => {
         onError?: (errorMessage: string) => void;
       },
     ): Promise<void> => {
-      // Ensure we're not calling with an empty or whitespace-only handle due to debounce race.
-      if (!currentHandle || currentHandle.trim() === "") {
-        // Clear any potential resolving/error states if triggered by empty text
+      const identityHandle = normalizeAuthHandle(currentHandle);
+      const version = ++resolutionVersion.current;
+      if (!identityHandle) {
         setPdsResolutionError(undefined);
         setIsResolvingPds(false);
         setPdsUrl(null);
-        callbacks?.onError?.("Handle cannot be empty for PDS resolution."); // Optional: notify caller
         return;
       }
-
       setIsResolvingPds(true);
       setPdsResolutionError(undefined);
       setPdsUrl(null);
       try {
-        console.log(`Attempting to resolve PDS for handle: ${currentHandle}`);
         const identity: ResolvedIdentity | null =
-          await resolveFromIdentity(currentHandle);
-
-        if (!identity || !identity.pds) {
-          throw new Error("Could not resolve PDS from the provided handle.");
-        }
-
+          await resolveFromIdentity(identityHandle);
+        if (version !== resolutionVersion.current) return;
+        if (!identity?.pds) throw new Error("Couldn't find this account.");
         setPdsUrl(identity.pds);
         callbacks?.onSuccess?.(identity.pds);
-        setIsResolvingPds(false);
-      } catch (e: any) {
-        const errorMessage =
-          e.message || "An unknown error occurred while resolving PDS.";
-        setPdsResolutionError(errorMessage);
-        callbacks?.onError?.(errorMessage);
+      } catch {
+        if (version !== resolutionVersion.current) return;
+        const message =
+          "Couldn't find this account. Check your handle and try again.";
+        setPdsResolutionError(message);
+        callbacks?.onError?.(message);
       } finally {
-        if (pdsResolutionError && isResolvingPds) {
-          setIsResolvingPds(false);
-        }
+        if (version === resolutionVersion.current) setIsResolvingPds(false);
       }
     },
-    [isResolvingPds, pdsResolutionError],
+    [],
   );
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -144,20 +119,24 @@ const LoginScreen = () => {
   const handleTextChange = useCallback(
     (text: string) => {
       setHandle(text);
+      resolutionVersion.current += 1;
+      setPdsUrl(null);
+      setPdsResolutionError(undefined);
+      setErr(undefined);
+      setIsResolvingPds(false);
 
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
 
-      if (text.trim().length > 3) {
+      if (normalizeAuthHandle(text).length > 3) {
         debounceTimeoutRef.current = setTimeout(() => {
-          getPdsUrl(text.trim(), {
+          getPdsUrl(normalizeAuthHandle(text), {
             onSuccess: (u) => {
               setPdsUrl(u);
             },
             onError: (e) => {
-              console.error(e);
-              setPdsResolutionError("Couldn't resolve handle");
+              setPdsResolutionError(e);
             },
           });
         }, DEBOUNCE_DELAY);
@@ -171,6 +150,7 @@ const LoginScreen = () => {
   );
 
   const handleLogin = async () => {
+    if (isLoading || isRedirecting || !pdsUrl || isResolvingPds) return;
     // reset state
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -178,7 +158,7 @@ const LoginScreen = () => {
     setIsResolvingPds(false);
     setPdsResolutionError(undefined);
 
-    if (!handle) {
+    if (!normalizeAuthHandle(handle)) {
       setErr("Please enter a handle");
       return;
     }
@@ -187,7 +167,7 @@ const LoginScreen = () => {
     setErr(undefined);
 
     try {
-      let redirUrl = await getLoginUrl(handle.replace("@", ""));
+      let redirUrl = await getLoginUrl(normalizeAuthHandle(handle));
       if (!redirUrl) {
         throw new Error("Could not get login url.");
       }
@@ -219,14 +199,6 @@ const LoginScreen = () => {
     }
   };
 
-  const closeLogin = () => {
-    if (Platform.OS === "web") {
-      window.history.back();
-      return;
-    }
-    router.dismiss();
-  };
-
   return (
     <SafeAreaView className="flex w-full flex-1 bg-black/45 px-4">
       <Stack.Screen
@@ -236,14 +208,19 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <Pressable className="absolute inset-0" onPress={closeLogin} />
+      <Pressable
+        className="absolute inset-0"
+        onPress={closeLogin}
+        accessible={false}
+        tabIndex={-1}
+      />
       <View className="flex flex-1 items-center justify-center">
         <View className="w-full max-w-md">
-          <Animated.View
-            className="w-full"
-            style={containerAnimatedStyle}
-          >
-            <View className="align-center w-full justify-center gap-5 rounded-2xl border border-border bg-background p-7 shadow-2xl md:p-8">
+          <Animated.View className="w-full" style={containerAnimatedStyle}>
+            <View
+              ref={dialogRef}
+              className="align-center w-full justify-center gap-5 rounded-2xl border border-border bg-background p-7 shadow-2xl md:p-8"
+            >
               <Button
                 variant="ghost"
                 size="icon"
@@ -267,17 +244,29 @@ const LoginScreen = () => {
                   />
                 </View>
               </View>
-              <Text className="text-center font-sans text-3xl font-black text-foreground">
+              <Text
+                nativeID="teal-login-title"
+                accessibilityRole="header"
+                className="text-center font-sans text-3xl font-black text-foreground"
+              >
                 Sign in to Teal
               </Text>
               <Text className="text-center text-sm leading-5 text-muted-foreground">
-                Use the handle for your ATProto account. Teal will resolve your PDS
-                before continuing.
+                Use your Bluesky or other Atmosphere account. We'll send you to
+                your account provider to approve sign-in.
               </Text>
               <View className="gap-2">
-                <Text className="text-sm font-bold text-foreground">Handle</Text>
+                <Text
+                  nativeID="teal-login-handle-label"
+                  className="text-sm font-bold text-foreground"
+                >
+                  Handle
+                </Text>
                 <Input
                   ref={handleInputRef}
+                  accessibilityLabel="Handle"
+                  aria-labelledby="teal-login-handle-label"
+                  aria-invalid={Boolean(err || pdsResolutionError)}
                   className={cn(
                     "h-12 rounded-lg",
                     (err || pdsResolutionError) && `border-red-500`,
@@ -285,8 +274,6 @@ const LoginScreen = () => {
                   placeholder="alice.bsky.social or did:plc:..."
                   value={handle}
                   onChangeText={handleTextChange}
-                  onFocus={(e) => setIsSelected(true)}
-                  onBlur={(e) => setIsSelected(false)}
                   autoCapitalize="none"
                   autoCorrect={false}
                   onKeyPress={(e) => {
@@ -296,75 +283,74 @@ const LoginScreen = () => {
                   }}
                 />
 
-                <Animated.View style={messageContainerAnimatedStyle}>
+                {(isResolvingPds || pdsResolutionError || pdsUrl) && (
                   <View
-                    className={cn(
-                      "-mt-7 rounded-lg border border-border p-2 transition-all duration-300",
-                      isSelected ? "pt-9" : "pt-8",
-                      pdsUrl !== null
-                        ? pdsUrl.hostname.includes("bsky.network")
-                          ? "bg-sky-400 dark:bg-sky-800"
-                          : "bg-teal-400 dark:bg-teal-800"
-                        : pdsResolutionError && "bg-red-300 dark:bg-red-800",
-                    )}
+                    accessibilityLiveRegion="polite"
+                    className="rounded-lg bg-muted p-3"
                   >
-                    {pdsUrl !== null ? (
-                      <View className="flex flex-row items-center gap-1">
-                        <Text>PDS:</Text>
-                        {pdsUrl.hostname.includes("bsky.network") && (
-                          <View className="flex flex-row justify-center gap-0.5 pr-0.5">
-                            <Icon
-                              icon={FontAwesome6}
-                              className="color-bsky"
-                              name="bluesky"
-                              size={16}
-                            />
-                          </View>
-                        )}
-                        <Text>
-                          {pdsUrl.hostname.includes("bsky.network")
-                            ? "Bluesky (" +
-                              capFirstLetter(
-                                pdsUrl.hostname.split(".").shift() || "",
-                              ) +
-                              ")"
-                            : pdsUrl.hostname}
+                    <View>
+                      {pdsUrl !== null ? (
+                        <View className="flex flex-row items-center gap-1">
+                          <Text>Account provider:</Text>
+                          {pdsUrl.hostname.includes("bsky.network") && (
+                            <View className="flex flex-row justify-center gap-0.5 pr-0.5">
+                              <Icon
+                                icon={FontAwesome6}
+                                className="color-bsky"
+                                name="bluesky"
+                                size={16}
+                              />
+                            </View>
+                          )}
+                          <Text>
+                            {pdsUrl.hostname.includes("bsky.network")
+                              ? "Bluesky (" +
+                                capFirstLetter(
+                                  pdsUrl.hostname.split(".").shift() || "",
+                                ) +
+                                ")"
+                              : pdsUrl.hostname}
+                          </Text>
+                        </View>
+                      ) : pdsResolutionError ? (
+                        <View className="flex flex-row">
+                          <Icon
+                            icon={AlertCircle}
+                            className="mr-1 inline text-foreground"
+                            size={18}
+                          />
+                          <Text accessibilityRole="alert" className="flex-1">
+                            {pdsResolutionError}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text className="px-1 text-muted-foreground">
+                          Finding your account...
                         </Text>
-                      </View>
-                    ) : pdsResolutionError ? (
-                      <View className="flex flex-row">
-                        <Icon
-                          icon={AlertCircle}
-                          className="mr-1 inline text-foreground"
-                          size={18}
-                        />
-                        <Text className="justify-baseline flex">
-                          {pdsResolutionError}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text className="px-1 text-muted-foreground">
-                        Resolving PDS...
-                      </Text>
-                    )}
+                      )}
+                    </View>
                   </View>
-                </Animated.View>
+                )}
               </View>
-              <View className="mt-2 flex flex-row items-center justify-between gap-3">
-                <Link href="https://bsky.app/signup" asChild>
+              {err && (
+                <Text accessibilityRole="alert" className="text-destructive">
+                  {err}
+                </Text>
+              )}
+              <View className="mt-2 flex flex-row flex-wrap items-center justify-between gap-3">
+                <Link href="/auth/signup" asChild>
                   <Button variant="link" className="p-0">
-                    <Text className="text-md text-secondary">
-                      Sign up for Bluesky
+                    <Text className="text-sm text-primary">
+                      Create an account
                     </Text>
                   </Button>
                 </Link>
                 <Button
-                  className={cn(
-                    "flex flex-row justify-end gap-1",
-                    isRedirecting ? "bg-primary" : "bg-primary",
-                  )}
+                  className="flex flex-row justify-end gap-1"
                   onPress={handleLogin}
-                  disabled={!pdsUrl}
+                  disabled={
+                    !pdsUrl || isLoading || isRedirecting || isResolvingPds
+                  }
                 >
                   {isRedirecting ? (
                     <>

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Link, router, Stack } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
@@ -26,7 +27,7 @@ const toSearchParams = (
 export default function AuthOptions() {
   const status = useStore((state) => state.status);
   const params = useLocalSearchParams<"iss" | "state" | "code">();
-  const { state } = params;
+  const [error, setError] = useState<string | null>(null);
   const calledRef = useRef(false);
 
   useEffect(() => {
@@ -36,16 +37,23 @@ export default function AuthOptions() {
     if (calledRef.current || !params) return;
     calledRef.current = true;
     const searchParams = toSearchParams(params);
-    useStore.getState().oauthCallback(searchParams);
-  }, [params]);
-
-  useEffect(() => {
-    if (status === "loggedIn") {
-      requestAnimationFrame(() => {
+    useStore
+      .getState()
+      .oauthCallback(searchParams)
+      .then(() => {
+        // The store reports callback failures in state rather than rejecting.
+        const result = useStore.getState();
+        if (result.status !== "loggedIn" || !result.pdsAgent) {
+          setError(result.login.error || "Sign-in did not complete.");
+          return;
+        }
+        // A previous failed attempt can leave login.error behind. The current
+        // authenticated status is authoritative after this callback completes.
+        setError(null);
         router.replace("/");
-      });
-    }
-  }, [status]);
+      })
+      .catch(() => setError("Sign-in did not complete."));
+  }, [params]);
 
   if (!params) {
     return (
@@ -63,15 +71,28 @@ export default function AuthOptions() {
         }}
       />
       <Icon icon={PencilLine} size={64} />
-      <Text className="text-center text-3xl font-semibold text-foreground">
-        {status === "loggedIn" ? "Success!" : "Fetching your data..."}
+      <Text
+        accessibilityRole={error ? "alert" : "header"}
+        className="text-center text-3xl font-semibold text-foreground"
+      >
+        {error
+          ? "Couldn't finish signing in"
+          : status === "loggedIn"
+            ? "You're signed in"
+            : "Finishing sign-in..."}
       </Text>
-      <Text className="text-sm text-muted-foreground">
-        This may take a few seconds {status}
+      <Text className="text-center text-sm text-muted-foreground">
+        {error
+          ? "Your sign-in session may have expired. Start again to connect your account."
+          : "Connecting your account to Teal. This may take a few seconds."}
       </Text>
-      <Text className="rounded-full bg-muted-foreground/30 px-2 py-1 font-mono text-sm text-muted-foreground">
-        {state}
-      </Text>
+      {error && (
+        <Link href="/auth/login" asChild>
+          <Button>
+            <Text>Try signing in again</Text>
+          </Button>
+        </Link>
+      )}
     </View>
   );
 }

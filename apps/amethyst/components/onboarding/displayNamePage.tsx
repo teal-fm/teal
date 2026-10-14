@@ -20,8 +20,8 @@ const DisplayNamePage: React.FC<DisplayNamePageProps> = ({
   const [displayName, setDisplayName] = useState(initialDisplayName || "");
 
   const handleNext = () => {
-    if (displayName) {
-      onComplete(displayName);
+    if (displayName.trim()) {
+      onComplete(displayName.trim());
     }
   };
 
@@ -38,7 +38,13 @@ const DisplayNamePage: React.FC<DisplayNamePageProps> = ({
           This is the name shown beside your plays. We started with your Bluesky
           display name when one was available.
         </Text>
+        <Text nativeID="teal-display-name-label" className="text-sm font-bold">
+          Display name
+        </Text>
         <Input
+          accessibilityLabel="Display name"
+          aria-labelledby="teal-display-name-label"
+          maxLength={64}
           className="h-14 rounded-lg border border-border bg-background px-4 text-lg"
           placeholder="Display name"
           value={displayName}
@@ -48,7 +54,7 @@ const DisplayNamePage: React.FC<DisplayNamePageProps> = ({
       <View className="w-full flex-row justify-end">
         <Button
           onPress={handleNext}
-          disabled={!displayName}
+          disabled={!displayName.trim()}
           className="min-w-36 flex-row gap-2"
         >
           <Text>Next</Text>

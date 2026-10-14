@@ -1,18 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, Stack } from "expo-router";
+import { Link, router, Stack } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { ArrowRight, AtSignIcon } from "lucide-react-native";
 
 const LoginScreen = () => {
+  const [opened, setOpened] = useState(false);
   return (
     <SafeAreaView className="flex flex-1 items-center justify-center bg-muted px-5">
       <Stack.Screen
         options={{
-          title: "Sign in",
+          title: "Create an account",
           headerBackButtonDisplayMode: "minimal",
           headerShown: false,
         }}
@@ -26,37 +27,63 @@ const LoginScreen = () => {
           />
         </View>
         <Text className="text-center font-sans text-3xl font-black text-foreground">
-          Sign up via the Atmosphere
+          Create your account
         </Text>
         <Text className="text-center text-lg font-bold text-foreground">
           No account? No problem.
         </Text>
         <View className="flex flex-col items-center justify-center">
           <Text className="-mx-3 mb-2 text-center">
-            To use teal.fm, you’ll need a PDS—your personal data storage on the
-            Atmosphere. Signing up with Bluesky is a great way to begin.
+            Teal uses the same account as Bluesky and other Atmosphere apps.
+            Create one with Bluesky, then use its handle to sign in here.
           </Text>
           <Text className="mb-4 text-center text-xs text-muted-foreground">
-            Sign up with Bluesky, then return here to start exploring.
+            Already have an account? You can sign in directly. Creating an
+            account opens Bluesky in another tab.
           </Text>
           {/* on click, open tab, then in the background navigate to /login */}
           <Button
             onPress={() => {
               // on web, open new tab
               if (Platform.OS === "web") {
-                window.open("https://bsky.app/signup", "_blank");
+                window.open(
+                  "https://bsky.app/signup",
+                  "_blank",
+                  "noopener,noreferrer",
+                );
               } else {
                 router.navigate("https://bsky.app");
               }
-              setTimeout(() => {
-                router.replace("/auth/login");
-              }, 1000);
+              setOpened(true);
             }}
             className="flex flex-row items-center justify-center gap-2"
           >
             <Text className="ml-2 text-sm">Continue to Bluesky</Text>
             <Icon icon={ArrowRight} />
           </Button>
+          {opened && (
+            <Text
+              accessibilityLiveRegion="polite"
+              className="mt-4 text-center text-muted-foreground"
+            >
+              Once your account is ready, return here and sign in with your new
+              handle.
+            </Text>
+          )}
+          <Link href="/auth/login" asChild>
+            <Button variant="outline" className="mt-4">
+              <Text>
+                {opened
+                  ? "I've created my account — sign in"
+                  : "I already have an account"}
+              </Text>
+            </Button>
+          </Link>
+          <Link href="/" asChild>
+            <Button variant="link" className="mt-2">
+              <Text>Back to Teal</Text>
+            </Button>
+          </Link>
         </View>
       </View>
     </SafeAreaView>
