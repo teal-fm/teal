@@ -1,15 +1,11 @@
-import React, { useState } from "react";
-import { Switch, View } from "react-native";
+import { useState } from "react";
+import { View } from "react-native";
 import { Link, Stack } from "expo-router";
-import RightRail from "@/components/teal/RightRail";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { useColorScheme } from "@/lib/useColorScheme";
-import { cn } from "@/lib/utils";
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
 
@@ -17,151 +13,136 @@ export default function Settings() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const appviewDid = useStore((state) => state.tealDid);
   const setAppviewDid = useStore((state) => state.setTealDid);
+  const status = useStore((state) => state.status);
+  const [advanced, setAdvanced] = useState(false);
+  const [provider, setProvider] = useState(appviewDid || "");
+  const [providerMessage, setProviderMessage] = useState<string | null>(null);
+  const [providerError, setProviderError] = useState(false);
 
-  const colorSchemeOptions = [
-    { label: "Light", value: "light" },
-    { label: "Dark", value: "dark" },
-    { label: "System", value: "system" },
-  ];
+  function saveProvider() {
+    const value = provider.trim();
+    if (!/^did:[a-z0-9]+:[A-Za-z0-9._:%-]+$/.test(value)) {
+      setProviderError(true);
+      setProviderMessage(
+        "Enter a valid provider DID, such as did:web:teal.fm.",
+      );
+      return;
+    }
+    setAppviewDid(value);
+    setProviderError(false);
+    setProviderMessage("Provider saved.");
+  }
 
   return (
-    <TealShell rightRail={<RightRail />}>
-      <Stack.Screen
-        options={{
-          title: "Settings",
-          headerBackButtonDisplayMode: "minimal",
-          headerShown: false,
-        }}
-      />
-      <SectionHeading eyebrow="Preferences" title="Settings" />
-      <View className="flex flex-col gap-5 rounded-lg border border-border bg-card p-5">
-        <ButtonSelector
-          text="Theme"
-          values={colorSchemeOptions}
-          selectedValue={colorScheme}
-          setSelectedValue={setColorScheme}
-        />
-        <TextInputRow
-          labelText="Appview DID"
-          initialValue={appviewDid || ""} // Ensure currentValue is a string
-          onSubmit={(e) => setAppviewDid(e)}
-          placeholder="Enter your Appview DID (e.g., did:web:...)"
-        />
-        <Link href="/auth/logoutModal" asChild>
-          <Button variant="destructive" size="sm" className="w-max pb-1">
-            <Text>Sign out</Text>
+    <TealShell pageTitle="Settings">
+      <Stack.Screen options={{ title: "Settings", headerShown: false }} />
+      <SectionHeading title="Settings" level={1} />
+      <View className="gap-8">
+        <View className="gap-3">
+          <Text role="heading" aria-level={3} className="text-lg font-semibold">
+            Appearance
+          </Text>
+          <Text className="text-sm text-muted-foreground">
+            Choose a theme, or follow your device.
+          </Text>
+          <View
+            role="group"
+            accessibilityLabel="Theme"
+            className="flex-row flex-wrap gap-2"
+          >
+            {(["light", "dark", "system"] as const).map((value) => (
+              <Button
+                key={value}
+                variant={colorScheme === value ? "default" : "outline"}
+                accessibilityState={{ selected: colorScheme === value }}
+                aria-pressed={colorScheme === value}
+                onPress={() => setColorScheme(value)}
+              >
+                <Text>{value[0].toUpperCase() + value.slice(1)}</Text>
+              </Button>
+            ))}
+          </View>
+        </View>
+        <View className="gap-3 border-t border-border pt-6">
+          <Text role="heading" aria-level={3} className="text-lg font-semibold">
+            Account
+          </Text>
+          <Link
+            href={status === "loggedIn" ? "/auth/logoutModal" : "/auth/login"}
+            asChild
+          >
+            <Button variant="outline" className="self-start">
+              <Text>{status === "loggedIn" ? "Sign out" : "Sign in"}</Text>
+            </Button>
+          </Link>
+        </View>
+        <View className="gap-3 border-t border-border pt-6">
+          <Button
+            variant="ghost"
+            className="self-start"
+            accessibilityState={{ expanded: advanced }}
+            aria-expanded={advanced}
+            onPress={() => setAdvanced((value) => !value)}
+          >
+            <Text>
+              {advanced ? "Hide advanced settings" : "Advanced settings"}
+            </Text>
           </Button>
-        </Link>
-        <View>
-          <Text className="text-muted-foreground">
-            teal.fm amethyst ver. {pkg.version}
-          </Text>
-          <Text className="text-muted-foreground">
-            react native{" "}
-            {pkg.dependencies["react-native"]
-              .replace("~", "")
-              .split(".")
-              .slice(0, 2)
-              .join(".")}
-            , expo {pkg.dependencies.expo.split(".")[0].replace("~", "")}.
-          </Text>
+          {advanced && (
+            <View className="gap-3">
+              <Text nativeID="provider-label" className="font-semibold">
+                AppView provider DID
+              </Text>
+              <Text
+                nativeID="provider-help"
+                className="text-sm text-muted-foreground"
+              >
+                This identifies the service that supplies Teal's feeds and
+                statistics. Change it only when you want to use another
+                provider.
+              </Text>
+              <View className="flex-row flex-wrap items-center gap-3">
+                <Input
+                  nativeID="provider-input"
+                  accessibilityLabel="AppView provider DID"
+                  aria-labelledby="provider-label"
+                  aria-describedby="provider-help"
+                  className="min-w-0 flex-1"
+                  value={provider}
+                  onChangeText={(value) => {
+                    setProvider(value);
+                    setProviderMessage(null);
+                  }}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholder="did:web:teal.fm"
+                />
+                <Button
+                  disabled={provider.trim() === appviewDid}
+                  onPress={saveProvider}
+                >
+                  <Text>Save provider</Text>
+                </Button>
+              </View>
+              {providerMessage && (
+                <Text
+                  role={providerError ? "alert" : "status"}
+                  className={
+                    providerError
+                      ? "text-sm text-destructive"
+                      : "text-sm text-muted-foreground"
+                  }
+                >
+                  {providerMessage}
+                </Text>
+              )}
+              <Text className="text-sm text-muted-foreground">
+                Teal {pkg.version}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </TealShell>
-  );
-}
-
-function ToggleSwitch({
-  text,
-  isEnabled,
-  setIsEnabled,
-}: {
-  text: string;
-  isEnabled: boolean;
-  setIsEnabled: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
-  const toggleSwitch = () =>
-    setIsEnabled((previousState: boolean) => !previousState);
-
-  return (
-    <View className="flex-row items-center justify-between">
-      <Text className="text-lg">{text}</Text>
-      <Switch className="ml-4" value={isEnabled} onValueChange={toggleSwitch} />
-    </View>
-  );
-}
-
-/// A selector component for smaller selections (usu. <3 values)
-function ButtonSelector({
-  text,
-  values,
-  selectedValue,
-  setSelectedValue,
-}: {
-  text: string;
-  values: { label: string; value: string }[];
-  selectedValue: string;
-  setSelectedValue: (value: any) => void;
-}) {
-  return (
-    <View className="items-start gap-2 pt-2">
-      <Text className="text-base font-semibold">{text}</Text>
-      <View className="h-10 w-full flex-row items-center justify-around gap-1 rounded-lg bg-muted px-1">
-        {values.map(({ label, value }) => (
-          <Button
-            key={value}
-            onPress={() => setSelectedValue(value)}
-            className={`h-8 w-full flex-1`}
-            variant={selectedValue === value ? "secondary" : "ghost"}
-          >
-            <Text
-              className={cn(
-                selectedValue === value
-                  ? "text-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              {label}
-            </Text>
-          </Button>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function TextInputRow({
-  labelText,
-  initialValue = "", // Added initialValue prop, defaults to empty string
-  onSubmit,
-  placeholder,
-}: {
-  labelText: string;
-  initialValue?: string; // Made initialValue optional
-  onSubmit: (value: string) => void; // onSubmit now takes the string value
-  placeholder?: string;
-}) {
-  const [inputValue, setInputValue] = useState(initialValue); // Internal state for the input
-
-  const handleSubmit = () => {
-    onSubmit(inputValue);
-  };
-
-  return (
-    <View className="items-start gap-2 pt-2">
-      <Text className="text-base font-semibold">{labelText}</Text>
-      <View className="w-full flex-row items-center gap-2">
-        <Input
-          className="h-10 w-full rounded-md border border-muted-foreground/50 bg-transparent px-3 py-2 text-base text-foreground"
-          value={inputValue}
-          onChangeText={setInputValue} // Update internal state on change
-          placeholder={placeholder}
-          placeholderTextColor="hsl(var(--muted-foreground))"
-        />
-        <Button onPress={handleSubmit} size="sm">
-          <Text>Submit</Text>
-        </Button>
-      </View>
-    </View>
   );
 }

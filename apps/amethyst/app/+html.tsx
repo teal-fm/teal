@@ -9,6 +9,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
+        <title>Teal</title>
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="viewport"
@@ -24,10 +25,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
         {/* import web-only css */}
-        <link
-          rel="stylesheet"
-          href="web.css"
-          />
+        <link rel="stylesheet" href="web.css" />
       </head>
       <body>{children}</body>
     </html>

@@ -1,5 +1,10 @@
-import { playViewToTrackView, trackViewToPlayView } from "../teal/social";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+
+import {
+  playViewToTrackView,
+  socialPostDeleteParams,
+  trackViewToPlayView,
+} from "../teal/social";
 
 describe("Teal social track normalization", () => {
   it("normalizes new trackView artists into play artists", () => {
@@ -47,5 +52,43 @@ describe("Teal social track normalization", () => {
     expect(play.artists).toEqual([
       { artistName: "New Order", artistMbId: "mbid:artist-1" },
     ]);
+  });
+});
+
+describe("post deletion ownership", () => {
+  const did = "did:plc:listener";
+  it("targets the author's exact post and uses its CID as a concurrent-edit guard", () => {
+    expect(
+      socialPostDeleteParams(
+        `at://${did}/fm.teal.feed.social.post/test-post`,
+        did,
+        "original-cid",
+      ),
+    ).toEqual({
+      repo: did,
+      collection: "fm.teal.feed.social.post",
+      rkey: "test-post",
+      swapRecord: "original-cid",
+    });
+  });
+  it.each([
+    "at://did:plc:other/fm.teal.feed.social.post/test-post",
+    `at://${did}/fm.teal.feed.play/test-post`,
+    `at://${did}/fm.teal.feed.social.post/..`,
+    `at://${did}/fm.teal.feed.social.post/test-post/extra`,
+    `at://${did}/fm.teal.feed.social.post/test-post?other=record`,
+  ])("rejects an unauthorized or malformed deletion URI: %s", (uri) => {
+    expect(() => socialPostDeleteParams(uri, did, "cid")).toThrow(
+      "Only your own",
+    );
+  });
+  it("requires a current CID rather than deleting an unknown record version", () => {
+    expect(() =>
+      socialPostDeleteParams(
+        `at://${did}/fm.teal.feed.social.post/test`,
+        did,
+        "",
+      ),
+    ).toThrow();
   });
 });

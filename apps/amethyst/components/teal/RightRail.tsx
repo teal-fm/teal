@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { Link } from "expo-router";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { getTopArtists, getTopReleases } from "@/lib/teal/api";
-import { musicArtistHref } from "@/lib/teal/routes";
-import { ArrowUpRight, Radio } from "lucide-react-native";
+import { musicAlbumHref, musicArtistHref } from "@/lib/teal/routes";
+import { ArrowUpRight } from "lucide-react-native";
 
 import type {
   ArtistView,
@@ -16,12 +17,21 @@ import { Text } from "../ui/text";
 export default function RightRail() {
   const [artists, setArtists] = useState<ArtistView[]>([]);
   const [releases, setReleases] = useState<ReleaseView[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [artistError, setArtistError] = useState(false);
+  const [releaseError, setReleaseError] = useState(false);
+  const [request, setRequest] = useState(0);
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
+    setArtistError(false);
+    setReleaseError(false);
     Promise.allSettled([getTopArtists(4), getTopReleases(6)]).then(
       ([artistResult, releaseResult]) => {
         if (!mounted) return;
+        setArtistError(artistResult.status === "rejected");
+        setReleaseError(releaseResult.status === "rejected");
         setArtists(
           artistResult.status === "fulfilled" ? artistResult.value.artists : [],
         );
@@ -30,95 +40,158 @@ export default function RightRail() {
             ? releaseResult.value.releases
             : [],
         );
+        setLoading(false);
       },
     );
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [request]);
 
   return (
-    <View className="gap-8">
+    <View className="gap-6">
       <View>
-        <View className="mb-3 flex-row items-center gap-2">
-          <Icon icon={Radio} size={14} className="text-primary" />
-          <Text className="text-xs font-light text-primary">
-            Trending now
-          </Text>
-        </View>
-        <Text className="font-sans text-3xl font-semibold text-foreground">
-          Live from the network
+        <Text
+          role="heading"
+          aria-level={2}
+          className="font-sans text-2xl font-semibold"
+        >
+          Trending music
         </Text>
         <Text className="mt-2 text-sm leading-5 text-muted-foreground">
-          Music activity indexed from Teal records across ATProto.
+          What people are listening to across the Atmosphere.
         </Text>
       </View>
-
-      <View>
-        <Text className="mb-3 text-xs font-light text-primary">
-          Top artists
-        </Text>
-        {artists.map((artist, index) => (
-          <Link
-            key={`${artist.mbid}-${artist.name}`}
-            href={musicArtistHref(artist.name || "Unknown", artist.mbid) as any}
-            asChild
-          >
-            <Pressable className="flex-row items-center gap-3 border-t border-border py-3">
-              <Text className="w-5 font-mono text-xs text-muted-foreground">
-                {String(index + 1).padStart(2, "0")}
-              </Text>
-              <View className="min-w-0 flex-1">
-                <Text
-                  className="text-sm font-semibold text-foreground"
-                  numberOfLines={1}
-                >
-                  {artist.name || "Unknown artist"}
-                </Text>
-                <Text className="font-mono text-[10px] text-muted-foreground">
-                  {artist.playCount || 0} listens
-                </Text>
-              </View>
-              <Icon
-                icon={ArrowUpRight}
-                size={14}
-                className="text-primary"
-              />
-            </Pressable>
-          </Link>
-        ))}
-      </View>
-
-      <View>
-        <Text className="mb-3 text-xs font-light text-primary">
-          Releases
-        </Text>
-        {releases.length === 0 ? (
+      {loading ? (
+        <View className="items-center gap-3 py-8">
+          <ActivityIndicator accessibilityLabel="Loading trending music" />
           <Text className="text-sm text-muted-foreground">
-            Waiting for plays.
+            Loading music activity…
           </Text>
-        ) : (
-          releases.map((release, index) => (
-            <View
-              key={`${release.mbid}-${release.name}`}
-              className="flex-row items-center gap-3 border-t border-border py-3"
-            >
-              <Text className="w-5 font-mono text-xs text-muted-foreground">
-                {String(index + 1).padStart(2, "0")}
+        </View>
+      ) : (
+        <>
+          {(artistError || releaseError) && (
+            <View role="alert" className="gap-3 rounded-lg bg-muted p-4">
+              <Text className="text-sm">
+                Some trending music could not load.
               </Text>
-              <Text
-                className="min-w-0 flex-1 text-sm font-medium text-foreground"
-                numberOfLines={1}
+              <Button
+                variant="outline"
+                onPress={() => setRequest((value) => value + 1)}
               >
-                {release.name}
-              </Text>
-              <Text className="font-mono text-[10px] text-muted-foreground">
-                {release.playCount}
-              </Text>
+                <Text>Try again</Text>
+              </Button>
             </View>
-          ))
-        )}
-      </View>
+          )}
+          {!artistError && (
+            <View>
+              <Text
+                role="heading"
+                aria-level={3}
+                className="mb-2 font-semibold"
+              >
+                Top artists
+              </Text>
+              {artists.length === 0 && (
+                <Text className="text-sm text-muted-foreground">
+                  No artist listens yet.
+                </Text>
+              )}
+              {artists.map((artist, index) => (
+                <Link
+                  key={artist.mbid || artist.name}
+                  href={
+                    musicArtistHref(
+                      artist.name || "Unknown",
+                      artist.mbid,
+                    ) as any
+                  }
+                  asChild
+                >
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={`View ${artist.name || "artist"}`}
+                    className="flex-row items-center gap-3 border-t border-border py-3 web:hover:bg-accent/40"
+                  >
+                    <Text className="w-5 text-xs text-muted-foreground">
+                      {index + 1}
+                    </Text>
+                    <View className="min-w-0 flex-1">
+                      <Text className="text-sm font-semibold" numberOfLines={1}>
+                        {artist.name || "Unknown artist"}
+                      </Text>
+                      <Text className="text-xs text-muted-foreground">
+                        {artist.playCount || 0} listens
+                      </Text>
+                    </View>
+                    <Icon
+                      icon={ArrowUpRight}
+                      size={14}
+                      className="text-primary"
+                    />
+                  </Pressable>
+                </Link>
+              ))}
+            </View>
+          )}
+          {!releaseError && (
+            <View>
+              <Text
+                role="heading"
+                aria-level={3}
+                className="mb-2 font-semibold"
+              >
+                Albums
+              </Text>
+              {releases.length === 0 && (
+                <Text className="text-sm text-muted-foreground">
+                  No album listens yet.
+                </Text>
+              )}
+              {releases.map((release, index) => (
+                <Link
+                  key={release.mbid || release.name}
+                  href={
+                    (release.mbid
+                      ? musicAlbumHref(
+                          "music",
+                          release.name || "Unknown album",
+                          release.mbid,
+                        )
+                      : "/search") as any
+                  }
+                  asChild
+                >
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={`View ${release.name || "album"}`}
+                    className="flex-row items-center gap-3 border-t border-border py-3 web:hover:bg-accent/40"
+                  >
+                    <Text className="w-5 text-xs text-muted-foreground">
+                      {index + 1}
+                    </Text>
+                    <Text
+                      className="min-w-0 flex-1 text-sm font-medium"
+                      numberOfLines={1}
+                    >
+                      {release.name || "Unknown album"}
+                    </Text>
+                    <Text className="text-xs text-muted-foreground">
+                      {release.playCount || 0}
+                    </Text>
+                    <Icon
+                      icon={ArrowUpRight}
+                      size={14}
+                      className="text-primary"
+                    />
+                  </Pressable>
+                </Link>
+              ))}
+            </View>
+          )}
+        </>
+      )}
     </View>
   );
 }

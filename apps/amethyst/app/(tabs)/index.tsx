@@ -11,9 +11,8 @@ import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
 import SocialComposer from "@/components/teal/SocialComposer";
 import SocialPostCard from "@/components/teal/SocialPostCard";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
@@ -42,6 +41,8 @@ function HomeFeedTabButton({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
       className={`min-w-0 flex-1 flex-row items-center justify-center gap-2 border-b-2 px-2 py-3 ${
         active ? "border-foreground" : "border-transparent"
       }`}
@@ -72,11 +73,13 @@ export default function HomeScreen() {
   const [postCursor, setPostCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [request, setRequest] = useState(0);
   const loadingMoreRef = useRef(false);
   const viewerDid = useStore((state) => state.pdsAgent?.did);
 
   useEffect(() => {
     let mounted = true;
+    setError(null);
     Promise.allSettled([
       getLatestPlays(30),
       getSocialFeed(30, undefined, viewerDid),
@@ -106,7 +109,7 @@ export default function HomeScreen() {
     return () => {
       mounted = false;
     };
-  }, [viewerDid]);
+  }, [viewerDid, request]);
 
   const visiblePlays = plays || [];
   const activeItemsCount =
@@ -175,6 +178,7 @@ export default function HomeScreen() {
       <SectionHeading
         eyebrow="Global feed"
         title="Posts and listens"
+        level={1}
       />
       <View className="mb-6">
         <SocialComposer
@@ -186,7 +190,11 @@ export default function HomeScreen() {
         />
       </View>
       <View className="mb-5 overflow-hidden rounded-lg border border-border bg-card/80">
-        <View className="flex-row overflow-hidden">
+        <View
+          role="tablist"
+          accessibilityLabel="Feed type"
+          className="flex-row overflow-hidden"
+        >
           <HomeFeedTabButton
             active={activeFeed === "posts"}
             icon={MessageCircle}
@@ -208,27 +216,37 @@ export default function HomeScreen() {
       )}
       {error && (
         <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            {error}
-          </Text>
+          <Text className="font-bold text-destructive">{error}</Text>
+          <Button
+            variant="outline"
+            className="mt-3"
+            onPress={() => setRequest((value) => value + 1)}
+          >
+            <Text>Try again</Text>
+          </Button>
         </View>
       )}
       {plays && activeItemsCount === 0 && !error && (
         <View className="min-h-[24rem] items-center justify-center rounded-lg border border-border bg-card p-8">
           <Text className="text-center text-2xl font-black">
-            {activeFeed === "posts"
-              ? "No posts indexed yet."
-              : "No listens indexed yet."}
+            {activeFeed === "posts" ? "No posts yet." : "No listens yet."}
           </Text>
           <Text className="mt-2 text-center text-muted-foreground">
-            Cadet will fill this view as ATProto records arrive.
+            New activity will appear here as people share music.
           </Text>
         </View>
       )}
       {activeFeed === "posts" &&
         socialPosts.map((post) => (
           <View key={post.uri} className="mb-4">
-            <SocialPostCard post={post} />
+            <SocialPostCard
+              post={post}
+              onDeleted={(uri) =>
+                setSocialPosts((current) =>
+                  current.filter((item) => item.uri !== uri),
+                )
+              }
+            />
           </View>
         ))}
       {activeFeed === "listens" &&

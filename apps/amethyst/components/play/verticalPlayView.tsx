@@ -58,7 +58,7 @@ export default function VerticalPlayView({
           uri: `https://coverartarchive.org/release/${releaseMbid}/front-250`,
         }}
       />
-      <Text className={cn(textSizes[size], "text-center")}>{trackTitle}</Text>{" "}
+      <Text className={cn(textSizes[size], "text-center")}>{trackTitle}</Text>
       {/* Apply main text size based on variant */}
       {artistName && (
         <Text

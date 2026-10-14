@@ -14,6 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
+  actorAvatarUrl,
+  actorProfileHref,
+  displayActorName,
+} from "@/lib/teal/actors";
+import {
   coverArtUrl,
   displayArtists,
   getNotifications,
@@ -21,11 +26,6 @@ import {
   type SocialNotificationView,
   type SocialPostView,
 } from "@/lib/teal/api";
-import {
-  actorAvatarUrl,
-  actorProfileHref,
-  displayActorName,
-} from "@/lib/teal/actors";
 import { postHrefFromUri } from "@/lib/teal/routes";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { useStore } from "@/stores/mainStore";
@@ -135,7 +135,11 @@ function reasonIconClass(reason: string) {
   }
 }
 
-function ActorAvatar({ notification }: { notification: SocialNotificationView }) {
+function ActorAvatar({
+  notification,
+}: {
+  notification: SocialNotificationView;
+}) {
   const actor = notification.actor;
   const actorDid = actor?.did || notification.actorDid;
   const label = displayActorName(actor, actorDid);
@@ -377,7 +381,9 @@ export default function Notifications() {
   if (status !== "loggedIn") {
     return (
       <TealShell rightRail={<RightRail />}>
-        <Stack.Screen options={{ title: "Notifications", headerShown: false }} />
+        <Stack.Screen
+          options={{ title: "Notifications", headerShown: false }}
+        />
         <View className="min-h-[32rem] items-center justify-center gap-4 rounded-lg border border-border bg-card px-8">
           <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
             <Icon icon={Bell} size={22} className="text-primary" />
@@ -386,8 +392,8 @@ export default function Notifications() {
             Sign in to view notifications.
           </Text>
           <Text className="max-w-sm text-center text-sm leading-5 text-muted-foreground">
-            Likes, reposts, replies, and playlist collaboration
-            activity will appear here.
+            Likes, reposts, replies, and playlist collaboration activity will
+            appear here.
           </Text>
           <Link href="/auth/login" asChild>
             <Button>
@@ -402,10 +408,7 @@ export default function Notifications() {
   return (
     <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
       <Stack.Screen options={{ title: "Notifications", headerShown: false }} />
-      <SectionHeading
-        eyebrow="Social"
-        title="Notifications"
-      />
+      <SectionHeading eyebrow="Social" title="Notifications" />
       {!items && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
@@ -424,7 +427,7 @@ export default function Notifications() {
             No notifications yet.
           </Text>
           <Text className="mt-2 text-center text-muted-foreground">
-            Social activity indexed by Aqua will appear here.
+            Likes, reposts, replies, and playlist invitations will appear here.
           </Text>
         </View>
       )}
