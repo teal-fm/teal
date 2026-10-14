@@ -185,7 +185,7 @@ export default function ProfileAlbumDeck({
 
   if (Platform.OS !== "web") {
     return (
-      <View className="h-40 items-center justify-center gap-2">
+      <View className="items-center justify-center gap-2 py-4">
         {open && (
           <View className="flex-row gap-2">
             {albums.map((release, index) => (

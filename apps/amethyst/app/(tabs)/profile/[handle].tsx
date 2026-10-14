@@ -775,6 +775,42 @@ export default function ProfileScreen() {
     </View>
   );
 
+  const profileActions = (
+    <View className="flex-row flex-wrap justify-center gap-2">
+      {isSelf ? (
+        <>
+          <Link href="/manual-listens" asChild>
+            <Button size="sm">
+              <Text>Add a listen</Text>
+            </Button>
+          </Link>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-row gap-2"
+            onPress={() => setEditProfileOpen(true)}
+          >
+            <Icon icon={Pencil} size={15} />
+            <Text>Edit profile</Text>
+          </Button>
+        </>
+      ) : (
+        <Button
+          size="sm"
+          className="flex-row gap-2"
+          variant={viewerFollowing ? "outline" : "default"}
+          disabled={!canFollow || followBusy}
+          onPress={toggleFollow}
+        >
+          <Icon icon={viewerFollowing ? UserMinus : UserPlus} size={15} />
+          <Text>
+            {followBusy ? "Saving" : viewerFollowing ? "Following" : "Follow"}
+          </Text>
+        </Button>
+      )}
+    </View>
+  );
+
   return (
     <TealShell rightRail={<RightRail />} pageTitle={displayName}>
       <Stack.Screen options={{ title: displayName, headerShown: false }} />
@@ -830,9 +866,9 @@ export default function ProfileScreen() {
                 displayName={displayName}
               />
             </View>
-            <View className="gap-3 p-4 md:p-5">
+            <View className="gap-2 px-4 pb-4 pt-[18px] md:px-5 md:pb-5">
               <View className="items-center">
-                <View className="w-full min-w-0 items-center gap-1">
+                <View className="w-full min-w-0 items-center">
                   <Text
                     accessibilityRole="header"
                     aria-level={1}
@@ -849,7 +885,7 @@ export default function ProfileScreen() {
                       @{normalizeHandle(profile.handle)}
                     </Text>
                   )}
-                  <View className="flex-row flex-wrap gap-3">
+                  <View className="flex-row flex-wrap items-center justify-center gap-x-3">
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`${graphSummary.followersCount} followers`}
@@ -884,6 +920,7 @@ export default function ProfileScreen() {
                         following
                       </Text>
                     </Pressable>
+                    {profileActions}
                   </View>
                 </View>
               </View>
@@ -919,46 +956,6 @@ export default function ProfileScreen() {
                   )}
                 </View>
               )}
-              <View className="flex-row flex-wrap justify-center gap-2">
-                {isSelf ? (
-                  <>
-                    <Link href="/manual-listens" asChild>
-                      <Button size="sm">
-                        <Text>Add a listen</Text>
-                      </Button>
-                    </Link>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-row gap-2"
-                      onPress={() => setEditProfileOpen(true)}
-                    >
-                      <Icon icon={Pencil} size={15} />
-                      <Text>Edit profile</Text>
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="sm"
-                    className="flex-row gap-2"
-                    variant={viewerFollowing ? "outline" : "default"}
-                    disabled={!canFollow || followBusy}
-                    onPress={toggleFollow}
-                  >
-                    <Icon
-                      icon={viewerFollowing ? UserMinus : UserPlus}
-                      size={15}
-                    />
-                    <Text>
-                      {followBusy
-                        ? "Saving"
-                        : viewerFollowing
-                          ? "Following"
-                          : "Follow"}
-                    </Text>
-                  </Button>
-                )}
-              </View>
               {currentStatus && (
                 <View className="flex-row items-center gap-2 border-t border-border pt-3">
                   <View className="h-9 w-9 overflow-hidden rounded-md bg-muted">

@@ -76,7 +76,7 @@ textarea {
 .profile-album-deck {
   position: relative;
   width: min(296px, 100%);
-  height: 154px;
+  height: 134px;
   align-self: center;
   isolation: isolate;
 }
