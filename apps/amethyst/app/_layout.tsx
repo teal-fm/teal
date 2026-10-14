@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
+import Head from "expo-router/head";
 import * as SplashScreen from "expo-splash-screen";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
@@ -100,15 +101,49 @@ function useTheme() {
 
 function RootLayoutNav() {
   verifyInstallation();
+  const pathname = usePathname();
+  const section = pathname.split("/")[1];
+  const pageTitle =
+    pathname === "/"
+      ? "Home"
+      : pathname.includes("/stats/")
+        ? `Top ${pathname.split("/").pop()}`
+        : pathname.endsWith("/topster")
+          ? "Album chart"
+          : (
+              {
+                search: "Explore",
+                settings: "Settings",
+                notifications: "Notifications",
+                profile: "Profile",
+                post: "Post",
+                listen: "Listen",
+                playlist: "Playlist",
+                "manual-listens": "Add listens",
+                stamp: "Add a listen",
+                onboarding: "Create your profile",
+                auth: "Your account",
+                offline: "Connection unavailable",
+                error: "Something went wrong",
+                ":o": "Music",
+                "at:": "Open Teal link",
+              } as Record<string, string>
+            )[section] || "Page not found";
 
   return (
     <GestureHandlerRootView>
+      <Head>
+        <title>{pageTitle} · Teal</title>
+      </Head>
       <ThemeProvider value={useTheme()}>
         <GlobalTextClassContext.Provider value="font-sans">
           <BottomSheetModalProvider>
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="onboarding"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen
                 name="auth/login"
                 options={{

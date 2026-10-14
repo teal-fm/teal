@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, View } from "react-native";
-import { RichText as AtprotoRichText } from "@atproto/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import {
+  searchMusicbrainz,
+  type MusicBrainzRecording,
+  type MusicBrainzRelease,
+} from "@/lib/oldStamp";
 import {
   coverArtUrl,
   displayArtists,
@@ -14,12 +18,8 @@ import {
   type SocialPostView,
 } from "@/lib/teal/api";
 import { playViewToTrackView } from "@/lib/teal/social";
-import {
-  type MusicBrainzRecording,
-  type MusicBrainzRelease,
-  searchMusicbrainz,
-} from "@/lib/oldStamp";
 import { useStore } from "@/stores/mainStore";
+import { RichText as AtprotoRichText } from "@atproto/api";
 import { Check, Disc3, Search } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
@@ -82,16 +82,16 @@ function musicBrainzToPlayView(
     trackName: recording.title || "Unknown track",
     trackMbId: recording.id ? `mbid:${recording.id}` : undefined,
     recordingMbId: recording.id ? `mbid:${recording.id}` : undefined,
-    duration: recording.length ? Math.floor(recording.length / 1000) : undefined,
+    duration: recording.length
+      ? Math.floor(recording.length / 1000)
+      : undefined,
     artists:
       recording["artist-credit"]?.map((credit) => ({
         artistName: credit.name || credit.artist.name,
         artistMbId: credit.artist.id ? `mbid:${credit.artist.id}` : undefined,
       })) || [],
     releaseName: selectedRelease?.title,
-    releaseMbId: selectedRelease?.id
-      ? `mbid:${selectedRelease.id}`
-      : undefined,
+    releaseMbId: selectedRelease?.id ? `mbid:${selectedRelease.id}` : undefined,
     isrc: recording.isrcs?.[0],
     originUri: recording.id
       ? `https://musicbrainz.org/recording/${recording.id}`
@@ -367,7 +367,8 @@ export default function SocialComposer({
           Sign in to {replyTo ? "reply" : "post"} about what you hear.
         </Text>
         <Text className="mt-1 text-sm text-muted-foreground">
-          Teal social posts attach a track and travel with your ATProto repo.
+          Share a thought with a song attached. Your post is saved to your
+          account.
         </Text>
       </View>
     );
@@ -396,9 +397,7 @@ export default function SocialComposer({
             </Text>
           </View>
           {canChangeTrack && (
-            <Text className="text-xs font-light text-primary">
-              Change
-            </Text>
+            <Text className="text-xs font-light text-primary">Change</Text>
           )}
         </Pressable>
       ) : (
@@ -411,7 +410,8 @@ export default function SocialComposer({
             {loadingRecent ? "Finding your latest listen..." : "Choose a song"}
           </Text>
           <Text className="text-sm text-muted-foreground">
-            Your newest indexed listen will attach automatically when available.
+            Your latest listen attaches automatically. You can choose another
+            song.
           </Text>
         </Pressable>
       )}
@@ -487,7 +487,7 @@ export default function SocialComposer({
             ))}
             {!loadingRecent && filteredRecent.length === 0 && (
               <Text className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
-                No indexed recent plays found.
+                No recent listens yet. Search the catalog to choose a song.
               </Text>
             )}
           </View>

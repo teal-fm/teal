@@ -1,8 +1,6 @@
-import type {
-  MusicBrainzArtistCredit,
-  MusicBrainzRecording,
-} from "./oldStamp";
 import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
+
+import type { MusicBrainzArtistCredit, MusicBrainzRecording } from "./oldStamp";
 
 export const PLAY_COLLECTION = "fm.teal.feed.play";
 export const FALLBACK_DURATION_SECONDS = 180;
@@ -23,11 +21,13 @@ export type MusicBrainzAlbumRelease = {
   date?: string;
   country?: string;
   status?: string;
+  disambiguation?: string;
   trackCount?: number;
   media?: MusicBrainzMedium[];
 };
 
 export type MusicBrainzMedium = {
+  format?: string;
   position?: number;
   title?: string;
   trackCount?: number;
@@ -68,7 +68,9 @@ function normalizeArtistCredit(
   return credit;
 }
 
-function artistCreditFromApi(value: unknown): MusicBrainzArtistCredit[] | undefined {
+function artistCreditFromApi(
+  value: unknown,
+): MusicBrainzArtistCredit[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
   const credits = value.filter(
@@ -90,7 +92,9 @@ function asOptionalString(value: unknown) {
 }
 
 function asOptionalNumber(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
 function parseRelease(value: unknown): MusicBrainzAlbumRelease | undefined {
@@ -107,11 +111,27 @@ function parseRelease(value: unknown): MusicBrainzAlbumRelease | undefined {
     date: asOptionalString(release.date),
     country: asOptionalString(release.country),
     status: asOptionalString(release.status),
+    disambiguation: asOptionalString(release.disambiguation),
     trackCount: asOptionalNumber(release["track-count"]),
+    media: Array.isArray(release.media)
+      ? release.media.flatMap((value) => {
+          if (!value || typeof value !== "object") return [];
+          const medium = value as Record<string, unknown>;
+          return [
+            {
+              format: asOptionalString(medium.format),
+              trackCount: asOptionalNumber(medium["track-count"]),
+            },
+          ];
+        })
+      : undefined,
   };
 }
 
-function parseAlbumTrack(value: unknown, index: number): MusicBrainzAlbumTrack | undefined {
+function parseAlbumTrack(
+  value: unknown,
+  index: number,
+): MusicBrainzAlbumTrack | undefined {
   if (!value || typeof value !== "object") return undefined;
   const track = value as Record<string, unknown>;
   const recording = track.recording;
@@ -166,6 +186,7 @@ function parseReleaseDetails(value: unknown): MusicBrainzAlbumRelease {
           {
             position: asOptionalNumber(medium.position) || mediumIndex + 1,
             title: asOptionalString(medium.title),
+            format: asOptionalString(medium.format),
             trackCount: asOptionalNumber(medium["track-count"]),
             tracks,
           },
@@ -206,18 +227,25 @@ async function musicBrainzJson(url: string): Promise<unknown> {
     let lastError: unknown;
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), MUSICBRAINZ_TIMEOUT_MS);
+      const timeout = setTimeout(
+        () => controller.abort(),
+        MUSICBRAINZ_TIMEOUT_MS,
+      );
       try {
         const response = await fetch(url, {
           headers: { "User-Agent": MUSICBRAINZ_USER_AGENT },
           signal: controller.signal,
         });
         if (response.status === 503 && attempt < 2) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * 2 ** attempt),
+          );
           continue;
         }
         if (!response.ok) {
-          throw new Error(`MusicBrainz request failed with ${response.status}.`);
+          throw new Error(
+            `MusicBrainz request failed with ${response.status}.`,
+          );
         }
         return await response.json();
       } catch (error) {
@@ -226,7 +254,9 @@ async function musicBrainzJson(url: string): Promise<unknown> {
         }
         lastError = error;
         if (attempt < 2) {
-          await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
+          await new Promise((resolve) =>
+            setTimeout(resolve, 500 * 2 ** attempt),
+          );
         }
       } finally {
         clearTimeout(timeout);
@@ -259,7 +289,9 @@ export async function searchMusicBrainzReleases(
     limit: "20",
     inc: "artist-credits",
   });
-  const value = await musicBrainzJson(`${MUSICBRAINZ_BASE_URL}/release?${params}`);
+  const value = await musicBrainzJson(
+    `${MUSICBRAINZ_BASE_URL}/release?${params}`,
+  );
   return releaseSearchResults(value);
 }
 
@@ -347,7 +379,9 @@ export function createPlayRecordFromRecording(
     trackName: recording.title,
     recordingMbId: normalizeMbid(recording.id),
     trackMbId: normalizeMbid(recording.id),
-    duration: recording.length ? Math.floor(recording.length / 1000) : undefined,
+    duration: recording.length
+      ? Math.floor(recording.length / 1000)
+      : undefined,
     artists,
     releaseName: release?.title,
     releaseMbId: normalizeMbid(release?.id),
@@ -394,8 +428,9 @@ export function buildManualListenRecords(
   customStart?: Date,
   now = new Date(),
 ) {
-  return buildListenTimeline(tracks, mode, customStart, now).map(({ track, playedTime }) =>
-    createPlayRecordFromAlbumTrack(release, track, playedTime),
+  return buildListenTimeline(tracks, mode, customStart, now).map(
+    ({ track, playedTime }) =>
+      createPlayRecordFromAlbumTrack(release, track, playedTime),
   );
 }
 
@@ -420,5 +455,7 @@ export async function submitManualListenRecords(
   );
 
   const results = (response.data as { results?: unknown[] }).results;
-  return Array.isArray(results) && results.length > 0 ? results.length : records.length;
+  return Array.isArray(results) && results.length > 0
+    ? results.length
+    : records.length;
 }

@@ -9,7 +9,10 @@ export type DisplayActor = {
   handle?: string;
 };
 
-const blueskyProfileCache = new Map<string, Promise<DisplayActor | undefined>>();
+const blueskyProfileCache = new Map<
+  string,
+  Promise<DisplayActor | undefined>
+>();
 
 export function isHttpUrl(value?: string) {
   return value?.startsWith("http://") || value?.startsWith("https://");
@@ -46,7 +49,11 @@ export function getCachedBlueskyProfile(did: string) {
         displayName,
         handle,
       }))
-      .catch(() => undefined);
+      .catch(() => {
+        // A temporary lookup failure must not become a permanent cached identity.
+        blueskyProfileCache.delete(did);
+        return undefined;
+      });
     blueskyProfileCache.set(did, profile);
   }
   return profile;
@@ -57,7 +64,11 @@ export function displayActorName(
   did?: string,
 ) {
   const handle = normalizeHandle(actor?.handle);
-  return actor?.displayName || handle || did || "Unknown listener";
+  return (
+    actor?.displayName ||
+    handle ||
+    (did ? `Listener · ${did.slice(-6)}` : "Unknown listener")
+  );
 }
 
 export function actorProfileHref(

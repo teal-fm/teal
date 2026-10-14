@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react";
 import { View } from "react-native";
-import { Redirect, Stack, useLocalSearchParams } from "expo-router";
+import { Link, Redirect, Stack, useLocalSearchParams } from "expo-router";
 import RightRail from "@/components/teal/RightRail";
 import TealShell from "@/components/teal/TealShell";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { atUriFromRoutePath, hrefFromAtUri } from "@/lib/teal/routes";
 
@@ -35,15 +36,18 @@ export default function AtUriResolver() {
     <TealShell rightRail={<RightRail />}>
       <Stack.Screen options={{ title: "AT URI", headerShown: false }} />
       <View className="rounded-lg border border-border bg-card p-5">
-        <Text className="font-mono text-xs uppercase text-primary">
-          AT URI
-        </Text>
         <Text className="mt-2 font-sans text-2xl font-black">
           Unsupported Teal link
         </Text>
         <Text className="mt-2 text-muted-foreground">
-          Teal can open profile, listen, and post AT-URIs.
+          Teal can open profile, listen, post, and playlist AT-URIs. Check that
+          this is the full record link.
         </Text>
+        <Link href="/" asChild>
+          <Button className="mt-4 self-start">
+            <Text>Go home</Text>
+          </Button>
+        </Link>
       </View>
     </TealShell>
   );

@@ -3,9 +3,7 @@ import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { Link, Stack, useRouter } from "expo-router";
 import { ExternalLink } from "@/components/ExternalLink";
 import RightRail from "@/components/teal/RightRail";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SheetBackdrop, { SheetHandle } from "@/components/ui/sheetBackdrop";
@@ -45,6 +43,7 @@ export default function StepOne() {
   );
 
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [searchError, setSearchError] = useState<string>();
 
   // reset search state if requested
   useEffect(() => {
@@ -62,11 +61,21 @@ export default function StepOne() {
     }
 
     setIsLoading(true);
+    setSearchError(undefined);
     setSelectedTrack(null);
-    const results = await searchMusicbrainz(searchFields);
-    setSearchResults(results);
-    setIsLoading(false);
-    setHasSearched(true);
+    try {
+      setSearchResults(
+        await searchMusicbrainz(searchFields, { throwOnError: true }),
+      );
+      setHasSearched(true);
+    } catch {
+      setSearchResults([]);
+      setSearchError(
+        "MusicBrainz search is unavailable. Try again in a moment.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const clearSearch = () => {
@@ -79,19 +88,26 @@ export default function StepOne() {
     <TealShell rightRail={<RightRail />}>
       <Stack.Screen
         options={{
-          title: "Stamp a play manually",
+          title: "Add a track",
           headerBackButtonDisplayMode: "generic",
           headerShown: false,
         }}
       />
-      <SectionHeading
-        eyebrow="Manual entry"
-        title="Stamp a play"
-        detail="MUSICBRAINZ"
-      />
+      <SectionHeading title="Add listens" />
+      <View className="mb-5 flex-row flex-wrap gap-2">
+        <Link href="/manual-listens" asChild>
+          <Button variant="outline">
+            <Text>Album</Text>
+          </Button>
+        </Link>
+        <Button variant="secondary" accessibilityState={{ selected: true }}>
+          <Text>Single track</Text>
+        </Button>
+      </View>
       <View className="flex gap-3 rounded-lg border border-border bg-card p-4">
         <Text className="text-sm font-bold">Search for a track</Text>
         <Input
+          accessibilityLabel="Track name"
           placeholder="Track name..."
           value={searchFields.track}
           onChangeText={(text) =>
@@ -104,6 +120,7 @@ export default function StepOne() {
           }}
         />
         <Input
+          accessibilityLabel="Artist name"
           placeholder="Artist name..."
           value={searchFields.artist}
           onChangeText={(text) =>
@@ -116,6 +133,7 @@ export default function StepOne() {
           }}
         />
         <Input
+          accessibilityLabel="Album name"
           placeholder="Album name..."
           value={searchFields.release}
           onChangeText={(text) =>
@@ -145,6 +163,11 @@ export default function StepOne() {
           </Button>
         </View>
       </View>
+      {searchError && (
+        <Text accessibilityRole="alert" className="my-4 text-destructive">
+          {searchError}
+        </Text>
+      )}
 
       {/* Search Results */}
       <View className="flex gap-4">
@@ -202,7 +225,7 @@ export default function StepOne() {
 
         {/* Submit Button */}
         {selectedTrack && (
-          <View className="sticky bottom-0 mt-4">
+          <View className="mt-4">
             <Button
               onPress={() => {
                 setState({
@@ -215,7 +238,7 @@ export default function StepOne() {
               }}
               className="flex w-full flex-row align-middle"
             >
-              <Text>{`Submit "${selectedTrack.title}" as Play`}</Text>
+              <Text>{`Review "${selectedTrack.title}"`}</Text>
               <ChevronRight className="ml-2 inline" />
             </Button>
           </View>
@@ -383,7 +406,9 @@ export function SearchResult({
               <Text className="font-medium">{release.title}</Text>
               <View className="flex-row gap-2">
                 {release.date && (
-                  <Text className="text-sm text-muted-foreground">{release.date}</Text>
+                  <Text className="text-sm text-muted-foreground">
+                    {release.date}
+                  </Text>
                 )}
                 {release.country && (
                   <Text className="text-sm text-muted-foreground">

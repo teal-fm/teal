@@ -1,20 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
+import DescriptionPage from "@/components/onboarding/descriptionPage";
+import DisplayNamePage from "@/components/onboarding/displayNamePage";
+import ImageSelectionPage from "@/components/onboarding/imageSelectionPage";
 import ProgressDots from "@/components/onboarding/progressDots";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { profileRecordBlob } from "@/lib/atp/profileBlob";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import { prepareProfileImage } from "@/lib/profileImage";
 import { useStore } from "@/stores/mainStore";
+import { RichText as AtprotoRichText, jsonToLex } from "@atproto/api";
 import { ArrowLeft, Check, Disc3, Music2, Sparkles } from "lucide-react-native";
 
-import { Main as ProfileRecord } from "@teal/lexicons/src/fm/teal/actor/profile";
+import {
+  $parse as parseProfileRecord,
+  Main as ProfileRecord,
+} from "@teal/lexicons/src/fm/teal/actor/profile";
 import { Main as ProfileStatusRecord } from "@teal/lexicons/src/fm/teal/actor/profileStatus";
-
-import DescriptionPage from "./descriptionPage";
-import DisplayNamePage from "./displayNamePage";
-import ImageSelectionPage from "./imageSelectionPage"; // Separate page components
 
 const OnboardingSubmissionSteps: string[] = [
   "",
@@ -33,6 +38,8 @@ export default function OnboardingPage() {
   const [bannerUri, setBannerUri] = useState("");
 
   const [submissionStep, setSubmissionStep] = useState(0);
+  const [submissionError, setSubmissionError] = useState<string>();
+  const submitting = useRef(false);
 
   // Profile status hooks - must be at top level
   const [profileStatus, setProfileStatus] =
@@ -96,67 +103,62 @@ export default function OnboardingPage() {
   };
 
   const onComplete = async (
-    updatedProfile: { displayName: any; description: any },
+    updatedProfile: { displayName: string; description: string },
     newAvatarUri: string | undefined,
     newBannerUri: string | undefined,
   ) => {
-    if (!agent) return;
-
+    if (!agent || submitting.current) return;
+    submitting.current = true;
+    setSubmissionError(undefined);
     setSubmissionStep(1);
-
-    // get the current user's profile (getRecord)
-    let currentUser: ProfileRecord | undefined;
-    let cid: string | undefined;
     try {
-      const res = await agent.call("com.atproto.repo.getRecord", {
-        repo: agent.did,
-        collection: "fm.teal.actor.profile",
-        rkey: "self",
+      let currentUser: ProfileRecord | undefined;
+      let cid: string | undefined;
+      try {
+        const res = await agent.call("com.atproto.repo.getRecord", {
+          repo: agent.did,
+          collection: "fm.teal.actor.profile",
+          rkey: "self",
+        });
+        currentUser = res.data.value;
+        cid = res.data.cid;
+      } catch (error) {
+        // A missing record is expected for a new account. Other failures must
+        // not be mistaken for permission to overwrite an existing profile.
+        if ((error as { error?: string })?.error !== "RecordNotFound")
+          throw error;
+      }
+      const uploadImage = async (uri: string, progress: number) => {
+        setSubmissionStep(progress);
+        const response = await fetch(uri);
+        if (!response.ok)
+          throw new Error(
+            "Couldn't read the image. Choose it again and retry.",
+          );
+        const image = await prepareProfileImage(await response.blob());
+        return (
+          await agent.uploadBlob(image.blob, { encoding: image.encoding })
+        ).data.blob;
+      };
+      const avatar = newAvatarUri
+        ? await uploadImage(newAvatarUri, 2)
+        : currentUser?.avatar;
+      const banner = newBannerUri
+        ? await uploadImage(newBannerUri, 3)
+        : currentUser?.banner;
+      setSubmissionStep(4);
+      const bio = new AtprotoRichText({ text: updatedProfile.description });
+      await bio.detectFacets(agent);
+      const record: ProfileRecord = parseProfileRecord({
+        ...currentUser,
+        $type: "fm.teal.actor.profile",
+        displayName: updatedProfile.displayName,
+        description: updatedProfile.description,
+        descriptionFacets: bio.facets,
+        avatar: profileRecordBlob(avatar, jsonToLex),
+        banner: profileRecordBlob(banner, jsonToLex),
       });
-      currentUser = res.data.value;
-      cid = res.data.cid;
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-    }
-
-    // upload blobs if necessary
-    let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
-    let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
-    if (newAvatarUri) {
-      if (!newAvatarUri.startsWith("http")) {
-        setSubmissionStep(2);
-        const data = await fetch(newAvatarUri).then((r) => r.blob());
-        const fileType = newAvatarUri.split(";")[0].split(":")[1];
-        const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
-          .data.blob as unknown as ProfileRecord["avatar"];
-      }
-    }
-    if (newBannerUri) {
-      if (!newBannerUri.startsWith("http")) {
-        setSubmissionStep(3);
-        const data = await fetch(newBannerUri).then((r) => r.blob());
-        const fileType = newBannerUri.split(";")[0].split(":")[1];
-        const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
-          .data.blob as unknown as ProfileRecord["banner"];
-      }
-    }
-
-    setSubmissionStep(4);
-
-    let record: ProfileRecord = {
-      $type: "fm.teal.actor.profile",
-      displayName: updatedProfile.displayName,
-      description: updatedProfile.description,
-      avatar: newAvatarBlob,
-      banner: newBannerBlob,
-    };
-
-    let post;
-
-    if (cid) {
-      post = await agent.call(
+      await agent.call(
         "com.atproto.repo.putRecord",
         {},
         {
@@ -164,68 +166,39 @@ export default function OnboardingPage() {
           collection: "fm.teal.actor.profile",
           rkey: "self",
           record,
-          swapRecord: cid,
+          ...(cid ? { swapRecord: cid } : {}),
         },
       );
-    } else {
-      post = await agent.call(
-        "com.atproto.repo.createRecord",
-        {},
-        {
-          repo: agent.did,
-          collection: "fm.teal.actor.profile",
-          rkey: "self",
-          record,
-        },
-      );
-    }
-
-    // Update profile status to mark onboarding as completed
-    const profileStatusRecord: ProfileStatusRecord = {
-      $type: "fm.teal.actor.profileStatus",
-      completedOnboarding: "profileOnboarding",
-      createdAt: new Date().toISOString() as ProfileStatusRecord["createdAt"],
-      updatedAt: new Date().toISOString() as ProfileStatusRecord["updatedAt"],
-    };
-
-    try {
+      const status: ProfileStatusRecord = {
+        $type: "fm.teal.actor.profileStatus",
+        completedOnboarding: "profileOnboarding",
+        createdAt:
+          profileStatus?.createdAt ||
+          (new Date().toISOString() as ProfileStatusRecord["createdAt"]),
+        updatedAt: new Date().toISOString() as ProfileStatusRecord["updatedAt"],
+      };
       await agent.call(
-        "com.atproto.repo.createRecord",
+        "com.atproto.repo.putRecord",
         {},
         {
           repo: agent.did,
           collection: "fm.teal.actor.profileStatus",
           rkey: "self",
-          record: profileStatusRecord,
+          record: status,
         },
       );
-    } catch {
-      // If record already exists, update it
-      try {
-        await agent.call(
-          "com.atproto.repo.putRecord",
-          {},
-          {
-            repo: agent.did,
-            collection: "fm.teal.actor.profileStatus",
-            rkey: "self",
-            record: {
-              ...profileStatusRecord,
-              completedOnboarding: "profileOnboarding",
-              updatedAt: new Date().toISOString() as ProfileStatusRecord["updatedAt"],
-            },
-          },
-        );
-      } catch (updateError) {
-        console.error("Error updating profile status:", updateError);
-      }
+      setSubmissionStep(5);
+      router.replace(`/profile/${agent.did}` as any);
+    } catch (error) {
+      setSubmissionStep(0);
+      setSubmissionError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't save your profile. Check your connection and try again.",
+      );
+    } finally {
+      submitting.current = false;
     }
-
-    setSubmissionStep(5);
-    //redirect to / after 2 seconds
-    setTimeout(() => {
-      router.replace("/");
-    }, 2000);
   };
 
   if (!agent) {
@@ -237,8 +210,8 @@ export default function OnboardingPage() {
             Create your Teal profile
           </Text>
           <Text className="text-muted-foreground">
-            Sign in with your ATProto account before setting up your music
-            identity.
+            Sign in with your Bluesky or other Atmosphere account to set up your
+            music profile.
           </Text>
           <Link href="/auth/login" asChild>
             <Button>
@@ -247,14 +220,6 @@ export default function OnboardingPage() {
           </Link>
         </View>
       </SafeAreaView>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <View className="min-h-screen flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" />
-      </View>
     );
   }
 
@@ -322,7 +287,7 @@ export default function OnboardingPage() {
           <DescriptionPage
             onComplete={handleDescriptionComplete}
             initialDescription={description}
-            onBack={() => setStep(2)}
+            onBack={() => setStep(1)}
           />
         );
       case 3:
@@ -331,6 +296,7 @@ export default function OnboardingPage() {
             onComplete={handleImageSelectionComplete}
             initialAvatar={avatarUri}
             initialBanner={bannerUri}
+            error={submissionError}
             onBack={() => setStep(2)}
           />
         );
@@ -357,8 +323,8 @@ export default function OnboardingPage() {
               Make it yours.
             </Text>
             <Text className="text-base leading-6 text-background/65">
-              A Teal profile lives in your ATProto repository and follows your
-              listening history across the Atmosphere.
+              Share your listening history and the music you love. Your profile
+              belongs to your account and travels with you.
             </Text>
           </View>
           <View className="flex-row items-center gap-2">

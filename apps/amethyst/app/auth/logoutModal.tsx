@@ -1,6 +1,8 @@
-import { Platform, TouchableOpacity, View } from "react-native";
+import { useCallback } from "react";
+import { Platform, Pressable, View } from "react-native";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useWebDialog } from "@/components/auth/useWebDialog";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -11,26 +13,45 @@ import { X } from "lucide-react-native";
 export default function ModalScreen() {
   // handle log out
   const { logOut } = useStore((state) => state);
-  const handleGoBack = () => {
-    router.back();
-  };
+  const handleGoBack = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/");
+  }, []);
+  const dialogRef = useWebDialog(
+    handleGoBack,
+    "teal-logout-title",
+    "/auth/logoutModal",
+  );
   return (
-    <TouchableOpacity
-      className="flex h-screen w-full items-center justify-center bg-muted/60 backdrop-blur-sm animate-in fade-in"
-      onPress={() => handleGoBack()}
-    >
-      <View className="relative max-h-72 w-full max-w-96 flex-1 items-center justify-center gap-3 rounded-lg border border-border bg-background px-7 shadow-xl">
-        <Icon
-          icon={X}
-          className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
-          name="x"
-        />
-        <Text className="font-sans text-3xl font-black">
+    <View className="flex min-h-screen w-full items-center justify-center bg-black/45 px-4">
+      <Pressable
+        className="absolute inset-0"
+        onPress={handleGoBack}
+        accessible={false}
+        tabIndex={-1}
+      />
+      <View
+        ref={dialogRef}
+        className="relative w-full max-w-96 items-center justify-center gap-4 rounded-2xl bg-background px-7 py-8 shadow-xl"
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          accessibilityLabel="Cancel sign out"
+          className="absolute right-2 top-2"
+          onPress={handleGoBack}
+        >
+          <Icon icon={X} className="text-muted-foreground" />
+        </Button>
+        <Text
+          nativeID="teal-logout-title"
+          className="mt-5 font-sans text-3xl font-black"
+        >
           Sign out of Teal?
         </Text>
         <Text className="text-center text-sm leading-5 text-muted-foreground">
-          Your records stay in your ATProto repository. This only clears your
-          local session.
+          Your profile and listening history stay with your account. You can
+          sign in again whenever you like.
         </Text>
         <Button
           onPress={() => {
@@ -39,12 +60,12 @@ export default function ModalScreen() {
             router.navigate("/");
           }}
         >
-          <Text className="text-lg">Sign Out</Text>
+          <Text className="text-lg">Sign out</Text>
         </Button>
 
         {/* Use a light status bar on iOS to account for the black space above the modal */}
         <StatusBar style={Platform.OS === "ios" ? "light" : "auto"} />
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }

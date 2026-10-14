@@ -29,13 +29,17 @@ const DescriptionPage: React.FC<DescriptionPageProps> = ({
         <View className="h-12 w-12 items-center justify-center rounded-lg bg-accent">
           <Icon icon={MessageSquareText} size={24} className="text-primary" />
         </View>
-        <Text className="font-sans text-3xl font-black">
-          Add a liner note.
-        </Text>
+        <Text className="font-sans text-3xl font-black">Add a liner note.</Text>
         <Text className="text-base text-muted-foreground">
           Say a little about your listening life, or leave this blank for now.
         </Text>
+        <Text nativeID="teal-bio-label" className="text-sm font-bold">
+          Bio (optional)
+        </Text>
         <Textarea
+          accessibilityLabel="Bio (optional)"
+          aria-labelledby="teal-bio-label"
+          maxLength={256}
           className="min-h-[170px] rounded-lg border border-border bg-background px-4 py-3 text-base"
           placeholder="What keeps ending up in your headphones?"
           multiline

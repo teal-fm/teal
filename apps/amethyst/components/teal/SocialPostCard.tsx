@@ -1,15 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Image, Pressable, View } from "react-native";
 import { Link } from "expo-router";
+import RichText from "@/components/teal/RichText";
+import SocialComposer from "@/components/teal/SocialComposer";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import {
-  coverArtUrl,
-  displayArtists,
-  getRecordingCoverArtUrl,
-  type SocialPostView,
-} from "@/lib/teal/api";
 import {
   actorAvatarUrl,
   actorProfileHref,
@@ -18,17 +14,27 @@ import {
   normalizeHandle,
   type DisplayActor,
 } from "@/lib/teal/actors";
-import RichText from "@/components/teal/RichText";
-import SocialComposer from "@/components/teal/SocialComposer";
+import {
+  coverArtUrl,
+  displayArtists,
+  getRecordingCoverArtUrl,
+  type SocialPostView,
+} from "@/lib/teal/api";
 import {
   musicTrackHref,
   postHrefFromUri,
   rkeyFromAtUri,
 } from "@/lib/teal/routes";
-import { trackViewToPlayView } from "@/lib/teal/social";
+import { socialPostDeleteParams, trackViewToPlayView } from "@/lib/teal/social";
 import { timeAgo } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
-import { Disc3, Heart, MessageCircle, Repeat2 } from "lucide-react-native";
+import {
+  Disc3,
+  Ellipsis,
+  Heart,
+  MessageCircle,
+  Repeat2,
+} from "lucide-react-native";
 
 type ActionState = {
   uri?: string;
@@ -46,7 +52,15 @@ function actionStateFromUri(uri?: string): ActionState {
   };
 }
 
-export default function SocialPostCard({ post }: { post: SocialPostView }) {
+export default function SocialPostCard({
+  post,
+  onDeleted,
+  onReplied,
+}: {
+  post: SocialPostView;
+  onDeleted?: (uri: string) => void;
+  onReplied?: (reply: SocialPostView) => void;
+}) {
   const pdsAgent = useStore((state) => state.pdsAgent);
   const status = useStore((state) => state.status);
   const tealProfile = useStore((state) => {
@@ -67,6 +81,13 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
   );
   const [releaseArtFailed, setReleaseArtFailed] = useState(false);
   const [recordingArt, setRecordingArt] = useState<string>();
+  const [ownerActions, setOwnerActions] = useState<
+    "closed" | "open" | "confirm"
+  >("closed");
+  const [deleting, setDeleting] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const deletionLock = useRef(false);
   const indexedAuthor = post.author as DisplayActor | undefined;
   const isViewerAuthor = pdsAgent?.did === post.authorDid;
   const tealAuthor = tealProfile
@@ -83,8 +104,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
         ...blueskyAuthor,
         ...preferredAuthor,
         avatar: preferredAuthor.avatar || blueskyAuthor?.avatar,
-        displayName:
-          preferredAuthor.displayName || blueskyAuthor?.displayName,
+        displayName: preferredAuthor.displayName || blueskyAuthor?.displayName,
         handle: preferredAuthor.handle || blueskyAuthor?.handle,
       }
     : isViewerAuthor
@@ -167,6 +187,7 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
     if (current.busy) return;
 
     setCurrent({ ...current, busy: true });
+    setActionError(null);
     try {
       if (current.active && (current.rkey || current.uri)) {
         await pdsAgent.call(
@@ -206,9 +227,51 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
       });
     } catch (error) {
       console.error(`Failed to ${kind} social post`, error);
+      setActionError(
+        `Could not ${kind === "like" ? "update your like" : "update your repost"}. Please try again.`,
+      );
       setCurrent({ ...current, busy: false });
     }
   }
+
+  async function deletePost() {
+    if (
+      !pdsAgent?.did ||
+      !isViewerAuthor ||
+      status !== "loggedIn" ||
+      deletionLock.current
+    )
+      return;
+    deletionLock.current = true;
+    setDeleting(true);
+    setActionError(null);
+    try {
+      await pdsAgent.call(
+        "com.atproto.repo.deleteRecord",
+        {},
+        socialPostDeleteParams(post.uri, pdsAgent.did, post.cid),
+      );
+      setDeleted(true);
+      onDeleted?.(post.uri);
+    } catch {
+      setActionError(
+        "Could not delete this post. It may have changed. Refresh and try again.",
+      );
+    } finally {
+      deletionLock.current = false;
+      setDeleting(false);
+    }
+  }
+
+  if (deleted)
+    return (
+      <View
+        role="status"
+        className="rounded-lg border border-border bg-card p-4"
+      >
+        <Text>Post deleted.</Text>
+      </View>
+    );
 
   return (
     <View className="rounded-lg border border-border bg-card/80 p-4">
@@ -259,7 +322,63 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
             )}
           </View>
         </View>
+        {isViewerAuthor && status === "loggedIn" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            accessibilityLabel="Manage your post"
+            accessibilityState={{ expanded: ownerActions !== "closed" }}
+            onPress={() =>
+              setOwnerActions((current) =>
+                current === "closed" ? "open" : "closed",
+              )
+            }
+          >
+            <Icon icon={Ellipsis} size={20} />
+          </Button>
+        )}
       </View>
+
+      {ownerActions !== "closed" && (
+        <View className="mt-3 gap-3 rounded-lg bg-muted p-4">
+          {ownerActions === "confirm" ? (
+            <>
+              <Text className="font-semibold">Delete this post?</Text>
+              <Text className="text-sm text-muted-foreground">
+                This removes it from your account and cannot be undone.
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                <Button
+                  variant="destructive"
+                  disabled={deleting}
+                  onPress={deletePost}
+                >
+                  <Text>{deleting ? "Deleting…" : "Delete post"}</Text>
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={deleting}
+                  onPress={() => setOwnerActions("closed")}
+                >
+                  <Text>Cancel</Text>
+                </Button>
+              </View>
+            </>
+          ) : (
+            <Button
+              variant="outline"
+              onPress={() => setOwnerActions("confirm")}
+            >
+              <Text>Delete post…</Text>
+            </Button>
+          )}
+        </View>
+      )}
+      {actionError && (
+        <Text role="alert" className="mt-3 text-sm text-destructive">
+          {actionError}
+        </Text>
+      )}
 
       {post.text ? (
         <RichText
@@ -307,6 +426,9 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
           size="sm"
           className="flex-row gap-2"
           disabled={status !== "loggedIn" || like.busy}
+          accessibilityLabel={`${like.active ? "Unlike" : "Like"} post, ${likeCount} likes`}
+          accessibilityState={{ selected: like.active, busy: like.busy }}
+          aria-pressed={like.active}
           onPress={() => toggleAction("like")}
         >
           <Icon icon={Heart} size={15} />
@@ -317,13 +439,23 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
           size="sm"
           className="flex-row gap-2"
           disabled={status !== "loggedIn" || repost.busy}
+          accessibilityLabel={`${repost.active ? "Undo repost" : "Repost"}, ${repostCount} reposts`}
+          accessibilityState={{ selected: repost.active, busy: repost.busy }}
+          aria-pressed={repost.active}
           onPress={() => toggleAction("repost")}
         >
           <Icon icon={Repeat2} size={15} />
           <Text>{repostCount}</Text>
         </Button>
-        <View className="flex-row items-center gap-2 rounded-md border border-border px-3 py-2">
-          <Icon icon={MessageCircle} size={15} className="text-muted-foreground" />
+        <View
+          accessibilityLabel={`${replyCount} replies`}
+          className="flex-row items-center gap-2 rounded-md border border-border px-3 py-2"
+        >
+          <Icon
+            icon={MessageCircle}
+            size={15}
+            className="text-muted-foreground"
+          />
           <Text className="text-sm text-muted-foreground">{replyCount}</Text>
         </View>
         <Button
@@ -341,9 +473,10 @@ export default function SocialPostCard({ post }: { post: SocialPostView }) {
             compact
             track={play}
             replyTo={post}
-            onPublished={() => {
+            onPublished={(reply) => {
               setReplyCount((count) => count + 1);
               setReplyOpen(false);
+              onReplied?.(reply);
             }}
           />
         </View>

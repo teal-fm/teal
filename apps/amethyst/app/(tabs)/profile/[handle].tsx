@@ -1,21 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   ActivityIndicator,
   Image,
+  Platform,
   Pressable,
   View,
 } from "react-native";
-import { Link, Stack, useLocalSearchParams } from "expo-router";
-import PlayFeedCard from "@/components/teal/PlayFeedCard";
+import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import EditProfileModal from "@/components/teal/EditProfileModal";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
-import { ProfileStatsSections } from "@/components/teal/ProfileStats";
+import ProfileListeningRow from "@/components/teal/ProfileListeningRow";
+import {
+  normalizeStatsPeriod,
+  ProfileStatsSections,
+} from "@/components/teal/ProfileStats";
 import RichText from "@/components/teal/RichText";
 import RightRail from "@/components/teal/RightRail";
 import SocialPostCard from "@/components/teal/SocialPostCard";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -31,6 +33,8 @@ import {
   type DisplayActor,
 } from "@/lib/teal/actors";
 import {
+  coverArtUrl,
+  displayArtists,
   getActorFeed,
   getActorPlaylists,
   getBlueskyProfile,
@@ -38,16 +42,12 @@ import {
   getGraphFollows,
   getGraphSummary,
   getProfile,
-  getUserTopReleases,
-  getSocialFeed,
-  coverArtUrl,
-  displayArtists,
   getRecordingCoverArtUrl,
-  type GraphSummaryView,
-  type SocialPostView,
-  type SocialPlaylistView,
-  type StatsPeriod,
+  getSocialFeed,
   XrpcError,
+  type GraphSummaryView,
+  type SocialPlaylistView,
+  type SocialPostView,
 } from "@/lib/teal/api";
 import {
   artistsFromText,
@@ -55,21 +55,22 @@ import {
   loadPlayRecord,
   putPlayRecord,
 } from "@/lib/teal/playRecords";
+import {
+  appendUniqueRecords,
+  isCurrentProfileRequest,
+} from "@/lib/teal/profileStats";
+import { playlistHref } from "@/lib/teal/routes";
 import { useStore } from "@/stores/mainStore";
-import { musicAlbumHref, playlistHref } from "@/lib/teal/routes";
 import type { AppBskyActorDefs } from "@atproto/api";
 import {
   CheckSquare,
-  Disc3,
-  Info,
   Pencil,
   Save,
   Square,
   Trash2,
   UserMinus,
   UserPlus,
-  UserRoundPlus,
-  Users,
+  X,
 } from "lucide-react-native";
 
 import type {
@@ -77,7 +78,6 @@ import type {
   ProfileView,
 } from "@teal/lexicons/src/fm/teal/actor/defs";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import type { ReleaseView } from "@teal/lexicons/src/fm/teal/stats/defs";
 
 type DisplayProfile = Pick<
   ProfileView,
@@ -118,100 +118,6 @@ function needsBlueskyFallback(profile: DisplayProfile) {
 
 function rkeyFromUri(uri?: string) {
   return uri?.split("/").pop();
-}
-
-function normalizeStatsPeriod(value?: string): StatsPeriod {
-  return ["7days", "30days", "90days", "180days", "365days", "all"].includes(
-    value || "",
-  )
-    ? (value as StatsPeriod)
-    : "90days";
-}
-
-function ProfileAlbumTile({
-  release,
-  index,
-}: {
-  release: ReleaseView;
-  index: number;
-}) {
-  const [failed, setFailed] = useState(false);
-  const art = failed ? undefined : coverArtUrl(release.mbid, 100);
-  const href = release.mbid
-    ? musicAlbumHref("music", release.name || "Unknown album", release.mbid)
-    : undefined;
-  const positions = [
-    { left: 4, top: 2, transform: [{ rotate: "-8deg" }] },
-    { left: 0, top: 76, transform: [{ rotate: "7deg" }] },
-    { right: 14, top: 0, transform: [{ rotate: "9deg" }] },
-    { right: 0, top: 82, transform: [{ rotate: "-6deg" }] },
-  ];
-  const content = (
-    <Pressable
-      accessibilityLabel={`${release.name || "Album"}: ${release.playCount || 0} plays`}
-      className="absolute h-14 w-14 items-center justify-center overflow-hidden rounded-md border-2 border-background bg-muted shadow-sm web:transition-transform web:hover:scale-105"
-      style={positions[index]}
-    >
-      {art ? (
-        <Image
-          source={{ uri: art }}
-          className="h-full w-full"
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <Icon icon={Disc3} size={22} className="text-muted-foreground" />
-      )}
-    </Pressable>
-  );
-
-  return href ? (
-    <Link href={href as any} asChild>
-      {content}
-    </Link>
-  ) : (
-    content
-  );
-}
-
-function ProfileAvatarCluster({
-  avatarUrl,
-  fallback,
-  topReleases,
-}: {
-  avatarUrl?: string;
-  fallback: string;
-  topReleases: ReleaseView[];
-}) {
-  const albumTiles = topReleases.slice(0, 4);
-  const avatar = avatarUrl ? (
-    <Image
-      source={{ uri: avatarUrl }}
-      className="h-24 w-24 rounded-lg border-4 border-background bg-primary"
-    />
-  ) : (
-    <View className="h-24 w-24 items-center justify-center rounded-lg border-4 border-background bg-primary">
-      <Text className="text-4xl font-black text-primary-foreground">
-        {fallback.slice(0, 1)}
-      </Text>
-    </View>
-  );
-
-  if (albumTiles.length === 0) {
-    return avatar;
-  }
-
-  return (
-    <View className="relative h-36 w-56">
-      {albumTiles.map((release, index) => (
-        <ProfileAlbumTile
-          key={`${release.mbid || release.name}-${index}`}
-          release={release}
-          index={index}
-        />
-      ))}
-      <View className="absolute left-[4.25rem] top-5">{avatar}</View>
-    </View>
-  );
 }
 
 function GraphActorRow({ actor }: { actor: MiniProfileView }) {
@@ -275,24 +181,49 @@ function GraphActorRow({ actor }: { actor: MiniProfileView }) {
 }
 
 export default function ProfileScreen() {
-  const { handle } = useLocalSearchParams();
+  const { handle, tab } = useLocalSearchParams();
+  const router = useRouter();
+  const tabValue = Array.isArray(tab) ? tab[0] : tab;
+  const activeTab = ["listening", "posts", "playlists"].includes(tabValue || "")
+    ? tabValue
+    : "overview";
   const actor = Array.isArray(handle) ? handle[0] : handle;
   const [did, setDid] = useState<string | null>(null);
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
   const [playlists, setPlaylists] = useState<SocialPlaylistView[]>([]);
-  const [topReleases, setTopReleases] = useState<ReleaseView[]>([]);
   const [graphSummary, setGraphSummary] = useState<GraphSummaryView>({
     followersCount: 0,
     followsCount: 0,
   });
-  const [followers, setFollowers] = useState<MiniProfileView[]>([]);
-  const [follows, setFollows] = useState<MiniProfileView[]>([]);
-  const [graphTab, setGraphTab] = useState<"followers" | "following">(
-    "followers",
+  const [graphTab, setGraphTab] = useState<"followers" | "following" | null>(
+    null,
   );
+  const [graphActors, setGraphActors] = useState<MiniProfileView[]>([]);
+  const [graphCursor, setGraphCursor] = useState<string>();
+  const [graphLoading, setGraphLoading] = useState(false);
+  const [graphError, setGraphError] = useState<string>();
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [bioExpanded, setBioExpanded] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [playsCursor, setPlaysCursor] = useState<string>();
+  const [postsCursor, setPostsCursor] = useState<string>();
+  const [playlistsCursor, setPlaylistsCursor] = useState<string>();
+  const [sectionLoading, setSectionLoading] = useState({
+    listening: true,
+    posts: true,
+    playlists: true,
+  });
+  const [sectionErrors, setSectionErrors] = useState<
+    Partial<Record<"listening" | "posts" | "playlists", string>>
+  >({});
+  const [loadingMore, setLoadingMore] = useState(false);
+  const requestVersion = useRef(0);
+  const graphRequestVersion = useRef(0);
   const [posts, setPosts] = useState<SocialPostView[]>([]);
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [followBusy, setFollowBusy] = useState(false);
+  const followLock = useRef<object | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [selectedPlayRkeys, setSelectedPlayRkeys] = useState<Set<string>>(
@@ -308,131 +239,288 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string | null>(null);
   const pdsAgent = useStore((state) => state.pdsAgent);
   const authStatus = useStore((state) => state.status);
+  const currentIdentity = useRef({
+    actor,
+    targetDid: did,
+    viewerDid: pdsAgent?.did,
+  });
+  currentIdentity.current = {
+    actor,
+    targetDid: did,
+    viewerDid: authStatus === "loggedIn" ? pdsAgent?.did : undefined,
+  };
 
   useEffect(() => {
     let mounted = true;
+    requestVersion.current += 1;
+    setError(null);
+    setFollowBusy(false);
+    followLock.current = null;
+    setDid(null);
+    setProfile(null);
+    setProfileLoading(true);
+    setBioExpanded(false);
+    setAvatarFailed(false);
+    setGraphTab(null);
+    setGraphSummary({ followersCount: 0, followsCount: 0 });
+    setPlaylists([]);
+    setPosts([]);
+    setPlays([]);
+    setPlaysCursor(undefined);
+    setPostsCursor(undefined);
+    setPlaylistsCursor(undefined);
+    setSectionLoading({ listening: true, posts: true, playlists: true });
+    setSectionErrors({});
+    setSelectedPlayRkeys(new Set());
+    setBulkEditOpen(false);
+    setBulkDeleteArmed(false);
+    setBulkArtistsText("");
+    setBulkReleaseName("");
+    setLoadingMore(false);
+
     async function load() {
-      if (!actor) return;
+      if (!actor) {
+        setError("No listener was selected.");
+        setProfileLoading(false);
+        return;
+      }
       try {
-        setError(null);
-        setDid(null);
-        setProfile(null);
-        setPlaylists([]);
-        setTopReleases([]);
-        setGraphSummary({ followersCount: 0, followsCount: 0 });
-        setFollowers([]);
-        setFollows([]);
-        setPosts([]);
-        setPlays([]);
-        setSelectedPlayRkeys(new Set());
-        setBulkEditOpen(false);
-        setBulkDeleteArmed(false);
-        setBulkArtistsText("");
-        setBulkReleaseName("");
         const resolved = actor.startsWith("did:")
           ? actor
           : await resolveHandle(actor);
         if (!mounted) return;
         setDid(resolved);
-        const feedRes = await getActorFeed(resolved, 10);
-        const postsRes = await getSocialFeed(
+        // Identity does not wait for history, posts, playlists, or graph requests.
+        const identityRequest = (async () => {
+          let nextProfile: DisplayProfile;
+          let fallback = false;
+          try {
+            nextProfile = (await getProfile(resolved)).profile;
+            fallback =
+              !nextProfile.displayName &&
+              !nextProfile.description &&
+              !nextProfile.avatar &&
+              !nextProfile.banner;
+          } catch (cause) {
+            if (!(cause instanceof XrpcError) || cause.status !== 404)
+              throw cause;
+            nextProfile = {
+              handle: actor.startsWith("did:") ? undefined : actor,
+            };
+            fallback = true;
+          }
+          if (mounted) {
+            setProfile(nextProfile);
+            setIsBlueskyFallback(fallback);
+            setProfileLoading(false);
+          }
+          if (needsBlueskyFallback(nextProfile)) {
+            const bsky = await getBlueskyProfile(resolved).catch(() => null);
+            if (bsky) nextProfile = mergeBlueskyProfile(nextProfile, bsky);
+          }
+          if (mounted) {
+            setProfile(nextProfile);
+            setIsBlueskyFallback(fallback);
+          }
+        })()
+          .catch((cause) => {
+            if (mounted)
+              setError(cause instanceof Error ? cause.message : String(cause));
+          })
+          .finally(() => {
+            if (mounted) setProfileLoading(false);
+          });
+
+        const listeningRequest = getActorFeed(resolved, 30).then((page) => {
+          if (!mounted) return;
+          setPlays(page.plays);
+          setPlaysCursor(page.cursor);
+        });
+        const postsRequest = getSocialFeed(
           10,
           undefined,
           pdsAgent?.did,
           resolved,
-        ).catch(() => ({
-          items: [],
-        }));
-        const playlistRes = await getActorPlaylists(resolved, 12).catch(() => ({
-          items: [],
-        }));
-        const graphSummaryRes = await getGraphSummary(
-          resolved,
-          pdsAgent?.did,
-        ).catch(() => ({
-          followersCount: 0,
-          followsCount: 0,
-        }));
-        const followersRes = await getGraphFollowers(resolved, 12).catch(
-          () => ({
-            actors: [],
-          }),
+        ).then((page) => {
+          if (!mounted) return;
+          setPosts(page.items);
+          setPostsCursor(page.cursor);
+        });
+        const playlistsRequest = getActorPlaylists(resolved, 12).then(
+          (page) => {
+            if (!mounted) return;
+            setPlaylists(page.items);
+            setPlaylistsCursor(page.cursor);
+          },
         );
-        const followsRes = await getGraphFollows(resolved, 12).catch(() => ({
-          actors: [],
-        }));
-        let nextProfile: DisplayProfile | null = null;
-        let nextIsBlueskyFallback = false;
-
-        try {
-          nextProfile = (await getProfile(resolved)).profile;
-          if (needsBlueskyFallback(nextProfile)) {
-            const bskyProfile = await getBlueskyProfile(resolved).catch(
-              () => null,
-            );
-            if (bskyProfile) {
-              nextIsBlueskyFallback =
-                !nextProfile.displayName &&
-                !nextProfile.description &&
-                !nextProfile.avatar &&
-                !nextProfile.banner;
-              nextProfile = mergeBlueskyProfile(nextProfile, bskyProfile);
-            }
-          }
-        } catch (profileError) {
-          if (
-            !(profileError instanceof XrpcError) ||
-            profileError.status !== 404
-          ) {
-            throw profileError;
-          }
-
-          const bskyProfile: AppBskyActorDefs.ProfileViewDetailed =
-            await getBlueskyProfile(resolved);
-          nextProfile = {
-            displayName: bskyProfile.displayName,
-            description: bskyProfile.description,
-            avatar: bskyProfile.avatar,
-            banner: bskyProfile.banner,
-            handle: bskyProfile.handle,
-          };
-          nextIsBlueskyFallback = true;
+        const sections = [
+          ["listening", listeningRequest],
+          ["posts", postsRequest],
+          ["playlists", playlistsRequest],
+        ] as const;
+        for (const [section, request] of sections) {
+          void request
+            .catch((cause) => {
+              if (mounted)
+                setSectionErrors((current) => ({
+                  ...current,
+                  [section]:
+                    cause instanceof Error ? cause.message : String(cause),
+                }));
+            })
+            .finally(() => {
+              if (mounted)
+                setSectionLoading((current) => ({
+                  ...current,
+                  [section]: false,
+                }));
+            });
         }
-
-        if (!mounted) return;
-        const topReleaseRes = await getUserTopReleases(
-          resolved,
-          normalizeStatsPeriod(nextProfile?.statsDefaultPeriod),
-          4,
-        ).catch(() => ({
-          releases: [],
-        }));
-        if (!mounted) return;
-        setProfile(nextProfile);
-        setPlaylists(playlistRes.items);
-        setTopReleases(topReleaseRes.releases);
-        setGraphSummary(graphSummaryRes);
-        setFollowers(followersRes.actors);
-        setFollows(followsRes.actors);
-        setIsBlueskyFallback(nextIsBlueskyFallback);
-        setPosts(postsRes.items);
-        setPlays(feedRes.plays);
-      } catch (e) {
-        if (mounted) setError(e instanceof Error ? e.message : String(e));
+        void getGraphSummary(resolved, pdsAgent?.did)
+          .then((summary) => {
+            if (mounted) setGraphSummary(summary);
+          })
+          .catch(() => undefined);
+        await identityRequest;
+      } catch (cause) {
+        if (mounted) {
+          setError(cause instanceof Error ? cause.message : String(cause));
+          setProfileLoading(false);
+        }
       }
     }
-    load();
+    void load();
+    return () => {
+      mounted = false;
+      requestVersion.current += 1;
+    };
+  }, [actor, pdsAgent?.did, refreshKey]);
+
+  useEffect(() => {
+    let mounted = true;
+    graphRequestVersion.current += 1;
+    setGraphActors([]);
+    setGraphCursor(undefined);
+    setGraphError(undefined);
+    if (!did || !graphTab) return;
+    setGraphLoading(true);
+    const request =
+      graphTab === "followers"
+        ? getGraphFollowers(did, 20)
+        : getGraphFollows(did, 20);
+    request
+      .then((page) => {
+        if (!mounted) return;
+        setGraphActors(page.actors);
+        setGraphCursor(page.cursor);
+      })
+      .catch(() => {
+        if (mounted)
+          setGraphError("Could not load this list. Close it and try again.");
+      })
+      .finally(() => {
+        if (mounted) setGraphLoading(false);
+      });
     return () => {
       mounted = false;
     };
-  }, [actor, pdsAgent?.did]);
+  }, [did, graphTab]);
+
+  async function loadMore(section: "listening" | "posts" | "playlists") {
+    const cursor =
+      section === "listening"
+        ? playsCursor
+        : section === "posts"
+          ? postsCursor
+          : playlistsCursor;
+    if (!did || !cursor || loadingMore) return;
+    const version = requestVersion.current;
+    setLoadingMore(true);
+    try {
+      if (section === "listening") {
+        const page = await getActorFeed(did, 30, cursor);
+        if (version !== requestVersion.current) return;
+        setPlays((current) => appendUniqueRecords(current, page.plays));
+        setPlaysCursor(page.cursor);
+      } else if (section === "posts") {
+        const page = await getSocialFeed(10, cursor, pdsAgent?.did, did);
+        if (version !== requestVersion.current) return;
+        setPosts((current) => appendUniqueRecords(current, page.items));
+        setPostsCursor(page.cursor);
+      } else {
+        const page = await getActorPlaylists(did, 12, cursor);
+        if (version !== requestVersion.current) return;
+        setPlaylists((current) => appendUniqueRecords(current, page.items));
+        setPlaylistsCursor(page.cursor);
+      }
+    } catch {
+      if (version === requestVersion.current)
+        setSectionErrors((current) => ({
+          ...current,
+          [section]: "Could not load more. Try again.",
+        }));
+    } finally {
+      if (version === requestVersion.current) setLoadingMore(false);
+    }
+  }
+
+  async function loadMoreGraph() {
+    if (!did || !graphTab || !graphCursor || graphLoading) return;
+    const version = requestVersion.current;
+    const graphVersion = graphRequestVersion.current;
+    setGraphLoading(true);
+    try {
+      const page = await (graphTab === "followers"
+        ? getGraphFollowers(did, 20, graphCursor)
+        : getGraphFollows(did, 20, graphCursor));
+      if (
+        version !== requestVersion.current ||
+        graphVersion !== graphRequestVersion.current
+      )
+        return;
+      setGraphActors((current) => {
+        const known = new Set(current.map((item) => item.did));
+        return [
+          ...current,
+          ...page.actors.filter((item) => !known.has(item.did)),
+        ];
+      });
+      setGraphCursor(page.cursor);
+    } catch {
+      if (
+        version === requestVersion.current &&
+        graphVersion === graphRequestVersion.current
+      )
+        setGraphError("Could not load more people. Try again.");
+    } finally {
+      if (
+        version === requestVersion.current &&
+        graphVersion === graphRequestVersion.current
+      )
+        setGraphLoading(false);
+    }
+  }
 
   const isSelf = did === pdsAgent?.did;
   const selectedPlayCount = selectedPlayRkeys.size;
   const viewerFollowing = graphSummary.viewerFollowing;
   const canFollow = authStatus === "loggedIn" && !!pdsAgent?.did && !!did;
   async function toggleFollow() {
-    if (!canFollow || !pdsAgent?.did || !did || isSelf || followBusy) return;
+    if (!canFollow || !pdsAgent?.did || !did || isSelf || followLock.current)
+      return;
+    const request = {
+      generation: requestVersion.current,
+      actor,
+      targetDid: did,
+      viewerDid: pdsAgent.did,
+    };
+    const operation = {};
+    followLock.current = operation;
+    const stillCurrent = () =>
+      isCurrentProfileRequest(request, {
+        generation: requestVersion.current,
+        ...currentIdentity.current,
+      });
     setFollowBusy(true);
     try {
       if (viewerFollowing) {
@@ -447,6 +535,7 @@ export default function ProfileScreen() {
             rkey,
           },
         );
+        if (!stillCurrent()) return;
         setGraphSummary((current) => ({
           ...current,
           followersCount: Math.max(0, current.followersCount - 1),
@@ -468,15 +557,17 @@ export default function ProfileScreen() {
           },
         },
       );
+      if (!stillCurrent()) return;
       setGraphSummary((current) => ({
         ...current,
         followersCount: current.followersCount + 1,
         viewerFollowing: (res.data as { uri?: string }).uri,
       }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (stillCurrent()) setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setFollowBusy(false);
+      if (followLock.current === operation) followLock.current = null;
+      if (stillCurrent()) setFollowBusy(false);
     }
   }
 
@@ -505,7 +596,6 @@ export default function ProfileScreen() {
   function selectVisiblePlays() {
     setBulkDeleteArmed(false);
     const visibleRkeys = plays
-      .slice(0, 10)
       .map((play) => play.rkey)
       .filter((rkey): rkey is string => !!rkey);
     setSelectedPlayRkeys(new Set(visibleRkeys));
@@ -525,7 +615,9 @@ export default function ProfileScreen() {
         await deletePlayRecord(pdsAgent, did, selectedRkey);
       }
       setPlays((current) =>
-        current.filter((play) => !play.rkey || !selectedPlayRkeys.has(play.rkey)),
+        current.filter(
+          (play) => !play.rkey || !selectedPlayRkeys.has(play.rkey),
+        ),
       );
       setSelectedPlayRkeys(new Set());
       setBulkDeleteArmed(false);
@@ -614,149 +706,341 @@ export default function ProfileScreen() {
     };
   }, [currentStatus, currentStatusReleaseArt]);
 
+  function handleTabKey(
+    event: KeyboardEvent<HTMLElement>,
+    selectedIndex: number,
+  ) {
+    const tabs = ["overview", "listening", "posts", "playlists"];
+    const nextIndex =
+      event.key === "ArrowRight"
+        ? (selectedIndex + 1) % tabs.length
+        : event.key === "ArrowLeft"
+          ? (selectedIndex + tabs.length - 1) % tabs.length
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? tabs.length - 1
+              : undefined;
+    if (nextIndex === undefined) return;
+    event.preventDefault();
+    router.setParams({ tab: tabs[nextIndex] });
+    setBulkEditOpen(false);
+    event.currentTarget.parentElement
+      ?.querySelectorAll<HTMLElement>('[role="tab"]')
+      [nextIndex]?.focus();
+  }
+
+  const displayName =
+    profile?.displayName ||
+    profile?.handle ||
+    (actor?.startsWith("did:") ? "Listener" : actor) ||
+    "Listener";
+  const description = profile?.description || "";
+  const longBio =
+    description.length > 180 || description.split("\n").length > 3;
+  const period = normalizeStatsPeriod(profile?.statsDefaultPeriod);
+  const sectionStatus = (section: "listening" | "posts" | "playlists") =>
+    sectionLoading[section] ? (
+      <View className="py-6">
+        <ActivityIndicator accessibilityLabel={`Loading ${section}`} />
+      </View>
+    ) : sectionErrors[section] ? (
+      <View className="mb-4 gap-3">
+        <Text className="text-destructive">
+          Could not load {section}. Please try again.
+        </Text>
+        <Button
+          variant="outline"
+          className="self-start"
+          onPress={() => setRefreshKey((key) => key + 1)}
+        >
+          <Text>Try again</Text>
+        </Button>
+      </View>
+    ) : null;
+  const emptyListening = (
+    <View className="gap-3 py-3">
+      <Text className="font-bold">No listens yet</Text>
+      <Text className="text-sm text-muted-foreground">
+        {isSelf
+          ? "Add a track or an album to start your listening history. Saved listens can take a moment to appear."
+          : "This listener has not shared any listens yet."}
+      </Text>
+      {isSelf && (
+        <Link href="/manual-listens" asChild>
+          <Button className="self-start">
+            <Text>Add your first listen</Text>
+          </Button>
+        </Link>
+      )}
+    </View>
+  );
+
   return (
-    <TealShell rightRail={<RightRail />}>
-      <Stack.Screen
-        options={{ title: actor || "Profile", headerShown: false }}
-      />
-      {!did && !error && (
-        <View className="min-h-[24rem] items-center justify-center">
-          <ActivityIndicator size="large" />
+    <TealShell rightRail={<RightRail />} pageTitle={displayName}>
+      <Stack.Screen options={{ title: displayName, headerShown: false }} />
+      {profileLoading && (
+        <View className="min-h-48 items-center justify-center">
+          <ActivityIndicator
+            size="large"
+            accessibilityLabel="Loading profile"
+          />
         </View>
       )}
       {error && (
-        <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+        <View className="mb-5 gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="font-bold text-destructive">
-            Could not load profile: {error}
+            {did
+              ? "We could not complete that action."
+              : "This profile could not be found."}
           </Text>
+          <Text className="text-sm text-muted-foreground">
+            Check the handle or try again in a moment.
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onPress={() => setRefreshKey((key) => key + 1)}
+            >
+              <Text>Try again</Text>
+            </Button>
+            <Link href="/search" asChild>
+              <Button variant="outline">
+                <Text>Find a listener</Text>
+              </Button>
+            </Link>
+          </View>
         </View>
       )}
-      {did && (
+      {did && !profileLoading && (
         <>
-          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
-            <View className="h-40 bg-primary/30">
-              {bannerUrl && (
+          <View className="mb-5 overflow-hidden rounded-lg border border-border bg-card">
+            {bannerUrl && (
+              <View className="h-24 bg-muted">
                 <Image
                   source={{ uri: bannerUrl }}
                   className="h-full w-full"
+                  resizeMode="cover"
                 />
-              )}
-            </View>
-            <View className="-mt-12 px-6 pb-6">
-              <ProfileAvatarCluster
-                avatarUrl={avatarUrl}
-                fallback={profile?.displayName || actor || "T"}
-                topReleases={topReleases}
-              />
-              <Text className="mt-1 font-sans text-3xl font-black">
-                {profile?.displayName || actor}
-              </Text>
-              {profile?.handle && (
-                <Text className="font-mono text-sm text-muted-foreground">
-                  @{profile.handle}
-                </Text>
-              )}
-              <View className="mt-4 flex-row flex-wrap items-center gap-3">
-                <View className="flex-row gap-4 rounded-lg border border-border bg-card/60 px-4 py-2">
-                  <Pressable onPress={() => setGraphTab("followers")}>
-                    <Text className="font-sans text-lg font-black">
-                      {graphSummary.followersCount}
+              </View>
+            )}
+            <View className="gap-3 p-4 md:p-5">
+              <View className="flex-row items-start gap-3">
+                <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted md:h-20 md:w-20">
+                  {avatarUrl && !avatarFailed ? (
+                    <Image
+                      source={{ uri: avatarUrl }}
+                      className="h-full w-full"
+                      onError={() => setAvatarFailed(true)}
+                    />
+                  ) : (
+                    <Text className="text-3xl font-bold text-muted-foreground">
+                      {displayName.slice(0, 1).toUpperCase()}
                     </Text>
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-                      Followers
-                    </Text>
-                  </Pressable>
-                  <Pressable onPress={() => setGraphTab("following")}>
-                    <Text className="font-sans text-lg font-black">
-                      {graphSummary.followsCount}
-                    </Text>
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-                      Following
-                    </Text>
-                  </Pressable>
+                  )}
                 </View>
-                {isSelf ? (
-                  <Button
-                    className="flex-row gap-2 self-start"
-                    variant="outline"
-                    onPress={() => setEditProfileOpen(true)}
+                <View className="min-w-0 flex-1 gap-1">
+                  <Text
+                    accessibilityRole="header"
+                    aria-level={1}
+                    className="font-sans text-2xl font-black"
+                    numberOfLines={2}
                   >
-                    <Icon icon={Pencil} size={16} />
-                    <Text>Edit profile</Text>
-                  </Button>
+                    {displayName}
+                  </Text>
+                  {profile?.handle && (
+                    <Text
+                      className="text-sm text-muted-foreground"
+                      numberOfLines={1}
+                    >
+                      @{normalizeHandle(profile.handle)}
+                    </Text>
+                  )}
+                  <View className="flex-row flex-wrap gap-3">
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${graphSummary.followersCount} followers`}
+                      className="min-h-11 justify-center"
+                      onPress={() =>
+                        setGraphTab((current) =>
+                          current === "followers" ? null : "followers",
+                        )
+                      }
+                    >
+                      <Text className="text-sm">
+                        <Text className="font-bold">
+                          {graphSummary.followersCount}
+                        </Text>{" "}
+                        followers
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Following ${graphSummary.followsCount} people`}
+                      className="min-h-11 justify-center"
+                      onPress={() =>
+                        setGraphTab((current) =>
+                          current === "following" ? null : "following",
+                        )
+                      }
+                    >
+                      <Text className="text-sm">
+                        <Text className="font-bold">
+                          {graphSummary.followsCount}
+                        </Text>{" "}
+                        following
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+              {description && (
+                <View>
+                  {bioExpanded || !longBio ? (
+                    <RichText
+                      text={description}
+                      facets={profile?.descriptionFacets}
+                      className="text-sm leading-6"
+                    />
+                  ) : (
+                    <Text className="text-sm leading-6" numberOfLines={3}>
+                      {description}
+                    </Text>
+                  )}
+                  {longBio && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: bioExpanded }}
+                      accessibilityLabel={
+                        bioExpanded
+                          ? "Show less biography"
+                          : "Read full biography"
+                      }
+                      className="min-h-11 justify-center self-start"
+                      onPress={() => setBioExpanded((value) => !value)}
+                    >
+                      <Text className="text-sm font-semibold text-primary">
+                        {bioExpanded ? "Show less" : "Read more"}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+              <View className="flex-row flex-wrap gap-2">
+                {isSelf ? (
+                  <>
+                    <Link href="/manual-listens" asChild>
+                      <Button size="sm">
+                        <Text>Add a listen</Text>
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-row gap-2"
+                      onPress={() => setEditProfileOpen(true)}
+                    >
+                      <Icon icon={Pencil} size={15} />
+                      <Text>Edit profile</Text>
+                    </Button>
+                  </>
                 ) : (
                   <Button
-                    className="flex-row gap-2 self-start"
+                    size="sm"
+                    className="flex-row gap-2"
                     variant={viewerFollowing ? "outline" : "default"}
                     disabled={!canFollow || followBusy}
                     onPress={toggleFollow}
                   >
                     <Icon
                       icon={viewerFollowing ? UserMinus : UserPlus}
-                      size={16}
+                      size={15}
                     />
-                    <Text>{viewerFollowing ? "Following" : "Follow"}</Text>
+                    <Text>
+                      {followBusy
+                        ? "Saving"
+                        : viewerFollowing
+                          ? "Following"
+                          : "Follow"}
+                    </Text>
                   </Button>
                 )}
               </View>
-              {isBlueskyFallback && (
-                <View className="mt-4 flex-row gap-3 rounded-lg border border-bsky/30 bg-bsky/10 p-3">
-                  <Icon icon={Info} size={18} className="mt-0.5 text-bsky" />
-                  <View className="flex-1 gap-1">
-                    <Text className="font-bold">Showing Bluesky profile</Text>
-                    <Text className="text-sm text-muted-foreground">
-                      This listener has not created a Teal profile yet. Their
-                      Bluesky profile is shown as a fallback.
-                    </Text>
-                  </View>
-                </View>
-              )}
-              {profile?.description && (
-                <RichText
-                  text={profile.description}
-                  facets={profile.descriptionFacets}
-                  className="mt-4 text-lg"
-                />
-              )}
               {currentStatus && (
-                <View className="mt-4 flex-row items-center gap-2 self-start">
-                  <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-muted">
-                    {currentStatusArt ? (
+                <View className="flex-row items-center gap-2 border-t border-border pt-3">
+                  <View className="h-9 w-9 overflow-hidden rounded-md bg-muted">
+                    {currentStatusArt && (
                       <Image
                         source={{ uri: currentStatusArt }}
                         className="h-full w-full"
                         onError={() => setStatusArtFailed(true)}
                       />
-                    ) : (
-                      <View className="h-full w-full border border-border bg-muted" />
                     )}
                   </View>
                   <View className="min-w-0 flex-1">
-                    <Text
-                      className="font-sans text-sm font-black leading-tight"
-                      numberOfLines={1}
-                    >
-                      Listening to: {currentStatus.trackName}
+                    <Text className="text-sm font-bold" numberOfLines={1}>
+                      Listening to {currentStatus.trackName}
                     </Text>
                     <Text
-                      className="text-xs font-bold text-muted-foreground"
+                      className="text-xs text-muted-foreground"
                       numberOfLines={1}
                     >
-                      {displayArtists(currentStatus) || "Unknown artist"}
+                      {displayArtists(currentStatus)}
                     </Text>
                   </View>
                 </View>
               )}
-              {isSelf && isBlueskyFallback && (
-                <Link href="/onboarding" asChild>
-                  <Button className="mt-5 flex-row gap-2 self-start">
-                    <Icon icon={UserRoundPlus} size={18} />
-                    <Text>Set up Teal profile</Text>
-                  </Button>
-                </Link>
-              )}
             </View>
           </View>
+          {graphTab && (
+            <View className="mb-5 gap-3 border-b border-border pb-5">
+              <View className="flex-row items-center justify-between">
+                <Text
+                  accessibilityRole="header"
+                  aria-level={2}
+                  className="text-xl font-bold"
+                >
+                  {graphTab === "followers" ? "Followers" : "Following"}
+                </Text>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  accessibilityLabel="Close people list"
+                  onPress={() => setGraphTab(null)}
+                >
+                  <Icon icon={X} size={18} />
+                </Button>
+              </View>
+              {graphError && (
+                <Text className="text-destructive">{graphError}</Text>
+              )}
+              {graphLoading && graphActors.length === 0 ? (
+                <ActivityIndicator />
+              ) : graphActors.length === 0 && !graphError ? (
+                <Text className="text-muted-foreground">
+                  {graphTab === "followers"
+                    ? "No followers yet."
+                    : "Not following anyone yet."}
+                </Text>
+              ) : (
+                graphActors.map((person) => (
+                  <GraphActorRow
+                    key={person.did || person.handle}
+                    actor={person}
+                  />
+                ))
+              )}
+              {graphCursor && (
+                <Button
+                  variant="outline"
+                  disabled={graphLoading}
+                  onPress={loadMoreGraph}
+                >
+                  <Text>{graphLoading ? "Loading" : "Load more people"}</Text>
+                </Button>
+              )}
+            </View>
+          )}
           {isSelf && (
             <EditProfileModal
               did={did}
@@ -772,217 +1056,408 @@ export default function ProfileScreen() {
               }}
             />
           )}
-          <View className="mb-8">
-            <SectionHeading eyebrow="Posts" title="Recent posts" />
-            {posts.length === 0 ? (
-              <Text className="text-muted-foreground">
-                No indexed posts yet.
-              </Text>
-            ) : (
-              <View className="gap-3">
-                {posts.map((post) => (
-                  <SocialPostCard key={post.uri} post={post} />
-                ))}
-              </View>
+          <View
+            accessibilityRole="tablist"
+            className="mb-5 flex-row border-b border-border"
+          >
+            {(["overview", "listening", "posts", "playlists"] as const).map(
+              (value, index) => (
+                <Pressable
+                  key={value}
+                  nativeID={`profile-tab-${value}`}
+                  {...(Platform.OS === "web"
+                    ? {
+                        tabIndex: activeTab === value ? 0 : -1,
+                        "aria-controls": "profile-content",
+                        onKeyDown: (event: KeyboardEvent<HTMLElement>) =>
+                          handleTabKey(event, index),
+                      }
+                    : {})}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === value }}
+                  accessibilityLabel={
+                    value.charAt(0).toUpperCase() + value.slice(1)
+                  }
+                  className={`min-h-12 min-w-0 flex-1 items-center justify-center border-b-2 px-1 ${activeTab === value ? "border-primary" : "border-transparent"}`}
+                  onPress={() => {
+                    router.setParams({ tab: value });
+                    setBulkEditOpen(false);
+                  }}
+                >
+                  <Text
+                    className={`text-sm font-bold ${activeTab === value ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    {value.charAt(0).toUpperCase() + value.slice(1)}
+                  </Text>
+                </Pressable>
+              ),
             )}
           </View>
-          <View className="mb-8">
-            <View className="mb-3 flex-row flex-wrap items-center justify-between gap-3">
-              <SectionHeading
-                eyebrow="Listening history"
-                title="Recent plays"
-              />
-              {isSelf && plays.length > 0 && (
-                <Button
-                  variant={bulkEditOpen ? "default" : "outline"}
-                  className="flex-row gap-2 self-start"
-                  disabled={bulkBusy}
-                  onPress={toggleBulkEdit}
-                >
-                  <Icon
-                    icon={bulkEditOpen ? CheckSquare : Square}
-                    size={16}
-                  />
-                  <Text>{bulkEditOpen ? "Done selecting" : "Select plays"}</Text>
-                </Button>
-              )}
-            </View>
-            {bulkEditOpen && isSelf && (
-              <View className="mb-4 gap-3 rounded-lg border border-border bg-card/75 p-4">
-                <View className="flex-row flex-wrap items-center justify-between gap-3">
-                  <View>
-                    <Text className="font-bold">
-                      {selectedPlayCount} selected
+          <View
+            nativeID="profile-content"
+            {...(Platform.OS === "web"
+              ? {
+                  role: "tabpanel" as const,
+                  "aria-labelledby": `profile-tab-${activeTab}`,
+                }
+              : {})}
+          >
+            {activeTab === "overview" && (
+              <>
+                {isSelf && isBlueskyFallback && (
+                  <View className="mb-5 gap-3 border-b border-border pb-5">
+                    <Text
+                      accessibilityRole="header"
+                      aria-level={2}
+                      className="text-lg font-bold"
+                    >
+                      Make this profile yours
                     </Text>
                     <Text className="text-sm text-muted-foreground">
-                      Bulk actions write directly to your PDS.
+                      Your Bluesky details are here to get you started. Add your
+                      Teal name, bio, and artwork.
                     </Text>
+                    <Link href="/onboarding" asChild>
+                      <Button variant="outline" className="self-start">
+                        <Text>Set up your Teal profile</Text>
+                      </Button>
+                    </Link>
                   </View>
-                  <View className="flex-row flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={bulkBusy}
-                      onPress={selectVisiblePlays}
+                )}
+                <View className="mb-6">
+                  <View className="flex-row items-center justify-between gap-2">
+                    <Text
+                      accessibilityRole="header"
+                      aria-level={2}
+                      className="text-xl font-bold"
                     >
-                      <Text>Select visible</Text>
-                    </Button>
-                    <Button
-                      variant={bulkDeleteArmed ? "destructive" : "outline"}
-                      size="sm"
-                      className="flex-row gap-2"
-                      disabled={bulkBusy || selectedPlayCount === 0}
-                      onPress={deleteSelectedPlays}
+                      Recent listening
+                    </Text>
+                    {plays.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onPress={() => router.setParams({ tab: "listening" })}
+                      >
+                        <Text>View all</Text>
+                      </Button>
+                    )}
+                  </View>
+                  {sectionStatus("listening") ||
+                    (plays.length
+                      ? plays
+                          .slice(0, 3)
+                          .map((play) => (
+                            <ProfileListeningRow key={play.uri} play={play} />
+                          ))
+                      : emptyListening)}
+                </View>
+                {plays.length > 0 && (
+                  <ProfileStatsSections
+                    actor={did}
+                    defaultPeriod={period}
+                    compact
+                    plays={plays}
+                  />
+                )}
+                {playlists.length > 0 && (
+                  <View className="mb-6">
+                    <Text
+                      accessibilityRole="header"
+                      aria-level={2}
+                      className="mb-3 text-xl font-bold"
                     >
-                      <Icon icon={Trash2} size={15} />
-                      <Text>
-                        {bulkDeleteArmed ? "Confirm delete" : "Delete selected"}
-                      </Text>
-                    </Button>
-                  </View>
-                </View>
-                <View className="grid-cols-1 gap-3 md:grid md:grid-cols-2">
-                  <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-                      Set artists
+                      Playlists
                     </Text>
-                    <Input
-                      value={bulkArtistsText}
-                      onChangeText={setBulkArtistsText}
-                      editable={!bulkBusy}
-                      placeholder="Artist, Featured artist"
-                    />
-                  </View>
-                  <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
-                      Set release
-                    </Text>
-                    <Input
-                      value={bulkReleaseName}
-                      onChangeText={setBulkReleaseName}
-                      editable={!bulkBusy}
-                      placeholder="Album or single"
-                    />
-                  </View>
-                </View>
-                <Button
-                  className="flex-row gap-2 self-start"
-                  disabled={
-                    bulkBusy ||
-                    selectedPlayCount === 0 ||
-                    (!bulkArtistsText.trim() && !bulkReleaseName.trim())
-                  }
-                  onPress={updateSelectedPlays}
-                >
-                  <Icon icon={Save} size={15} />
-                  <Text>Apply to selected</Text>
-                </Button>
-              </View>
-            )}
-            {plays.length === 0 ? (
-              <Text className="text-muted-foreground">
-                No indexed plays yet.
-              </Text>
-            ) : (
-              plays.slice(0, 10).map((play, index) => (
-                <View
-                  key={play.uri || `${play.trackName}-${index}`}
-                  className={bulkEditOpen ? "flex-row gap-3" : undefined}
-                >
-                  {bulkEditOpen && (
-                    <Button
-                      variant={
-                        play.rkey && selectedPlayRkeys.has(play.rkey)
-                          ? "default"
-                          : "outline"
+                    <Link
+                      href={
+                        playlistHref(playlists[0].name, playlists[0].uri) as any
                       }
-                      size="icon"
-                      className="mt-4"
-                      disabled={!play.rkey || bulkBusy}
-                      onPress={() => togglePlaySelection(play.rkey)}
+                      asChild
+                    >
+                      <Button
+                        variant="outline"
+                        className="h-auto items-start p-4"
+                      >
+                        <Text className="font-bold">{playlists[0].name}</Text>
+                        <Text className="text-sm text-muted-foreground">
+                          {playlists[0].itemCount} tracks
+                        </Text>
+                      </Button>
+                    </Link>
+                  </View>
+                )}
+                {posts.length > 0 && (
+                  <View className="mb-6">
+                    <View className="mb-3 flex-row items-center justify-between">
+                      <Text
+                        accessibilityRole="header"
+                        aria-level={2}
+                        className="text-xl font-bold"
+                      >
+                        Latest post
+                      </Text>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onPress={() => router.setParams({ tab: "posts" })}
+                      >
+                        <Text>View all</Text>
+                      </Button>
+                    </View>
+                    <SocialPostCard
+                      post={posts[0]}
+                      onDeleted={(uri) =>
+                        setPosts((current) =>
+                          current.filter((post) => post.uri !== uri),
+                        )
+                      }
+                    />
+                  </View>
+                )}
+              </>
+            )}
+            {activeTab === "listening" && (
+              <>
+                <View className="mb-6 flex-row flex-wrap items-center justify-between gap-3">
+                  <Text
+                    accessibilityRole="header"
+                    aria-level={2}
+                    className="text-xl font-bold"
+                  >
+                    Listening history
+                  </Text>
+                  {isSelf && plays.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant={bulkEditOpen ? "default" : "outline"}
+                      disabled={bulkBusy}
+                      onPress={toggleBulkEdit}
                     >
                       <Icon
-                        icon={
-                          play.rkey && selectedPlayRkeys.has(play.rkey)
-                            ? CheckSquare
-                            : Square
-                        }
-                        size={18}
+                        icon={bulkEditOpen ? CheckSquare : Square}
+                        size={16}
                       />
+                      <Text>
+                        {bulkEditOpen ? "Done selecting" : "Select listens"}
+                      </Text>
                     </Button>
                   )}
-                  <View className="min-w-0 flex-1">
-                    <PlayFeedCard play={play} />
-                  </View>
                 </View>
-              ))
-            )}
-          </View>
-          <ProfileStatsSections
-            actor={did}
-            defaultPeriod={profile?.statsDefaultPeriod}
-          />
-          <View className="mb-8">
-            <SectionHeading
-              eyebrow="Social graph"
-              title={graphTab === "followers" ? "Followers" : "Following"}
-            />
-            <View className="mb-4 flex-row gap-2">
-              <Button
-                size="sm"
-                variant={graphTab === "followers" ? "default" : "outline"}
-                className="flex-row gap-2"
-                onPress={() => setGraphTab("followers")}
-              >
-                <Icon icon={Users} size={15} />
-                <Text>Followers</Text>
-              </Button>
-              <Button
-                size="sm"
-                variant={graphTab === "following" ? "default" : "outline"}
-                className="flex-row gap-2"
-                onPress={() => setGraphTab("following")}
-              >
-                <Icon icon={UserPlus} size={15} />
-                <Text>Following</Text>
-              </Button>
-            </View>
-            {(graphTab === "followers" ? followers : follows).length === 0 ? (
-              <Text className="text-muted-foreground">
-                {graphTab === "followers"
-                  ? "No indexed followers yet."
-                  : "No indexed follows yet."}
-              </Text>
-            ) : (
-              <View className="gap-3">
-                {(graphTab === "followers" ? followers : follows).map(
-                  (actor) => (
-                    <GraphActorRow
-                      key={actor.did || actor.handle || actor.displayName}
-                      actor={actor}
+                {bulkEditOpen && isSelf && (
+                  <View className="mb-4 gap-3 rounded-lg border border-border bg-card/75 p-4">
+                    <View className="flex-row flex-wrap items-center justify-between gap-3">
+                      <View>
+                        <Text className="font-bold">
+                          {selectedPlayCount} selected
+                        </Text>
+                        <Text className="text-sm text-muted-foreground">
+                          Changes are saved to your account.
+                        </Text>
+                      </View>
+                      <View className="flex-row flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={bulkBusy}
+                          onPress={selectVisiblePlays}
+                        >
+                          <Text>Select visible</Text>
+                        </Button>
+                        <Button
+                          variant={bulkDeleteArmed ? "destructive" : "outline"}
+                          size="sm"
+                          className="flex-row gap-2"
+                          disabled={bulkBusy || selectedPlayCount === 0}
+                          onPress={deleteSelectedPlays}
+                        >
+                          <Icon icon={Trash2} size={15} />
+                          <Text>
+                            {bulkDeleteArmed
+                              ? "Confirm delete"
+                              : "Delete selected"}
+                          </Text>
+                        </Button>
+                      </View>
+                    </View>
+                    <View className="grid-cols-1 gap-3 md:grid md:grid-cols-2">
+                      <View className="gap-2">
+                        <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                          Artists
+                        </Text>
+                        <Input
+                          value={bulkArtistsText}
+                          onChangeText={setBulkArtistsText}
+                          editable={!bulkBusy}
+                          placeholder="Artist, Featured artist"
+                        />
+                      </View>
+                      <View className="gap-2">
+                        <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                          Album or single
+                        </Text>
+                        <Input
+                          value={bulkReleaseName}
+                          onChangeText={setBulkReleaseName}
+                          editable={!bulkBusy}
+                          placeholder="Album or single"
+                        />
+                      </View>
+                    </View>
+                    <Button
+                      className="flex-row gap-2 self-start"
+                      disabled={
+                        bulkBusy ||
+                        selectedPlayCount === 0 ||
+                        (!bulkArtistsText.trim() && !bulkReleaseName.trim())
+                      }
+                      onPress={updateSelectedPlays}
+                    >
+                      <Icon icon={Save} size={15} />
+                      <Text>Apply to selected</Text>
+                    </Button>
+                  </View>
+                )}
+
+                {sectionStatus("listening")}
+                {!sectionLoading.listening &&
+                  !sectionErrors.listening &&
+                  plays.length === 0 &&
+                  emptyListening}
+                {plays.map((play, index) => (
+                  <View
+                    key={play.uri || `${play.trackName}-${index}`}
+                    className="flex-row items-center gap-3"
+                  >
+                    {bulkEditOpen && (
+                      <Button
+                        size="icon"
+                        variant={
+                          play.rkey && selectedPlayRkeys.has(play.rkey)
+                            ? "default"
+                            : "outline"
+                        }
+                        disabled={!play.rkey || bulkBusy}
+                        accessibilityLabel={`Select ${play.trackName}`}
+                        accessibilityState={{
+                          selected:
+                            !!play.rkey && selectedPlayRkeys.has(play.rkey),
+                        }}
+                        onPress={() => togglePlaySelection(play.rkey)}
+                      >
+                        <Icon
+                          icon={
+                            play.rkey && selectedPlayRkeys.has(play.rkey)
+                              ? CheckSquare
+                              : Square
+                          }
+                          size={18}
+                        />
+                      </Button>
+                    )}
+                    <View className="min-w-0 flex-1">
+                      <ProfileListeningRow play={play} />
+                    </View>
+                  </View>
+                ))}
+                {playsCursor && (
+                  <Button
+                    variant="outline"
+                    className="my-5 self-center"
+                    disabled={loadingMore}
+                    onPress={() => loadMore("listening")}
+                  >
+                    <Text>{loadingMore ? "Loading" : "Load more listens"}</Text>
+                  </Button>
+                )}
+                {plays.length > 0 && (
+                  <View className="mt-6">
+                    <ProfileStatsSections
+                      actor={did}
+                      defaultPeriod={period}
+                      plays={plays}
                     />
-                  ),
+                  </View>
+                )}
+              </>
+            )}
+            {activeTab === "posts" && (
+              <View className="gap-3">
+                <Text
+                  accessibilityRole="header"
+                  aria-level={2}
+                  className="text-xl font-bold"
+                >
+                  Posts
+                </Text>
+                {sectionStatus("posts")}
+                {!sectionLoading.posts &&
+                  !sectionErrors.posts &&
+                  posts.length === 0 && (
+                    <View className="gap-3 py-3">
+                      <Text className="text-muted-foreground">
+                        {isSelf
+                          ? "Share a song or say what you have been listening to."
+                          : "No posts yet."}
+                      </Text>
+                      {isSelf && (
+                        <Link href="/" asChild>
+                          <Button variant="outline" className="self-start">
+                            <Text>Write a post</Text>
+                          </Button>
+                        </Link>
+                      )}
+                    </View>
+                  )}
+                {posts.map((post) => (
+                  <SocialPostCard
+                    key={post.uri}
+                    post={post}
+                    onDeleted={(uri) =>
+                      setPosts((current) =>
+                        current.filter((item) => item.uri !== uri),
+                      )
+                    }
+                  />
+                ))}
+                {postsCursor && (
+                  <Button
+                    variant="outline"
+                    className="my-5 self-center"
+                    disabled={loadingMore}
+                    onPress={() => loadMore("posts")}
+                  >
+                    <Text>{loadingMore ? "Loading" : "Load more posts"}</Text>
+                  </Button>
                 )}
               </View>
             )}
-          </View>
-          <View className="mb-8">
-            <SectionHeading eyebrow="Collections" title="Playlists" />
-            {isSelf && (
-              <View className="mb-4">
-                <PlaylistCreator
-                  onCreated={(playlist) =>
-                    setPlaylists((current) => [playlist, ...current])
-                  }
-                />
-              </View>
-            )}
-            {playlists.length === 0 ? (
-              <Text className="text-muted-foreground">
-                No indexed playlists yet.
-              </Text>
-            ) : (
-              <View className="gap-3">
+            {activeTab === "playlists" && (
+              <View className="gap-4">
+                <Text
+                  accessibilityRole="header"
+                  aria-level={2}
+                  className="text-xl font-bold"
+                >
+                  Playlists
+                </Text>
+                {isSelf && (
+                  <PlaylistCreator
+                    onCreated={(playlist) =>
+                      setPlaylists((current) => [playlist, ...current])
+                    }
+                  />
+                )}
+                {sectionStatus("playlists")}
+                {!sectionLoading.playlists &&
+                  !sectionErrors.playlists &&
+                  playlists.length === 0 && (
+                    <Text className="text-muted-foreground">
+                      {isSelf
+                        ? "Collect favorite tracks in your first playlist."
+                        : "No playlists yet."}
+                    </Text>
+                  )}
                 {playlists.map((playlist) => (
                   <Link
                     key={playlist.uri}
@@ -991,19 +1466,29 @@ export default function ProfileScreen() {
                   >
                     <Button
                       variant="outline"
-                      className="h-auto items-start justify-start p-4"
+                      className="h-auto items-start p-4"
                     >
-                      <View className="min-w-0">
-                        <Text className="font-black" numberOfLines={1}>
-                          {playlist.name}
-                        </Text>
-                        <Text className="text-sm text-muted-foreground">
-                          {playlist.itemCount} tracks
-                        </Text>
-                      </View>
+                      <Text className="font-bold" numberOfLines={2}>
+                        {playlist.name}
+                      </Text>
+                      <Text className="text-sm text-muted-foreground">
+                        {playlist.itemCount} tracks
+                      </Text>
                     </Button>
                   </Link>
                 ))}
+                {playlistsCursor && (
+                  <Button
+                    variant="outline"
+                    className="my-5 self-center"
+                    disabled={loadingMore}
+                    onPress={() => loadMore("playlists")}
+                  >
+                    <Text>
+                      {loadingMore ? "Loading" : "Load more playlists"}
+                    </Text>
+                  </Button>
+                )}
               </View>
             )}
           </View>
