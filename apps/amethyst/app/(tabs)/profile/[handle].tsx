@@ -9,6 +9,7 @@ import {
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import EditProfileModal from "@/components/teal/EditProfileModal";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
+import ProfileAlbumDeck from "@/components/teal/ProfileAlbumDeck";
 import ProfileListeningRow from "@/components/teal/ProfileListeningRow";
 import {
   normalizeStatsPeriod,
@@ -204,7 +205,6 @@ export default function ProfileScreen() {
   const [graphError, setGraphError] = useState<string>();
   const [profileLoading, setProfileLoading] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
-  const [avatarFailed, setAvatarFailed] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [playsCursor, setPlaysCursor] = useState<string>();
   const [postsCursor, setPostsCursor] = useState<string>();
@@ -260,7 +260,6 @@ export default function ProfileScreen() {
     setProfile(null);
     setProfileLoading(true);
     setBioExpanded(false);
-    setAvatarFailed(false);
     setGraphTab(null);
     setGraphSummary({ followersCount: 0, followsCount: 0 });
     setPlaylists([]);
@@ -815,35 +814,29 @@ export default function ProfileScreen() {
       {did && !profileLoading && (
         <>
           <View className="mb-5 overflow-hidden rounded-lg border border-border bg-card">
-            {bannerUrl && (
-              <View className="h-24 bg-muted">
+            <View className="relative bg-accent/60">
+              {bannerUrl && (
                 <Image
                   source={{ uri: bannerUrl }}
-                  className="h-full w-full"
+                  className="absolute inset-0 h-full w-full"
                   resizeMode="cover"
                 />
-              </View>
-            )}
+              )}
+              <ProfileAlbumDeck
+                key={`${did}-${period}`}
+                actor={did}
+                period={period}
+                avatarUrl={avatarUrl}
+                displayName={displayName}
+              />
+            </View>
             <View className="gap-3 p-4 md:p-5">
-              <View className="flex-row items-start gap-3">
-                <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted md:h-20 md:w-20">
-                  {avatarUrl && !avatarFailed ? (
-                    <Image
-                      source={{ uri: avatarUrl }}
-                      className="h-full w-full"
-                      onError={() => setAvatarFailed(true)}
-                    />
-                  ) : (
-                    <Text className="text-3xl font-bold text-muted-foreground">
-                      {displayName.slice(0, 1).toUpperCase()}
-                    </Text>
-                  )}
-                </View>
-                <View className="min-w-0 flex-1 gap-1">
+              <View className="items-center">
+                <View className="w-full min-w-0 items-center gap-1">
                   <Text
                     accessibilityRole="header"
                     aria-level={1}
-                    className="font-sans text-2xl font-black"
+                    className="var-font-soft text-center font-accent text-3xl font-semibold"
                     numberOfLines={2}
                   >
                     {displayName}
@@ -926,7 +919,7 @@ export default function ProfileScreen() {
                   )}
                 </View>
               )}
-              <View className="flex-row flex-wrap gap-2">
+              <View className="flex-row flex-wrap justify-center gap-2">
                 {isSelf ? (
                   <>
                     <Link href="/manual-listens" asChild>
