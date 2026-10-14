@@ -217,9 +217,6 @@ export default function ProfileAlbumDeck({
             </Text>
           )}
         </Pressable>
-        {hasAlbums && (
-          <Text className="text-xs text-muted-foreground">{label}</Text>
-        )}
       </View>
     );
   }
@@ -297,11 +294,6 @@ export default function ProfileAlbumDeck({
           />
         ))}
       </div>
-      {hasAlbums && (
-        <span className="profile-deck-caption" aria-hidden>
-          <Disc3 size={12} /> {label}
-        </span>
-      )}
     </div>
   );
 }

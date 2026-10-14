@@ -191,25 +191,6 @@ button.profile-deck-avatar {
   z-index: 3;
 }
 
-.profile-deck-caption {
-  position: absolute;
-  top: 134px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  padding: 4px 9px;
-  border-radius: 20px;
-  background: hsl(var(--card));
-  color: hsl(var(--muted-foreground));
-  font:
-    500 11px "DM Sans",
-    sans-serif;
-  z-index: 3;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .profile-album-sleeve,
   .profile-album-deck[data-open="true"] .profile-album-sleeve {
