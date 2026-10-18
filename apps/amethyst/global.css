@@ -74,10 +74,12 @@ textarea {
 
 /* A small fan lifts out from behind the avatar, with the top album in front. */
 .profile-album-deck {
+  --portrait-size: 150px;
   position: relative;
-  width: min(296px, 100%);
-  height: 134px;
-  align-self: center;
+  width: var(--portrait-size);
+  height: var(--portrait-size);
+  flex-shrink: 0;
+  align-self: flex-start;
   isolation: isolate;
 }
 
@@ -89,15 +91,15 @@ textarea {
 
 .profile-album-sleeve {
   position: absolute;
-  left: calc(50% - 20px);
-  top: 64px;
+  left: calc(var(--portrait-size) * 0.266667);
+  top: calc(var(--portrait-size) * 0.36);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: calc(var(--portrait-size) / 3 + 4px);
+  height: calc(var(--portrait-size) / 3 + 4px);
   border: 2px solid hsl(var(--card));
-  border-radius: 7px;
+  border-radius: 12px;
   background: hsl(var(--muted));
   color: hsl(var(--muted-foreground));
   box-shadow: 0 3px 8px #0003;
@@ -118,7 +120,7 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 5px;
+  border-radius: 10px;
 }
 
 .profile-album-deck[data-open="true"] .profile-album-sleeve {
@@ -127,30 +129,42 @@ textarea {
 }
 
 .profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(1) {
-  transform: translate(0, -58px);
+  transform: translateY(calc(var(--portrait-size) * -0.693333));
 }
 .profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(2) {
-  transform: translate(-26px, -52px) rotate(-12deg);
+  transform: translate(
+      calc(var(--portrait-size) * -0.213333),
+      calc(var(--portrait-size) * -0.64)
+    )
+    rotate(-12deg);
 }
 .profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(3) {
-  transform: translate(26px, -52px) rotate(12deg);
+  transform: translate(
+      calc(var(--portrait-size) * 0.266667),
+      calc(var(--portrait-size) * -0.64)
+    )
+    rotate(12deg);
 }
 .profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(4) {
-  transform: translate(-48px, -40px) rotate(-40deg);
+  transform: translate(
+      calc(var(--portrait-size) * -0.4),
+      calc(var(--portrait-size) * -0.533333)
+    )
+    rotate(-45deg);
 }
 
 .profile-deck-avatar {
   position: absolute;
-  left: calc(50% - 52px);
-  top: 40px;
+  left: 0;
+  top: 0;
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 104px;
+  width: 100%;
+  height: 100%;
   padding: 0;
   overflow: hidden;
-  border: 4px solid hsl(var(--card));
-  border-radius: 50%;
+  border: 2px solid hsl(var(--card));
+  border-radius: 12px;
   background: hsl(var(--accent));
   color: hsl(var(--primary));
   box-shadow: 0 2px 6px #0002;
@@ -175,6 +189,12 @@ button.profile-deck-avatar {
 }
 .profile-album-sleeve:focus-visible {
   z-index: 5;
+}
+
+@media (max-width: 639px) {
+  .profile-album-deck {
+    --portrait-size: 128px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -182,9 +182,9 @@ export default function ProfileAlbumDeck({
 
   if (Platform.OS !== "web") {
     return (
-      <View className="items-center justify-center gap-2 py-4">
+      <View className="relative h-32 w-32 shrink-0 sm:h-[150px] sm:w-[150px]">
         {open && (
-          <View className="flex-row gap-2">
+          <View className="absolute bottom-full left-0 mb-2 flex-row gap-2">
             {albums.map((release, index) => (
               <AlbumSleeve
                 key={`${release.mbid || release.name}-${index}`}
@@ -200,7 +200,7 @@ export default function ProfileAlbumDeck({
           accessibilityLabel={hasAlbums ? label : `${displayName}'s avatar`}
           accessibilityState={{ expanded: open }}
           onPress={() => hasAlbums && setOpen(!open)}
-          className="h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-card bg-accent"
+          className="h-full w-full items-center justify-center overflow-hidden rounded-xl border-2 border-card bg-accent"
         >
           {avatar ? (
             <Image

@@ -806,7 +806,7 @@ export default function ProfileScreen() {
   );
 
   const profileActions = (
-    <View className="flex-row flex-wrap justify-center gap-2">
+    <View className="flex-row flex-wrap gap-2">
       {isSelf ? (
         <>
           <Link href="/manual-listens" asChild>
@@ -817,7 +817,7 @@ export default function ProfileScreen() {
           <Button
             size="sm"
             variant="outline"
-            className="flex-row gap-2"
+            className="flex-row gap-1 px-2 sm:gap-2 sm:px-3"
             onPress={() => setEditProfileOpen(true)}
           >
             <Icon icon={Pencil} size={15} />
@@ -879,8 +879,8 @@ export default function ProfileScreen() {
       )}
       {did && !profileLoading && (
         <>
-          <View className="mb-5 overflow-hidden rounded-lg border border-border bg-card">
-            <View className="relative bg-accent/60">
+          <View className="mb-5 overflow-hidden rounded-xl border border-border bg-card">
+            <View className="relative h-36 bg-accent/60 sm:h-44">
               {bannerUrl && (
                 <Image
                   source={{ uri: bannerUrl }}
@@ -888,70 +888,36 @@ export default function ProfileScreen() {
                   resizeMode="cover"
                 />
               )}
-              <ProfileAlbumDeck
-                key={`${did}-${period}`}
-                actor={did}
-                period={period}
-                avatarUrl={avatarUrl}
-                displayName={displayName}
-              />
             </View>
-            <View className="gap-2 px-4 pb-4 pt-[18px] md:px-5 md:pb-5">
-              <View className="items-center">
-                <View className="w-full min-w-0 items-center">
-                  <Text
-                    accessibilityRole="header"
-                    aria-level={1}
-                    className="var-font-soft text-center font-accent text-3xl font-semibold"
-                    numberOfLines={2}
-                  >
-                    {displayName}
-                  </Text>
-                  {profile?.handle && (
+            <View className="gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
+              <View className="-mt-5 flex-row items-center gap-4">
+                <ProfileAlbumDeck
+                  key={`${did}-${period}`}
+                  actor={did}
+                  period={period}
+                  avatarUrl={avatarUrl}
+                  displayName={displayName}
+                />
+                <View className="min-w-0 flex-1 gap-2 pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <View className="min-w-0 sm:flex-1">
                     <Text
-                      className="text-sm text-muted-foreground"
-                      numberOfLines={1}
+                      accessibilityRole="header"
+                      aria-level={1}
+                      className="var-font-soft font-accent text-2xl font-semibold"
+                      numberOfLines={2}
                     >
-                      @{normalizeHandle(profile.handle)}
+                      {displayName}
                     </Text>
-                  )}
-                  <View className="flex-row flex-wrap items-center justify-center gap-x-3">
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`${graphSummary.followersCount} followers`}
-                      className="min-h-11 justify-center"
-                      onPress={() =>
-                        setGraphTab((current) =>
-                          current === "followers" ? null : "followers",
-                        )
-                      }
-                    >
-                      <Text className="text-sm">
-                        <Text className="font-bold">
-                          {graphSummary.followersCount}
-                        </Text>{" "}
-                        followers
+                    {profile?.handle && (
+                      <Text
+                        className="text-sm text-muted-foreground"
+                        numberOfLines={1}
+                      >
+                        @{normalizeHandle(profile.handle)}
                       </Text>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Following ${graphSummary.followsCount} people`}
-                      className="min-h-11 justify-center"
-                      onPress={() =>
-                        setGraphTab((current) =>
-                          current === "following" ? null : "following",
-                        )
-                      }
-                    >
-                      <Text className="text-sm">
-                        <Text className="font-bold">
-                          {graphSummary.followsCount}
-                        </Text>{" "}
-                        following
-                      </Text>
-                    </Pressable>
-                    {profileActions}
+                    )}
                   </View>
+                  {profileActions}
                 </View>
               </View>
               {description && (
@@ -986,6 +952,42 @@ export default function ProfileScreen() {
                   )}
                 </View>
               )}
+              <View className="flex-row flex-wrap items-center gap-x-4">
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${graphSummary.followersCount} followers`}
+                  className="min-h-11 justify-center"
+                  onPress={() =>
+                    setGraphTab((current) =>
+                      current === "followers" ? null : "followers",
+                    )
+                  }
+                >
+                  <Text className="text-sm">
+                    <Text className="font-bold">
+                      {graphSummary.followersCount}
+                    </Text>{" "}
+                    followers
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Following ${graphSummary.followsCount} people`}
+                  className="min-h-11 justify-center"
+                  onPress={() =>
+                    setGraphTab((current) =>
+                      current === "following" ? null : "following",
+                    )
+                  }
+                >
+                  <Text className="text-sm">
+                    <Text className="font-bold">
+                      {graphSummary.followsCount}
+                    </Text>{" "}
+                    following
+                  </Text>
+                </Pressable>
+              </View>
               {currentStatus && (
                 <View className="flex-row items-center gap-2 border-t border-border pt-3">
                   <View className="h-9 w-9 overflow-hidden rounded-md bg-muted">
