@@ -101,9 +101,6 @@ function AlbumSleeve({
       ) : (
         <Disc3 size={28} aria-hidden />
       )}
-      <span className="profile-album-rank" aria-hidden>
-        {index + 1}
-      </span>
     </Sleeve>
   );
   return content;
@@ -236,12 +233,6 @@ export default function ProfileAlbumDeck({
       ref={root}
       className="profile-album-deck"
       data-open={open}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") {
-          hovering.current = true;
-          if (hasAlbums) setOpen(true);
-        }
-      }}
       onPointerLeave={() => {
         hovering.current = false;
         if (!pinned.current && !root.current?.contains(document.activeElement))
@@ -267,6 +258,12 @@ export default function ProfileAlbumDeck({
           aria-label={`${open ? "Hide" : "Show"} ${label.toLowerCase()}`}
           aria-expanded={open}
           aria-controls={controlsId}
+          onPointerEnter={(event) => {
+            if (event.pointerType === "mouse") {
+              hovering.current = true;
+              setOpen(true);
+            }
+          }}
           onClick={() => {
             const next = !open;
             pinned.current = next;
