@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { Link, useFocusEffect, useRouter } from "expo-router";
+import { resolveHandle } from "@/lib/atp/pid";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
   coverArtUrl,
   getActorFeed,
   getArtistImageUrl,
   getRecordingCoverArtUrl,
+  getSearchResults,
   getUserTopArtists,
   getUserTopRecordings,
   getUserTopReleases,
   type StatsPeriod,
 } from "@/lib/teal/api";
+import {
+  resolveRankedTrack,
+  type RankedTrackResolution,
+} from "@/lib/teal/profileRankedTrack";
 import { indexedStatContext } from "@/lib/teal/profileStats";
 import { musicAlbumHref, musicArtistHref } from "@/lib/teal/routes";
 import { Disc3, Mic2, Music2 } from "lucide-react-native";
@@ -179,13 +185,121 @@ function StatArtwork({ item }: { item: StatItem }) {
   );
 }
 
-function StatListRow({ item, rank }: { item: StatItem; rank: number }) {
-  const href = itemHref(item);
+function useStatsRequestScope() {
+  const scope = useRef({ focused: false, generation: 0 });
+  const [focusGeneration, setFocusGeneration] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      scope.current.focused = true;
+      scope.current.generation += 1;
+      setFocusGeneration(scope.current.generation);
+      return () => {
+        scope.current.focused = false;
+        scope.current.generation += 1;
+        setFocusGeneration(scope.current.generation);
+      };
+    }, []),
+  );
+  const captureFocus = useCallback(() => {
+    const generation = scope.current.generation;
+    return () =>
+      scope.current.focused && generation === scope.current.generation;
+  }, []);
+  return [captureFocus, focusGeneration] as const;
+}
+
+function StatListRow({
+  item,
+  rank,
+  actor,
+  captureFocus,
+  focusGeneration,
+}: {
+  focusGeneration: number;
+  captureFocus: () => () => boolean;
+  item: StatItem;
+  rank: number;
+  actor: string;
+}) {
+  const router = useRouter();
+  const lookupKey = `${actor}:${item.kind}:${item.mbid || ""}`;
+  const activeLookup = useRef(lookupKey);
+  activeLookup.current = lookupKey;
+  const lookupLock = useRef(false);
+  const lookupGeneration = useRef(0);
+  const [lookup, setLookup] = useState<{
+    key: string;
+    result?: RankedTrackResolution;
+    busy?: boolean;
+    error?: string;
+  }>();
+  useEffect(() => {
+    activeLookup.current = lookupKey;
+    lookupGeneration.current += 1;
+    lookupLock.current = false;
+    setLookup((current) =>
+      current?.busy ? { ...current, busy: false } : current,
+    );
+    return () => {
+      activeLookup.current = "";
+      lookupGeneration.current += 1;
+    };
+  }, [lookupKey, focusGeneration]);
+  const state = lookup?.key === lookupKey ? lookup : undefined;
+  const href = itemHref(item) || state?.result?.context?.href;
+  const artist = item.artist || state?.result?.context?.artist;
+  const canResolve = item.kind === "tracks" && Boolean(item.mbid) && !href;
+
+  async function openOlderTrack() {
+    if (!canResolve || !item.mbid || lookupLock.current) return;
+    lookupLock.current = true;
+    setLookup({ key: lookupKey, result: state?.result, busy: true });
+    const generation = lookupGeneration.current;
+    const stillFocused = captureFocus();
+    const isCurrent = () =>
+      stillFocused() &&
+      activeLookup.current === lookupKey &&
+      lookupGeneration.current === generation;
+    try {
+      const actorDid = actor.startsWith("did:")
+        ? actor
+        : await resolveHandle(actor);
+      if (!isCurrent()) return;
+      const result = await resolveRankedTrack(
+        actorDid,
+        item.mbid,
+        item.name,
+        state?.result?.exhausted ? undefined : state?.result,
+        {
+          search: (query, did) => getSearchResults(query, 25, did),
+          history: getActorFeed,
+        },
+        isCurrent,
+      );
+      if (!isCurrent()) return;
+      setLookup({ key: lookupKey, result });
+      if (result.context?.href) router.push(result.context.href as any);
+    } catch (error) {
+      if (isCurrent())
+        setLookup({
+          key: lookupKey,
+          result: state?.result,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Could not find this listen. Try again.",
+        });
+    } finally {
+      if (isCurrent()) lookupLock.current = false;
+    }
+  }
   const content = (
     <Pressable
-      disabled={!href}
-      accessibilityRole={href ? "link" : undefined}
-      accessibilityLabel={`${rank}. ${item.name}${item.artist ? ` by ${item.artist}` : ""}, ${playsLabel(item.playCount)}`}
+      disabled={state?.busy || (!href && !canResolve)}
+      accessibilityRole={href ? "link" : canResolve ? "button" : undefined}
+      accessibilityLabel={`${rank}. ${item.name}${artist ? ` by ${artist}` : ""}, ${playsLabel(item.playCount)}${canResolve ? ", find listening details" : ""}`}
+      accessibilityState={{ busy: Boolean(state?.busy) }}
+      onPress={canResolve ? openOlderTrack : undefined}
       className="flex-row items-center gap-2 border-b border-border/70 py-3 web:hover:bg-muted/50"
     >
       <Text className="w-5 text-xs text-muted-foreground">{rank}</Text>
@@ -195,13 +309,38 @@ function StatListRow({ item, rank }: { item: StatItem; rank: number }) {
           {item.name}
         </Text>
         <Text className="text-xs text-muted-foreground" numberOfLines={1}>
-          {item.artist ||
+          {artist ||
             (item.kind === "artists"
               ? "Artist"
               : item.kind === "albums"
                 ? "Album"
-                : "Track")}
+                : item.mbid
+                  ? "Open track details"
+                  : "Recording not identified")}
         </Text>
+        {state?.busy && (
+          <Text
+            accessibilityLiveRegion="polite"
+            className="text-xs text-muted-foreground"
+          >
+            Finding a matching listen…
+          </Text>
+        )}
+        {!state?.busy && !href && state?.result && (
+          <Text
+            accessibilityLiveRegion="polite"
+            className="text-xs text-muted-foreground"
+          >
+            {state.result.exhausted
+              ? "No matching listen available. Press to retry search."
+              : "More history remains. Press to keep looking."}
+          </Text>
+        )}
+        {state?.error && (
+          <Text accessibilityRole="alert" className="text-xs text-destructive">
+            Could not find listening details. Press to retry.
+          </Text>
+        )}
       </View>
       <View className="items-end pl-1">
         <Text className="text-sm font-bold">
@@ -273,9 +412,11 @@ function StatsPreviewSection({
   title: string;
   period: StatsPeriod;
 }) {
+  const [captureFocus, focusGeneration] = useStatsRequestScope();
   const [items, setItems] = useState<StatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -294,7 +435,7 @@ function StatsPreviewSection({
     return () => {
       mounted = false;
     };
-  }, [actor, kind, period, compact]);
+  }, [actor, kind, period, compact, retry]);
 
   return (
     <View className="mb-5 min-w-0">
@@ -332,7 +473,16 @@ function StatsPreviewSection({
         </View>
       ) : error ? (
         <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">{error}</Text>
+          <Text className="font-bold text-destructive">
+            Could not load {title.toLowerCase()}.
+          </Text>
+          <Button
+            variant="outline"
+            className="mt-3 self-start"
+            onPress={() => setRetry((value) => value + 1)}
+          >
+            <Text>Try again</Text>
+          </Button>
         </View>
       ) : items.length === 0 ? (
         <View className="rounded-lg border border-border bg-card/60 p-4">
@@ -345,6 +495,9 @@ function StatsPreviewSection({
           {items.map((item, index) => (
             <StatListRow
               key={item.id}
+              actor={actor}
+              captureFocus={captureFocus}
+              focusGeneration={focusGeneration}
               item={attachContext(item, plays)}
               rank={index + 1}
             />
@@ -450,7 +603,11 @@ export function ProfileStatsMorePage({
   const [period, setPeriod] = useState<StatsPeriod>(
     normalizeStatsPeriod(initialPeriod),
   );
+  const [captureFocus, focusGeneration] = useStatsRequestScope();
   const [items, setItems] = useState<StatItem[]>([]);
+  useEffect(() => {
+    setPeriod(normalizeStatsPeriod(initialPeriod));
+  }, [initialPeriod]);
   const [contextPlays, setContextPlays] = useState<PlayView[]>([]);
   const [retryKey, setRetryKey] = useState(0);
   const requestVersion = useRef(0);
@@ -475,7 +632,8 @@ export function ProfileStatsMorePage({
     setError(null);
     setItems([]);
     setCursor(undefined);
-    getActorFeed(actor, 50)
+    (actor.startsWith("did:") ? Promise.resolve(actor) : resolveHandle(actor))
+      .then((did) => getActorFeed(did, 50))
       .then((page) => {
         if (mounted) setContextPlays(page.plays);
       })
@@ -581,6 +739,9 @@ export function ProfileStatsMorePage({
           {items.map((item, index) => (
             <StatListRow
               key={`${item.id}-${index}`}
+              actor={actor}
+              captureFocus={captureFocus}
+              focusGeneration={focusGeneration}
               item={attachContext(item, contextPlays)}
               rank={index + 1}
             />
