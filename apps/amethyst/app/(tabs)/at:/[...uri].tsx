@@ -33,7 +33,7 @@ export default function AtUriResolver() {
   }
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />} pageTitle="Open link">
       <Stack.Screen options={{ title: "AT URI", headerShown: false }} />
       <View className="rounded-lg border border-border bg-card p-5">
         <Text className="mt-2 font-sans text-2xl font-black">

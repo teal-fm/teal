@@ -8,18 +8,14 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import LoadFailure from "@/components/teal/LoadFailure";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import {
-  coverArtUrl,
-  getAlbum,
-  releaseGroupCoverArtUrl,
-} from "@/lib/teal/api";
+import { coverArtUrl, getAlbum, releaseGroupCoverArtUrl } from "@/lib/teal/api";
 import { musicArtistHref, musicTrackHref } from "@/lib/teal/routes";
 import { ChevronRight, Disc3, Music2 } from "lucide-react-native";
 
@@ -33,12 +29,23 @@ export default function AlbumDetail() {
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string>();
+  const [pageError, setPageError] = useState(false);
+  const [request, setRequest] = useState(0);
+  const requestVersion = useRef(0);
   const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
+    requestVersion.current += 1;
+    setAlbum(null);
+    setPlays([]);
+    setCursor(undefined);
+    setError(undefined);
+    setPageError(false);
+    setLoadingMore(false);
+    loadingMoreRef.current = false;
     if (!mbid) {
       setError("Missing MusicBrainz release ID");
       return;
@@ -60,15 +67,19 @@ export default function AlbumDetail() {
       });
     return () => {
       mounted = false;
+      requestVersion.current += 1;
     };
-  }, [mbid]);
+  }, [mbid, request]);
 
   const loadMore = useCallback(() => {
     if (!mbid || !cursor || loadingMoreRef.current) return;
+    const version = requestVersion.current;
     loadingMoreRef.current = true;
     setLoadingMore(true);
+    setPageError(false);
     getAlbum(mbid, 30, cursor)
       .then((page) => {
+        if (version !== requestVersion.current) return;
         setPlays((current) => {
           const knownUris = new Set(current.map((play) => play.uri));
           return [
@@ -80,12 +91,11 @@ export default function AlbumDetail() {
         });
         setCursor(page.cursor);
       })
-      .catch((loadError) => {
-        setError(
-          loadError instanceof Error ? loadError.message : String(loadError),
-        );
+      .catch(() => {
+        if (version === requestVersion.current) setPageError(true);
       })
       .finally(() => {
+        if (version !== requestVersion.current) return;
         loadingMoreRef.current = false;
         setLoadingMore(false);
       });
@@ -96,13 +106,13 @@ export default function AlbumDetail() {
       const { contentOffset, contentSize, layoutMeasurement } =
         event.nativeEvent;
       if (
-        contentSize.height - (contentOffset.y + layoutMeasurement.height) <
-        800
+        !pageError &&
+        contentSize.height - (contentOffset.y + layoutMeasurement.height) < 800
       ) {
         loadMore();
       }
     },
-    [loadMore],
+    [loadMore, pageError],
   );
 
   const artCandidates = [
@@ -115,7 +125,11 @@ export default function AlbumDetail() {
   };
 
   return (
-    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell
+      rightRail={<RightRail />}
+      onScroll={handleScroll}
+      pageTitle={album?.name || "Album"}
+    >
       <Stack.Screen
         options={{ title: album?.name || "Album", headerShown: false }}
       />
@@ -125,11 +139,10 @@ export default function AlbumDetail() {
         </View>
       )}
       {error && (
-        <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            Could not load album: {error}
-          </Text>
-        </View>
+        <LoadFailure
+          title="This album could not load"
+          onRetry={mbid ? () => setRequest((value) => value + 1) : undefined}
+        />
       )}
       {album && (
         <>
@@ -164,6 +177,8 @@ export default function AlbumDetail() {
                   Album
                 </Text>
                 <Text
+                  role="heading"
+                  aria-level={1}
                   className="font-sans text-2xl font-black md:text-3xl"
                   numberOfLines={3}
                 >
@@ -278,8 +293,23 @@ export default function AlbumDetail() {
           )}
           {plays.length > 0 && !cursor && (
             <Text className="pb-6 text-center font-mono text-xs text-muted-foreground">
-              You reached the beginning of this album's indexed listens.
+              You reached the beginning of this album's listening history.
             </Text>
+          )}
+          {pageError && (
+            <View role="alert" className="gap-3 py-4">
+              <Text className="text-sm text-muted-foreground">
+                Older listens could not load. The album and listens above are
+                still available.
+              </Text>
+              <Button
+                variant="outline"
+                className="self-start"
+                onPress={loadMore}
+              >
+                <Text>Try again</Text>
+              </Button>
+            </View>
           )}
         </>
       )}

@@ -174,7 +174,11 @@ export default function ArtistListenersScreen() {
   const title = artist?.name || name || "Artist";
 
   return (
-    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell
+      rightRail={<RightRail />}
+      onScroll={handleScroll}
+      pageTitle={`${title} listeners`}
+    >
       <Stack.Screen
         options={{ title: `${title} listeners`, headerShown: false }}
       />

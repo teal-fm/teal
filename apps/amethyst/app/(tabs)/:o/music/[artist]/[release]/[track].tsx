@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import LoadFailure from "@/components/teal/LoadFailure";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
 import SocialPostCard from "@/components/teal/SocialPostCard";
@@ -43,6 +44,7 @@ export default function MusicDetail() {
   const [related, setRelated] = useState<PlayView[]>([]);
   const [sourcePost, setSourcePost] = useState<SocialPostView | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [request, setRequest] = useState(0);
   const [artFailed, setArtFailed] = useState(false);
   const [recordingArt, setRecordingArt] = useState<string>();
   const [historyCursor, setHistoryCursor] = useState<string>();
@@ -125,7 +127,7 @@ export default function MusicDetail() {
     return () => {
       mounted = false;
     };
-  }, [artistSlug, postUri, releaseSlug, trackSlug, uri]);
+  }, [artistSlug, postUri, releaseSlug, trackSlug, uri, request]);
 
   async function loadMoreHistory() {
     if (!play?.releaseMbId || historyBusy.current) return;
@@ -170,7 +172,7 @@ export default function MusicDetail() {
   }, [play?.recordingMbId, releaseArt]);
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />} pageTitle={play?.trackName || "Track"}>
       <Stack.Screen
         options={{ title: play?.trackName || "Music", headerShown: false }}
       />
@@ -180,11 +182,10 @@ export default function MusicDetail() {
         </View>
       )}
       {error && (
-        <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            Could not load music detail: {error}
-          </Text>
-        </View>
+        <LoadFailure
+          title="This track could not load"
+          onRetry={() => setRequest((value) => value + 1)}
+        />
       )}
       {play && (
         <>
@@ -216,6 +217,8 @@ export default function MusicDetail() {
               )}
               <View className="min-w-0 flex-1 justify-end pb-2">
                 <Text
+                  role="heading"
+                  aria-level={1}
                   className="font-sans text-2xl font-black"
                   numberOfLines={3}
                 >

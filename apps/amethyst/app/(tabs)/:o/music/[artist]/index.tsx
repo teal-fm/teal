@@ -6,10 +6,9 @@ import {
   ArtistListenerPeriodTabs,
   normalizeArtistListenerPeriod,
 } from "@/components/teal/ArtistLeaderboard";
+import LoadFailure from "@/components/teal/LoadFailure";
 import RightRail from "@/components/teal/RightRail";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -24,8 +23,10 @@ import {
 import { musicAlbumHref, musicArtistListenersHref } from "@/lib/teal/routes";
 import { ChevronRight, Disc3, Mic2, Trophy } from "lucide-react-native";
 
-import type { ArtistView } from "@teal/lexicons/src/fm/teal/music/defs";
-import type { ArtistListenerView } from "@teal/lexicons/src/fm/teal/music/defs";
+import type {
+  ArtistListenerView,
+  ArtistView,
+} from "@teal/lexicons/src/fm/teal/music/defs";
 
 export default function ArtistDetail() {
   const params = useLocalSearchParams();
@@ -44,6 +45,8 @@ export default function ArtistDetail() {
     normalizeArtistListenerPeriod(initialPeriod),
   );
   const [error, setError] = useState<string>();
+  const [request, setRequest] = useState(0);
+  const [listenerRequest, setListenerRequest] = useState(0);
   const [listenerError, setListenerError] = useState<string>();
   const [listenersLoading, setListenersLoading] = useState(false);
   const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
@@ -51,6 +54,8 @@ export default function ArtistDetail() {
 
   useEffect(() => {
     let mounted = true;
+    setArtist(null);
+    setError(undefined);
     getArtist(mbid, artistLookup)
       .then(({ artist }) => {
         if (mounted) setArtist(artist);
@@ -65,7 +70,7 @@ export default function ArtistDetail() {
     return () => {
       mounted = false;
     };
-  }, [artistLookup, mbid]);
+  }, [artistLookup, mbid, request]);
 
   useEffect(() => {
     let mounted = true;
@@ -89,7 +94,7 @@ export default function ArtistDetail() {
     return () => {
       mounted = false;
     };
-  }, [artistLookup, mbid, listenerPeriod]);
+  }, [artistLookup, mbid, listenerPeriod, listenerRequest]);
 
   useEffect(() => {
     let mounted = true;
@@ -133,9 +138,7 @@ export default function ArtistDetail() {
     return (
       <Link
         key={album.mbid}
-        href={
-          musicAlbumHref(album.artistName, album.name, album.mbid) as any
-        }
+        href={musicAlbumHref(album.artistName, album.name, album.mbid) as any}
         asChild
       >
         <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-4">
@@ -147,11 +150,7 @@ export default function ArtistDetail() {
                 onError={() => art && handleArtError(art)}
               />
             ) : (
-              <Icon
-                icon={Disc3}
-                size={26}
-                className="text-muted-foreground"
-              />
+              <Icon icon={Disc3} size={26} className="text-muted-foreground" />
             )}
           </View>
           <View className="min-w-0 flex-1">
@@ -179,15 +178,21 @@ export default function ArtistDetail() {
     ? [
         {
           title: "Albums",
-          releases: artist.albums.filter((release) => release.releaseType === "album"),
+          releases: artist.albums.filter(
+            (release) => release.releaseType === "album",
+          ),
         },
         {
           title: "EPs",
-          releases: artist.albums.filter((release) => release.releaseType === "ep"),
+          releases: artist.albums.filter(
+            (release) => release.releaseType === "ep",
+          ),
         },
         {
           title: "Singles",
-          releases: artist.albums.filter((release) => release.releaseType === "single"),
+          releases: artist.albums.filter(
+            (release) => release.releaseType === "single",
+          ),
         },
         {
           title: "Other releases",
@@ -201,10 +206,11 @@ export default function ArtistDetail() {
       ]
     : [];
   const albumCount =
-    artist?.albums.filter((release) => release.releaseType === "album").length ?? 0;
+    artist?.albums.filter((release) => release.releaseType === "album")
+      .length ?? 0;
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />} pageTitle={artist?.name || "Artist"}>
       <Stack.Screen
         options={{ title: artist?.name || "Artist", headerShown: false }}
       />
@@ -214,11 +220,10 @@ export default function ArtistDetail() {
         </View>
       )}
       {error && (
-        <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            Could not load artist: {error}
-          </Text>
-        </View>
+        <LoadFailure
+          title="This artist could not load"
+          onRetry={() => setRequest((value) => value + 1)}
+        />
       )}
       {artist && (
         <>
@@ -253,6 +258,8 @@ export default function ArtistDetail() {
                   Artist
                 </Text>
                 <Text
+                  role="heading"
+                  aria-level={1}
                   className="font-sans text-2xl font-black"
                   numberOfLines={3}
                 >
@@ -282,16 +289,19 @@ export default function ArtistDetail() {
                 <ActivityIndicator />
               </View>
             ) : listenerError ? (
-              <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-                <Text className="font-bold text-destructive">
-                  Could not load listeners: {listenerError}
-                </Text>
-              </View>
+              <LoadFailure
+                title="Listeners could not load"
+                onRetry={() => setListenerRequest((value) => value + 1)}
+              />
             ) : listeners.length === 0 ? (
               <View className="items-center gap-2 rounded-lg border border-border bg-card p-6">
-                <Icon icon={Trophy} size={24} className="text-muted-foreground" />
+                <Icon
+                  icon={Trophy}
+                  size={24}
+                  className="text-muted-foreground"
+                />
                 <Text className="text-center text-muted-foreground">
-                  No indexed listeners for this period yet.
+                  No listeners for this period yet.
                 </Text>
               </View>
             ) : (

@@ -173,7 +173,11 @@ export default function HomeScreen() {
   );
 
   return (
-    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell
+      rightRail={<RightRail />}
+      onScroll={handleScroll}
+      pageTitle="Home"
+    >
       <Stack.Screen options={{ title: "Teal", headerShown: false }} />
       <SectionHeading
         eyebrow="Global feed"

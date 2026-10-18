@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack } from "expo-router";
 import RightRail from "@/components/teal/RightRail";
-import TealShell, {
-  SectionHeading,
-} from "@/components/teal/TealShell";
+import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -294,7 +292,7 @@ export default function Explore() {
   const hasQuery = query.trim().length >= 2;
   const hasResults = counts[activeTab] > 0;
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />} pageTitle="Explore">
       <Stack.Screen options={{ title: "Explore", headerShown: false }} />
       <SectionHeading
         eyebrow="Discovery"
