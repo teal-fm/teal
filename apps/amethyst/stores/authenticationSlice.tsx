@@ -7,7 +7,7 @@ import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
 import { pdsHostFromOAuthIssuer } from "../lib/atp/oauthIssuer";
-import { getProfile } from "../lib/teal/api";
+import { getProfile, XrpcError } from "../lib/teal/api";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {
@@ -214,7 +214,9 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             },
           });
         } catch (error) {
-          console.error("Failed to get teal profile:", error);
+          if (!(error instanceof XrpcError && error.status === 404)) {
+            console.error("Failed to get teal profile:", error);
+          }
           // insert bsky profile
           set({
             profiles: {

@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
-import { Link, router, Stack } from "expo-router";
+import { Link, router, Stack, usePathname } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
+import AuthPageTitle from "@/components/auth/AuthPageTitle";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { firstLoginHref } from "@/lib/atp/firstLogin";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { PencilLine } from "lucide-react-native";
@@ -29,6 +31,9 @@ export default function AuthOptions() {
   const params = useLocalSearchParams<"iss" | "state" | "code">();
   const [error, setError] = useState<string | null>(null);
   const calledRef = useRef(false);
+  const pathname = usePathname();
+  const activePath = useRef(pathname);
+  activePath.current = pathname;
 
   useEffect(() => {
     // The OAuth state in IndexedDB is deleted on first read (replay prevention).
@@ -40,19 +45,39 @@ export default function AuthOptions() {
     useStore
       .getState()
       .oauthCallback(searchParams)
-      .then(() => {
+      .then(async () => {
         // The store reports callback failures in state rather than rejecting.
+        if (activePath.current !== "/auth/callback") return;
         const result = useStore.getState();
-        if (result.status !== "loggedIn" || !result.pdsAgent) {
+        if (result.status !== "loggedIn" || !result.pdsAgent?.did) {
           setError(result.login.error || "Sign-in did not complete.");
           return;
         }
         // A previous failed attempt can leave login.error behind. The current
         // authenticated status is authoritative after this callback completes.
         setError(null);
-        router.replace("/");
+        const agent = result.pdsAgent;
+        const viewerDid = result.pdsAgent.did;
+        const destination = await firstLoginHref(viewerDid, () =>
+          agent.call("com.atproto.repo.getRecord", {
+            repo: viewerDid,
+            collection: "fm.teal.actor.profile",
+            rkey: "self",
+          }),
+        );
+        const current = useStore.getState();
+        if (
+          activePath.current === "/auth/callback" &&
+          current.status === "loggedIn" &&
+          current.pdsAgent?.did === viewerDid
+        ) {
+          router.replace(destination as any);
+        }
       })
-      .catch(() => setError("Sign-in did not complete."));
+      .catch(() => {
+        if (activePath.current === "/auth/callback")
+          setError("Sign-in did not complete.");
+      });
   }, [params]);
 
   if (!params) {
@@ -64,6 +89,10 @@ export default function AuthOptions() {
   }
   return (
     <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
+      <AuthPageTitle
+        path="/auth/callback"
+        title={error ? "Sign-in failed" : "Finishing sign-in"}
+      />
       <Stack.Screen
         options={{
           title: "Processing",

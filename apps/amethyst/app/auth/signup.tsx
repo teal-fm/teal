@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router, Stack } from "expo-router";
+import AuthPageTitle from "@/components/auth/AuthPageTitle";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -11,6 +12,7 @@ const LoginScreen = () => {
   const [opened, setOpened] = useState(false);
   return (
     <SafeAreaView className="flex flex-1 items-center justify-center bg-muted px-5">
+      <AuthPageTitle path="/auth/signup" title="Create an account" />
       <Stack.Screen
         options={{
           title: "Create an account",
@@ -29,9 +31,6 @@ const LoginScreen = () => {
         <Text className="text-center font-sans text-3xl font-black text-foreground">
           Create your account
         </Text>
-        <Text className="text-center text-lg font-bold text-foreground">
-          No account? No problem.
-        </Text>
         <View className="flex flex-col items-center justify-center">
           <Text className="-mx-3 mb-2 text-center">
             Teal uses the same account as Bluesky and other Atmosphere apps.
@@ -41,7 +40,6 @@ const LoginScreen = () => {
             Already have an account? You can sign in directly. Creating an
             account opens Bluesky in another tab.
           </Text>
-          {/* on click, open tab, then in the background navigate to /login */}
           <Button
             onPress={() => {
               // on web, open new tab
@@ -74,7 +72,7 @@ const LoginScreen = () => {
             <Button variant="outline" className="mt-4">
               <Text>
                 {opened
-                  ? "I've created my account — sign in"
+                  ? "Sign in with my new account"
                   : "I already have an account"}
               </Text>
             </Button>

@@ -8,7 +8,6 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Link, Stack } from "expo-router";
-import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -23,6 +22,7 @@ import {
   displayArtists,
   getNotifications,
   getSocialPost,
+  XrpcError,
   type SocialNotificationView,
   type SocialPostView,
 } from "@/lib/teal/api";
@@ -51,7 +51,7 @@ function reasonLabel(reason: string) {
     case "badgeAssignment":
       return "gave you a badge";
     default:
-      return reason;
+      return "interacted with your profile";
   }
 }
 
@@ -210,7 +210,9 @@ function NotificationRow({ group }: { group: NotificationGroup }) {
   const [postState, setPostState] = useState<{
     uri: string;
     post: SocialPostView | null;
+    failed?: boolean;
   }>();
+  const [postAttempt, setPostAttempt] = useState(0);
   const post =
     group.contextUri && contextualReasons.has(group.reason)
       ? postState?.uri === group.contextUri
@@ -222,21 +224,26 @@ function NotificationRow({ group }: { group: NotificationGroup }) {
     if (!group.contextUri || !contextualReasons.has(group.reason)) return;
 
     let mounted = true;
+    setPostState(undefined);
     getSocialPost(group.contextUri)
       .then((response) => {
         if (mounted) {
           setPostState({ uri: group.contextUri!, post: response.post });
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (mounted) {
-          setPostState({ uri: group.contextUri!, post: null });
+          setPostState({
+            uri: group.contextUri!,
+            post: null,
+            failed: !(error instanceof XrpcError && error.status === 404),
+          });
         }
       });
     return () => {
       mounted = false;
     };
-  }, [group.contextUri, group.reason]);
+  }, [group.contextUri, group.reason, postAttempt]);
 
   const actorLabel = displayActorName(first.actor, first.actorDid);
   const otherCount = notifications.length - 1;
@@ -300,11 +307,29 @@ function NotificationRow({ group }: { group: NotificationGroup }) {
               </Pressable>
             </Link>
           )}
-          {postHref && post === null && (
-            <Text className="mt-3 text-sm italic text-muted-foreground">
-              The original post is no longer available.
-            </Text>
-          )}
+          {postHref &&
+            post === null &&
+            (postState?.failed ? (
+              <View className="mt-3 items-start gap-2">
+                <Text
+                  accessibilityRole="alert"
+                  className="text-sm text-muted-foreground"
+                >
+                  Couldn't load this post. Your notification is still here.
+                </Text>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={() => setPostAttempt((attempt) => attempt + 1)}
+                >
+                  <Text>Try again</Text>
+                </Button>
+              </View>
+            ) : (
+              <Text className="mt-3 text-sm italic text-muted-foreground">
+                The original post is no longer available.
+              </Text>
+            ))}
         </View>
       </View>
     </View>
@@ -319,13 +344,21 @@ export default function Notifications() {
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const loadingMoreRef = useRef(false);
+  const loadingMoreRef = useRef<object | null>(null);
+  const requestVersion = useRef(0);
+  const activeIdentity = useRef({ actorDid, status });
+  activeIdentity.current = { actorDid, status };
+  const [attempt, setAttempt] = useState(0);
+  const [itemsActor, setItemsActor] = useState<string>();
 
   useEffect(() => {
     let mounted = true;
-    if (status !== "loggedIn" || !actorDid) {
-      return;
-    }
+    requestVersion.current += 1;
+    setCursor(undefined);
+    setLoadingMore(false);
+    loadingMoreRef.current = null;
+    if (status !== "loggedIn" || !actorDid) return;
+    setItemsActor(actorDid);
     setItems(null);
     setError(null);
     getNotifications(actorDid, 30)
@@ -334,22 +367,39 @@ export default function Notifications() {
         setItems(res.items);
         setCursor(res.cursor);
       })
-      .catch((e) => {
+      .catch(() => {
         if (!mounted) return;
-        setError(e instanceof Error ? e.message : String(e));
+        setError(
+          "We couldn't load your notifications. Check your connection and try again.",
+        );
         setItems([]);
       });
     return () => {
       mounted = false;
     };
-  }, [actorDid, status]);
+  }, [actorDid, status, attempt]);
 
   const loadMore = useCallback(() => {
-    if (!actorDid || !cursor || loadingMoreRef.current) return;
-    loadingMoreRef.current = true;
+    if (
+      !actorDid ||
+      itemsActor !== actorDid ||
+      status !== "loggedIn" ||
+      !cursor ||
+      loadingMoreRef.current
+    )
+      return;
+    const version = requestVersion.current;
+    const operation = {};
+    loadingMoreRef.current = operation;
+    const stillCurrent = () =>
+      version === requestVersion.current &&
+      activeIdentity.current.actorDid === actorDid &&
+      activeIdentity.current.status === "loggedIn";
     setLoadingMore(true);
+    setError(null);
     getNotifications(actorDid, 30, cursor)
       .then((res) => {
+        if (!stillCurrent()) return;
         setItems((current) => {
           const knownIds = new Set(current?.map((item) => item.id) || []);
           return [
@@ -359,12 +409,17 @@ export default function Notifications() {
         });
         setCursor(res.cursor);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .catch(() => {
+        if (stillCurrent())
+          setError(
+            "Couldn't load older notifications. Try again; your current list is still here.",
+          );
+      })
       .finally(() => {
-        loadingMoreRef.current = false;
-        setLoadingMore(false);
+        if (loadingMoreRef.current === operation) loadingMoreRef.current = null;
+        if (stillCurrent()) setLoadingMore(false);
       });
-  }, [actorDid, cursor]);
+  }, [actorDid, cursor, status, itemsActor]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -372,15 +427,27 @@ export default function Notifications() {
         event.nativeEvent;
       const remaining =
         contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      if (remaining < 600) loadMore();
+      if (remaining < 600 && !error) loadMore();
     },
-    [loadMore],
+    [loadMore, error],
   );
-  const groups = items ? groupNotifications(items) : [];
+  const visibleItems = itemsActor === actorDid ? items : null;
+  const groups = visibleItems ? groupNotifications(visibleItems) : [];
+
+  if (status === "start") {
+    return (
+      <TealShell pageTitle="Notifications">
+        <ActivityIndicator
+          accessibilityLabel="Checking your account"
+          className="my-20"
+        />
+      </TealShell>
+    );
+  }
 
   if (status !== "loggedIn") {
     return (
-      <TealShell rightRail={<RightRail />}>
+      <TealShell pageTitle="Notifications">
         <Stack.Screen
           options={{ title: "Notifications", headerShown: false }}
         />
@@ -389,15 +456,14 @@ export default function Notifications() {
             <Icon icon={Bell} size={22} className="text-primary" />
           </View>
           <Text className="max-w-md text-center font-sans text-3xl font-black">
-            Sign in to view notifications.
+            Sign in to see your notifications
           </Text>
           <Text className="max-w-sm text-center text-sm leading-5 text-muted-foreground">
-            Likes, reposts, replies, and playlist collaboration activity will
-            appear here.
+            Find replies, likes, reposts, and new followers here.
           </Text>
           <Link href="/auth/login" asChild>
             <Button>
-              <Text>Sign In</Text>
+              <Text>Sign in</Text>
             </Button>
           </Link>
         </View>
@@ -406,29 +472,43 @@ export default function Notifications() {
   }
 
   return (
-    <TealShell rightRail={<RightRail />} onScroll={handleScroll}>
+    <TealShell pageTitle="Notifications" onScroll={handleScroll}>
       <Stack.Screen options={{ title: "Notifications", headerShown: false }} />
-      <SectionHeading eyebrow="Social" title="Notifications" />
-      {!items && (
+      <SectionHeading title="Notifications" />
+      {!visibleItems && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
         </View>
       )}
       {error && (
         <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            Could not load notifications: {error}
-          </Text>
+          <Text className="font-bold text-destructive">{error}</Text>
+          <Button
+            variant="outline"
+            className="mt-3 self-start"
+            onPress={() => {
+              if (visibleItems?.length && cursor) loadMore();
+              else setAttempt((value) => value + 1);
+            }}
+          >
+            <Text>Try again</Text>
+          </Button>
         </View>
       )}
-      {items?.length === 0 && !error && (
+      {visibleItems?.length === 0 && !error && (
         <View className="min-h-[24rem] items-center justify-center rounded-lg border border-border bg-card p-8">
           <Text className="text-center text-2xl font-black">
             No notifications yet.
           </Text>
           <Text className="mt-2 text-center text-muted-foreground">
-            Likes, reposts, replies, and playlist invitations will appear here.
+            When someone follows you or responds to your music posts, you'll see
+            it here.
           </Text>
+          <Link href="/search" asChild>
+            <Button variant="outline" className="mt-5">
+              <Text>Explore music</Text>
+            </Button>
+          </Link>
         </View>
       )}
       <View className="mt-2">
@@ -436,6 +516,15 @@ export default function Notifications() {
           <NotificationRow key={group.key} group={group} />
         ))}
       </View>
+      {cursor && !loadingMore && !error && (
+        <Button
+          variant="outline"
+          className="my-5 self-center"
+          onPress={loadMore}
+        >
+          <Text>Load older notifications</Text>
+        </Button>
+      )}
       {loadingMore && (
         <View className="items-center justify-center py-5">
           <ActivityIndicator />

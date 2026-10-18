@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Platform, Pressable, View } from "react-native";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import AuthPageTitle from "@/components/auth/AuthPageTitle";
 import { useWebDialog } from "@/components/auth/useWebDialog";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -24,6 +25,7 @@ export default function ModalScreen() {
   );
   return (
     <View className="flex min-h-screen w-full items-center justify-center bg-black/45 px-4">
+      <AuthPageTitle path="/auth/logoutModal" title="Sign out" />
       <Pressable
         className="absolute inset-0"
         onPress={handleGoBack}

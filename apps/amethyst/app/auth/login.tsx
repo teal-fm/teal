@@ -8,6 +8,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router, Stack } from "expo-router";
 import { openAuthSessionAsync } from "expo-web-browser";
+import AuthPageTitle from "@/components/auth/AuthPageTitle";
 import { useWebDialog } from "@/components/auth/useWebDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,6 +202,7 @@ const LoginScreen = () => {
 
   return (
     <SafeAreaView className="flex w-full flex-1 bg-black/45 px-4">
+      <AuthPageTitle path="/auth/login" title="Sign in" />
       <Stack.Screen
         options={{
           title: "Sign in",
@@ -302,7 +304,7 @@ const LoginScreen = () => {
                               />
                             </View>
                           )}
-                          <Text>
+                          <Text className="min-w-0 flex-1">
                             {pdsUrl.hostname.includes("bsky.network")
                               ? "Bluesky (" +
                                 capFirstLetter(

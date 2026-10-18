@@ -1,12 +1,14 @@
 import React from "react";
 import { View } from "react-native";
 import { Link, Stack } from "expo-router";
+import AuthPageTitle from "@/components/auth/AuthPageTitle";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 
 export default function AuthOptions() {
   return (
     <View className="flex-1 items-center justify-center bg-muted p-6">
+      <AuthPageTitle path="/auth/options" title="Welcome" />
       <Stack.Screen
         options={{
           title: "Sign in",

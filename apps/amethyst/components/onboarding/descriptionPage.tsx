@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -9,7 +9,7 @@ import { ArrowLeft, ArrowRight, MessageSquareText } from "lucide-react-native";
 interface DescriptionPageProps {
   onComplete: (description: string) => void;
   initialDescription?: string;
-  onBack?: () => void;
+  onBack?: (draft: string) => void;
 }
 
 const DescriptionPage: React.FC<DescriptionPageProps> = ({
@@ -18,6 +18,10 @@ const DescriptionPage: React.FC<DescriptionPageProps> = ({
   onBack,
 }) => {
   const [description, setDescription] = useState(initialDescription || "");
+  const edited = useRef(false);
+  useEffect(() => {
+    if (!edited.current) setDescription(initialDescription || "");
+  }, [initialDescription]);
 
   const handleComplete = () => {
     onComplete(description);
@@ -44,12 +48,19 @@ const DescriptionPage: React.FC<DescriptionPageProps> = ({
           placeholder="What keeps ending up in your headphones?"
           multiline
           value={description}
-          onChangeText={setDescription}
+          onChangeText={(value) => {
+            edited.current = true;
+            setDescription(value);
+          }}
         />
       </View>
       <View className="w-full flex-row justify-between">
         {onBack && (
-          <Button variant="outline" onPress={onBack} className="flex-row gap-2">
+          <Button
+            variant="outline"
+            onPress={() => onBack(description)}
+            className="flex-row gap-2"
+          >
             <Icon icon={ArrowLeft} size={18} />
             <Text>Back</Text>
           </Button>

@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
+import AuthPageTitle from "@/components/auth/AuthPageTitle";
 import DescriptionPage from "@/components/onboarding/descriptionPage";
 import DisplayNamePage from "@/components/onboarding/displayNamePage";
 import ImageSelectionPage from "@/components/onboarding/imageSelectionPage";
 import ProgressDots from "@/components/onboarding/progressDots";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { isMissingProfileRecord } from "@/lib/atp/firstLogin";
 import { profileRecordBlob } from "@/lib/atp/profileBlob";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { prepareProfileImage } from "@/lib/profileImage";
@@ -23,14 +25,31 @@ import { Main as ProfileStatusRecord } from "@teal/lexicons/src/fm/teal/actor/pr
 
 const OnboardingSubmissionSteps: string[] = [
   "",
-  "Double checking everything",
-  "Submitting Profile Picture",
-  "Submitting Header Image",
-  "Submitting Profile",
-  "Done!",
+  "Checking your profile",
+  "Saving your avatar",
+  "Saving your banner",
+  "Saving your profile",
+  "Profile saved",
 ];
 
 export default function OnboardingPage() {
+  const accountDid = useStore((state) => state.pdsAgent?.did);
+  const authStatus = useStore((state) => state.status);
+  return (
+    <>
+      <AuthPageTitle path="/onboarding" title="Set up your profile" />
+      {authStatus === "start" ? (
+        <View className="min-h-screen flex-1 items-center justify-center bg-background">
+          <ActivityIndicator accessibilityLabel="Checking your account" />
+        </View>
+      ) : (
+        <OnboardingFlow key={accountDid || "signed-out"} />
+      )}
+    </>
+  );
+}
+
+function OnboardingFlow() {
   const [step, setStep] = useState(1);
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
@@ -39,14 +58,15 @@ export default function OnboardingPage() {
 
   const [submissionStep, setSubmissionStep] = useState(0);
   const [submissionError, setSubmissionError] = useState<string>();
+  const [completed, setCompleted] = useState(false);
+  const [statusError, setStatusError] = useState(false);
+  const [statusAttempt, setStatusAttempt] = useState(0);
   const submitting = useRef(false);
 
   // Profile status hooks - must be at top level
   const [profileStatus, setProfileStatus] =
     useState<ProfileStatusRecord | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
-
-  const router = useRouter();
 
   const agent = useStore((store) => store.pdsAgent);
   const profiles = useStore((store) => store.profiles);
@@ -60,28 +80,41 @@ export default function OnboardingPage() {
     setBannerUri((current) => current || profile.bsky?.banner || "");
   }, [profile?.bsky]);
 
-  // Check profile status
-  React.useEffect(() => {
+  useEffect(() => {
+    let mounted = true;
+    if (!agent) return;
+    setStatusLoading(true);
+    setStatusError(false);
     const checkProfileStatus = async () => {
-      if (!agent) return;
-
       try {
         const res = await agent.call("com.atproto.repo.getRecord", {
           repo: agent.did,
           collection: "fm.teal.actor.profileStatus",
           rkey: "self",
         });
-        setProfileStatus(res.data.value as ProfileStatusRecord);
-      } catch {
-        // If no record exists, user hasn't completed onboarding
-        setProfileStatus(null);
+        const status = res.data.value as ProfileStatusRecord;
+        // A previously completed setup does not imply the profile still exists.
+        if (status.completedOnboarding !== "none") {
+          await agent.call("com.atproto.repo.getRecord", {
+            repo: agent.did,
+            collection: "fm.teal.actor.profile",
+            rkey: "self",
+          });
+        }
+        if (mounted) setProfileStatus(status);
+      } catch (error) {
+        if (!mounted) return;
+        if (isMissingProfileRecord(error)) setProfileStatus(null);
+        else setStatusError(true);
       } finally {
-        setStatusLoading(false);
+        if (mounted) setStatusLoading(false);
       }
     };
-
-    checkProfileStatus();
-  }, [agent]);
+    void checkProfileStatus();
+    return () => {
+      mounted = false;
+    };
+  }, [agent, statusAttempt]);
 
   const handleImageSelectionComplete = (
     avatar: string | undefined,
@@ -188,7 +221,7 @@ export default function OnboardingPage() {
         },
       );
       setSubmissionStep(5);
-      router.replace(`/profile/${agent.did}` as any);
+      setCompleted(true);
     } catch (error) {
       setSubmissionStep(0);
       setSubmissionError(
@@ -234,23 +267,68 @@ export default function OnboardingPage() {
     );
   }
 
-  if (profileStatus && profileStatus.completedOnboarding !== "none") {
+  if (statusError) {
+    return (
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+        <View className="w-full max-w-md gap-4 rounded-xl bg-card p-6">
+          <Text accessibilityRole="header" className="text-2xl font-bold">
+            Couldn't check your profile
+          </Text>
+          <Text accessibilityRole="alert" className="text-muted-foreground">
+            Check your connection and try again. Your profile hasn't been
+            changed.
+          </Text>
+          <Button onPress={() => setStatusAttempt((attempt) => attempt + 1)}>
+            <Text>Try again</Text>
+          </Button>
+          <Link href="/" asChild>
+            <Button variant="ghost">
+              <Text>Back to Teal</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (
+    completed ||
+    (profileStatus && profileStatus.completedOnboarding !== "none")
+  ) {
     return (
       <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
         <View className="w-full max-w-md items-start gap-4 rounded-lg border border-border bg-card p-6">
           <Icon icon={Check} size={42} className="text-primary" />
-          <Text className="font-sans text-3xl font-black">
+          <Text
+            accessibilityRole="header"
+            className="font-sans text-3xl font-black"
+          >
             Your Teal profile is ready
           </Text>
           <Text className="text-muted-foreground">
-            Your music identity already exists. You can return to your profile
-            and keep listening.
+            {completed
+              ? "Save your first listen to start sharing the music you love. You can update your profile any time."
+              : "Your profile is already set up. Add a listen or return to your profile."}
           </Text>
-          <Link href={`/profile/${agent.did}` as any} asChild>
-            <Button>
-              <Text>View profile</Text>
-            </Button>
-          </Link>
+          <View className="w-full gap-3">
+            <Link href="/manual-listens" asChild>
+              <Button>
+                <Text>
+                  {completed ? "Add your first listen" : "Add a listen"}
+                </Text>
+              </Button>
+            </Link>
+            <Link href={`/profile/${agent.did}` as any} asChild>
+              <Button variant="outline">
+                <Text>View profile</Text>
+              </Button>
+            </Link>
+          </View>
+          {completed && (
+            <Text className="text-sm text-muted-foreground">
+              Profile saved. It may take a moment to appear for other listeners.
+            </Text>
+          )}
         </View>
       </SafeAreaView>
     );
@@ -266,7 +344,8 @@ export default function OnboardingPage() {
           {OnboardingSubmissionSteps[submissionStep]}
         </Text>
         <Text className="text-muted-foreground">
-          Publishing your profile to the Atmosphere.
+          Saving your profile. Your name, bio, and images will stay here if you
+          need to retry.
         </Text>
       </View>
     );
@@ -287,7 +366,10 @@ export default function OnboardingPage() {
           <DescriptionPage
             onComplete={handleDescriptionComplete}
             initialDescription={description}
-            onBack={() => setStep(1)}
+            onBack={(draft) => {
+              setDescription(draft);
+              setStep(1);
+            }}
           />
         );
       case 3:
@@ -297,7 +379,11 @@ export default function OnboardingPage() {
             initialAvatar={avatarUri}
             initialBanner={bannerUri}
             error={submissionError}
-            onBack={() => setStep(2)}
+            onBack={(avatar, banner) => {
+              setAvatarUri(avatar || "");
+              setBannerUri(banner || "");
+              setStep(2);
+            }}
           />
         );
       default:
@@ -330,21 +416,27 @@ export default function OnboardingPage() {
           <View className="flex-row items-center gap-2">
             <Icon icon={Music2} size={18} className="text-secondary" />
             <Text className="font-mono text-xs text-background/55">
-              fm.teal.actor.profile
+              Your music, your profile.
             </Text>
           </View>
         </View>
         <View className="min-h-screen flex-1 px-5 py-8 md:px-12">
           <View className="mx-auto w-full max-w-2xl flex-1">
+            <Link href="/" asChild>
+              <Button variant="ghost" className="mb-4 self-start lg:hidden">
+                <Icon icon={ArrowLeft} size={18} className="text-foreground" />
+                <Text className="ml-2">Back to Teal</Text>
+              </Button>
+            </Link>
             <View className="mb-8 flex-row items-center justify-between">
               <View className="flex-row items-center gap-3">
                 <Icon icon={Sparkles} size={20} className="text-primary" />
-                <Text className="font-mono text-xs font-bold uppercase text-muted-foreground">
-                  Teal profile setup
+                <Text className="font-sans text-base font-bold text-foreground">
+                  teal.fm
                 </Text>
               </View>
               <Text className="font-mono text-xs text-muted-foreground">
-                0{step} / 03
+                Step {step} of 3
               </Text>
             </View>
             <View className="flex-1 rounded-lg border border-border bg-card p-6 md:p-10">

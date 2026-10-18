@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,10 @@ const DisplayNamePage: React.FC<DisplayNamePageProps> = ({
   onBack,
 }) => {
   const [displayName, setDisplayName] = useState(initialDisplayName || "");
+  const edited = useRef(false);
+  useEffect(() => {
+    if (!edited.current) setDisplayName(initialDisplayName || "");
+  }, [initialDisplayName]);
 
   const handleNext = () => {
     if (displayName.trim()) {
@@ -48,7 +52,10 @@ const DisplayNamePage: React.FC<DisplayNamePageProps> = ({
           className="h-14 rounded-lg border border-border bg-background px-4 text-lg"
           placeholder="Display name"
           value={displayName}
-          onChangeText={setDisplayName}
+          onChangeText={(value) => {
+            edited.current = true;
+            setDisplayName(value);
+          }}
         />
       </View>
       <View className="w-full flex-row justify-end">

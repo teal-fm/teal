@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +14,7 @@ interface ImageSelectionPageProps {
   ) => void;
   initialAvatar?: string;
   initialBanner?: string;
-  onBack?: () => void;
+  onBack?: (avatar?: string, banner?: string) => void;
   error?: string;
 }
 
@@ -29,6 +29,14 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
   const [bannerUri, setBannerUri] = useState(initialBanner || "");
   const [loading, setLoading] = useState(false);
   const [pickerError, setPickerError] = useState<string>();
+  const avatarEdited = useRef(false);
+  const bannerEdited = useRef(false);
+  useEffect(() => {
+    if (!avatarEdited.current) setAvatarUri(initialAvatar || "");
+  }, [initialAvatar]);
+  useEffect(() => {
+    if (!bannerEdited.current) setBannerUri(initialBanner || "");
+  }, [initialBanner]);
 
   const pickImage = async (
     setType: typeof setAvatarUri | typeof setBannerUri,
@@ -43,7 +51,11 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         aspect: setType === setAvatarUri ? [1, 1] : [3, 1],
         quality: 0.8,
       });
-      if (!result.canceled && result.assets[0]) setType(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        if (setType === setAvatarUri) avatarEdited.current = true;
+        else bannerEdited.current = true;
+        setType(result.assets[0].uri);
+      }
     } catch {
       setPickerError(
         "Couldn't open your images. Try again or continue without artwork.",
@@ -65,7 +77,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         <Text className="font-sans text-3xl font-black">Set the artwork.</Text>
         <Text className="text-base text-muted-foreground">
           Add an avatar and banner, or keep the images from your Bluesky
-          profile. Both are optional. Use PNG or JPEG images smaller than 1 MB.
+          profile. Both are optional. Use PNG or JPEG images of 1 MB or less.
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -97,7 +109,10 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
           <Button
             variant="ghost"
             className="self-start"
-            onPress={() => setBannerUri("")}
+            onPress={() => {
+              bannerEdited.current = true;
+              setBannerUri("");
+            }}
           >
             <Text>Remove banner</Text>
           </Button>
@@ -133,7 +148,10 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
           <Button
             variant="ghost"
             className="self-start"
-            onPress={() => setAvatarUri("")}
+            onPress={() => {
+              avatarEdited.current = true;
+              setAvatarUri("");
+            }}
           >
             <Text>Remove avatar</Text>
           </Button>
@@ -147,7 +165,13 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
       </View>
       <View className="w-full flex-row justify-between gap-3">
         {onBack && (
-          <Button variant="outline" onPress={onBack} className="flex-row gap-2">
+          <Button
+            variant="outline"
+            onPress={() =>
+              onBack(avatarUri || undefined, bannerUri || undefined)
+            }
+            className="flex-row gap-2"
+          >
             <Icon icon={ArrowLeft} size={18} />
             <Text>Back</Text>
           </Button>
