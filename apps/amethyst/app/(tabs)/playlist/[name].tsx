@@ -239,7 +239,7 @@ export default function PlaylistDetailScreen() {
   }
 
   return (
-    <TealShell>
+    <TealShell pageTitle={playlist?.name || "Playlist"}>
       <Stack.Screen
         options={{ title: playlist?.name || "Playlist", headerShown: false }}
       />

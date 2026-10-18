@@ -50,6 +50,8 @@ import {
   type SocialPlaylistView,
   type SocialPostView,
 } from "@/lib/teal/api";
+import { updateSelectedPlayRecords } from "@/lib/teal/bulkPlayRecords";
+import { mergePendingListens } from "@/lib/teal/pendingListens";
 import {
   artistsFromText,
   deletePlayRecord,
@@ -62,6 +64,12 @@ import {
 } from "@/lib/teal/profileStats";
 import { playlistHref } from "@/lib/teal/routes";
 import { useStore } from "@/stores/mainStore";
+import {
+  removePendingListens,
+  retainConfirmedListens,
+  retireIndexedListens,
+  usePendingListens,
+} from "@/stores/pendingListenStore";
 import type { AppBskyActorDefs } from "@atproto/api";
 import {
   CheckSquare,
@@ -221,7 +229,7 @@ export default function ProfileScreen() {
   const requestVersion = useRef(0);
   const graphRequestVersion = useRef(0);
   const [posts, setPosts] = useState<SocialPostView[]>([]);
-  const [plays, setPlays] = useState<PlayView[]>([]);
+  const [indexedPlays, setPlays] = useState<PlayView[]>([]);
   const [followBusy, setFollowBusy] = useState(false);
   const followLock = useRef<object | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -501,6 +509,25 @@ export default function ProfileScreen() {
   }
 
   const isSelf = did === pdsAgent?.did;
+  const pendingListens = usePendingListens(isSelf ? did : null);
+  const plays = did
+    ? mergePendingListens(did, indexedPlays, pendingListens)
+    : indexedPlays;
+  const syncingUris = new Set(
+    pendingListens
+      .filter(
+        (entry) =>
+          !indexedPlays.some(
+            (play) =>
+              play.uri === entry.play.uri && play.cid === entry.play.cid,
+          ),
+      )
+      .map((entry) => entry.play.uri),
+  );
+
+  useEffect(() => {
+    if (isSelf && did) retireIndexedListens(did, indexedPlays);
+  }, [did, indexedPlays, isSelf]);
   const selectedPlayCount = selectedPlayRkeys.size;
   const viewerFollowing = graphSummary.viewerFollowing;
   const canFollow = authStatus === "loggedIn" && !!pdsAgent?.did && !!did;
@@ -595,6 +622,7 @@ export default function ProfileScreen() {
   function selectVisiblePlays() {
     setBulkDeleteArmed(false);
     const visibleRkeys = plays
+      .filter((play) => !syncingUris.has(play.uri))
       .map((play) => play.rkey)
       .filter((rkey): rkey is string => !!rkey);
     setSelectedPlayRkeys(new Set(visibleRkeys));
@@ -612,6 +640,9 @@ export default function ProfileScreen() {
       const rkeys = Array.from(selectedPlayRkeys);
       for (const selectedRkey of rkeys) {
         await deletePlayRecord(pdsAgent, did, selectedRkey);
+        removePendingListens(did, [
+          `at://${did}/fm.teal.feed.play/${selectedRkey}`,
+        ]);
       }
       setPlays((current) =>
         current.filter(
@@ -640,20 +671,19 @@ export default function ProfileScreen() {
     setError(null);
     try {
       const selected = new Set(selectedPlayRkeys);
-      for (const selectedRkey of selected) {
-        const loaded = await loadPlayRecord(pdsAgent, did, selectedRkey);
-        await putPlayRecord(
-          pdsAgent,
-          did,
-          selectedRkey,
-          {
-            ...loaded.record,
-            ...(nextArtists ? { artists: artistsFromText(nextArtists) } : {}),
-            ...(nextRelease ? { releaseName: nextRelease } : {}),
-          },
-          loaded.swapRecord,
-        );
-      }
+      await updateSelectedPlayRecords(
+        Array.from(selected),
+        {
+          ...(nextArtists ? { artists: artistsFromText(nextArtists) } : {}),
+          ...(nextRelease ? { releaseName: nextRelease } : {}),
+        },
+        {
+          load: (rkey) => loadPlayRecord(pdsAgent, did, rkey),
+          put: (rkey, record, cid) =>
+            putPlayRecord(pdsAgent, did, rkey, record, cid),
+          confirmed: (write) => retainConfirmedListens(did, [write]),
+        },
+      );
       setPlays((current) =>
         current.map((play) => {
           if (!play.rkey || !selected.has(play.rkey)) return play;
@@ -1133,21 +1163,27 @@ export default function ProfileScreen() {
                       </Button>
                     )}
                   </View>
-                  {sectionStatus("listening") ||
-                    (plays.length
-                      ? plays
-                          .slice(0, 3)
-                          .map((play) => (
-                            <ProfileListeningRow key={play.uri} play={play} />
-                          ))
-                      : emptyListening)}
+                  {sectionStatus("listening")}
+                  {plays.length
+                    ? plays
+                        .slice(0, 3)
+                        .map((play) => (
+                          <ProfileListeningRow
+                            key={play.uri}
+                            play={play}
+                            syncing={syncingUris.has(play.uri)}
+                          />
+                        ))
+                    : !sectionLoading.listening && !sectionErrors.listening
+                      ? emptyListening
+                      : null}
                 </View>
                 {plays.length > 0 && (
                   <ProfileStatsSections
                     actor={did}
                     defaultPeriod={period}
                     compact
-                    plays={plays}
+                    plays={indexedPlays}
                   />
                 )}
                 {playlists.length > 0 && (
@@ -1327,7 +1363,9 @@ export default function ProfileScreen() {
                             ? "default"
                             : "outline"
                         }
-                        disabled={!play.rkey || bulkBusy}
+                        disabled={
+                          !play.rkey || bulkBusy || syncingUris.has(play.uri)
+                        }
                         accessibilityLabel={`Select ${play.trackName}`}
                         accessibilityState={{
                           selected:
@@ -1346,7 +1384,10 @@ export default function ProfileScreen() {
                       </Button>
                     )}
                     <View className="min-w-0 flex-1">
-                      <ProfileListeningRow play={play} />
+                      <ProfileListeningRow
+                        play={play}
+                        syncing={syncingUris.has(play.uri)}
+                      />
                     </View>
                   </View>
                 ))}
@@ -1365,7 +1406,7 @@ export default function ProfileScreen() {
                     <ProfileStatsSections
                       actor={did}
                       defaultPeriod={period}
-                      plays={plays}
+                      plays={indexedPlays}
                     />
                   </View>
                 )}

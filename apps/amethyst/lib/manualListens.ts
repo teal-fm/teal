@@ -1,6 +1,7 @@
 import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
 
 import type { MusicBrainzArtistCredit, MusicBrainzRecording } from "./oldStamp";
+import type { ConfirmedListenWrite } from "./teal/pendingListens";
 
 export const PLAY_COLLECTION = "fm.teal.feed.play";
 export const FALLBACK_DURATION_SECONDS = 180;
@@ -55,7 +56,7 @@ export type ManualListenAgent = {
     method: string,
     params: Record<string, never>,
     body: unknown,
-  ) => Promise<{ data: unknown }>;
+  ) => Promise<{ data: unknown; success?: boolean }>;
 };
 
 let lastMusicBrainzRequestAt = 0;
@@ -437,6 +438,7 @@ export function buildManualListenRecords(
 export async function submitManualListenRecords(
   agent: ManualListenAgent,
   records: PlayRecord[],
+  onSaved?: (writes: ConfirmedListenWrite[]) => void,
 ) {
   if (records.length === 0) throw new Error("Select at least one track.");
   if (!agent.did) throw new Error("Your repository is not ready.");
@@ -454,7 +456,25 @@ export async function submitManualListenRecords(
     },
   );
 
+  if (response.success === false)
+    throw new Error("Could not save these listens. Try again.");
+
   const results = (response.data as { results?: unknown[] }).results;
+  if (Array.isArray(results) && onSaved) {
+    const confirmed = results.flatMap((result, index) => {
+      if (!result || typeof result !== "object" || !records[index]) return [];
+      const receipt = result as { uri?: unknown; cid?: unknown };
+      return typeof receipt.uri === "string" && typeof receipt.cid === "string"
+        ? [{ record: records[index], uri: receipt.uri, cid: receipt.cid }]
+        : [];
+    });
+    try {
+      onSaved(confirmed);
+    } catch {
+      // A local readback cache must never turn a completed write into a retry.
+      console.warn("Listens saved, but local pending-listen retention failed.");
+    }
+  }
   return Array.isArray(results) && results.length > 0
     ? results.length
     : records.length;

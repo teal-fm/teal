@@ -20,6 +20,7 @@ import {
 } from "@/lib/manualListens";
 import { coverArtUrl } from "@/lib/teal/api";
 import { useStore } from "@/stores/mainStore";
+import { retainConfirmedListens } from "@/stores/pendingListenStore";
 import {
   AlertCircle,
   CalendarClock,
@@ -263,7 +264,11 @@ export default function ManualListensPage() {
         customDate,
         new Date(),
       );
-      setSubmittedCount(await submitManualListenRecords(agent, records));
+      setSubmittedCount(
+        await submitManualListenRecords(agent, records, (writes) => {
+          if (agent.did) retainConfirmedListens(agent.did, writes);
+        }),
+      );
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -277,9 +282,9 @@ export default function ManualListensPage() {
   }
 
   return (
-    <TealShell>
+    <TealShell pageTitle="Add listens">
       <Stack.Screen options={{ title: "Add listens", headerShown: false }} />
-      <SectionHeading title="Add listens" />
+      <SectionHeading title="Add listens" level={1} />
       <View className="mb-5 flex-row flex-wrap gap-2">
         <Button variant="secondary" accessibilityState={{ selected: true }}>
           <Text>Album</Text>
@@ -615,11 +620,11 @@ export default function ManualListensPage() {
         <View className="mt-5 gap-3 rounded-xl border border-primary/30 bg-accent p-5">
           <Text className="font-sans text-2xl font-black">Listens saved</Text>
           <Text className="text-sm text-muted-foreground">
-            Added {submittedCount} listen{submittedCount === 1 ? "" : "s"}. They
-            may take a moment to appear on your profile.
+            Added {submittedCount} listen{submittedCount === 1 ? "" : "s"}.
+            Public listening history may take a moment to update.
           </Text>
           <View className="flex-row flex-wrap gap-3">
-            <Link href={`/profile/${agent.did}` as any} asChild>
+            <Link href={`/profile/${agent.did}?tab=listening` as any} asChild>
               <Button>
                 <Text>View listens</Text>
               </Button>

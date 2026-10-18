@@ -26,7 +26,7 @@ export default function StepThree() {
     return <Redirect href="/stamp" />;
   }
   return (
-    <TealShell>
+    <TealShell pageTitle="Listen saved">
       <Stack.Screen
         options={{
           title: "Listen saved",
@@ -37,10 +37,16 @@ export default function StepThree() {
         <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
           <Check size={24} className="text-primary" />
         </View>
-        <Text className="font-sans text-3xl font-black">Listen saved</Text>
+        <Text
+          role="heading"
+          aria-level={1}
+          className="font-sans text-3xl font-black"
+        >
+          Listen saved
+        </Text>
         <Text className="text-center text-muted-foreground">
-          Your listen is saved. It may take a moment to appear in Teal's
-          listening index.
+          Your listen is saved. Public listening history may take a moment to
+          update.
         </Text>
         {state.shareError && (
           <Text
@@ -65,12 +71,11 @@ export default function StepThree() {
           </Link>
         )}
         <Text className="text-sm text-muted-foreground">
-          View the saved record{" "}
           <ExternalLink
             className="text-primary"
             href={`https://pdsls.dev/${state.submittedStamp.playAtUrl}`}
           >
-            on PDSls
+            View source record
           </ExternalLink>
           <ExternalLinkIcon className="mb-0.5 ml-0.5 inline" size="1rem" />
         </Text>

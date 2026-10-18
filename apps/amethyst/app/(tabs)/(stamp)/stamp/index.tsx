@@ -85,7 +85,7 @@ export default function StepOne() {
   };
 
   return (
-    <TealShell rightRail={<RightRail />}>
+    <TealShell rightRail={<RightRail />} pageTitle="Add a track">
       <Stack.Screen
         options={{
           title: "Add a track",
@@ -93,7 +93,7 @@ export default function StepOne() {
           headerShown: false,
         }}
       />
-      <SectionHeading title="Add listens" />
+      <SectionHeading title="Add listens" level={1} />
       <View className="mb-5 flex-row flex-wrap gap-2">
         <Link href="/manual-listens" asChild>
           <Button variant="outline">

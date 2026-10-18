@@ -11,6 +11,7 @@ import { createPlayRecordFromRecording } from "@/lib/manualListens";
 import { PlaySubmittedData } from "@/lib/oldStamp";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
+import { retainConfirmedListens } from "@/stores/pendingListenStore";
 import {
   Agent,
   BlobRef,
@@ -227,6 +228,9 @@ powered by @teal.fm`;
         throw new Error("Failed to submit play!");
       }
       const typed: ComAtprotoRepoCreateRecord.Response = res;
+      retainConfirmedListens(agent.did, [
+        { record, uri: typed.data.uri, cid: typed.data.cid },
+      ]);
       console.log("Play submitted successfully:", res);
       let submittedData: PlaySubmittedData = {
         playAtUrl: typed.data.uri,
@@ -295,14 +299,14 @@ powered by @teal.fm`;
   };
 
   return (
-    <TealShell>
+    <TealShell pageTitle="Review listen">
       <Stack.Screen
         options={{
           title: "Review listen",
           headerShown: false,
         }}
       />
-      <SectionHeading title="Review listen" />
+      <SectionHeading title="Review listen" level={1} />
       <View className="w-full gap-6">
         <View>
           <VerticalPlayView

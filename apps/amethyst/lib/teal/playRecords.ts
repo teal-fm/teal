@@ -145,7 +145,7 @@ export async function putPlayRecord(
   record: EditablePlayRecord,
   swapRecord?: string,
 ) {
-  await agent.call(
+  const response = await agent.call(
     "com.atproto.repo.putRecord",
     {},
     {
@@ -156,9 +156,14 @@ export async function putPlayRecord(
       swapRecord,
     },
   );
+  return { uri: response.data.uri, cid: response.data.cid };
 }
 
-export async function deletePlayRecord(agent: Agent, did: string, rkey: string) {
+export async function deletePlayRecord(
+  agent: Agent,
+  did: string,
+  rkey: string,
+) {
   await agent.call(
     "com.atproto.repo.deleteRecord",
     {},

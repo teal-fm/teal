@@ -4,12 +4,18 @@ import { Link } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { coverArtUrl, displayArtists } from "@/lib/teal/api";
-import { musicTrackHref } from "@/lib/teal/routes";
+import { listenHref, musicTrackHref } from "@/lib/teal/routes";
 import { Music2 } from "lucide-react-native";
 
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 
-export default function ProfileListeningRow({ play }: { play: PlayView }) {
+export default function ProfileListeningRow({
+  play,
+  syncing = false,
+}: {
+  play: PlayView;
+  syncing?: boolean;
+}) {
   const [artFailed, setArtFailed] = useState(false);
   const art = artFailed ? undefined : coverArtUrl(play.releaseMbId, 100);
   const artists = displayArtists(play) || "Unknown artist";
@@ -28,17 +34,18 @@ export default function ProfileListeningRow({ play }: { play: PlayView }) {
   return (
     <Link
       href={
-        musicTrackHref(
+        (syncing ? listenHref(play.authorDid, play.rkey) : undefined) ||
+        (musicTrackHref(
           artists,
           play.releaseName,
           play.trackName,
           play.uri,
-        ) as any
+        ) as any)
       }
       asChild
     >
       <Pressable
-        accessibilityLabel={`${play.trackName} by ${artists}${date ? `, listened ${date}` : ""}`}
+        accessibilityLabel={`${play.trackName} by ${artists}${date ? `, listened ${date}` : ""}${syncing ? ", saved and syncing" : ""}`}
         className="min-h-20 flex-row items-center gap-3 border-b border-border/70 py-3 web:hover:bg-muted/50"
       >
         <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-md bg-muted">
@@ -62,6 +69,11 @@ export default function ProfileListeningRow({ play }: { play: PlayView }) {
           </Text>
           {date && (
             <Text className="text-xs text-muted-foreground">{date}</Text>
+          )}
+          {syncing && (
+            <Text className="text-xs font-semibold text-primary">
+              Saved, syncing
+            </Text>
           )}
         </View>
       </Pressable>

@@ -13,8 +13,10 @@ import {
   type SocialPlaylistItemView,
   type SocialPlaylistView,
 } from "@/lib/teal/api";
+import { searchPendingListens } from "@/lib/teal/pendingListens";
 import { playViewToTrackView, type TrackViewLike } from "@/lib/teal/social";
 import { useStore } from "@/stores/mainStore";
+import { usePendingListens } from "@/stores/pendingListenStore";
 import { RichText as AtprotoRichText } from "@atproto/api";
 import { Music2, Search } from "lucide-react-native";
 
@@ -31,6 +33,7 @@ type TrackSearchResult = {
   release?: string;
   artwork?: string;
   detail: string;
+  pending?: boolean;
   sourceUri?: string;
 };
 
@@ -347,6 +350,19 @@ function resultFromHistory(song: SongResult): TrackSearchResult {
   };
 }
 
+function resultFromPendingListen(play: PlayView): TrackSearchResult {
+  return {
+    id: `history:${play.recordingMbId || play.uri}`,
+    track: playViewToTrackView(play),
+    title: play.trackName,
+    artist: play.artists.map((artist) => artist.artistName).join(", "),
+    release: play.releaseName,
+    artwork: play.releaseMbId ? coverArtUrl(play.releaseMbId, 160) : undefined,
+    detail: "Saved · syncing",
+    pending: true,
+  };
+}
+
 export function PlaylistTrackPicker({
   playlist,
   items,
@@ -367,17 +383,41 @@ export function PlaylistTrackPicker({
   const [query, setQuery] = useState("");
   const [artistQuery, setArtistQuery] = useState("");
   const [historyResults, setHistoryResults] = useState<TrackSearchResult[]>([]);
+  const [historyActor, setHistoryActor] = useState<string>();
   const [musicBrainzResults, setMusicBrainzResults] = useState<
     TrackSearchResult[]
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pending = usePendingListens(pdsAgent?.did);
 
   const addedKeys = useMemo(
     () => new Set(items.map((item) => trackKey(item.track))),
     [items],
   );
-  const results = source === "history" ? historyResults : musicBrainzResults;
+  const results = useMemo(() => {
+    if (source !== "history") return musicBrainzResults;
+    const local = pdsAgent?.did
+      ? searchPendingListens(pdsAgent.did, query, pending).map(
+          resultFromPendingListen,
+        )
+      : [];
+    const indexed = historyActor === pdsAgent?.did ? historyResults : [];
+    const known = new Set<string>();
+    return [...local, ...indexed].filter((result) => {
+      if (known.has(result.id)) return false;
+      known.add(result.id);
+      return true;
+    });
+  }, [
+    historyActor,
+    historyResults,
+    musicBrainzResults,
+    pending,
+    pdsAgent?.did,
+    query,
+    source,
+  ]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -410,8 +450,10 @@ export function PlaylistTrackPicker({
       request
         .then((nextResults) => {
           if (!mounted) return;
-          if (source === "history") setHistoryResults(nextResults);
-          else setMusicBrainzResults(nextResults);
+          if (source === "history") {
+            setHistoryResults(nextResults);
+            setHistoryActor(pdsAgent?.did);
+          } else setMusicBrainzResults(nextResults);
         })
         .catch((searchError) => {
           if (!mounted) return;
@@ -489,13 +531,33 @@ export function PlaylistTrackPicker({
         )}
         {source === "history" && (
           <Text className="mt-2 text-sm text-muted-foreground">
-            Recently saved listens may take a moment to appear here. You can
-            also find them in MusicBrainz.
+            Your saved listens are available while public listening history
+            updates.
           </Text>
         )}
       </View>
 
       <View className="px-2 py-2">
+        {results.length > 0 && loading && (
+          <Text
+            accessibilityLiveRegion="polite"
+            className="px-3 py-2 text-sm text-muted-foreground"
+          >
+            {source === "history"
+              ? "Refreshing your history…"
+              : "Searching MusicBrainz…"}
+          </Text>
+        )}
+        {results.length > 0 && error && (
+          <Text
+            accessibilityRole="alert"
+            className="px-3 py-2 text-sm text-destructive"
+          >
+            {source === "history"
+              ? "Could not refresh your history. Your saved listens are still available below."
+              : "Could not refresh MusicBrainz results. Previous results remain below."}
+          </Text>
+        )}
         {source === "history" && !pdsAgent?.did ? (
           <View className="items-center px-6 py-8">
             <Text className="text-center font-black">
@@ -512,14 +574,14 @@ export function PlaylistTrackPicker({
               Type at least two characters to search.
             </Text>
           </View>
-        ) : loading ? (
+        ) : loading && results.length === 0 ? (
           <View className="items-center py-8">
             <ActivityIndicator />
             <Text className="mt-2 text-sm text-muted-foreground">
               Searching...
             </Text>
           </View>
-        ) : error ? (
+        ) : error && results.length === 0 ? (
           <Text className="px-3 py-6 text-center text-sm text-destructive">
             {error}
           </Text>
@@ -564,6 +626,11 @@ export function PlaylistTrackPicker({
                 >
                   {result.release || result.detail}
                 </Text>
+                {result.pending && result.release && (
+                  <Text className="text-xs text-muted-foreground">
+                    {result.detail}
+                  </Text>
+                )}
               </View>
               <AddTrackButton
                 playlist={playlist}
