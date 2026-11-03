@@ -69,10 +69,17 @@ impl ActorProfileIngestor {
             .stats_default_period
             .as_ref()
             .map(ToString::to_string);
+        // The lexicon caps favourites at four; keep only the first four if a client sends more.
+        let favorites = match profile.favorites.as_ref() {
+            Some(items) => Some(serde_json::to_value(
+                items.iter().take(4).collect::<Vec<_>>(),
+            )?),
+            None => None,
+        };
         sqlx::query(
             r#"
-                INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, stats_default_period, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, stats_default_period, created_at, favorites)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 ON CONFLICT (did) DO UPDATE SET
                     handle = EXCLUDED.handle,
                     display_name = EXCLUDED.display_name,
@@ -81,7 +88,8 @@ impl ActorProfileIngestor {
                     avatar = EXCLUDED.avatar,
                     banner = EXCLUDED.banner,
                     stats_default_period = EXCLUDED.stats_default_period,
-                    created_at = EXCLUDED.created_at;
+                    created_at = EXCLUDED.created_at,
+                    favorites = EXCLUDED.favorites;
             "#,
         )
         .bind(did)
@@ -93,6 +101,7 @@ impl ActorProfileIngestor {
         .bind(banner)
         .bind(stats_default_period)
         .bind(time_datetime)
+        .bind(favorites)
         .execute(&self.sql)
         .await?;
 

@@ -210,6 +210,7 @@ async fn delete_social_records(
     let mut record_uris = Vec::new();
     record_uris.extend(fetch_uris(tx, "social_posts", did).await?);
     record_uris.extend(fetch_uris(tx, "social_likes", did).await?);
+    record_uris.extend(fetch_uris(tx, "social_reactions", did).await?);
     record_uris.extend(fetch_uris(tx, "social_reposts", did).await?);
     record_uris.extend(fetch_uris(tx, "social_follows", did).await?);
     record_uris.extend(fetch_uris(tx, "social_playlists", did).await?);
@@ -230,6 +231,7 @@ async fn delete_social_records(
     delete_by_did(tx, "social_playlists", did).await?;
     delete_by_did(tx, "social_reposts", did).await?;
     delete_by_did(tx, "social_likes", did).await?;
+    delete_by_did(tx, "social_reactions", did).await?;
     delete_by_did(tx, "social_posts", did).await?;
     delete_by_did(tx, "social_follows", did).await?;
 

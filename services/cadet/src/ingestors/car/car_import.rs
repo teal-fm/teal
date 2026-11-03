@@ -69,6 +69,7 @@ fn stable_collection_for(collection: &str) -> Option<&'static str> {
         "fm.teal.feed.social.like" | "fm.teal.alpha.feed.social.like" => {
             Some("fm.teal.feed.social.like")
         }
+        "fm.teal.feed.social.reaction" => Some("fm.teal.feed.social.reaction"),
         "fm.teal.feed.social.repost" | "fm.teal.alpha.feed.social.repost" => {
             Some("fm.teal.feed.social.repost")
         }

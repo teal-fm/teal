@@ -11,6 +11,7 @@ use super::assemble_at_uri;
 pub enum SocialCollection {
     Post,
     Like,
+    Reaction,
     Repost,
     Follow,
     Playlist,
@@ -24,6 +25,7 @@ impl SocialCollection {
         match self {
             Self::Post => "fm.teal.feed.social.post",
             Self::Like => "fm.teal.feed.social.like",
+            Self::Reaction => "fm.teal.feed.social.reaction",
             Self::Repost => "fm.teal.feed.social.repost",
             Self::Follow => "fm.teal.graph.follow",
             Self::Playlist => "fm.teal.feed.social.playlist",
@@ -58,6 +60,9 @@ impl SocialRecordIngestor {
         match self.collection {
             SocialCollection::Post => insert_post(&mut tx, &uri, did, rkey, cid, record).await?,
             SocialCollection::Like => insert_like(&mut tx, &uri, did, rkey, cid, record).await?,
+            SocialCollection::Reaction => {
+                insert_emoji_reaction(&mut tx, &uri, did, rkey, cid, record).await?
+            }
             SocialCollection::Repost => {
                 insert_repost(&mut tx, &uri, did, rkey, cid, record).await?
             }
@@ -98,6 +103,7 @@ impl SocialRecordIngestor {
         match self.collection {
             SocialCollection::Post => remove_post(tx, uri).await,
             SocialCollection::Like => remove_reaction(tx, uri, "social_likes", "like_count").await,
+            SocialCollection::Reaction => remove_emoji_reaction(tx, uri).await,
             SocialCollection::Repost => {
                 remove_reaction(tx, uri, "social_reposts", "repost_count").await
             }
@@ -192,6 +198,68 @@ async fn insert_like(
     let subject_uri = required_ref_uri(record, "subject")?;
     increment_count(tx, &subject_uri, "like_count", 1).await?;
     insert_notification(tx, did, "like", uri, Some(&subject_uri), record).await
+}
+
+/// Emoji reactions are counted on read (grouped by emoji), so unlike likes they keep no
+/// running total in `social_subject_counts`.
+async fn insert_emoji_reaction(
+    tx: &mut Transaction<'_, Postgres>,
+    uri: &str,
+    did: &str,
+    rkey: &str,
+    cid: &str,
+    record: &Value,
+) -> anyhow::Result<()> {
+    let subject = required_value(record, "subject")?;
+    let subject_uri = required_ref_uri(record, "subject")?;
+    let emoji = validated_emoji(&required_str(record, "emoji")?)?;
+
+    sqlx::query(
+        r#"
+            INSERT INTO social_reactions (
+                uri, did, rkey, cid, subject_uri, subject_cid, emoji, created_at, record
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (did, subject_uri, emoji) DO UPDATE SET
+                uri = EXCLUDED.uri,
+                rkey = EXCLUDED.rkey,
+                cid = EXCLUDED.cid,
+                subject_cid = EXCLUDED.subject_cid,
+                created_at = EXCLUDED.created_at,
+                record = EXCLUDED.record,
+                indexed_at = NOW()
+        "#,
+    )
+    .bind(uri)
+    .bind(did)
+    .bind(rkey)
+    .bind(cid)
+    .bind(&subject_uri)
+    .bind(ref_cid(Some(subject)).ok_or_else(|| anyhow!("subject.cid is required"))?)
+    .bind(emoji)
+    .bind(required_datetime(record, "createdAt")?)
+    .bind(record.clone())
+    .execute(&mut **tx)
+    .await?;
+
+    insert_notification(tx, did, "reaction", uri, Some(&subject_uri), record).await
+}
+
+/// A reaction carries exactly one emoji. Without a grapheme segmenter we accept short,
+/// non-blank strings with no ASCII letters, digits, or whitespace, which keeps out text
+/// while allowing multi-codepoint emoji (skin tones, ZWJ sequences, flags).
+fn validated_emoji(raw: &str) -> anyhow::Result<String> {
+    let emoji = raw.trim();
+    if emoji.is_empty() || emoji.len() > 64 {
+        return Err(anyhow!("emoji must be 1-64 bytes"));
+    }
+    if emoji
+        .chars()
+        .any(|c| c.is_ascii_alphanumeric() || c.is_whitespace())
+    {
+        return Err(anyhow!("emoji must not contain text"));
+    }
+    Ok(emoji.to_string())
 }
 
 async fn insert_repost(
@@ -451,6 +519,17 @@ async fn remove_reaction(
     {
         increment_count(tx, &row.0, count_column, -1).await?;
     }
+    cleanup_record_indexes(tx, uri).await
+}
+
+async fn remove_emoji_reaction(
+    tx: &mut Transaction<'_, Postgres>,
+    uri: &str,
+) -> anyhow::Result<()> {
+    sqlx::query("DELETE FROM social_reactions WHERE uri = $1")
+        .bind(uri)
+        .execute(&mut **tx)
+        .await?;
     cleanup_record_indexes(tx, uri).await
 }
 
@@ -736,7 +815,7 @@ mod tests {
 
     use super::{
         blob_cid, did_from_at_uri, notification_recipient, ref_cid, ref_uri, required_datetime,
-        required_ref_uri, required_string_array, string_array,
+        required_ref_uri, required_string_array, string_array, validated_emoji,
     };
 
     #[test]
@@ -821,5 +900,15 @@ mod tests {
             Some("did:plc:post-author")
         );
         assert!(did_from_at_uri("https://example.com/not-at-uri").is_none());
+    }
+
+    #[test]
+    fn accepts_single_emoji_and_rejects_text() {
+        assert_eq!(validated_emoji("🔥").unwrap(), "🔥");
+        assert_eq!(validated_emoji(" 🫶🏽 ").unwrap(), "🫶🏽");
+        assert_eq!(validated_emoji("👩‍🎤").unwrap(), "👩‍🎤");
+        assert!(validated_emoji("").is_err());
+        assert!(validated_emoji("lol").is_err());
+        assert!(validated_emoji("🔥 🔥").is_err());
     }
 }

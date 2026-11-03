@@ -77,6 +77,10 @@ pub fn build_ingestors_with_retry(
             ingestors::teal::social::SocialCollection::Like,
         ),
         (
+            "fm.teal.feed.social.reaction",
+            ingestors::teal::social::SocialCollection::Reaction,
+        ),
+        (
             "fm.teal.feed.social.repost",
             ingestors::teal::social::SocialCollection::Repost,
         ),
@@ -138,6 +142,7 @@ fn build_ingestors_for_names() -> Vec<String> {
         "fm.teal.actor.profileStatus".to_string(),
         "fm.teal.feed.social.post".to_string(),
         "fm.teal.feed.social.like".to_string(),
+        "fm.teal.feed.social.reaction".to_string(),
         "fm.teal.feed.social.repost".to_string(),
         "fm.teal.graph.follow".to_string(),
         "fm.teal.feed.social.playlist".to_string(),
