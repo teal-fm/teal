@@ -1,33 +1,39 @@
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { useFonts } from "expo-font";
 import { Stack, usePathname } from "expo-router";
 import Head from "expo-router/head";
 import * as SplashScreen from "expo-splash-screen";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import {
-  DarkTheme,
-  DefaultTheme,
-  Theme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router";
+
+type Theme = typeof DefaultTheme;
 import { PortalHost } from "@rn-primitives/portal";
 
 import "react-native-reanimated";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { verifyInstallation } from "nativewind";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 import { GlobalTextClassContext } from "../components/ui/text";
-import { useColorScheme } from "../lib/useColorScheme";
+import { queryClient } from "../lib/query";
+import {
+  restoreColorSchemePreference,
+  useColorScheme,
+} from "../lib/useColorScheme";
 
 import "../global.css";
 
-import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
+// The redesign sets UI type in the platform system face.
+const SYSTEM_FONT = Platform.select({
+  web: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Roboto, "Segoe UI", sans-serif',
+  default: "System",
+});
 let defaultFamily = (weight: string) => {
   return {
-    fontFamily: "DM Sans",
+    fontFamily: SYSTEM_FONT,
     fontWeight: weight,
   } as Theme["fonts"]["regular"];
 };
@@ -40,13 +46,17 @@ const THEME_FONTS: Theme["fonts"] = {
 
 const DARK_THEME: Theme = {
   ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: "#000000", primary: "#3fc9bd" },
   fonts: THEME_FONTS,
 };
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: "#ffffff", primary: "#0b7a73" },
   fonts: THEME_FONTS,
 };
+
+void restoreColorSchemePreference();
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -87,9 +97,9 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaView className="flex min-h-screen flex-1 bg-background">
+    <QueryClientProvider client={queryClient}>
       <RootLayoutNav />
-    </SafeAreaView>
+    </QueryClientProvider>
   );
 }
 
@@ -100,7 +110,6 @@ function useTheme() {
 }
 
 function RootLayoutNav() {
-  verifyInstallation();
   const pathname = usePathname();
   const section = pathname.split("/")[1];
   const pageTitle =
@@ -136,7 +145,7 @@ function RootLayoutNav() {
         <title>{pageTitle} · Teal</title>
       </Head>
       <ThemeProvider value={useTheme()}>
-        <GlobalTextClassContext.Provider value="font-sans">
+        <GlobalTextClassContext.Provider value="font-sans text-ink">
           <BottomSheetModalProvider>
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

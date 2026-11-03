@@ -5,7 +5,7 @@ type Color = [number, number, number];
 const css = readFileSync(join(__dirname, "../../global.css"), "utf8");
 const blocks = {
   light: css.match(/\s:root\s*\{([^}]+)\}/)?.[1] || "",
-  dark: css.match(/\.dark:root\s*\{([^}]+)\}/)?.[1] || "",
+  dark: css.match(/@variant dark\s*\{([^}]+)\}/)?.[1] || "",
 };
 
 function token(block: string, name: string): Color {

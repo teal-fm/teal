@@ -12,7 +12,6 @@ const Textarea = React.forwardRef<
       className,
       multiline = true,
       numberOfLines = 4,
-      placeholderClassName,
       ...props
     },
     ref,
@@ -25,7 +24,6 @@ const Textarea = React.forwardRef<
           props.editable === false && "opacity-50 web:cursor-not-allowed",
           className,
         )}
-        placeholderClassName={cn("text-muted-foreground", placeholderClassName)}
         multiline={multiline}
         numberOfLines={numberOfLines}
         textAlignVertical="top"

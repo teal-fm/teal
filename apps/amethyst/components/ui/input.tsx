@@ -7,7 +7,7 @@ import { GlobalTextClassContext, TextClassContext } from "./text";
 const Input = React.forwardRef<
   React.ElementRef<typeof TextInput>,
   TextInputProps
->(({ className, placeholderClassName, ...props }, ref) => {
+>(({ className, ...props }, ref) => {
   const cc = React.useContext(TextClassContext);
   const gc = React.useContext(GlobalTextClassContext);
   return (
@@ -20,7 +20,6 @@ const Input = React.forwardRef<
         props.editable === false && "opacity-50 web:cursor-not-allowed",
         className,
       )}
-      placeholderClassName={cn("text-muted-foreground", placeholderClassName)}
       {...props}
     />
   );

@@ -1,83 +1,69 @@
-import { useCallback, useEffect } from "react";
-import { useColorScheme as useNativewindColorScheme } from "nativewind";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Appearance,
+  Platform,
+  useColorScheme as useSystemColorScheme,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const COLOR_SCHEME_STORAGE_KEY = "teal-color-scheme";
-type ThemePreference = "light" | "dark" | "system";
+export type ThemePreference = "light" | "dark" | "system";
 
-function getStoredColorScheme(): ThemePreference | null {
-  if (typeof window === "undefined") {
-    return null;
+function isPreference(value: unknown): value is ThemePreference {
+  return value === "light" || value === "dark" || value === "system";
+}
+
+/**
+ * The app follows the system appearance. On iOS and Android a stored override is
+ * applied through `Appearance`, which the style engine reads for `dark:` styles.
+ * Browsers expose no override, so the web always follows the system.
+ */
+export const canOverrideColorScheme = Platform.OS !== "web";
+
+function applyPreference(preference: ThemePreference) {
+  if (canOverrideColorScheme) {
+    Appearance.setColorScheme(preference === "system" ? "unspecified" : preference);
   }
+}
 
+export async function restoreColorSchemePreference() {
+  if (!canOverrideColorScheme) return;
   try {
-    const storedColorScheme = window.localStorage.getItem(
-      COLOR_SCHEME_STORAGE_KEY,
-    );
-
-    if (
-      storedColorScheme === "light" ||
-      storedColorScheme === "dark" ||
-      storedColorScheme === "system"
-    ) {
-      return storedColorScheme;
-    }
+    const stored = await AsyncStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
+    if (isPreference(stored)) applyPreference(stored);
   } catch {
-    // localStorage can be unavailable in private or restricted browser contexts.
+    // Storage can be unavailable; the system appearance still applies.
   }
-
-  return null;
 }
 
 export function useColorScheme() {
-  const nativewind = useNativewindColorScheme();
-  const storedColorScheme = getStoredColorScheme();
-
-  const setColorScheme = useCallback(
-    (nextColorScheme: ThemePreference) => {
-      nativewind.setColorScheme(nextColorScheme);
-
-      if (typeof window === "undefined") {
-        return;
-      }
-
-      try {
-        if (nextColorScheme === "system") {
-          window.localStorage.removeItem(COLOR_SCHEME_STORAGE_KEY);
-        } else {
-          window.localStorage.setItem(
-            COLOR_SCHEME_STORAGE_KEY,
-            nextColorScheme,
-          );
-        }
-      } catch {
-        // localStorage can be unavailable in private or restricted browser contexts.
-      }
-    },
-    [nativewind.setColorScheme],
-  );
+  const colorScheme = useSystemColorScheme() === "dark" ? "dark" : "light";
+  const [preference, setPreference] = useState<ThemePreference>("system");
 
   useEffect(() => {
-    if (
-      storedColorScheme &&
-      storedColorScheme !== "system" &&
-      nativewind.colorScheme !== storedColorScheme
-    ) {
-      nativewind.setColorScheme(storedColorScheme);
-    }
-  }, [nativewind.colorScheme, nativewind.setColorScheme, storedColorScheme]);
+    if (!canOverrideColorScheme) return;
+    AsyncStorage.getItem(COLOR_SCHEME_STORAGE_KEY)
+      .then((stored) => {
+        if (isPreference(stored)) setPreference(stored);
+      })
+      .catch(() => undefined);
+  }, []);
 
-  const colorScheme =
-    nativewind.colorScheme ||
-    (storedColorScheme === "system" ? null : storedColorScheme) ||
-    "dark";
-  const toggleColorScheme = useCallback(() => {
-    setColorScheme(colorScheme === "dark" ? "light" : "dark");
-  }, [colorScheme, setColorScheme]);
+  const setColorScheme = useCallback((next: ThemePreference) => {
+    setPreference(next);
+    applyPreference(next);
+    if (!canOverrideColorScheme) return;
+    const write =
+      next === "system"
+        ? AsyncStorage.removeItem(COLOR_SCHEME_STORAGE_KEY)
+        : AsyncStorage.setItem(COLOR_SCHEME_STORAGE_KEY, next);
+    write.catch(() => undefined);
+  }, []);
 
   return {
     colorScheme,
+    preference,
     isDarkColorScheme: colorScheme === "dark",
     setColorScheme,
-    toggleColorScheme,
   };
 }

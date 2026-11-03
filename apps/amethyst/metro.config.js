@@ -2,7 +2,7 @@
 const { getDefaultConfig } = require("expo/metro-config");
 const { FileStore } = require("metro-cache");
 const path = require("path");
-const { withNativeWind } = require("nativewind/metro");
+const { withNativewind } = require("nativewind/metro");
 
 const {
   wrapWithReanimatedMetroConfig,
@@ -32,5 +32,5 @@ config.cacheStores = [
 ];
 
 module.exports = wrapWithReanimatedMetroConfig(
-  withNativeWind(config, { input: "./global.css" }),
+  withNativewind(config),
 );
