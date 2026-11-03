@@ -44,15 +44,17 @@ const THEME_FONTS: Theme["fonts"] = {
   regular: defaultFamily("400"),
 };
 
+// Scenes are transparent so the blurred-cover backdrop shows through; the page
+// ground is painted by the backdrop itself (and html/body on the web).
 const DARK_THEME: Theme = {
   ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: "#000000", primary: "#3fc9bd" },
+  colors: { ...DarkTheme.colors, background: "transparent", primary: "#3fc9bd" },
   fonts: THEME_FONTS,
 };
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: "#ffffff", primary: "#0b7a73" },
+  colors: { ...DefaultTheme.colors, background: "transparent", primary: "#0b7a73" },
   fonts: THEME_FONTS,
 };
 

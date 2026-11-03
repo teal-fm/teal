@@ -8,7 +8,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { normalizeHandle } from "@/lib/teal/actors";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
-import { Bell, Compass, House, UserRound, type LucideIcon } from "lucide-react-native";
+import { Bell, Compass, House, SquarePen, UserRound, type LucideIcon } from "lucide-react-native";
 
 export const WIDE_BREAKPOINT = 1000;
 
@@ -126,6 +126,14 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
             </Text>
           </Pressable>
         ))}
+        {me.signedIn ? (
+          <Link href="/compose" asChild>
+            <Pressable className="mx-0.5 mt-4 h-[46px] flex-row items-center justify-center gap-2 rounded-full bg-tint shadow-lg">
+              <Icon icon={SquarePen} size={19} className="text-on-tint" />
+              <Text className="text-[15.5px] font-semibold text-on-tint">Post a song</Text>
+            </Pressable>
+          </Link>
+        ) : null}
         <View className="mt-auto gap-3">
           <Text className="px-3 text-[11.5px] leading-4 text-ink-3">
             Early work in progress: expect bugs and the odd database wipe.

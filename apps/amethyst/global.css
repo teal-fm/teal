@@ -130,6 +130,11 @@
   }
 }
 
+html,
+body {
+  background-color: var(--ground);
+}
+
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

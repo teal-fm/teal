@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -28,6 +29,8 @@ export function Cover({
   accessibilityLabel?: string;
 }) {
   const source = uri ?? coverUri(releaseMbId, size && size <= 250 ? 250 : 500);
+  // The Cover Art Archive has no art for some releases; fall back to the disc.
+  const [failed, setFailed] = useState<string | undefined>();
   return (
     <View
       className={cn("aspect-square overflow-hidden bg-fill", className)}
@@ -35,8 +38,9 @@ export function Cover({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityLabel ? "image" : undefined}
     >
-      {source ? (
+      {source && failed !== source ? (
         <Image
+          onError={() => setFailed(source)}
           source={{ uri: source }}
           style={{ width: "100%", height: "100%" }}
           contentFit="cover"

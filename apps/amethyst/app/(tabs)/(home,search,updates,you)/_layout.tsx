@@ -15,6 +15,8 @@ export default function SharedStack() {
         headerShown: false,
         contentStyle: { backgroundColor: "transparent" },
       }}
-    />
+    >
+      <Stack.Screen name="compose" options={{ presentation: "modal" }} />
+    </Stack>
   );
 }
