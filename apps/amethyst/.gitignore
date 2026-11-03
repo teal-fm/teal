@@ -38,3 +38,9 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Impeccable design workspace: comps, captures, and build state stay local.
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/build/
+.impeccable/live/

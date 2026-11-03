@@ -5,12 +5,15 @@ import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { useColorScheme } from "@/lib/useColorScheme";
+import {
+  canOverrideColorScheme,
+  useColorScheme,
+} from "@/lib/useColorScheme";
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
 
 export default function Settings() {
-  const { colorScheme, setColorScheme } = useColorScheme();
+  const { preference, setColorScheme } = useColorScheme();
   const appviewDid = useStore((state) => state.tealDid);
   const setAppviewDid = useStore((state) => state.setTealDid);
   const status = useStore((state) => state.status);
@@ -43,8 +46,11 @@ export default function Settings() {
             Appearance
           </Text>
           <Text className="text-sm text-muted-foreground">
-            Choose a theme, or follow your device.
+            {canOverrideColorScheme
+              ? "Choose a theme, or follow your device."
+              : "Teal follows your device's light or dark setting."}
           </Text>
+          {canOverrideColorScheme && (
           <View
             role="group"
             accessibilityLabel="Theme"
@@ -53,15 +59,16 @@ export default function Settings() {
             {(["light", "dark", "system"] as const).map((value) => (
               <Button
                 key={value}
-                variant={colorScheme === value ? "default" : "outline"}
-                accessibilityState={{ selected: colorScheme === value }}
-                aria-pressed={colorScheme === value}
+                variant={preference === value ? "default" : "outline"}
+                accessibilityState={{ selected: preference === value }}
+                aria-pressed={preference === value}
                 onPress={() => setColorScheme(value)}
               >
                 <Text>{value[0].toUpperCase() + value.slice(1)}</Text>
               </Button>
             ))}
           </View>
+          )}
         </View>
         <View className="gap-3 border-t border-border pt-6">
           <Text role="heading" aria-level={3} className="text-lg font-semibold">

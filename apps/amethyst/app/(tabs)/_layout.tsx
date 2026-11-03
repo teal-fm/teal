@@ -1,146 +1,38 @@
-import React from "react";
-import { Platform, Pressable, type ColorValue } from "react-native";
-import { Link, Tabs } from "expo-router";
-import useIsMobile from "@/hooks/useIsMobile";
-import { useStore } from "@/stores/mainStore";
-import {
-  FilePen,
-  Disc3,
-  Home,
-  LogOut,
-  Search,
-  Settings,
-  type LucideIcon,
-} from "lucide-react-native";
-import { useColorScheme } from "nativewind";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { useColorScheme } from "@/lib/useColorScheme";
 
-import Colors from "../../constants/Colors";
-import { Icon, iconWithClassName } from "../../lib/icons/iconWithClassName";
+export const unstable_settings = {
+  initialRouteName: "(home)",
+};
 
-function TabBarIcon(props: { name: LucideIcon; color: ColorValue }) {
-  const Name = props.name;
-  iconWithClassName(Name);
-  return <Name size={28} className="text-muted" {...props} color={String(props.color)} />;
-}
-
+/**
+ * Four places, one native tab bar: UITabBar (Liquid Glass) on iOS, Material
+ * navigation on Android. Profiles, posts, and music pages push onto whichever
+ * tab you are in; see the shared `(home,search,updates,you)` stack.
+ */
 export default function TabLayout() {
-  const { colorScheme } = useColorScheme();
-  const authStatus = useStore((state) => state.status);
-  const isMobile = useIsMobile();
-  const hideTabBar = !isMobile || Platform.OS === "web";
-
+  const { isDarkColorScheme } = useColorScheme();
   return (
-    <Tabs
-      screenOptions={{
-        title: "Home",
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in
-        // React Navigation v6.
-        headerShown: false, // useClientOnlyValue(false, true),
-        headerStyle: {
-          height: 50,
-        },
-        tabBarShowLabel: isMobile,
-
-        tabBarStyle: {
-          //height: 75,
-          display: hideTabBar ? "none" : "flex",
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name={Home} color={color} />,
-          headerRight: () => (
-            <Link href="/auth/logoutModal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <Icon
-                    icon={LogOut}
-                    className="mr-4 text-2xl text-muted-foreground"
-                    name="log-out"
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search/index"
-        options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => <TabBarIcon name={Search} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="manual-listens"
-        options={{
-          title: "Add listens",
-          href: authStatus === "loggedIn" ? undefined : null,
-          tabBarIcon: ({ color }) => <TabBarIcon name={Disc3} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: "Notifications",
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="(stamp)"
-        options={{
-          title: "Stamp",
-          href: authStatus === "loggedIn" ? undefined : null,
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name={FilePen} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings/index"
-        options={{
-          title: "Settings",
-          href: authStatus === "loggedIn" ? undefined : null,
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name={Settings} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile/[handle]"
-        options={{
-          title: "Stamp",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name={FilePen} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="listen/[did]/[rkey]"
-        options={{
-          title: "Listen",
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="post/[did]/[rkey]"
-        options={{
-          title: "Post",
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="at:/[...uri]"
-        options={{
-          title: "AT URI",
-          href: null,
-        }}
-      />
-    </Tabs>
+    <NativeTabs tintColor={isDarkColorScheme ? "#3fc9bd" : "#0b7a73"}>
+      <NativeTabs.Trigger name="(home)">
+        <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} md="home" />
+        <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(search)">
+        <NativeTabs.Trigger.Icon sf="safari" md="explore" />
+        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(updates)">
+        <NativeTabs.Trigger.Icon sf={{ default: "bell", selected: "bell.fill" }} md="notifications" />
+        <NativeTabs.Trigger.Label>Activity</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(you)">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "person.crop.circle", selected: "person.crop.circle.fill" }}
+          md="account_circle"
+        />
+        <NativeTabs.Trigger.Label>You</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
