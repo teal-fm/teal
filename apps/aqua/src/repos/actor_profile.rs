@@ -10,6 +10,7 @@ use serde_json::Value;
 use types::{
     app_bsky::richtext::facet::Facet,
     fm_teal::actor::profile_status::ProfileStatus,
+    fm_teal::actor::profile::FeaturedItem,
     fm_teal::actor::{ProfileView, StatusView},
 };
 
@@ -33,6 +34,7 @@ pub struct PgProfileRepoRows {
     pub description_facets: Option<Value>,
     pub did: Option<String>,
     pub display_name: Option<String>,
+    pub favorites: Option<Value>,
     pub handle: Option<String>,
     pub profile_status: Option<Value>,
     pub stats_default_period: Option<String>,
@@ -62,6 +64,7 @@ impl From<PgProfileRepoRows> for ProfileView {
                 .and_then(|v| from_json_value::<Vec<Facet>>(v).ok()),
             did: row.did.map(Into::into),
             display_name: row.display_name.map(Into::into),
+            favorites: row.favorites.and_then(|v| from_json_value::<Vec<FeaturedItem>>(v).ok()),
             featured_item: None,
             profile_status: row.profile_status.and_then(profile_status_from_record),
             stats_default_period: row.stats_default_period.map(Into::into),
@@ -137,6 +140,7 @@ impl ActorProfileRepo for PgDataSource {
                 p.description_facets,
                 actors.did,
                 p.display_name,
+                p.favorites,
                 p.handle,
                 ps.record as profile_status,
                 p.stats_default_period,
@@ -177,6 +181,7 @@ mod tests {
             description_facets: None,
             did: Some("did:plc:ewvi7nxzyoun6zhxrhs64oiz".into()),
             display_name: Some("Teal listener".into()),
+            favorites: None,
             handle: None,
             profile_status: Some(profile_status),
             stats_default_period: None,

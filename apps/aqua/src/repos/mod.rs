@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::repos::feed_play::FeedPlayRepo;
 use crate::repos::graph::GraphRepo;
+use crate::repos::listening::ListeningRepo;
 use crate::repos::music::MusicRepo;
 use crate::repos::search::SearchRepo;
 use crate::repos::social::SocialRepo;
@@ -18,6 +19,7 @@ use crate::repos::stats::StatsRepo;
 pub mod actor_profile;
 pub mod feed_play;
 pub mod graph;
+pub mod listening;
 pub mod music;
 pub mod pg;
 pub mod search;
@@ -29,6 +31,7 @@ pub trait DataSource:
     ActorProfileRepo
     + FeedPlayRepo
     + GraphRepo
+    + ListeningRepo
     + MusicRepo
     + SearchRepo
     + SocialRepo

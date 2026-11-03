@@ -3,7 +3,12 @@ use serde::Serialize;
 use serde_json::Value;
 use types::fm_teal::actor::MiniProfileView;
 
-use super::{mini_profile, pg::PgDataSource, time_to_chrono_utc, utc_to_atrium_datetime};
+use super::{
+    listening::{mini_profiles, parse_mbid, ListeningRepo, ReactionSummary},
+    mini_profile,
+    pg::PgDataSource,
+    time_to_chrono_utc, utc_to_atrium_datetime,
+};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,6 +32,18 @@ pub struct SocialPostView {
     pub reply_count: i32,
     pub viewer_like: Option<String>,
     pub viewer_repost: Option<String>,
+    pub reactions: Vec<ReactionSummary>,
+    pub listen_context: Option<ListenContext>,
+}
+
+/// How the viewer's circle has been listening to a post's recording.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListenContext {
+    pub circle_listener_count: i32,
+    pub circle_sample: Vec<MiniProfileView>,
+    pub author_play_count: i32,
+    pub viewer_play_count: i32,
 }
 
 #[derive(Serialize)]
@@ -248,10 +265,9 @@ impl SocialRepo for PgDataSource {
         )
         .await?;
         let cursor = page_cursor(&rows, limit, offset)?;
-        Ok(Page {
-            items: rows.into_iter().take(limit as usize).collect(),
-            cursor,
-        })
+        let mut items: Vec<SocialPostView> = rows.into_iter().take(limit as usize).collect();
+        enrich_posts(self, &mut items, viewer).await?;
+        Ok(Page { items, cursor })
     }
 
     async fn get_post(
@@ -269,7 +285,9 @@ impl SocialRepo for PgDataSource {
             None,
         )
         .await?;
-        Ok(rows.into_iter().next())
+        let mut items: Vec<SocialPostView> = rows.into_iter().take(1).collect();
+        enrich_posts(self, &mut items, viewer).await?;
+        Ok(items.into_iter().next())
     }
 
     async fn get_post_replies(
@@ -292,10 +310,9 @@ impl SocialRepo for PgDataSource {
         )
         .await?;
         let cursor = page_cursor(&rows, limit, offset)?;
-        Ok(Page {
-            items: rows.into_iter().take(limit as usize).collect(),
-            cursor,
-        })
+        let mut items: Vec<SocialPostView> = rows.into_iter().take(limit as usize).collect();
+        enrich_posts(self, &mut items, viewer).await?;
+        Ok(Page { items, cursor })
     }
 
     async fn get_post_likes(
@@ -623,8 +640,82 @@ async fn fetch_posts(
             reply_count: row.reply_count,
             viewer_like: row.viewer_like,
             viewer_repost: row.viewer_repost,
+            reactions: Vec::new(),
+            listen_context: None,
         })
         .collect())
+}
+
+/// Attach reaction summaries to every post and, for a signed-in viewer, how their circle
+/// has been listening to each post's recording in the last 24 hours.
+async fn enrich_posts(
+    repo: &PgDataSource,
+    posts: &mut [SocialPostView],
+    viewer: Option<&str>,
+) -> anyhow::Result<()> {
+    if posts.is_empty() {
+        return Ok(());
+    }
+    let uris: Vec<String> = posts.iter().map(|p| p.uri.clone()).collect();
+    let mut reactions = repo.reaction_summaries(&uris, viewer).await?;
+    for post in posts.iter_mut() {
+        post.reactions = reactions.remove(&post.uri).unwrap_or_default();
+    }
+
+    let Some(viewer) = viewer else {
+        return Ok(());
+    };
+    let recordings: Vec<Option<uuid::Uuid>> = posts
+        .iter()
+        .map(|p| parse_mbid(p.track.get("recordingMbId").and_then(Value::as_str)))
+        .collect();
+    if recordings.iter().all(Option::is_none) {
+        return Ok(());
+    }
+    let authors: Vec<String> = posts.iter().map(|p| p.author_did.clone()).collect();
+    let rows = sqlx::query_as::<_, (i64, i64, Vec<String>, i64, i64)>(
+        r#"
+            SELECT
+                x.idx,
+                (
+                    SELECT COUNT(DISTINCT p.did) FROM plays p
+                    JOIN social_follows f ON f.subject_did = p.did AND f.did = $1
+                    WHERE p.recording_mbid = x.rec AND p.played_time >= NOW() - INTERVAL '24 hours'
+                ),
+                ARRAY(
+                    SELECT DISTINCT p.did FROM plays p
+                    JOIN social_follows f ON f.subject_did = p.did AND f.did = $1
+                    WHERE p.recording_mbid = x.rec AND p.played_time >= NOW() - INTERVAL '24 hours'
+                    LIMIT 3
+                ),
+                (SELECT COUNT(*) FROM plays p WHERE p.did = x.author AND p.recording_mbid = x.rec),
+                (SELECT COUNT(*) FROM plays p WHERE p.did = $1 AND p.recording_mbid = x.rec)
+            FROM unnest($2::uuid[], $3::text[]) WITH ORDINALITY AS x(rec, author, idx)
+            WHERE x.rec IS NOT NULL
+        "#,
+    )
+    .bind(viewer)
+    .bind(&recordings)
+    .bind(&authors)
+    .fetch_all(&repo.db)
+    .await?;
+
+    let sample_dids: Vec<String> = rows.iter().flat_map(|r| r.2.clone()).collect();
+    let profiles = mini_profiles(repo, &sample_dids).await?;
+    for (idx, circle, sample, author_plays, viewer_plays) in rows {
+        if let Some(post) = posts.get_mut(idx as usize - 1) {
+            post.listen_context = Some(ListenContext {
+                circle_listener_count: circle as i32,
+                circle_sample: sample
+                    .iter()
+                    .filter_map(|did| profiles.get(did).cloned())
+                    .collect(),
+                author_play_count: author_plays as i32,
+                viewer_play_count: viewer_plays as i32,
+            });
+        }
+    }
+    Ok(())
 }
 
 async fn fetch_actions(
@@ -792,7 +883,7 @@ async fn fetch_badges(
         .collect())
 }
 
-async fn resolve_actor_to_did(repo: &PgDataSource, actor: &str) -> anyhow::Result<String> {
+pub(crate) async fn resolve_actor_to_did(repo: &PgDataSource, actor: &str) -> anyhow::Result<String> {
     if actor.starts_with("did:") {
         return Ok(actor.to_string());
     }
