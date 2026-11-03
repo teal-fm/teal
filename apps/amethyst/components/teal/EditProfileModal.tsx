@@ -9,12 +9,14 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { RichText as AtprotoRichText } from "@atproto/api";
+import { useQuery } from "@tanstack/react-query";
+import { Cover } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import { getProfileImageUrl } from "@/lib/teal/actors";
-import type { StatsPeriod } from "@/lib/teal/api";
+import { getUserTopReleases, type StatsPeriod } from "@/lib/teal/api";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { ImagePlus, Save, UserRoundPen, X } from "lucide-react-native";
@@ -30,7 +32,11 @@ type EditableProfile = Pick<
   | "avatar"
   | "banner"
   | "statsDefaultPeriod"
+  | "favorites"
 >;
+
+type FavouriteItem = { mbid: string; type: string };
+const MAX_FAVOURITES = 4;
 
 type EditProfileModalProps = {
   did: string;
@@ -105,6 +111,7 @@ export default function EditProfileModal({
   const [description, setDescription] = useState("");
   const [statsDefaultPeriod, setStatsDefaultPeriod] =
     useState<StatsPeriod>("90days");
+  const [favourites, setFavourites] = useState<FavouriteItem[]>([]);
   const [avatarUri, setAvatarUri] = useState("");
   const [bannerUri, setBannerUri] = useState("");
   const [saving, setSaving] = useState(false);
@@ -126,6 +133,7 @@ export default function EditProfileModal({
     setDisplayName(profile?.displayName || "");
     setDescription(profile?.description || "");
     setStatsDefaultPeriod(normalizeStatsPeriod(profile?.statsDefaultPeriod));
+    setFavourites((profile?.favorites as FavouriteItem[] | undefined) ?? []);
     setAvatarUri(currentAvatarUrl || "");
     setBannerUri(currentBannerUrl || "");
     setError(null);
@@ -191,6 +199,7 @@ export default function EditProfileModal({
         avatar,
         banner,
         statsDefaultPeriod,
+        favorites: favourites.length ? favourites : undefined,
       });
 
       if (swapRecord) {
@@ -225,6 +234,7 @@ export default function EditProfileModal({
         avatar: blobCid(avatar) || profile?.avatar,
         banner: blobCid(banner) || profile?.banner,
         statsDefaultPeriod: record.statsDefaultPeriod,
+        favorites: record.favorites,
       });
       onClose();
     } catch (e) {
@@ -352,6 +362,12 @@ export default function EditProfileModal({
                   ))}
                 </View>
               </View>
+              <FavouritesEditor
+                did={did}
+                visible={visible}
+                favourites={favourites}
+                onChange={setFavourites}
+              />
               {error && (
                 <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
                   <Text className="font-bold text-destructive">{error}</Text>
@@ -379,5 +395,82 @@ export default function EditProfileModal({
         </View>
       </View>
     </Modal>
+  );
+}
+
+function mbidOf(item: FavouriteItem) {
+  return item.mbid.replace(/^mbid:/, "");
+}
+
+/** Pick up to four favourite albums from your own most-played releases. */
+function FavouritesEditor({
+  did,
+  visible,
+  favourites,
+  onChange,
+}: {
+  did: string;
+  visible: boolean;
+  favourites: FavouriteItem[];
+  onChange: (next: FavouriteItem[]) => void;
+}) {
+  const top = useQuery({
+    queryKey: ["top-releases", did, "all"],
+    queryFn: () => getUserTopReleases(did, "all", 24),
+    enabled: visible,
+    staleTime: 10 * 60_000,
+  });
+  const chosen = new Set(favourites.map(mbidOf));
+  const toggle = (mbid: string) => {
+    if (chosen.has(mbid)) {
+      onChange(favourites.filter((f) => mbidOf(f) !== mbid));
+    } else if (favourites.length < MAX_FAVOURITES) {
+      onChange([...favourites, { mbid: `mbid:${mbid}`, type: "release" }]);
+    }
+  };
+  const releases = (top.data?.releases ?? []).filter((r) => r.mbid);
+
+  return (
+    <View className="gap-2">
+      <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+        Favourites ({favourites.length}/{MAX_FAVOURITES})
+      </Text>
+      <Text className="text-sm text-muted-foreground">
+        Choose up to four albums from what you play most. Tap again to remove.
+      </Text>
+      {top.isLoading ? (
+        <ActivityIndicator />
+      ) : releases.length === 0 ? (
+        <Text className="text-sm text-muted-foreground">
+          Once you have listening history, your top albums appear here to choose from.
+        </Text>
+      ) : (
+        <View className="flex-row flex-wrap gap-2">
+          {releases.map((release) => {
+            const mbid = release.mbid!.replace(/^mbid:/, "");
+            const order = favourites.findIndex((f) => mbidOf(f) === mbid);
+            const full = order < 0 && favourites.length >= MAX_FAVOURITES;
+            return (
+              <Pressable
+                key={mbid}
+                onPress={() => toggle(mbid)}
+                disabled={full}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: order >= 0, disabled: full }}
+                accessibilityLabel={release.name}
+                className={full ? "opacity-40" : undefined}
+              >
+                <Cover releaseMbId={mbid} size={64} radius={8} className={order >= 0 ? "border-2 border-tint" : undefined} />
+                {order >= 0 ? (
+                  <View className="absolute right-1 top-1 h-5 w-5 items-center justify-center rounded-full bg-tint">
+                    <Text className="text-[11px] font-bold text-on-tint">{order + 1}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
   );
 }

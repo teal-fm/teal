@@ -4,19 +4,24 @@ import {
   Image,
   Platform,
   Pressable,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import EditProfileModal from "@/components/teal/EditProfileModal";
 import { PlaylistCreator } from "@/components/teal/PlaylistControls";
-import ProfileAlbumDeck from "@/components/teal/ProfileAlbumDeck";
 import ProfileListeningRow from "@/components/teal/ProfileListeningRow";
 import {
   normalizeStatsPeriod,
   ProfileStatsSections,
 } from "@/components/teal/ProfileStats";
 import RichText from "@/components/teal/RichText";
-import RightRail from "@/components/teal/RightRail";
+import { Avatar, Glass } from "@/components/ds";
+import { CoverCalendar } from "@/components/profile/CoverCalendar";
+import { Favourites } from "@/components/profile/Favourites";
+import { Fingerprint } from "@/components/profile/Fingerprint";
+import { NowAndRecent } from "@/components/profile/NowAndRecent";
+import { TasteMatch } from "@/components/profile/TasteMatch";
 import SocialPostCard from "@/components/teal/SocialPostCard";
 import TealShell from "@/components/teal/TealShell";
 import { Button } from "@/components/ui/button";
@@ -97,6 +102,7 @@ type DisplayProfile = Pick<
   | "banner"
   | "status"
   | "statsDefaultPeriod"
+  | "favorites"
 > & {
   handle?: string;
 };
@@ -197,6 +203,7 @@ export default function ProfileScreen() {
     ? tabValue
     : "overview";
   const actor = Array.isArray(handle) ? handle[0] : handle;
+  const { width } = useWindowDimensions();
   const [did, setDid] = useState<string | null>(null);
   const [profile, setProfile] = useState<DisplayProfile | null>(null);
   const [playlists, setPlaylists] = useState<SocialPlaylistView[]>([]);
@@ -841,8 +848,25 @@ export default function ProfileScreen() {
     </View>
   );
 
+  // Taste match and the cover calendar sit beside the profile on wide screens.
+  const sideColumn = width >= 1280;
+  const viewerDid = pdsAgent?.did;
+  const identityExtras = did ? (
+    <>
+      {!isSelf && viewerDid ? (
+        <TasteMatch
+          actor={did}
+          viewer={viewerDid}
+          name={displayName}
+          avatars={{ viewer: { did: viewerDid }, actor: { did, avatar: profile?.avatar } }}
+        />
+      ) : null}
+      <CoverCalendar actor={did} name={isSelf ? "you" : displayName} />
+    </>
+  ) : null;
+
   return (
-    <TealShell rightRail={<RightRail />} pageTitle={displayName}>
+    <TealShell rightRail={sideColumn ? <View className="gap-3">{identityExtras}</View> : undefined} pageTitle={displayName}>
       <Stack.Screen options={{ title: displayName, headerShown: false }} />
       {profileLoading && (
         <View className="min-h-48 items-center justify-center">
@@ -879,140 +903,87 @@ export default function ProfileScreen() {
       )}
       {did && !profileLoading && (
         <>
-          <View className="mb-5 overflow-hidden rounded-xl border border-border bg-card">
-            <View className="relative h-36 bg-accent/60 sm:h-44">
-              {bannerUrl && (
-                <Image
-                  source={{ uri: bannerUrl }}
-                  className="absolute inset-0 h-full w-full"
-                  resizeMode="cover"
-                />
-              )}
+          <View className="-mx-4 md:-mx-7 lg:-mx-8">
+            <Fingerprint actor={did} height={width >= 1000 ? 200 : 168} />
+          </View>
+          <Glass strong className="-mt-9 mb-3 gap-2 p-4">
+            <View className="-mt-14">
+              <Avatar
+                did={did}
+                avatar={profile?.avatar}
+                name={displayName}
+                size={104}
+                listeningNow={!!currentStatus}
+              />
             </View>
-            <View className="gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
-              <View className="-mt-5 flex-row items-center gap-4">
-                <ProfileAlbumDeck
-                  key={`${did}-${period}`}
-                  actor={did}
-                  period={period}
-                  avatarUrl={avatarUrl}
-                  displayName={displayName}
-                />
-                <View className="min-w-0 flex-1 gap-2 pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                  <View className="min-w-0 sm:flex-1">
-                    <Text
-                      accessibilityRole="header"
-                      aria-level={1}
-                      className="var-font-soft font-accent text-2xl font-semibold"
-                      numberOfLines={2}
-                    >
-                      {displayName}
+            <Text
+              role="heading"
+              aria-level={1}
+              className="mt-1 text-[28px] font-bold text-ink"
+              numberOfLines={2}
+            >
+              {displayName}
+            </Text>
+            {!!profile?.handle && (
+              <Text className="-mt-1 text-[15px] text-ink-2" numberOfLines={1}>
+                @{normalizeHandle(profile.handle)}
+              </Text>
+            )}
+            {!!description && (
+              <View>
+                {bioExpanded || !longBio ? (
+                  <RichText
+                    text={description}
+                    facets={profile?.descriptionFacets}
+                    className="text-[16px] leading-[22px] text-ink"
+                  />
+                ) : (
+                  <Text className="text-[16px] leading-[22px] text-ink" numberOfLines={3}>
+                    {description}
+                  </Text>
+                )}
+                {longBio && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: bioExpanded }}
+                    className="min-h-11 justify-center self-start"
+                    onPress={() => setBioExpanded((value) => !value)}
+                  >
+                    <Text className="text-[15px] font-semibold text-tint">
+                      {bioExpanded ? "Show less" : "Read more"}
                     </Text>
-                    {profile?.handle && (
-                      <Text
-                        className="text-sm text-muted-foreground"
-                        numberOfLines={1}
-                      >
-                        @{normalizeHandle(profile.handle)}
-                      </Text>
-                    )}
-                  </View>
-                  {profileActions}
-                </View>
+                  </Pressable>
+                )}
               </View>
-              {description && (
-                <View>
-                  {bioExpanded || !longBio ? (
-                    <RichText
-                      text={description}
-                      facets={profile?.descriptionFacets}
-                      className="text-sm leading-6"
-                    />
-                  ) : (
-                    <Text className="text-sm leading-6" numberOfLines={3}>
-                      {description}
-                    </Text>
-                  )}
-                  {longBio && (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityState={{ expanded: bioExpanded }}
-                      accessibilityLabel={
-                        bioExpanded
-                          ? "Show less biography"
-                          : "Read full biography"
-                      }
-                      className="min-h-11 justify-center self-start"
-                      onPress={() => setBioExpanded((value) => !value)}
-                    >
-                      <Text className="text-sm font-semibold text-primary">
-                        {bioExpanded ? "Show less" : "Read more"}
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
-              )}
-              <View className="flex-row flex-wrap items-center gap-x-4">
+            )}
+            <View className="flex-row flex-wrap items-center gap-x-4">
+              {(["followers", "following"] as const).map((kind) => (
                 <Pressable
+                  key={kind}
                   accessibilityRole="button"
-                  accessibilityLabel={`${graphSummary.followersCount} followers`}
+                  accessibilityState={{ expanded: graphTab === kind }}
                   className="min-h-11 justify-center"
-                  onPress={() =>
-                    setGraphTab((current) =>
-                      current === "followers" ? null : "followers",
-                    )
-                  }
+                  onPress={() => setGraphTab((current) => (current === kind ? null : kind))}
                 >
-                  <Text className="text-sm">
-                    <Text className="font-bold">
-                      {graphSummary.followersCount}
+                  <Text className="text-[15px] text-ink-2">
+                    <Text className="font-semibold tabular-nums text-ink">
+                      {kind === "followers" ? graphSummary.followersCount : graphSummary.followsCount}
                     </Text>{" "}
-                    followers
+                    {kind}
                   </Text>
                 </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Following ${graphSummary.followsCount} people`}
-                  className="min-h-11 justify-center"
-                  onPress={() =>
-                    setGraphTab((current) =>
-                      current === "following" ? null : "following",
-                    )
-                  }
-                >
-                  <Text className="text-sm">
-                    <Text className="font-bold">
-                      {graphSummary.followsCount}
-                    </Text>{" "}
-                    following
-                  </Text>
-                </Pressable>
-              </View>
-              {currentStatus && (
-                <View className="flex-row items-center gap-2 border-t border-border pt-3">
-                  <View className="h-9 w-9 overflow-hidden rounded-md bg-muted">
-                    {currentStatusArt && (
-                      <Image
-                        source={{ uri: currentStatusArt }}
-                        className="h-full w-full"
-                        onError={() => setStatusArtFailed(true)}
-                      />
-                    )}
-                  </View>
-                  <View className="min-w-0 flex-1">
-                    <Text className="text-sm font-bold" numberOfLines={1}>
-                      Listening to {currentStatus.trackName}
-                    </Text>
-                    <Text
-                      className="text-xs text-muted-foreground"
-                      numberOfLines={1}
-                    >
-                      {displayArtists(currentStatus)}
-                    </Text>
-                  </View>
-                </View>
-              )}
+              ))}
             </View>
+            {profileActions}
+          </Glass>
+          <View className="mb-3 gap-3">
+            <NowAndRecent now={currentStatus} recent={plays.slice(0, 10)} />
+            <Favourites
+              favourites={profile?.favorites ?? []}
+              isSelf={isSelf}
+              onEdit={() => setEditProfileOpen(true)}
+            />
+            {!sideColumn && identityExtras}
           </View>
           {graphTab && (
             <View className="mb-5 gap-3 border-b border-border pb-5">
