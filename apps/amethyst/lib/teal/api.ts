@@ -68,6 +68,73 @@ export type SocialPostView = {
   replyCount: number;
   viewerLike?: string;
   viewerRepost?: string;
+  reactions?: ReactionSummary[];
+  listenContext?: ListenContext;
+};
+
+export type ReactionSummary = {
+  emoji: string;
+  count: number;
+  viewerReaction?: string;
+};
+
+export type ListenContext = {
+  circleListenerCount: number;
+  circleSample: MiniProfileView[];
+  authorPlayCount?: number;
+  viewerPlayCount?: number;
+};
+
+export type ReleaseSummary = {
+  releaseMbId?: string;
+  releaseName: string;
+  artistName?: string;
+};
+
+export type ListeningView = {
+  actor?: MiniProfileView;
+  playUri: string;
+  playCid?: string;
+  trackName: string;
+  artistName?: string;
+  recordingMbId?: string;
+  releaseMbId?: string;
+  releaseName?: string;
+  playedTime: string;
+  listeningNow: boolean;
+  trackPlaysToday: number;
+  releasePlaysToday: number;
+  firstReleaseListen: boolean;
+  reactions: ReactionSummary[];
+};
+
+export type MomentView = {
+  kind: "mutuals" | "network" | "trending" | "circle";
+  release: ReleaseSummary;
+  listenerCount: number;
+  listeners: MiniProfileView[];
+  changePercent?: number;
+};
+
+export type TodayView = {
+  listening: ListeningView[];
+  moments: MomentView[];
+  heatingUp: MomentView[];
+};
+
+export type TasteMatchView = {
+  level: "high" | "some" | "low";
+  sharedArtistCount: number;
+  topArtistCount: number;
+  sharedArtists: { name: string; releaseMbId?: string; releaseName?: string }[];
+  suggestion?: ReleaseSummary & { rank: number };
+};
+
+export type ListeningDay = {
+  date: string;
+  playCount: number;
+  topRelease?: ReleaseSummary;
+  hours: { hour: number; playCount: number; releaseMbId?: string }[];
 };
 
 export type SocialPlaylistView = {
@@ -119,6 +186,39 @@ async function getXrpc<T>(
     throw new XrpcError(method, response.status);
   }
   return response.json() as Promise<T>;
+}
+
+export function getToday(viewer?: string, limit = 12) {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return getXrpc<TodayView>("fm.teal.feed.getToday", { viewer, tz, limit });
+}
+
+export function getReactions(subject: string, viewer?: string, emoji?: string) {
+  return getXrpc<{
+    summary: ReactionSummary[];
+    reactions: {
+      uri: string;
+      emoji: string;
+      actorDid: string;
+      actor?: MiniProfileView;
+      createdAt: string;
+    }[];
+    cursor?: string;
+  }>("fm.teal.feed.social.getReactions", { subject, viewer, emoji });
+}
+
+export function getTasteMatch(actor: string, viewer: string) {
+  return getXrpc<TasteMatchView>("fm.teal.actor.getTasteMatch", { actor, viewer });
+}
+
+export function getListeningCalendar(actor: string, from: string, to: string) {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return getXrpc<{ days: ListeningDay[] }>("fm.teal.stats.getListeningCalendar", {
+    actor,
+    from,
+    to,
+    tz,
+  });
 }
 
 export function getLatestPlays(limit = 50, cursor?: string) {
