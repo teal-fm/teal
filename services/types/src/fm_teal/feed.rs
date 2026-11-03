@@ -8,6 +8,7 @@
 //! Generated bindings for the `fm.teal.feed` Lexicon namespace/module.
 pub mod get_actor_feed;
 pub mod get_play;
+pub mod get_today;
 pub mod play;
 pub mod social;
 

@@ -55,6 +55,25 @@
           "description": "Total number of plays for this recording"
         }
       }
+    },
+    "releaseSummary": {
+      "type": "object",
+      "required": [
+        "releaseName"
+      ],
+      "description": "A release identified for display: name, artist, and MusicBrainz ID when known.",
+      "properties": {
+        "releaseMbId": {
+          "type": "string",
+          "description": "MusicBrainz release ID (uuid)."
+        },
+        "releaseName": {
+          "type": "string"
+        },
+        "artistName": {
+          "type": "string"
+        }
+      }
     }
   }
 }

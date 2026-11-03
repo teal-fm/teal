@@ -5,7 +5,9 @@
   "defs": {
     "trackView": {
       "type": "object",
-      "required": ["trackName"],
+      "required": [
+        "trackName"
+      ],
       "properties": {
         "trackName": {
           "type": "string",
@@ -41,12 +43,17 @@
         },
         "artistMbIds": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "DEPRECATED: USE 'artists' INSTEAD. Array of Musicbrainz artist IDs."
         },
         "artists": {
           "type": "array",
-          "items": { "type": "ref", "ref": "fm.teal.feed.defs#artist" },
+          "items": {
+            "type": "ref",
+            "ref": "fm.teal.feed.defs#artist"
+          },
           "description": "Array of artists in order of original appearance."
         },
         "releaseName": {
@@ -80,6 +87,62 @@
           "type": "string",
           "format": "uri",
           "description": "The URL associated with this track."
+        }
+      }
+    },
+    "reactionSummary": {
+      "type": "object",
+      "required": [
+        "emoji",
+        "count"
+      ],
+      "properties": {
+        "emoji": {
+          "type": "string",
+          "maxGraphemes": 1,
+          "maxLength": 64
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "viewerReaction": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "The viewer's reaction record URI for this emoji, if any."
+        }
+      }
+    },
+    "listenContext": {
+      "type": "object",
+      "required": [
+        "circleListenerCount",
+        "circleSample"
+      ],
+      "description": "How the viewer's circle has been listening to a post's track.",
+      "properties": {
+        "circleListenerCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Distinct accounts the viewer follows who played this recording in the last 24 hours."
+        },
+        "circleSample": {
+          "type": "array",
+          "maxLength": 3,
+          "items": {
+            "type": "ref",
+            "ref": "fm.teal.actor.defs#miniProfileView"
+          }
+        },
+        "authorPlayCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many times the post author has played this recording."
+        },
+        "viewerPlayCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many times the viewer has played this recording."
         }
       }
     }

@@ -151,6 +151,9 @@ pub struct Profile<S: BosStr = DefaultStr> {
     pub description_facets: Option<Vec<Facet<S>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_name: Option<S>,
+    ///Up to four favourite releases shown at the top of the profile, in display order.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub favorites: Option<Vec<profile::FeaturedItem<S>>>,
     ///The user's most recent item featured on their profile.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub featured_item: Option<profile::FeaturedItem<S>>,
@@ -353,6 +356,16 @@ impl<S: BosStr> LexiconSchema for Profile<S> {
                         actual: count,
                     });
                 }
+            }
+        }
+        if let Some(ref value) = self.favorites {
+            #[allow(unused_comparisons)]
+            if value.len() > 4usize {
+                return Err(ConstraintError::MaxLength {
+                    path: ValidationPath::from_field("favorites"),
+                    max: 4usize,
+                    actual: value.len(),
+                });
             }
         }
         Ok(())
@@ -621,6 +634,22 @@ fn lexicon_doc_fm_teal_actor_profile() -> LexiconDoc<'static> {
                                 }),
                             );
                             map.insert(
+                                SmolStr::new_static("favorites"),
+                                LexObjectProperty::Array(LexArray {
+                                    description: Some(
+                                        CowStr::new_static(
+                                            "Up to four favourite releases shown at the top of the profile, in display order.",
+                                        ),
+                                    ),
+                                    items: LexArrayItem::Ref(LexRef {
+                                        r#ref: CowStr::new_static("#featuredItem"),
+                                        ..Default::default()
+                                    }),
+                                    max_length: Some(4usize),
+                                    ..Default::default()
+                                }),
+                            );
+                            map.insert(
                                 SmolStr::new_static("featuredItem"),
                                 LexObjectProperty::Ref(LexRef {
                                     r#ref: CowStr::new_static("#featuredItem"),
@@ -680,6 +709,7 @@ pub struct ProfileBuilder<St: profile_state::State, S: BosStr = DefaultStr> {
         Option<S>,
         Option<Vec<Facet<S>>>,
         Option<S>,
+        Option<Vec<profile::FeaturedItem<S>>>,
         Option<profile::FeaturedItem<S>>,
         Option<S>,
     ),
@@ -705,7 +735,7 @@ impl ProfileBuilder<profile_state::Empty, DefaultStr> {
     pub fn new() -> Self {
         ProfileBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -716,7 +746,7 @@ impl<S: BosStr> ProfileBuilder<profile_state::Empty, S> {
     pub fn builder() -> Self {
         ProfileBuilder {
             _state: PhantomData,
-            _fields: (None, None, None, None, None, None, None, None),
+            _fields: (None, None, None, None, None, None, None, None, None),
             _type: PhantomData,
         }
     }
@@ -804,18 +834,18 @@ impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
 }
 
 impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
-    /// Set the `featuredItem` field (optional)
-    pub fn featured_item(
+    /// Set the `favorites` field (optional)
+    pub fn favorites(
         mut self,
-        value: impl Into<Option<profile::FeaturedItem<S>>>,
+        value: impl Into<Option<Vec<profile::FeaturedItem<S>>>>,
     ) -> Self {
         self._fields.6 = value.into();
         self
     }
-    /// Set the `featuredItem` field to an Option value (optional)
-    pub fn maybe_featured_item(
+    /// Set the `favorites` field to an Option value (optional)
+    pub fn maybe_favorites(
         mut self,
-        value: Option<profile::FeaturedItem<S>>,
+        value: Option<Vec<profile::FeaturedItem<S>>>,
     ) -> Self {
         self._fields.6 = value;
         self
@@ -823,14 +853,33 @@ impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
 }
 
 impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
+    /// Set the `featuredItem` field (optional)
+    pub fn featured_item(
+        mut self,
+        value: impl Into<Option<profile::FeaturedItem<S>>>,
+    ) -> Self {
+        self._fields.7 = value.into();
+        self
+    }
+    /// Set the `featuredItem` field to an Option value (optional)
+    pub fn maybe_featured_item(
+        mut self,
+        value: Option<profile::FeaturedItem<S>>,
+    ) -> Self {
+        self._fields.7 = value;
+        self
+    }
+}
+
+impl<St: profile_state::State, S: BosStr> ProfileBuilder<St, S> {
     /// Set the `statsDefaultPeriod` field (optional)
     pub fn stats_default_period(mut self, value: impl Into<Option<S>>) -> Self {
-        self._fields.7 = value.into();
+        self._fields.8 = value.into();
         self
     }
     /// Set the `statsDefaultPeriod` field to an Option value (optional)
     pub fn maybe_stats_default_period(mut self, value: Option<S>) -> Self {
-        self._fields.7 = value;
+        self._fields.8 = value;
         self
     }
 }
@@ -848,8 +897,9 @@ where
             description: self._fields.3,
             description_facets: self._fields.4,
             display_name: self._fields.5,
-            featured_item: self._fields.6,
-            stats_default_period: self._fields.7,
+            favorites: self._fields.6,
+            featured_item: self._fields.7,
+            stats_default_period: self._fields.8,
             extra_data: Default::default(),
         }
     }
@@ -862,8 +912,9 @@ where
             description: self._fields.3,
             description_facets: self._fields.4,
             display_name: self._fields.5,
-            featured_item: self._fields.6,
-            stats_default_period: self._fields.7,
+            favorites: self._fields.6,
+            featured_item: self._fields.7,
+            stats_default_period: self._fields.8,
             extra_data: Some(extra_data),
         }
     }

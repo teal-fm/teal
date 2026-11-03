@@ -7,6 +7,7 @@
 
 //! Generated bindings for the `fm.teal.stats` Lexicon namespace/module.
 pub mod get_latest;
+pub mod get_listening_calendar;
 pub mod get_repo_top_releases;
 pub mod get_top_artists;
 pub mod get_top_releases;
@@ -65,6 +66,21 @@ pub struct RecordingView<S: BosStr = DefaultStr> {
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
 }
 
+/// A release identified for display: name, artist, and MusicBrainz ID when known.
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct ReleaseSummary<S: BosStr = DefaultStr> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub artist_name: Option<S>,
+    ///MusicBrainz release ID (uuid).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub release_mb_id: Option<S>,
+    pub release_name: S,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
@@ -103,6 +119,21 @@ impl<S: BosStr> LexiconSchema for RecordingView<S> {
     }
     fn def_name() -> &'static str {
         "recordingView"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_fm_teal_stats_defs()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        Ok(())
+    }
+}
+
+impl<S: BosStr> LexiconSchema for ReleaseSummary<S> {
+    fn nsid() -> &'static str {
+        "fm.teal.stats.defs"
+    }
+    fn def_name() -> &'static str {
+        "releaseSummary"
     }
     fn lexicon_doc() -> LexiconDoc<'static> {
         lexicon_doc_fm_teal_stats_defs()
@@ -205,6 +236,40 @@ fn lexicon_doc_fm_teal_stats_defs() -> LexiconDoc<'static> {
                             LexObjectProperty::Integer(LexInteger {
                                 ..Default::default()
                             }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map.insert(
+                SmolStr::new_static("releaseSummary"),
+                LexUserType::Object(LexObject {
+                    description: Some(
+                        CowStr::new_static(
+                            "A release identified for display: name, artist, and MusicBrainz ID when known.",
+                        ),
+                    ),
+                    required: Some(vec![SmolStr::new_static("releaseName")]),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("artistName"),
+                            LexObjectProperty::String(LexString { ..Default::default() }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("releaseMbId"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static("MusicBrainz release ID (uuid)."),
+                                ),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("releaseName"),
+                            LexObjectProperty::String(LexString { ..Default::default() }),
                         );
                         map
                     },

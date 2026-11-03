@@ -23,37 +23,68 @@
           "descriptionFacets": {
             "type": "array",
             "description": "Annotations of text in the profile description (mentions, URLs, hashtags, etc).",
-            "items": { "type": "ref", "ref": "app.bsky.richtext.facet" }
+            "items": {
+              "type": "ref",
+              "ref": "app.bsky.richtext.facet"
+            }
           },
           "featuredItem": {
             "type": "ref",
             "description": "The user's most recent item featured on their profile.",
             "ref": "#featuredItem"
           },
+          "favorites": {
+            "type": "array",
+            "maxLength": 4,
+            "description": "Up to four favourite releases shown at the top of the profile, in display order.",
+            "items": {
+              "type": "ref",
+              "ref": "#featuredItem"
+            }
+          },
           "avatar": {
             "type": "blob",
             "description": "Small image to be displayed next to posts from account. AKA, 'profile picture'",
-            "accept": ["image/png", "image/jpeg"],
+            "accept": [
+              "image/png",
+              "image/jpeg"
+            ],
             "maxSize": 1000000
           },
           "banner": {
             "type": "blob",
             "description": "Larger horizontal image to display behind profile view.",
-            "accept": ["image/png", "image/jpeg"],
+            "accept": [
+              "image/png",
+              "image/jpeg"
+            ],
             "maxSize": 1000000
           },
           "statsDefaultPeriod": {
             "type": "string",
-            "enum": ["7days", "30days", "90days", "180days", "365days", "all"],
+            "enum": [
+              "7days",
+              "30days",
+              "90days",
+              "180days",
+              "365days",
+              "all"
+            ],
             "description": "Default time period for profile listening statistics."
           },
-          "createdAt": { "type": "string", "format": "datetime" }
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
         }
       }
     },
     "featuredItem": {
       "type": "object",
-      "required": ["mbid", "type"],
+      "required": [
+        "mbid",
+        "type"
+      ],
       "properties": {
         "mbid": {
           "type": "string",
@@ -62,7 +93,11 @@
         },
         "type": {
           "type": "string",
-          "knownValues": ["artist", "release", "recording"],
+          "knownValues": [
+            "artist",
+            "release",
+            "recording"
+          ],
           "description": "The MusicBrainz entity type of the item."
         }
       }

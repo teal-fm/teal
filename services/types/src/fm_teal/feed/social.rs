@@ -6,21 +6,26 @@
 // Any manual changes will be overwritten on the next regeneration.
 
 //! Generated bindings for the `fm.teal.feed.social` Lexicon namespace/module.
+pub mod get_reactions;
 pub mod like;
 pub mod playlist;
 pub mod playlist_item;
 pub mod post;
+pub mod reaction;
 pub mod repost;
 
 
 #[allow(unused_imports)]
 use alloc::collections::BTreeMap;
+
+#[allow(unused_imports)]
+use core::marker::PhantomData;
 use jacquard_common::{CowStr, BosStr, DefaultStr, FromStaticStr};
 
 #[allow(unused_imports)]
 use jacquard_common::deps::codegen::unicode_segmentation::UnicodeSegmentation;
 use jacquard_common::deps::smol_str::SmolStr;
-use jacquard_common::types::string::UriValue;
+use jacquard_common::types::string::{AtUri, UriValue};
 use jacquard_common::types::value::Data;
 use jacquard_derive::IntoStatic;
 use jacquard_lexicon::lexicon::LexiconDoc;
@@ -29,7 +34,39 @@ use jacquard_lexicon::schema::LexiconSchema;
 #[allow(unused_imports)]
 use jacquard_lexicon::validation::{ConstraintError, ValidationPath};
 use serde::{Serialize, Deserialize};
+use crate::fm_teal::actor::MiniProfileView;
 use crate::fm_teal::feed::Artist;
+/// How the viewer's circle has been listening to a post's track.
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct ListenContext<S: BosStr = DefaultStr> {
+    ///How many times the post author has played this recording.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub author_play_count: Option<i64>,
+    ///Distinct accounts the viewer follows who played this recording today.
+    pub circle_listener_count: i64,
+    pub circle_sample: Vec<MiniProfileView<S>>,
+    ///How many times the viewer has played this recording.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub viewer_play_count: Option<i64>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic)]
+#[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
+pub struct ReactionSummary<S: BosStr = DefaultStr> {
+    pub count: i64,
+    pub emoji: S,
+    ///The viewer's reaction record URI for this emoji, if any.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub viewer_reaction: Option<AtUri<S>>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, IntoStatic, Default)]
 #[serde(rename_all = "camelCase", bound(deserialize = "S: Deserialize<'de> + BosStr"))]
@@ -74,6 +111,109 @@ pub struct TrackView<S: BosStr = DefaultStr> {
     pub track_name: S,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub extra_data: Option<BTreeMap<SmolStr, Data<S>>>,
+}
+
+impl<S: BosStr> LexiconSchema for ListenContext<S> {
+    fn nsid() -> &'static str {
+        "fm.teal.feed.social.defs"
+    }
+    fn def_name() -> &'static str {
+        "listenContext"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_fm_teal_feed_social_defs()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        if let Some(ref value) = self.author_play_count {
+            if *value < 0i64 {
+                return Err(ConstraintError::Minimum {
+                    path: ValidationPath::from_field("author_play_count"),
+                    min: 0i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.circle_listener_count;
+            if *value < 0i64 {
+                return Err(ConstraintError::Minimum {
+                    path: ValidationPath::from_field("circle_listener_count"),
+                    min: 0i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.circle_sample;
+            #[allow(unused_comparisons)]
+            if value.len() > 3usize {
+                return Err(ConstraintError::MaxLength {
+                    path: ValidationPath::from_field("circle_sample"),
+                    max: 3usize,
+                    actual: value.len(),
+                });
+            }
+        }
+        if let Some(ref value) = self.viewer_play_count {
+            if *value < 0i64 {
+                return Err(ConstraintError::Minimum {
+                    path: ValidationPath::from_field("viewer_play_count"),
+                    min: 0i64,
+                    actual: *value,
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
+impl<S: BosStr> LexiconSchema for ReactionSummary<S> {
+    fn nsid() -> &'static str {
+        "fm.teal.feed.social.defs"
+    }
+    fn def_name() -> &'static str {
+        "reactionSummary"
+    }
+    fn lexicon_doc() -> LexiconDoc<'static> {
+        lexicon_doc_fm_teal_feed_social_defs()
+    }
+    fn validate(&self) -> Result<(), ConstraintError> {
+        {
+            let value = &self.count;
+            if *value < 0i64 {
+                return Err(ConstraintError::Minimum {
+                    path: ValidationPath::from_field("count"),
+                    min: 0i64,
+                    actual: *value,
+                });
+            }
+        }
+        {
+            let value = &self.emoji;
+            #[allow(unused_comparisons)]
+            if <str>::len(value.as_ref()) > 64usize {
+                return Err(ConstraintError::MaxLength {
+                    path: ValidationPath::from_field("emoji"),
+                    max: 64usize,
+                    actual: <str>::len(value.as_ref()),
+                });
+            }
+        }
+        {
+            let value = &self.emoji;
+            {
+                let count = UnicodeSegmentation::graphemes(value.as_ref(), true).count();
+                if count > 1usize {
+                    return Err(ConstraintError::MaxGraphemes {
+                        path: ValidationPath::from_field("emoji"),
+                        max: 1usize,
+                        actual: count,
+                    });
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<S: BosStr> LexiconSchema for TrackView<S> {
@@ -201,6 +341,191 @@ impl<S: BosStr> LexiconSchema for TrackView<S> {
     }
 }
 
+pub mod listen_context_state {
+
+    pub use crate::builder_types::{Set, Unset, IsSet, IsUnset};
+    #[allow(unused)]
+    use ::core::marker::PhantomData;
+    mod sealed {
+        pub trait Sealed {}
+    }
+    /// State trait tracking which required fields have been set
+    pub trait State: sealed::Sealed {
+        type CircleListenerCount;
+        type CircleSample;
+    }
+    /// Empty state - all required fields are unset
+    pub struct Empty(());
+    impl sealed::Sealed for Empty {}
+    impl State for Empty {
+        type CircleListenerCount = Unset;
+        type CircleSample = Unset;
+    }
+    ///State transition - sets the `circle_listener_count` field to Set
+    pub struct SetCircleListenerCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCircleListenerCount<St> {}
+    impl<St: State> State for SetCircleListenerCount<St> {
+        type CircleListenerCount = Set<members::circle_listener_count>;
+        type CircleSample = St::CircleSample;
+    }
+    ///State transition - sets the `circle_sample` field to Set
+    pub struct SetCircleSample<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCircleSample<St> {}
+    impl<St: State> State for SetCircleSample<St> {
+        type CircleListenerCount = St::CircleListenerCount;
+        type CircleSample = Set<members::circle_sample>;
+    }
+    /// Marker types for field names
+    #[allow(non_camel_case_types)]
+    pub mod members {
+        ///Marker type for the `circle_listener_count` field
+        pub struct circle_listener_count(());
+        ///Marker type for the `circle_sample` field
+        pub struct circle_sample(());
+    }
+}
+
+/// Builder for constructing an instance of this type.
+pub struct ListenContextBuilder<
+    St: listen_context_state::State,
+    S: BosStr = DefaultStr,
+> {
+    _state: PhantomData<fn() -> St>,
+    _fields: (Option<i64>, Option<i64>, Option<Vec<MiniProfileView<S>>>, Option<i64>),
+    _type: PhantomData<fn() -> S>,
+}
+
+impl ListenContext<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ListenContextBuilder<listen_context_state::Empty, DefaultStr> {
+        ListenContextBuilder::new()
+    }
+}
+
+impl<S: BosStr> ListenContext<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ListenContextBuilder<listen_context_state::Empty, S> {
+        ListenContextBuilder::builder()
+    }
+}
+
+impl ListenContextBuilder<listen_context_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
+    pub fn new() -> Self {
+        ListenContextBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr> ListenContextBuilder<listen_context_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ListenContextBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: listen_context_state::State, S: BosStr> ListenContextBuilder<St, S> {
+    /// Set the `authorPlayCount` field (optional)
+    pub fn author_play_count(mut self, value: impl Into<Option<i64>>) -> Self {
+        self._fields.0 = value.into();
+        self
+    }
+    /// Set the `authorPlayCount` field to an Option value (optional)
+    pub fn maybe_author_play_count(mut self, value: Option<i64>) -> Self {
+        self._fields.0 = value;
+        self
+    }
+}
+
+impl<St, S: BosStr> ListenContextBuilder<St, S>
+where
+    St: listen_context_state::State,
+    St::CircleListenerCount: listen_context_state::IsUnset,
+{
+    /// Set the `circleListenerCount` field (required)
+    pub fn circle_listener_count(
+        mut self,
+        value: impl Into<i64>,
+    ) -> ListenContextBuilder<listen_context_state::SetCircleListenerCount<St>, S> {
+        self._fields.1 = Option::Some(value.into());
+        ListenContextBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ListenContextBuilder<St, S>
+where
+    St: listen_context_state::State,
+    St::CircleSample: listen_context_state::IsUnset,
+{
+    /// Set the `circleSample` field (required)
+    pub fn circle_sample(
+        mut self,
+        value: impl Into<Vec<MiniProfileView<S>>>,
+    ) -> ListenContextBuilder<listen_context_state::SetCircleSample<St>, S> {
+        self._fields.2 = Option::Some(value.into());
+        ListenContextBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: listen_context_state::State, S: BosStr> ListenContextBuilder<St, S> {
+    /// Set the `viewerPlayCount` field (optional)
+    pub fn viewer_play_count(mut self, value: impl Into<Option<i64>>) -> Self {
+        self._fields.3 = value.into();
+        self
+    }
+    /// Set the `viewerPlayCount` field to an Option value (optional)
+    pub fn maybe_viewer_play_count(mut self, value: Option<i64>) -> Self {
+        self._fields.3 = value;
+        self
+    }
+}
+
+impl<St, S: BosStr> ListenContextBuilder<St, S>
+where
+    St: listen_context_state::State,
+    St::CircleListenerCount: listen_context_state::IsSet,
+    St::CircleSample: listen_context_state::IsSet,
+{
+    /// Build the final struct.
+    pub fn build(self) -> ListenContext<S> {
+        ListenContext {
+            author_play_count: self._fields.0,
+            circle_listener_count: self._fields.1.unwrap(),
+            circle_sample: self._fields.2.unwrap(),
+            viewer_play_count: self._fields.3,
+            extra_data: Default::default(),
+        }
+    }
+    /// Build the final struct with custom extra_data.
+    pub fn build_with_data(
+        self,
+        extra_data: BTreeMap<SmolStr, Data<S>>,
+    ) -> ListenContext<S> {
+        ListenContext {
+            author_play_count: self._fields.0,
+            circle_listener_count: self._fields.1.unwrap(),
+            circle_sample: self._fields.2.unwrap(),
+            viewer_play_count: self._fields.3,
+            extra_data: Some(extra_data),
+        }
+    }
+}
+
 fn lexicon_doc_fm_teal_feed_social_defs() -> LexiconDoc<'static> {
     #[allow(unused_imports)]
     use jacquard_common::{CowStr, deps::smol_str::SmolStr, types::blob::MimeType};
@@ -211,6 +536,103 @@ fn lexicon_doc_fm_teal_feed_social_defs() -> LexiconDoc<'static> {
         id: CowStr::new_static("fm.teal.feed.social.defs"),
         defs: {
             let mut map = BTreeMap::new();
+            map.insert(
+                SmolStr::new_static("listenContext"),
+                LexUserType::Object(LexObject {
+                    description: Some(
+                        CowStr::new_static(
+                            "How the viewer's circle has been listening to a post's track.",
+                        ),
+                    ),
+                    required: Some(
+                        vec![
+                            SmolStr::new_static("circleListenerCount"),
+                            SmolStr::new_static("circleSample")
+                        ],
+                    ),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("authorPlayCount"),
+                            LexObjectProperty::Integer(LexInteger {
+                                minimum: Some(0i64),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("circleListenerCount"),
+                            LexObjectProperty::Integer(LexInteger {
+                                minimum: Some(0i64),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("circleSample"),
+                            LexObjectProperty::Array(LexArray {
+                                items: LexArrayItem::Ref(LexRef {
+                                    r#ref: CowStr::new_static(
+                                        "fm.teal.actor.defs#miniProfileView",
+                                    ),
+                                    ..Default::default()
+                                }),
+                                max_length: Some(3usize),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("viewerPlayCount"),
+                            LexObjectProperty::Integer(LexInteger {
+                                minimum: Some(0i64),
+                                ..Default::default()
+                            }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
+            map.insert(
+                SmolStr::new_static("reactionSummary"),
+                LexUserType::Object(LexObject {
+                    required: Some(
+                        vec![SmolStr::new_static("emoji"), SmolStr::new_static("count")],
+                    ),
+                    properties: {
+                        #[allow(unused_mut)]
+                        let mut map = BTreeMap::new();
+                        map.insert(
+                            SmolStr::new_static("count"),
+                            LexObjectProperty::Integer(LexInteger {
+                                minimum: Some(0i64),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("emoji"),
+                            LexObjectProperty::String(LexString {
+                                max_length: Some(64usize),
+                                max_graphemes: Some(1usize),
+                                ..Default::default()
+                            }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("viewerReaction"),
+                            LexObjectProperty::String(LexString {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "The viewer's reaction record URI for this emoji, if any.",
+                                    ),
+                                ),
+                                format: Some(LexStringFormat::AtUri),
+                                ..Default::default()
+                            }),
+                        );
+                        map
+                    },
+                    ..Default::default()
+                }),
+            );
             map.insert(
                 SmolStr::new_static("trackView"),
                 LexUserType::Object(LexObject {
@@ -385,5 +807,175 @@ fn lexicon_doc_fm_teal_feed_social_defs() -> LexiconDoc<'static> {
             map
         },
         ..Default::default()
+    }
+}
+
+pub mod reaction_summary_state {
+
+    pub use crate::builder_types::{Set, Unset, IsSet, IsUnset};
+    #[allow(unused)]
+    use ::core::marker::PhantomData;
+    mod sealed {
+        pub trait Sealed {}
+    }
+    /// State trait tracking which required fields have been set
+    pub trait State: sealed::Sealed {
+        type Count;
+        type Emoji;
+    }
+    /// Empty state - all required fields are unset
+    pub struct Empty(());
+    impl sealed::Sealed for Empty {}
+    impl State for Empty {
+        type Count = Unset;
+        type Emoji = Unset;
+    }
+    ///State transition - sets the `count` field to Set
+    pub struct SetCount<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetCount<St> {}
+    impl<St: State> State for SetCount<St> {
+        type Count = Set<members::count>;
+        type Emoji = St::Emoji;
+    }
+    ///State transition - sets the `emoji` field to Set
+    pub struct SetEmoji<St: State = Empty>(PhantomData<fn() -> St>);
+    impl<St: State> sealed::Sealed for SetEmoji<St> {}
+    impl<St: State> State for SetEmoji<St> {
+        type Count = St::Count;
+        type Emoji = Set<members::emoji>;
+    }
+    /// Marker types for field names
+    #[allow(non_camel_case_types)]
+    pub mod members {
+        ///Marker type for the `count` field
+        pub struct count(());
+        ///Marker type for the `emoji` field
+        pub struct emoji(());
+    }
+}
+
+/// Builder for constructing an instance of this type.
+pub struct ReactionSummaryBuilder<
+    St: reaction_summary_state::State,
+    S: BosStr = DefaultStr,
+> {
+    _state: PhantomData<fn() -> St>,
+    _fields: (Option<i64>, Option<S>, Option<AtUri<S>>),
+    _type: PhantomData<fn() -> S>,
+}
+
+impl ReactionSummary<DefaultStr> {
+    /// Create a new builder for this type, using the default string type (DefaultStr = SmolStr) if needed
+    pub fn new() -> ReactionSummaryBuilder<reaction_summary_state::Empty, DefaultStr> {
+        ReactionSummaryBuilder::new()
+    }
+}
+
+impl<S: BosStr> ReactionSummary<S> {
+    /// Create a new builder for this type
+    pub fn builder() -> ReactionSummaryBuilder<reaction_summary_state::Empty, S> {
+        ReactionSummaryBuilder::builder()
+    }
+}
+
+impl ReactionSummaryBuilder<reaction_summary_state::Empty, DefaultStr> {
+    /// Create a new builder with all fields unset, using the default string type, if needed
+    pub fn new() -> Self {
+        ReactionSummaryBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<S: BosStr> ReactionSummaryBuilder<reaction_summary_state::Empty, S> {
+    /// Create a new builder with all fields unset
+    pub fn builder() -> Self {
+        ReactionSummaryBuilder {
+            _state: PhantomData,
+            _fields: (None, None, None),
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ReactionSummaryBuilder<St, S>
+where
+    St: reaction_summary_state::State,
+    St::Count: reaction_summary_state::IsUnset,
+{
+    /// Set the `count` field (required)
+    pub fn count(
+        mut self,
+        value: impl Into<i64>,
+    ) -> ReactionSummaryBuilder<reaction_summary_state::SetCount<St>, S> {
+        self._fields.0 = Option::Some(value.into());
+        ReactionSummaryBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St, S: BosStr> ReactionSummaryBuilder<St, S>
+where
+    St: reaction_summary_state::State,
+    St::Emoji: reaction_summary_state::IsUnset,
+{
+    /// Set the `emoji` field (required)
+    pub fn emoji(
+        mut self,
+        value: impl Into<S>,
+    ) -> ReactionSummaryBuilder<reaction_summary_state::SetEmoji<St>, S> {
+        self._fields.1 = Option::Some(value.into());
+        ReactionSummaryBuilder {
+            _state: PhantomData,
+            _fields: self._fields,
+            _type: PhantomData,
+        }
+    }
+}
+
+impl<St: reaction_summary_state::State, S: BosStr> ReactionSummaryBuilder<St, S> {
+    /// Set the `viewerReaction` field (optional)
+    pub fn viewer_reaction(mut self, value: impl Into<Option<AtUri<S>>>) -> Self {
+        self._fields.2 = value.into();
+        self
+    }
+    /// Set the `viewerReaction` field to an Option value (optional)
+    pub fn maybe_viewer_reaction(mut self, value: Option<AtUri<S>>) -> Self {
+        self._fields.2 = value;
+        self
+    }
+}
+
+impl<St, S: BosStr> ReactionSummaryBuilder<St, S>
+where
+    St: reaction_summary_state::State,
+    St::Count: reaction_summary_state::IsSet,
+    St::Emoji: reaction_summary_state::IsSet,
+{
+    /// Build the final struct.
+    pub fn build(self) -> ReactionSummary<S> {
+        ReactionSummary {
+            count: self._fields.0.unwrap(),
+            emoji: self._fields.1.unwrap(),
+            viewer_reaction: self._fields.2,
+            extra_data: Default::default(),
+        }
+    }
+    /// Build the final struct with custom extra_data.
+    pub fn build_with_data(
+        self,
+        extra_data: BTreeMap<SmolStr, Data<S>>,
+    ) -> ReactionSummary<S> {
+        ReactionSummary {
+            count: self._fields.0.unwrap(),
+            emoji: self._fields.1.unwrap(),
+            viewer_reaction: self._fields.2,
+            extra_data: Some(extra_data),
+        }
     }
 }

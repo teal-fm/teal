@@ -8,6 +8,7 @@
 //! Generated bindings for the `fm.teal.actor` Lexicon namespace/module.
 pub mod get_profile;
 pub mod get_profiles;
+pub mod get_taste_match;
 pub mod profile;
 pub mod profile_status;
 pub mod search_actors;
@@ -76,6 +77,9 @@ pub struct ProfileView<S: BosStr = DefaultStr> {
     pub did: Option<Did<S>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_name: Option<S>,
+    ///Up to four favourite releases, in display order.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub favorites: Option<Vec<FeaturedItem<S>>>,
     ///The user's most recent item featured on their profile.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub featured_item: Option<FeaturedItem<S>>,
@@ -134,6 +138,16 @@ impl<S: BosStr> LexiconSchema for ProfileView<S> {
         lexicon_doc_fm_teal_actor_defs()
     }
     fn validate(&self) -> Result<(), ConstraintError> {
+        if let Some(ref value) = self.favorites {
+            #[allow(unused_comparisons)]
+            if value.len() > 4usize {
+                return Err(ConstraintError::MaxLength {
+                    path: ValidationPath::from_field("favorites"),
+                    max: 4usize,
+                    actual: value.len(),
+                });
+            }
+        }
         Ok(())
     }
 }
@@ -275,6 +289,24 @@ fn lexicon_doc_fm_teal_actor_defs() -> LexiconDoc<'static> {
                         map.insert(
                             SmolStr::new_static("displayName"),
                             LexObjectProperty::String(LexString { ..Default::default() }),
+                        );
+                        map.insert(
+                            SmolStr::new_static("favorites"),
+                            LexObjectProperty::Array(LexArray {
+                                description: Some(
+                                    CowStr::new_static(
+                                        "Up to four favourite releases, in display order.",
+                                    ),
+                                ),
+                                items: LexArrayItem::Ref(LexRef {
+                                    r#ref: CowStr::new_static(
+                                        "fm.teal.actor.profile#featuredItem",
+                                    ),
+                                    ..Default::default()
+                                }),
+                                max_length: Some(4usize),
+                                ..Default::default()
+                            }),
                         );
                         map.insert(
                             SmolStr::new_static("featuredItem"),
