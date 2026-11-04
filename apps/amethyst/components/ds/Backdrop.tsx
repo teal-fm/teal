@@ -39,6 +39,8 @@ const FADE_IN_MS = 900;
 const FADE_OUT_MS = 1600;
 /** A cover stays at least this long once it arrives, so a flick can't churn the set. */
 const HOLD_MS = 700;
+/** The longest leaving covers wait for an arriving one's image. */
+const WAIT_FOR_ART_MS = 2000;
 const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 
 type Shown = { uri: string; weight: number; slot: number; since: number };
@@ -73,14 +75,21 @@ function Blob({
   shown,
   size,
   solo,
+  hold,
   remember,
+  dark,
+  onLoaded,
   onGone,
 }: {
   shown: Shown;
   size: number;
   /** The only cover in play, so it fills the whole window instead of one spot. */
   solo: boolean;
+  /** Keep showing while it leaves, because nothing has loaded to replace it yet. */
+  hold: boolean;
   remember: boolean;
+  dark: boolean;
+  onLoaded: (uri: string) => void;
   onGone: (uri: string) => void;
 }) {
   const { width, height } = useWindowDimensions();
@@ -93,7 +102,11 @@ function Blob({
   // A resumed cover was showing a moment ago, so its image is already in memory.
   const [loaded, setLoaded] = useState(resumed > 0);
   // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
-  const target = loaded ? Math.pow(shown.weight, 0.7) : 0;
+  const live = loaded ? Math.pow(shown.weight, 0.7) : 0;
+  const shownAt = useRef(live);
+  if (live > 0) shownAt.current = live;
+  const leaving = shown.weight === 0;
+  const target = leaving && hold ? shownAt.current : live;
 
   useEffect(() => {
     // An opacity crossfade moves nothing, so it runs even with Reduce Motion on;
@@ -103,12 +116,12 @@ function Blob({
       easing: ease,
       reduceMotion: ReduceMotion.Never,
     });
-    if (shown.weight > 0) return;
+    if (!leaving || hold) return;
     // Stay mounted until the fade-out finishes, so a cover never blinks away. The
     // margin covers the timer and the animation running on different clocks.
     const timer = setTimeout(() => onGone(shown.uri), FADE_OUT_MS + 250);
     return () => clearTimeout(timer);
-  }, [target, shown.weight, opacity, onGone, shown.uri]);
+  }, [target, leaving, hold, opacity, onGone, shown.uri]);
 
   // Keep what's on screen at the moment of a remount, mid-fade included, so the
   // next mount carries on from there rather than from where the fade was heading.
@@ -116,8 +129,13 @@ function Blob({
     if (!remember) return;
     const uri = shown.uri;
     return () => {
-      memory.opacity.set(uri, opacity.value);
-      memory.fill.set(uri, fill.value);
+      if (opacity.value > 0.01) {
+        memory.opacity.set(uri, opacity.value);
+        memory.fill.set(uri, fill.value);
+      } else {
+        memory.opacity.delete(uri);
+        memory.fill.delete(uri);
+      }
     };
   }, [remember, shown.uri, opacity, fill]);
 
@@ -170,7 +188,10 @@ function Blob({
           spotStyle,
         ]}
       >
-        {image(() => setLoaded(true))}
+        {image(() => {
+          setLoaded(true);
+          onLoaded(shown.uri);
+        })}
       </Animated.View>
       {/* Overscanned so the blur doesn't fade the window's edges to the ground. */}
       <Animated.View
@@ -186,6 +207,14 @@ function Blob({
         ]}
       >
         {image()}
+        {/* A cover filling the window needs a deeper veil than a few spots of it, so
+            pale art can't wash out text in dark mode, or dark art in light mode. */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: dark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.3)" },
+          ]}
+        />
       </Animated.View>
     </>
   );
@@ -259,9 +288,32 @@ export function Backdrop({
   const active = shown.filter((item) => item.weight > 0);
   const solo = active.length === 1 ? active[0].uri : undefined;
 
+  // Leaving covers wait for an arriving one to load, up to a limit, so moving to a
+  // screen whose art is still downloading doesn't drain the colour in between.
+  const [loadedUris, setLoadedUris] = useState(() => new Set<string>());
+  const waiting = active.length > 0 && !active.some((item) => loadedUris.has(item.uri));
+  const [patient, setPatient] = useState(true);
+  useEffect(() => {
+    if (!waiting) return;
+    setPatient(true);
+    const timer = setTimeout(() => setPatient(false), WAIT_FOR_ART_MS);
+    return () => clearTimeout(timer);
+  }, [waiting]);
+  const hold = waiting && patient;
+
+  const loaded = useCallback((uri: string) => {
+    setLoadedUris((prev) => (prev.has(uri) ? prev : new Set(prev).add(uri)));
+  }, []);
+
   const forget = useCallback(
     (uri: string) => {
       commit(current.current.filter((item) => item.uri !== uri || item.weight > 0));
+      setLoadedUris((prev) => {
+        if (!prev.has(uri)) return prev;
+        const next = new Set(prev);
+        next.delete(uri);
+        return next;
+      });
     },
     [commit],
   );
@@ -280,7 +332,10 @@ export function Backdrop({
             shown={item}
             size={size}
             solo={solo === item.uri}
+            hold={hold}
             remember={remember}
+            dark={isDarkColorScheme}
+            onLoaded={loaded}
             onGone={forget}
           />
         ))}

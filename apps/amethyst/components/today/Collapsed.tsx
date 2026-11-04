@@ -1,4 +1,6 @@
 import { Pressable, View } from "react-native";
+import { displayActorName } from "@/lib/teal/actors";
+import { parseAtUri } from "@/lib/teal/routes";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react-native";
 import { Avatar, Cover, Glass, Icon, Text } from "@/components/ds";
@@ -7,6 +9,10 @@ import type { DeckItem } from "./DeckCard";
 
 function cover(item: DeckItem) {
   return item.kind === "listen" ? item.listen.releaseMbId : item.moment.release.releaseMbId;
+}
+
+function listener(item: Extract<DeckItem, { kind: "listen" }>) {
+  return displayActorName(item.listen.actor, item.listen.actor?.did ?? parseAtUri(item.listen.playUri)?.did);
 }
 
 function summary(items: DeckItem[]) {
@@ -23,7 +29,7 @@ function detail(items: DeckItem[]) {
     .slice(0, 3)
     .map((i) =>
       i.kind === "listen"
-        ? `${i.listen.actor?.displayName || i.listen.actor?.handle || "someone"} on ${i.listen.artistName ?? i.listen.trackName}`
+        ? `${listener(i)} on ${i.listen.artistName ?? i.listen.trackName}`
         : `${i.moment.listenerCount} on ${i.moment.release.releaseName}`,
     )
     .join(", ");
@@ -77,7 +83,7 @@ export function TodayRailGrid({
           const listening = item.kind === "listen" && item.listen.listeningNow;
           const label =
             item.kind === "listen"
-              ? `${item.listen.actor?.displayName || item.listen.actor?.handle}: ${item.listen.trackName}${listening ? ", listening now" : ""}`
+              ? `${listener(item)}: ${item.listen.trackName}${listening ? ", listening now" : ""}`
               : `${item.moment.release.releaseName}`;
           return (
             <Pressable

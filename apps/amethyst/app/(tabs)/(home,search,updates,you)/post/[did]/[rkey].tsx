@@ -31,6 +31,7 @@ import {
 import RichText from "@/components/post/RichText";
 import { ReactionBar } from "@/components/today/ReactionBar";
 import { useDisplayActor } from "@/hooks/useDisplayActor";
+import { displayActorName } from "@/lib/teal/actors";
 import { useStore } from "@/stores/mainStore";
 
 function param(value: string | string[] | undefined) {
@@ -230,8 +231,8 @@ export default function PostScreen() {
               {context.circleSample.map((p) => (
                 <Link key={p.did} href={`/profile/${p.did}`} asChild>
                   <Pressable className="flex-row items-center gap-3 py-1.5">
-                    <Avatar did={p.did} avatar={p.avatar} name={p.displayName ?? p.handle} size={40} />
-                    <Text className="font-semibold">{p.displayName || p.handle}</Text>
+                    <Avatar did={p.did} avatar={p.avatar} name={displayActorName(p, p.did)} size={40} />
+                    <Text className="font-semibold">{displayActorName(p, p.did)}</Text>
                   </Pressable>
                 </Link>
               ))}
