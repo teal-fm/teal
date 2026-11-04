@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   Easing,
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
+import { getReleaseGroupCoverArtUrl } from "@/lib/teal/api";
 import { useColorScheme } from "@/lib/useColorScheme";
 
 export type AmbientBlob = {
@@ -31,18 +33,31 @@ const SLOTS: [number, number][] = [
   [0.3, 0.5],
   [0.7, 0.55],
 ];
-const FADE_MS = 1200;
+// Leaving covers fade slower than new ones arrive, so a fast scroll hands colour
+// over rather than washing out between covers.
+const FADE_IN_MS = 900;
+const FADE_OUT_MS = 1600;
+/** A cover stays at least this long once it arrives, so a flick can't churn the set. */
+const HOLD_MS = 700;
 const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 
-function hash(value: string) {
-  let h = 2166136261;
-  for (let i = 0; i < value.length; i++) {
-    h = Math.imul(h ^ value.charCodeAt(i), 16777619);
-  }
-  return (h >>> 0) / 4294967296;
+type Shown = { uri: string; weight: number; slot: number; since: number };
+
+/** The blur hides detail, so the small thumbnail does, and feed covers share its cache. */
+function thumbnail(uri: string) {
+  return uri.replace(/front-(250|500|1200)$/, "front-250");
 }
 
-type Shown = { uri: string; weight: number; slot: number };
+/** The next image to try after `failed`, mirroring Cover: release group, then the other size. */
+async function fallbackFor(failed: string, original: string) {
+  const release = original.match(/coverartarchive\.org\/release\/([^/]+)\//)?.[1];
+  if (release && failed === thumbnail(original)) {
+    const group = await getReleaseGroupCoverArtUrl(release, 250);
+    if (group && group !== failed) return group;
+  }
+  const other = failed.replace(/front-250$/, "front-500");
+  return other !== failed ? other : undefined;
+}
 
 function Blob({
   shown,
@@ -55,15 +70,30 @@ function Blob({
 }) {
   const { width, height } = useWindowDimensions();
   const opacity = useSharedValue(0);
-  const target = Math.pow(shown.weight, 0.7);
+  const [source, setSource] = useState(() => thumbnail(shown.uri));
+  const [loaded, setLoaded] = useState(false);
+  // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
+  const target = loaded ? Math.pow(shown.weight, 0.7) : 0;
 
   useEffect(() => {
-    opacity.value = withTiming(target, { duration: FADE_MS, easing: ease });
-    if (target > 0) return;
+    // An opacity crossfade moves nothing, so it runs even with Reduce Motion on;
+    // jumping instead would flash the plain ground on every screen change.
+    opacity.value = withTiming(target, {
+      duration: target > 0 ? FADE_IN_MS : FADE_OUT_MS,
+      easing: ease,
+      reduceMotion: ReduceMotion.Never,
+    });
+    if (shown.weight > 0) return;
     // Stay mounted until the fade-out finishes, so a cover never blinks away.
-    const timer = setTimeout(() => onGone(shown.uri), FADE_MS);
+    const timer = setTimeout(() => onGone(shown.uri), FADE_OUT_MS);
     return () => clearTimeout(timer);
-  }, [target, opacity, onGone, shown.uri]);
+  }, [target, shown.weight, opacity, onGone, shown.uri]);
+
+  const onError = () => {
+    void fallbackFor(source, shown.uri).then((next) => {
+      if (next) setSource(next);
+    });
+  };
 
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
   const [fx, fy] = SLOTS[shown.slot];
@@ -84,10 +114,12 @@ function Blob({
       ]}
     >
       <Image
-        source={{ uri: shown.uri }}
+        source={{ uri: source }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         cachePolicy="memory-disk"
+        onLoad={() => setLoaded(true)}
+        onError={onError}
       />
     </Animated.View>
   );
@@ -110,32 +142,49 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
   const { isDarkColorScheme } = useColorScheme();
   const size = Math.max(width, height) * (width >= 1000 ? 0.75 : 0.95);
   const [shown, setShown] = useState<Shown[]>([]);
+  const current = useRef<Shown[]>([]);
+  const [recheck, setRecheck] = useState(0);
 
-  // Covers that drop out fade to nothing in their spot; new ones take a free spot.
-  useEffect(() => {
-    setShown((prev) => {
-      const incoming = new Map(blobs.map((blob) => [blob.uri, blob.weight]));
-      const next = prev.map((item) => ({
-        ...item,
-        weight: incoming.get(item.uri) ?? 0,
-      }));
-      const used = new Set(next.map((item) => item.slot));
-      for (const blob of blobs) {
-        if (prev.some((item) => item.uri === blob.uri)) continue;
-        let slot = SLOTS.findIndex((_, index) => !used.has(index));
-        if (slot < 0) slot = Math.floor(hash(blob.uri) * SLOTS.length);
-        used.add(slot);
-        next.push({ uri: blob.uri, weight: blob.weight, slot });
-      }
-      return next;
-    });
-  }, [blobs]);
-
-  const forget = useCallback((uri: string) => {
-    setShown((prev) =>
-      prev.filter((item) => item.uri !== uri || item.weight > 0),
-    );
+  const commit = useCallback((next: Shown[]) => {
+    current.current = next;
+    setShown(next);
   }, []);
+
+  // Covers that drop out fade to nothing in their spot; new ones take the emptiest spot.
+  useEffect(() => {
+    const now = Date.now();
+    const prev = current.current;
+    const incoming = new Map(blobs.map((blob) => [blob.uri, blob.weight]));
+    let wake = Infinity;
+    const next = prev.map((item) => {
+      const weight = incoming.get(item.uri);
+      if (weight !== undefined) {
+        return { ...item, weight, since: item.weight > 0 ? item.since : now };
+      }
+      if (item.weight > 0 && now - item.since < HOLD_MS) {
+        wake = Math.min(wake, item.since + HOLD_MS);
+        return item;
+      }
+      return { ...item, weight: 0 };
+    });
+    for (const blob of blobs) {
+      if (prev.some((item) => item.uri === blob.uri)) continue;
+      const crowd = SLOTS.map((_, index) => next.filter((item) => item.slot === index).length);
+      const slot = crowd.indexOf(Math.min(...crowd));
+      next.push({ uri: blob.uri, weight: blob.weight, slot, since: now });
+    }
+    commit(next);
+    if (wake === Infinity) return;
+    const timer = setTimeout(() => setRecheck((n) => n + 1), wake - now);
+    return () => clearTimeout(timer);
+  }, [blobs, recheck, commit]);
+
+  const forget = useCallback(
+    (uri: string) => {
+      commit(current.current.filter((item) => item.uri !== uri || item.weight > 0));
+    },
+    [commit],
+  );
 
   return (
     <View

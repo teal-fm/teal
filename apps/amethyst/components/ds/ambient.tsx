@@ -43,6 +43,8 @@ export function WindowBackdrop() {
 
 /** How many covers blend at once; more turns the backdrop to mud. */
 const MAX_BLOBS = 6;
+/** The nearest cover counts as at least this close, so a lone far one stays faint. */
+const MIN_LEAD = 0.6;
 
 function weightFor(top: number, bottom: number, height: number) {
   const mid = height * 0.45;
@@ -83,9 +85,13 @@ export function AmbientScreen({
           }),
       ),
     );
-    setBlobs(
-      [...seen.values()].sort((a, b) => b.weight - a.weight).slice(0, MAX_BLOBS),
-    );
+    const top = [...seen.values()]
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, MAX_BLOBS);
+    // Scale to the nearest cover, so a fast scroll between covers shifts the colour
+    // instead of draining it.
+    const scale = 1 / Math.max(top[0]?.weight ?? 1, MIN_LEAD);
+    setBlobs(top.map((blob) => ({ ...blob, weight: Math.min(1, blob.weight * scale) })));
   }, [height]);
 
   const refresh = useCallback(() => {
