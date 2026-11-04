@@ -164,9 +164,16 @@ export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: strin
   }
   client.setQueriesData<SocialPostView[]>({ queryKey: ["replies"] }, (replies) => replies?.filter(keep));
   client.removeQueries({ queryKey: ["post", uri] });
-  if (parentUri) {
-    client.setQueriesData<SocialPostView>({ queryKey: ["post", parentUri] }, (parent) =>
-      parent && { ...parent, replyCount: Math.max(0, parent.replyCount - 1) },
+  if (parentUri) bumpReplyCount(client, parentUri, -1);
+}
+
+/** Changes a post's reply count everywhere it's cached: its page, feeds, and profile lists. */
+function bumpReplyCount(client: ReturnType<typeof useQueryClient>, uri: string, by: number) {
+  const bump = (post: SocialPostView) => (post.uri === uri ? { ...post, replyCount: Math.max(0, post.replyCount + by) } : post);
+  client.setQueriesData<SocialPostView>({ queryKey: ["post", uri] }, (post) => post && bump(post));
+  for (const key of [["feed"], ["actor-posts"]]) {
+    client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: key }, (pages) =>
+      pages && { ...pages, pages: pages.pages.map((page) => ({ ...page, items: page.items.map(bump) })) },
     );
   }
 }
@@ -180,9 +187,7 @@ export function rememberPost(client: ReturnType<typeof useQueryClient>, viewer: 
     client.setQueriesData<SocialPostView[]>({ queryKey: ["replies", post.replyParentUri] }, (replies) =>
       replies && !replies.some((r) => r.uri === post.uri) ? [...replies, post] : replies,
     );
-    client.setQueriesData<SocialPostView>({ queryKey: ["post", post.replyParentUri] }, (parent) =>
-      parent && { ...parent, replyCount: parent.replyCount + 1 },
-    );
+    bumpReplyCount(client, post.replyParentUri, 1);
     return;
   }
   const prepend = (pages: InfiniteData<FeedPage> | undefined) =>
