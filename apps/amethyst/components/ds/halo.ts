@@ -18,5 +18,5 @@ export function useHalo(): TextStyle {
 /** Placeholder text in fields; clears 4.5:1 on the ground and on fill in both themes. */
 export function usePlaceholderColor() {
   const { isDarkColorScheme } = useColorScheme();
-  return isDarkColorScheme ? "#98989d" : "#6e6e73";
+  return isDarkColorScheme ? "#98989d" : "#636366";
 }

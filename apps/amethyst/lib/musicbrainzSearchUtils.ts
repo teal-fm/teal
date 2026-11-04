@@ -161,6 +161,9 @@ function setCache(key: string, results: MusicBrainzRecording[]): void {
  * Single search stage with specified matching strategy.
  * Caches results in-memory to avoid redundant API calls (MB rate limit: 1 req/sec).
  */
+/** MusicBrainz didn't answer (rate limited, an error status, or no connection) after retries. */
+export class MusicBrainzUnavailableError extends Error {}
+
 export async function searchStage(
   track: string | undefined,
   artist: string | undefined,
@@ -233,11 +236,11 @@ export async function searchStage(
           delay *= 2; // Exponential backoff
           continue;
         }
-        return [];
+        throw new MusicBrainzUnavailableError(`MusicBrainz is rate limiting (${strategy})`);
       }
 
       if (!res.ok) {
-        return [];
+        throw new MusicBrainzUnavailableError(`MusicBrainz returned ${res.status} (${strategy})`);
       }
 
       const data = (await res.json()) as {
@@ -247,15 +250,15 @@ export async function searchStage(
       setCache(cacheKey, results);
       return results;
     } catch (error) {
+      if (error instanceof MusicBrainzUnavailableError) throw error;
       retries--;
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
       } else {
-        if (error instanceof Error) {
-          console.error(`Search stage ${strategy} failed:`, error.message);
-        }
-        return [];
+        throw new MusicBrainzUnavailableError(
+          `Search stage ${strategy} failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
   }

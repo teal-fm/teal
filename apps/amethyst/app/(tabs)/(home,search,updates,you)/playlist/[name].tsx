@@ -195,6 +195,8 @@ export default function PlaylistScreen() {
 
   const { playlist, items } = query.data;
   const isOwner = viewer === playlist.authorDid;
+  // Alpha-era playlists aren't re-indexed when edited, so an edit would look like it reverted.
+  const legacy = playlist.uri.includes("/fm.teal.alpha.");
   const canAdd = !!viewer && playlist.authors.includes(viewer);
   const tracks = items.map((item) => ({ item, play: trackViewToPlayView(item.track) }));
 
@@ -226,7 +228,10 @@ export default function PlaylistScreen() {
             </View>
           </View>
           {playlist.description ? <RichText text={playlist.description} facets={playlist.descriptionFacets} className="text-[16px] leading-[22px] text-ink" /> : null}
-          {isOwner ? <Button label="Edit playlist" size="sm" variant="secondary" onPress={() => setEditing(true)} /> : null}
+          {isOwner && !legacy ? <Button label="Edit playlist" size="sm" variant="secondary" onPress={() => setEditing(true)} /> : null}
+          {isOwner && legacy ? (
+            <Text className="text-[13px] text-ink-2">This playlist was made before teal's current format, so its details can't be edited here yet. You can still add songs.</Text>
+          ) : null}
         </Glass>
       )}
 

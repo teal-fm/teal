@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { rememberPost } from "@/lib/teal/queries";
 import { Composer } from "@/components/compose/Composer";
 import { Glass, goBack, Screen } from "@/components/ds";
 
@@ -10,8 +11,8 @@ export default function Compose() {
       <Glass strong className="p-4">
         <Composer
           chooseTrack
-          onPublished={() => {
-            void client.invalidateQueries({ queryKey: ["feed"] });
+          onPublished={(post) => {
+            rememberPost(client, post.authorDid, post);
             goBack();
           }}
         />

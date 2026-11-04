@@ -61,6 +61,10 @@ export function Cover({
       // Unlabelled covers sit beside text that names the album, so they're decorative.
       aria-hidden={accessibilityLabel ? undefined : true}
     >
+      {/* The disc sits underneath, so a cover that's loading or failing never leaves a hole. */}
+      <View className="absolute inset-0 items-center justify-center">
+        <Icon icon={Disc3} size={(size ?? 64) * 0.4} className="text-ink-3" />
+      </View>
       {source && !failed.includes(source) ? (
         <Image
           key={`${source}#${attempt}`}
@@ -71,11 +75,7 @@ export function Cover({
           transition={200}
           recyclingKey={source}
         />
-      ) : (
-        <View className="flex-1 items-center justify-center">
-          <Icon icon={Disc3} size={(size ?? 64) * 0.4} className="text-ink-3" />
-        </View>
-      )}
+      ) : null}
     </View>
   );
 }

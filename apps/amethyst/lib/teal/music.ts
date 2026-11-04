@@ -13,7 +13,10 @@ export function normalizeListenerPeriod(value?: string): ArtistListenerPeriod {
 }
 
 /** An artist's releases split the way record shops do: albums, EPs, singles, everything else. */
-export function discography(releases: readonly AlbumSummary[]) {
+export function discography(all: readonly AlbumSummary[]) {
+  // The index can list one MBID under two names (an album and its single); show it once.
+  const seen = new Set<string>();
+  const releases = all.filter((r) => !seen.has(r.mbid) && seen.add(r.mbid));
   const of = (test: (type?: string) => boolean) => releases.filter((r) => test(r.releaseType));
   return [
     { title: "Albums", releases: of((t) => t === "album") },

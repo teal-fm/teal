@@ -29,14 +29,20 @@ import {
 } from "@/components/ds";
 
 const REASONS: Record<string, { label: string; icon: LucideIcon; tone: string }> = {
-  like: { label: "liked your post", icon: Heart, tone: "text-rose-500" },
-  repost: { label: "reposted your post", icon: Repeat2, tone: "text-tint" },
+  like: { label: "liked your", icon: Heart, tone: "text-rose-500" },
+  repost: { label: "reposted your", icon: Repeat2, tone: "text-tint" },
   reply: { label: "replied to your post", icon: MessageCircle, tone: "text-tint" },
-  reaction: { label: "reacted to your post", icon: SmilePlus, tone: "text-tint" },
+  reaction: { label: "reacted to your", icon: SmilePlus, tone: "text-tint" },
   follow: { label: "followed you", icon: UserPlus, tone: "text-tint" },
   badgeAssignment: { label: "gave you a badge", icon: Bell, tone: "text-ink-2" },
 };
 const OTHER = { label: "interacted with your profile", icon: Bell, tone: "text-ink-2" };
+
+function targetKind(uri?: string) {
+  if (uri?.includes(".feed.play/")) return "listen";
+  if (uri?.includes(".social.playlist/")) return "playlist";
+  return "post";
+}
 
 type Group = { key: string; reason: string; items: SocialNotificationView[]; contextUri?: string };
 
@@ -113,9 +119,9 @@ export default function Activity() {
 
 function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
   const known = REASONS[g.reason] ?? OTHER;
-  // Reactions land on listens as well as posts.
-  const reason =
-    g.reason === "reaction" && g.contextUri?.includes(".feed.play/") ? { ...known, label: "reacted to your listen" } : known;
+  // Likes, reposts, and reactions can land on a listen or a playlist as well as a post.
+  const target = targetKind(g.contextUri);
+  const reason = known.label.endsWith(" your") ? { ...known, label: `${known.label} ${target}` } : known;
   const first = g.items[0];
   const others = g.items.length - 1;
   const href = g.contextUri ? postHrefFromUri(g.contextUri) : undefined;
@@ -151,7 +157,7 @@ function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
           {otherHref ? (
             <Link href={otherHref as never} asChild>
               <Pressable accessibilityRole="link" className="self-start">
-                <Text className="text-[14px] font-semibold text-tint">Open your listen</Text>
+                <Text className="text-[14px] font-semibold text-tint">Open your {target}</Text>
               </Pressable>
             </Link>
           ) : null}

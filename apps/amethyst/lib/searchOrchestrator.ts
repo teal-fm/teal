@@ -21,7 +21,8 @@ import {
   normalizeForComparison,
 } from "./musicbrainzCleaner";
 import {
-  searchStage,
+  MusicBrainzUnavailableError,
+  searchStage as runStage,
   PARTIAL_THRESHOLD,
   hasCJK,
   resolveArtistAlias,
@@ -82,6 +83,20 @@ export async function searchMusicbrainz(
   if (!searchParams.track && !searchParams.artist && !searchParams.release) {
     return [];
   }
+
+  // A stage MusicBrainz didn't answer counts as empty, so other stages can still
+  // find results. If none do and any stage failed, the search failed rather than
+  // finding nothing.
+  let unavailable: MusicBrainzUnavailableError | undefined;
+  const searchStage = async (...args: Parameters<typeof runStage>) => {
+    try {
+      return await runStage(...args);
+    } catch (error) {
+      if (!(error instanceof MusicBrainzUnavailableError)) throw error;
+      unavailable = error;
+      return [];
+    }
+  };
 
   try {
     const cleanedTrack = searchParams.track
@@ -234,7 +249,9 @@ export async function searchMusicbrainz(
       cleanedRelease,
     };
 
-    return rankMultiStageResults(stageResults, rankingQuery).slice(0, 25);
+    const ranked = rankMultiStageResults(stageResults, rankingQuery).slice(0, 25);
+    if (ranked.length === 0 && unavailable) throw unavailable;
+    return ranked;
   } catch (error) {
     if (error instanceof Error) {
       console.error("Failed to fetch MusicBrainz data:", error.message);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { ListChecks, Plus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
@@ -9,7 +9,7 @@ import { mergePendingListens } from "@/lib/teal/pendingListens";
 import { artistsFromText, deletePlayRecord, loadPlayRecord, putPlayRecord } from "@/lib/teal/playRecords";
 import { Button, ButtonRow, ErrorNotice, Field, Glass, Heading, Loading, Notice, Text } from "@/components/ds";
 import { ListenRow } from "@/components/listen/ListenRow";
-import { useActorPlays } from "@/hooks/useProfile";
+import { patchActorPlays, useActorPlays } from "@/hooks/useProfile";
 import { useStore } from "@/stores/mainStore";
 import {
   removePendingListens,
@@ -60,20 +60,7 @@ function BulkEditor({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const editable = plays.filter((play) => play.rkey && !syncing.has(play.uri ?? ""));
-  // The index lags writes, so the cached history is updated in place rather than refetched.
-  const patchPlays = (update: (play: PlayView) => PlayView | null) =>
-    client.setQueryData<InfiniteData<{ plays: PlayView[]; cursor?: string }>>(["actor-plays", did], (data) =>
-      data && {
-        ...data,
-        pages: data.pages.map((page) => ({
-          ...page,
-          plays: page.plays.flatMap((play) => {
-            const next = update(play);
-            return next ? [next] : [];
-          }),
-        })),
-      },
-    );
+  const patchPlays = (update: (play: PlayView) => PlayView | null) => patchActorPlays(client, did, update);
 
   const toggle = (rkey: string) => {
     setConfirmDelete(false);

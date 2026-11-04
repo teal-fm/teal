@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Modal, Pressable, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Modal, Platform, Pressable, TextInput, View } from "react-native";
 import { QUICK_REACTIONS } from "@/lib/teal/reactions";
-import { Glass, Text } from "@/components/ds";
+import { Glass, Text, usePlaceholderColor } from "@/components/ds";
 
 /** A single grapheme-ish emoji: no letters, digits, or spaces. */
 function asEmoji(value: string) {
@@ -23,6 +23,26 @@ export function ReactionPicker({
   onClose: () => void;
 }) {
   const [custom, setCustom] = useState("");
+  const placeholder = usePlaceholderColor();
+  const panel = useRef<View>(null);
+
+  // On the web the modal gets keyboard focus and closes on Escape, like a native sheet.
+  useEffect(() => {
+    if (Platform.OS !== "web" || !visible) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const frame = requestAnimationFrame(() =>
+      (panel.current as unknown as HTMLElement | null)?.querySelector<HTMLElement>('[role="menuitem"]')?.focus(),
+    );
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKey);
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [visible, onClose]);
   const pick = (emoji: string) => {
     setCustom("");
     onPick(emoji);
@@ -36,6 +56,7 @@ export function ReactionPicker({
         onPress={onClose}
       >
         <Pressable onPress={() => undefined}>
+          <View ref={panel} role="dialog" aria-modal aria-label="Add a reaction">
           <Glass strong className="items-center gap-3 rounded-[28px] p-3">
             <View role="menu" className="flex-row gap-1">
               {QUICK_REACTIONS.map((emoji) => (
@@ -60,10 +81,12 @@ export function ReactionPicker({
                 }}
                 placeholder="Any emoji"
                 accessibilityLabel="Type any emoji"
-                className="h-11 flex-1 text-[17px] text-ink placeholder:text-ink-3"
+                placeholderTextColor={placeholder}
+                className="h-11 flex-1 text-[17px] text-ink"
               />
             </View>
           </Glass>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>

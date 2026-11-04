@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Linking, Platform, Pressable, View } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, MessageCircle, Share as ShareIcon, Trash2 } from "lucide-react-native";
 import { getSocialPost, getSocialPostReplies, type SocialPostView } from "@/lib/teal/api";
-import { forgetPost, useViewerDid } from "@/lib/teal/queries";
+import { forgetPost, rememberPost, useViewerDid } from "@/lib/teal/queries";
 import { absoluteUrl, musicArtistHref, postHrefFromUri, postUriFromRoute } from "@/lib/teal/routes";
 import { shareLink } from "@/lib/teal/share";
 import { socialPostDeleteParams, trackViewToPlayView } from "@/lib/teal/social";
@@ -14,6 +14,7 @@ import {
   AmbientSource,
   Avatar,
   Button,
+  ButtonRow,
   Cover,
   coverUri,
   ErrorNotice,
@@ -65,6 +66,11 @@ export default function PostScreen() {
   const layout = useLayout();
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const confirmRef = useRef<View>(null);
+  // Keyboard focus follows the trash button into the confirmation that replaces it.
+  useEffect(() => {
+    if (confirmDelete && Platform.OS === "web") (confirmRef.current as unknown as HTMLElement | null)?.focus();
+  }, [confirmDelete]);
   const [note, setNote] = useState<string | null>(null);
 
   const post = useQuery({
@@ -79,10 +85,12 @@ export default function PostScreen() {
   });
 
   // A reply-count link lands on #replies; bring the replies into view once they've loaded.
+  // The replies panel only mounts once the post has loaded too, so wait for both.
+  const ready = !post.isLoading && !replies.isLoading;
   useEffect(() => {
-    if (Platform.OS !== "web" || replies.isLoading || window.location.hash !== "#replies") return;
-    document.getElementById("replies")?.scrollIntoView({ block: "start" });
-  }, [replies.isLoading]);
+    if (Platform.OS !== "web" || !ready || window.location.hash !== "#replies") return;
+    requestAnimationFrame(() => document.getElementById("replies")?.scrollIntoView({ block: "start" }));
+  }, [ready]);
 
   const data = post.data;
   const play = data ? trackViewToPlayView(data.track) : undefined;
@@ -188,14 +196,17 @@ export default function PostScreen() {
                 <Text className="text-[14px] tabular-nums text-ink-2">{data.replyCount}</Text>
               </View>
               <IconButton icon={ShareIcon} label="Share" size={38} onPress={share} />
-              {isOwn ? (
-                confirmDelete ? (
-                  <Button label={deleting ? "Deleting" : "Delete post?"} size="sm" variant="destructive" loading={deleting} onPress={remove} />
-                ) : (
-                  <IconButton icon={Trash2} label="Delete post" size={38} onPress={remove} />
-                )
-              ) : null}
+              {isOwn && !confirmDelete ? <IconButton icon={Trash2} label="Delete post" size={38} onPress={remove} /> : null}
             </View>
+            {isOwn && confirmDelete ? (
+              <View role="alert" className="gap-2 rounded-[14px] bg-fill p-3">
+                <Text className="font-semibold">Delete this post? This can't be undone.</Text>
+                <ButtonRow>
+                  <Button ref={confirmRef} label={deleting ? "Deleting" : "Delete"} size="sm" variant="destructive" loading={deleting} onPress={remove} />
+                  <Button label="Cancel" size="sm" variant="secondary" disabled={deleting} onPress={() => setConfirmDelete(false)} />
+                </ButtonRow>
+              </View>
+            ) : null}
             {note ? (
               <Text role="status" className="text-[14px] text-ink-2">
                 {note}
@@ -240,10 +251,7 @@ export default function PostScreen() {
               <Composer
                 track={play}
                 replyTo={data}
-                onPublished={() => {
-                  void client.invalidateQueries({ queryKey: ["replies", uri] });
-                  void client.invalidateQueries({ queryKey: ["post", uri] });
-                }}
+                onPublished={(reply) => rememberPost(client, reply.authorDid, reply)}
               />
             </View>
           </Glass>

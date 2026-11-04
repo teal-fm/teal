@@ -1,6 +1,7 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
 import type { AppBskyActorDefs } from "@atproto/api";
 import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 import { resolveHandle } from "@/lib/atp/pid";
 import {
   getActorFeed,
@@ -164,4 +165,24 @@ export function useActorPlaylists(did?: string) {
     getNextPageParam: (last) => last.cursor,
     enabled: !!did,
   });
+}
+
+/**
+ * Edits or removes listens in someone's cached history in place. The index lags
+ * writes, so refetching would bring back what was just deleted or changed.
+ * Return null from `update` to remove a listen.
+ */
+export function patchActorPlays(client: QueryClient, did: string, update: (play: PlayView) => PlayView | null) {
+  client.setQueryData<InfiniteData<{ plays: PlayView[]; cursor?: string }>>(["actor-plays", did], (data) =>
+    data && {
+      ...data,
+      pages: data.pages.map((page) => ({
+        ...page,
+        plays: page.plays.flatMap((play) => {
+          const next = update(play);
+          return next ? [next] : [];
+        }),
+      })),
+    },
+  );
 }

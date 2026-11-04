@@ -546,7 +546,12 @@ export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
         )?.id;
         return releaseId ? coverArtUrl(releaseId, size) : undefined;
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .then((url) => {
+        // Keep hits for the session; a miss may be a passing outage, so let the next call ask again.
+        if (!url) recordingCoverArtCache.delete(cacheKey);
+        return url;
+      });
     recordingCoverArtCache.set(cacheKey, cached);
   }
   return cached;
@@ -617,7 +622,12 @@ export function getArtistImageUrl(artistMbId?: string, width = 500) {
         const filename = entity?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
         return filename ? commonsFilePath(filename, width) : undefined;
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .then((url) => {
+        // Keep hits for the session; a miss may be a passing outage, so let the next call ask again.
+        if (!url) artistImageCache.delete(cacheKey);
+        return url;
+      });
     artistImageCache.set(cacheKey, cached);
   }
   return cached;

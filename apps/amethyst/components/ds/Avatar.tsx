@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View } from "react-native";
 import { Image } from "expo-image";
 import { getProfileImageUrl } from "@/lib/teal/actors";
@@ -24,6 +25,7 @@ export function Avatar({
 }) {
   const uri = did ? getProfileImageUrl(did, avatar, "avatar") : undefined;
   const ring = listeningNow ? Math.max(2, Math.round(size / 24)) : 0;
+  const [broken, setBroken] = useState(false);
   return (
     <View
       className={cn("rounded-full", listeningNow && "bg-now", className)}
@@ -32,13 +34,18 @@ export function Avatar({
       aria-hidden
     >
       <View className="flex-1 items-center justify-center overflow-hidden rounded-full border-ground bg-fill" style={{ borderWidth: ring ? ring : 0 }}>
-        {uri ? (
-          <Image source={{ uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-        ) : (
-          <Text className="font-semibold text-ink-2" style={{ fontSize: size * 0.4 }}>
-            {(name ?? "?").slice(0, 1).toUpperCase()}
-          </Text>
-        )}
+        {/* The initial sits underneath, so a missing or broken image still shows who it is. */}
+        <Text className="font-semibold text-ink-2" style={{ fontSize: size * 0.4 }}>
+          {(name ?? "?").slice(0, 1).toUpperCase()}
+        </Text>
+        {uri && !broken ? (
+          <Image
+            source={{ uri }}
+            style={{ position: "absolute", width: "100%", height: "100%" }}
+            contentFit="cover"
+            onError={() => setBroken(true)}
+          />
+        ) : null}
       </View>
     </View>
   );

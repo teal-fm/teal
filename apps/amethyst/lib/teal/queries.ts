@@ -165,3 +165,26 @@ export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: strin
   client.setQueriesData<SocialPostView[]>({ queryKey: ["replies"] }, (replies) => replies?.filter(keep));
   client.removeQueries({ queryKey: ["post", uri] });
 }
+
+/**
+ * Shows a post you just published without waiting for the index: a new post leads
+ * your feed and your profile's posts; a reply joins its thread and bumps the count.
+ */
+export function rememberPost(client: ReturnType<typeof useQueryClient>, viewer: string, post: SocialPostView) {
+  if (post.replyParentUri) {
+    client.setQueriesData<SocialPostView[]>({ queryKey: ["replies", post.replyParentUri] }, (replies) =>
+      replies && !replies.some((r) => r.uri === post.uri) ? [...replies, post] : replies,
+    );
+    client.setQueriesData<SocialPostView>({ queryKey: ["post", post.replyParentUri] }, (parent) =>
+      parent && { ...parent, replyCount: parent.replyCount + 1 },
+    );
+    return;
+  }
+  const prepend = (pages: InfiniteData<FeedPage> | undefined) =>
+    pages && {
+      ...pages,
+      pages: pages.pages.map((page, i) => (i === 0 ? { ...page, items: [post, ...page.items.filter((p) => p.uri !== post.uri)] } : page)),
+    };
+  client.setQueryData<InfiniteData<FeedPage>>(keys.feed(viewer), prepend);
+  client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: ["actor-posts", viewer] }, prepend);
+}

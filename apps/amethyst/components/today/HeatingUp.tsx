@@ -9,8 +9,10 @@ function albumHref(m: MomentView) {
   return r.releaseMbId && r.artistName ? musicAlbumHref(r.artistName, r.releaseName, r.releaseMbId) : undefined;
 }
 
+/** One way to say how many are on an album, wherever it shows. */
 function caption(m: MomentView) {
-  const people = `${m.listenerCount} ${m.listenerCount === 1 ? "listener" : "listeners"}`;
+  const noun = m.kind === "circle" ? ["friend", "friends"] : ["listener", "listeners"];
+  const people = `${m.listenerCount} ${m.listenerCount === 1 ? noun[0] : noun[1]}`;
   if (m.kind === "trending" && m.changePercent) return `${people} · +${m.changePercent}%`;
   return `${people} today`;
 }
@@ -65,7 +67,9 @@ export function HeatingRail({ moments }: { moments: MomentView[] }) {
   if (moments.length === 0) return null;
   return (
     <Glass className="gap-1 p-4">
-      <Text className="mb-1 text-[19px] font-bold text-ink">Heating up</Text>
+      <Heading level={2} className="mb-1 text-[19px]">
+        Heating up
+      </Heading>
       {moments.map((m) => (
         <Link key={m.release.releaseMbId ?? m.release.releaseName} href={(albumHref(m) ?? "/") as never} asChild>
           <Pressable className="flex-row items-center gap-3 py-1.5">
@@ -75,7 +79,7 @@ export function HeatingRail({ moments }: { moments: MomentView[] }) {
                 {m.release.releaseName}
               </Text>
               <Text className="text-[13.5px] text-ink-2" numberOfLines={1}>
-                {m.listenerCount} {m.kind === "circle" ? "friends" : "people"} today
+                {caption(m)}
               </Text>
             </View>
           </Pressable>

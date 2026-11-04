@@ -36,6 +36,7 @@ import { MusicHero } from "@/components/music/MusicHero";
 import { useRecordingArt } from "@/hooks/useRecordingArt";
 import { ReactionBar } from "@/components/today/ReactionBar";
 import { useDisplayActor } from "@/hooks/useDisplayActor";
+import { patchActorPlays } from "@/hooks/useProfile";
 import { useStore } from "@/stores/mainStore";
 import { removePendingListens, retainConfirmedListens, retireIndexedListens, usePendingListens } from "@/stores/pendingListenStore";
 
@@ -161,7 +162,7 @@ export default function ListenScreen() {
       await deletePlayRecord(agent, did, rkey);
       removePendingListens(did, [uri]);
       setDeleted(true);
-      void client.invalidateQueries({ queryKey: ["actor-plays", did] });
+      patchActorPlays(client, did, (p) => (p.rkey === rkey ? null : p));
     } catch {
       setDeleteError(true);
     }

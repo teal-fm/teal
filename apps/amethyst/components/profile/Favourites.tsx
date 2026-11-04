@@ -23,7 +23,8 @@ export function Favourites({
 }) {
   const albums = useQueries({
     queries: favourites.map((f) => ({
-      queryKey: ["album", favouriteId(f)],
+      // Not ["album", …]: the album page keeps paged data under that key.
+      queryKey: ["album-summary", favouriteId(f)],
       queryFn: () => getAlbum(`mbid:${favouriteId(f)}`, 1),
       staleTime: 60 * 60_000,
     })),
