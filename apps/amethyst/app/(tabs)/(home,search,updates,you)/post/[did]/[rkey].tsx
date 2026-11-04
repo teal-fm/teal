@@ -47,7 +47,7 @@ function Reply({ reply }: { reply: SocialPostView }) {
   return (
     <View className="flex-row gap-3 border-b border-hair py-3.5 last:border-b-0">
       <Link href={`/profile/${reply.authorDid}`} asChild>
-        <Pressable>
+        <Pressable accessibilityLabel={`${name}'s profile`} className="self-start">
           <Avatar did={reply.authorDid} avatar={reply.author?.avatar} name={name} size={36} />
         </Pressable>
       </Link>

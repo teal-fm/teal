@@ -278,7 +278,10 @@ export default function SocialPostCard({
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row gap-3">
           <Link href={`/profile/${authorHref}` as any} asChild>
-            <Pressable className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary">
+            <Pressable
+              accessibilityLabel={`${authorLabel}'s profile`}
+              className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary"
+            >
               {authorAvatar ? (
                 <Image
                   source={{ uri: authorAvatar }}

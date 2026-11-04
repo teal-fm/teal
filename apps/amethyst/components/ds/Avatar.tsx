@@ -28,7 +28,7 @@ export function Avatar({
     <View
       className={cn("rounded-full", listeningNow && "bg-now", className)}
       style={{ width: size, height: size, padding: ring }}
-      // Avatars sit beside the person's name or inside a labelled link.
+      // Avatars are decorative: the name sits beside them, or the link around them carries a label.
       aria-hidden
     >
       <View className="flex-1 items-center justify-center overflow-hidden rounded-full border-ground bg-fill" style={{ borderWidth: ring ? ring : 0 }}>

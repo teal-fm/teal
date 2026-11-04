@@ -241,7 +241,7 @@ function OnboardingFlow() {
         <View className="w-full items-center px-6">
         <View className="w-full max-w-md gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
           <Icon icon={Disc3} size={42} className="text-primary" />
-          <Text className="font-sans text-3xl font-black">
+          <Text role="heading" aria-level={1} className="font-sans text-3xl font-black">
             Create your Teal profile
           </Text>
           <Text className="text-ink-2">
@@ -347,7 +347,7 @@ function OnboardingFlow() {
         <View className="h-20 w-20 items-center justify-center rounded-full border-8 border-primary/20 bg-primary/10">
           <ActivityIndicator size="large" />
         </View>
-        <Text className="font-sans text-3xl font-black">
+        <Text role="heading" aria-level={1} className="font-sans text-3xl font-black">
           {OnboardingSubmissionSteps[submissionStep]}
         </Text>
         <Text className="text-ink-2">
