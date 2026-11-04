@@ -135,7 +135,7 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
           {
             backgroundColor: isDarkColorScheme
               ? "rgba(0,0,0,0.42)"
-              : "rgba(250,250,252,0.32)",
+              : "rgba(250,250,252,0.46)",
           },
         ]}
       />

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack } from "expo-router";
-import RightRail from "@/components/teal/RightRail";
 import { useQuery } from "@tanstack/react-query";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { HeatingShelf } from "@/components/today/HeatingUp";
@@ -109,14 +108,17 @@ function SearchTabButton({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={`${label}, ${count}`}
       className={`min-w-0 flex-1 flex-row items-center justify-center gap-1 border-b-2 px-1 py-3 ${
-        active ? "border-foreground" : "border-transparent"
+        active ? "border-ink" : "border-transparent"
       }`}
     >
       <Icon
         icon={icon}
         size={17}
-        className={active ? "text-foreground" : "text-ink-2"}
+        className={active ? "text-ink" : "text-ink-2"}
       />
       <Text
         className={
@@ -127,7 +129,7 @@ function SearchTabButton({
       >
         {label}
       </Text>
-      <Text className="font-mono text-xs text-ink-2">{count}</Text>
+      <Text className="text-xs tabular-nums text-ink-2">{count}</Text>
     </Pressable>
   );
 }
@@ -153,7 +155,7 @@ function UserRow({ user }: { user: UserResult }) {
             {user.displayName || handle || user.did}
           </Text>
           <Text
-            className="font-mono text-xs text-ink-2"
+            className="text-xs tabular-nums text-ink-2"
             numberOfLines={1}
           >
             {handle ? `@${handle}` : user.did}
@@ -185,14 +187,14 @@ function SongRow({ song }: { song: SongResult }) {
           </Text>
           {song.releaseName && (
             <Text
-              className="font-mono text-xs text-ink-2"
+              className="text-xs tabular-nums text-ink-2"
               numberOfLines={1}
             >
               {song.releaseName}
             </Text>
           )}
         </View>
-        <Text className="font-mono text-xs text-ink-2">
+        <Text className="text-xs tabular-nums text-ink-2">
           {song.playCount}
         </Text>
       </Pressable>
@@ -220,7 +222,7 @@ function MusicEntityRow({
         <Text className="min-w-0 flex-1 font-black" numberOfLines={1}>
           {name || "Unknown"}
         </Text>
-        <Text className="font-mono text-xs text-ink-2">
+        <Text className="text-xs tabular-nums text-ink-2">
           {playCount || 0} plays
         </Text>
       </Pressable>
@@ -326,16 +328,17 @@ export default function Explore() {
   const hasQuery = query.trim().length >= 2;
   const hasResults = counts[activeTab] > 0;
   return (
-    <TealShell rightRail={<RightRail />} pageTitle="Explore">
+    <TealShell pageTitle="Explore">
       <Stack.Screen options={{ title: "Explore", headerShown: false }} />
       <SectionHeading title="Explore" level={1} />
-      <View className="overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
+      <View className="overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl web:focus-within:border-tint">
         <View className="flex-row items-center gap-3 px-4 py-4">
           <Icon icon={Search} size={23} className="text-ink-2" />
           <Input
             value={query}
             onChangeText={setQuery}
-            placeholder="Search listeners, songs, artists, albums"
+            placeholder="Search people and music"
+            accessibilityLabel="Search listeners, songs, artists, and albums"
             className="h-12 flex-1 border-0 bg-transparent px-0 text-lg web:focus-visible:ring-0"
             autoCapitalize="none"
             autoCorrect={false}
@@ -346,6 +349,8 @@ export default function Explore() {
             query.length > 0 && (
               <Pressable
                 onPress={() => setQuery("")}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
                 className="h-9 w-9 items-center justify-center rounded-full bg-muted"
               >
                 <Icon icon={X} size={18} className="text-ink-2" />
@@ -353,7 +358,7 @@ export default function Explore() {
             )
           )}
         </View>
-        <View className="flex-row overflow-hidden border-t border-border/60">
+        <View accessibilityRole="tablist" className="flex-row overflow-hidden border-t border-border/60">
           <SearchTabButton
             active={activeTab === "users"}
             count={counts.users}

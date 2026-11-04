@@ -96,7 +96,7 @@ export function ArtistListenerRow({
     <Link href={`/profile/${href}` as any} asChild>
       <Pressable className="flex-row items-center gap-3 border-b border-hair py-3 web:transition-colors web:hover:bg-primary/5">
         <View className="w-8 items-center">
-          <Text className="font-mono text-xs font-bold text-ink-2">
+          <Text className="text-xs font-bold text-ink-2 tabular-nums">
             #{rank}
           </Text>
         </View>
@@ -115,14 +115,14 @@ export function ArtistListenerRow({
           </Text>
           {handle ? (
             <Text
-              className="font-mono text-xs text-ink-2"
+              className="text-xs text-ink-2 tabular-nums"
               numberOfLines={1}
             >
               @{handle}
             </Text>
           ) : (
             <Text
-              className="font-mono text-xs text-ink-2"
+              className="text-xs text-ink-2 tabular-nums"
               numberOfLines={1}
             >
               {did}
@@ -136,7 +136,7 @@ export function ArtistListenerRow({
               {listener.playCount}
             </Text>
           </View>
-          <Text className="font-mono text-[10px] uppercase text-ink-2">
+          <Text className="text-xs text-ink-2 font-medium">
             listens
           </Text>
         </View>

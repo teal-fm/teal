@@ -45,7 +45,7 @@ export function Fingerprint({ actor, height = 168 }: { actor: string; height?: n
                   <View
                     key={r}
                     style={{ height: rowHeight, borderRadius: Math.min(3, cell / 3) }}
-                    className={bin.playCount ? "overflow-hidden bg-fill" : undefined}
+                    className={bin.playCount ? "overflow-hidden bg-fill" : "bg-fill opacity-60"}
                   >
                     {bin.playCount && bin.releaseMbId ? (
                       <Image
@@ -63,8 +63,8 @@ export function Fingerprint({ actor, height = 168 }: { actor: string; height?: n
           })}
         </View>
       ) : null}
-      <View className="absolute bottom-3 right-3 rounded-full bg-black/45 px-2.5 py-1">
-        <Text className="text-[11.5px] font-semibold text-white">last 30 days, by hour</Text>
+      <View className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1">
+        <Text className="text-[11.5px] font-semibold text-white">last {DAYS} days, by hour</Text>
       </View>
     </View>
   );

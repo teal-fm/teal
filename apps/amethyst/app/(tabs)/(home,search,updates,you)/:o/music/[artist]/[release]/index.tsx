@@ -215,7 +215,7 @@ export default function AlbumDetail() {
                       {track.artistName}
                     </Text>
                   </View>
-                  <Text className="font-mono text-xs text-ink-2">
+                  <Text className="text-xs text-ink-2 tabular-nums">
                     {track.playCount}
                   </Text>
                   {track.uri && (
@@ -271,7 +271,7 @@ export default function AlbumDetail() {
             </View>
           )}
           {plays.length > 0 && !cursor && (
-            <Text className="pb-6 text-center font-mono text-xs text-ink-2">
+            <Text className="pb-6 text-center text-xs text-ink-2 tabular-nums">
               You reached the beginning of this album's listening history.
             </Text>
           )}

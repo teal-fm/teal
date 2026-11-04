@@ -1,11 +1,13 @@
-import { Linking, Pressable, Share, View } from "react-native";
+import { useState } from "react";
+import { Linking, Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { AmbientSource, Avatar, Cover, coverUri, Glass } from "@/components/ds";
 import RichText from "@/components/teal/RichText";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import type { SocialPostView } from "@/lib/teal/api";
-import { musicArtistHref, postHrefFromUri } from "@/lib/teal/routes";
+import { absoluteUrl, musicArtistHref, postHrefFromUri } from "@/lib/teal/routes";
+import { shareLink } from "@/lib/teal/share";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { shortAgo } from "@/lib/teal/today";
 import { ArrowUpRight, MessageCircle, Share as ShareIcon } from "lucide-react-native";
@@ -36,6 +38,14 @@ export function PostCard({ post }: { post: SocialPostView }) {
   const artist = play.artists?.[0]?.artistName;
   const context = contextLine(post);
   const faces = post.listenContext?.circleSample ?? [];
+  const [copied, setCopied] = useState(false);
+
+  const share = async () => {
+    const result = await shareLink(`${post.text ? `${post.text} ` : ""}${play.trackName}`, absoluteUrl(href));
+    if (result !== "copied") return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <AmbientSource uri={coverUri(play.releaseMbId)}>
@@ -119,17 +129,21 @@ export function PostCard({ post }: { post: SocialPostView }) {
             <ReactionBar subject={{ uri: post.uri, cid: post.cid }} reactions={post.reactions ?? []} />
           </View>
           <Link href={`${href}#replies` as never} asChild>
-            <Pressable accessibilityLabel={`${post.replyCount} replies`} className="h-9 flex-row items-center gap-1.5 px-2">
+            <Pressable
+              accessibilityLabel={`${post.replyCount} ${post.replyCount === 1 ? "reply" : "replies"}`}
+              className="h-9 flex-row items-center gap-1.5 px-2">
               <Icon icon={MessageCircle} size={20} className="text-ink-2" />
               <Text className="text-sm tabular-nums text-ink-2">{post.replyCount || ""}</Text>
             </Pressable>
           </Link>
           <Pressable
-            accessibilityLabel="Share"
-            onPress={() => Share.share({ message: `${post.text ? `${post.text} ` : ""}${play.trackName}` })}
-            className="h-9 w-9 items-center justify-center"
+            accessibilityRole="button"
+            accessibilityLabel={copied ? "Link copied" : "Share"}
+            onPress={share}
+            className="h-9 min-w-9 flex-row items-center justify-center gap-1 px-1"
           >
             <Icon icon={ShareIcon} size={20} className="text-ink-2" />
+            {copied ? <Text className="text-sm text-ink-2">Copied</Text> : null}
           </Pressable>
         </View>
       </Glass>

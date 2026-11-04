@@ -621,7 +621,7 @@ export function PlaylistTrackPicker({
                   {result.artist}
                 </Text>
                 <Text
-                  className="font-mono text-[10px] uppercase text-ink-2"
+                  className="text-xs text-ink-2 font-medium"
                   numberOfLines={1}
                 >
                   {result.release || result.detail}

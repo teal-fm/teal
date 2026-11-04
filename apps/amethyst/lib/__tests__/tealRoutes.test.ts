@@ -2,6 +2,8 @@ import {
   atUriFromRoutePath,
   hrefFromAtUri,
   playlistHrefFromUri,
+  postHrefFromUri,
+  postUriFromRoute,
 } from "../teal/routes";
 
 it("opens a playlist AT URI with the required identity query intact", () => {
@@ -25,5 +27,15 @@ it.each([
 it("keeps existing listen redirects working", () => {
   expect(hrefFromAtUri("at://did:plc:owner/fm.teal.feed.play/3test")).toBe(
     "/listen/did%3Aplc%3Aowner/3test",
+  );
+});
+
+it("routes alpha-era posts to the post page and back to their original URI", () => {
+  const uri = "at://did:plc:owner/fm.teal.alpha.feed.social.post/3test";
+  const href = postHrefFromUri(uri);
+  expect(href).toBe("/post/did%3Aplc%3Aowner/3test?alpha=1");
+  expect(postUriFromRoute("did:plc:owner", "3test", "1")).toBe(uri);
+  expect(postUriFromRoute("did:plc:owner", "3test")).toBe(
+    "at://did:plc:owner/fm.teal.feed.social.post/3test",
   );
 });

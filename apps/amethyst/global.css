@@ -34,25 +34,26 @@
   --color-glass-edge: var(--glass-edge);
   --color-fill: var(--fill);
 
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  /* Legacy names resolve to the redesign tokens so unmigrated screens share one tint and one ink. */
+  --color-border: var(--hair);
+  --color-input: var(--hair);
+  --color-ring: var(--tint);
+  --color-background: var(--ground);
+  --color-foreground: var(--ink);
+  --color-primary: var(--tint);
+  --color-primary-foreground: var(--on-tint);
+  --color-secondary: var(--fill);
+  --color-secondary-foreground: var(--ink);
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-muted: var(--fill);
+  --color-muted-foreground: var(--ink-2);
+  --color-accent: var(--tint-soft);
+  --color-accent-foreground: var(--ink);
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card: var(--ground-2);
+  --color-card-foreground: var(--ink);
   --color-bsky: hsl(var(--bsky));
 }
 
@@ -61,7 +62,7 @@
     --ground: #ffffff;
     --ground-2: #f2f2f7;
     --ink: #000000;
-    --ink-2: rgba(60, 60, 67, 0.72);
+    --ink-2: rgba(60, 60, 67, 0.85);
     --ink-3: rgba(60, 60, 67, 0.4);
     --hair: rgba(60, 60, 67, 0.18);
     --tint: #0b7a73;
@@ -138,6 +139,11 @@ body {
   background-color: var(--ground);
 }
 
+/* Browser scrollbars and form controls follow the theme. */
+html {
+  color-scheme: light dark;
+}
+
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -145,13 +151,33 @@ body {
 }
 
 ::selection {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  background: var(--tint);
+  color: var(--on-tint);
 }
 
 input,
 textarea {
-  caret-color: hsl(var(--primary));
+  caret-color: var(--tint);
+}
+
+/*
+ * One keyboard focus ring for every control. React Native Web renders pressables
+ * as focusable divs and clears their outline inline, hence !important.
+ */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--tint) !important;
+  outline-offset: 2px;
+}
+
+/* Text fields show focus on their panel instead, so the ring isn't clipped by rounded glass. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none !important;
 }
 
 .var-font-soft {

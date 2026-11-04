@@ -255,7 +255,7 @@ export default function EditProfileModal({
         <View className="max-h-full w-full max-w-2xl overflow-hidden rounded-lg border border-border bg-background">
           <View className="flex-row items-start justify-between border-b border-border p-4">
             <View>
-              <Text className="font-mono text-[10px] uppercase text-primary">
+              <Text className="text-xs text-primary font-medium">
                 Teal profile
               </Text>
               <Text className="font-sans text-2xl font-black">Edit profile</Text>
@@ -319,7 +319,7 @@ export default function EditProfileModal({
                 </View>
               </Pressable>
               <View className="gap-2">
-                <Text className="font-mono text-[10px] uppercase text-ink-2">
+                <Text className="text-xs text-ink-2 font-medium">
                   Display name
                 </Text>
                 <Input
@@ -330,7 +330,7 @@ export default function EditProfileModal({
                 />
               </View>
               <View className="gap-2">
-                <Text className="font-mono text-[10px] uppercase text-ink-2">
+                <Text className="text-xs text-ink-2 font-medium">
                   Bio
                 </Text>
                 <Textarea
@@ -342,7 +342,7 @@ export default function EditProfileModal({
                 />
               </View>
               <View className="gap-2">
-                <Text className="font-mono text-[10px] uppercase text-ink-2">
+                <Text className="text-xs text-ink-2 font-medium">
                   Default stats range
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
@@ -432,7 +432,7 @@ function FavouritesEditor({
 
   return (
     <View className="gap-2">
-      <Text className="font-mono text-[10px] uppercase text-ink-2">
+      <Text className="text-xs text-ink-2 font-medium">
         Favourites ({favourites.length}/{MAX_FAVOURITES})
       </Text>
       <Text className="text-sm text-ink-2">

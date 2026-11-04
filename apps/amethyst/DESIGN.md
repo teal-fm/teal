@@ -16,7 +16,7 @@ colors:
   ground-2-dark: "#1c1c1e"
   ink: "#000000"
   ink-dark: "#ffffff"
-  ink-2: "rgba(60, 60, 67, 0.72)"
+  ink-2: "rgba(60, 60, 67, 0.85)"
   ink-2-dark: "rgba(235, 235, 245, 0.72)"
   ink-3: "rgba(60, 60, 67, 0.4)"
   ink-3-dark: "rgba(235, 235, 245, 0.36)"
@@ -214,7 +214,7 @@ Legacy shadcn-style names (`background`, `primary`, `muted`, `card`, `border`, .
 ### Named Rules
 **The One Tint Rule.** Teal is the only accent the interface owns. Any other colour on screen must come from album art or people's avatars.
 
-**The Art Brings the Colour Rule.** Screens don't get a background colour. They get a backdrop made from the covers on them: up to 6 covers, weighted by how close each is to 45% of the viewport height, blurred and saturated, then veiled per theme (black at 42% on dark, rgba(250,250,252,0.32) on light).
+**The Art Brings the Colour Rule.** Screens don't get a background colour. They get a backdrop made from the covers on them: up to 6 covers, weighted by how close each is to 45% of the viewport height, blurred and saturated, then veiled per theme (black at 42% on dark, rgba(250,250,252,0.46) on light).
 
 **The Now Is Not Live Rule.** Presence is "listening now" with the `now` dot or ring. Never label it "live".
 
@@ -333,5 +333,5 @@ The last 31 days as columns of twelve two-hour slots. Each cell is filled with a
 - **Don't** add ratings, stars, scores, or review UI.
 - **Don't** call presence "live".
 - **Don't** put shadows on panels or use hard offset shadows anywhere.
-- **Don't** use the legacy shadcn tokens (`background`, `card`, `muted-foreground`, `primary`, `border`) on new or migrated surfaces.
+- **Don't** use the legacy shadcn tokens (`background`, `card`, `muted-foreground`, `primary`, `border`) on new or migrated surfaces. They now resolve to the redesign tokens (`primary` is `tint`, `foreground` is `ink`, `border` is `hair`) so older screens keep one tint, but new code should name the redesign tokens directly.
 - **Don't** blend more than six covers into one backdrop. More turns it to mud.

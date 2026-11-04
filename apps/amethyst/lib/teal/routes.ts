@@ -60,9 +60,20 @@ export function listenHrefFromUri(uri?: string) {
   return listenHref(parsed.did, parsed.rkey);
 }
 
-export function postHref(authorDid?: string, rkey?: string) {
+export const POST_COLLECTION = "fm.teal.feed.social.post";
+// Posts written before the lexicons left alpha keep their original collection in the URI.
+export const ALPHA_POST_COLLECTION = "fm.teal.alpha.feed.social.post";
+
+export function postHref(authorDid?: string, rkey?: string, collection?: string) {
   if (!authorDid || !rkey) return undefined;
-  return `/post/${encodeURIComponent(authorDid)}/${encodeURIComponent(rkey)}`;
+  const path = `/post/${encodeURIComponent(authorDid)}/${encodeURIComponent(rkey)}`;
+  return collection === ALPHA_POST_COLLECTION ? `${path}?alpha=1` : path;
+}
+
+/** The AT URI a /post route points at; `alpha` comes from postHref's query. */
+export function postUriFromRoute(did?: string, rkey?: string, alpha?: string) {
+  if (!did || !rkey) return undefined;
+  return `at://${did}/${alpha === "1" ? ALPHA_POST_COLLECTION : POST_COLLECTION}/${rkey}`;
 }
 
 export function rkeyFromAtUri(uri?: string) {
@@ -71,10 +82,14 @@ export function rkeyFromAtUri(uri?: string) {
 
 export function postHrefFromUri(uri?: string) {
   const parsed = parseAtUri(uri);
-  if (!parsed || parsed.collection !== "fm.teal.feed.social.post") {
+  if (
+    !parsed ||
+    (parsed.collection !== POST_COLLECTION &&
+      parsed.collection !== ALPHA_POST_COLLECTION)
+  ) {
     return undefined;
   }
-  return postHref(parsed.did, parsed.rkey);
+  return postHref(parsed.did, parsed.rkey, parsed.collection);
 }
 
 type ParsedAtUri = {
@@ -157,4 +172,13 @@ export function playlistHrefFromUri(uri?: string) {
 
 export function playlistHref(name: string, uri: string) {
   return `/playlist/${routePart(name)}?uri=${encodeURIComponent(uri)}`;
+}
+
+/** An app path as a full link someone else can open. */
+export function absoluteUrl(path: string) {
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : process.env.EXPO_PUBLIC_BASE_URL || "https://teal.fm";
+  return `${origin.replace(/\/$/, "")}${path}`;
 }

@@ -551,7 +551,7 @@ export default function ListenDetail() {
                 <View className="mt-5 gap-3 rounded-lg border border-border bg-background p-4">
                   <View className="flex-row items-start justify-between gap-3">
                     <View className="min-w-0 flex-1">
-                      <Text className="font-mono text-xs uppercase text-ink-2">
+                      <Text className="text-xs text-ink-2 tabular-nums">
                         Edit record
                       </Text>
                       <Text className="font-bold">
@@ -570,7 +570,7 @@ export default function ListenDetail() {
                     </Button>
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-ink-2">
+                    <Text className="text-xs text-ink-2 font-medium">
                       Track
                     </Text>
                     <Input
@@ -581,7 +581,7 @@ export default function ListenDetail() {
                     />
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-ink-2">
+                    <Text className="text-xs text-ink-2 font-medium">
                       Artists
                     </Text>
                     <Input
@@ -592,7 +592,7 @@ export default function ListenDetail() {
                     />
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-ink-2">
+                    <Text className="text-xs text-ink-2 font-medium">
                       Release
                     </Text>
                     <Input
@@ -603,7 +603,7 @@ export default function ListenDetail() {
                     />
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-ink-2">
+                    <Text className="text-xs text-ink-2 font-medium">
                       Played time
                     </Text>
                     <Input

@@ -375,8 +375,8 @@ export default function PlaylistDetailScreen() {
                         facets={playlist.descriptionFacets}
                       />
                     )}
-                    <Text className="mt-2 font-mono text-[10px] uppercase text-ink-2">
-                      {items.length} tracks · {playlist.authors.length}{" "}
+                    <Text className="mt-2 text-xs text-ink-2 font-medium">
+                      {items.length} {items.length === 1 ? "track" : "tracks"} · {playlist.authors.length}{" "}
                       contributor
                       {playlist.authors.length === 1 ? "" : "s"}
                     </Text>
@@ -435,7 +435,7 @@ export default function PlaylistDetailScreen() {
                   <Link key={item.uri} href={musicHref(play) as any} asChild>
                     <Pressable className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
                       <View className="flex-row items-center gap-3">
-                        <Text className="w-7 font-mono text-xs text-ink-2">
+                        <Text className="w-7 text-xs text-ink-2 tabular-nums">
                           {String(index + 1).padStart(2, "0")}
                         </Text>
                         <View className="h-10 w-10 items-center justify-center rounded-lg bg-muted">

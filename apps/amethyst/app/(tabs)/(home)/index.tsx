@@ -28,6 +28,8 @@ import { useTodaySeen } from "@/lib/todaySeen";
 import { ChevronLeft, ChevronRight, ChevronUp, SquarePen } from "lucide-react-native";
 
 const WIDE = 1000;
+// The right rail joins at the same width as the shell's other rails.
+const RAIL = 1280;
 
 type Row =
   | { type: "post"; key: string; post: SocialPostView }
@@ -77,6 +79,7 @@ export default function TodayScreen() {
 function Today() {
   const { width } = useWindowDimensions();
   const wide = Platform.OS === "web" && width >= WIDE;
+  const rail = wide && width >= RAIL;
   const insets = useSafeAreaInsets();
   const halo = useHalo();
   const viewer = useViewerDid();
@@ -106,12 +109,12 @@ function Today() {
         const listen = weaves.shift()!;
         out.push({ type: "weave", key: `weave-${listen.playUri}`, listen });
       }
-      if (i === 1 && !wide && heating.length) out.push({ type: "shelf", key: "shelf" });
+      if (i === 1 && !rail && heating.length) out.push({ type: "shelf", key: "shelf" });
     });
     return out;
-  }, [posts, today.data, wide]);
+  }, [posts, today.data, rail]);
 
-  const contentWidth = wide ? Math.min(660, width - 264 - 360) : width;
+  const contentWidth = wide ? Math.min(660, width - 264 - (rail ? 360 : 40)) : width;
   const date = new Date().toLocaleDateString(undefined, {
     weekday: "long",
     day: "numeric",
@@ -181,7 +184,7 @@ function Today() {
           />
         ) : showDeck ? (
           <ListeningDeck ref={deck} items={items} width={contentWidth} wide={wide} />
-        ) : collapsed && !wide && items.length > 0 ? (
+        ) : collapsed && !rail && items.length > 0 ? (
           <TodayStrip items={items} onExpand={() => openToday()} />
         ) : items.length === 0 ? (
           <Notice
@@ -241,6 +244,13 @@ function Today() {
   );
 
   if (!wide) return main;
+  if (!rail) {
+    return (
+      <View className="flex-1 items-center">
+        <View style={{ width: contentWidth + 40 }}>{main}</View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 flex-row justify-center">

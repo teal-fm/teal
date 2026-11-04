@@ -4,7 +4,6 @@ import {
   Linking,
   Pressable,
   ScrollView,
-  Share,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -32,16 +31,12 @@ import {
   type SocialPostView,
 } from "@/lib/teal/api";
 import { useViewerDid } from "@/lib/teal/queries";
-import { musicArtistHref } from "@/lib/teal/routes";
+import { absoluteUrl, musicArtistHref, postHrefFromUri, postUriFromRoute } from "@/lib/teal/routes";
+import { shareLink } from "@/lib/teal/share";
 import { socialPostDeleteParams, trackViewToPlayView } from "@/lib/teal/social";
 import { shortAgo } from "@/lib/teal/today";
 import { useStore } from "@/stores/mainStore";
 import { ArrowUpRight, ChevronLeft, MessageCircle, Share as ShareIcon, Trash2 } from "lucide-react-native";
-
-function postUri(did?: string, rkey?: string) {
-  if (!did || !rkey) return undefined;
-  return `at://${did}/fm.teal.feed.social.post/${rkey}`;
-}
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -78,7 +73,7 @@ export default function PostDetail() {
 
 function PostBody() {
   const params = useLocalSearchParams();
-  const uri = postUri(param(params.did), param(params.rkey));
+  const uri = postUriFromRoute(param(params.did), param(params.rkey), param(params.alpha));
   const viewer = useViewerDid();
   const agent = useStore((state) => state.pdsAgent);
   const client = useQueryClient();
@@ -89,6 +84,7 @@ function PostBody() {
   const wide = width >= 1000;
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [shareNote, setShareNote] = useState<string | null>(null);
 
   const post = useQuery({
     queryKey: ["post", uri, viewer],
@@ -217,12 +213,23 @@ function PostBody() {
                   </View>
                 ) : null}
                 <View className="flex-row items-center border-t border-hair pt-2">
-                  <View className="h-10 flex-1 flex-row items-center justify-center gap-1.5">
+                  <View
+                    accessible
+                    accessibilityLabel={`${data.replyCount} ${data.replyCount === 1 ? "reply" : "replies"}`}
+                    className="h-10 flex-1 flex-row items-center justify-center gap-1.5"
+                  >
                     <Icon icon={MessageCircle} size={20} className="text-ink-2" />
                     <Text className="text-sm tabular-nums text-ink-2">{data.replyCount}</Text>
                   </View>
                   <Pressable
-                    onPress={() => Share.share({ message: `${data.text ? `${data.text} ` : ""}${play?.trackName ?? ""}` })}
+                    onPress={async () => {
+                      const result = await shareLink(
+                        `${data.text ? `${data.text} ` : ""}${play?.trackName ?? ""}`,
+                        absoluteUrl(postHrefFromUri(data.uri) ?? "/"),
+                      );
+                      setShareNote(result === "copied" ? "Link copied." : result === "failed" ? "Couldn't share this post." : null);
+                    }}
+                    accessibilityRole="button"
                     accessibilityLabel="Share"
                     className="h-10 flex-1 items-center justify-center"
                   >
@@ -240,6 +247,11 @@ function PostBody() {
                   ) : null}
                 </View>
                 {deleteError ? <Text className="text-sm text-destructive">{deleteError}</Text> : null}
+                {shareNote ? (
+                  <Text role="status" className="text-sm text-ink-2">
+                    {shareNote}
+                  </Text>
+                ) : null}
               </Glass>
 
               {context && context.circleListenerCount > 0 ? (
@@ -267,6 +279,13 @@ function PostBody() {
                 </Text>
                 {replies.isLoading ? (
                   <ActivityIndicator className="my-4" />
+                ) : replies.isError ? (
+                  <View className="gap-2 py-2">
+                    <Text className="text-[15px] text-ink-2">Replies didn't load.</Text>
+                    <Pressable onPress={() => replies.refetch()} className="self-start rounded-full bg-fill px-4 py-2">
+                      <Text className="font-semibold text-ink">Try again</Text>
+                    </Pressable>
+                  </View>
                 ) : (replies.data ?? []).length === 0 ? (
                   <Text className="py-2 text-[15px] text-ink-2">No replies yet. Start the conversation.</Text>
                 ) : (

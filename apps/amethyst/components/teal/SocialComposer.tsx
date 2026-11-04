@@ -175,7 +175,7 @@ function TrackOption({
         </Text>
         {(play.releaseName || detail) && (
           <Text
-            className="mt-1 font-mono text-[10px] uppercase text-ink-2"
+            className="mt-1 text-xs text-ink-2 font-medium"
             numberOfLines={1}
           >
             {detail || play.releaseName}
@@ -440,7 +440,7 @@ export default function SocialComposer({
           </View>
           {musicBrainzResults.length > 0 && (
             <View className="gap-2">
-              <Text className="font-mono text-[10px] uppercase text-ink-2">
+              <Text className="text-xs text-ink-2 font-medium">
                 MusicBrainz
               </Text>
               {musicBrainzResults.map((play) => (
@@ -460,7 +460,7 @@ export default function SocialComposer({
             </View>
           )}
           <View className="gap-2">
-            <Text className="font-mono text-[10px] uppercase text-ink-2">
+            <Text className="text-xs text-ink-2 font-medium">
               My recent plays
             </Text>
             <Input
@@ -502,7 +502,7 @@ export default function SocialComposer({
         onChangeText={setText}
       />
       {tags.length > 0 && (
-        <Text className="mt-2 font-mono text-[10px] uppercase text-ink-2">
+        <Text className="mt-2 text-xs text-ink-2 font-medium">
           Tags: {tags.join(", ")}
         </Text>
       )}

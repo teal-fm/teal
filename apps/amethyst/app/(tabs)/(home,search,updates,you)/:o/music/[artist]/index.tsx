@@ -245,8 +245,8 @@ export default function ArtistDetail() {
                 {artist.name}
               </Text>
               <Text style={halo} className="text-[15px] text-ink-2">
-                {artist.playCount} {artist.playCount === 1 ? "listen" : "listens"} on teal · {albumCount}{" "}
-                {albumCount === 1 ? "album" : "albums"}
+                {artist.playCount} {artist.playCount === 1 ? "listen" : "listens"} on teal
+                {albumCount > 0 ? ` · ${albumCount} ${albumCount === 1 ? "album" : "albums"}` : ""}
               </Text>
             </View>
           </View>
@@ -256,7 +256,6 @@ export default function ArtistDetail() {
               <SectionHeading
                 eyebrow="Community"
                 title="Top listeners"
-                detail={listenerPeriod === "all" ? "ALL TIME" : listenerPeriod}
               />
               <ArtistListenerPeriodTabs
                 period={listenerPeriod}

@@ -415,7 +415,7 @@ function OnboardingFlow() {
           </View>
           <View className="flex-row items-center gap-2">
             <Icon icon={Music2} size={18} className="text-secondary" />
-            <Text className="font-mono text-xs text-background/55">
+            <Text className="text-xs text-background/55 tabular-nums">
               Your music, your profile.
             </Text>
           </View>
@@ -435,7 +435,7 @@ function OnboardingFlow() {
                   teal.fm
                 </Text>
               </View>
-              <Text className="font-mono text-xs text-ink-2">
+              <Text className="text-xs text-ink-2 tabular-nums">
                 Step {step} of 3
               </Text>
             </View>

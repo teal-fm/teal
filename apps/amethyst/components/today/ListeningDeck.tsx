@@ -82,6 +82,7 @@ export const ListeningDeck = forwardRef<
           )}
         />
       </AmbientSource>
+      {items.length > 1 ? (
       <View
         className={cn("flex-row flex-wrap gap-2.5 pt-3.5", wide ? "px-5" : "justify-center px-5")}
         accessibilityLabel="Jump to"
@@ -94,6 +95,7 @@ export const ListeningDeck = forwardRef<
               <Pressable
                 key={item.key}
                 onPress={() => go(index)}
+                accessibilityRole="button"
                 accessibilityLabel={`Jump to ${a?.displayName || a?.handle || "listener"}${item.listen.listeningNow ? ", listening now" : ""}`}
                 accessibilityState={{ selected: on }}
                 className={cn("rounded-full", on ? "scale-110 border-2 border-ink" : "opacity-60")}
@@ -112,6 +114,7 @@ export const ListeningDeck = forwardRef<
             <Pressable
               key={item.key}
               onPress={() => go(index)}
+              accessibilityRole="button"
               accessibilityLabel={`Jump to ${item.moment.release.releaseName}`}
               accessibilityState={{ selected: on }}
               className={cn("rounded-[9px]", on ? "scale-110 border-2 border-ink" : "opacity-60")}
@@ -121,6 +124,7 @@ export const ListeningDeck = forwardRef<
           );
         })}
       </View>
+      ) : null}
     </View>
   );
 });

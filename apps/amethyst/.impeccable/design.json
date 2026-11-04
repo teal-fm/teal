@@ -496,7 +496,7 @@
       },
       {
         "name": "backdrop-veil-light",
-        "value": "rgba(250,250,252,0.32)",
+        "value": "rgba(250,250,252,0.46)",
         "purpose": "Fixed veil over the light backdrop."
       },
       {
@@ -646,7 +646,7 @@
       },
       {
         "name": "The Art Brings the Colour Rule",
-        "body": "Screens don't get a background colour. They get a backdrop made from the covers on them: up to 6 covers, weighted by how close each is to 45% of the viewport height, blurred and saturated, then veiled per theme (black at 42% on dark, rgba(250,250,252,0.32) on light).",
+        "body": "Screens don't get a background colour. They get a backdrop made from the covers on them: up to 6 covers, weighted by how close each is to 45% of the viewport height, blurred and saturated, then veiled per theme (black at 42% on dark, rgba(250,250,252,0.46) on light).",
         "section": "colors"
       },
       {

@@ -12,11 +12,11 @@ import { Bell, Compass, House, Settings, SquarePen, UserRound, type LucideIcon }
 
 export const WIDE_BREAKPOINT = 1000;
 
-const ITEMS: Record<string, { label: string; icon?: LucideIcon }> = {
-  "(home)": { label: "Today", icon: House },
-  "(search)": { label: "Explore", icon: Compass },
-  "(updates)": { label: "Activity", icon: Bell },
-  "(you)": { label: "You" },
+const ITEMS: Record<string, { label: string; href: string; icon?: LucideIcon }> = {
+  "(home)": { label: "Today", href: "/", icon: House },
+  "(search)": { label: "Explore", href: "/search", icon: Compass },
+  "(updates)": { label: "Activity", href: "/notifications", icon: Bell },
+  "(you)": { label: "You", href: "/me" },
 };
 
 function MeIcon({ me, size, focused }: { me: ReturnType<typeof useMe>; size: number; focused: boolean }) {
@@ -48,14 +48,16 @@ function useMe() {
 /** The tab bar for browsers: a floating frosted sidebar when wide, a pill bar when narrow. */
 export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: boolean }) {
   const me = useMe();
-  const go = (name: string, key: string, focused: boolean) => {
-    const event = navigation.emit({ type: "tabPress", target: key, canPreventDefault: true });
-    if (!focused && !event.defaultPrevented) navigation.navigate(name);
+  const go = (name: string, key: string, focused: boolean, event?: { preventDefault?: () => void }) => {
+    // Items are real links so they can open in a new tab; a plain click stays in the app.
+    event?.preventDefault?.();
+    const press = navigation.emit({ type: "tabPress", target: key, canPreventDefault: true });
+    if (!focused && !press.defaultPrevented) navigation.navigate(name);
   };
 
   const items = state.routes.map((route, index) => {
     const focused = state.index === index;
-    const item = ITEMS[route.name] ?? { label: route.name };
+    const item = ITEMS[route.name] ?? { label: route.name, href: "/" };
     return { route, focused, ...item };
   });
 
@@ -65,6 +67,7 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
         <Glass
           role="navigation"
           aria-label="Tabs"
+          strong
           className="h-[62px] w-full max-w-[380px] flex-row items-center justify-around rounded-full px-2"
         >
           {items.map(({ route, focused, label, icon }) => (
@@ -73,7 +76,7 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
               accessibilityLabel={label}
-              onPress={() => go(route.name, route.key, focused)}
+              onPress={(e) => go(route.name, route.key, focused, e)}
               className={cn(
                 "flex-1 items-center gap-0.5 rounded-full py-1.5",
                 focused && "bg-fill",
@@ -105,12 +108,15 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
         <Text className="px-3 pb-[22px] text-[25px] font-extrabold tracking-tight text-tint">
           teal<Text className="text-[25px] font-semibold text-ink-3">.fm</Text>
         </Text>
-        {items.map(({ route, focused, label, icon }) => (
+        {items.map(({ route, focused, label, icon, href }) => (
           <Pressable
             key={route.key}
             accessibilityRole="link"
             accessibilityState={{ selected: focused }}
-            onPress={() => go(route.name, route.key, focused)}
+            aria-current={focused ? "page" : undefined}
+            // @ts-expect-error React Native Web renders a pressable with href as an anchor.
+            href={href}
+            onPress={(e) => go(route.name, route.key, focused, e)}
             className={cn(
               "h-[46px] flex-row items-center gap-[13px] rounded-[15px] px-3 web:transition-colors",
               focused ? "bg-tint-soft" : "web:hover:bg-fill",
@@ -135,7 +141,7 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
           </Link>
         ) : null}
         <View className="mt-auto gap-3">
-          <Text className="px-3 text-[11.5px] leading-4 text-ink-3">
+          <Text className="px-3 text-[12px] leading-4 text-ink-2">
             Early work in progress: expect bugs and the odd database wipe.
           </Text>
           <View className="flex-row items-center gap-1.5">
@@ -153,7 +159,7 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
                   {me.signedIn ? me.name : "Sign in"}
                 </Text>
                 <Text className="text-[12.5px] text-ink-2" numberOfLines={1}>
-                  {me.signedIn ? (me.handle ? `@${me.handle}` : "Your profile") : "with your Atmosphere account"}
+                  {me.signedIn ? (me.handle ? `@${me.handle}` : "Your profile") : "with Atmosphere"}
                 </Text>
               </View>
             </Pressable>

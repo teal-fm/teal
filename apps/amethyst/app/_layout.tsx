@@ -117,7 +117,7 @@ function RootLayoutNav() {
   const section = pathname.split("/")[1];
   const pageTitle =
     pathname === "/"
-      ? "Home"
+      ? "Today"
       : pathname.includes("/stats/")
         ? `Top ${pathname.split("/").pop()}`
         : pathname.endsWith("/topster")
@@ -126,7 +126,9 @@ function RootLayoutNav() {
               {
                 search: "Explore",
                 settings: "Settings",
-                notifications: "Notifications",
+                notifications: "Activity",
+                me: "You",
+                compose: "Post a song",
                 profile: "Profile",
                 post: "Post",
                 listen: "Listen",

@@ -209,7 +209,7 @@ export default function ProfileAlbumDeck({
               onError={() => setAvatarFailed(true)}
             />
           ) : (
-            <Text className="font-accent text-3xl text-primary">
+            <Text className="font-bold text-3xl text-primary">
               {displayName.slice(0, 1).toUpperCase()}
             </Text>
           )}

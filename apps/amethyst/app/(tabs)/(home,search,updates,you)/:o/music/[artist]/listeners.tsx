@@ -205,14 +205,14 @@ export default function ArtistListenersScreen() {
             )}
           </View>
           <View className="min-w-0 flex-1 pb-1">
-            <Text className="font-mono text-xs font-bold uppercase text-ink-2">
+            <Text className="text-xs font-bold text-ink-2 tabular-nums">
               Artist leaderboard
             </Text>
             <Text className="font-sans text-2xl font-semibold" numberOfLines={2}>
               {title}
             </Text>
             {artist && (
-              <Text className="font-mono text-xs text-ink-2">
+              <Text className="text-xs text-ink-2 tabular-nums">
                 {artist.playCount} indexed listens
               </Text>
             )}
@@ -255,7 +255,7 @@ export default function ArtistListenersScreen() {
             </View>
           )}
           {!cursor && (
-            <Text className="py-6 text-center font-mono text-xs text-ink-2">
+            <Text className="py-6 text-center text-xs text-ink-2 tabular-nums">
               You reached the end of this artist leaderboard.
             </Text>
           )}

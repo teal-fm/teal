@@ -184,7 +184,7 @@ function GraphActorRow({ actor }: { actor: MiniProfileView }) {
           </Text>
           {handle && (
             <Text
-              className="font-mono text-xs text-ink-2"
+              className="text-xs text-ink-2 tabular-nums"
               numberOfLines={1}
             >
               @{handle}
@@ -842,8 +842,8 @@ export default function ProfileScreen() {
           size="sm"
           className="flex-row gap-2"
           variant={viewerFollowing ? "outline" : "default"}
-          disabled={!canFollow || followBusy}
-          onPress={toggleFollow}
+          disabled={followBusy}
+          onPress={canFollow ? toggleFollow : () => router.push("/auth/login")}
         >
           <Icon icon={viewerFollowing ? UserMinus : UserPlus} size={15} />
           <Text>
@@ -912,16 +912,9 @@ export default function ProfileScreen() {
           <View className="-mx-4 md:-mx-7 lg:-mx-8">
             <Fingerprint actor={did} height={width >= 1000 ? 200 : 168} />
           </View>
-          <Glass strong className="-mt-9 mb-3 gap-2 p-4">
-            <View className="-mt-14">
-              <Avatar
-                did={did}
-                avatar={profile?.avatar}
-                name={displayName}
-                size={104}
-                listeningNow={!!currentStatus}
-              />
-            </View>
+          {/* The avatar overlaps the panel's top edge, so it sits outside the clipped Glass. */}
+          <View className="-mt-9 mb-3">
+          <Glass strong className="gap-2 p-4 pt-[64px]">
             <Text
               role="heading"
               aria-level={1}
@@ -982,6 +975,16 @@ export default function ProfileScreen() {
             </View>
             {profileActions}
           </Glass>
+            <View className="absolute -top-[52px] left-4">
+              <Avatar
+                did={did}
+                avatar={profile?.avatar}
+                name={displayName}
+                size={104}
+                listeningNow={!!currentStatus}
+              />
+            </View>
+          </View>
           <View className="mb-3 gap-3">
             <NowAndRecent now={currentStatus} recent={plays.slice(0, 10)} />
             <Favourites
@@ -1287,7 +1290,7 @@ export default function ProfileScreen() {
                     </View>
                     <View className="grid-cols-1 gap-3 md:grid md:grid-cols-2">
                       <View className="gap-2">
-                        <Text className="font-mono text-[10px] uppercase text-ink-2">
+                        <Text className="text-xs text-ink-2 font-medium">
                           Artists
                         </Text>
                         <Input
@@ -1298,7 +1301,7 @@ export default function ProfileScreen() {
                         />
                       </View>
                       <View className="gap-2">
-                        <Text className="font-mono text-[10px] uppercase text-ink-2">
+                        <Text className="text-xs text-ink-2 font-medium">
                           Album or single
                         </Text>
                         <Input

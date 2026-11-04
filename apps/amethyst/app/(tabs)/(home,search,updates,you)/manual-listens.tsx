@@ -91,7 +91,7 @@ function TrackRow({
       >
         {selected && <Check size={15} className="text-primary-foreground" />}
       </View>
-      <Text className="w-8 font-mono text-xs text-ink-2">
+      <Text className="w-8 text-xs text-ink-2 tabular-nums">
         {track.number || track.position || "—"}
       </Text>
       <View className="min-w-0 flex-1">
@@ -104,7 +104,7 @@ function TrackRow({
             .join(", ") || "Album artist"}
         </Text>
       </View>
-      <Text className="font-mono text-xs text-ink-2">
+      <Text className="text-xs text-ink-2 tabular-nums">
         {formatDuration(duration)}
         {!actualDuration && "*"}
       </Text>
@@ -359,7 +359,7 @@ export default function ManualListensPage() {
                 MusicBrainz has several releases for many albums.
               </Text>
             </View>
-            <Text className="font-mono text-xs text-ink-2">
+            <Text className="text-xs text-ink-2 tabular-nums">
               {searchResults.length} results
             </Text>
           </View>
@@ -387,7 +387,7 @@ export default function ManualListensPage() {
                   >
                     {releaseArtist(release)}
                   </Text>
-                  <Text className="font-mono text-[10px] uppercase text-ink-2">
+                  <Text className="text-xs text-ink-2 font-medium">
                     {releaseDetails(release) || "Release details unavailable"}
                   </Text>
                 </View>
@@ -439,7 +439,7 @@ export default function ManualListensPage() {
                 >
                   {releaseArtist(selectedRelease)}
                 </Text>
-                <Text className="font-mono text-[10px] uppercase text-ink-2">
+                <Text className="text-xs text-ink-2 font-medium">
                   {releaseDetails(selectedRelease)} · {tracks.length} tracks
                 </Text>
               </View>
@@ -500,7 +500,7 @@ export default function ManualListensPage() {
                 />
               ))}
             </View>
-            <Text className="px-4 py-3 font-mono text-[10px] text-ink-2">
+            <Text className="px-4 py-3 text-xs text-ink-2 font-medium">
               * no duration in MusicBrainz; timing uses 3:00
             </Text>
           </View>
@@ -576,7 +576,7 @@ export default function ManualListensPage() {
                       key={`${track.key}-${playedTime}`}
                       className="flex-row flex-wrap items-center gap-3"
                     >
-                      <Text className="w-8 font-mono text-[10px] text-ink-2">
+                      <Text className="w-8 text-xs text-ink-2 font-medium">
                         {track.number || track.position || "—"}
                       </Text>
                       <Text

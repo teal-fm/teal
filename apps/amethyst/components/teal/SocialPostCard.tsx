@@ -301,7 +301,7 @@ export default function SocialPostCard({
             </Link>
             {authorHandle && (
               <Text
-                className="max-w-full font-mono text-xs text-ink-2"
+                className="max-w-full text-xs text-ink-2 tabular-nums"
                 numberOfLines={1}
               >
                 @{authorHandle}
