@@ -55,6 +55,10 @@ export function Cover({
   const retry = (target: string) => {
     if (retried.includes(target)) {
       setFailed((current) => [...current, target]);
+      // The archive's thumbnail sizes are separate files, so a size that keeps failing
+      // can be swapped for the other before settling on the disc.
+      const other = target.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
+      if (other !== target && !failed.includes(other)) setFallback({ from: primary ?? target, uri: other });
       return;
     }
     setRetried((current) => [...current, target]);
