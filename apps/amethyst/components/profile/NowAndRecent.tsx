@@ -12,6 +12,8 @@ import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView[] }) {
   if (!now && recent.length === 0) return null;
   return (
+    // The latest cover tints the profile's backdrop even when nothing is playing now.
+    <AmbientSource uri={now ? undefined : coverUri(recent[0]?.releaseMbId)}>
     <Glass className="gap-3 p-4">
       {now ? (
         <AmbientSource uri={coverUri(now.releaseMbId)}>
@@ -52,5 +54,6 @@ export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView
         </ScrollView>
       ) : null}
     </Glass>
+    </AmbientSource>
   );
 }

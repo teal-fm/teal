@@ -234,7 +234,15 @@ function Today() {
         feed.isLoading ? (
           <ActivityIndicator className="my-10" />
         ) : feed.isError ? (
-          <Notice title="Posts didn't load" body="We couldn't reach teal for posts. Pull down or try again soon." />
+          <Notice
+            title="Posts didn't load"
+            body="We couldn't reach teal for posts."
+            action={
+              <Pressable onPress={() => feed.refetch()} className="mt-2 self-start rounded-full bg-fill px-4 py-2">
+                <Text className="font-semibold text-ink">Try again</Text>
+              </Pressable>
+            }
+          />
         ) : (
           <Notice title="No posts yet" body="When people you follow post a song, it shows up here." />
         )

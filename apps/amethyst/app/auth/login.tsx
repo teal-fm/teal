@@ -216,12 +216,12 @@ const LoginScreen = () => {
         accessible={false}
         tabIndex={-1}
       />
-      <View className="flex flex-1 items-center justify-center">
+      <View className="flex flex-1 items-center justify-center px-4">
         <View className="w-full max-w-md">
           <Animated.View className="w-full" style={containerAnimatedStyle}>
             <View
               ref={dialogRef}
-              className="align-center w-full justify-center gap-5 rounded-2xl border border-border bg-background p-7 shadow-2xl md:p-8"
+              className="align-center w-full justify-center gap-5 rounded-[26px] border border-border bg-background p-7 shadow-2xl md:p-8"
             >
               <Button
                 variant="ghost"

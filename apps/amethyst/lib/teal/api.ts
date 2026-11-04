@@ -460,6 +460,14 @@ export async function searchBlueskyUsers(q: string, limit = 8) {
   }>;
 }
 
+// The Cover Art Archive only serves these thumbnail sizes. Any other size
+// redirects to the original upload, which can be tens of megabytes.
+const COVER_ART_SIZES = [250, 500, 1200] as const;
+
+export function coverArtSize(size: number) {
+  return COVER_ART_SIZES.find((option) => option >= size) ?? 1200;
+}
+
 function coverArtUrlFor(
   entity: "release" | "release-group",
   mbId?: string,
@@ -467,7 +475,7 @@ function coverArtUrlFor(
 ) {
   const mbid = mbId?.replace(/^mbid:/, "");
   return mbid
-    ? `https://coverartarchive.org/${entity}/${mbid}/front-${size}`
+    ? `https://coverartarchive.org/${entity}/${mbid}/front-${coverArtSize(size)}`
     : undefined;
 }
 

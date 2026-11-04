@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Image } from "expo-image";
 import { useQuery } from "@tanstack/react-query";
 import { coverUri } from "@/components/ds";
@@ -63,9 +63,19 @@ export function Fingerprint({ actor, height = 168 }: { actor: string; height?: n
           })}
         </View>
       ) : null}
-      <View className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1">
-        <Text className="text-[11.5px] font-semibold text-white">last {DAYS} days, by hour</Text>
-      </View>
+      {calendar.isError ? (
+        <Pressable
+          onPress={() => calendar.refetch()}
+          accessibilityRole="button"
+          className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1"
+        >
+          <Text className="text-[11.5px] font-semibold text-white">Listening didn't load · Try again</Text>
+        </Pressable>
+      ) : (
+        <View className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1">
+          <Text className="text-[11.5px] font-semibold text-white">last {DAYS} days, by hour</Text>
+        </View>
+      )}
     </View>
   );
 }

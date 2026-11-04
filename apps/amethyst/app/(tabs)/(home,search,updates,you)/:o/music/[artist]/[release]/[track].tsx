@@ -215,7 +215,8 @@ export default function MusicDetail() {
                   />
                 </View>
               )}
-              <View className="min-w-0 flex-1 justify-end pb-2">
+              {/* Only the cover overlaps the banner; the title starts below it. */}
+              <View className="min-w-0 flex-1 pt-11">
                 <Text
                   role="heading"
                   aria-level={1}

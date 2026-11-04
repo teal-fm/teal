@@ -171,7 +171,7 @@ export default function AlbumDetail() {
               {album.artistMbid ? (
                 <Link href={musicArtistHref(album.artistName, album.artistMbid) as any} asChild>
                   <Pressable>
-                    <Text style={halo} className="text-[18px] font-semibold text-tint">
+                    <Text style={halo} className="text-[18px] font-semibold text-ink">
                       {album.artistName}
                     </Text>
                   </Pressable>

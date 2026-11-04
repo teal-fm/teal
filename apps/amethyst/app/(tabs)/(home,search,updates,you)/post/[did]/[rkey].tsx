@@ -140,7 +140,7 @@ function PostBody() {
         </Text>
         <Text style={halo} className="text-[17px] text-ink-2">
           {artist ? (
-            <Link href={musicArtistHref(artist.artistName, artist.artistMbId) as never} className="text-tint">
+            <Link href={musicArtistHref(artist.artistName, artist.artistMbId) as never} className="font-semibold text-ink">
               {artist.artistName}
             </Link>
           ) : null}
@@ -167,9 +167,11 @@ function PostBody() {
     >
       <Stack.Screen options={{ title: data?.text || "Post" }} />
       <View className="mx-auto w-full max-w-[1000px]">
-        <Pressable onPress={back} accessibilityRole="button" className="mb-2 h-11 flex-row items-center self-start px-3">
-          <Icon icon={ChevronLeft} size={26} className="text-tint" />
-          <Text className="text-[17px] text-tint">Back</Text>
+        <Pressable onPress={back} accessibilityRole="button" className="mb-3 ml-4 self-start">
+          <Glass className="h-10 flex-row items-center gap-0.5 rounded-full pl-2 pr-4">
+            <Icon icon={ChevronLeft} size={22} className="text-ink" />
+            <Text className="text-[16px] font-semibold text-ink">Back</Text>
+          </Glass>
         </Pressable>
 
         {post.isLoading ? (

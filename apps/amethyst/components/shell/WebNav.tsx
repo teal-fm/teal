@@ -70,12 +70,15 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
           strong
           className="h-[62px] w-full max-w-[380px] flex-row items-center justify-around rounded-full px-2"
         >
-          {items.map(({ route, focused, label, icon }) => (
+          {items.map(({ route, focused, label, icon, href }) => (
             <Pressable
               key={route.key}
-              accessibilityRole="tab"
+              accessibilityRole="link"
               accessibilityState={{ selected: focused }}
+              aria-current={focused ? "page" : undefined}
               accessibilityLabel={label}
+              // @ts-expect-error React Native Web renders a pressable with href as an anchor.
+              href={href}
               onPress={(e) => go(route.name, route.key, focused, e)}
               className={cn(
                 "flex-1 items-center gap-0.5 rounded-full py-1.5",
@@ -87,7 +90,7 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
               ) : (
                 <MeIcon me={me} size={23} focused={focused} />
               )}
-              <Text className={cn("text-[10.5px] font-semibold", focused ? "text-tint" : "text-ink-2")}>
+              <Text className={cn("text-[10.5px] font-semibold", focused ? "text-ink" : "text-ink-2")}>
                 {label}
               </Text>
             </Pressable>
@@ -127,7 +130,7 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
             ) : (
               <MeIcon me={me} size={23} focused={focused} />
             )}
-            <Text className={cn("text-base font-semibold", focused ? "text-tint" : "text-ink-2")}>
+            <Text className={cn("text-base font-semibold", focused ? "text-ink" : "text-ink-2")}>
               {label}
             </Text>
           </Pressable>

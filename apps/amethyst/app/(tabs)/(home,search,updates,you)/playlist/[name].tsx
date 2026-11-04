@@ -261,7 +261,9 @@ export default function PlaylistDetailScreen() {
       )}
       {error && validUri && (
         <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">{error}</Text>
+          <Text className="font-bold text-destructive">
+            {playlist ? "Your changes didn't save. Try again." : "This playlist didn't load."}
+          </Text>
           {!playlist && (
             <Button
               variant="outline"

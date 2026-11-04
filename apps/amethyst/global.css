@@ -62,7 +62,7 @@
     --ground: #ffffff;
     --ground-2: #f2f2f7;
     --ink: #000000;
-    --ink-2: rgba(60, 60, 67, 0.85);
+    --ink-2: rgba(0, 0, 0, 0.66);
     --ink-3: rgba(60, 60, 67, 0.4);
     --hair: rgba(60, 60, 67, 0.18);
     --tint: #0b7a73;
@@ -99,7 +99,7 @@
       --ground: #000000;
       --ground-2: #1c1c1e;
       --ink: #ffffff;
-      --ink-2: rgba(235, 235, 245, 0.72);
+      --ink-2: rgba(235, 235, 245, 0.8);
       --ink-3: rgba(235, 235, 245, 0.36);
       --hair: rgba(84, 84, 88, 0.6);
       --tint: #3fc9bd;
@@ -174,10 +174,21 @@ button:focus-visible,
   outline-offset: 2px;
 }
 
-/* Text fields show focus on their panel instead, so the ring isn't clipped by rounded glass. */
+/* Tabs sit in rows that clip overflow, so their ring is drawn inside. */
+[role="tab"]:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Text fields mark focus with a tint border. Fields set inside a panel (Explore's search) opt out and light the panel instead. */
 input:focus-visible,
 textarea:focus-visible {
   outline: none !important;
+  border-color: var(--tint) !important;
+  box-shadow: 0 0 0 1px var(--tint);
+}
+
+input.field-in-panel:focus-visible {
+  box-shadow: none;
 }
 
 .var-font-soft {

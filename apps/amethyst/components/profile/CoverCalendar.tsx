@@ -46,12 +46,13 @@ export function CoverCalendar({ actor, name }: { actor: string; name: string }) 
             {title}
           </Text>
           <View className="flex-row gap-1.5">
-            <Pressable onPress={() => step(-1)} accessibilityLabel="Previous month" className="h-8 w-8 items-center justify-center rounded-full bg-fill">
+            <Pressable onPress={() => step(-1)} accessibilityRole="button" accessibilityLabel="Previous month" className="h-8 w-8 items-center justify-center rounded-full bg-fill">
               <Icon icon={ChevronLeft} size={17} className="text-tint" />
             </Pressable>
             <Pressable
               onPress={() => step(1)}
               disabled={isCurrent}
+              accessibilityRole="button"
               accessibilityLabel="Next month"
               className="h-8 w-8 items-center justify-center rounded-full bg-fill disabled:opacity-40"
             >
@@ -62,7 +63,7 @@ export function CoverCalendar({ actor, name }: { actor: string; name: string }) 
         <View className="flex-row flex-wrap">
           {WEEKDAYS.map((d, i) => (
             <View key={i} style={COLUMN}>
-              <Text className="pb-0.5 text-center text-[11.5px] font-semibold text-ink-3">{d}</Text>
+              <Text className="pb-0.5 text-center text-[11.5px] font-semibold text-ink-2">{d}</Text>
             </View>
           ))}
           {Array.from({ length: offset }, (_, i) => (
@@ -88,7 +89,7 @@ export function CoverCalendar({ actor, name }: { actor: string; name: string }) 
                 ) : null}
                 <Text
                   className={
-                    day.topRelease ? "absolute left-1 top-0.5 text-[10.5px] font-bold text-white" : "absolute left-1 top-0.5 text-[10.5px] font-bold text-ink-3"
+                    day.topRelease ? "absolute left-1 top-0.5 text-[10.5px] font-bold text-white" : "absolute left-1 top-0.5 text-[10.5px] font-bold text-ink-2"
                   }
                   style={day.topRelease ? { textShadowColor: "rgba(0,0,0,0.6)", textShadowRadius: 3 } : undefined}
                 >
@@ -98,7 +99,16 @@ export function CoverCalendar({ actor, name }: { actor: string; name: string }) 
             </View>
           ))}
         </View>
-        <Text className="text-[13px] text-ink-2">Each day is the album {name} played most.</Text>
+        {calendar.isError ? (
+          <View className="flex-row items-center justify-between gap-3">
+            <Text className="flex-1 text-[13px] text-ink-2">This month's listening didn't load.</Text>
+            <Pressable onPress={() => calendar.refetch()} accessibilityRole="button" className="rounded-full bg-fill px-3.5 py-1.5">
+              <Text className="text-[13px] font-semibold text-ink">Try again</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Text className="text-[13px] text-ink-2">Each day is the album {name} played most.</Text>
+        )}
       </Glass>
     </AmbientSource>
   );

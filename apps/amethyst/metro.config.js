@@ -37,6 +37,11 @@ if (process.env.NODE_ENV !== "production" && !process.env.CI) {
       // Recursive watching is unavailable on some platforms; restart Metro to pick up new classes.
     }
   }
+  // Token edits in global.css need the same nudge, or Expo keeps serving the old file.
+  fs.watch(path.join(__dirname, "global.css"), () => {
+    clearTimeout(pending);
+    pending = setTimeout(writeCssEntry, 150);
+  });
 }
 
 /** @type {import('expo/metro-config').MetroConfig} */

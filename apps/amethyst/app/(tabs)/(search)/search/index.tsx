@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { AmbientSource, coverUri } from "@/components/ds";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { HeatingShelf } from "@/components/today/HeatingUp";
 import { dedupeMoments } from "@/lib/teal/today";
@@ -110,6 +111,7 @@ function SearchTabButton({
       onPress={onPress}
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
+      aria-selected={active}
       accessibilityLabel={`${label}, ${count}`}
       className={`min-w-0 flex-1 flex-row items-center justify-center gap-1 border-b-2 px-1 py-3 ${
         active ? "border-ink" : "border-transparent"
@@ -243,6 +245,18 @@ function Discover() {
     refetchInterval: 60_000,
   });
   if (network.isLoading) return <ActivityIndicator className="my-10" />;
+  if (network.isError) {
+    return (
+      <View className="mt-8 items-center gap-3">
+        <Text className="text-center text-[15px] text-ink-2">
+          What's playing across teal didn't load.
+        </Text>
+        <Pressable onPress={() => network.refetch()} accessibilityRole="button" className="rounded-full bg-fill px-4 py-2">
+          <Text className="font-semibold text-ink">Try again</Text>
+        </Pressable>
+      </View>
+    );
+  }
   const now = network.data?.moments ?? [];
   const heating = network.data?.heatingUp ?? [];
   if (now.length === 0 && heating.length === 0) {
@@ -339,7 +353,7 @@ export default function Explore() {
             onChangeText={setQuery}
             placeholder="Search people and music"
             accessibilityLabel="Search listeners, songs, artists, and albums"
-            className="h-12 flex-1 border-0 bg-transparent px-0 text-lg web:focus-visible:ring-0"
+            className="field-in-panel h-12 flex-1 border-0 bg-transparent px-0 text-lg web:focus-visible:ring-0"
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -391,6 +405,10 @@ export default function Explore() {
       </View>
 
       {!hasQuery && <Discover />}
+      {/* The top result's cover keeps the backdrop alive while searching. */}
+      <AmbientSource
+        uri={hasQuery ? coverUri(results.songs[0]?.releaseMbId ?? results.albums[0]?.mbid) : undefined}
+      >
       <View
         className={
           hasQuery
@@ -400,7 +418,7 @@ export default function Explore() {
       >
         {error && (
           <Text className="py-8 text-center font-bold text-destructive">
-            Search failed: {error}
+            Search didn't go through. Check your connection and try again.
           </Text>
         )}
         {hasQuery && !loading && !error && !hasResults && (
@@ -437,6 +455,7 @@ export default function Explore() {
             />
           ))}
       </View>
+      </AmbientSource>
     </TealShell>
   );
 }

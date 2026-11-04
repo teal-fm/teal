@@ -885,12 +885,14 @@ export default function ProfileScreen() {
       {error && (
         <View className="mb-5 gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="font-bold text-destructive">
-            {did
-              ? "We could not complete that action."
-              : "This profile could not be found."}
+            {!did
+              ? "This profile could not be found."
+              : profile
+                ? "That didn't go through."
+                : "This profile didn't load."}
           </Text>
           <Text className="text-sm text-ink-2">
-            Check the handle or try again in a moment.
+            {profile ? "Try again in a moment." : "Check the handle or try again in a moment."}
           </Text>
           <View className="flex-row flex-wrap gap-2">
             <Button
@@ -907,7 +909,8 @@ export default function ProfileScreen() {
           </View>
         </View>
       )}
-      {did && !profileLoading && (
+      {/* A failed load shows only the error, never a placeholder profile. */}
+      {did && !profileLoading && (profile || !error) && (
         <>
           <View className="-mx-4 md:-mx-7 lg:-mx-8">
             <Fingerprint actor={did} height={width >= 1000 ? 200 : 168} />
@@ -1077,6 +1080,7 @@ export default function ProfileScreen() {
                     : {})}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: activeTab === value }}
+                  aria-selected={activeTab === value}
                   accessibilityLabel={
                     value.charAt(0).toUpperCase() + value.slice(1)
                   }
@@ -1189,7 +1193,7 @@ export default function ProfileScreen() {
                       >
                         <Text className="font-bold">{playlists[0].name}</Text>
                         <Text className="text-sm text-ink-2">
-                          {playlists[0].itemCount} tracks
+                          {playlists[0].itemCount} {playlists[0].itemCount === 1 ? "track" : "tracks"}
                         </Text>
                       </Button>
                     </Link>
@@ -1485,7 +1489,7 @@ export default function ProfileScreen() {
                         {playlist.name}
                       </Text>
                       <Text className="text-sm text-ink-2">
-                        {playlist.itemCount} tracks
+                        {playlist.itemCount} {playlist.itemCount === 1 ? "track" : "tracks"}
                       </Text>
                     </Button>
                   </Link>

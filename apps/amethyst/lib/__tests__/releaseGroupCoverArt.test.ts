@@ -1,4 +1,4 @@
-import { getReleaseGroupCoverArtUrl } from "../teal/api";
+import { coverArtUrl, getReleaseGroupCoverArtUrl } from "../teal/api";
 
 const groupMbid = "15c3b397-9652-4537-a14b-7eb8489092ff";
 
@@ -82,4 +82,14 @@ it("keeps known cover art when an expired lookup cannot refresh", async () => {
     knownCover,
   );
   expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+it("only asks the Cover Art Archive for thumbnail sizes it serves", () => {
+  expect(coverArtUrl(groupMbid, 100)).toBe(
+    `https://coverartarchive.org/release/${groupMbid}/front-250`,
+  );
+  expect(coverArtUrl(groupMbid, 160)).toMatch(/front-250$/);
+  expect(coverArtUrl(groupMbid, 500)).toMatch(/front-500$/);
+  expect(coverArtUrl(groupMbid, 800)).toMatch(/front-1200$/);
+  expect(coverArtUrl(groupMbid, 4000)).toMatch(/front-1200$/);
 });
