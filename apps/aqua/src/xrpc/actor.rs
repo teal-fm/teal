@@ -27,11 +27,27 @@ pub async fn get_actor(
         .as_deref()
         .ok_or_else(|| (StatusCode::BAD_REQUEST, "actor is required".to_string()))?;
 
-    match repo.get_actor_profile(identity).await {
+    let mut found = repo.get_actor_profile(identity).await;
+    // An account Cadet hasn't seen a profile for may still have one on its PDS.
+    if matches!(found, Ok(None))
+        && ctx
+            .actors
+            .backfill_teal_profile(identity)
+            .await
+            .unwrap_or_else(|error| {
+                tracing::warn!("Couldn't backfill the profile for {identity}: {error:#}");
+                false
+            })
+    {
+        found = repo.get_actor_profile(identity).await;
+    }
+
+    match found {
         Ok(Some(profile)) => Ok(axum::Json(GetProfileOutput {
             extra_data: Default::default(),
             profile: profile.into_static(),
         })),
+        // No teal profile anywhere: the app shows the Bluesky profile, or the DID.
         Ok(None) => Err((StatusCode::NOT_FOUND, "Profile not found".to_string())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

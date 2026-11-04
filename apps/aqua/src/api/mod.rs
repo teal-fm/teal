@@ -518,7 +518,7 @@ pub async fn fetch_car_from_pds(pds_host: &str, did: &str, since: Option<&str>) 
     Ok(car_data)
 }
 
-async fn validate_public_pds_host(host: &str) -> Result<()> {
+pub(crate) async fn validate_public_pds_host(host: &str) -> Result<()> {
     if host.eq_ignore_ascii_case("localhost") || host.ends_with(".localhost") {
         return Err(anyhow::anyhow!("PDS host is not publicly routable"));
     }

@@ -17,6 +17,7 @@ use repos::pg::PgDataSource;
 mod api;
 mod ctx;
 mod db;
+mod identity;
 mod redis_client;
 mod repos;
 mod types;
@@ -43,7 +44,8 @@ async fn main() -> Result<(), String> {
 
     let db = db::init_pool().await.expect("failed to init db");
     let pgds = PgDataSource::new(db.clone()).boxed();
-    let ctx = RawContext::new(pgds).build(); // Arc<RawContext>
+    let actors = identity::ActorResolver::new(db.clone()).map_err(|e| e.to_string())?;
+    let ctx = RawContext::new(pgds, actors.clone()).build(); // Arc<RawContext>
 
     // Check if we should import a CAR file instead of starting the server
     if let Some(identity) = matches.get_one::<String>("import-identity-car") {
@@ -74,6 +76,10 @@ async fn main() -> Result<(), String> {
         .nest("/xrpc/", xrpc::search::search_routes())
         .nest("/xrpc/", xrpc::social::social_routes())
         .nest("/xrpc/", xrpc::stats::stats_routes())
+        .layer(axum::middleware::from_fn_with_state(
+            actors,
+            xrpc::hydrate::hydrate_actors,
+        ))
         .layer(Extension(ctx))
         .layer(cors);
 
