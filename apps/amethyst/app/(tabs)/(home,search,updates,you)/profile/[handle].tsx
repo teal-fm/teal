@@ -872,7 +872,7 @@ export default function ProfileScreen() {
   ) : null;
 
   return (
-    <TealShell rightRail={sideColumn ? <View className="gap-3">{identityExtras}</View> : undefined} pageTitle={displayName}>
+    <TealShell rightRail={sideColumn && (profile || !error) ? <View className="gap-3">{identityExtras}</View> : undefined} pageTitle={displayName}>
       <Stack.Screen options={{ title: displayName, headerShown: false }} />
       {profileLoading && (
         <View className="min-h-48 items-center justify-center">

@@ -236,7 +236,9 @@ function OnboardingFlow() {
 
   if (!agent) {
     return (
-      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background">
+        {/* SafeAreaView sets its own side padding from the insets, so the margin lives here. */}
+        <View className="w-full items-center px-6">
         <View className="w-full max-w-md gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
           <Icon icon={Disc3} size={42} className="text-primary" />
           <Text className="font-sans text-3xl font-black">
@@ -251,6 +253,7 @@ function OnboardingFlow() {
               <Text>Sign in</Text>
             </Button>
           </Link>
+        </View>
         </View>
       </SafeAreaView>
     );
@@ -269,8 +272,9 @@ function OnboardingFlow() {
 
   if (statusError) {
     return (
-      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
-        <View className="w-full max-w-md gap-4 rounded-xl bg-card p-6">
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background">
+        <View className="w-full items-center px-6">
+        <View className="w-full max-w-md gap-4 rounded-[26px] bg-card p-6">
           <Text accessibilityRole="header" className="text-2xl font-bold">
             Couldn't check your profile
           </Text>
@@ -287,6 +291,7 @@ function OnboardingFlow() {
             </Button>
           </Link>
         </View>
+        </View>
       </SafeAreaView>
     );
   }
@@ -296,7 +301,8 @@ function OnboardingFlow() {
     (profileStatus && profileStatus.completedOnboarding !== "none")
   ) {
     return (
-      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
+      <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background">
+        <View className="w-full items-center px-6">
         <View className="w-full max-w-md items-start gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
           <Icon icon={Check} size={42} className="text-primary" />
           <Text
@@ -329,6 +335,7 @@ function OnboardingFlow() {
               Profile saved. It may take a moment to appear for other listeners.
             </Text>
           )}
+        </View>
         </View>
       </SafeAreaView>
     );

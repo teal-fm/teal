@@ -256,7 +256,7 @@ export default function TopsterScreen() {
       ) : error ? (
         <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <Text className="text-destructive">
-            Could not load top albums: {error}
+            Top albums didn't load. Try again in a moment.
           </Text>
         </View>
       ) : visible.length === 0 ? (
