@@ -53,7 +53,7 @@ export function ReactionPicker({
         onPress={onClose}
       >
         <Pressable onPress={() => undefined}>
-          <View ref={panel} aria-label="Add a reaction">
+          <View ref={panel} role="group" aria-label="Add a reaction">
           <Glass strong className="items-center gap-3 rounded-[28px] p-3">
             <View role="menu" className="flex-row gap-1">
               {QUICK_REACTIONS.map((emoji) => (

@@ -76,10 +76,17 @@ export function useProfile(did?: string, handleHint?: string) {
         fromBluesky = true;
       }
       if (!profile.avatar || !profile.displayName || !profile.handle || !profile.description) {
-        const bsky = await getBlueskyProfile(did!).catch(() => null);
+        // Only Bluesky answering 400 means the account doesn't exist. An outage, rate
+        // limit, or blocked network just means no Bluesky details this time.
+        let unknownToBluesky = false;
+        const bsky = await getBlueskyProfile(did!).catch((error) => {
+          unknownToBluesky = error instanceof XrpcError && error.status === 400;
+          return null;
+        });
         if (bsky) profile = withBluesky(profile, bsky);
-        // No teal profile and no Bluesky one: nobody's here.
-        else if (fromBluesky && !profile.displayName && !profile.avatar) throw new ProfileNotFoundError(did!);
+        else if (fromBluesky && unknownToBluesky && !profile.displayName && !profile.avatar) {
+          throw new ProfileNotFoundError(did!);
+        }
       }
       return { profile, fromBluesky };
     },

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { View } from "react-native";
 import { Link } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { Check, ListPlus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { getPlaylist } from "@/lib/teal/api";
+import { getActorPlaylists, getPlaylist } from "@/lib/teal/api";
 import { addPlaylistItem } from "@/lib/teal/playlists";
 import { useViewerDid } from "@/lib/teal/queries";
 import { playViewToTrackView } from "@/lib/teal/social";
@@ -36,6 +36,16 @@ export function AddToPlaylist({ play }: { play: PlayView }) {
       // The index lags writes, so update the cached playlist rather than refetching it.
       client.setQueryData<Awaited<ReturnType<typeof getPlaylist>>>(["playlist", playlist.uri], (data) =>
         data && { ...data, playlist: { ...data.playlist, itemCount: data.playlist.itemCount + 1 }, items: [...data.items, item] },
+      );
+      // The picker's counts also give the next item its order, so bump them too.
+      client.setQueriesData<InfiniteData<Awaited<ReturnType<typeof getActorPlaylists>>>>({ queryKey: ["actor-playlists", viewer] }, (data) =>
+        data && {
+          ...data,
+          pages: data.pages.map((page) => ({
+            ...page,
+            items: page.items.map((p) => (p.uri === playlist.uri ? { ...p, itemCount: p.itemCount + 1 } : p)),
+          })),
+        },
       );
     } catch {
       setError(true);
