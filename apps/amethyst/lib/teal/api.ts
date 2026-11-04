@@ -20,11 +20,34 @@ import type {
 const rawBase =
   process.env.EXPO_PUBLIC_AQUA_URL || process.env.EXPO_PUBLIC_APPVIEW_URL || "";
 
-const requestBase =
-  rawBase ||
-  (typeof window === "undefined"
-    ? "http://localhost:3000"
-    : window.location.origin);
+const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])$/;
+
+/**
+ * Where XRPC requests go. A browser that reached the dev server through another
+ * host (Tailscale, a LAN IP) can't use a loopback base baked into the bundle, so
+ * it falls back to its own origin, which proxies /xrpc the same way.
+ */
+export function resolveRequestBase(
+  configured: string,
+  pageOrigin: string | undefined,
+) {
+  if (!pageOrigin) return configured || "http://localhost:3000";
+  if (!configured) return pageOrigin;
+  try {
+    const page = new URL(pageOrigin).hostname;
+    if (LOOPBACK.test(new URL(configured).hostname) && !LOOPBACK.test(page)) {
+      return pageOrigin;
+    }
+  } catch {
+    // An unparseable base is left for fetch to report.
+  }
+  return configured;
+}
+
+const requestBase = resolveRequestBase(
+  rawBase,
+  typeof window === "undefined" ? undefined : window.location?.origin,
+);
 const xrpcBase = requestBase.endsWith("/xrpc")
   ? requestBase
   : `${requestBase.replace(/\/$/, "")}/xrpc`;
