@@ -22,7 +22,8 @@ import {
   useColorScheme,
 } from "../lib/useColorScheme";
 
-import "../global.css";
+// global.entry.css imports global.css; see metro.config.js for why it exists.
+import "../global.entry.css";
 
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
