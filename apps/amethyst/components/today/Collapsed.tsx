@@ -1,9 +1,7 @@
 import { Pressable, View } from "react-native";
-import { Avatar, Cover, Glass } from "@/components/ds";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react-native";
+import { Avatar, Cover, Glass, Icon, Text } from "@/components/ds";
 
 import type { DeckItem } from "./DeckCard";
 

@@ -1,16 +1,12 @@
 import { Pressable, View } from "react-native";
 import type { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs/types";
 import { Link } from "expo-router";
-import { Avatar } from "@/components/ds/Avatar";
-import { Glass } from "@/components/ds/Glass";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Avatar, Glass, Icon, Text } from "@/components/ds";
 import { normalizeHandle } from "@/lib/teal/actors";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
 import { Bell, Compass, House, Settings, SquarePen, UserRound, type LucideIcon } from "lucide-react-native";
 
-export const WIDE_BREAKPOINT = 1000;
 
 const ITEMS: Record<string, { label: string; href: string; icon?: LucideIcon }> = {
   "(home)": { label: "Today", href: "/", icon: House },

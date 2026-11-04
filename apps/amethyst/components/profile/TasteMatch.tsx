@@ -1,12 +1,10 @@
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Avatar, Cover, Glass } from "@/components/ds";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
 import { getTasteMatch } from "@/lib/teal/api";
 import { musicAlbumHref } from "@/lib/teal/routes";
 import { ChevronRight } from "lucide-react-native";
+import { Avatar, Cover, Glass, Icon, Text } from "@/components/ds";
 
 const LEVEL = { high: "Very in tune", some: "Some overlap", low: "Different tastes" } as const;
 

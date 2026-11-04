@@ -1,9 +1,6 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 
-// This file is web-only and used to configure the root HTML for every
-// web page during static rendering.
-// The contents of this function only run in Node.js environments and
-// do not have access to the DOM or browser APIs.
+// The web document shell. Runs in Node during rendering, so no DOM access here.
 export default function Root({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -16,28 +13,19 @@ export default function Root({ children }: { children: React.ReactNode }) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
 
-        {/*
-          Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
-          However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.
-        */}
+        {/* Pages scroll inside their ScrollView, as on native. */}
         <ScrollViewStyleReset />
 
-        {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
-        {/* import web-only css */}
-        <link rel="stylesheet" href="web.css" />
       </head>
       <body>{children}</body>
     </html>
   );
 }
 
+// Matches --ground so the first paint doesn't flash before global.css loads.
 const responsiveBackground = `
-body {
-  background-color: hsl(226 35% 94%);
-}
+body { background-color: #ffffff; }
 @media (prefers-color-scheme: dark) {
-  body {
-    background-color: hsl(180 24% 7%);
-  }
+  body { background-color: #000000; }
 }`;

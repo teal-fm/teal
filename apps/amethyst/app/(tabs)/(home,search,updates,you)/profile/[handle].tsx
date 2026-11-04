@@ -1,1517 +1,276 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  Pressable,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import EditProfileModal from "@/components/teal/EditProfileModal";
-import { PlaylistCreator } from "@/components/teal/PlaylistControls";
-import ProfileListeningRow from "@/components/teal/ProfileListeningRow";
-import {
-  normalizeStatsPeriod,
-  ProfileStatsSections,
-} from "@/components/teal/ProfileStats";
-import RichText from "@/components/teal/RichText";
-import { Avatar, Glass } from "@/components/ds";
-import { CoverCalendar } from "@/components/profile/CoverCalendar";
-import { Favourites } from "@/components/profile/Favourites";
-import { Fingerprint } from "@/components/profile/Fingerprint";
-import { NowAndRecent } from "@/components/profile/NowAndRecent";
-import { TasteMatch } from "@/components/profile/TasteMatch";
-import SocialPostCard from "@/components/teal/SocialPostCard";
-import TealShell from "@/components/teal/TealShell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
-import { resolveHandle } from "@/lib/atp/pid";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import {
-  actorAvatarUrl,
-  actorProfileHref,
-  displayActorName,
-  getCachedBlueskyProfile,
-  getProfileImageUrl,
-  normalizeHandle,
-  type DisplayActor,
-} from "@/lib/teal/actors";
-import {
-  coverArtUrl,
-  displayArtists,
-  getActorFeed,
-  getActorPlaylists,
-  getBlueskyProfile,
-  getGraphFollowers,
-  getGraphFollows,
-  getGraphSummary,
-  getProfile,
-  getRecordingCoverArtUrl,
-  getSocialFeed,
-  XrpcError,
-  type GraphSummaryView,
-  type SocialPlaylistView,
-  type SocialPostView,
-} from "@/lib/teal/api";
-import { updateSelectedPlayRecords } from "@/lib/teal/bulkPlayRecords";
-import { mergePendingListens } from "@/lib/teal/pendingListens";
-import {
-  artistsFromText,
-  deletePlayRecord,
-  loadPlayRecord,
-  putPlayRecord,
-} from "@/lib/teal/playRecords";
-import {
-  appendUniqueRecords,
-  isCurrentProfileRequest,
-} from "@/lib/teal/profileStats";
+import { useState } from "react";
+import { View } from "react-native";
+import { Link, router, useLocalSearchParams } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { normalizeHandle } from "@/lib/teal/actors";
+import { useViewerDid } from "@/lib/teal/queries";
 import { playlistHref } from "@/lib/teal/routes";
-import { useStore } from "@/stores/mainStore";
+import { normalizePeriod } from "@/lib/teal/topStats";
 import {
-  removePendingListens,
-  retainConfirmedListens,
-  retireIndexedListens,
-  usePendingListens,
-} from "@/stores/pendingListenStore";
-import type { AppBskyActorDefs } from "@atproto/api";
+  Button,
+  ErrorNotice,
+  Loading,
+  Notice,
+  Row,
+  Screen,
+  Section,
+  Tabs,
+  useLayout,
+} from "@/components/ds";
+import { CoverCalendar } from "@/components/profile/CoverCalendar";
+import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
+import { Favourites } from "@/components/profile/Favourites";
+import { ListeningHistory, usePlaysWithPending } from "@/components/profile/ListeningHistory";
+import { NowAndRecent } from "@/components/profile/NowAndRecent";
+import { PeopleList } from "@/components/profile/PeopleList";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { TasteMatch } from "@/components/profile/TasteMatch";
+import { TopStats } from "@/components/profile/TopStats";
+import { PlaylistCreator } from "@/components/playlist/PlaylistCreator";
+import { PostCard } from "@/components/today/PostCard";
 import {
-  CheckSquare,
-  Pencil,
-  Save,
-  Settings,
-  Square,
-  Trash2,
-  UserMinus,
-  UserPlus,
-  X,
-} from "lucide-react-native";
+  useActorDid,
+  useActorPlaylists,
+  useActorPosts,
+  useGraphSummary,
+  useProfile,
+  type DisplayProfile,
+} from "@/hooks/useProfile";
 
-import type {
-  MiniProfileView,
-  ProfileView,
-} from "@teal/lexicons/src/fm/teal/actor/defs";
-import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+type Tab = "overview" | "listening" | "posts" | "playlists";
+const TABS = ["overview", "listening", "posts", "playlists"] as const;
 
-type DisplayProfile = Pick<
-  ProfileView,
-  | "displayName"
-  | "description"
-  | "descriptionFacets"
-  | "avatar"
-  | "banner"
-  | "status"
-  | "statsDefaultPeriod"
-  | "favorites"
-> & {
-  handle?: string;
-};
-
-function mergeBlueskyProfile(
-  tealProfile: DisplayProfile,
-  bskyProfile: AppBskyActorDefs.ProfileViewDetailed,
-): DisplayProfile {
-  return {
-    ...tealProfile,
-    avatar: tealProfile.avatar || bskyProfile.avatar,
-    banner: tealProfile.banner || bskyProfile.banner,
-    description: tealProfile.description || bskyProfile.description,
-    displayName: tealProfile.displayName || bskyProfile.displayName,
-    handle: tealProfile.handle || bskyProfile.handle,
-  };
-}
-
-function needsBlueskyFallback(profile: DisplayProfile) {
-  return (
-    !profile.avatar ||
-    !profile.banner ||
-    !profile.description ||
-    !profile.displayName ||
-    !profile.handle
-  );
-}
-
-function rkeyFromUri(uri?: string) {
-  return uri?.split("/").pop();
-}
-
-function GraphActorRow({ actor }: { actor: MiniProfileView }) {
-  const [blueskyActor, setBlueskyActor] = useState<DisplayActor>();
-  const indexedActor = actor as DisplayActor;
-  const did = indexedActor.did;
-  const mergedActor = {
-    ...blueskyActor,
-    ...indexedActor,
-    avatar: indexedActor.avatar || blueskyActor?.avatar,
-    displayName: indexedActor.displayName || blueskyActor?.displayName,
-    handle: indexedActor.handle || blueskyActor?.handle,
-  };
-  const href = actorProfileHref(mergedActor, did);
-  const name = displayActorName(mergedActor, did);
-  const handle = normalizeHandle(mergedActor.handle);
-  const avatar = actorAvatarUrl(mergedActor, did);
-
-  useEffect(() => {
-    let mounted = true;
-    if (!did || (indexedActor.displayName && indexedActor.handle)) {
-      setBlueskyActor(undefined);
-      return;
-    }
-    getCachedBlueskyProfile(did).then((profile) => {
-      if (mounted) setBlueskyActor(profile);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [did, indexedActor.displayName, indexedActor.handle]);
-
-  return (
-    <Link href={`/profile/${href}` as any} asChild>
-      <Pressable className="flex-row items-center gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-3 web:transition-colors web:hover:border-primary/45">
-        <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary">
-          {avatar ? (
-            <Image source={{ uri: avatar }} className="h-full w-full" />
-          ) : (
-            <Text className="text-lg font-black text-primary-foreground">
-              {name.slice(0, 1).toUpperCase()}
-            </Text>
-          )}
-        </View>
-        <View className="min-w-0 flex-1">
-          <Text className="font-semibold" numberOfLines={1}>
-            {name}
-          </Text>
-          {handle && (
-            <Text
-              className="text-xs text-ink-2 tabular-nums"
-              numberOfLines={1}
-            >
-              @{handle}
-            </Text>
-          )}
-        </View>
-      </Pressable>
-    </Link>
-  );
+function param(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 export default function ProfileScreen() {
-  const { handle, tab } = useLocalSearchParams();
-  const router = useRouter();
-  const tabValue = Array.isArray(tab) ? tab[0] : tab;
-  const activeTab = ["listening", "posts", "playlists"].includes(tabValue || "")
-    ? tabValue
-    : "overview";
-  const actor = Array.isArray(handle) ? handle[0] : handle;
-  const { width } = useWindowDimensions();
-  const [did, setDid] = useState<string | null>(null);
-  const [profile, setProfile] = useState<DisplayProfile | null>(null);
-  const [playlists, setPlaylists] = useState<SocialPlaylistView[]>([]);
-  const [graphSummary, setGraphSummary] = useState<GraphSummaryView>({
-    followersCount: 0,
-    followsCount: 0,
-  });
-  const [graphTab, setGraphTab] = useState<"followers" | "following" | null>(
-    null,
-  );
-  const [graphActors, setGraphActors] = useState<MiniProfileView[]>([]);
-  const [graphCursor, setGraphCursor] = useState<string>();
-  const [graphLoading, setGraphLoading] = useState(false);
-  const [graphError, setGraphError] = useState<string>();
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [bioExpanded, setBioExpanded] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [playsCursor, setPlaysCursor] = useState<string>();
-  const [postsCursor, setPostsCursor] = useState<string>();
-  const [playlistsCursor, setPlaylistsCursor] = useState<string>();
-  const [sectionLoading, setSectionLoading] = useState({
-    listening: true,
-    posts: true,
-    playlists: true,
-  });
-  const [sectionErrors, setSectionErrors] = useState<
-    Partial<Record<"listening" | "posts" | "playlists", string>>
-  >({});
-  const [loadingMore, setLoadingMore] = useState(false);
-  const requestVersion = useRef(0);
-  const graphRequestVersion = useRef(0);
-  const [posts, setPosts] = useState<SocialPostView[]>([]);
-  const [indexedPlays, setPlays] = useState<PlayView[]>([]);
-  const [followBusy, setFollowBusy] = useState(false);
-  const followLock = useRef<object | null>(null);
-  const [editProfileOpen, setEditProfileOpen] = useState(false);
-  const [bulkEditOpen, setBulkEditOpen] = useState(false);
-  const [selectedPlayRkeys, setSelectedPlayRkeys] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const [bulkArtistsText, setBulkArtistsText] = useState("");
-  const [bulkReleaseName, setBulkReleaseName] = useState("");
-  const [bulkBusy, setBulkBusy] = useState(false);
-  const [bulkDeleteArmed, setBulkDeleteArmed] = useState(false);
-  const [isBlueskyFallback, setIsBlueskyFallback] = useState(false);
-  const [statusRecordingArt, setStatusRecordingArt] = useState<string>();
-  const [statusArtFailed, setStatusArtFailed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const pdsAgent = useStore((state) => state.pdsAgent);
-  const authStatus = useStore((state) => state.status);
-  const currentIdentity = useRef({
-    actor,
-    targetDid: did,
-    viewerDid: pdsAgent?.did,
-  });
-  currentIdentity.current = {
-    actor,
-    targetDid: did,
-    viewerDid: authStatus === "loggedIn" ? pdsAgent?.did : undefined,
-  };
+  const params = useLocalSearchParams();
+  const actor = param(params.handle);
+  const tab: Tab = TABS.includes(param(params.tab) as Tab) ? (param(params.tab) as Tab) : "overview";
+  const viewer = useViewerDid();
+  const layout = useLayout();
+  const didQuery = useActorDid(actor);
+  const did = didQuery.data;
+  const profileQuery = useProfile(did, actor && !actor.startsWith("did:") ? actor : undefined);
+  const graph = useGraphSummary(did);
+  const [people, setPeople] = useState<"followers" | "following" | null>(null);
+  const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    requestVersion.current += 1;
-    setError(null);
-    setFollowBusy(false);
-    followLock.current = null;
-    setDid(null);
-    setProfile(null);
-    setProfileLoading(true);
-    setBioExpanded(false);
-    setGraphTab(null);
-    setGraphSummary({ followersCount: 0, followsCount: 0 });
-    setPlaylists([]);
-    setPosts([]);
-    setPlays([]);
-    setPlaysCursor(undefined);
-    setPostsCursor(undefined);
-    setPlaylistsCursor(undefined);
-    setSectionLoading({ listening: true, posts: true, playlists: true });
-    setSectionErrors({});
-    setSelectedPlayRkeys(new Set());
-    setBulkEditOpen(false);
-    setBulkDeleteArmed(false);
-    setBulkArtistsText("");
-    setBulkReleaseName("");
-    setLoadingMore(false);
+  const profile = profileQuery.data?.profile;
+  const name = profile?.displayName || normalizeHandle(profile?.handle) || "Listener";
+  const isSelf = !!viewer && did === viewer;
+  const failed = didQuery.isError || profileQuery.isError;
 
-    async function load() {
-      if (!actor) {
-        setError("No listener was selected.");
-        setProfileLoading(false);
-        return;
-      }
-      try {
-        const resolved = actor.startsWith("did:")
-          ? actor
-          : await resolveHandle(actor);
-        if (!mounted) return;
-        setDid(resolved);
-        // Identity does not wait for history, posts, playlists, or graph requests.
-        const identityRequest = (async () => {
-          let nextProfile: DisplayProfile;
-          let fallback = false;
-          try {
-            nextProfile = (await getProfile(resolved)).profile;
-            fallback =
-              !nextProfile.displayName &&
-              !nextProfile.description &&
-              !nextProfile.avatar &&
-              !nextProfile.banner;
-          } catch (cause) {
-            if (!(cause instanceof XrpcError) || cause.status !== 404)
-              throw cause;
-            nextProfile = {
-              handle: actor.startsWith("did:") ? undefined : actor,
-            };
-            fallback = true;
-          }
-          if (mounted) {
-            setProfile(nextProfile);
-            setIsBlueskyFallback(fallback);
-            setProfileLoading(false);
-          }
-          if (needsBlueskyFallback(nextProfile)) {
-            const bsky = await getBlueskyProfile(resolved).catch(() => null);
-            if (bsky) nextProfile = mergeBlueskyProfile(nextProfile, bsky);
-          }
-          if (mounted) {
-            setProfile(nextProfile);
-            setIsBlueskyFallback(fallback);
-          }
-        })()
-          .catch((cause) => {
-            if (mounted)
-              setError(cause instanceof Error ? cause.message : String(cause));
-          })
-          .finally(() => {
-            if (mounted) setProfileLoading(false);
-          });
-
-        const listeningRequest = getActorFeed(resolved, 30).then((page) => {
-          if (!mounted) return;
-          setPlays(page.plays);
-          setPlaysCursor(page.cursor);
-        });
-        const postsRequest = getSocialFeed(
-          10,
-          undefined,
-          pdsAgent?.did,
-          resolved,
-        ).then((page) => {
-          if (!mounted) return;
-          setPosts(page.items);
-          setPostsCursor(page.cursor);
-        });
-        const playlistsRequest = getActorPlaylists(resolved, 12).then(
-          (page) => {
-            if (!mounted) return;
-            setPlaylists(page.items);
-            setPlaylistsCursor(page.cursor);
-          },
-        );
-        const sections = [
-          ["listening", listeningRequest],
-          ["posts", postsRequest],
-          ["playlists", playlistsRequest],
-        ] as const;
-        for (const [section, request] of sections) {
-          void request
-            .catch((cause) => {
-              if (mounted)
-                setSectionErrors((current) => ({
-                  ...current,
-                  [section]:
-                    cause instanceof Error ? cause.message : String(cause),
-                }));
-            })
-            .finally(() => {
-              if (mounted)
-                setSectionLoading((current) => ({
-                  ...current,
-                  [section]: false,
-                }));
-            });
-        }
-        void getGraphSummary(resolved, pdsAgent?.did)
-          .then((summary) => {
-            if (mounted) setGraphSummary(summary);
-          })
-          .catch(() => undefined);
-        await identityRequest;
-      } catch (cause) {
-        if (mounted) {
-          setError(cause instanceof Error ? cause.message : String(cause));
-          setProfileLoading(false);
-        }
-      }
-    }
-    void load();
-    return () => {
-      mounted = false;
-      requestVersion.current += 1;
-    };
-  }, [actor, pdsAgent?.did, refreshKey]);
-
-  useEffect(() => {
-    let mounted = true;
-    graphRequestVersion.current += 1;
-    setGraphActors([]);
-    setGraphCursor(undefined);
-    setGraphError(undefined);
-    if (!did || !graphTab) return;
-    setGraphLoading(true);
-    const request =
-      graphTab === "followers"
-        ? getGraphFollowers(did, 20)
-        : getGraphFollows(did, 20);
-    request
-      .then((page) => {
-        if (!mounted) return;
-        setGraphActors(page.actors);
-        setGraphCursor(page.cursor);
-      })
-      .catch(() => {
-        if (mounted)
-          setGraphError("Could not load this list. Close it and try again.");
-      })
-      .finally(() => {
-        if (mounted) setGraphLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [did, graphTab]);
-
-  async function loadMore(section: "listening" | "posts" | "playlists") {
-    const cursor =
-      section === "listening"
-        ? playsCursor
-        : section === "posts"
-          ? postsCursor
-          : playlistsCursor;
-    if (!did || !cursor || loadingMore) return;
-    const version = requestVersion.current;
-    setLoadingMore(true);
-    try {
-      if (section === "listening") {
-        const page = await getActorFeed(did, 30, cursor);
-        if (version !== requestVersion.current) return;
-        setPlays((current) => appendUniqueRecords(current, page.plays));
-        setPlaysCursor(page.cursor);
-      } else if (section === "posts") {
-        const page = await getSocialFeed(10, cursor, pdsAgent?.did, did);
-        if (version !== requestVersion.current) return;
-        setPosts((current) => appendUniqueRecords(current, page.items));
-        setPostsCursor(page.cursor);
-      } else {
-        const page = await getActorPlaylists(did, 12, cursor);
-        if (version !== requestVersion.current) return;
-        setPlaylists((current) => appendUniqueRecords(current, page.items));
-        setPlaylistsCursor(page.cursor);
-      }
-    } catch {
-      if (version === requestVersion.current)
-        setSectionErrors((current) => ({
-          ...current,
-          [section]: "Could not load more. Try again.",
-        }));
-    } finally {
-      if (version === requestVersion.current) setLoadingMore(false);
-    }
+  if (didQuery.isLoading || (did && profileQuery.isLoading)) {
+    return (
+      <Screen back pageTitle="Profile">
+        <Loading />
+      </Screen>
+    );
   }
-
-  async function loadMoreGraph() {
-    if (!did || !graphTab || !graphCursor || graphLoading) return;
-    const version = requestVersion.current;
-    const graphVersion = graphRequestVersion.current;
-    setGraphLoading(true);
-    try {
-      const page = await (graphTab === "followers"
-        ? getGraphFollowers(did, 20, graphCursor)
-        : getGraphFollows(did, 20, graphCursor));
-      if (
-        version !== requestVersion.current ||
-        graphVersion !== graphRequestVersion.current
-      )
-        return;
-      setGraphActors((current) => {
-        const known = new Set(current.map((item) => item.did));
-        return [
-          ...current,
-          ...page.actors.filter((item) => !known.has(item.did)),
-        ];
-      });
-      setGraphCursor(page.cursor);
-    } catch {
-      if (
-        version === requestVersion.current &&
-        graphVersion === graphRequestVersion.current
-      )
-        setGraphError("Could not load more people. Try again.");
-    } finally {
-      if (
-        version === requestVersion.current &&
-        graphVersion === graphRequestVersion.current
-      )
-        setGraphLoading(false);
-    }
-  }
-
-  const isSelf = did === pdsAgent?.did;
-  const pendingListens = usePendingListens(isSelf ? did : null);
-  const plays = did
-    ? mergePendingListens(did, indexedPlays, pendingListens)
-    : indexedPlays;
-  const syncingUris = new Set(
-    pendingListens
-      .filter(
-        (entry) =>
-          !indexedPlays.some(
-            (play) =>
-              play.uri === entry.play.uri && play.cid === entry.play.cid,
-          ),
-      )
-      .map((entry) => entry.play.uri),
-  );
-
-  useEffect(() => {
-    if (isSelf && did) retireIndexedListens(did, indexedPlays);
-  }, [did, indexedPlays, isSelf]);
-  const selectedPlayCount = selectedPlayRkeys.size;
-  const viewerFollowing = graphSummary.viewerFollowing;
-  const canFollow = authStatus === "loggedIn" && !!pdsAgent?.did && !!did;
-  async function toggleFollow() {
-    if (!canFollow || !pdsAgent?.did || !did || isSelf || followLock.current)
-      return;
-    const request = {
-      generation: requestVersion.current,
-      actor,
-      targetDid: did,
-      viewerDid: pdsAgent.did,
-    };
-    const operation = {};
-    followLock.current = operation;
-    const stillCurrent = () =>
-      isCurrentProfileRequest(request, {
-        generation: requestVersion.current,
-        ...currentIdentity.current,
-      });
-    setFollowBusy(true);
-    try {
-      if (viewerFollowing) {
-        const rkey = rkeyFromUri(viewerFollowing);
-        if (!rkey) throw new Error("Could not resolve follow rkey");
-        await pdsAgent.call(
-          "com.atproto.repo.deleteRecord",
-          {},
-          {
-            repo: pdsAgent.did,
-            collection: "fm.teal.graph.follow",
-            rkey,
-          },
-        );
-        if (!stillCurrent()) return;
-        setGraphSummary((current) => ({
-          ...current,
-          followersCount: Math.max(0, current.followersCount - 1),
-          viewerFollowing: undefined,
-        }));
-        return;
-      }
-
-      const res = await pdsAgent.call(
-        "com.atproto.repo.createRecord",
-        {},
-        {
-          repo: pdsAgent.did,
-          collection: "fm.teal.graph.follow",
-          record: {
-            $type: "fm.teal.graph.follow",
-            subject: did,
-            createdAt: new Date().toISOString(),
-          },
-        },
-      );
-      if (!stillCurrent()) return;
-      setGraphSummary((current) => ({
-        ...current,
-        followersCount: current.followersCount + 1,
-        viewerFollowing: (res.data as { uri?: string }).uri,
-      }));
-    } catch (e) {
-      if (stillCurrent()) setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      if (followLock.current === operation) followLock.current = null;
-      if (stillCurrent()) setFollowBusy(false);
-    }
-  }
-
-  function toggleBulkEdit() {
-    setBulkEditOpen((current) => !current);
-    setSelectedPlayRkeys(new Set());
-    setBulkDeleteArmed(false);
-    setBulkArtistsText("");
-    setBulkReleaseName("");
-  }
-
-  function togglePlaySelection(rkey?: string) {
-    if (!rkey || bulkBusy) return;
-    setBulkDeleteArmed(false);
-    setSelectedPlayRkeys((current) => {
-      const next = new Set(current);
-      if (next.has(rkey)) {
-        next.delete(rkey);
-      } else {
-        next.add(rkey);
-      }
-      return next;
-    });
-  }
-
-  function selectVisiblePlays() {
-    setBulkDeleteArmed(false);
-    const visibleRkeys = plays
-      .filter((play) => !syncingUris.has(play.uri))
-      .map((play) => play.rkey)
-      .filter((rkey): rkey is string => !!rkey);
-    setSelectedPlayRkeys(new Set(visibleRkeys));
-  }
-
-  async function deleteSelectedPlays() {
-    if (!pdsAgent?.did || !did || selectedPlayCount === 0 || bulkBusy) return;
-    if (!bulkDeleteArmed) {
-      setBulkDeleteArmed(true);
-      return;
-    }
-    setBulkBusy(true);
-    setError(null);
-    try {
-      const rkeys = Array.from(selectedPlayRkeys);
-      for (const selectedRkey of rkeys) {
-        await deletePlayRecord(pdsAgent, did, selectedRkey);
-        removePendingListens(did, [
-          `at://${did}/fm.teal.feed.play/${selectedRkey}`,
-        ]);
-      }
-      setPlays((current) =>
-        current.filter(
-          (play) => !play.rkey || !selectedPlayRkeys.has(play.rkey),
-        ),
-      );
-      setSelectedPlayRkeys(new Set());
-      setBulkDeleteArmed(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBulkBusy(false);
-    }
-  }
-
-  async function updateSelectedPlays() {
-    if (!pdsAgent?.did || !did || selectedPlayCount === 0 || bulkBusy) return;
-    const nextArtists = bulkArtistsText.trim();
-    const nextRelease = bulkReleaseName.trim();
-    if (!nextArtists && !nextRelease) {
-      setError("Enter artists or release text before applying a bulk edit.");
-      return;
-    }
-
-    setBulkBusy(true);
-    setError(null);
-    try {
-      const selected = new Set(selectedPlayRkeys);
-      await updateSelectedPlayRecords(
-        Array.from(selected),
-        {
-          ...(nextArtists ? { artists: artistsFromText(nextArtists) } : {}),
-          ...(nextRelease ? { releaseName: nextRelease } : {}),
-        },
-        {
-          load: (rkey) => loadPlayRecord(pdsAgent, did, rkey),
-          put: (rkey, record, cid) =>
-            putPlayRecord(pdsAgent, did, rkey, record, cid),
-          confirmed: (write) => retainConfirmedListens(did, [write]),
-        },
-      );
-      setPlays((current) =>
-        current.map((play) => {
-          if (!play.rkey || !selected.has(play.rkey)) return play;
-          return {
-            ...play,
-            ...(nextArtists ? { artists: artistsFromText(nextArtists) } : {}),
-            ...(nextRelease ? { releaseName: nextRelease } : {}),
-          };
-        }),
-      );
-      setSelectedPlayRkeys(new Set());
-      setBulkArtistsText("");
-      setBulkReleaseName("");
-      setBulkDeleteArmed(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBulkBusy(false);
-    }
-  }
-  const avatarUrl = did
-    ? getProfileImageUrl(did, profile?.avatar, "avatar")
-    : undefined;
-  const bannerUrl = did
-    ? getProfileImageUrl(did, profile?.banner, "banner")
-    : undefined;
-  const currentStatus = profile?.status?.item;
-  const currentStatusReleaseArt = coverArtUrl(currentStatus?.releaseMbId, 100);
-  const currentStatusArt = statusArtFailed
-    ? undefined
-    : currentStatusReleaseArt || statusRecordingArt;
-
-  useEffect(() => {
-    let mounted = true;
-    setStatusArtFailed(false);
-    if (
-      !currentStatus ||
-      currentStatusReleaseArt ||
-      !currentStatus.recordingMbId
-    ) {
-      setStatusRecordingArt(undefined);
-      return;
-    }
-    getRecordingCoverArtUrl(currentStatus.recordingMbId, 100).then((url) => {
-      if (mounted) setStatusRecordingArt(url);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [currentStatus, currentStatusReleaseArt]);
-
-  function handleTabKey(
-    event: KeyboardEvent<HTMLElement>,
-    selectedIndex: number,
-  ) {
-    const tabs = ["overview", "listening", "posts", "playlists"];
-    const nextIndex =
-      event.key === "ArrowRight"
-        ? (selectedIndex + 1) % tabs.length
-        : event.key === "ArrowLeft"
-          ? (selectedIndex + tabs.length - 1) % tabs.length
-          : event.key === "Home"
-            ? 0
-            : event.key === "End"
-              ? tabs.length - 1
-              : undefined;
-    if (nextIndex === undefined) return;
-    event.preventDefault();
-    router.setParams({ tab: tabs[nextIndex] });
-    setBulkEditOpen(false);
-    event.currentTarget.parentElement
-      ?.querySelectorAll<HTMLElement>('[role="tab"]')
-      [nextIndex]?.focus();
-  }
-
-  const displayName =
-    profile?.displayName ||
-    profile?.handle ||
-    (actor?.startsWith("did:") ? "Listener" : actor) ||
-    "Listener";
-  const description = profile?.description || "";
-  const longBio =
-    description.length > 180 || description.split("\n").length > 3;
-  const period = normalizeStatsPeriod(profile?.statsDefaultPeriod);
-  const sectionStatus = (section: "listening" | "posts" | "playlists") =>
-    sectionLoading[section] ? (
-      <View className="py-6">
-        <ActivityIndicator accessibilityLabel={`Loading ${section}`} />
-      </View>
-    ) : sectionErrors[section] ? (
-      <View className="mb-4 gap-3">
-        <Text className="text-destructive">
-          Could not load {section}. Please try again.
-        </Text>
-        <Button
-          variant="outline"
-          className="self-start"
-          onPress={() => setRefreshKey((key) => key + 1)}
-        >
-          <Text>Try again</Text>
-        </Button>
-      </View>
-    ) : null;
-  const emptyListening = (
-    <View className="gap-3 py-3">
-      <Text className="font-bold">No listens yet</Text>
-      <Text className="text-sm text-ink-2">
-        {isSelf
-          ? "Add a track or an album to start your listening history. Saved listens can take a moment to appear."
-          : "This listener has not shared any listens yet."}
-      </Text>
-      {isSelf && (
-        <Link href="/manual-listens" asChild>
-          <Button className="self-start">
-            <Text>Add your first listen</Text>
-          </Button>
+  if (failed || !did) {
+    return (
+      <Screen back pageTitle="Profile">
+        <ErrorNotice
+          title={didQuery.isError || !did ? "This profile could not be found" : "This profile didn't load"}
+          body="Check the handle or try again in a moment."
+          onRetry={() => (didQuery.isError ? didQuery.refetch() : profileQuery.refetch())}
+        />
+        <Link href="/search" asChild>
+          <Button label="Find a listener" variant="secondary" />
         </Link>
-      )}
-    </View>
-  );
+      </Screen>
+    );
+  }
 
-  const profileActions = (
-    <View className="flex-row flex-wrap gap-2">
-      {isSelf ? (
-        <>
-          <Link href="/manual-listens" asChild>
-            <Button size="sm">
-              <Text>Add a listen</Text>
-            </Button>
-          </Link>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-row gap-1 px-2 sm:gap-2 sm:px-3"
-            onPress={() => setEditProfileOpen(true)}
-          >
-            <Icon icon={Pencil} size={15} />
-            <Text>Edit profile</Text>
-          </Button>
-          <Link href="/settings" asChild>
-            <Button size="sm" variant="outline" accessibilityLabel="Settings" className="px-2.5">
-              <Icon icon={Settings} size={16} />
-            </Button>
-          </Link>
-        </>
-      ) : (
-        <Button
-          size="sm"
-          className="flex-row gap-2"
-          variant={viewerFollowing ? "outline" : "default"}
-          disabled={followBusy}
-          onPress={canFollow ? toggleFollow : () => router.push("/auth/login")}
-        >
-          <Icon icon={viewerFollowing ? UserMinus : UserPlus} size={15} />
-          <Text>
-            {followBusy ? "Saving" : viewerFollowing ? "Following" : "Follow"}
-          </Text>
-        </Button>
-      )}
-    </View>
-  );
-
-  // Taste match and the cover calendar sit beside the profile on wide screens.
-  const sideColumn = width >= 1280;
-  const viewerDid = pdsAgent?.did;
-  const identityExtras = did ? (
+  const extras = (
     <>
-      {!isSelf && viewerDid ? (
+      {viewer && !isSelf ? (
         <TasteMatch
           actor={did}
-          viewer={viewerDid}
-          name={displayName}
-          avatars={{ viewer: { did: viewerDid }, actor: { did, avatar: profile?.avatar } }}
+          viewer={viewer}
+          name={name}
+          avatars={{ viewer: { did: viewer }, actor: { did, avatar: profile?.avatar } }}
         />
       ) : null}
-      <CoverCalendar actor={did} name={isSelf ? "you" : displayName} />
+      <CoverCalendar actor={did} name={isSelf ? "you" : name} />
     </>
-  ) : null;
+  );
 
   return (
-    <TealShell rightRail={sideColumn && (profile || !error) ? <View className="gap-3">{identityExtras}</View> : undefined} pageTitle={displayName}>
-      <Stack.Screen options={{ title: displayName, headerShown: false }} />
-      {profileLoading && (
-        <View className="min-h-48 items-center justify-center">
-          <ActivityIndicator
-            size="large"
-            accessibilityLabel="Loading profile"
-          />
-        </View>
-      )}
-      {error && (
-        <View className="mb-5 gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            {!did
-              ? "This profile could not be found."
-              : profile
-                ? "That didn't go through."
-                : "This profile didn't load."}
-          </Text>
-          <Text className="text-sm text-ink-2">
-            {profile ? "Try again in a moment." : "Check the handle or try again in a moment."}
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onPress={() => setRefreshKey((key) => key + 1)}
-            >
-              <Text>Try again</Text>
-            </Button>
-            <Link href="/search" asChild>
-              <Button variant="outline">
-                <Text>Find a listener</Text>
-              </Button>
-            </Link>
-          </View>
-        </View>
-      )}
-      {/* A failed load shows only the error, never a placeholder profile. */}
-      {did && !profileLoading && (profile || !error) && (
-        <>
-          <View className="-mx-4 md:-mx-7 lg:-mx-8">
-            <Fingerprint actor={did} height={width >= 1000 ? 200 : 168} />
-          </View>
-          {/* The avatar overlaps the panel's top edge, so it sits outside the clipped Glass. */}
-          <View className="-mt-9 mb-3">
-          <Glass strong className="gap-2 p-4 pt-[64px]">
-            <Text
-              role="heading"
-              aria-level={1}
-              className="mt-1 text-[28px] font-bold text-ink"
-              numberOfLines={2}
-            >
-              {displayName}
-            </Text>
-            {!!profile?.handle && (
-              <Text className="-mt-1 text-[15px] text-ink-2" numberOfLines={1}>
-                @{normalizeHandle(profile.handle)}
-              </Text>
-            )}
-            {!!description && (
-              <View>
-                {bioExpanded || !longBio ? (
-                  <RichText
-                    text={description}
-                    facets={profile?.descriptionFacets}
-                    className="text-[16px] leading-[22px] text-ink"
-                  />
-                ) : (
-                  <Text className="text-[16px] leading-[22px] text-ink" numberOfLines={3}>
-                    {description}
-                  </Text>
-                )}
-                {longBio && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: bioExpanded }}
-                    className="min-h-11 justify-center self-start"
-                    onPress={() => setBioExpanded((value) => !value)}
-                  >
-                    <Text className="text-[15px] font-semibold text-tint">
-                      {bioExpanded ? "Show less" : "Read more"}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            )}
-            <View className="flex-row flex-wrap items-center gap-x-4">
-              {(["followers", "following"] as const).map((kind) => (
-                <Pressable
-                  key={kind}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: graphTab === kind }}
-                  className="min-h-11 justify-center"
-                  onPress={() => setGraphTab((current) => (current === kind ? null : kind))}
-                >
-                  <Text className="text-[15px] text-ink-2">
-                    <Text className="font-semibold tabular-nums text-ink">
-                      {kind === "followers" ? graphSummary.followersCount : graphSummary.followsCount}
-                    </Text>{" "}
-                    {kind}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            {profileActions}
-          </Glass>
-            <View className="absolute -top-[52px] left-4">
-              <Avatar
-                did={did}
-                avatar={profile?.avatar}
-                name={displayName}
-                size={104}
-                listeningNow={!!currentStatus}
-              />
-            </View>
-          </View>
-          <View className="mb-3 gap-3">
-            <NowAndRecent now={currentStatus} recent={plays.slice(0, 10)} />
-            <Favourites
-              favourites={profile?.favorites ?? []}
-              isSelf={isSelf}
-              onEdit={() => setEditProfileOpen(true)}
-            />
-            {!sideColumn && identityExtras}
-          </View>
-          {graphTab && (
-            <View className="mb-5 gap-3 border-b border-border pb-5">
-              <View className="flex-row items-center justify-between">
-                <Text
-                  accessibilityRole="header"
-                  aria-level={2}
-                  className="text-xl font-bold"
-                >
-                  {graphTab === "followers" ? "Followers" : "Following"}
-                </Text>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  accessibilityLabel="Close people list"
-                  onPress={() => setGraphTab(null)}
-                >
-                  <Icon icon={X} size={18} />
-                </Button>
-              </View>
-              {graphError && (
-                <Text className="text-destructive">{graphError}</Text>
-              )}
-              {graphLoading && graphActors.length === 0 ? (
-                <ActivityIndicator />
-              ) : graphActors.length === 0 && !graphError ? (
-                <Text className="text-ink-2">
-                  {graphTab === "followers"
-                    ? "No followers yet."
-                    : "Not following anyone yet."}
-                </Text>
-              ) : (
-                graphActors.map((person) => (
-                  <GraphActorRow
-                    key={person.did || person.handle}
-                    actor={person}
-                  />
-                ))
-              )}
-              {graphCursor && (
-                <Button
-                  variant="outline"
-                  disabled={graphLoading}
-                  onPress={loadMoreGraph}
-                >
-                  <Text>{graphLoading ? "Loading" : "Load more people"}</Text>
-                </Button>
-              )}
-            </View>
-          )}
-          {isSelf && (
-            <EditProfileModal
-              did={did}
-              profile={profile}
-              visible={editProfileOpen}
-              onClose={() => setEditProfileOpen(false)}
-              onSaved={(updatedProfile) => {
-                setProfile((current) => ({
-                  ...(current || {}),
-                  ...updatedProfile,
-                }));
-                setIsBlueskyFallback(false);
-              }}
-            />
-          )}
-          <View
-            accessibilityRole="tablist"
-            className="mb-5 flex-row border-b border-border"
-          >
-            {(["overview", "listening", "posts", "playlists"] as const).map(
-              (value, index) => (
-                <Pressable
-                  key={value}
-                  nativeID={`profile-tab-${value}`}
-                  {...(Platform.OS === "web"
-                    ? {
-                        tabIndex: activeTab === value ? 0 : -1,
-                        "aria-controls": "profile-content",
-                        onKeyDown: (event: KeyboardEvent<HTMLElement>) =>
-                          handleTabKey(event, index),
-                      }
-                    : {})}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: activeTab === value }}
-                  aria-selected={activeTab === value}
-                  accessibilityLabel={
-                    value.charAt(0).toUpperCase() + value.slice(1)
-                  }
-                  className={`min-h-12 min-w-0 flex-1 items-center justify-center border-b-2 px-1 ${activeTab === value ? "border-primary" : "border-transparent"}`}
-                  onPress={() => {
-                    router.setParams({ tab: value });
-                    setBulkEditOpen(false);
-                  }}
-                >
-                  <Text
-                    className={`text-sm font-bold ${activeTab === value ? "text-foreground" : "text-ink-2"}`}
-                  >
-                    {value.charAt(0).toUpperCase() + value.slice(1)}
-                  </Text>
-                </Pressable>
-              ),
-            )}
-          </View>
-          <View
-            nativeID="profile-content"
-            {...(Platform.OS === "web"
-              ? {
-                  role: "tabpanel" as const,
-                  "aria-labelledby": `profile-tab-${activeTab}`,
-                }
-              : {})}
-          >
-            {activeTab === "overview" && (
-              <>
-                {isSelf && isBlueskyFallback && (
-                  <View className="mb-5 gap-3 border-b border-border pb-5">
-                    <Text
-                      accessibilityRole="header"
-                      aria-level={2}
-                      className="text-lg font-bold"
-                    >
-                      Make this profile yours
-                    </Text>
-                    <Text className="text-sm text-ink-2">
-                      Your Bluesky details are here to get you started. Add your
-                      Teal name, bio, and artwork.
-                    </Text>
-                    <Link href="/onboarding" asChild>
-                      <Button variant="outline" className="self-start">
-                        <Text>Set up your Teal profile</Text>
-                      </Button>
-                    </Link>
-                  </View>
-                )}
-                <View className="mb-6">
-                  <View className="flex-row items-center justify-between gap-2">
-                    <Text
-                      accessibilityRole="header"
-                      aria-level={2}
-                      className="text-xl font-bold"
-                    >
-                      Recent listening
-                    </Text>
-                    {plays.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={() => router.setParams({ tab: "listening" })}
-                      >
-                        <Text>View all</Text>
-                      </Button>
-                    )}
-                  </View>
-                  {sectionStatus("listening")}
-                  {plays.length
-                    ? plays
-                        .slice(0, 3)
-                        .map((play) => (
-                          <ProfileListeningRow
-                            key={play.uri}
-                            play={play}
-                            syncing={syncingUris.has(play.uri)}
-                          />
-                        ))
-                    : !sectionLoading.listening && !sectionErrors.listening
-                      ? emptyListening
-                      : null}
-                </View>
-                {plays.length > 0 && (
-                  <ProfileStatsSections
-                    actor={did}
-                    defaultPeriod={period}
-                    compact
-                    plays={indexedPlays}
-                  />
-                )}
-                {playlists.length > 0 && (
-                  <View className="mb-6">
-                    <Text
-                      accessibilityRole="header"
-                      aria-level={2}
-                      className="mb-3 text-xl font-bold"
-                    >
-                      Playlists
-                    </Text>
-                    <Link
-                      href={
-                        playlistHref(playlists[0].name, playlists[0].uri) as any
-                      }
-                      asChild
-                    >
-                      <Button
-                        variant="outline"
-                        className="h-auto items-start p-4"
-                      >
-                        <Text className="font-bold">{playlists[0].name}</Text>
-                        <Text className="text-sm text-ink-2">
-                          {playlists[0].itemCount} {playlists[0].itemCount === 1 ? "track" : "tracks"}
-                        </Text>
-                      </Button>
-                    </Link>
-                  </View>
-                )}
-                {posts.length > 0 && (
-                  <View className="mb-6">
-                    <View className="mb-3 flex-row items-center justify-between">
-                      <Text
-                        accessibilityRole="header"
-                        aria-level={2}
-                        className="text-xl font-bold"
-                      >
-                        Latest post
-                      </Text>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={() => router.setParams({ tab: "posts" })}
-                      >
-                        <Text>View all</Text>
-                      </Button>
-                    </View>
-                    <SocialPostCard
-                      post={posts[0]}
-                      onDeleted={(uri) =>
-                        setPosts((current) =>
-                          current.filter((post) => post.uri !== uri),
-                        )
-                      }
-                    />
-                  </View>
-                )}
-              </>
-            )}
-            {activeTab === "listening" && (
-              <>
-                <View className="mb-6 flex-row flex-wrap items-center justify-between gap-3">
-                  <Text
-                    accessibilityRole="header"
-                    aria-level={2}
-                    className="text-xl font-bold"
-                  >
-                    Listening history
-                  </Text>
-                  {isSelf && plays.length > 0 && (
-                    <Button
-                      size="sm"
-                      variant={bulkEditOpen ? "default" : "outline"}
-                      aria-pressed={bulkEditOpen}
-                      disabled={bulkBusy}
-                      onPress={toggleBulkEdit}
-                    >
-                      <Icon
-                        icon={bulkEditOpen ? CheckSquare : Square}
-                        size={16}
-                      />
-                      <Text>
-                        {bulkEditOpen ? "Done selecting" : "Select listens"}
-                      </Text>
-                    </Button>
-                  )}
-                </View>
-                {bulkEditOpen && isSelf && (
-                  <View className="mb-4 gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
-                    <View className="flex-row flex-wrap items-center justify-between gap-3">
-                      <View>
-                        <Text className="font-bold">
-                          {selectedPlayCount} selected
-                        </Text>
-                        <Text className="text-sm text-ink-2">
-                          Changes are saved to your account.
-                        </Text>
-                      </View>
-                      <View className="flex-row flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={bulkBusy}
-                          onPress={selectVisiblePlays}
-                        >
-                          <Text>Select visible</Text>
-                        </Button>
-                        <Button
-                          variant={bulkDeleteArmed ? "destructive" : "outline"}
-                          size="sm"
-                          className="flex-row gap-2"
-                          disabled={bulkBusy || selectedPlayCount === 0}
-                          onPress={deleteSelectedPlays}
-                        >
-                          <Icon icon={Trash2} size={15} />
-                          <Text>
-                            {bulkDeleteArmed
-                              ? "Confirm delete"
-                              : "Delete selected"}
-                          </Text>
-                        </Button>
-                      </View>
-                    </View>
-                    <View className="grid-cols-1 gap-3 md:grid md:grid-cols-2">
-                      <View className="gap-2">
-                        <Text className="text-xs text-ink-2 font-medium">
-                          Artists
-                        </Text>
-                        <Input
-                          value={bulkArtistsText}
-                          onChangeText={setBulkArtistsText}
-                          editable={!bulkBusy}
-                          placeholder="Artist, Featured artist"
-                        />
-                      </View>
-                      <View className="gap-2">
-                        <Text className="text-xs text-ink-2 font-medium">
-                          Album or single
-                        </Text>
-                        <Input
-                          value={bulkReleaseName}
-                          onChangeText={setBulkReleaseName}
-                          editable={!bulkBusy}
-                          placeholder="Album or single"
-                        />
-                      </View>
-                    </View>
-                    <Button
-                      className="flex-row gap-2 self-start"
-                      disabled={
-                        bulkBusy ||
-                        selectedPlayCount === 0 ||
-                        (!bulkArtistsText.trim() && !bulkReleaseName.trim())
-                      }
-                      onPress={updateSelectedPlays}
-                    >
-                      <Icon icon={Save} size={15} />
-                      <Text>Apply to selected</Text>
-                    </Button>
-                  </View>
-                )}
+    <Screen back={!isSelf} pageTitle={name} rail={<View className="gap-3">{extras}</View>}>
+      <ProfileHeader
+        did={did}
+        profile={profile}
+        graph={graph.data}
+        isSelf={isSelf}
+        listeningNow={!!profile?.status?.item}
+        people={people}
+        onPeople={(kind) => setPeople((open) => (open === kind ? null : kind))}
+        onEdit={() => setEditing(true)}
+      />
+      {people ? <PeopleList did={did} kind={people} onClose={() => setPeople(null)} /> : null}
 
-                {sectionStatus("listening")}
-                {!sectionLoading.listening &&
-                  !sectionErrors.listening &&
-                  plays.length === 0 &&
-                  emptyListening}
-                {plays.map((play, index) => (
-                  <View
-                    key={play.uri || `${play.trackName}-${index}`}
-                    className="flex-row items-center gap-3"
-                  >
-                    {bulkEditOpen && (
-                      <Button
-                        size="icon"
-                        variant={
-                          play.rkey && selectedPlayRkeys.has(play.rkey)
-                            ? "default"
-                            : "outline"
-                        }
-                        disabled={
-                          !play.rkey || bulkBusy || syncingUris.has(play.uri)
-                        }
-                        accessibilityLabel={`Select ${play.trackName}`}
-                        accessibilityState={{
-                          selected:
-                            !!play.rkey && selectedPlayRkeys.has(play.rkey),
-                        }}
-                        onPress={() => togglePlaySelection(play.rkey)}
-                      >
-                        <Icon
-                          icon={
-                            play.rkey && selectedPlayRkeys.has(play.rkey)
-                              ? CheckSquare
-                              : Square
-                          }
-                          size={18}
-                        />
-                      </Button>
-                    )}
-                    <View className="min-w-0 flex-1">
-                      <ProfileListeningRow
-                        play={play}
-                        syncing={syncingUris.has(play.uri)}
-                      />
-                    </View>
-                  </View>
-                ))}
-                {playsCursor && (
-                  <Button
-                    variant="outline"
-                    className="my-5 self-center"
-                    disabled={loadingMore}
-                    onPress={() => loadMore("listening")}
-                  >
-                    <Text>{loadingMore ? "Loading" : "Load more listens"}</Text>
-                  </Button>
-                )}
-                {plays.length > 0 && (
-                  <View className="mt-6">
-                    <ProfileStatsSections
-                      actor={did}
-                      defaultPeriod={period}
-                      plays={indexedPlays}
-                    />
-                  </View>
-                )}
-              </>
-            )}
-            {activeTab === "posts" && (
-              <View className="gap-3">
-                <Text
-                  accessibilityRole="header"
-                  aria-level={2}
-                  className="text-xl font-bold"
-                >
-                  Posts
-                </Text>
-                {sectionStatus("posts")}
-                {!sectionLoading.posts &&
-                  !sectionErrors.posts &&
-                  posts.length === 0 && (
-                    <View className="gap-3 py-3">
-                      <Text className="text-ink-2">
-                        {isSelf
-                          ? "Share a song or say what you have been listening to."
-                          : "No posts yet."}
-                      </Text>
-                      {isSelf && (
-                        <Link href="/" asChild>
-                          <Button variant="outline" className="self-start">
-                            <Text>Write a post</Text>
-                          </Button>
-                        </Link>
-                      )}
-                    </View>
-                  )}
-                {posts.map((post) => (
-                  <SocialPostCard
-                    key={post.uri}
-                    post={post}
-                    onDeleted={(uri) =>
-                      setPosts((current) =>
-                        current.filter((item) => item.uri !== uri),
-                      )
-                    }
-                  />
-                ))}
-                {postsCursor && (
-                  <Button
-                    variant="outline"
-                    className="my-5 self-center"
-                    disabled={loadingMore}
-                    onPress={() => loadMore("posts")}
-                  >
-                    <Text>{loadingMore ? "Loading" : "Load more posts"}</Text>
-                  </Button>
-                )}
-              </View>
-            )}
-            {activeTab === "playlists" && (
-              <View className="gap-4">
-                <Text
-                  accessibilityRole="header"
-                  aria-level={2}
-                  className="text-xl font-bold"
-                >
-                  Playlists
-                </Text>
-                {isSelf && (
-                  <PlaylistCreator
-                    onCreated={(playlist) =>
-                      setPlaylists((current) => [playlist, ...current])
-                    }
-                  />
-                )}
-                {sectionStatus("playlists")}
-                {!sectionLoading.playlists &&
-                  !sectionErrors.playlists &&
-                  playlists.length === 0 && (
-                    <Text className="text-ink-2">
-                      {isSelf
-                        ? "Collect favorite tracks in your first playlist."
-                        : "No playlists yet."}
-                    </Text>
-                  )}
-                {playlists.map((playlist) => (
-                  <Link
-                    key={playlist.uri}
-                    href={playlistHref(playlist.name, playlist.uri) as any}
-                    asChild
-                  >
-                    <Button
-                      variant="outline"
-                      className="h-auto items-start p-4"
-                    >
-                      <Text className="font-bold" numberOfLines={2}>
-                        {playlist.name}
-                      </Text>
-                      <Text className="text-sm text-ink-2">
-                        {playlist.itemCount} {playlist.itemCount === 1 ? "track" : "tracks"}
-                      </Text>
-                    </Button>
-                  </Link>
-                ))}
-                {playlistsCursor && (
-                  <Button
-                    variant="outline"
-                    className="my-5 self-center"
-                    disabled={loadingMore}
-                    onPress={() => loadMore("playlists")}
-                  >
-                    <Text>
-                      {loadingMore ? "Loading" : "Load more playlists"}
-                    </Text>
-                  </Button>
-                )}
-              </View>
-            )}
-          </View>
-        </>
+      <Tabs
+        label="Profile sections"
+        value={tab}
+        onChange={(next) => router.setParams({ tab: next })}
+        tabs={[
+          { value: "overview", label: "Overview" },
+          { value: "listening", label: "Listening" },
+          { value: "posts", label: "Posts" },
+          { value: "playlists", label: "Playlists" },
+        ]}
+      />
+      <View role="tabpanel" aria-label={tab} className="gap-4">
+        {tab === "overview" ? (
+          <Overview did={did} profile={profile} isSelf={isSelf} fromBluesky={!!profileQuery.data?.fromBluesky} onEdit={() => setEditing(true)} extras={layout.rail ? null : extras} />
+        ) : tab === "listening" ? (
+          <ListeningHistory did={did} isSelf={isSelf} />
+        ) : tab === "posts" ? (
+          <Posts did={did} isSelf={isSelf} />
+        ) : (
+          <Playlists did={did} isSelf={isSelf} />
+        )}
+      </View>
+
+      {isSelf ? <EditProfileSheet did={did} profile={profile} visible={editing} onClose={() => setEditing(false)} /> : null}
+    </Screen>
+  );
+}
+
+function Overview({
+  did,
+  profile,
+  isSelf,
+  fromBluesky,
+  onEdit,
+  extras,
+}: {
+  did: string;
+  profile?: DisplayProfile;
+  isSelf: boolean;
+  fromBluesky: boolean;
+  onEdit: () => void;
+  extras: React.ReactNode;
+}) {
+  const { query, indexed, plays } = usePlaysWithPending(did, isSelf);
+  const posts = useActorPosts(did);
+  const playlists = useActorPlaylists(did);
+  const layout = useLayout();
+  const latest = posts.data?.pages[0]?.items[0];
+  const firstPlaylist = playlists.data?.pages[0]?.items[0];
+
+  return (
+    <>
+      {isSelf && fromBluesky ? (
+        <Notice
+          title="Make this profile yours"
+          body="Your Bluesky details are here to get you started. Add your Teal name, bio, and artwork."
+          action={
+            <Link href="/onboarding" asChild>
+              <Button label="Set up your Teal profile" size="sm" />
+            </Link>
+          }
+        />
+      ) : null}
+      {query.isError ? (
+        <ErrorNotice title="Recent listening didn't load" onRetry={() => query.refetch()} />
+      ) : (
+        <NowAndRecent now={profile?.status?.item} recent={plays.slice(0, 10)} />
       )}
-    </TealShell>
+      <Favourites favourites={profile?.favorites ?? []} isSelf={isSelf} onEdit={onEdit} />
+      {extras}
+      {plays.length ? (
+        <TopStats actor={did} defaultPeriod={normalizePeriod(profile?.statsDefaultPeriod)} plays={indexed} wide={layout.sidebar} />
+      ) : null}
+      {latest ? (
+        <Section title="Latest post" more={{ label: "See all", href: `/profile/${did}?tab=posts` as never }}>
+          <PostCard post={latest} />
+        </Section>
+      ) : null}
+      {firstPlaylist ? (
+        <Section title="Playlists" panel more={{ label: "See all", href: `/profile/${did}?tab=playlists` as never }}>
+          <Row
+            href={playlistHref(firstPlaylist.name, firstPlaylist.uri) as never}
+            title={firstPlaylist.name}
+            subtitle={`${firstPlaylist.itemCount} ${firstPlaylist.itemCount === 1 ? "track" : "tracks"}`}
+            divider={false}
+          />
+        </Section>
+      ) : null}
+    </>
+  );
+}
+
+function Posts({ did, isSelf }: { did: string; isSelf: boolean }) {
+  const posts = useActorPosts(did);
+  const items = posts.data?.pages.flatMap((p) => p.items) ?? [];
+  if (posts.isLoading) return <Loading />;
+  if (posts.isError) return <ErrorNotice title="Posts didn't load" onRetry={() => posts.refetch()} />;
+  if (!items.length) {
+    return (
+      <Notice
+        title="No posts yet"
+        body={isSelf ? "Post a song and what you think of it; it shows up here." : "Nothing posted yet."}
+        action={
+          isSelf ? (
+            <Link href="/compose" asChild>
+              <Button label="Post a song" size="sm" />
+            </Link>
+          ) : null
+        }
+      />
+    );
+  }
+  return (
+    <View>
+      {items.map((post) => (
+        <PostCard key={post.uri} post={post} />
+      ))}
+      {posts.hasNextPage ? (
+        <Button
+          label={posts.isFetchingNextPage ? "Loading" : "Load more"}
+          variant="secondary"
+          className="self-center"
+          loading={posts.isFetchingNextPage}
+          onPress={() => posts.fetchNextPage()}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function Playlists({ did, isSelf }: { did: string; isSelf: boolean }) {
+  const playlists = useActorPlaylists(did);
+  const client = useQueryClient();
+  const items = playlists.data?.pages.flatMap((p) => p.items) ?? [];
+  return (
+    <View className="gap-4">
+      {isSelf ? <PlaylistCreator onCreated={() => client.invalidateQueries({ queryKey: ["actor-playlists", did] })} /> : null}
+      {playlists.isLoading ? (
+        <Loading />
+      ) : playlists.isError ? (
+        <ErrorNotice title="Playlists didn't load" onRetry={() => playlists.refetch()} />
+      ) : !items.length ? (
+        <Notice title="No playlists yet" body={isSelf ? "Make one above, then add songs from any song page." : "Nothing here yet."} />
+      ) : (
+        <Section title="Playlists" panel>
+          {items.map((playlist, i) => (
+            <Row
+              key={playlist.uri}
+              href={playlistHref(playlist.name, playlist.uri) as never}
+              title={playlist.name}
+              subtitle={`${playlist.itemCount} ${playlist.itemCount === 1 ? "track" : "tracks"}`}
+              divider={i < items.length - 1}
+            />
+          ))}
+        </Section>
+      )}
+      {playlists.hasNextPage ? (
+        <Button label="Load more" variant="secondary" className="self-center" onPress={() => playlists.fetchNextPage()} />
+      ) : null}
+    </View>
   );
 }

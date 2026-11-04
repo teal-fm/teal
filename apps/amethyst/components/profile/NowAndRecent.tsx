@@ -1,12 +1,11 @@
 import { Pressable, ScrollView, View } from "react-native";
 import { Link } from "expo-router";
-import { AmbientSource, Cover, coverUri, Glass } from "@/components/ds";
-import { Text } from "@/components/ui/text";
 import { displayArtists } from "@/lib/teal/api";
 import { listenHrefFromUri } from "@/lib/teal/routes";
 import { shortAgo } from "@/lib/teal/today";
 
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import { AmbientSource, Cover, Glass, Text, coverUri } from "@/components/ds";
 
 /** What someone is listening to now, then their last few plays as covers. */
 export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView[] }) {

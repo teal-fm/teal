@@ -4,20 +4,11 @@
 @import "nativewind/theme";
 
 /*
- * Design tokens.
- *
- * The redesign (ground, ink, tint, glass, hair, now) follows the platform's system
- * materials: plain grounds, one teal tint, frosted panels over album-art backdrops.
- * The legacy shadcn-style names (background, primary, muted, ...) stay mapped so
- * screens that have not moved to the redesign keep rendering.
+ * Design tokens. The palette follows the platform's system materials: plain
+ * grounds, one teal tint, frosted panels over album-art backdrops. Type is the
+ * system face (Tailwind's font-sans; nativewind/theme maps it to System natively).
  */
 @theme {
-  /* --font-sans keeps Tailwind's system stack on the web; nativewind/theme maps it to System on iOS and Android. */
-  --font-accent: "Fraunces";
-  --font-crimson: "Crimson Pro";
-  --font-crimson-italic: "Crimson Pro Italic";
-  --font-mono: "PlexMono";
-
   --color-ground: var(--ground);
   --color-ground-2: var(--ground-2);
   --color-ink: var(--ink);
@@ -34,27 +25,7 @@
   --color-glass-edge: var(--glass-edge);
   --color-fill: var(--fill);
 
-  /* Legacy names resolve to the redesign tokens so unmigrated screens share one tint and one ink. */
-  --color-border: var(--hair);
-  --color-input: var(--hair);
-  --color-ring: var(--tint);
-  --color-background: var(--ground);
-  --color-foreground: var(--ink);
-  --color-primary: var(--tint);
-  --color-primary-foreground: var(--on-tint);
-  --color-secondary: var(--fill);
-  --color-secondary-foreground: var(--ink);
   --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-muted: var(--fill);
-  --color-muted-foreground: var(--ink-2);
-  --color-accent: var(--tint-soft);
-  --color-accent-foreground: var(--ink);
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-card: var(--ground-2);
-  --color-card-foreground: var(--ink);
-  --color-bsky: hsl(var(--bsky));
 }
 
 @layer theme {
@@ -74,26 +45,7 @@
     --fill: rgba(120, 120, 128, 0.12);
     --now: #0f8f84;
 
-    --background: 226 35% 94%;
-    --foreground: 0 0% 15%;
-    --muted: 220 18% 90%;
-    --muted-foreground: 220 9% 35%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --primary: 174 72% 25%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 176 70% 49%;
-    --secondary-foreground: 0 0% 15%;
-    --accent: 174 72% 91%;
-    --accent-foreground: 0 0% 15%;
     --destructive: 5 91% 37%;
-    --destructive-foreground: 5 91% 97%;
-    --bsky: 211.08 99.11% 60.08%;
-    --ring: 174 72% 25%;
 
     @variant dark {
       --ground: #000000;
@@ -111,25 +63,7 @@
       --fill: rgba(120, 120, 128, 0.24);
       --now: #3fc9bd;
 
-      --background: 180 24% 7%;
-      --foreground: 52 30% 94%;
-      --muted: 176 16% 14%;
-      --muted-foreground: 174 20% 72%;
-      --popover: 180 24% 11%;
-      --popover-foreground: 226 35% 94%;
-      --card: 180 24% 10%;
-      --card-foreground: 52 30% 94%;
-      --border: 176 17% 22%;
-      --input: 176 17% 24%;
-      --primary: 176 70% 49%;
-      --primary-foreground: 180 24% 8%;
-      --secondary: 174 72% 25%;
-      --secondary-foreground: 226 35% 94%;
-      --accent: 176 20% 17%;
-      --accent-foreground: 52 30% 94%;
       --destructive: 5 85% 72%;
-      --destructive-foreground: 180 24% 8%;
-      --ring: 166 48% 52%;
     }
   }
 }
@@ -189,140 +123,4 @@ textarea:focus-visible {
 
 input.field-in-panel:focus-visible {
   box-shadow: none;
-}
-
-.var-font-soft {
-  font-variation-settings: "SOFT" 100;
-}
-
-/* A small fan lifts out from behind the avatar, with the top album in front. */
-.profile-album-deck {
-  --portrait-size: 150px;
-  position: relative;
-  width: var(--portrait-size);
-  height: var(--portrait-size);
-  flex-shrink: 0;
-  align-self: flex-start;
-  isolation: isolate;
-}
-
-.profile-album-sleeves {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.profile-album-sleeve {
-  position: absolute;
-  left: calc(var(--portrait-size) * 0.266667);
-  top: calc(var(--portrait-size) * 0.36);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--portrait-size) / 3 + 4px);
-  height: calc(var(--portrait-size) / 3 + 4px);
-  border: 2px solid hsl(var(--card));
-  border-radius: 12px;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-  box-shadow: 0 3px 8px #0003;
-  opacity: 0;
-  transform: translateY(0);
-  transition:
-    transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-  z-index: calc(4 - var(--album-index));
-}
-
-.profile-album-sleeve:first-child {
-  border-color: #f3dc8c;
-}
-
-.profile-album-sleeve img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.profile-album-deck[data-open="true"] .profile-album-sleeve {
-  pointer-events: auto;
-  opacity: 1;
-}
-
-.profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(1) {
-  transform: translateY(calc(var(--portrait-size) * -0.693333));
-}
-.profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(2) {
-  transform: translate(
-      calc(var(--portrait-size) * -0.213333),
-      calc(var(--portrait-size) * -0.64)
-    )
-    rotate(-12deg);
-}
-.profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(3) {
-  transform: translate(
-      calc(var(--portrait-size) * 0.266667),
-      calc(var(--portrait-size) * -0.64)
-    )
-    rotate(12deg);
-}
-.profile-album-deck[data-open="true"] .profile-album-sleeve:nth-child(4) {
-  transform: translate(
-      calc(var(--portrait-size) * -0.4),
-      calc(var(--portrait-size) * -0.533333)
-    )
-    rotate(-45deg);
-}
-
-.profile-deck-avatar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  overflow: hidden;
-  border: 2px solid hsl(var(--card));
-  border-radius: 12px;
-  background: hsl(var(--accent));
-  color: hsl(var(--primary));
-  box-shadow: 0 2px 6px #0002;
-  font:
-    600 36px "Fraunces",
-    serif;
-  z-index: 2;
-}
-
-button.profile-deck-avatar {
-  cursor: pointer;
-}
-.profile-deck-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.profile-deck-avatar:focus-visible,
-.profile-album-sleeve:focus-visible {
-  outline: 3px solid hsl(var(--ring));
-  outline-offset: 4px;
-}
-.profile-album-sleeve:focus-visible {
-  z-index: 5;
-}
-
-@media (max-width: 639px) {
-  .profile-album-deck {
-    --portrait-size: 128px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .profile-album-sleeve,
-  .profile-album-deck[data-open="true"] .profile-album-sleeve {
-    transition: none;
-  }
 }

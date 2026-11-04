@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Image } from "expo-image";
 import { useQuery } from "@tanstack/react-query";
-import { coverUri } from "@/components/ds";
-import { Text } from "@/components/ui/text";
 import { getListeningCalendar } from "@/lib/teal/api";
 import { hourBins, lastDays } from "@/lib/teal/calendar";
+import { Text, coverUri } from "@/components/ds";
 
 const DAYS = 31;
 const ROWS = 12;

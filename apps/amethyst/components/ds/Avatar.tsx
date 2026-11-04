@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { getProfileImageUrl } from "@/lib/teal/actors";
 import { cn } from "@/lib/utils";
 
-import { Text } from "../ui/text";
+import { Text } from "./Text";
 
 /** A round profile picture; falls back to the first letter of the name. */
 export function Avatar({

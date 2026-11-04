@@ -1,54 +1,34 @@
-import { useEffect, useMemo } from "react";
-import { View } from "react-native";
-import { Link, Redirect, Stack, useLocalSearchParams } from "expo-router";
-import RightRail from "@/components/teal/RightRail";
-import TealShell from "@/components/teal/TealShell";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { useMemo } from "react";
+import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { atUriFromRoutePath, hrefFromAtUri } from "@/lib/teal/routes";
+import { Button, Notice, Screen } from "@/components/ds";
 
 function atUriFromParams(param: string | string[] | undefined) {
   if (typeof window !== "undefined") {
-    const atUri = atUriFromRoutePath(window.location.pathname);
-    if (atUri) return atUri;
+    const fromPath = atUriFromRoutePath(window.location.pathname);
+    if (fromPath) return fromPath;
   }
-
   const parts = Array.isArray(param) ? param : param ? [param] : [];
-  return parts.length > 0 ? `at://${parts.join("/")}` : undefined;
+  return parts.length ? `at://${parts.join("/")}` : undefined;
 }
 
-export default function AtUriResolver() {
+/** Opens an at:// link (a listen, post, playlist, or profile) at its teal page. */
+export default function AtUriLink() {
   const params = useLocalSearchParams();
-  const atUri = useMemo(() => atUriFromParams(params.uri), [params.uri]);
-  const href = hrefFromAtUri(atUri);
-
-  useEffect(() => {
-    if (!href && atUri) {
-      console.warn("Unsupported Teal AT-URI route", atUri);
-    }
-  }, [atUri, href]);
-
-  if (href) {
-    return <Redirect href={href as any} />;
-  }
-
+  const uri = useMemo(() => atUriFromParams(params.uri), [params.uri]);
+  const href = hrefFromAtUri(uri);
+  if (href) return <Redirect href={href as never} />;
   return (
-    <TealShell rightRail={<RightRail />} pageTitle="Open link">
-      <Stack.Screen options={{ title: "AT URI", headerShown: false }} />
-      <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-5">
-        <Text className="mt-2 font-sans text-2xl font-black">
-          Unsupported Teal link
-        </Text>
-        <Text className="mt-2 text-ink-2">
-          Teal can open profile, listen, post, and playlist AT-URIs. Check that
-          this is the full record link.
-        </Text>
-        <Link href="/" asChild>
-          <Button className="mt-4 self-start">
-            <Text>Go home</Text>
-          </Button>
-        </Link>
-      </View>
-    </TealShell>
+    <Screen back pageTitle="Unsupported link">
+      <Notice
+        title="Teal can't open this link"
+        body="It points to a record teal doesn't show yet."
+        action={
+          <Link href="/" asChild>
+            <Button label="Go to Today" size="sm" />
+          </Link>
+        }
+      />
+    </Screen>
   );
 }

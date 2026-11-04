@@ -1,7 +1,6 @@
 import { View } from "react-native";
-import { Avatar, Cover, Glass } from "@/components/ds";
-import { Text } from "@/components/ui/text";
 import type { ListeningView } from "@/lib/teal/api";
+import { Avatar, Cover, Glass, Text } from "@/components/ds";
 
 /** A short note about someone's listening, woven between posts. */
 export function Weave({ listen }: { listen: ListeningView }) {

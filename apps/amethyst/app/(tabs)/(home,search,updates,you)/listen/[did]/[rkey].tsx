@@ -1,27 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, View } from "react-native";
-import { Link, Stack, useLocalSearchParams } from "expo-router";
-import LoadFailure from "@/components/teal/LoadFailure";
-import PlayFeedCard, { musicHref } from "@/components/teal/PlayFeedCard";
-import RightRail from "@/components/teal/RightRail";
-import TealShell, { SectionHeading } from "@/components/teal/TealShell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import {
-  actorProfileHref,
-  displayActorName,
-  getCachedBlueskyProfile,
-  type DisplayActor,
-} from "@/lib/teal/actors";
-import {
-  coverArtUrl,
-  displayArtists,
-  getPlayByAuthorRkey,
-  getRecordingCoverArtUrl,
-  XrpcError,
-} from "@/lib/teal/api";
+import { useEffect, useState } from "react";
+import { Linking, Pressable, View } from "react-native";
+import { Link, useLocalSearchParams } from "expo-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowUpRight, Pencil } from "lucide-react-native";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
+import { displayArtists, getPlayByAuthorRkey, XrpcError } from "@/lib/teal/api";
 import { readListenDetail } from "@/lib/teal/listenReadback";
 import {
   applyEditableFields,
@@ -31,618 +15,274 @@ import {
   putPlayRecord,
   type EditablePlayRecord,
 } from "@/lib/teal/playRecords";
-import { timeAgo } from "@/lib/utils";
+import { useReactionsQuery, useViewerDid } from "@/lib/teal/queries";
+import { musicAlbumHref, musicArtistHref, musicTrackHref } from "@/lib/teal/routes";
+import { shortAgo } from "@/lib/teal/today";
+import {
+  Avatar,
+  Button,
+  ButtonRow,
+  ErrorNotice,
+  Field,
+  Glass,
+  Heading,
+  Loading,
+  Notice,
+  Screen,
+  Text,
+} from "@/components/ds";
+import { listenedAt } from "@/components/listen/ListenRow";
+import { MusicHero } from "@/components/music/MusicHero";
+import { ReactionBar } from "@/components/today/ReactionBar";
+import { useDisplayActor } from "@/hooks/useDisplayActor";
 import { useStore } from "@/stores/mainStore";
-import {
-  removePendingListens,
-  retainConfirmedListens,
-  retireIndexedListens,
-  usePendingListens,
-} from "@/stores/pendingListenStore";
-import {
-  Disc3,
-  ExternalLink,
-  Pencil,
-  Save,
-  Trash2,
-  UserRound,
-  X,
-} from "lucide-react-native";
+import { removePendingListens, retainConfirmedListens, retireIndexedListens, usePendingListens } from "@/stores/pendingListenStore";
 
-import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
+function param(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
-export default function ListenDetail() {
-  const params = useLocalSearchParams();
-  const did = Array.isArray(params.did) ? params.did[0] : params.did;
-  const rkey = Array.isArray(params.rkey) ? params.rkey[0] : params.rkey;
+/** Fix the track, artists, album, or time of your own listen. Reads the record first so a stale view can't overwrite it. */
+function EditListen({
+  did,
+  rkey,
+  uri,
+  onSaved,
+  onCancel,
+}: {
+  did: string;
+  rkey: string;
+  uri: string;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
   const agent = useStore((state) => state.pdsAgent);
-  const authStatus = useStore((state) => state.status);
-  const viewerDid = authStatus === "loggedIn" ? agent?.did : undefined;
-  const uri = did && rkey ? `at://${did}/fm.teal.feed.play/${rkey}` : undefined;
-  const routeIdentity = `${uri || ""}:${viewerDid || ""}`;
-  const currentRoute = useRef(routeIdentity);
-  currentRoute.current = routeIdentity;
-  const requestVersion = useRef(0);
-  const routeVersion = useRef(0);
-  const deletedRoute = useRef<string | undefined>(undefined);
-  const latestEdit = useRef<{ identity: string; play: PlayView } | undefined>(
-    undefined,
-  );
-  const mutationLock = useRef(false);
-  const pending = usePendingListens(viewerDid === did ? viewerDid : undefined);
-  const ownPending = pending.find((entry) => entry.play.uri === uri);
-  const currentConfirmed = useRef(ownPending?.play);
-  currentConfirmed.current =
-    ownPending?.play ||
-    (latestEdit.current?.identity === routeIdentity
-      ? latestEdit.current.play
-      : undefined);
-  const [view, setView] = useState<{
-    identity: string;
-    play: PlayView;
-    syncing: boolean;
-  }>();
-  const play = view?.identity === routeIdentity ? view.play : null;
-  const syncing = view?.identity === routeIdentity && view.syncing;
-  const [retry, setRetry] = useState(0);
-  const [blueskyAuthor, setBlueskyAuthor] = useState<DisplayActor>();
-  const [recordingArt, setRecordingArt] = useState<string>();
-  const [artFailed, setArtFailed] = useState(false);
-  const [errorState, setErrorState] = useState<{
-    identity: string;
-    message: string;
-    status?: number;
-    kind?: "action";
-  }>();
-  const error =
-    errorState?.identity === routeIdentity ? errorState.message : undefined;
-  const setError = (message: string | null) =>
-    setErrorState(
-      message
-        ? { identity: routeIdentity, message, kind: "action" }
-        : undefined,
-    );
-  const [deletedIdentity, setDeletedIdentity] = useState<string>();
-  const deleted = deletedIdentity === routeIdentity;
-  const [editOpen, setEditOpen] = useState(false);
-  const [sourceRecord, setSourceRecord] = useState<EditablePlayRecord | null>(
-    null,
-  );
-  const [swapRecord, setSwapRecord] = useState<string>();
-  const [trackName, setTrackName] = useState("");
-  const [artistsText, setArtistsText] = useState("");
-  const [releaseName, setReleaseName] = useState("");
-  const [playedTime, setPlayedTime] = useState("");
-  const [editBusy, setEditBusy] = useState(false);
-  const [deleteArmed, setDeleteArmed] = useState(false);
+  const [source, setSource] = useState<{ record: EditablePlayRecord; cid?: string } | null>(null);
+  const [fields, setFields] = useState({ trackName: "", artistsText: "", releaseName: "", playedTime: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    routeVersion.current += 1;
-    mutationLock.current = false;
-    setEditOpen(false);
-    setEditBusy(false);
-    setDeleteArmed(false);
-    setSourceRecord(null);
-    setDeletedIdentity(
-      deletedRoute.current === routeIdentity ? routeIdentity : undefined,
-    );
-    return () => {
-      routeVersion.current += 1;
-    };
-  }, [routeIdentity]);
-
-  useEffect(() => {
-    if (!ownPending || deletedRoute.current === routeIdentity) return;
-    setView((current) =>
-      current?.identity === routeIdentity &&
-      current.play.cid === ownPending.play.cid &&
-      !current.syncing
-        ? current
-        : { identity: routeIdentity, play: ownPending.play, syncing: true },
-    );
-    setErrorState((current) =>
-      current?.identity === routeIdentity && current.status === 404
-        ? undefined
-        : current,
-    );
-  }, [routeIdentity, ownPending?.play.cid]);
-
-  useEffect(() => {
-    let mounted = true;
-    const version = ++requestVersion.current;
-    setErrorState(undefined);
-    setView((current) =>
-      current?.identity === routeIdentity
-        ? current
-        : currentConfirmed.current
-          ? {
-              identity: routeIdentity,
-              play: currentConfirmed.current,
-              syncing: true,
-            }
-          : undefined,
-    );
-    async function load() {
-      if (deletedRoute.current === routeIdentity) {
-        setView(undefined);
-        return;
-      }
-      if (!did || !rkey) {
-        setErrorState({
-          identity: routeIdentity,
-          message: "This listen link is incomplete.",
+    if (!agent) return;
+    loadPlayRecord(agent, did, rkey)
+      .then((loaded) => {
+        setSource({ record: loaded.record, cid: loaded.swapRecord });
+        setFields({
+          trackName: loaded.record.trackName,
+          artistsText: artistTextFromRecord(loaded.record),
+          releaseName: loaded.record.releaseName || "",
+          playedTime: loaded.record.playedTime || "",
         });
-        return;
-      }
-      try {
-        const result = await readListenDetail(
-          did,
-          rkey,
-          viewerDid,
-          () =>
-            currentRoute.current === routeIdentity
-              ? currentConfirmed.current
-              : undefined,
-          getPlayByAuthorRkey,
-        );
-        if (
-          !mounted ||
-          version !== requestVersion.current ||
-          deletedRoute.current === routeIdentity
-        )
-          return;
-        setView({
-          identity: routeIdentity,
-          play: result.play,
-          syncing: result.syncing,
-        });
-        if (!result.syncing && latestEdit.current?.identity === routeIdentity)
-          latestEdit.current = undefined;
-        if (viewerDid === did && result.indexed)
-          retireIndexedListens(did, [result.indexed]);
-      } catch (cause) {
-        if (
-          !mounted ||
-          version !== requestVersion.current ||
-          deletedRoute.current === routeIdentity
-        )
-          return;
-        setErrorState({
-          identity: routeIdentity,
-          status: cause instanceof XrpcError ? cause.status : undefined,
-          message:
-            cause instanceof XrpcError && cause.status === 404
-              ? "This listen is not available. Check the link or try again in a moment."
-              : "Teal could not load this listen. Check your connection and try again.",
-        });
-      }
-    }
-    void load();
-    return () => {
-      mounted = false;
-      requestVersion.current += 1;
-    };
-  }, [did, rkey, viewerDid, retry]);
+      })
+      .catch(() => setError("The editor didn't open. Your listen hasn't changed. Try again."));
+  }, [agent, did, rkey]);
 
-  const indexedAuthor = play?.author as DisplayActor | undefined;
-  const authorProfile = indexedAuthor
-    ? {
-        ...blueskyAuthor,
-        ...indexedAuthor,
-        avatar: indexedAuthor.avatar || blueskyAuthor?.avatar,
-        displayName: indexedAuthor.displayName || blueskyAuthor?.displayName,
-        handle: indexedAuthor.handle || blueskyAuthor?.handle,
-      }
-    : blueskyAuthor;
-  const authorDid = authorProfile?.did || play?.authorDid || did;
-  const authorName = displayActorName(authorProfile, authorDid);
-  const authorHref = actorProfileHref(authorProfile, authorDid);
-  const releaseArt = coverArtUrl(play?.releaseMbId, 500);
-  const art = artFailed ? undefined : releaseArt || recordingArt;
-  const when = play?.playedTime
-    ? timeAgo(new Date(play.playedTime))
-    : play
-      ? "recently"
-      : "";
-  const canManage = !!viewerDid && !!did && viewerDid === did && !!rkey;
-
-  function captureMutation() {
-    const version = routeVersion.current;
-    const identity = routeIdentity;
-    return () =>
-      version === routeVersion.current && identity === currentRoute.current;
-  }
-
-  async function openEditor() {
-    if (!canManage || !agent || !did || !rkey || !play || mutationLock.current)
-      return;
-    const stillCurrent = captureMutation();
-    mutationLock.current = true;
-    setEditBusy(true);
+  const save = async () => {
+    if (!agent || !source || busy) return;
+    setBusy(true);
     setError(null);
     try {
-      // Read the actual record and CID before editing. An unavailable PDS must not permit an unchecked overwrite.
-      const loaded = await loadPlayRecord(agent, did, rkey);
-      if (!stillCurrent()) return;
-      setSourceRecord(loaded.record);
-      setSwapRecord(loaded.swapRecord);
-      setTrackName(loaded.record.trackName);
-      setArtistsText(artistTextFromRecord(loaded.record));
-      setReleaseName(loaded.record.releaseName || "");
-      setPlayedTime(loaded.record.playedTime ? loaded.record.playedTime : "");
-      setDeleteArmed(false);
-      setEditOpen(true);
-    } catch {
-      if (stillCurrent())
-        setError(
-          "Could not open the editor. Your saved listen has not changed. Try again.",
-        );
-    } finally {
-      if (stillCurrent()) {
-        mutationLock.current = false;
-        setEditBusy(false);
-      }
-    }
-  }
-
-  async function saveEdit() {
-    if (
-      !canManage ||
-      !agent ||
-      !did ||
-      !rkey ||
-      !uri ||
-      !sourceRecord ||
-      mutationLock.current
-    )
-      return;
-    const stillCurrent = captureMutation();
-    mutationLock.current = true;
-    setEditBusy(true);
-    setError(null);
-    try {
-      const record = applyEditableFields(sourceRecord, {
-        trackName,
-        artistsText,
-        releaseName,
-        playedTime,
-      });
-      const receipt = await putPlayRecord(agent, did, rkey, record, swapRecord);
-      // Retire the old cached version even if the route changed while the write completed.
+      const record = applyEditableFields(source.record, fields);
+      const receipt = await putPlayRecord(agent, did, rkey, record, source.cid);
       removePendingListens(did, [uri]);
-      if (receipt.uri === uri && receipt.cid)
-        retainConfirmedListens(did, [
-          {
-            record: { ...record, $type: "fm.teal.feed.play" } as PlayRecord,
-            ...receipt,
-          },
-        ]);
-      if (!stillCurrent()) return;
-      setSourceRecord(record);
-      setSwapRecord(receipt.cid);
-      if (play) {
-        const updated: PlayView = {
-          ...play,
-          ...record,
-          artists: record.artists || [],
-          uri: uri as PlayView["uri"],
-          cid: receipt.cid,
-          $type: "fm.teal.feed.defs#playView",
-        };
-        latestEdit.current = { identity: routeIdentity, play: updated };
-        currentConfirmed.current = updated;
-        setView({ identity: routeIdentity, play: updated, syncing: true });
+      if (receipt.uri === uri && receipt.cid) {
+        retainConfirmedListens(did, [{ record: { ...record, $type: "fm.teal.feed.play" } as PlayRecord, ...receipt }]);
       }
-      setEditOpen(false);
-    } catch (cause) {
-      if (stillCurrent())
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Could not save the changes. Try again.",
-        );
+      onSaved();
+    } catch (e) {
+      // applyEditableFields explains invalid input; anything else is a save failure.
+      setError(e instanceof Error && /required|valid|date/i.test(e.message) ? e.message : "Your changes didn't save. Try again.");
     } finally {
-      if (stillCurrent()) {
-        mutationLock.current = false;
-        setEditBusy(false);
-      }
+      setBusy(false);
     }
-  }
+  };
 
-  async function deleteListen() {
-    if (!canManage || !agent || !did || !rkey || !uri || mutationLock.current)
-      return;
-    if (!deleteArmed) {
-      setDeleteArmed(true);
+  if (!source) return error ? <ErrorNotice title="The editor didn't open" body={error} /> : <Loading className="py-8" />;
+  const set = (key: keyof typeof fields) => (value: string) => setFields((f) => ({ ...f, [key]: value }));
+  return (
+    <Glass strong className="gap-3 p-4">
+      <Heading level={2}>Edit listen</Heading>
+      <Field label="Track" value={fields.trackName} onChangeText={set("trackName")} />
+      <Field label="Artists" hint="Separate several with commas." value={fields.artistsText} onChangeText={set("artistsText")} />
+      <Field label="Album" value={fields.releaseName} onChangeText={set("releaseName")} />
+      <Field label="Played at" hint="A date and time, such as 2026-11-04T18:30:00Z." value={fields.playedTime} onChangeText={set("playedTime")} autoCapitalize="none" />
+      {error ? (
+        <Text role="alert" className="text-[14px] text-destructive">
+          {error}
+        </Text>
+      ) : null}
+      <ButtonRow>
+        <Button label={busy ? "Saving" : "Save"} loading={busy} onPress={save} />
+        <Button label="Cancel" variant="secondary" onPress={onCancel} />
+      </ButtonRow>
+    </Glass>
+  );
+}
+
+/** One listen: what was played, by whom and when, with reactions, and editing for its owner. */
+export default function ListenScreen() {
+  const params = useLocalSearchParams();
+  const did = param(params.did);
+  const rkey = param(params.rkey);
+  const uri = did && rkey ? `at://${did}/fm.teal.feed.play/${rkey}` : undefined;
+  const viewer = useViewerDid();
+  const agent = useStore((state) => state.pdsAgent);
+  const client = useQueryClient();
+  const pending = usePendingListens(viewer === did ? viewer : undefined);
+  const [editing, setEditing] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
+
+  const listen = useQuery({
+    queryKey: ["listen", did, rkey, viewer ?? null],
+    enabled: !!did && !!rkey && !deleted,
+    queryFn: async () => {
+      const result = await readListenDetail(did!, rkey!, viewer, () => pending.find((e) => e.play.uri === uri)?.play, getPlayByAuthorRkey);
+      if (viewer === did && result.indexed) retireIndexedListens(did!, [result.indexed]);
+      return result;
+    },
+  });
+  const play: PlayView | undefined = listen.data?.play;
+  const author = useDisplayActor(play?.author as never, did);
+  const reactions = useReactionsQuery(play?.uri);
+  const isOwn = !!viewer && viewer === did;
+
+  const remove = async () => {
+    if (!agent || !did || !rkey || !uri) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
       return;
     }
-    const stillCurrent = captureMutation();
-    mutationLock.current = true;
-    setEditBusy(true);
-    setError(null);
+    setDeleteError(false);
     try {
       await deletePlayRecord(agent, did, rkey);
-      deletedRoute.current = routeIdentity;
-      if (latestEdit.current?.identity === routeIdentity)
-        latestEdit.current = undefined;
       removePendingListens(did, [uri]);
-      if (!stillCurrent()) return;
-      setView(undefined);
-      setDeletedIdentity(routeIdentity);
-      setEditOpen(false);
+      setDeleted(true);
+      void client.invalidateQueries({ queryKey: ["actor-plays", did] });
     } catch {
-      if (stillCurrent())
-        setError("Could not delete this listen. Please try again.");
-    } finally {
-      if (stillCurrent()) {
-        mutationLock.current = false;
-        setEditBusy(false);
-      }
+      setDeleteError(true);
     }
+  };
+
+  if (deleted) {
+    return (
+      <Screen back pageTitle="Listen deleted">
+        <Notice title="Listen deleted" body="It's gone from your account. Public feeds may take a moment to catch up." />
+      </Screen>
+    );
+  }
+  if (!did || !rkey) {
+    return (
+      <Screen back pageTitle="Listen">
+        <Notice title="This listen link is incomplete" body="Check the link and try again." />
+      </Screen>
+    );
+  }
+  if (listen.isLoading) {
+    return (
+      <Screen back pageTitle="Listen">
+        <Loading />
+      </Screen>
+    );
+  }
+  if (listen.isError || !play) {
+    const missing = listen.error instanceof XrpcError && listen.error.status === 404;
+    return (
+      <Screen back pageTitle="Listen">
+        <ErrorNotice
+          title={missing ? "This listen isn't available" : "This listen didn't load"}
+          body={missing ? "Check the link, or try again in a moment." : undefined}
+          onRetry={() => listen.refetch()}
+        />
+      </Screen>
+    );
   }
 
-  useEffect(() => {
-    let mounted = true;
-    const needsBlueskyFallback =
-      !indexedAuthor?.displayName || !indexedAuthor?.handle;
-    if (!authorDid || !needsBlueskyFallback) {
-      setBlueskyAuthor(undefined);
-      return;
-    }
-    getCachedBlueskyProfile(authorDid).then((profile) => {
-      if (mounted) setBlueskyAuthor(profile);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [authorDid, indexedAuthor]);
-
-  useEffect(() => {
-    let mounted = true;
-    setArtFailed(false);
-    if (releaseArt || !play?.recordingMbId) {
-      setRecordingArt(undefined);
-      return;
-    }
-    getRecordingCoverArtUrl(play.recordingMbId, 500).then((url) => {
-      if (mounted) setRecordingArt(url);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [play?.recordingMbId, releaseArt]);
-
+  const artists = displayArtists(play) || "Unknown artist";
   return (
-    <TealShell
-      rightRail={<RightRail />}
-      pageTitle={play?.trackName || "Listen"}
-    >
-      <Stack.Screen
-        options={{ title: play?.trackName || "Listen", headerShown: false }}
+    <Screen back pageTitle={`${play.trackName} · ${artists}`} width="wide">
+      <MusicHero
+        releaseMbId={play.releaseMbId}
+        title={play.trackName}
+        lines={[
+          play.artists?.[0]?.artistMbId ? (
+            <Link href={musicArtistHref(artists, play.artists[0].artistMbId) as never} asChild>
+              <Pressable className="self-start">
+                <Text onBackdrop className="text-[18px] font-semibold">
+                  {artists}
+                </Text>
+              </Pressable>
+            </Link>
+          ) : (
+            artists
+          ),
+          play.releaseName && play.releaseMbId ? (
+            <Link href={musicAlbumHref(artists, play.releaseName, play.releaseMbId) as never} asChild>
+              <Pressable className="self-start">
+                <Text onBackdrop className="text-[16px] text-ink-2">
+                  {play.releaseName}
+                </Text>
+              </Pressable>
+            </Link>
+          ) : (
+            play.releaseName ?? ""
+          ),
+        ]}
+        actions={
+          <>
+            <Link href={musicTrackHref(artists, play.releaseName, play.trackName, play.uri) as never} asChild>
+              <Button label="Song page" variant="secondary" />
+            </Link>
+            {play.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(play.originUri as string)} /> : null}
+          </>
+        }
       />
-      {!play && !error && !deleted && (
-        <View className="min-h-[24rem] items-center justify-center">
-          <ActivityIndicator size="large" />
-        </View>
-      )}
-      {deleted && (
-        <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
-          <Text className="font-sans text-2xl font-semibold">Listen deleted.</Text>
-          <Text className="mt-2 text-ink-2">
-            Your listen has been removed from your account. Public feeds may
-            take a moment to update.
-          </Text>
-        </View>
-      )}
-      {error &&
-        (errorState?.kind === "action" ? (
-          <View
-            role="alert"
-            className="mb-5 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4"
-          >
-            <Text className="text-destructive">{error}</Text>
-          </View>
-        ) : (
-          <LoadFailure
-            title="Could not load listen"
-            description={error}
-            onRetry={() => setRetry((value) => value + 1)}
-          />
-        ))}
-      {syncing && play && (
-        <View
-          role="status"
-          className="mb-5 gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4"
-        >
-          <Text className="font-bold">Saved, syncing</Text>
-          <Text className="text-sm text-ink-2">
-            This listen is saved to your account. Teal is still catching up. You
-            are viewing your confirmed local copy.
-          </Text>
-          <Button
-            variant="outline"
-            className="self-start"
-            onPress={() => setRetry((value) => value + 1)}
-          >
-            <Text>Check for updates</Text>
-          </Button>
-        </View>
-      )}
-      {play && (
-        <>
-          <View className="mb-8 overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
-            <View className="h-44 bg-muted">
-              {art ? (
-                <Image
-                  source={{ uri: art }}
-                  className="h-full w-full opacity-35"
-                  onError={() => setArtFailed(true)}
-                />
-              ) : null}
-            </View>
-            <View className="-mt-12 px-5 pb-6">
-              <View className="flex-row items-end gap-4">
-                {art ? (
-                  <Image
-                    source={{ uri: art }}
-                    className="h-24 w-24 rounded-lg border-4 border-background bg-muted md:h-28 md:w-28"
-                    onError={() => setArtFailed(true)}
-                  />
-                ) : (
-                  <View className="h-24 w-24 items-center justify-center rounded-lg border-4 border-background bg-muted md:h-28 md:w-28">
-                    <Icon
-                      icon={Disc3}
-                      size={42}
-                      className="text-ink-2"
-                    />
-                  </View>
-                )}
-                <View className="min-w-0 flex-1 pb-2">
-                  <Text
-                    accessibilityRole="header"
-                    aria-level={1}
-                    className="font-sans text-3xl font-semibold leading-tight"
-                    numberOfLines={3}
-                  >
-                    {play.trackName}
-                  </Text>
-                  <Text
-                    className="font-bold text-ink-2"
-                    numberOfLines={1}
-                  >
-                    {displayArtists(play) || "Unknown artist"}
-                  </Text>
-                </View>
-              </View>
 
-              <View className="mt-5 flex-row flex-wrap gap-2">
-                <Link href={`/profile/${authorHref}` as any} asChild>
-                  <Button variant="outline" className="flex-row gap-2">
-                    <Icon icon={UserRound} size={16} />
-                    <Text>{authorName}</Text>
-                  </Button>
-                </Link>
-                <Link href={musicHref(play) as any} asChild>
-                  <Button variant="outline" className="flex-row gap-2">
-                    <Icon icon={ExternalLink} size={16} />
-                    <Text>Song page</Text>
-                  </Button>
-                </Link>
-                {canManage && (
-                  <Button
-                    variant="outline"
-                    className="flex-row gap-2"
-                    disabled={editBusy}
-                    onPress={openEditor}
-                  >
-                    <Icon icon={Pencil} size={16} />
-                    <Text>Edit listen</Text>
-                  </Button>
-                )}
-              </View>
-
-              <Text className="mt-4 text-sm text-ink-2">
-                {authorName} listened {when}
-                {play.releaseName ? ` from ${play.releaseName}` : ""}.
+      <Glass className="gap-3 p-4">
+        <Link href={author.href as never} asChild>
+          <Pressable className="flex-row items-center gap-3 self-start">
+            <Avatar did={did} avatar={author.avatar} name={author.name} size={44} />
+            <View>
+              <Text className="font-semibold">{author.name}</Text>
+              <Text className="text-[14px] text-ink-2">
+                {listen.data?.syncing ? "Saved, syncing" : `listened ${play.playedTime ? `${shortAgo(play.playedTime)} ago · ${listenedAt(play.playedTime)}` : "recently"}`}
               </Text>
-
-              {editOpen && canManage && (
-                <View className="mt-5 gap-3 rounded-lg border border-border bg-background p-4">
-                  <View className="flex-row items-start justify-between gap-3">
-                    <View className="min-w-0 flex-1">
-                      <Text className="text-xs text-ink-2 tabular-nums">
-                        Edit record
-                      </Text>
-                      <Text className="font-bold">
-                        Changes are saved to your account and may take a moment
-                        to appear publicly.
-                      </Text>
-                    </View>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={editBusy}
-                      accessibilityLabel="Close listen editor"
-                      onPress={() => setEditOpen(false)}
-                    >
-                      <Icon icon={X} size={18} />
-                    </Button>
-                  </View>
-                  <View className="gap-2">
-                    <Text className="text-xs text-ink-2 font-medium">
-                      Track
-                    </Text>
-                    <Input
-                      accessibilityLabel="Track name"
-                      value={trackName}
-                      onChangeText={setTrackName}
-                      editable={!editBusy}
-                    />
-                  </View>
-                  <View className="gap-2">
-                    <Text className="text-xs text-ink-2 font-medium">
-                      Artists
-                    </Text>
-                    <Input
-                      accessibilityLabel="Artists"
-                      value={artistsText}
-                      onChangeText={setArtistsText}
-                      editable={!editBusy}
-                    />
-                  </View>
-                  <View className="gap-2">
-                    <Text className="text-xs text-ink-2 font-medium">
-                      Release
-                    </Text>
-                    <Input
-                      accessibilityLabel="Release name"
-                      value={releaseName}
-                      onChangeText={setReleaseName}
-                      editable={!editBusy}
-                    />
-                  </View>
-                  <View className="gap-2">
-                    <Text className="text-xs text-ink-2 font-medium">
-                      Played time
-                    </Text>
-                    <Input
-                      accessibilityLabel="Played time"
-                      value={playedTime}
-                      onChangeText={setPlayedTime}
-                      editable={!editBusy}
-                      inputMode="text"
-                      placeholder="2026-10-17T12:30:00Z"
-                    />
-                  </View>
-                  <View className="flex-row flex-wrap gap-2">
-                    <Button
-                      className="flex-row gap-2"
-                      disabled={editBusy}
-                      onPress={saveEdit}
-                    >
-                      <Icon icon={Save} size={16} />
-                      <Text>Save listen</Text>
-                    </Button>
-                    <Button
-                      variant={deleteArmed ? "destructive" : "outline"}
-                      className="flex-row gap-2"
-                      disabled={editBusy}
-                      onPress={deleteListen}
-                    >
-                      <Icon icon={Trash2} size={16} />
-                      <Text>{deleteArmed ? "Confirm delete" : "Delete"}</Text>
-                    </Button>
-                  </View>
-                </View>
-              )}
             </View>
+          </Pressable>
+        </Link>
+        {play.uri && play.cid ? (
+          <View className="border-t border-hair pt-3">
+            <ReactionBar subject={{ uri: play.uri, cid: play.cid }} reactions={reactions.data ?? []} />
           </View>
+        ) : null}
+        {isOwn && !editing ? (
+          <View className="gap-2 border-t border-hair pt-3">
+            <ButtonRow>
+              <Button label="Edit" icon={Pencil} size="sm" variant="secondary" onPress={() => setEditing(true)} />
+              <Button label={confirmDelete ? "Delete? Tap again" : "Delete"} size="sm" variant="destructive" onPress={remove} />
+            </ButtonRow>
+            {deleteError ? (
+              <Text role="alert" className="text-[14px] text-destructive">
+                The listen wasn't deleted. Try again.
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+      </Glass>
 
-          <SectionHeading title="This listen" />
-          <PlayFeedCard play={play} />
-        </>
-      )}
-    </TealShell>
+      {editing && uri ? (
+        <EditListen
+          did={did}
+          rkey={rkey}
+          uri={uri}
+          onCancel={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            void listen.refetch();
+          }}
+        />
+      ) : null}
+    </Screen>
   );
 }

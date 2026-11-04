@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { AmbientSource, Cover, coverUri, Glass } from "@/components/ds";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
 import { getListeningCalendar } from "@/lib/teal/api";
 import { isoDay, mondayOffset, monthRange } from "@/lib/teal/calendar";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { AmbientSource, Cover, Glass, Icon, Text, coverUri } from "@/components/ds";
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
 // Seven columns; widths are set as styles so they apply on every platform.

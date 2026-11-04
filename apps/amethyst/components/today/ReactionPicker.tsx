@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Modal, Pressable, TextInput, View } from "react-native";
-import { Glass } from "@/components/ds";
-import { Text } from "@/components/ui/text";
 import { QUICK_REACTIONS } from "@/lib/teal/reactions";
+import { Glass, Text } from "@/components/ds";
 
 /** A single grapheme-ish emoji: no letters, digits, or spaces. */
 function asEmoji(value: string) {

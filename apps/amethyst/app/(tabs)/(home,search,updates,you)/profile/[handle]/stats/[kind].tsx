@@ -1,44 +1,71 @@
-import { View } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
-import {
-  ProfileStatsMorePage,
-  type ProfileStatsKind,
-} from "@/components/teal/ProfileStats";
-import TealShell from "@/components/teal/TealShell";
-import { Text } from "@/components/ui/text";
+import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { loadTop, normalizeKind, normalizePeriod, STATS_PERIODS, withContext, type TopKind } from "@/lib/teal/topStats";
+import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen, Tabs } from "@/components/ds";
+import { TopRow } from "@/components/profile/TopStats";
+import { useActorDid, useActorPlays } from "@/hooks/useProfile";
 
-function normalizeKind(value?: string): ProfileStatsKind | undefined {
-  if (value === "artists" || value === "albums" || value === "tracks") {
-    return value;
-  }
-  return undefined;
+function param(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
-export default function ProfileStatsRoute() {
+const TITLES: Record<TopKind, string> = { artists: "Top artists", albums: "Top albums", tracks: "Top tracks" };
+
+/** Someone's full ranking of artists, albums, or tracks for a period. */
+export default function TopStatsScreen() {
   const params = useLocalSearchParams();
-  const actor = Array.isArray(params.handle) ? params.handle[0] : params.handle;
-  const kindParam = Array.isArray(params.kind) ? params.kind[0] : params.kind;
-  const period = Array.isArray(params.period)
-    ? params.period[0]
-    : params.period;
-  const kind = normalizeKind(kindParam);
+  const actor = param(params.handle) ?? "";
+  const kind = normalizeKind(param(params.kind));
+  const [period, setPeriod] = useState(normalizePeriod(param(params.period)));
+  const did = useActorDid(actor).data;
+  // Recent history supplies artist names and links for albums and tracks.
+  const history = useActorPlays(did);
+  const plays = history.data?.pages.flatMap((p) => p.plays) ?? [];
+  const top = useInfiniteQuery({
+    queryKey: ["top-all", actor, kind, period],
+    queryFn: ({ pageParam }) => loadTop(actor, kind, period, 50, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.cursor,
+    enabled: !!actor,
+  });
+  const items = top.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
-    <TealShell pageTitle={`Top ${kind || "listening"} stats`}>
-      <Stack.Screen options={{ title: "Profile stats", headerShown: false }} />
-      {!actor || !kind ? (
-        <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            Could not load profile stats.
-          </Text>
-        </View>
+    <Screen back title={TITLES[kind]}>
+      <Tabs
+        label="Ranking"
+        value={kind}
+        onChange={(next) => router.setParams({ kind: next })}
+        tabs={[
+          { value: "artists", label: "Artists" },
+          { value: "albums", label: "Albums" },
+          { value: "tracks", label: "Tracks" },
+        ]}
+      />
+      <Choices label="Period" value={period} onChange={setPeriod} options={STATS_PERIODS} />
+      {top.isLoading ? (
+        <Loading />
+      ) : top.isError ? (
+        <ErrorNotice title={`${TITLES[kind]} didn't load`} onRetry={() => top.refetch()} />
+      ) : !items.length ? (
+        <Notice title="Nothing here yet" body="No listens in this period." />
       ) : (
-        <ProfileStatsMorePage
-          actor={actor}
-          kind={kind}
-          initialPeriod={period}
-        />
+        <Glass className="px-4 py-1">
+          {items.map((item, i) => (
+            <TopRow key={`${item.id}-${i}`} item={withContext(item, plays)} rank={i + 1} actor={did ?? actor} last={i === items.length - 1} />
+          ))}
+        </Glass>
       )}
-    </TealShell>
+      {top.hasNextPage ? (
+        <Button
+          label={top.isFetchingNextPage ? "Loading" : "Load more"}
+          variant="secondary"
+          className="self-center"
+          loading={top.isFetchingNextPage}
+          onPress={() => top.fetchNextPage()}
+        />
+      ) : null}
+    </Screen>
   );
 }

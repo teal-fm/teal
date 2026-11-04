@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Icon } from "./Icon";
 import { coverArtUrl, getReleaseGroupCoverArtUrl } from "@/lib/teal/api";
 import { cn } from "@/lib/utils";
 import { Disc3 } from "lucide-react-native";

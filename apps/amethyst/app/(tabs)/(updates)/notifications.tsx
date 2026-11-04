@@ -1,535 +1,191 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
+import { Pressable, View } from "react-native";
+import { Link } from "expo-router";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { Bell, Heart, MessageCircle, Repeat2, SmilePlus, UserPlus, type LucideIcon } from "lucide-react-native";
+import { actorAvatarUrl, actorProfileHref, displayActorName } from "@/lib/teal/actors";
 import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from "react-native";
-import { Link, Stack } from "expo-router";
-import TealShell, { SectionHeading } from "@/components/teal/TealShell";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import {
-  actorAvatarUrl,
-  actorProfileHref,
-  displayActorName,
-} from "@/lib/teal/actors";
-import {
-  coverArtUrl,
   displayArtists,
   getNotifications,
   getSocialPost,
   XrpcError,
   type SocialNotificationView,
-  type SocialPostView,
 } from "@/lib/teal/api";
+import { useViewerDid } from "@/lib/teal/queries";
 import { postHrefFromUri } from "@/lib/teal/routes";
 import { trackViewToPlayView } from "@/lib/teal/social";
-import { useStore } from "@/stores/mainStore";
+import { shortAgo } from "@/lib/teal/today";
 import {
-  Bell,
-  ChevronRight,
-  Disc3,
-  Heart,
-  MessageCircle,
-  Repeat2,
-} from "lucide-react-native";
+  Avatar,
+  Button,
+  Cover,
+  ErrorNotice,
+  Glass,
+  Icon,
+  Loading,
+  Notice,
+  Screen,
+  Text,
+} from "@/components/ds";
 
-function reasonLabel(reason: string) {
-  switch (reason) {
-    case "like":
-      return "liked your post";
-    case "repost":
-      return "reposted your post";
-    case "reply":
-      return "replied to your post";
-    case "follow":
-      return "followed you";
-    case "badgeAssignment":
-      return "gave you a badge";
-    default:
-      return "interacted with your profile";
-  }
-}
-
-function reasonIcon(reason: string) {
-  switch (reason) {
-    case "like":
-      return Heart;
-    case "repost":
-      return Repeat2;
-    case "reply":
-      return MessageCircle;
-    default:
-      return Bell;
-  }
-}
-
-type NotificationGroup = {
-  key: string;
-  reason: string;
-  notifications: SocialNotificationView[];
-  contextUri?: string;
+const REASONS: Record<string, { label: string; icon: LucideIcon; tone: string }> = {
+  like: { label: "liked your post", icon: Heart, tone: "text-rose-500" },
+  repost: { label: "reposted your post", icon: Repeat2, tone: "text-tint" },
+  reply: { label: "replied to your post", icon: MessageCircle, tone: "text-tint" },
+  reaction: { label: "reacted to your post", icon: SmilePlus, tone: "text-tint" },
+  follow: { label: "followed you", icon: UserPlus, tone: "text-tint" },
+  badgeAssignment: { label: "gave you a badge", icon: Bell, tone: "text-ink-2" },
 };
+const OTHER = { label: "interacted with your profile", icon: Bell, tone: "text-ink-2" };
 
-const contextualReasons = new Set(["like", "repost", "reply"]);
+type Group = { key: string; reason: string; items: SocialNotificationView[]; contextUri?: string };
 
-function groupNotifications(items: SocialNotificationView[]) {
-  const groups: NotificationGroup[] = [];
-  const grouped = new Map<string, NotificationGroup>();
-
-  for (const notification of items) {
-    const contextUri =
-      notification.reason === "reply"
-        ? notification.recordUri
-        : notification.subjectUri;
-    const canGroup = contextualReasons.has(notification.reason) && contextUri;
-    const key = canGroup
-      ? `${notification.reason}:${contextUri}`
-      : `notification:${notification.id}`;
-    const existing = grouped.get(key);
-
-    if (existing) {
-      existing.notifications.push(notification);
-      continue;
-    }
-
-    const group = {
-      key,
-      reason: notification.reason,
-      notifications: [notification],
-      contextUri,
-    };
-    grouped.set(key, group);
-    groups.push(group);
+/** Likes, reposts, replies, and reactions on the same post fold into one row. */
+function group(items: SocialNotificationView[]) {
+  const groups = new Map<string, Group>();
+  for (const item of items) {
+    const contextUri = item.reason === "reply" ? item.recordUri : item.subjectUri;
+    const groupable = contextUri && ["like", "repost", "reply", "reaction"].includes(item.reason);
+    const key = groupable ? `${item.reason}:${contextUri}` : `n:${item.id}`;
+    const existing = groups.get(key);
+    if (existing) existing.items.push(item);
+    else groups.set(key, { key, reason: item.reason, items: [item], contextUri: groupable ? contextUri : undefined });
   }
-
-  return groups;
+  return [...groups.values()];
 }
 
-function compactTimeAgo(value: string) {
-  const seconds = Math.max(
-    0,
-    Math.floor((Date.now() - new Date(value).getTime()) / 1000),
-  );
-  if (seconds < 60) return "now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
-  return `${Math.floor(seconds / 604800)}w`;
-}
+/** Activity: who liked, replied, reacted, and followed. */
+export default function Activity() {
+  const viewer = useViewerDid();
+  const feed = useInfiniteQuery({
+    queryKey: ["notifications", viewer],
+    queryFn: ({ pageParam }) => getNotifications(viewer!, 30, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.cursor,
+    enabled: !!viewer,
+  });
+  const groups = useMemo(() => group(feed.data?.pages.flatMap((p) => p.items) ?? []), [feed.data]);
 
-function reasonIconClass(reason: string) {
-  switch (reason) {
-    case "like":
-      return "text-rose-500";
-    case "repost":
-      return "text-primary";
-    case "reply":
-      return "text-bsky";
-    default:
-      return "text-ink-2";
+  if (!viewer) {
+    return (
+      <Screen title="Activity">
+        <Notice
+          center
+          icon={Bell}
+          title="Sign in to see your activity"
+          body="Replies, likes, reactions, and new followers show up here."
+          action={
+            <Link href="/auth/login" asChild>
+              <Button label="Sign in" />
+            </Link>
+          }
+        />
+      </Screen>
+    );
   }
-}
-
-function ActorAvatar({
-  notification,
-}: {
-  notification: SocialNotificationView;
-}) {
-  const actor = notification.actor;
-  const actorDid = actor?.did || notification.actorDid;
-  const label = displayActorName(actor, actorDid);
-  const avatar = actorAvatarUrl(actor, actorDid);
-  const href = actorProfileHref(actor, actorDid);
 
   return (
-    <Link href={`/profile/${href}` as any} asChild>
-      <Pressable
-        className="h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-primary"
-        accessibilityLabel={`View ${label}'s profile`}
-      >
-        {avatar ? (
-          <Image source={{ uri: avatar }} className="h-full w-full" />
-        ) : (
-          <Text className="text-sm font-black text-primary-foreground">
-            {label.slice(0, 1).toUpperCase()}
+    <Screen
+      title="Activity"
+      onScroll={(event) => {
+        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+        const nearEnd = layoutMeasurement.height + contentOffset.y > contentSize.height - 600;
+        if (nearEnd && feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage();
+      }}
+    >
+      {feed.isLoading ? (
+        <Loading />
+      ) : feed.isError ? (
+        <ErrorNotice title="Your activity didn't load" onRetry={() => feed.refetch()} />
+      ) : groups.length === 0 ? (
+        <Notice title="Nothing yet" body="When people reply, like, react, or follow you, it shows up here." />
+      ) : (
+        <Glass className="px-4">
+          {groups.map((g, i) => (
+            <ActivityRow key={g.key} group={g} last={i === groups.length - 1} />
+          ))}
+        </Glass>
+      )}
+      {feed.isFetchingNextPage ? <Loading className="py-6" /> : null}
+    </Screen>
+  );
+}
+
+function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
+  const known = REASONS[g.reason] ?? OTHER;
+  // Reactions land on listens as well as posts.
+  const reason =
+    g.reason === "reaction" && g.contextUri?.includes(".feed.play/") ? { ...known, label: "reacted to your listen" } : known;
+  const first = g.items[0];
+  const others = g.items.length - 1;
+  const href = g.contextUri ? postHrefFromUri(g.contextUri) : undefined;
+
+  return (
+    <View className={last ? "py-4" : "border-b border-hair py-4"}>
+      <View className="flex-row gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-full bg-fill">
+          <Icon icon={reason.icon} size={19} className={reason.tone} />
+        </View>
+        <View className="min-w-0 flex-1 gap-2">
+          <View className="flex-row">
+            {g.items.slice(0, 4).map((item, index) => {
+              const did = item.actor?.did || item.actorDid;
+              const name = displayActorName(item.actor, did);
+              return (
+                <Link key={item.id} href={`/profile/${actorProfileHref(item.actor, did)}` as never} asChild>
+                  <Pressable accessibilityLabel={`${name}'s profile`} style={{ marginLeft: index ? -8 : 0, zIndex: 4 - index }}>
+                    <Avatar did={did} avatar={actorAvatarUrl(item.actor, did)} name={name} size={36} className="border-2 border-ground" />
+                  </Pressable>
+                </Link>
+              );
+            })}
+          </View>
+          <Text className="text-[15px] leading-[21px]">
+            <Text className="font-semibold">{displayActorName(first.actor, first.actor?.did || first.actorDid)}</Text>
+            {others > 0 ? ` and ${others} ${others === 1 ? "other" : "others"}` : ""} {reason.label}
+            <Text className="text-ink-2"> · {shortAgo(first.createdAt)}</Text>
           </Text>
-        )}
+          {href && g.contextUri ? <PostPreview uri={g.contextUri} href={href} /> : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function PostPreview({ uri, href }: { uri: string; href: string }) {
+  const post = useQuery({
+    queryKey: ["post", uri, null],
+    queryFn: () => getSocialPost(uri).then((r) => r.post),
+    retry: (count, error) => !(error instanceof XrpcError && error.status === 404) && count < 2,
+  });
+  if (post.isLoading) {
+    return <View className="h-16 rounded-[16px] bg-fill" />;
+  }
+  if (post.isError || !post.data) {
+    const gone = post.error instanceof XrpcError && post.error.status === 404;
+    return gone ? (
+      <Text className="text-[14px] text-ink-2">The original post is no longer available.</Text>
+    ) : (
+      <View className="flex-row items-center gap-3">
+        <Text className="text-[14px] text-ink-2">This post didn't load.</Text>
+        <Button label="Try again" variant="secondary" size="sm" onPress={() => post.refetch()} />
+      </View>
+    );
+  }
+  const play = trackViewToPlayView(post.data.track);
+  return (
+    <Link href={href as never} asChild>
+      <Pressable accessibilityLabel="Open the post" className="flex-row items-center gap-3 rounded-[16px] bg-fill p-2.5 web:hover:opacity-85">
+        <Cover releaseMbId={play.releaseMbId} size={44} radius={8} />
+        <View className="min-w-0 flex-1">
+          <Text className="text-[15px]" numberOfLines={2}>
+            {post.data.text || play.trackName}
+          </Text>
+          <Text className="text-[13px] text-ink-2" numberOfLines={1}>
+            {play.trackName} · {displayArtists(play) || "Unknown artist"}
+          </Text>
+        </View>
       </Pressable>
     </Link>
-  );
-}
-
-function PostPreview({ post }: { post: SocialPostView }) {
-  const play = trackViewToPlayView(post.track);
-  const art = coverArtUrl(play.releaseMbId);
-
-  return (
-    <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-3">
-      {post.text ? (
-        <Text className="text-[15px] leading-6" numberOfLines={4}>
-          {post.text}
-        </Text>
-      ) : (
-        <Text className="text-sm italic text-ink-2">
-          Shared a track
-        </Text>
-      )}
-      <View className="mt-3 flex-row items-center gap-3 rounded-md bg-muted/55 p-2">
-        <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-accent">
-          {art ? (
-            <Image source={{ uri: art }} className="h-full w-full" />
-          ) : (
-            <Icon icon={Disc3} size={18} className="text-primary" />
-          )}
-        </View>
-        <View className="min-w-0 flex-1">
-          <Text className="font-semibold" numberOfLines={1}>
-            {play.trackName}
-          </Text>
-          <Text className="text-sm text-ink-2" numberOfLines={1}>
-            {displayArtists(play) || "Unknown artist"}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function NotificationRow({ group }: { group: NotificationGroup }) {
-  const notifications = group.notifications;
-  const first = notifications[0];
-  const IconForReason = reasonIcon(group.reason);
-  const postHref = group.contextUri
-    ? postHrefFromUri(group.contextUri)
-    : undefined;
-  const [postState, setPostState] = useState<{
-    uri: string;
-    post: SocialPostView | null;
-    failed?: boolean;
-  }>();
-  const [postAttempt, setPostAttempt] = useState(0);
-  const post =
-    group.contextUri && contextualReasons.has(group.reason)
-      ? postState?.uri === group.contextUri
-        ? postState.post
-        : undefined
-      : null;
-
-  useEffect(() => {
-    if (!group.contextUri || !contextualReasons.has(group.reason)) return;
-
-    let mounted = true;
-    setPostState(undefined);
-    getSocialPost(group.contextUri)
-      .then((response) => {
-        if (mounted) {
-          setPostState({ uri: group.contextUri!, post: response.post });
-        }
-      })
-      .catch((error) => {
-        if (mounted) {
-          setPostState({
-            uri: group.contextUri!,
-            post: null,
-            failed: !(error instanceof XrpcError && error.status === 404),
-          });
-        }
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [group.contextUri, group.reason, postAttempt]);
-
-  const actorLabel = displayActorName(first.actor, first.actorDid);
-  const otherCount = notifications.length - 1;
-
-  return (
-    <View className="border-b border-border py-5 first:pt-2">
-      <View className="flex-row gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-full bg-accent">
-          <Icon
-            icon={IconForReason}
-            size={20}
-            className={reasonIconClass(group.reason)}
-          />
-        </View>
-        <View className="min-w-0 flex-1">
-          <View className="flex-row items-center justify-between gap-3">
-            <View className="flex-row items-center pl-1">
-              {notifications.slice(0, 3).map((notification, index) => (
-                <View
-                  key={notification.id}
-                  className={index > 0 ? "-ml-2" : undefined}
-                  style={{ zIndex: 3 - index }}
-                >
-                  <ActorAvatar notification={notification} />
-                </View>
-              ))}
-            </View>
-            {postHref && (
-              <Icon
-                icon={ChevronRight}
-                size={18}
-                className="text-ink-2"
-              />
-            )}
-          </View>
-          <Text className="mt-3 text-[15px] leading-6">
-            <Text className="font-black">{actorLabel}</Text>
-            {otherCount > 0
-              ? ` and ${otherCount} ${otherCount === 1 ? "other" : "others"}`
-              : ""}{" "}
-            {reasonLabel(group.reason)}
-            <Text className="text-ink-2">
-              {` · ${compactTimeAgo(first.createdAt)}`}
-            </Text>
-          </Text>
-
-          {postHref && post === undefined && (
-            <View className="mt-3 gap-2 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-3">
-              <View className="h-3 w-4/5 rounded-full bg-muted" />
-              <View className="h-3 w-2/5 rounded-full bg-muted" />
-            </View>
-          )}
-          {postHref && post && (
-            <Link href={postHref as any} asChild>
-              <Pressable
-                className="mt-3 web:hover:opacity-80"
-                accessibilityRole="link"
-                accessibilityLabel="View the original post"
-              >
-                <PostPreview post={post} />
-              </Pressable>
-            </Link>
-          )}
-          {postHref &&
-            post === null &&
-            (postState?.failed ? (
-              <View className="mt-3 items-start gap-2">
-                <Text
-                  accessibilityRole="alert"
-                  className="text-sm text-ink-2"
-                >
-                  Couldn't load this post. Your notification is still here.
-                </Text>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setPostAttempt((attempt) => attempt + 1)}
-                >
-                  <Text>Try again</Text>
-                </Button>
-              </View>
-            ) : (
-              <Text className="mt-3 text-sm italic text-ink-2">
-                The original post is no longer available.
-              </Text>
-            ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-export default function Notifications() {
-  const status = useStore((state) => state.status);
-  const pdsAgent = useStore((state) => state.pdsAgent);
-  const actorDid = pdsAgent?.did;
-  const [items, setItems] = useState<SocialNotificationView[] | null>(null);
-  const [cursor, setCursor] = useState<string>();
-  const [error, setError] = useState<string | null>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const loadingMoreRef = useRef<object | null>(null);
-  const requestVersion = useRef(0);
-  const activeIdentity = useRef({ actorDid, status });
-  activeIdentity.current = { actorDid, status };
-  const [attempt, setAttempt] = useState(0);
-  const [itemsActor, setItemsActor] = useState<string>();
-
-  useEffect(() => {
-    let mounted = true;
-    requestVersion.current += 1;
-    setCursor(undefined);
-    setLoadingMore(false);
-    loadingMoreRef.current = null;
-    if (status !== "loggedIn" || !actorDid) return;
-    setItemsActor(actorDid);
-    setItems(null);
-    setError(null);
-    getNotifications(actorDid, 30)
-      .then((res) => {
-        if (!mounted) return;
-        setItems(res.items);
-        setCursor(res.cursor);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setError(
-          "We couldn't load your notifications. Check your connection and try again.",
-        );
-        setItems([]);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [actorDid, status, attempt]);
-
-  const loadMore = useCallback(() => {
-    if (
-      !actorDid ||
-      itemsActor !== actorDid ||
-      status !== "loggedIn" ||
-      !cursor ||
-      loadingMoreRef.current
-    )
-      return;
-    const version = requestVersion.current;
-    const operation = {};
-    loadingMoreRef.current = operation;
-    const stillCurrent = () =>
-      version === requestVersion.current &&
-      activeIdentity.current.actorDid === actorDid &&
-      activeIdentity.current.status === "loggedIn";
-    setLoadingMore(true);
-    setError(null);
-    getNotifications(actorDid, 30, cursor)
-      .then((res) => {
-        if (!stillCurrent()) return;
-        setItems((current) => {
-          const knownIds = new Set(current?.map((item) => item.id) || []);
-          return [
-            ...(current || []),
-            ...res.items.filter((item) => !knownIds.has(item.id)),
-          ];
-        });
-        setCursor(res.cursor);
-      })
-      .catch(() => {
-        if (stillCurrent())
-          setError(
-            "Couldn't load older notifications. Try again; your current list is still here.",
-          );
-      })
-      .finally(() => {
-        if (loadingMoreRef.current === operation) loadingMoreRef.current = null;
-        if (stillCurrent()) setLoadingMore(false);
-      });
-  }, [actorDid, cursor, status, itemsActor]);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } =
-        event.nativeEvent;
-      const remaining =
-        contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      if (remaining < 600 && !error) loadMore();
-    },
-    [loadMore, error],
-  );
-  const visibleItems = itemsActor === actorDid ? items : null;
-  const groups = visibleItems ? groupNotifications(visibleItems) : [];
-
-  if (status === "start") {
-    return (
-      <TealShell pageTitle="Activity">
-        <ActivityIndicator
-          accessibilityLabel="Checking your account"
-          className="my-20"
-        />
-      </TealShell>
-    );
-  }
-
-  if (status !== "loggedIn") {
-    return (
-      <TealShell pageTitle="Activity">
-        <Stack.Screen
-          options={{ title: "Notifications", headerShown: false }}
-        />
-        <View className="min-h-[32rem] items-center justify-center gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl px-8">
-          <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
-            <Icon icon={Bell} size={22} className="text-primary" />
-          </View>
-          <Text role="heading" aria-level={1} className="max-w-md text-center font-sans text-3xl font-black">
-            Sign in to see your notifications
-          </Text>
-          <Text className="max-w-sm text-center text-sm leading-5 text-ink-2">
-            Find replies, likes, reposts, and new followers here.
-          </Text>
-          <Link href="/auth/login" asChild>
-            <Button>
-              <Text>Sign in</Text>
-            </Button>
-          </Link>
-        </View>
-      </TealShell>
-    );
-  }
-
-  return (
-    <TealShell pageTitle="Activity" onScroll={handleScroll}>
-      <Stack.Screen options={{ title: "Notifications", headerShown: false }} />
-      <SectionHeading title="Activity" level={1} />
-      {!visibleItems && (
-        <View className="min-h-[24rem] items-center justify-center">
-          <ActivityIndicator size="large" />
-        </View>
-      )}
-      {error && (
-        <View className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">{error}</Text>
-          <Button
-            variant="outline"
-            className="mt-3 self-start"
-            onPress={() => {
-              if (visibleItems?.length && cursor) loadMore();
-              else setAttempt((value) => value + 1);
-            }}
-          >
-            <Text>Try again</Text>
-          </Button>
-        </View>
-      )}
-      {visibleItems?.length === 0 && !error && (
-        <View className="min-h-[24rem] items-center justify-center rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-8">
-          <Text className="text-center text-2xl font-black">
-            No notifications yet.
-          </Text>
-          <Text className="mt-2 text-center text-ink-2">
-            When someone follows you or responds to your music posts, you'll see
-            it here.
-          </Text>
-          <Link href="/search" asChild>
-            <Button variant="outline" className="mt-5">
-              <Text>Explore music</Text>
-            </Button>
-          </Link>
-        </View>
-      )}
-      <View className="mt-2">
-        {groups.map((group) => (
-          <NotificationRow key={group.key} group={group} />
-        ))}
-      </View>
-      {cursor && !loadingMore && !error && (
-        <Button
-          variant="outline"
-          className="my-5 self-center"
-          onPress={loadMore}
-        >
-          <Text>Load older notifications</Text>
-        </Button>
-      )}
-      {loadingMore && (
-        <View className="items-center justify-center py-5">
-          <ActivityIndicator />
-        </View>
-      )}
-    </TealShell>
   );
 }

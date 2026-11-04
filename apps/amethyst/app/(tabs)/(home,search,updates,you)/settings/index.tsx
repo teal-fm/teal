@@ -1,155 +1,98 @@
 import { useState } from "react";
 import { View } from "react-native";
-import { Link, Stack } from "expo-router";
-import TealShell, { SectionHeading } from "@/components/teal/TealShell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
-import {
-  canOverrideColorScheme,
-  useColorScheme,
-} from "@/lib/useColorScheme";
+import { Link } from "expo-router";
+import { ChevronDown, ChevronRight } from "lucide-react-native";
+import { canOverrideColorScheme, useColorScheme } from "@/lib/useColorScheme";
+import { Button, Choices, Field, Section, Screen, Text } from "@/components/ds";
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
 
+const DID = /^did:[a-z0-9]+:[A-Za-z0-9._:%-]+$/;
+
 export default function Settings() {
   const { preference, setColorScheme } = useColorScheme();
+  const status = useStore((state) => state.status);
   const appviewDid = useStore((state) => state.tealDid);
   const setAppviewDid = useStore((state) => state.setTealDid);
-  const status = useStore((state) => state.status);
   const [advanced, setAdvanced] = useState(false);
   const [provider, setProvider] = useState(appviewDid || "");
-  const [providerMessage, setProviderMessage] = useState<string | null>(null);
-  const [providerError, setProviderError] = useState(false);
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
 
-  function saveProvider() {
+  const saveProvider = () => {
     const value = provider.trim();
-    if (!/^did:[a-z0-9]+:[A-Za-z0-9._:%-]+$/.test(value)) {
-      setProviderError(true);
-      setProviderMessage(
-        "Enter a valid provider DID, such as did:web:teal.fm.",
-      );
+    if (!DID.test(value)) {
+      setMessage({ text: "Enter a valid provider DID, such as did:web:teal.fm.", error: true });
       return;
     }
     setAppviewDid(value);
-    setProviderError(false);
-    setProviderMessage("Provider saved.");
-  }
+    setMessage({ text: "Provider saved.", error: false });
+  };
 
   return (
-    <TealShell pageTitle="Settings">
-      <Stack.Screen options={{ title: "Settings", headerShown: false }} />
-      <SectionHeading title="Settings" level={1} />
-      <View className="gap-8">
-        <View className="gap-3">
-          <Text role="heading" aria-level={3} className="text-lg font-semibold">
-            Appearance
-          </Text>
-          <Text className="text-sm text-ink-2">
-            {canOverrideColorScheme
-              ? "Choose a theme, or follow your device."
-              : "Teal follows your device's light or dark setting."}
-          </Text>
-          {canOverrideColorScheme && (
-          <View
-            role="group"
-            accessibilityLabel="Theme"
-            className="flex-row flex-wrap gap-2"
-          >
-            {(["light", "dark", "system"] as const).map((value) => (
-              <Button
-                key={value}
-                variant={preference === value ? "default" : "outline"}
-                accessibilityState={{ selected: preference === value }}
-                aria-pressed={preference === value}
-                onPress={() => setColorScheme(value)}
-              >
-                <Text>{value[0].toUpperCase() + value.slice(1)}</Text>
-              </Button>
-            ))}
+    <Screen title="Settings" back>
+      <Section title="Appearance" panel>
+        {canOverrideColorScheme ? (
+          <View className="gap-3">
+            <Text className="text-[15px] text-ink-2">Choose a theme, or follow your device.</Text>
+            <Choices
+              label="Theme"
+              value={preference}
+              onChange={setColorScheme}
+              options={[
+                { value: "light", label: "Light" },
+                { value: "dark", label: "Dark" },
+                { value: "system", label: "System" },
+              ]}
+            />
           </View>
-          )}
-        </View>
-        <View className="gap-3 border-t border-border pt-6">
-          <Text role="heading" aria-level={3} className="text-lg font-semibold">
-            Account
-          </Text>
-          <Link
-            href={status === "loggedIn" ? "/auth/logoutModal" : "/auth/login"}
-            asChild
-          >
-            <Button variant="outline" className="self-start">
-              <Text>{status === "loggedIn" ? "Sign out" : "Sign in"}</Text>
-            </Button>
-          </Link>
-        </View>
-        <View className="gap-3 border-t border-border pt-6">
-          <Button
-            variant="ghost"
-            className="self-start"
-            accessibilityState={{ expanded: advanced }}
-            aria-expanded={advanced}
-            onPress={() => setAdvanced((value) => !value)}
-          >
-            <Text>
-              {advanced ? "Hide advanced settings" : "Advanced settings"}
-            </Text>
-          </Button>
-          {advanced && (
-            <View className="gap-3">
-              <Text nativeID="provider-label" className="font-semibold">
-                AppView provider DID
+        ) : (
+          <Text className="text-[15px] text-ink-2">Teal follows your device's light or dark setting.</Text>
+        )}
+      </Section>
+
+      <Section title="Account" panel>
+        <Link href={status === "loggedIn" ? "/auth/logout" : "/auth/login"} asChild>
+          <Button label={status === "loggedIn" ? "Sign out" : "Sign in"} variant="secondary" />
+        </Link>
+      </Section>
+
+      <Section title="Advanced" panel>
+        <Button
+          label={advanced ? "Hide provider settings" : "Change the AppView provider"}
+          variant="plain"
+          icon={advanced ? ChevronDown : ChevronRight}
+          aria-expanded={advanced}
+          onPress={() => setAdvanced((value) => !value)}
+          className="-ml-3 px-3"
+        />
+        {advanced ? (
+          <View className="mt-2 gap-3">
+            <Field
+              label="AppView provider DID"
+              hint="The service that supplies Teal's feeds and statistics. Change it only to use another provider."
+              value={provider}
+              onChangeText={(value) => {
+                setProvider(value);
+                setMessage(null);
+              }}
+              error={message?.error ? message.text : null}
+              placeholder="did:web:teal.fm"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Button label="Save provider" disabled={provider.trim() === appviewDid} onPress={saveProvider} />
+            {message && !message.error ? (
+              <Text role="status" className="text-[14px] text-ink-2">
+                {message.text}
               </Text>
-              <Text
-                nativeID="provider-help"
-                className="text-sm text-ink-2"
-              >
-                This identifies the service that supplies Teal's feeds and
-                statistics. Change it only when you want to use another
-                provider.
-              </Text>
-              <View className="flex-row flex-wrap items-center gap-3">
-                <Input
-                  nativeID="provider-input"
-                  accessibilityLabel="AppView provider DID"
-                  aria-labelledby="provider-label"
-                  aria-describedby="provider-help"
-                  className="min-w-0 flex-1"
-                  value={provider}
-                  onChangeText={(value) => {
-                    setProvider(value);
-                    setProviderMessage(null);
-                  }}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  placeholder="did:web:teal.fm"
-                />
-                <Button
-                  disabled={provider.trim() === appviewDid}
-                  onPress={saveProvider}
-                >
-                  <Text>Save provider</Text>
-                </Button>
-              </View>
-              {providerMessage && (
-                <Text
-                  role={providerError ? "alert" : "status"}
-                  className={
-                    providerError
-                      ? "text-sm text-destructive"
-                      : "text-sm text-ink-2"
-                  }
-                >
-                  {providerMessage}
-                </Text>
-              )}
-              <Text className="text-sm text-ink-2">
-                Teal {pkg.version}
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </TealShell>
+            ) : null}
+          </View>
+        ) : null}
+      </Section>
+
+      <Text onBackdrop className="text-center text-[13px] text-ink-2">
+        Teal {pkg.version}
+      </Text>
+    </Screen>
   );
 }

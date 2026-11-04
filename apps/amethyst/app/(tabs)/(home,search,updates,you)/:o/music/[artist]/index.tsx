@@ -1,321 +1,91 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, View } from "react-native";
-import { Link, Stack, useLocalSearchParams } from "expo-router";
-import {
-  ArtistLeaderboardList,
-  ArtistListenerPeriodTabs,
-  normalizeArtistListenerPeriod,
-} from "@/components/teal/ArtistLeaderboard";
-import { AmbientSource, Glass, useHalo } from "@/components/ds";
-import LoadFailure from "@/components/teal/LoadFailure";
-import RightRail from "@/components/teal/RightRail";
-import TealShell, { SectionHeading } from "@/components/teal/TealShell";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import {
-  coverArtUrl,
-  getArtist,
-  getArtistImageUrl,
-  getArtistListeners,
-  releaseGroupCoverArtUrl,
-  type ArtistListenerPeriod,
-} from "@/lib/teal/api";
-import { musicAlbumHref, musicArtistListenersHref } from "@/lib/teal/routes";
-import { ChevronRight, Disc3, Mic2, Trophy } from "lucide-react-native";
+import { useState } from "react";
+import { Link, useLocalSearchParams } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { Trophy } from "lucide-react-native";
+import { getArtist, getArtistImageUrl, getArtistListeners } from "@/lib/teal/api";
+import { countLabel, discography, LISTENER_PERIODS, normalizeListenerPeriod } from "@/lib/teal/music";
+import { musicArtistListenersHref } from "@/lib/teal/routes";
+import { Button, Choices, ErrorNotice, Loading, Screen, Section, Text } from "@/components/ds";
+import { Leaderboard } from "@/components/music/Leaderboard";
+import { MusicHero } from "@/components/music/MusicHero";
+import { ReleaseGrid } from "@/components/music/ReleaseGrid";
 
-import type {
-  ArtistListenerView,
-  ArtistView,
-} from "@teal/lexicons/src/fm/teal/music/defs";
+function param(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
-export default function ArtistDetail() {
+/** An artist: who they are on teal, who listens most, and their releases. */
+export default function ArtistScreen() {
   const params = useLocalSearchParams();
-  const artistSlug = Array.isArray(params.artist)
-    ? params.artist[0]
-    : params.artist;
-  const mbid = Array.isArray(params.mbid) ? params.mbid[0] : params.mbid;
-  const name = Array.isArray(params.name) ? params.name[0] : params.name;
-  const artistLookup = name || artistSlug;
-  const initialPeriod = Array.isArray(params.period)
-    ? params.period[0]
-    : params.period;
-  const [artist, setArtist] = useState<ArtistView | null>(null);
-  const [listeners, setListeners] = useState<ArtistListenerView[]>([]);
-  const [listenerPeriod, setListenerPeriod] = useState<ArtistListenerPeriod>(
-    normalizeArtistListenerPeriod(initialPeriod),
-  );
-  const [error, setError] = useState<string>();
-  const [request, setRequest] = useState(0);
-  const [listenerRequest, setListenerRequest] = useState(0);
-  const [listenerError, setListenerError] = useState<string>();
-  const [listenersLoading, setListenersLoading] = useState(false);
-  const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
-  const [artistImage, setArtistImage] = useState<string>();
-  const halo = useHalo();
+  const mbid = param(params.mbid);
+  const lookup = param(params.name) || param(params.artist);
+  const [period, setPeriod] = useState(normalizeListenerPeriod(param(params.period)));
 
-  useEffect(() => {
-    let mounted = true;
-    setArtist(null);
-    setError(undefined);
-    getArtist(mbid, artistLookup)
-      .then(({ artist }) => {
-        if (mounted) setArtist(artist);
-      })
-      .catch((loadError) => {
-        if (mounted) {
-          setError(
-            loadError instanceof Error ? loadError.message : String(loadError),
-          );
-        }
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [artistLookup, mbid, request]);
+  const artist = useQuery({
+    queryKey: ["artist", mbid, lookup],
+    queryFn: () => getArtist(mbid, lookup).then((r) => r.artist),
+  });
+  const photo = useQuery({
+    queryKey: ["artist-image", artist.data?.mbid],
+    queryFn: () => getArtistImageUrl(artist.data!.mbid, 500),
+    enabled: !!artist.data?.mbid,
+    staleTime: Infinity,
+  });
+  const listeners = useQuery({
+    queryKey: ["artist-listeners", mbid, lookup, period, 5],
+    queryFn: () => getArtistListeners(mbid, lookup, period, 5).then((r) => r.listeners),
+  });
 
-  useEffect(() => {
-    let mounted = true;
-    setListenersLoading(true);
-    setListenerError(undefined);
-    getArtistListeners(mbid, artistLookup, listenerPeriod, 5)
-      .then(({ listeners }) => {
-        if (mounted) setListeners(listeners);
-      })
-      .catch((loadError) => {
-        if (mounted) {
-          setListeners([]);
-          setListenerError(
-            loadError instanceof Error ? loadError.message : String(loadError),
-          );
-        }
-      })
-      .finally(() => {
-        if (mounted) setListenersLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [artistLookup, mbid, listenerPeriod, listenerRequest]);
-
-  useEffect(() => {
-    let mounted = true;
-    setArtistImage(undefined);
-    setFailedArt(new Set());
-    if (!artist?.mbid) return;
-    getArtistImageUrl(artist.mbid, 500).then((imageUrl) => {
-      if (mounted) setArtistImage(imageUrl);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [artist?.mbid]);
-
-  const handleArtError = (url: string) => {
-    setFailedArt((previous) => new Set(previous).add(url));
-  };
-
-  const representativeArt = [
-    releaseGroupCoverArtUrl(artist?.albums[0]?.releaseGroupMbid, 500),
-    coverArtUrl(artist?.albums[0]?.mbid, 500),
-  ]
-    .filter((url): url is string => Boolean(url))
-    .find((url) => !failedArt.has(url));
-  const heroArt = artistImage || representativeArt;
-  const handleHeroArtError = () => {
-    if (artistImage) {
-      setArtistImage(undefined);
-    } else if (representativeArt) {
-      handleArtError(representativeArt);
-    }
-  };
-
-  const renderRelease = (album: ArtistView["albums"][number]) => {
-    const art = [
-      releaseGroupCoverArtUrl(album.releaseGroupMbid, 500),
-      coverArtUrl(album.mbid, 500),
-    ]
-      .filter((url): url is string => Boolean(url))
-      .find((url) => !failedArt.has(url));
+  if (artist.isLoading) {
     return (
-      <Link
-        key={album.mbid}
-        href={musicAlbumHref(album.artistName, album.name, album.mbid) as any}
-        asChild
-      >
-        <Pressable className="w-[46%] sm:w-[30%]">
-          <AmbientSource uri={art}>
-            <View className="aspect-square items-center justify-center overflow-hidden rounded-[14px] bg-fill shadow-lg">
-              {art ? (
-                <Image
-                  source={{ uri: art }}
-                  className="h-full w-full"
-                  onError={() => art && handleArtError(art)}
-                />
-              ) : (
-                <Icon icon={Disc3} size={30} className="text-ink-3" />
-              )}
-            </View>
-          </AmbientSource>
-          <Text className="mt-2 text-[15px] font-semibold text-ink" numberOfLines={2}>
-            {album.name}
-          </Text>
-          <Text className="text-[13px] tabular-nums text-ink-2">
-            {album.playCount} {album.playCount === 1 ? "listen" : "listens"}
-          </Text>
-        </Pressable>
-      </Link>
+      <Screen back pageTitle="Artist">
+        <Loading />
+      </Screen>
     );
-  };
+  }
+  if (artist.isError || !artist.data) {
+    return (
+      <Screen back pageTitle="Artist">
+        <ErrorNotice title="This artist didn't load" onRetry={() => artist.refetch()} />
+      </Screen>
+    );
+  }
 
-  const discographyGroups: Array<{
-    title: string;
-    releases: ArtistView["albums"];
-  }> = artist
-    ? [
-        {
-          title: "Albums",
-          releases: artist.albums.filter(
-            (release) => release.releaseType === "album",
-          ),
-        },
-        {
-          title: "EPs",
-          releases: artist.albums.filter(
-            (release) => release.releaseType === "ep",
-          ),
-        },
-        {
-          title: "Singles",
-          releases: artist.albums.filter(
-            (release) => release.releaseType === "single",
-          ),
-        },
-        {
-          title: "Other releases",
-          releases: artist.albums.filter(
-            (release) =>
-              release.releaseType !== "album" &&
-              release.releaseType !== "ep" &&
-              release.releaseType !== "single",
-          ),
-        },
-      ]
-    : [];
-  const albumCount =
-    artist?.albums.filter((release) => release.releaseType === "album")
-      .length ?? 0;
-
+  const a = artist.data;
+  const albums = a.albums.filter((r) => r.releaseType === "album").length;
   return (
-    <TealShell rightRail={<RightRail />} pageTitle={artist?.name || "Artist"}>
-      <Stack.Screen
-        options={{ title: artist?.name || "Artist", headerShown: false }}
+    <Screen back pageTitle={a.name} width="wide">
+      <MusicHero
+        imageUri={photo.data}
+        releaseMbId={photo.data ? undefined : a.albums[0]?.mbid}
+        round={!!photo.data}
+        title={a.name}
+        lines={[[countLabel(a.playCount, "listen") + " on teal", albums ? countLabel(albums, "album") : ""].filter(Boolean).join(" · ")]}
       />
-      {!artist && !error && (
-        <View className="min-h-[24rem] items-center justify-center">
-          <ActivityIndicator size="large" />
-        </View>
-      )}
-      {error && (
-        <LoadFailure
-          title="This artist could not load"
-          onRetry={() => setRequest((value) => value + 1)}
-        />
-      )}
-      {artist && (
-        <>
-          <View className="mb-6 gap-5 sm:flex-row sm:items-end">
-            <AmbientSource uri={heroArt}>
-              <View className="h-[200px] w-[200px] items-center justify-center overflow-hidden rounded-[16px] bg-fill shadow-2xl sm:h-[232px] sm:w-[232px]">
-                {heroArt ? (
-                  <Image source={{ uri: heroArt }} className="h-full w-full" onError={handleHeroArtError} />
-                ) : (
-                  <Icon icon={Mic2} size={56} className="text-ink-3" />
-                )}
-              </View>
-            </AmbientSource>
-            <View className="min-w-0 flex-1 gap-1">
-              <Text
-                role="heading"
-                aria-level={1}
-                style={halo}
-                className="text-[40px] font-bold tracking-tight text-ink sm:text-[52px]"
-                numberOfLines={3}
-              >
-                {artist.name}
-              </Text>
-              <Text style={halo} className="text-[15px] text-ink-2">
-                {artist.playCount} {artist.playCount === 1 ? "listen" : "listens"} on teal
-                {albumCount > 0 ? ` · ${albumCount} ${albumCount === 1 ? "album" : "albums"}` : ""}
-              </Text>
-            </View>
-          </View>
 
-          <Glass className="mb-4 p-4">
-            <View className="mb-4 gap-3 md:flex-row md:items-end md:justify-between">
-              <SectionHeading
-                eyebrow="Community"
-                title="Top listeners"
-              />
-              <ArtistListenerPeriodTabs
-                period={listenerPeriod}
-                onChange={setListenerPeriod}
-              />
-            </View>
-            {listenersLoading && listeners.length === 0 ? (
-              <View className="min-h-[8rem] items-center justify-center rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
-                <ActivityIndicator />
-              </View>
-            ) : listenerError ? (
-              <LoadFailure
-                title="Listeners could not load"
-                onRetry={() => setListenerRequest((value) => value + 1)}
-              />
-            ) : listeners.length === 0 ? (
-              <View className="items-center gap-2 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
-                <Icon
-                  icon={Trophy}
-                  size={24}
-                  className="text-ink-2"
-                />
-                <Text className="text-center text-ink-2">
-                  No listeners for this period yet.
-                </Text>
-              </View>
-            ) : (
-              <>
-                <ArtistLeaderboardList listeners={listeners} />
-                <Link
-                  href={
-                    musicArtistListenersHref(
-                      artist.name,
-                      artist.mbid,
-                      listenerPeriod,
-                    ) as any
-                  }
-                  asChild
-                >
-                  <Button variant="outline" className="mt-3 flex-row gap-2">
-                    <Icon icon={Trophy} size={16} />
-                    <Text>View more listeners</Text>
-                  </Button>
-                </Link>
-              </>
-            )}
-          </Glass>
+      <Section title="Top listeners" panel>
+        <Choices label="Period" value={period} onChange={setPeriod} options={LISTENER_PERIODS} />
+        {listeners.isLoading ? (
+          <Loading className="py-8" />
+        ) : listeners.isError ? (
+          <ErrorNotice title="Listeners didn't load" onRetry={() => listeners.refetch()} className="mt-3" />
+        ) : !listeners.data?.length ? (
+          <Text className="py-4 text-ink-2">No listeners in this period yet.</Text>
+        ) : (
+          <>
+            <Leaderboard listeners={listeners.data} />
+            <Link href={musicArtistListenersHref(a.name, a.mbid, period) as never} asChild>
+              <Button label="See all listeners" icon={Trophy} size="sm" variant="secondary" className="mt-3" />
+            </Link>
+          </>
+        )}
+      </Section>
 
-          {discographyGroups.map(({ title, releases }) =>
-            releases.length > 0 ? (
-              <Glass key={title} className="mb-4 gap-3 p-4">
-                <Text role="heading" aria-level={2} className="text-[20px] font-bold text-ink">
-                  {title}
-                </Text>
-                <View className="flex-row flex-wrap gap-x-[4%] gap-y-4">{releases.map(renderRelease)}</View>
-              </Glass>
-            ) : null,
-          )}
-        </>
-      )}
-    </TealShell>
+      {discography(a.albums).map((group) => (
+        <Section key={group.title} title={group.title} panel>
+          <ReleaseGrid releases={group.releases} />
+        </Section>
+      ))}
+    </Screen>
   );
 }

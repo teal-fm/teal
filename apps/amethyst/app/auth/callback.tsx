@@ -1,127 +1,82 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
-import { Link, router, Stack, usePathname } from "expo-router";
-import { useLocalSearchParams } from "expo-router/build/hooks";
-import AuthPageTitle from "@/components/auth/AuthPageTitle";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { Link, router, useLocalSearchParams, usePathname } from "expo-router";
 import { firstLoginHref } from "@/lib/atp/firstLogin";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Button, Glass, Heading, Loading, PageTitle, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
-import { PencilLine } from "lucide-react-native";
 
-const toSearchParams = (
-  params: Record<string, string | string[] | undefined>,
-): URLSearchParams => {
-  const searchParams = new URLSearchParams();
+function toSearchParams(params: Record<string, string | string[] | undefined>) {
+  const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        searchParams.append(key, item);
-      }
-    } else if (value !== undefined) {
-      searchParams.set(key, value);
+    for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) {
+      search.append(key, item);
     }
   }
-  return searchParams;
-};
+  return search;
+}
 
-export default function AuthOptions() {
-  const status = useStore((state) => state.status);
-  const params = useLocalSearchParams<"iss" | "state" | "code">();
-  const [error, setError] = useState<string | null>(null);
-  const calledRef = useRef(false);
+/** Where the account provider sends people back after approving sign-in. */
+export default function AuthCallback() {
+  const params = useLocalSearchParams();
   const pathname = usePathname();
   const activePath = useRef(pathname);
   activePath.current = pathname;
+  // The provider's state is deleted on first read, so the callback must run once.
+  const called = useRef(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    // The OAuth state in IndexedDB is deleted on first read (replay prevention).
-    // Must only call oauthCallback once -- a second call will fail with
-    // "Unknown authorization session".
-    if (calledRef.current || !params) return;
-    calledRef.current = true;
-    const searchParams = toSearchParams(params);
+    if (called.current) return;
+    called.current = true;
+    const stillHere = () => activePath.current === "/auth/callback";
     useStore
       .getState()
-      .oauthCallback(searchParams)
+      .oauthCallback(toSearchParams(params))
       .then(async () => {
-        // The store reports callback failures in state rather than rejecting.
-        if (activePath.current !== "/auth/callback") return;
-        const result = useStore.getState();
-        if (result.status !== "loggedIn" || !result.pdsAgent?.did) {
-          setError(result.login.error || "Sign-in did not complete.");
+        // The store reports failures in state rather than rejecting.
+        const { status, pdsAgent } = useStore.getState();
+        if (!stillHere()) return;
+        if (status !== "loggedIn" || !pdsAgent?.did) {
+          setFailed(true);
           return;
         }
-        // A previous failed attempt can leave login.error behind. The current
-        // authenticated status is authoritative after this callback completes.
-        setError(null);
-        const agent = result.pdsAgent;
-        const viewerDid = result.pdsAgent.did;
-        const destination = await firstLoginHref(viewerDid, () =>
-          agent.call("com.atproto.repo.getRecord", {
-            repo: viewerDid,
+        const did = pdsAgent.did;
+        const destination = await firstLoginHref(did, () =>
+          pdsAgent.call("com.atproto.repo.getRecord", {
+            repo: did,
             collection: "fm.teal.actor.profile",
             rkey: "self",
           }),
         );
         const current = useStore.getState();
-        if (
-          activePath.current === "/auth/callback" &&
-          current.status === "loggedIn" &&
-          current.pdsAgent?.did === viewerDid
-        ) {
-          router.replace(destination as any);
+        if (stillHere() && current.status === "loggedIn" && current.pdsAgent?.did === did) {
+          router.replace(destination as never);
         }
       })
       .catch(() => {
-        if (activePath.current === "/auth/callback")
-          setError("Sign-in did not complete.");
+        if (stillHere()) setFailed(true);
       });
   }, [params]);
 
-  if (!params) {
-    return (
-      <View>
-        <Link href="/error" />
-      </View>
-    );
-  }
   return (
-    <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
-      <AuthPageTitle
-        path="/auth/callback"
-        title={error ? "Sign-in failed" : "Finishing sign-in"}
-      />
-      <Stack.Screen
-        options={{
-          title: "Processing",
-          headerBackButtonDisplayMode: "minimal",
-        }}
-      />
-      <Icon icon={PencilLine} size={64} />
-      <Text
-        accessibilityRole={error ? "alert" : "header"}
-        className="text-center text-3xl font-semibold text-foreground"
-      >
-        {error
-          ? "Couldn't finish signing in"
-          : status === "loggedIn"
-            ? "You're signed in"
-            : "Finishing sign-in..."}
-      </Text>
-      <Text className="text-center text-sm text-ink-2">
-        {error
-          ? "Your sign-in session may have expired. Start again to connect your account."
-          : "Connecting your account to Teal. This may take a few seconds."}
-      </Text>
-      {error && (
-        <Link href="/auth/login" asChild>
-          <Button>
-            <Text>Try signing in again</Text>
-          </Button>
-        </Link>
-      )}
+    <View className="flex-1 items-center justify-center bg-ground px-4">
+      <PageTitle title={failed ? "Sign-in failed" : "Finishing sign-in"} />
+      <Glass className="w-full max-w-md items-center gap-3 p-7">
+        {failed ? null : <Loading className="py-2" label="Finishing sign-in" />}
+        <Heading level={1} size="title" className="text-center" role={failed ? "alert" : "heading"}>
+          {failed ? "Couldn't finish signing in" : "Finishing sign-in"}
+        </Heading>
+        <Text className="text-center text-[15px] text-ink-2">
+          {failed
+            ? "Your sign-in session may have expired. Start again to connect your account."
+            : "Connecting your account to Teal. This takes a few seconds."}
+        </Text>
+        {failed ? (
+          <Link href="/auth/login" asChild>
+            <Button label="Sign in again" className="mt-2 self-center" />
+          </Link>
+        ) : null}
+      </Glass>
     </View>
   );
 }

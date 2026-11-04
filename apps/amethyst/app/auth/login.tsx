@@ -1,380 +1,159 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, Pressable, TextInput, View } from "react-native";
-import Animated, {
-  useAnimatedKeyboard,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, router, Stack } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Platform, Pressable, View } from "react-native";
+import { Link, router } from "expo-router";
 import { openAuthSessionAsync } from "expo-web-browser";
-import AuthPageTitle from "@/components/auth/AuthPageTitle";
-import { useWebDialog } from "@/components/auth/useWebDialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
+import { Check, ChevronRight, CircleAlert } from "lucide-react-native";
 import { resolveFromIdentity } from "@/lib/atp/pid";
 import { normalizeAuthHandle } from "@/lib/authHandle";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import { capFirstLetter, cn } from "@/lib/utils";
+import { Button, Dialog, Field, goBack, Icon, PageTitle, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
-import { FontAwesome6 } from "@expo/vector-icons";
-import {
-  AlertCircle,
-  AtSign,
-  Check,
-  ChevronRight,
-  X,
-} from "lucide-react-native";
 
-type Url = URL;
+const RESOLVE_DELAY = 500;
 
-interface ResolvedIdentity {
-  pds: Url;
-  [key: string]: any;
+/** "morel.us-east.host.bsky.network" reads as "Bluesky (Morel)". */
+function providerName(pds: URL) {
+  if (!pds.hostname.endsWith("bsky.network")) return pds.hostname;
+  const shroom = pds.hostname.split(".")[0] ?? "";
+  return `Bluesky (${shroom.charAt(0).toUpperCase()}${shroom.slice(1)})`;
 }
 
-const DEBOUNCE_DELAY = 500; // 500ms debounce delay
+type Lookup =
+  | { state: "idle" }
+  | { state: "resolving" }
+  | { state: "found"; pds: URL }
+  | { state: "missing" };
 
-const LoginScreen = () => {
+/** Sign in with an Atmosphere handle: find the account's provider, then hand off to OAuth. */
+export default function Login() {
+  const getLoginUrl = useStore((state) => state.getLoginUrl);
+  const oauthCallback = useStore((state) => state.oauthCallback);
   const [handle, setHandle] = useState("");
-  const [err, setErr] = useState<string | undefined>();
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [lookup, setLookup] = useState<Lookup>({ state: "idle" });
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"signing-in" | "redirecting" | null>(null);
+  const version = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [pdsUrl, setPdsUrl] = useState<Url | null>(null);
-  const [isResolvingPds, setIsResolvingPds] = useState(false);
-  const [pdsResolutionError, setPdsResolutionError] = useState<
-    string | undefined
-  >();
-
-  const kb = useAnimatedKeyboard();
-
-  const handleInputRef = useRef<TextInput>(null);
-  const resolutionVersion = useRef(0);
-  const closeLogin = useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else router.replace("/");
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
   }, []);
-  const dialogRef = useWebDialog(closeLogin, "teal-login-title", "/auth/login");
 
-  const { getLoginUrl, oauthCallback } = useStore((state) => state);
+  const resolve = useCallback(async (value: string) => {
+    const current = ++version.current;
+    setLookup({ state: "resolving" });
+    try {
+      const identity = await resolveFromIdentity(value);
+      if (current !== version.current) return;
+      setLookup(identity?.pds ? { state: "found", pds: identity.pds } : { state: "missing" });
+    } catch {
+      if (current === version.current) setLookup({ state: "missing" });
+    }
+  }, []);
 
-  const containerAnimatedStyle = useAnimatedStyle(() => {
-    const isKeyboardOpen = kb.height.value > 0;
-    return {
-      bottom: withTiming(isKeyboardOpen ? kb.height.value / 3 : 0, {
-        duration: 250,
-      }),
-    };
-  });
+  const onChange = (text: string) => {
+    setHandle(text);
+    setError(null);
+    version.current += 1;
+    if (timer.current) clearTimeout(timer.current);
+    const value = normalizeAuthHandle(text);
+    if (value.length > 3) {
+      setLookup({ state: "resolving" });
+      timer.current = setTimeout(() => void resolve(value), RESOLVE_DELAY);
+    } else {
+      setLookup({ state: "idle" });
+    }
+  };
 
-  const getPdsUrl = useCallback(
-    async (
-      currentHandle: string,
-      callbacks?: {
-        onSuccess?: (resolvedPdsUrl: Url) => void;
-        onError?: (errorMessage: string) => void;
-      },
-    ): Promise<void> => {
-      const identityHandle = normalizeAuthHandle(currentHandle);
-      const version = ++resolutionVersion.current;
-      if (!identityHandle) {
-        setPdsResolutionError(undefined);
-        setIsResolvingPds(false);
-        setPdsUrl(null);
+  const signIn = async () => {
+    const value = normalizeAuthHandle(handle);
+    if (busy || lookup.state !== "found" || !value) return;
+    setBusy("signing-in");
+    setError(null);
+    try {
+      const url = await getLoginUrl(value);
+      if (!url) throw new Error("no login url");
+      setBusy("redirecting");
+      if (Platform.OS === "web") {
+        router.navigate(url.toString() as never);
         return;
       }
-      setIsResolvingPds(true);
-      setPdsResolutionError(undefined);
-      setPdsUrl(null);
-      try {
-        const identity: ResolvedIdentity | null =
-          await resolveFromIdentity(identityHandle);
-        if (version !== resolutionVersion.current) return;
-        if (!identity?.pds) throw new Error("Couldn't find this account.");
-        setPdsUrl(identity.pds);
-        callbacks?.onSuccess?.(identity.pds);
-      } catch {
-        if (version !== resolutionVersion.current) return;
-        const message =
-          "Couldn't find this account. Check your handle and try again.";
-        setPdsResolutionError(message);
-        callbacks?.onError?.(message);
-      } finally {
-        if (version === resolutionVersion.current) setIsResolvingPds(false);
-      }
-    },
-    [],
-  );
-  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleTextChange = useCallback(
-    (text: string) => {
-      setHandle(text);
-      resolutionVersion.current += 1;
-      setPdsUrl(null);
-      setPdsResolutionError(undefined);
-      setErr(undefined);
-      setIsResolvingPds(false);
-
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-
-      if (normalizeAuthHandle(text).length > 3) {
-        debounceTimeoutRef.current = setTimeout(() => {
-          getPdsUrl(normalizeAuthHandle(text), {
-            onSuccess: (u) => {
-              setPdsUrl(u);
-            },
-            onError: (e) => {
-              setPdsResolutionError(e);
-            },
-          });
-        }, DEBOUNCE_DELAY);
+      const result = await openAuthSessionAsync(url.toString(), "http://127.0.0.1:8081/login");
+      if (result.type === "success") {
+        await oauthCallback(new URLSearchParams(result.url.split("?")[1]));
+        router.replace("/");
       } else {
-        setPdsResolutionError(undefined);
-        setIsResolvingPds(false);
-        setPdsUrl(null);
+        setError(result.type === "cancel" || result.type === "dismiss" ? "Sign-in was cancelled." : "Sign-in didn't finish. Try again.");
+        setBusy(null);
       }
-    },
-    [getPdsUrl],
-  );
-
-  const handleLogin = async () => {
-    if (isLoading || isRedirecting || !pdsUrl || isResolvingPds) return;
-    // reset state
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    setIsResolvingPds(false);
-    setPdsResolutionError(undefined);
-
-    if (!normalizeAuthHandle(handle)) {
-      setErr("Please enter a handle");
-      return;
-    }
-
-    setIsLoading(true);
-    setErr(undefined);
-
-    try {
-      let redirUrl = await getLoginUrl(normalizeAuthHandle(handle));
-      if (!redirUrl) {
-        throw new Error("Could not get login url.");
-      }
-      setIsRedirecting(true);
-      if (Platform.OS === "web") {
-        router.navigate(redirUrl.toString());
-      } else {
-        const res = await openAuthSessionAsync(
-          redirUrl.toString(),
-          "http://127.0.0.1:8081/login",
-        );
-        if (res.type === "success") {
-          const params = new URLSearchParams(res.url.split("?")[1]);
-          await oauthCallback(params);
-        } else if (res.type === "cancel" || res.type === "dismiss") {
-          setErr("Login cancelled by user.");
-          setIsRedirecting(false);
-          setIsLoading(false);
-          return;
-        } else {
-          throw new Error("Authentication failed or was cancelled.");
-        }
-      }
-    } catch (e: any) {
-      setErr(e.message || "An unknown error occurred during login.");
-      setIsLoading(false);
-      setIsRedirecting(false);
-      return;
+    } catch {
+      setError("Sign-in didn't start. Check your handle and try again.");
+      setBusy(null);
     }
   };
 
   return (
-    <SafeAreaView className="flex w-full flex-1 bg-black/45 px-4">
-      <AuthPageTitle path="/auth/login" title="Sign in" />
-      <Stack.Screen
-        options={{
-          title: "Sign in",
-          headerBackButtonDisplayMode: "minimal",
-          headerShown: false,
-        }}
-      />
-      <Pressable
-        className="absolute inset-0"
-        onPress={closeLogin}
-        accessible={false}
-        tabIndex={-1}
-      />
-      <View className="flex flex-1 items-center justify-center px-4">
-        <View className="w-full max-w-md">
-          <Animated.View className="w-full" style={containerAnimatedStyle}>
-            <View
-              ref={dialogRef}
-              className="align-center w-full justify-center gap-5 rounded-[26px] border border-border bg-background p-7 shadow-2xl md:p-8"
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                accessibilityLabel="Close sign in"
-                className="absolute right-4 top-4 z-10 h-9 w-9 items-center justify-center rounded-full bg-muted"
-                onPress={closeLogin}
-              >
-                <Icon
-                  icon={X}
-                  className="pointer-events-none text-ink-2"
-                  size={18}
-                />
-              </Button>
-              <View className="flex items-center">
-                <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
-                  <Icon
-                    icon={AtSign}
-                    className="text-primary-foreground"
-                    name="at"
-                    size={24}
-                  />
-                </View>
-              </View>
-              <Text
-                nativeID="teal-login-title"
-                accessibilityRole="header"
-                className="text-center font-sans text-3xl font-black text-foreground"
-              >
-                Sign in to Teal
+    <>
+      <PageTitle title="Sign in" />
+      <Dialog
+        title="Sign in to Teal"
+        description="Use your Bluesky or other Atmosphere account. We'll send you to your account provider to approve sign-in."
+        onClose={goBack}
+      >
+        <Field
+          label="Handle"
+          value={handle}
+          onChangeText={onChange}
+          onSubmitEditing={signIn}
+          placeholder="alice.bsky.social or did:plc:…"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="username"
+          inputMode="email"
+          returnKeyType="go"
+          autoFocus
+        />
+        <View aria-live="polite" className="min-h-6 flex-row items-center gap-2">
+          {lookup.state === "resolving" ? (
+            <>
+              <ActivityIndicator size="small" />
+              <Text className="text-[14px] text-ink-2">Finding your account…</Text>
+            </>
+          ) : lookup.state === "found" ? (
+            <>
+              <Icon icon={Check} size={16} className="text-tint" />
+              <Text className="min-w-0 flex-1 text-[14px] text-ink-2" numberOfLines={1}>
+                Account provider: {providerName(lookup.pds)}
               </Text>
-              <Text className="text-center text-sm leading-5 text-ink-2">
-                Use your Bluesky or other Atmosphere account. We'll send you to
-                your account provider to approve sign-in.
+            </>
+          ) : lookup.state === "missing" ? (
+            <>
+              <Icon icon={CircleAlert} size={16} className="text-destructive" />
+              <Text role="alert" className="flex-1 text-[14px] text-destructive">
+                Couldn't find this account. Check your handle and try again.
               </Text>
-              <View className="gap-2">
-                <Text
-                  nativeID="teal-login-handle-label"
-                  className="text-sm font-bold text-foreground"
-                >
-                  Handle
-                </Text>
-                <Input
-                  ref={handleInputRef}
-                  accessibilityLabel="Handle"
-                  aria-labelledby="teal-login-handle-label"
-                  aria-invalid={Boolean(err || pdsResolutionError)}
-                  className={cn(
-                    "h-12 rounded-lg",
-                    (err || pdsResolutionError) && `border-red-500`,
-                  )}
-                  placeholder="alice.bsky.social or did:plc:..."
-                  value={handle}
-                  onChangeText={handleTextChange}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  onKeyPress={(e) => {
-                    if (e.nativeEvent.key === "Enter") {
-                      handleLogin();
-                    }
-                  }}
-                />
-
-                {(isResolvingPds || pdsResolutionError || pdsUrl) && (
-                  <View
-                    accessibilityLiveRegion="polite"
-                    className="rounded-lg bg-muted p-3"
-                  >
-                    <View>
-                      {pdsUrl !== null ? (
-                        <View className="flex flex-row items-center gap-1">
-                          <Text>Account provider:</Text>
-                          {pdsUrl.hostname.includes("bsky.network") && (
-                            <View className="flex flex-row justify-center gap-0.5 pr-0.5">
-                              <Icon
-                                icon={FontAwesome6}
-                                className="color-bsky"
-                                name="bluesky"
-                                size={16}
-                              />
-                            </View>
-                          )}
-                          <Text className="min-w-0 flex-1">
-                            {pdsUrl.hostname.includes("bsky.network")
-                              ? "Bluesky (" +
-                                capFirstLetter(
-                                  pdsUrl.hostname.split(".").shift() || "",
-                                ) +
-                                ")"
-                              : pdsUrl.hostname}
-                          </Text>
-                        </View>
-                      ) : pdsResolutionError ? (
-                        <View className="flex flex-row">
-                          <Icon
-                            icon={AlertCircle}
-                            className="mr-1 inline text-foreground"
-                            size={18}
-                          />
-                          <Text accessibilityRole="alert" className="flex-1">
-                            {pdsResolutionError}
-                          </Text>
-                        </View>
-                      ) : (
-                        <Text className="px-1 text-ink-2">
-                          Finding your account...
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                )}
-              </View>
-              {err && (
-                <Text accessibilityRole="alert" className="text-destructive">
-                  {err}
-                </Text>
-              )}
-              <View className="mt-2 flex flex-row flex-wrap items-center justify-between gap-3">
-                <Link href="/auth/signup" asChild>
-                  <Button variant="link" className="p-0">
-                    <Text className="text-sm text-primary">
-                      Create an account
-                    </Text>
-                  </Button>
-                </Link>
-                <Button
-                  className="flex flex-row justify-end gap-1"
-                  onPress={handleLogin}
-                  disabled={
-                    !pdsUrl || isLoading || isRedirecting || isResolvingPds
-                  }
-                >
-                  {isRedirecting ? (
-                    <>
-                      <Text>Redirecting</Text>
-                      <Icon icon={Check} />
-                    </>
-                  ) : isLoading ? (
-                    <Text>Signing in...</Text>
-                  ) : (
-                    <>
-                      <Text>Sign in</Text>
-                      <Icon icon={ChevronRight} />
-                    </>
-                  )}
-                </Button>
-              </View>
-            </View>
-          </Animated.View>
+            </>
+          ) : null}
         </View>
-      </View>
-    </SafeAreaView>
+        {error ? (
+          <Text role="alert" className="text-[14px] text-destructive">
+            {error}
+          </Text>
+        ) : null}
+        <View className="flex-row items-center justify-between gap-3">
+          <Link href="/auth/signup" asChild>
+            <Pressable accessibilityRole="link" className="min-h-11 justify-center">
+              <Text className="text-[15px] font-semibold text-tint">Create an account</Text>
+            </Pressable>
+          </Link>
+          <Button
+            label={busy === "redirecting" ? "Redirecting" : busy ? "Signing in" : "Sign in"}
+            icon={busy ? undefined : ChevronRight}
+            loading={!!busy}
+            disabled={lookup.state !== "found"}
+            onPress={signIn}
+          />
+        </View>
+      </Dialog>
+    </>
   );
-};
-
-export default LoginScreen;
+}
