@@ -10,6 +10,8 @@ import { shortAgo } from "@/lib/teal/today";
 import { ArrowUpRight, MessageCircle, Share as ShareIcon } from "lucide-react-native";
 import { AmbientSource, Avatar, Cover, Glass, Icon, Text, coverUri } from "@/components/ds";
 
+import { useDisplayActor } from "@/hooks/useDisplayActor";
+
 import { ReactionBar } from "./ReactionBar";
 
 function contextLine(post: SocialPostView) {
@@ -29,8 +31,8 @@ function contextLine(post: SocialPostView) {
 /** A song post: what someone said, the song beside it, and how your circle met it. */
 export function PostCard({ post }: { post: SocialPostView }) {
   const play = trackViewToPlayView(post.track);
-  const author = post.author;
-  const name = author?.displayName || author?.handle || "Someone";
+  const author = useDisplayActor(post.author, post.authorDid);
+  const name = author.name;
   // Fall back to the generic AT URI route when a post URI doesn't parse into a post route.
   const href = postHrefFromUri(post.uri) ?? `/at:/${post.uri.replace(/^at:\/\//, "")}`;
   const artist = play.artists?.[0]?.artistName;
@@ -49,15 +51,17 @@ export function PostCard({ post }: { post: SocialPostView }) {
     <AmbientSource uri={coverUri(play.releaseMbId)}>
       <Glass className="mb-3.5 gap-3 px-4 pb-3 pt-4">
         <View className="flex-row items-center gap-2.5">
-          <Link href={`/profile/${author?.did ?? post.authorDid}`} asChild>
-            <Pressable accessibilityLabel={`${name}'s profile`}>
-              <Avatar did={author?.did} avatar={author?.avatar} name={name} size={40} />
+          <Link href={author.href as never} asChild>
+            <Pressable accessibilityLabel={name ? `${name}'s profile` : "Profile"}>
+              <Avatar did={author.did} avatar={author.avatar} name={name} size={40} />
             </Pressable>
           </Link>
           <View className="min-w-0 flex-1">
             <Text className="text-[15.5px] font-semibold text-ink" numberOfLines={1}>
               {name}
-              {author?.handle ? <Text className="text-sm font-normal text-ink-2"> @{author.handle}</Text> : null}
+              {author.handle && author.handle !== name ? (
+                <Text className="text-sm font-normal text-ink-2"> @{author.handle}</Text>
+              ) : null}
             </Text>
           </View>
           <Text className="text-sm text-ink-2">{shortAgo(post.createdAt)}</Text>

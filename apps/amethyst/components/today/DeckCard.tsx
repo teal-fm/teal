@@ -5,11 +5,12 @@ import { Link } from "expo-router";
 import type { ListeningView, MomentView } from "@/lib/teal/api";
 import { useToggleReaction, useViewerDid } from "@/lib/teal/queries";
 import { QUICK_REACTIONS } from "@/lib/teal/reactions";
-import { musicAlbumHref } from "@/lib/teal/routes";
+import { musicAlbumHref, parseAtUri } from "@/lib/teal/routes";
 import { listeningFact, momentLabel, momentLine, shortAgo } from "@/lib/teal/today";
 import { cn } from "@/lib/utils";
 import { Compass, SmilePlus, TrendingUp } from "lucide-react-native";
 import { Avatar, Cover, Icon, Text, useHalo } from "@/components/ds";
+import { useDisplayActor } from "@/hooks/useDisplayActor";
 
 import { ReactionPicker } from "./ReactionPicker";
 
@@ -39,8 +40,8 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
   const [picking, setPicking] = useState(false);
   const lastTap = useRef(0);
   const subject = { uri: listen.playUri, cid: listen.playCid };
-  const actor = listen.actor;
-  const name = actor?.displayName || actor?.handle || "Someone";
+  const actor = useDisplayActor(listen.actor, listen.actor?.did ?? parseAtUri(listen.playUri)?.did);
+  const name = actor.name;
   const fact = listeningFact(listen);
   const halo = useHalo();
 
@@ -69,9 +70,9 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
         accessibilityLabel={`${name} is playing ${listen.trackName}${listen.artistName ? ` by ${listen.artistName}` : ""}.${viewer ? " Double tap to react with fire." : ""}`}
       >
         <Cover releaseMbId={listen.releaseMbId} radius={18} style={{ width, height: width }} className="shadow-2xl" />
-        <Link href={`/profile/${actor?.did}`} asChild>
+        <Link href={actor.href as never} asChild>
           <Pressable className="absolute left-2.5 top-2.5 h-[34px] flex-row items-center gap-2 rounded-full bg-black/45 pl-[3px] pr-3">
-            <Avatar did={actor?.did} avatar={actor?.avatar} name={name} size={28} />
+            <Avatar did={actor.did} avatar={actor.avatar} name={name} size={28} />
             <Text className="text-[13.5px] font-semibold text-white" numberOfLines={1}>
               {name}
             </Text>

@@ -1,3 +1,4 @@
+import { getDidDocument, resolveHandle } from "@/lib/atp/pid";
 import { getBlueskyProfile } from "@/lib/teal/api";
 
 import type { MiniProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
@@ -39,16 +40,39 @@ export function getProfileImageUrl(
   return `https://cdn.bsky.app/img/${kind}/plain/${did}/${value}@jpeg`;
 }
 
+/**
+ * The handle an account's DID document claims, kept only when the handle resolves
+ * back to the same DID, so a document can't borrow someone else's name.
+ */
+async function verifiedDocumentHandle(did: string) {
+  const doc = (await getDidDocument(did)) as { alsoKnownAs?: string[] } | undefined;
+  const handle = doc?.alsoKnownAs
+    ?.find((aka) => aka.startsWith("at://"))
+    ?.slice("at://".length);
+  if (!handle) return undefined;
+  return (await resolveHandle(handle).catch(() => undefined)) === did ? handle : undefined;
+}
+
+/**
+ * Who a DID is, for accounts teal hasn't indexed a profile for: Bluesky's profile,
+ * or for an account Bluesky doesn't know, the handle in its DID document.
+ */
+async function lookupActor(did: string): Promise<DisplayActor | undefined> {
+  const bluesky = await getBlueskyProfile(did).catch(() => undefined);
+  const handle =
+    bluesky?.handle && bluesky.handle !== "handle.invalid" ? bluesky.handle : undefined;
+  if (handle) {
+    return { avatar: bluesky?.avatar, did, displayName: bluesky?.displayName, handle };
+  }
+  const documented = await verifiedDocumentHandle(did);
+  if (!bluesky && !documented) throw new Error(`No identity found for ${did}`);
+  return { avatar: bluesky?.avatar, did, displayName: bluesky?.displayName, handle: documented };
+}
+
 export function getCachedBlueskyProfile(did: string) {
   let profile = blueskyProfileCache.get(did);
   if (!profile) {
-    profile = getBlueskyProfile(did)
-      .then(({ avatar, displayName, handle }) => ({
-        avatar,
-        did,
-        displayName,
-        handle,
-      }))
+    profile = lookupActor(did)
       .catch(() => {
         // A temporary lookup failure must not become a permanent cached identity.
         blueskyProfileCache.delete(did);
@@ -67,7 +91,9 @@ export function displayActorName(
   return (
     actor?.displayName ||
     handle ||
-    (did ? `Listener · ${did.slice(-6)}` : "Unknown listener")
+    // With no profile anywhere, the DID is the one honest name to show.
+    did ||
+    "Unknown listener"
   );
 }
 

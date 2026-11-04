@@ -30,6 +30,7 @@ import {
 } from "@/components/ds";
 import RichText from "@/components/post/RichText";
 import { ReactionBar } from "@/components/today/ReactionBar";
+import { useDisplayActor } from "@/hooks/useDisplayActor";
 import { useStore } from "@/stores/mainStore";
 
 function param(value: string | string[] | undefined) {
@@ -37,12 +38,13 @@ function param(value: string | string[] | undefined) {
 }
 
 function Reply({ reply, last }: { reply: SocialPostView; last: boolean }) {
-  const name = reply.author?.displayName || reply.author?.handle || "Someone";
+  const author = useDisplayActor(reply.author, reply.authorDid);
+  const name = author.name;
   return (
     <View className={last ? "flex-row gap-3 py-3.5" : "flex-row gap-3 border-b border-hair py-3.5"}>
-      <Link href={`/profile/${reply.authorDid}`} asChild>
-        <Pressable accessibilityLabel={`${name}'s profile`} className="self-start">
-          <Avatar did={reply.authorDid} avatar={reply.author?.avatar} name={name} size={36} />
+      <Link href={author.href as never} asChild>
+        <Pressable accessibilityLabel={name ? `${name}'s profile` : "Profile"} className="self-start">
+          <Avatar did={author.did} avatar={author.avatar} name={name} size={36} />
         </Pressable>
       </Link>
       <View className="min-w-0 flex-1 gap-1.5">
@@ -100,7 +102,7 @@ export default function PostScreen() {
   const data = post.data;
   const play = data ? trackViewToPlayView(data.track) : undefined;
   const artist = play?.artists?.[0];
-  const name = data?.author?.displayName || data?.author?.handle || "Someone";
+  const name = useDisplayActor(data?.author, data?.authorDid).name;
   const context = data?.listenContext;
   const isOwn = !!viewer && data?.authorDid === viewer;
 

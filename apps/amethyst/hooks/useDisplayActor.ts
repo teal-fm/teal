@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import type { MiniProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
-import { actorAvatarUrl, actorProfileHref, displayActorName, getCachedBlueskyProfile, type DisplayActor } from "@/lib/teal/actors";
+import {
+  actorAvatarUrl,
+  actorProfileHref,
+  displayActorName,
+  getCachedBlueskyProfile,
+  normalizeHandle,
+  type DisplayActor,
+} from "@/lib/teal/actors";
 
 /**
  * An indexed actor, with Bluesky filling a missing name or handle. Returns what a
@@ -24,9 +31,12 @@ export function useDisplayActor(actor: DisplayActor | MiniProfileView | undefine
         handle: actor?.handle || bluesky.data.handle,
       }
     : actor;
+  // While the lookup runs, show no name rather than a placeholder that reads as a person.
+  const resolving = needsFallback && bluesky.isPending && !actor?.displayName && !actor?.handle;
   return {
     did: id,
-    name: displayActorName(merged, id),
+    name: resolving ? "" : displayActorName(merged, id),
+    handle: merged?.handle ? normalizeHandle(merged.handle) : undefined,
     href: `/profile/${actorProfileHref(merged, id)}`,
     // A teal avatar is a blob CID; Bluesky's is already a URL.
     avatar: actor?.avatar ? actorAvatarUrl(actor, id) : merged?.avatar,
