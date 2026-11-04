@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   Easing,
@@ -14,13 +14,25 @@ export type AmbientBlob = {
   uri: string;
   /** 0..1, how close the cover's source is to the middle of the screen. */
   weight: number;
-  /** Vertical centre of the source in window coordinates. */
-  cy: number;
 };
 
-// Covers take turns across three lanes so colour reaches both edges of wide screens.
-const LANES = [0.1, 0.9, 0.5];
-const ease = Easing.bezier(0.2, 0.8, 0.2, 1);
+/**
+ * Fixed spots, as fractions of the window, that covers take as they arrive.
+ * The colour stays put while the page scrolls: following the content at any
+ * other pace reads as the background swimming, which can make people queasy.
+ */
+const SLOTS: [number, number][] = [
+  [0.15, 0.25],
+  [0.85, 0.35],
+  [0.5, 0.75],
+  [0.1, 0.8],
+  [0.9, 0.8],
+  [0.5, 0.15],
+  [0.3, 0.5],
+  [0.7, 0.55],
+];
+const FADE_MS = 1200;
+const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 
 function hash(value: string) {
   let h = 2166136261;
@@ -30,53 +42,53 @@ function hash(value: string) {
   return (h >>> 0) / 4294967296;
 }
 
+type Shown = { uri: string; weight: number; slot: number };
+
 function Blob({
-  blob,
-  lane,
+  shown,
   size,
+  onGone,
 }: {
-  blob: AmbientBlob;
-  lane: number;
+  shown: Shown;
   size: number;
+  onGone: (uri: string) => void;
 }) {
   const { width, height } = useWindowDimensions();
   const opacity = useSharedValue(0);
-  const x = useSharedValue((LANES[lane] + (hash(blob.uri) - 0.5) * 0.16) * width);
-  const y = useSharedValue(height * 0.45);
+  const target = Math.pow(shown.weight, 0.7);
 
   useEffect(() => {
-    const mid = height * 0.45;
-    opacity.value = withTiming(Math.pow(blob.weight, 0.7), {
-      duration: 1000,
-      easing: ease,
-    });
-    // Blobs ride along with their source at a slower, parallax pace.
-    y.value = withTiming(mid + (blob.cy - mid) * 0.55, {
-      duration: 1200,
-      easing: ease,
-    });
-    x.value = withTiming(
-      (LANES[lane] + (hash(blob.uri) - 0.5) * 0.16) * width,
-      { duration: 1200, easing: ease },
-    );
-  }, [blob.weight, blob.cy, height, lane, width, blob.uri, opacity, x, y]);
+    opacity.value = withTiming(target, { duration: FADE_MS, easing: ease });
+    if (target > 0) return;
+    // Stay mounted until the fade-out finishes, so a cover never blinks away.
+    const timer = setTimeout(() => onGone(shown.uri), FADE_MS);
+    return () => clearTimeout(timer);
+  }, [target, opacity, onGone, shown.uri]);
 
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateX: x.value - size / 2 },
-      { translateY: y.value - size / 2 },
-    ],
-  }));
+  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const [fx, fy] = SLOTS[shown.slot];
 
   return (
     <Animated.View
       style={[
-        { position: "absolute", width: size, height: size, borderRadius: size / 2, overflow: "hidden" },
+        {
+          position: "absolute",
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          overflow: "hidden",
+          left: fx * width - size / 2,
+          top: fy * height - size / 2,
+        },
         style,
       ]}
     >
-      <Image source={{ uri: blob.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <Image
+        source={{ uri: shown.uri }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
     </Animated.View>
   );
 }
@@ -96,14 +108,34 @@ const blurFilter =
 export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
   const { width, height } = useWindowDimensions();
   const { isDarkColorScheme } = useColorScheme();
-  const lanes = useRef(new Map<string, number>());
   const size = Math.max(width, height) * (width >= 1000 ? 0.75 : 0.95);
+  const [shown, setShown] = useState<Shown[]>([]);
 
-  for (const blob of blobs) {
-    if (!lanes.current.has(blob.uri)) {
-      lanes.current.set(blob.uri, lanes.current.size % LANES.length);
-    }
-  }
+  // Covers that drop out fade to nothing in their spot; new ones take a free spot.
+  useEffect(() => {
+    setShown((prev) => {
+      const incoming = new Map(blobs.map((blob) => [blob.uri, blob.weight]));
+      const next = prev.map((item) => ({
+        ...item,
+        weight: incoming.get(item.uri) ?? 0,
+      }));
+      const used = new Set(next.map((item) => item.slot));
+      for (const blob of blobs) {
+        if (prev.some((item) => item.uri === blob.uri)) continue;
+        let slot = SLOTS.findIndex((_, index) => !used.has(index));
+        if (slot < 0) slot = Math.floor(hash(blob.uri) * SLOTS.length);
+        used.add(slot);
+        next.push({ uri: blob.uri, weight: blob.weight, slot });
+      }
+      return next;
+    });
+  }, [blobs]);
+
+  const forget = useCallback((uri: string) => {
+    setShown((prev) =>
+      prev.filter((item) => item.uri !== uri || item.weight > 0),
+    );
+  }, []);
 
   return (
     <View
@@ -113,13 +145,8 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
       className="bg-ground"
     >
       <View style={[StyleSheet.absoluteFill, { filter: blurFilter } as object]}>
-        {blobs.map((blob) => (
-          <Blob
-            key={blob.uri}
-            blob={blob}
-            lane={lanes.current.get(blob.uri) ?? 0}
-            size={size}
-          />
+        {shown.map((item) => (
+          <Blob key={item.uri} shown={item} size={size} onGone={forget} />
         ))}
       </View>
       {Platform.OS === "ios" && (

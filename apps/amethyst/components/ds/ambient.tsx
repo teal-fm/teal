@@ -75,7 +75,7 @@ export function AmbientScreen({
                 const weight = weightFor(y, y + h, height);
                 const prev = seen.get(source.uri);
                 if (weight > 0 && (!prev || prev.weight < weight)) {
-                  seen.set(source.uri, { uri: source.uri, weight, cy: y + h / 2 });
+                  seen.set(source.uri, { uri: source.uri, weight });
                 }
               }
               resolve();
