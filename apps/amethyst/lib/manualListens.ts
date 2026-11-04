@@ -479,3 +479,28 @@ export async function submitManualListenRecords(
     ? results.length
     : records.length;
 }
+
+/** A `datetime-local` style value for now, in local time. */
+export function localDateTimeValue(date = new Date()) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function parseLocalDateTime(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+export function releaseArtist(release: MusicBrainzAlbumRelease) {
+  return release.artistCredit?.map((credit) => credit.name || credit.artist.name).join(", ") || "Unknown artist";
+}
+
+/** Date, country, format, and status: enough to tell editions of an album apart. */
+export function releaseDetails(release: MusicBrainzAlbumRelease) {
+  const formats = [...new Set(release.media?.map((medium) => medium.format).filter(Boolean))].join(" + ");
+  return [release.date, release.country, formats, release.status, release.disambiguation].filter(Boolean).join(" · ");
+}
+
+export function flattenTracks(release: MusicBrainzAlbumRelease) {
+  return (release.media || []).flatMap((medium) => medium.tracks || []);
+}

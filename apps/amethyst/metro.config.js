@@ -26,7 +26,7 @@ function writeCssEntry() {
 writeCssEntry();
 if (process.env.NODE_ENV !== "production" && !process.env.CI) {
   let pending;
-  for (const dir of ["app", "components", "lib"]) {
+  for (const dir of ["app", "components", "lib", "next"]) {
     try {
       fs.watch(path.join(__dirname, dir), { recursive: true }, (_event, file) => {
         if (!file || !/\.(tsx?|jsx?)$/.test(file)) return;

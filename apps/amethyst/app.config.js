@@ -57,7 +57,8 @@ export default () => {
             },
           },
         ],
-        "expo-router",
+        // The rewrite builds in next/ until it reaches parity; AMETHYST_NEXT=1 serves it.
+        ["expo-router", process.env.AMETHYST_NEXT ? { root: "./next/app" } : {}],
         "expo-web-browser",
         "expo-splash-screen",
         "expo-status-bar",

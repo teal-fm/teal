@@ -8,6 +8,7 @@ import {
 import { useStore } from "@/stores/mainStore";
 
 import {
+  getReactions,
   getSocialFeed,
   getToday,
   type ReactionSummary,
@@ -25,6 +26,7 @@ import {
 export const keys = {
   today: (viewer?: string) => ["today", viewer ?? null] as const,
   feed: (viewer?: string) => ["feed", viewer ?? null] as const,
+  reactions: (subject: string, viewer?: string) => ["reactions", subject, viewer ?? null] as const,
 };
 
 export function useViewerDid() {
@@ -87,6 +89,23 @@ function patchReactions(
       })),
     },
   );
+  const patchPost = (post: SocialPostView) =>
+    post.uri === subjectUri ? { ...post, reactions: update(post.reactions ?? []) } : post;
+  client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: ["actor-posts"] }, (posts) =>
+    posts && { ...posts, pages: posts.pages.map((page) => ({ ...page, items: page.items.map(patchPost) })) },
+  );
+  client.setQueriesData<SocialPostView>({ queryKey: ["post", subjectUri] }, (post) => post && patchPost(post));
+  client.setQueryData<ReactionSummary[]>(keys.reactions(subjectUri, viewer), (summaries) => summaries && update(summaries));
+}
+
+/** The reactions on one subject, for pages (like a listen) whose views don't carry them. */
+export function useReactionsQuery(subject?: string) {
+  const viewer = useViewerDid();
+  return useQuery({
+    queryKey: keys.reactions(subject ?? "", viewer),
+    queryFn: () => getReactions(subject!, viewer).then((r) => r.summary),
+    enabled: !!subject,
+  });
 }
 
 /**
