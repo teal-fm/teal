@@ -1,0 +1,692 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-04T00:10:33.109053+00:00",
+  "title": "Design System: teal.fm (Amethyst)",
+  "extensions": {
+    "colorMeta": {
+      "tint": {
+        "role": "primary",
+        "displayName": "Teal Tint (light)",
+        "tonalRamp": [
+          "oklch(15% 0.027 185)",
+          "oklch(26% 0.047 185)",
+          "oklch(37% 0.067 185)",
+          "oklch(48% 0.087 185)",
+          "oklch(59% 0.093 185)",
+          "oklch(70% 0.073 185)",
+          "oklch(82% 0.051 185)",
+          "oklch(95% 0.027 185)"
+        ],
+        "canonical": "oklch(51% 0.09 185)"
+      },
+      "tint-dark": {
+        "role": "primary",
+        "displayName": "Teal Tint (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.033 184)",
+          "oklch(26% 0.057 184)",
+          "oklch(37% 0.081 184)",
+          "oklch(48% 0.105 184)",
+          "oklch(59% 0.111 184)",
+          "oklch(70% 0.087 184)",
+          "oklch(82% 0.061 184)",
+          "oklch(95% 0.033 184)"
+        ],
+        "canonical": "oklch(76% 0.12 184)"
+      },
+      "on-tint": {
+        "role": "primary",
+        "displayName": "On Tint (light)",
+        "tonalRamp": [
+          "oklch(15% 0.0 0)",
+          "oklch(26% 0.0 0)",
+          "oklch(37% 0.0 0)",
+          "oklch(48% 0.0 0)",
+          "oklch(59% 0.0 0)",
+          "oklch(70% 0.0 0)",
+          "oklch(82% 0.0 0)",
+          "oklch(95% 0.0 0)"
+        ]
+      },
+      "on-tint-dark": {
+        "role": "primary",
+        "displayName": "On Tint (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.027 185)",
+          "oklch(26% 0.047 185)",
+          "oklch(37% 0.067 185)",
+          "oklch(48% 0.087 185)",
+          "oklch(59% 0.093 185)",
+          "oklch(70% 0.073 185)",
+          "oklch(82% 0.051 185)",
+          "oklch(95% 0.027 185)"
+        ],
+        "canonical": "oklch(26% 0.05 185)"
+      },
+      "tint-soft": {
+        "role": "primary",
+        "displayName": "Tint Wash (light)",
+        "tonalRamp": [
+          "oklch(15% 0.027 185)",
+          "oklch(26% 0.047 185)",
+          "oklch(37% 0.067 185)",
+          "oklch(48% 0.087 185)",
+          "oklch(59% 0.093 185)",
+          "oklch(70% 0.073 185)",
+          "oklch(82% 0.051 185)",
+          "oklch(95% 0.027 185)"
+        ]
+      },
+      "tint-soft-dark": {
+        "role": "primary",
+        "displayName": "Tint Wash (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.033 184)",
+          "oklch(26% 0.057 184)",
+          "oklch(37% 0.081 184)",
+          "oklch(48% 0.105 184)",
+          "oklch(59% 0.111 184)",
+          "oklch(70% 0.087 184)",
+          "oklch(82% 0.061 184)",
+          "oklch(95% 0.033 184)"
+        ]
+      },
+      "now": {
+        "role": "secondary",
+        "displayName": "Listening Now Aqua",
+        "tonalRamp": [
+          "oklch(15% 0.033 184)",
+          "oklch(26% 0.057 184)",
+          "oklch(37% 0.081 184)",
+          "oklch(48% 0.105 184)",
+          "oklch(59% 0.111 184)",
+          "oklch(70% 0.087 184)",
+          "oklch(82% 0.061 184)",
+          "oklch(95% 0.033 184)"
+        ],
+        "canonical": "oklch(76% 0.12 184)"
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Ground (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "Ground (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ground-2": {
+        "role": "neutral",
+        "displayName": "Grouped Ground (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ground-2-dark": {
+        "role": "neutral",
+        "displayName": "Grouped Ground (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Ink (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2 (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Ink 2 (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3 (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "ink-3-dark": {
+        "role": "neutral",
+        "displayName": "Ink 3 (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "hair": {
+        "role": "neutral",
+        "displayName": "Hairline (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "hair-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "fill": {
+        "role": "neutral",
+        "displayName": "Fill (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "fill-dark": {
+        "role": "neutral",
+        "displayName": "Fill (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "glass": {
+        "role": "neutral",
+        "displayName": "Glass (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "glass-dark": {
+        "role": "neutral",
+        "displayName": "Glass (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "glass-strong": {
+        "role": "neutral",
+        "displayName": "Glass Strong (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "glass-strong-dark": {
+        "role": "neutral",
+        "displayName": "Glass Strong (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "glass-edge": {
+        "role": "neutral",
+        "displayName": "Glass Edge (light)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "glass-edge-dark": {
+        "role": "neutral",
+        "displayName": "Glass Edge (dark)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(37% 0.005 286)",
+          "oklch(48% 0.007 286)",
+          "oklch(59% 0.007 286)",
+          "oklch(70% 0.006 286)",
+          "oklch(82% 0.004 286)",
+          "oklch(95% 0.002 286)"
+        ]
+      },
+      "chip-scrim": {
+        "role": "neutral",
+        "displayName": "Chip Scrim",
+        "tonalRamp": [
+          "oklch(15% 0.0 0)",
+          "oklch(26% 0.0 0)",
+          "oklch(37% 0.0 0)",
+          "oklch(48% 0.0 0)",
+          "oklch(59% 0.0 0)",
+          "oklch(70% 0.0 0)",
+          "oklch(82% 0.0 0)",
+          "oklch(95% 0.0 0)"
+        ]
+      },
+      "on-scrim": {
+        "role": "neutral",
+        "displayName": "On Scrim",
+        "tonalRamp": [
+          "oklch(15% 0.0 0)",
+          "oklch(26% 0.0 0)",
+          "oklch(37% 0.0 0)",
+          "oklch(48% 0.0 0)",
+          "oklch(59% 0.0 0)",
+          "oklch(70% 0.0 0)",
+          "oklch(82% 0.0 0)",
+          "oklch(95% 0.0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "hero": {
+        "displayName": "Hero",
+        "purpose": "Artist and album names on music pages; 40px rising to 52px at sm; haloed over the backdrop."
+      },
+      "large-title": {
+        "displayName": "Large Title",
+        "purpose": "Screen titles: Today, Explore, shell page titles."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings within pages."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Headings inside glass panels."
+      },
+      "post-text": {
+        "displayName": "Post Text",
+        "purpose": "What someone said in a song post; the largest feed text."
+      },
+      "card-title": {
+        "displayName": "Card Title",
+        "purpose": "Track or release name under a deck card."
+      },
+      "row-title": {
+        "displayName": "Row Title",
+        "purpose": "Track in a post; notice titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Artist and album lines, listening facts, weave notes; usually ink-2."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Timestamps, counts, circle context; tabular numerals."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chips over art and small captions (11.5 to 13.5px)."
+      },
+      "tab-label": {
+        "displayName": "Tab Label",
+        "purpose": "Web pill tab bar labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "cover-lift",
+        "value": "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+        "purpose": "Deck covers and music page hero art."
+      },
+      {
+        "name": "cover-rest",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        "purpose": "Covers inside post cards."
+      },
+      {
+        "name": "sticker",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Emoji stickers on covers, release grid art, the tint Post a song pill."
+      },
+      {
+        "name": "halo-light",
+        "value": "0 0 10px rgba(255,255,255,0.65)",
+        "purpose": "Text-shadow for text set directly on the backdrop in light mode."
+      },
+      {
+        "name": "halo-dark",
+        "value": "0 0 10px rgba(0,0,0,0.6)",
+        "purpose": "Text-shadow for text set directly on the backdrop in dark mode."
+      }
+    ],
+    "materials": [
+      {
+        "name": "backdrop-blur",
+        "value": "web: blur(56px) saturate(2); android: blur(60px) saturate(1.8); ios: saturate(1.8) + BlurView intensity 90",
+        "purpose": "Blended cover backdrop; up to 6 covers in three lanes (10%, 90%, 50% of width), weighted by distance from 45% viewport height."
+      },
+      {
+        "name": "backdrop-veil-light",
+        "value": "rgba(250,250,252,0.32)",
+        "purpose": "Fixed veil over the light backdrop."
+      },
+      {
+        "name": "backdrop-veil-dark",
+        "value": "rgba(0,0,0,0.42)",
+        "purpose": "Fixed veil over the dark backdrop."
+      },
+      {
+        "name": "glass-material",
+        "value": "ios: systemThinMaterial BlurView intensity 60; web: backdrop-filter blur(40px) saturate(1.5); android: glass-strong fill, no blur",
+        "purpose": "Frosted panels."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-ambient",
+        "value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "purpose": "Backdrop blobs; opacity over 1000ms, position over 1200ms at a 0.55 parallax."
+      },
+      {
+        "name": "deck-focus",
+        "value": "transform, opacity 300ms",
+        "purpose": "Unfocused deck cards ease to scale 0.94 and opacity 0.8."
+      },
+      {
+        "name": "sticker-enter",
+        "value": "ZoomIn spring, damping 9",
+        "purpose": "Reaction stickers stamping onto a cover."
+      },
+      {
+        "name": "press-shrink",
+        "value": "scale 0.75 (quick reactions), 0.95 (pills)",
+        "purpose": "Native press feedback."
+      },
+      {
+        "name": "cover-fade",
+        "value": "200ms",
+        "purpose": "Cover image load transition."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "wide",
+        "value": "1000px"
+      },
+      {
+        "name": "shell-rail",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Pill Button",
+      "kind": "button",
+      "refersTo": "button-tint",
+      "description": "The one main action in a context: Post a song, Sign in.",
+      "html": "<button class=\"ds-btn-tint\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z\"/></svg>Post a song</button>",
+      "css": ".ds-btn-tint { display:inline-flex; align-items:center; gap:8px; height:46px; padding:0 20px; border:none; border-radius:9999px; background:var(--tint); color:var(--on-tint); font:600 15.5px/1 system-ui, -apple-system, Roboto, sans-serif; box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); cursor:pointer; transition:transform 150ms, filter 150ms; } .ds-btn-tint:hover { filter:brightness(1.06); } .ds-btn-tint:active { transform:scale(0.95); } .ds-btn-tint:focus-visible { outline:3px solid var(--tint); outline-offset:3px; }"
+    },
+    {
+      "name": "Secondary Pill Button",
+      "kind": "button",
+      "refersTo": "button-fill",
+      "description": "Quiet secondary actions: Try again, See who's listening.",
+      "html": "<button class=\"ds-btn-fill\">See who's listening</button>",
+      "css": ".ds-btn-fill { height:36px; padding:0 14px; border:none; border-radius:9999px; background:var(--fill); color:var(--ink); font:600 14.5px/1 system-ui, -apple-system, Roboto, sans-serif; cursor:pointer; transition:transform 150ms, background 150ms; } .ds-btn-fill:hover { background:rgba(120,120,128,0.2); } .ds-btn-fill:active { transform:scale(0.95); } .ds-btn-fill:focus-visible { outline:3px solid var(--tint); outline-offset:3px; }"
+    },
+    {
+      "name": "Glass Panel",
+      "kind": "card",
+      "refersTo": "glass-panel",
+      "description": "The frosted container every reading surface sits on, over the cover backdrop.",
+      "html": "<div class=\"ds-glass\"><div class=\"ds-glass-title\">Taste match</div><div class=\"ds-glass-body\">You and ana share 14 artists this month.</div></div>",
+      "css": ".ds-glass { padding:16px; border-radius:26px; border:1px solid var(--glass-edge); background:var(--glass); backdrop-filter:blur(40px) saturate(1.5); -webkit-backdrop-filter:blur(40px) saturate(1.5); font-family:system-ui, -apple-system, Roboto, sans-serif; max-width:420px; } .ds-glass-title { font-size:20px; font-weight:700; color:var(--ink); } .ds-glass-body { margin-top:6px; font-size:15px; color:var(--ink-2); }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "glass-panel-strong",
+      "description": "Explore search: a borderless input inside a strong glass panel.",
+      "html": "<label class=\"ds-search\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input placeholder=\"Search listeners, songs, artists, albums\"/></label>",
+      "css": ".ds-search { display:flex; align-items:center; gap:12px; padding:16px; border-radius:26px; border:1px solid var(--glass-edge); background:var(--glass-strong); backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px); color:var(--ink-2); max-width:520px; } .ds-search input { flex:1; height:48px; border:none; background:transparent; outline:none; font:400 18px system-ui, -apple-system, Roboto, sans-serif; color:var(--ink); caret-color:var(--tint); } .ds-search input::placeholder { color:var(--ink-3); } .ds-search:focus-within { border-color:var(--tint-soft); }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Wide-web frosted sidebar; active item in the tint wash.",
+      "html": "<nav class=\"ds-nav\"><div class=\"ds-nav-mark\">teal<span>.fm</span></div><a class=\"ds-nav-item ds-nav-active\" href=\"#\">Today</a><a class=\"ds-nav-item\" href=\"#\">Explore</a><a class=\"ds-nav-item\" href=\"#\">Activity</a><a class=\"ds-nav-item\" href=\"#\">You</a></nav>",
+      "css": ".ds-nav { width:232px; display:flex; flex-direction:column; gap:2px; padding:22px 12px 12px; border-radius:30px; border:1px solid var(--glass-edge); background:var(--glass-strong); backdrop-filter:blur(40px) saturate(1.5); -webkit-backdrop-filter:blur(40px) saturate(1.5); font-family:system-ui, -apple-system, Roboto, sans-serif; } .ds-nav-mark { padding:0 12px 22px; font-size:25px; font-weight:800; letter-spacing:-0.025em; color:var(--tint); } .ds-nav-mark span { font-weight:600; color:var(--ink-3); } .ds-nav-item { display:flex; align-items:center; height:46px; padding:0 12px; border-radius:15px; font-size:16px; font-weight:600; color:var(--ink-2); text-decoration:none; transition:background 150ms; } .ds-nav-item:hover { background:var(--fill); } .ds-nav-item:focus-visible { outline:3px solid var(--tint); outline-offset:2px; } .ds-nav-active, .ds-nav-active:hover { background:var(--tint-soft); color:var(--tint); }"
+    },
+    {
+      "name": "Reaction Pills",
+      "kind": "chip",
+      "refersTo": "reaction-pill",
+      "description": "Emoji reaction counts; yours in the tint wash.",
+      "html": "<div class=\"ds-reacts\"><button class=\"ds-react ds-react-mine\">🔥<b>12</b></button><button class=\"ds-react\">🫶<b>3</b></button><button class=\"ds-react\">🤯<b>1</b></button></div>",
+      "css": ".ds-reacts { display:flex; gap:6px; font-family:system-ui, -apple-system, Roboto, sans-serif; } .ds-react { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 10px; border:1px solid transparent; border-radius:9999px; background:var(--fill); font-size:15px; cursor:pointer; transition:transform 120ms; } .ds-react b { font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink); } .ds-react:active { transform:scale(0.95); } .ds-react:focus-visible { outline:3px solid var(--tint); outline-offset:2px; } .ds-react-mine { background:var(--tint-soft); border-color:rgba(11,122,115,0.4); } .ds-react-mine b { color:var(--tint); }"
+    },
+    {
+      "name": "Friend Chip",
+      "kind": "chip",
+      "refersTo": "friend-chip",
+      "description": "Who is playing a deck card, laid over the cover, with the listening-now dot.",
+      "html": "<div class=\"ds-friend\"><span class=\"ds-friend-av\">A</span><b>ana</b><i class=\"ds-now\"></i><span>now</span></div>",
+      "css": ".ds-friend { display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 12px 0 3px; border-radius:9999px; background:rgba(0,0,0,0.45); color:#fff; font-family:system-ui, -apple-system, Roboto, sans-serif; } .ds-friend-av { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:var(--fill); font-size:11px; font-weight:600; } .ds-friend b { font-size:13.5px; font-weight:600; } .ds-friend span:last-child { font-size:12.5px; color:rgba(255,255,255,0.8); } .ds-now { width:7px; height:7px; border-radius:50%; background:#3fc9bd; }"
+    },
+    {
+      "name": "Deck Card",
+      "kind": "custom",
+      "refersTo": "deck-cover",
+      "description": "Listening deck card: 18px-radius cover with lift shadow, stickers, haloed title block, quick reactions.",
+      "html": "<div class=\"ds-deck\"><div class=\"ds-deck-cover\"><div class=\"ds-deck-stickers\"><span>🔥</span><span>😭</span></div></div><div class=\"ds-deck-title\">Pink + White</div><div class=\"ds-deck-sub\">Frank Ocean · Blonde</div><div class=\"ds-deck-quick\"><button>🔥</button><button>😭</button><button>🫶</button><button>🔁</button><button>🤯</button></div></div>",
+      "css": ".ds-deck { width:280px; font-family:system-ui, -apple-system, Roboto, sans-serif; } .ds-deck-cover { position:relative; width:280px; height:280px; border-radius:18px; background:linear-gradient(135deg,#e6a5b8,#6fa9c9); box-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25); } .ds-deck-stickers { position:absolute; right:10px; bottom:10px; display:flex; flex-direction:row-reverse; } .ds-deck-stickers span { width:44px; height:44px; margin-left:-12px; border-radius:50%; display:grid; place-items:center; background:var(--ground); font-size:23px; box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); } .ds-deck-title { margin-top:12px; font-size:19px; font-weight:700; color:var(--ink); text-shadow:0 0 10px rgba(255,255,255,0.65); } .ds-deck-sub { font-size:15px; color:var(--ink-2); text-shadow:0 0 10px rgba(255,255,255,0.65); } .ds-deck-quick { display:flex; margin:8px 0 0 -6px; } .ds-deck-quick button { width:40px; height:40px; border:none; border-radius:50%; background:transparent; font-size:22px; cursor:pointer; transition:transform 120ms, background 120ms; } .ds-deck-quick button:hover { background:var(--fill); } .ds-deck-quick button:active { transform:scale(0.75); } .ds-deck-quick button:focus-visible { outline:3px solid var(--tint); outline-offset:1px; }"
+    },
+    {
+      "name": "Weave Note",
+      "kind": "custom",
+      "refersTo": "weave-note",
+      "description": "Pill-shaped glass note woven between posts; avatar wears the now ring.",
+      "html": "<div class=\"ds-weave\"><span class=\"ds-weave-av\"><span>J</span></span><p><b>jo</b> has played 6 songs from <b>Blonde</b> today</p><span class=\"ds-weave-cover\"></span></div>",
+      "css": ".ds-weave { display:flex; align-items:center; gap:12px; padding:8px; border-radius:9999px; border:1px solid var(--glass-edge); background:var(--glass); backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px); font-family:system-ui, -apple-system, Roboto, sans-serif; max-width:460px; } .ds-weave-av { width:32px; height:32px; padding:2px; border-radius:50%; background:#3fc9bd; flex-shrink:0; } .ds-weave-av span { display:grid; place-items:center; width:100%; height:100%; border-radius:50%; border:2px solid var(--ground); box-sizing:border-box; background:var(--fill); font-size:11px; font-weight:600; color:var(--ink-2); } .ds-weave p { flex:1; margin:0; font-size:15px; color:var(--ink-2); } .ds-weave b { font-weight:600; color:var(--ink); } .ds-weave-cover { width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#e6a5b8,#6fa9c9); flex-shrink:0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Glass Over the Record Shelf",
+    "overview": "Amethyst looks like the platform it runs on. It uses system type, Apple-style grounds and inks, hairlines, and one teal tint. Colour doesn't come from the palette. It comes from the music: every screen sits on a backdrop that blends the blurred covers nearest the middle of the viewport, and content floats above it on frosted panels. The base stays calm and Are.na-quiet. The energy belongs to album art, people's faces, and the playful moments where people meet: the listening deck, emoji stickers stamped onto covers, and the teal \"listening now\" ring.\n\nThe density is that of a native list app, not an editorial page. Large system titles anchor each screen. Under them are panels with 26px corners, covers with soft shadows, and pill-shaped controls. Light and dark get equal design attention. Every surface token has a deliberate value for each theme, and the backdrop veil, the glass, and the text halo all switch with the scheme. Each platform gets its own idioms. iOS gets system blur materials and native tabs, Android gets Material tabs and a stronger translucent fill where backdrop blur isn't available, and the web gets a frosted sidebar or a floating pill tab bar.\n\nThe rejections are recorded in PRODUCT.md: no themed costumes (radio, record label, poster, signage), no ratings or reviews, and no story timers or one-at-a-time gating.",
+    "keyCharacteristics": [
+      "System type with large titles. No display face.",
+      "Teal is the only tint. Album art supplies every other colour.",
+      "A blended, blurred-cover backdrop follows whatever covers are near the middle of the screen.",
+      "Content sits on frosted glass panels. Text set directly on the backdrop gets a theme-aware halo.",
+      "Light and dark are designed equally, and each platform keeps its native idioms.",
+      "Reactions are emoji (🔥😭🫶🔁🤯 plus any emoji). There are no stars, scores, or reviews.",
+      "\"Listening now\" is marked with the teal `now` dot or ring and is never called \"live\"."
+    ],
+    "rules": [
+      {
+        "name": "The One Tint Rule",
+        "body": "Teal is the only accent the interface owns. Any other colour on screen must come from album art or people's avatars.",
+        "section": "colors"
+      },
+      {
+        "name": "The Art Brings the Colour Rule",
+        "body": "Screens don't get a background colour. They get a backdrop made from the covers on them: up to 6 covers, weighted by how close each is to 45% of the viewport height, blurred and saturated, then veiled per theme (black at 42% on dark, rgba(250,250,252,0.32) on light).",
+        "section": "colors"
+      },
+      {
+        "name": "The Now Is Not Live Rule",
+        "body": "Presence is \"listening now\" with the `now` dot or ring. Never label it \"live\".",
+        "section": "colors"
+      },
+      {
+        "name": "The System Voice Rule",
+        "body": "All interface text uses the system family. Fraunces, Crimson Pro, and Plex Mono are still in the repo, but the redesign doesn't use them for interface text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Halo Rule",
+        "body": "Any text set directly on the backdrop, without a panel behind it, gets the theme halo: a 10px blur with no offset, in rgba(255,255,255,0.65) on light and rgba(0,0,0,0.6) on dark. Text on glass doesn't need it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Glass Holds, Art Floats Rule",
+        "body": "Panels never cast shadows. Only covers, stickers, and the one primary action do, and those shadows are always soft and blurred, never hard or offset.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** let covers supply colour: wrap screens in the ambient backdrop and mark covers as sources so the backdrop follows the content.",
+      "**Do** put reading content on glass panels (26px corners, 1px glass edge), and give any text on the bare backdrop the theme halo.",
+      "**Do** design every surface in both light and dark using the paired tokens, never values that only work in one theme.",
+      "**Do** use system type with large bold titles (34px screen titles), and recede secondary text with `ink-2` rather than shrinking it.",
+      "**Do** keep controls as pills and covers square, with radius scaled to their size.",
+      "**Do** mark presence with the `now` dot or ring and the words \"listening now\" or \"now\".",
+      "**Do** offer reactions as the quick set 🔥😭🫶🔁🤯 plus any emoji."
+    ],
+    "donts": [
+      "**Don't** add a second accent colour or tint the interface from a cover. Art colours only reach the screen through the blurred backdrop.",
+      "**Don't** introduce a display or serif face, mono labels, or uppercase tracked kicker lines above headings.",
+      "**Don't** add ratings, stars, scores, or review UI.",
+      "**Don't** call presence \"live\".",
+      "**Don't** put shadows on panels or use hard offset shadows anywhere.",
+      "**Don't** use the legacy shadcn tokens (`background`, `card`, `muted-foreground`, `primary`, `border`) on new or migrated surfaces.",
+      "**Don't** blend more than six covers into one backdrop. More turns it to mud."
+    ]
+  }
+}
