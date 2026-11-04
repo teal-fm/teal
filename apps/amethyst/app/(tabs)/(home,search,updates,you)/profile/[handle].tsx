@@ -59,7 +59,7 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false);
 
   const profile = profileQuery.data?.profile;
-  const name = profile?.displayName || normalizeHandle(profile?.handle) || "Listener";
+  const name = profile?.displayName || normalizeHandle(profile?.handle) || did || actor || "";
   const isSelf = !!viewer && did === viewer;
   const failed = didQuery.isError || profileQuery.isError;
 

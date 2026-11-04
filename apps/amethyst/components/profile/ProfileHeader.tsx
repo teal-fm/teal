@@ -63,7 +63,7 @@ export function ProfileHeader({
   const layout = useLayout();
   const [bioOpen, setBioOpen] = useState(false);
   const handle = normalizeHandle(profile?.handle);
-  const name = profile?.displayName || handle || "Listener";
+  const name = profile?.displayName || handle || did;
   const bio = profile?.description || "";
   const longBio = bio.length > LONG_BIO || bio.split("\n").length > 3;
 

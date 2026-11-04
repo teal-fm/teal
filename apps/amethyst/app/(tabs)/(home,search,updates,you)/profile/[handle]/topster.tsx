@@ -60,7 +60,7 @@ export default function TopsterScreen() {
     queryFn: () => getProfile(actor).then((r) => r.profile),
     enabled: !!actor,
   });
-  const name = profile.data?.displayName || (actor.startsWith("did:") ? "Listener" : normalizeHandle(actor));
+  const name = profile.data?.displayName || normalizeHandle((profile.data as { handle?: string } | undefined)?.handle) || normalizeHandle(actor);
   const title = `${name}'s top albums`;
   const releases = chart.data ?? [];
   const gap = 4;

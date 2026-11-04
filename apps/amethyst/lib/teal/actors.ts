@@ -41,16 +41,25 @@ export function getProfileImageUrl(
 }
 
 /**
- * The handle an account's DID document claims, kept only when the handle resolves
- * back to the same DID, so a document can't borrow someone else's name.
+ * An account as its DID document describes it, or `undefined` when the document
+ * doesn't resolve. The handle is kept only when it resolves back to the same DID,
+ * so a document can't borrow someone else's name.
  */
-async function verifiedDocumentHandle(did: string) {
-  const doc = (await getDidDocument(did)) as { alsoKnownAs?: string[] } | undefined;
-  const handle = doc?.alsoKnownAs
+export async function documentIdentity(did: string): Promise<{ handle?: string } | undefined> {
+  const doc = (await getDidDocument(did).catch(() => undefined)) as
+    | { alsoKnownAs?: string[] }
+    | undefined;
+  if (!doc) return undefined;
+  const handle = doc.alsoKnownAs
     ?.find((aka) => aka.startsWith("at://"))
     ?.slice("at://".length);
-  if (!handle) return undefined;
-  return (await resolveHandle(handle).catch(() => undefined)) === did ? handle : undefined;
+  if (!handle) return {};
+  const verified = (await resolveHandle(handle).catch(() => undefined)) === did;
+  return verified ? { handle } : {};
+}
+
+async function verifiedDocumentHandle(did: string) {
+  return (await documentIdentity(did))?.handle;
 }
 
 /**

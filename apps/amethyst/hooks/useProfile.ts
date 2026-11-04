@@ -15,6 +15,7 @@ import {
   XrpcError,
   type GraphSummaryView,
 } from "@/lib/teal/api";
+import { documentIdentity } from "@/lib/teal/actors";
 import { useViewerDid } from "@/lib/teal/queries";
 import { rkeyFromAtUri } from "@/lib/teal/routes";
 import { useStore } from "@/stores/mainStore";
@@ -85,7 +86,11 @@ export function useProfile(did?: string, handleHint?: string) {
         });
         if (bsky) profile = withBluesky(profile, bsky);
         else if (fromBluesky && unknownToBluesky && !profile.displayName && !profile.avatar) {
-          throw new ProfileNotFoundError(did!);
+          // An account off Bluesky still exists while its DID document resolves, and
+          // then shows its handle, or just its DID.
+          const documented = await documentIdentity(did!);
+          if (!documented) throw new ProfileNotFoundError(did!);
+          profile = { ...profile, handle: profile.handle ?? documented.handle };
         }
       }
       return { profile, fromBluesky };

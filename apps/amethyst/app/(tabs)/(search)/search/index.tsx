@@ -142,7 +142,7 @@ export default function Explore() {
                   key={person.did}
                   href={`/profile/${person.did}`}
                   leading={<Avatar did={person.did} avatar={person.avatar} name={person.displayName ?? person.handle} size={44} />}
-                  title={person.displayName || person.handle || "Listener"}
+                  title={person.displayName || person.handle || person.did}
                   subtitle={person.handle ? `@${person.handle}` : undefined}
                   divider={i < data.people.length - 1}
                 />
