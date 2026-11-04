@@ -85,6 +85,14 @@ export function AmbientScreen({
           }),
       ),
     );
+    // A page with one cover in it, like an album or a listen, keeps that cover
+    // at full strength however far it scrolls, so it can fill the backdrop.
+    const uris = new Set([...sources.current.values()].map((source) => source.uri));
+    if (uris.size === 1) {
+      const [uri] = uris;
+      setBlobs([{ uri, weight: 1 }]);
+      return;
+    }
     const top = [...seen.values()]
       .sort((a, b) => b.weight - a.weight)
       .slice(0, MAX_BLOBS);

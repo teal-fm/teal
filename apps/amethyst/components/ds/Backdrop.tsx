@@ -62,14 +62,18 @@ async function fallbackFor(failed: string, original: string) {
 function Blob({
   shown,
   size,
+  solo,
   onGone,
 }: {
   shown: Shown;
   size: number;
+  /** The only cover in play, so it fills the whole window instead of one spot. */
+  solo: boolean;
   onGone: (uri: string) => void;
 }) {
   const { width, height } = useWindowDimensions();
   const opacity = useSharedValue(0);
+  const fill = useSharedValue(solo ? 1 : 0);
   const [source, setSource] = useState(() => thumbnail(shown.uri));
   const [loaded, setLoaded] = useState(false);
   // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
@@ -89,39 +93,73 @@ function Blob({
     return () => clearTimeout(timer);
   }, [target, shown.weight, opacity, onGone, shown.uri]);
 
+  // Spot and full-window layers crossfade rather than resize, so nothing moves.
+  useEffect(() => {
+    fill.value = withTiming(solo ? 1 : 0, {
+      duration: FADE_IN_MS,
+      easing: ease,
+      reduceMotion: ReduceMotion.Never,
+    });
+  }, [solo, fill]);
+
   const onError = () => {
     void fallbackFor(source, shown.uri).then((next) => {
       if (next) setSource(next);
     });
   };
 
-  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const spotStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value * (1 - fill.value),
+  }));
+  const fullStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value * fill.value,
+  }));
   const [fx, fy] = SLOTS[shown.slot];
+  const image = (onLoad?: () => void) => (
+    <Image
+      source={{ uri: source }}
+      style={StyleSheet.absoluteFill}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      onLoad={onLoad}
+      onError={onLoad ? onError : undefined}
+    />
+  );
 
   return (
-    <Animated.View
-      style={[
-        {
-          position: "absolute",
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          overflow: "hidden",
-          left: fx * width - size / 2,
-          top: fy * height - size / 2,
-        },
-        style,
-      ]}
-    >
-      <Image
-        source={{ uri: source }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        onLoad={() => setLoaded(true)}
-        onError={onError}
-      />
-    </Animated.View>
+    <>
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            overflow: "hidden",
+            left: fx * width - size / 2,
+            top: fy * height - size / 2,
+          },
+          spotStyle,
+        ]}
+      >
+        {image(() => setLoaded(true))}
+      </Animated.View>
+      {/* Overscanned so the blur doesn't fade the window's edges to the ground. */}
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            left: -width * 0.1,
+            top: -height * 0.1,
+            width: width * 1.2,
+            height: height * 1.2,
+          },
+          fullStyle,
+        ]}
+      >
+        {image()}
+      </Animated.View>
+    </>
   );
 }
 
@@ -179,6 +217,9 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
     return () => clearTimeout(timer);
   }, [blobs, recheck, commit]);
 
+  const active = shown.filter((item) => item.weight > 0);
+  const solo = active.length === 1 ? active[0].uri : undefined;
+
   const forget = useCallback(
     (uri: string) => {
       commit(current.current.filter((item) => item.uri !== uri || item.weight > 0));
@@ -195,7 +236,13 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
     >
       <View style={[StyleSheet.absoluteFill, { filter: blurFilter } as object]}>
         {shown.map((item) => (
-          <Blob key={item.uri} shown={item} size={size} onGone={forget} />
+          <Blob
+            key={item.uri}
+            shown={item}
+            size={size}
+            solo={solo === item.uri}
+            onGone={forget}
+          />
         ))}
       </View>
       {Platform.OS === "ios" && (
