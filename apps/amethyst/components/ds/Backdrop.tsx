@@ -103,23 +103,32 @@ function Blob({
       easing: ease,
       reduceMotion: ReduceMotion.Never,
     });
-    if (remember) memory.opacity.set(shown.uri, target);
     if (shown.weight > 0) return;
     // Stay mounted until the fade-out finishes, so a cover never blinks away. The
     // margin covers the timer and the animation running on different clocks.
     const timer = setTimeout(() => onGone(shown.uri), FADE_OUT_MS + 250);
     return () => clearTimeout(timer);
-  }, [target, shown.weight, opacity, onGone, shown.uri, remember]);
+  }, [target, shown.weight, opacity, onGone, shown.uri]);
+
+  // Keep what's on screen at the moment of a remount, mid-fade included, so the
+  // next mount carries on from there rather than from where the fade was heading.
+  useEffect(() => {
+    if (!remember) return;
+    const uri = shown.uri;
+    return () => {
+      memory.opacity.set(uri, opacity.value);
+      memory.fill.set(uri, fill.value);
+    };
+  }, [remember, shown.uri, opacity, fill]);
 
   // Spot and full-window layers crossfade rather than resize, so nothing moves.
   useEffect(() => {
-    if (remember) memory.fill.set(shown.uri, solo ? 1 : 0);
     fill.value = withTiming(solo ? 1 : 0, {
       duration: FADE_IN_MS,
       easing: ease,
       reduceMotion: ReduceMotion.Never,
     });
-  }, [solo, fill, remember, shown.uri]);
+  }, [solo, fill]);
 
   const onError = () => {
     void fallbackFor(source, shown.uri).then((next) => {
