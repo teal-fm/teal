@@ -28,14 +28,24 @@ pub async fn get_actor(
         .ok_or_else(|| (StatusCode::BAD_REQUEST, "actor is required".to_string()))?;
 
     let mut found = repo.get_actor_profile(identity).await;
-    // An account Cadet hasn't seen a profile for may still have one on its PDS.
-    if matches!(found, Ok(None))
+    // An account Cadet hasn't seen a profile for may still have one on its PDS. A row
+    // with no created_at holds only a handle or status, not a teal profile record.
+    let unindexed = match &found {
+        Ok(None) => identity.starts_with("did:").then(|| identity.to_string()),
+        Ok(Some(profile)) if profile.created_at.is_none() => profile
+            .did
+            .as_ref()
+            .map(|did| did.to_string())
+            .or_else(|| identity.starts_with("did:").then(|| identity.to_string())),
+        _ => None,
+    };
+    if let Some(did) = unindexed
         && ctx
             .actors
-            .backfill_teal_profile(identity)
+            .backfill_teal_profile(&did)
             .await
             .unwrap_or_else(|error| {
-                tracing::warn!("Couldn't backfill the profile for {identity}: {error:#}");
+                tracing::warn!("Couldn't backfill the profile for {did}: {error:#}");
                 false
             })
     {

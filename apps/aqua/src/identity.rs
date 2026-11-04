@@ -8,13 +8,19 @@
 
 use std::{
     collections::HashMap,
+    net::{IpAddr, SocketAddr},
     sync::Arc,
     time::{Duration, Instant},
 };
 
+use futures::{
+    FutureExt, StreamExt,
+    future::{BoxFuture, Shared},
+    stream::FuturesUnordered,
+};
 use serde_json::Value;
 use sqlx::PgPool;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Semaphore};
 use tracing::{info, warn};
 
 const PROFILE_COLLECTIONS: [&str; 2] = ["fm.teal.actor.profile", "fm.teal.alpha.actor.profile"];
@@ -26,6 +32,11 @@ const FOUND_TTL: Duration = Duration::from_secs(60 * 60);
 const MISSING_TTL: Duration = Duration::from_secs(10 * 60);
 const FAILED_TTL: Duration = Duration::from_secs(2 * 60);
 const MAX_LOOKUPS: usize = 24;
+/// Lookups running at once across all requests.
+const CONCURRENT_LOOKUPS: usize = 16;
+/// Past this, expired entries are dropped, and if that isn't enough, everything.
+const MAX_CACHED: usize = 20_000;
+const HTTP_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// The name, handle, and avatar to show for an account.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -45,23 +56,25 @@ enum Lookup {
     Failed,
 }
 
+type InFlight = Shared<BoxFuture<'static, Lookup>>;
+
 pub struct ActorResolver {
     db: PgPool,
     http: reqwest::Client,
     cache: Mutex<HashMap<String, (Lookup, Instant)>>,
+    /// Lookups underway, so concurrent requests for one DID share a single fetch.
+    in_flight: Mutex<HashMap<String, InFlight>>,
+    permits: Arc<Semaphore>,
 }
 
 impl ActorResolver {
     pub fn new(db: PgPool) -> anyhow::Result<Arc<Self>> {
-        let http = reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .timeout(Duration::from_secs(5))
-            .user_agent("teal-aqua (+https://teal.fm)")
-            .build()?;
         Ok(Arc::new(Self {
             db,
-            http,
+            http: http_client(None)?,
             cache: Mutex::new(HashMap::new()),
+            in_flight: Mutex::new(HashMap::new()),
+            permits: Arc::new(Semaphore::new(CONCURRENT_LOOKUPS)),
         }))
     }
 
@@ -92,31 +105,54 @@ impl ActorResolver {
         }
 
         let teal_profiles = self.indexed_teal_profiles(&pending).await;
-        let tasks: Vec<_> = pending
-            .into_iter()
-            .map(|did| {
-                let resolver = Arc::clone(self);
-                let has_teal_profile = teal_profiles.contains(&did);
-                // Spawned so a lookup that outlasts this request still fills the cache.
-                tokio::spawn(async move {
-                    let lookup = resolver.lookup(&did, has_teal_profile).await;
-                    resolver
-                        .cache
-                        .lock()
-                        .await
-                        .insert(did.clone(), (lookup.clone(), Instant::now()));
-                    (did, lookup)
-                })
-            })
-            .collect();
-        if let Ok(results) = tokio::time::timeout(WAIT, futures::future::join_all(tasks)).await {
-            for (did, lookup) in results.into_iter().flatten() {
-                if let Lookup::Found(identity) = lookup {
-                    found.insert(did, identity);
-                }
+        let mut lookups: FuturesUnordered<_> = FuturesUnordered::new();
+        for did in pending {
+            let has_teal_profile = teal_profiles.contains(&did);
+            let lookup = self.lookup_once(did.clone(), has_teal_profile).await;
+            lookups.push(async move { (did, lookup.await) });
+        }
+        // Keep whatever finishes in time; the rest land in the cache for next time.
+        let deadline = tokio::time::Instant::now() + WAIT;
+        while let Ok(Some((did, lookup))) = tokio::time::timeout_at(deadline, lookups.next()).await {
+            if let Lookup::Found(identity) = lookup {
+                found.insert(did, identity);
             }
         }
         found
+    }
+
+    /// The lookup for `did`, joining one already underway.
+    async fn lookup_once(self: &Arc<Self>, did: String, has_teal_profile: bool) -> InFlight {
+        let mut in_flight = self.in_flight.lock().await;
+        if let Some(lookup) = in_flight.get(&did) {
+            return lookup.clone();
+        }
+        let resolver = Arc::clone(self);
+        let key = did.clone();
+        // Spawned so a lookup that outlasts this request still fills the cache.
+        let task = tokio::spawn(async move {
+            let lookup = match resolver.permits.clone().acquire_owned().await {
+                Ok(_permit) => resolver.lookup(&key, has_teal_profile).await,
+                Err(_) => Lookup::Failed,
+            };
+            resolver.remember(&key, lookup.clone()).await;
+            resolver.in_flight.lock().await.remove(&key);
+            lookup
+        });
+        let lookup = task.map(|result| result.unwrap_or(Lookup::Failed)).boxed().shared();
+        in_flight.insert(did, lookup.clone());
+        lookup
+    }
+
+    async fn remember(&self, did: &str, lookup: Lookup) {
+        let mut cache = self.cache.lock().await;
+        if cache.len() >= MAX_CACHED {
+            cache.retain(|_, (lookup, at)| at.elapsed() < ttl(lookup));
+            if cache.len() >= MAX_CACHED {
+                cache.clear();
+            }
+        }
+        cache.insert(did.to_string(), (lookup, Instant::now()));
     }
 
     /// Fetches and stores the teal profile for `did` if its PDS has one. Returns
@@ -186,20 +222,24 @@ impl ActorResolver {
     }
 
     async fn did_document(&self, did: &str) -> anyhow::Result<Value> {
-        let url = if did.starts_with("did:plc:") {
-            format!("{PLC_DIRECTORY}/{did}")
+        let response = if did.starts_with("did:plc:") {
+            self.http.get(format!("{PLC_DIRECTORY}/{did}")).send().await?
         } else if let Some(host) = did.strip_prefix("did:web:") {
             anyhow::ensure!(
                 host.bytes()
                     .all(|b| b.is_ascii_alphanumeric() || b == b'.' || b == b'-'),
                 "unsupported did:web {did}"
             );
-            format!("https://{host}/.well-known/did.json")
+            // Anyone can name any host in a did:web, so only public ones are fetched.
+            public_client(host)
+                .await?
+                .get(format!("https://{host}/.well-known/did.json"))
+                .send()
+                .await?
         } else {
             anyhow::bail!("unsupported DID method: {did}");
         };
-        let response = self.http.get(url).send().await?.error_for_status()?;
-        Ok(response.json().await?)
+        Ok(response.error_for_status()?.json().await?)
     }
 
     async fn teal_profile(&self, did: &str, doc: &Value) -> anyhow::Result<Option<ActorIdentity>> {
@@ -210,7 +250,7 @@ impl ActorResolver {
             .host_str()
             .map(str::to_string)
             .ok_or_else(|| anyhow::anyhow!("PDS endpoint has no host: {pds}"))?;
-        crate::api::validate_public_pds_host(&host).await?;
+        let client = public_client(&host).await?;
 
         for collection in PROFILE_COLLECTIONS {
             let mut url = url::Url::parse(&pds)?.join("/xrpc/com.atproto.repo.getRecord")?;
@@ -218,7 +258,7 @@ impl ActorResolver {
                 .append_pair("repo", did)
                 .append_pair("collection", collection)
                 .append_pair("rkey", "self");
-            let response = self.http.get(url).send().await?;
+            let response = client.get(url).send().await?;
             // A PDS answers 400 RecordNotFound for a collection the account never wrote.
             if response.status() == reqwest::StatusCode::BAD_REQUEST
                 || response.status() == reqwest::StatusCode::NOT_FOUND
@@ -229,7 +269,10 @@ impl ActorResolver {
             let Some(record) = body.get("value") else {
                 continue;
             };
-            let handle = document_handle(doc);
+            let handle = match document_handle(doc) {
+                Some(handle) if self.handle_resolves_to(&handle, did).await => Some(handle),
+                _ => None,
+            };
             self.store_teal_profile(did, handle.as_deref(), record).await?;
             info!("Backfilled the teal profile for {did} from its PDS");
             return Ok(Some(ActorIdentity {
@@ -274,6 +317,9 @@ impl ActorResolver {
                     stats_default_period = EXCLUDED.stats_default_period,
                     created_at = EXCLUDED.created_at,
                     favorites = EXCLUDED.favorites
+                -- Cadet always sets created_at, so a row that has one holds a record
+                -- at least as new as this fetch, and wins.
+                WHERE profiles.created_at IS NULL
             "#,
         )
         .bind(did)
@@ -339,6 +385,63 @@ impl ActorResolver {
             return false;
         };
         body.get("did").and_then(Value::as_str) == Some(did)
+    }
+}
+
+fn http_client(pinned: Option<(&str, &[SocketAddr])>) -> anyhow::Result<reqwest::Client> {
+    let mut builder = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .timeout(HTTP_TIMEOUT)
+        .user_agent("teal-aqua (+https://teal.fm)");
+    if let Some((host, addrs)) = pinned {
+        builder = builder.resolve_to_addrs(host, addrs);
+    }
+    Ok(builder.build()?)
+}
+
+/// A client that can only reach `host` at the public addresses it resolves to now,
+/// so neither a private address nor a later DNS answer can redirect the request.
+async fn public_client(host: &str) -> anyhow::Result<reqwest::Client> {
+    anyhow::ensure!(
+        !host.eq_ignore_ascii_case("localhost") && !host.ends_with(".localhost"),
+        "{host} is not a public host"
+    );
+    let addrs: Vec<SocketAddr> = tokio::net::lookup_host((host, 443)).await?.collect();
+    anyhow::ensure!(!addrs.is_empty(), "{host} did not resolve");
+    anyhow::ensure!(
+        addrs.iter().all(|addr| is_public_ip(addr.ip())),
+        "{host} resolves to a private address"
+    );
+    http_client(Some((host, &addrs)))
+}
+
+fn is_public_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(ip) => {
+            let [a, b, ..] = ip.octets();
+            !(ip.is_private()
+                || ip.is_loopback()
+                || ip.is_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
+                || ip.is_broadcast()
+                || ip.is_documentation()
+                // Shared address space (CGNAT, Tailscale) and benchmarking ranges.
+                || (a == 100 && (64..128).contains(&b))
+                || (a == 198 && (18..20).contains(&b))
+                || a == 0
+                || a >= 240)
+        }
+        IpAddr::V6(ip) => match ip.to_ipv4_mapped() {
+            Some(v4) => is_public_ip(IpAddr::V4(v4)),
+            None => {
+                !(ip.is_loopback()
+                    || ip.is_unspecified()
+                    || ip.is_multicast()
+                    || ip.is_unique_local()
+                    || ip.is_unicast_link_local())
+            }
+        },
     }
 }
 
@@ -416,6 +519,28 @@ mod tests {
         assert_eq!(blob_cid(Some(&current)).as_deref(), Some("bafkreiavatar"));
         assert_eq!(blob_cid(Some(&legacy)).as_deref(), Some("bafkreilegacy"));
         assert_eq!(blob_cid(None), None);
+    }
+
+    #[test]
+    fn private_and_shared_addresses_are_not_public() {
+        for ip in [
+            "127.0.0.1",
+            "10.1.2.3",
+            "192.168.1.1",
+            "172.16.0.1",
+            "169.254.169.254",
+            "100.100.1.1",
+            "0.0.0.0",
+            "::1",
+            "fd00::1",
+            "fe80::1",
+            "::ffff:127.0.0.1",
+        ] {
+            assert!(!is_public_ip(ip.parse().unwrap()), "{ip} should not be public");
+        }
+        for ip in ["1.1.1.1", "2606:4700:4700::1111"] {
+            assert!(is_public_ip(ip.parse().unwrap()), "{ip} should be public");
+        }
     }
 
     #[test]
