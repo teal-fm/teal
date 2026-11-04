@@ -65,6 +65,8 @@ pub struct ActorResolver {
     /// Lookups underway, so concurrent requests for one DID share a single fetch.
     in_flight: Mutex<HashMap<String, InFlight>>,
     permits: Arc<Semaphore>,
+    /// When getProfile last looked for a DID's teal profile and found none.
+    profile_checks: Mutex<HashMap<String, Instant>>,
 }
 
 impl ActorResolver {
@@ -75,6 +77,7 @@ impl ActorResolver {
             cache: Mutex::new(HashMap::new()),
             in_flight: Mutex::new(HashMap::new()),
             permits: Arc::new(Semaphore::new(CONCURRENT_LOOKUPS)),
+            profile_checks: Mutex::new(HashMap::new()),
         }))
     }
 
@@ -161,8 +164,29 @@ impl ActorResolver {
         if !is_did(did) {
             return Ok(false);
         }
-        let doc = self.did_document(did).await?;
-        Ok(self.teal_profile(did, &doc).await?.is_some())
+        // A miss is remembered, so repeated profile views can't make Aqua refetch.
+        if self
+            .profile_checks
+            .lock()
+            .await
+            .get(did)
+            .is_some_and(|at| at.elapsed() < MISSING_TTL)
+        {
+            return Ok(false);
+        }
+        let _permit = self.permits.acquire().await?;
+        let found = match self.did_document(did).await {
+            Ok(doc) => self.teal_profile(did, &doc).await?.is_some(),
+            Err(_) => false,
+        };
+        if !found {
+            let mut checks = self.profile_checks.lock().await;
+            if checks.len() >= MAX_CACHED {
+                checks.retain(|_, at| at.elapsed() < MISSING_TTL);
+            }
+            checks.insert(did.to_string(), Instant::now());
+        }
+        Ok(found)
     }
 
     async fn lookup(&self, did: &str, has_teal_profile: bool) -> Lookup {
@@ -239,7 +263,7 @@ impl ActorResolver {
         } else {
             anyhow::bail!("unsupported DID method: {did}");
         };
-        Ok(response.error_for_status()?.json().await?)
+        read_json(response.error_for_status()?).await
     }
 
     async fn teal_profile(&self, did: &str, doc: &Value) -> anyhow::Result<Option<ActorIdentity>> {
@@ -265,7 +289,7 @@ impl ActorResolver {
             {
                 continue;
             }
-            let body: Value = response.error_for_status()?.json().await?;
+            let body = read_json(response.error_for_status()?).await?;
             let Some(record) = body.get("value") else {
                 continue;
             };
@@ -361,7 +385,7 @@ impl ActorResolver {
         if response.status() == reqwest::StatusCode::BAD_REQUEST {
             return Ok(None);
         }
-        let profile: Value = response.error_for_status()?.json().await?;
+        let profile = read_json(response.error_for_status()?).await?;
         Ok(Some(ActorIdentity {
             handle: string_field(&profile, "handle").filter(|h| h != "handle.invalid"),
             display_name: string_field(&profile, "displayName"),
@@ -386,6 +410,22 @@ impl ActorResolver {
         };
         body.get("did").and_then(Value::as_str) == Some(did)
     }
+}
+
+/// A DID document, record, or profile is a few kilobytes; anything near this is hostile.
+const MAX_JSON_BYTES: usize = 256 * 1024;
+
+async fn read_json(mut response: reqwest::Response) -> anyhow::Result<Value> {
+    anyhow::ensure!(
+        response.content_length().is_none_or(|length| length <= MAX_JSON_BYTES as u64),
+        "response too large"
+    );
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        anyhow::ensure!(body.len() + chunk.len() <= MAX_JSON_BYTES, "response too large");
+        body.extend_from_slice(&chunk);
+    }
+    Ok(serde_json::from_slice(&body)?)
 }
 
 fn http_client(pinned: Option<(&str, &[SocketAddr])>) -> anyhow::Result<reqwest::Client> {
