@@ -6,6 +6,7 @@ import {
   ArtistListenerPeriodTabs,
   normalizeArtistListenerPeriod,
 } from "@/components/teal/ArtistLeaderboard";
+import { AmbientSource, Glass, useHalo } from "@/components/ds";
 import LoadFailure from "@/components/teal/LoadFailure";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
@@ -51,6 +52,7 @@ export default function ArtistDetail() {
   const [listenersLoading, setListenersLoading] = useState(false);
   const [failedArt, setFailedArt] = useState<ReadonlySet<string>>(new Set());
   const [artistImage, setArtistImage] = useState<string>();
+  const halo = useHalo();
 
   useEffect(() => {
     let mounted = true;
@@ -130,8 +132,8 @@ export default function ArtistDetail() {
 
   const renderRelease = (album: ArtistView["albums"][number]) => {
     const art = [
-      releaseGroupCoverArtUrl(album.releaseGroupMbid),
-      coverArtUrl(album.mbid),
+      releaseGroupCoverArtUrl(album.releaseGroupMbid, 500),
+      coverArtUrl(album.mbid, 500),
     ]
       .filter((url): url is string => Boolean(url))
       .find((url) => !failedArt.has(url));
@@ -141,31 +143,26 @@ export default function ArtistDetail() {
         href={musicAlbumHref(album.artistName, album.name, album.mbid) as any}
         asChild
       >
-        <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-4">
-          <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted">
-            {art ? (
-              <Image
-                source={{ uri: art }}
-                className="h-full w-full"
-                onError={() => art && handleArtError(art)}
-              />
-            ) : (
-              <Icon icon={Disc3} size={26} className="text-muted-foreground" />
-            )}
-          </View>
-          <View className="min-w-0 flex-1">
-            <Text className="font-black" numberOfLines={2}>
-              {album.name}
-            </Text>
-            <Text className="font-mono text-xs text-muted-foreground">
-              {album.playCount} listens
-            </Text>
-          </View>
-          <Icon
-            icon={ChevronRight}
-            size={18}
-            className="text-muted-foreground"
-          />
+        <Pressable className="w-[46%] sm:w-[30%]">
+          <AmbientSource uri={art}>
+            <View className="aspect-square items-center justify-center overflow-hidden rounded-[14px] bg-fill shadow-lg">
+              {art ? (
+                <Image
+                  source={{ uri: art }}
+                  className="h-full w-full"
+                  onError={() => art && handleArtError(art)}
+                />
+              ) : (
+                <Icon icon={Disc3} size={30} className="text-ink-3" />
+              )}
+            </View>
+          </AmbientSource>
+          <Text className="mt-2 text-[15px] font-semibold text-ink" numberOfLines={2}>
+            {album.name}
+          </Text>
+          <Text className="text-[13px] tabular-nums text-ink-2">
+            {album.playCount} {album.playCount === 1 ? "listen" : "listens"}
+          </Text>
         </Pressable>
       </Link>
     );
@@ -227,52 +224,34 @@ export default function ArtistDetail() {
       )}
       {artist && (
         <>
-          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
-            <View className="h-40 bg-muted">
-              {heroArt && (
-                <Image
-                  source={{ uri: heroArt }}
-                  className="h-full w-full opacity-40"
-                  onError={handleHeroArtError}
-                />
-              )}
-            </View>
-            <View className="-mt-10 flex-row items-end gap-4 px-5 pb-7">
-              <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-muted md:h-28 md:w-28">
+          <View className="mb-6 gap-5 sm:flex-row sm:items-end">
+            <AmbientSource uri={heroArt}>
+              <View className="h-[200px] w-[200px] items-center justify-center overflow-hidden rounded-[16px] bg-fill shadow-2xl sm:h-[232px] sm:w-[232px]">
                 {heroArt ? (
-                  <Image
-                    source={{ uri: heroArt }}
-                    className="h-full w-full"
-                    onError={handleHeroArtError}
-                  />
+                  <Image source={{ uri: heroArt }} className="h-full w-full" onError={handleHeroArtError} />
                 ) : (
-                  <Icon
-                    icon={Mic2}
-                    size={42}
-                    className="text-muted-foreground"
-                  />
+                  <Icon icon={Mic2} size={56} className="text-ink-3" />
                 )}
               </View>
-              <View className="min-w-0 flex-1 pb-1">
-                <Text className="font-mono text-xs font-bold uppercase text-muted-foreground">
-                  Artist
-                </Text>
-                <Text
-                  role="heading"
-                  aria-level={1}
-                  className="font-sans text-2xl font-black"
-                  numberOfLines={3}
-                >
-                  {artist.name}
-                </Text>
-                <Text className="font-mono text-xs text-muted-foreground">
-                  {artist.playCount} indexed listens
-                </Text>
-              </View>
+            </AmbientSource>
+            <View className="min-w-0 flex-1 gap-1">
+              <Text
+                role="heading"
+                aria-level={1}
+                style={halo}
+                className="text-[40px] font-bold tracking-tight text-ink sm:text-[52px]"
+                numberOfLines={3}
+              >
+                {artist.name}
+              </Text>
+              <Text style={halo} className="text-[15px] text-ink-2">
+                {artist.playCount} {artist.playCount === 1 ? "listen" : "listens"} on teal · {albumCount}{" "}
+                {albumCount === 1 ? "album" : "albums"}
+              </Text>
             </View>
           </View>
 
-          <View className="mb-8">
+          <Glass className="mb-4 p-4">
             <View className="mb-4 gap-3 md:flex-row md:items-end md:justify-between">
               <SectionHeading
                 eyebrow="Community"
@@ -285,7 +264,7 @@ export default function ArtistDetail() {
               />
             </View>
             {listenersLoading && listeners.length === 0 ? (
-              <View className="min-h-[8rem] items-center justify-center rounded-lg border border-border bg-card">
+              <View className="min-h-[8rem] items-center justify-center rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
                 <ActivityIndicator />
               </View>
             ) : listenerError ? (
@@ -294,13 +273,13 @@ export default function ArtistDetail() {
                 onRetry={() => setListenerRequest((value) => value + 1)}
               />
             ) : listeners.length === 0 ? (
-              <View className="items-center gap-2 rounded-lg border border-border bg-card p-6">
+              <View className="items-center gap-2 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
                 <Icon
                   icon={Trophy}
                   size={24}
-                  className="text-muted-foreground"
+                  className="text-ink-2"
                 />
-                <Text className="text-center text-muted-foreground">
+                <Text className="text-center text-ink-2">
                   No listeners for this period yet.
                 </Text>
               </View>
@@ -324,23 +303,16 @@ export default function ArtistDetail() {
                 </Link>
               </>
             )}
-          </View>
+          </Glass>
 
-          <SectionHeading
-            eyebrow="Catalog"
-            title="Discography"
-            detail={`${albumCount} ALBUMS`}
-          />
           {discographyGroups.map(({ title, releases }) =>
             releases.length > 0 ? (
-              <View key={title} className="mb-6">
-                <Text className="mb-2 font-mono text-xs font-bold uppercase text-muted-foreground">
+              <Glass key={title} className="mb-4 gap-3 p-4">
+                <Text role="heading" aria-level={2} className="text-[20px] font-bold text-ink">
                   {title}
                 </Text>
-                <View className="overflow-hidden rounded-lg border border-border bg-card px-3">
-                  {releases.map(renderRelease)}
-                </View>
-              </View>
+                <View className="flex-row flex-wrap gap-x-[4%] gap-y-4">{releases.map(renderRelease)}</View>
+              </Glass>
             ) : null,
           )}
         </>

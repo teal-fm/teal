@@ -427,9 +427,9 @@ export default function ListenDetail() {
         </View>
       )}
       {deleted && (
-        <View className="rounded-lg border border-border bg-card p-6">
-          <Text className="font-sans text-2xl font-black">Listen deleted.</Text>
-          <Text className="mt-2 text-muted-foreground">
+        <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
+          <Text className="font-sans text-2xl font-semibold">Listen deleted.</Text>
+          <Text className="mt-2 text-ink-2">
             Your listen has been removed from your account. Public feeds may
             take a moment to update.
           </Text>
@@ -439,7 +439,7 @@ export default function ListenDetail() {
         (errorState?.kind === "action" ? (
           <View
             role="alert"
-            className="mb-5 rounded-lg border border-border bg-card p-4"
+            className="mb-5 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4"
           >
             <Text className="text-destructive">{error}</Text>
           </View>
@@ -453,10 +453,10 @@ export default function ListenDetail() {
       {syncing && play && (
         <View
           role="status"
-          className="mb-5 gap-3 rounded-lg border border-border bg-card p-4"
+          className="mb-5 gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4"
         >
           <Text className="font-bold">Saved, syncing</Text>
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             This listen is saved to your account. Teal is still catching up. You
             are viewing your confirmed local copy.
           </Text>
@@ -471,7 +471,7 @@ export default function ListenDetail() {
       )}
       {play && (
         <>
-          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
+          <View className="mb-8 overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
             <View className="h-44 bg-muted">
               {art ? (
                 <Image
@@ -494,7 +494,7 @@ export default function ListenDetail() {
                     <Icon
                       icon={Disc3}
                       size={42}
-                      className="text-muted-foreground"
+                      className="text-ink-2"
                     />
                   </View>
                 )}
@@ -502,13 +502,13 @@ export default function ListenDetail() {
                   <Text
                     accessibilityRole="header"
                     aria-level={1}
-                    className="font-sans text-3xl font-black leading-tight"
+                    className="font-sans text-3xl font-semibold leading-tight"
                     numberOfLines={3}
                   >
                     {play.trackName}
                   </Text>
                   <Text
-                    className="font-bold text-muted-foreground"
+                    className="font-bold text-ink-2"
                     numberOfLines={1}
                   >
                     {displayArtists(play) || "Unknown artist"}
@@ -542,7 +542,7 @@ export default function ListenDetail() {
                 )}
               </View>
 
-              <Text className="mt-4 text-sm text-muted-foreground">
+              <Text className="mt-4 text-sm text-ink-2">
                 {authorName} listened {when}
                 {play.releaseName ? ` from ${play.releaseName}` : ""}.
               </Text>
@@ -551,7 +551,7 @@ export default function ListenDetail() {
                 <View className="mt-5 gap-3 rounded-lg border border-border bg-background p-4">
                   <View className="flex-row items-start justify-between gap-3">
                     <View className="min-w-0 flex-1">
-                      <Text className="font-mono text-xs uppercase text-muted-foreground">
+                      <Text className="font-mono text-xs uppercase text-ink-2">
                         Edit record
                       </Text>
                       <Text className="font-bold">
@@ -570,7 +570,7 @@ export default function ListenDetail() {
                     </Button>
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                    <Text className="font-mono text-[10px] uppercase text-ink-2">
                       Track
                     </Text>
                     <Input
@@ -581,7 +581,7 @@ export default function ListenDetail() {
                     />
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                    <Text className="font-mono text-[10px] uppercase text-ink-2">
                       Artists
                     </Text>
                     <Input
@@ -592,7 +592,7 @@ export default function ListenDetail() {
                     />
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                    <Text className="font-mono text-[10px] uppercase text-ink-2">
                       Release
                     </Text>
                     <Input
@@ -603,7 +603,7 @@ export default function ListenDetail() {
                     />
                   </View>
                   <View className="gap-2">
-                    <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                    <Text className="font-mono text-[10px] uppercase text-ink-2">
                       Played time
                     </Text>
                     <Input

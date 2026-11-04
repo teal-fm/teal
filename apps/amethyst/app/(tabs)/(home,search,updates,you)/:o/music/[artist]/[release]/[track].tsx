@@ -189,7 +189,7 @@ export default function MusicDetail() {
       )}
       {play && (
         <>
-          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
+          <View className="mb-8 overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
             <View className="h-44 bg-muted">
               {art && (
                 <Image
@@ -211,7 +211,7 @@ export default function MusicDetail() {
                   <Icon
                     icon={Disc3}
                     size={42}
-                    className="text-muted-foreground"
+                    className="text-ink-2"
                   />
                 </View>
               )}
@@ -219,7 +219,7 @@ export default function MusicDetail() {
                 <Text
                   role="heading"
                   aria-level={1}
-                  className="font-sans text-2xl font-black"
+                  className="font-sans text-2xl font-semibold"
                   numberOfLines={3}
                 >
                   {play.trackName}
@@ -235,13 +235,13 @@ export default function MusicDetail() {
                     asChild
                   >
                     <Pressable>
-                      <Text className="font-bold text-muted-foreground">
+                      <Text className="font-bold text-ink-2">
                         {displayArtists(play) || "Unknown artist"}
                       </Text>
                     </Pressable>
                   </Link>
                 ) : (
-                  <Text className="font-bold text-muted-foreground">
+                  <Text className="font-bold text-ink-2">
                     {displayArtists(play) || "Unknown artist"}
                   </Text>
                 )}
@@ -258,13 +258,13 @@ export default function MusicDetail() {
                       asChild
                     >
                       <Pressable>
-                        <Text className="text-muted-foreground">
+                        <Text className="text-ink-2">
                           {play.releaseName}
                         </Text>
                       </Pressable>
                     </Link>
                   ) : (
-                    <Text className="text-muted-foreground">
+                    <Text className="text-ink-2">
                       {play.releaseName}
                     </Text>
                   ))}
@@ -274,7 +274,7 @@ export default function MusicDetail() {
           <SectionHeading title="Selected listen" />
           <PlayFeedCard play={play} />
           <SectionHeading title="More listens from this album" />
-          <Text className="mb-4 text-sm text-muted-foreground">
+          <Text className="mb-4 text-sm text-ink-2">
             This track's activity on this album, from Teal's listening index.
             Other editions are not included.
           </Text>
@@ -296,7 +296,7 @@ export default function MusicDetail() {
             </Text>
           )}
           {!historyLoading && !historyError && related.length === 0 && (
-            <Text className="my-3 text-muted-foreground">
+            <Text className="my-3 text-ink-2">
               {!play.releaseMbId
                 ? "This listen has no album identity, so album history is unavailable."
                 : historyCursor

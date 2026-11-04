@@ -8,6 +8,7 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { AmbientSource, useHalo } from "@/components/ds";
 import LoadFailure from "@/components/teal/LoadFailure";
 import PlayFeedCard from "@/components/teal/PlayFeedCard";
 import RightRail from "@/components/teal/RightRail";
@@ -25,6 +26,7 @@ import type { AlbumView } from "@teal/lexicons/src/fm/teal/music/defs";
 export default function AlbumDetail() {
   const params = useLocalSearchParams();
   const mbid = Array.isArray(params.mbid) ? params.mbid[0] : params.mbid;
+  const halo = useHalo();
   const [album, setAlbum] = useState<AlbumView | null>(null);
   const [plays, setPlays] = useState<PlayView[]>([]);
   const [cursor, setCursor] = useState<string>();
@@ -146,66 +148,43 @@ export default function AlbumDetail() {
       )}
       {album && (
         <>
-          <View className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
-            <View className="h-40 bg-muted">
-              {art && (
-                <Image
-                  source={{ uri: art }}
-                  className="h-full w-full opacity-40"
-                  onError={() => handleArtError(art)}
-                />
-              )}
-            </View>
-            <View className="-mt-10 flex-row items-end gap-4 px-5 pb-7">
-              <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-muted md:h-28 md:w-28">
+          <View className="mb-6 gap-5 sm:flex-row sm:items-end">
+            <AmbientSource uri={art}>
+              <View className="h-[220px] w-[220px] items-center justify-center overflow-hidden rounded-[16px] bg-fill shadow-2xl sm:h-[260px] sm:w-[260px]">
                 {art ? (
-                  <Image
-                    source={{ uri: art }}
-                    className="h-full w-full"
-                    onError={() => handleArtError(art)}
-                  />
+                  <Image source={{ uri: art }} className="h-full w-full" onError={() => handleArtError(art)} />
                 ) : (
-                  <Icon
-                    icon={Disc3}
-                    size={42}
-                    className="text-muted-foreground"
-                  />
+                  <Icon icon={Disc3} size={56} className="text-ink-3" />
                 )}
               </View>
-              <View className="min-w-0 flex-1 pb-1">
-                <Text className="font-mono text-xs font-bold uppercase text-muted-foreground">
-                  Album
+            </AmbientSource>
+            <View className="min-w-0 flex-1 gap-1">
+              <Text
+                role="heading"
+                aria-level={1}
+                style={halo}
+                className="text-[32px] font-bold tracking-tight text-ink sm:text-[40px]"
+                numberOfLines={3}
+              >
+                {album.name}
+              </Text>
+              {album.artistMbid ? (
+                <Link href={musicArtistHref(album.artistName, album.artistMbid) as any} asChild>
+                  <Pressable>
+                    <Text style={halo} className="text-[18px] font-semibold text-tint">
+                      {album.artistName}
+                    </Text>
+                  </Pressable>
+                </Link>
+              ) : (
+                <Text style={halo} className="text-[18px] font-semibold text-ink-2">
+                  {album.artistName}
                 </Text>
-                <Text
-                  role="heading"
-                  aria-level={1}
-                  className="font-sans text-2xl font-black md:text-3xl"
-                  numberOfLines={3}
-                >
-                  {album.name}
-                </Text>
-                {album.artistMbid ? (
-                  <Link
-                    href={
-                      musicArtistHref(album.artistName, album.artistMbid) as any
-                    }
-                    asChild
-                  >
-                    <Pressable>
-                      <Text className="font-bold text-muted-foreground">
-                        {album.artistName}
-                      </Text>
-                    </Pressable>
-                  </Link>
-                ) : (
-                  <Text className="font-bold text-muted-foreground">
-                    {album.artistName}
-                  </Text>
-                )}
-                <Text className="font-mono text-xs text-muted-foreground">
-                  {album.playCount} indexed listens
-                </Text>
-              </View>
+              )}
+              <Text style={halo} className="text-[15px] text-ink-2">
+                {album.playCount} {album.playCount === 1 ? "listen" : "listens"} on teal · {album.tracks.length}{" "}
+                {album.tracks.length === 1 ? "track" : "tracks"}
+              </Text>
             </View>
           </View>
 
@@ -214,36 +193,36 @@ export default function AlbumDetail() {
             title="Track list"
             detail={`${album.tracks.length} TRACKS`}
           />
-          <View className="mb-10 overflow-hidden rounded-lg border border-border bg-card px-3">
+          <View className="mb-10 overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl px-3">
             {album.tracks.map((track) => {
               const row = (
-                <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-4">
+                <Pressable className="flex-row items-center gap-3 border-b border-hair py-4">
                   <View className="h-10 w-10 items-center justify-center rounded-full bg-muted">
                     <Icon
                       icon={Music2}
                       size={18}
-                      className="text-muted-foreground"
+                      className="text-ink-2"
                     />
                   </View>
                   <View className="min-w-0 flex-1">
-                    <Text className="font-black" numberOfLines={2}>
+                    <Text className="font-semibold" numberOfLines={2}>
                       {track.name}
                     </Text>
                     <Text
-                      className="text-sm text-muted-foreground"
+                      className="text-sm text-ink-2"
                       numberOfLines={1}
                     >
                       {track.artistName}
                     </Text>
                   </View>
-                  <Text className="font-mono text-xs text-muted-foreground">
+                  <Text className="font-mono text-xs text-ink-2">
                     {track.playCount}
                   </Text>
                   {track.uri && (
                     <Icon
                       icon={ChevronRight}
                       size={18}
-                      className="text-muted-foreground"
+                      className="text-ink-2"
                     />
                   )}
                 </Pressable>
@@ -292,13 +271,13 @@ export default function AlbumDetail() {
             </View>
           )}
           {plays.length > 0 && !cursor && (
-            <Text className="pb-6 text-center font-mono text-xs text-muted-foreground">
+            <Text className="pb-6 text-center font-mono text-xs text-ink-2">
               You reached the beginning of this album's listening history.
             </Text>
           )}
           {pageError && (
             <View role="alert" className="gap-3 py-4">
-              <Text className="text-sm text-muted-foreground">
+              <Text className="text-sm text-ink-2">
                 Older listens could not load. The album and listens above are
                 still available.
               </Text>

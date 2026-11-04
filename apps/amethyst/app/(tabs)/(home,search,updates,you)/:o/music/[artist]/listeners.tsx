@@ -182,7 +182,7 @@ export default function ArtistListenersScreen() {
       <Stack.Screen
         options={{ title: `${title} listeners`, headerShown: false }}
       />
-      <View className="mb-6 overflow-hidden rounded-lg border border-border bg-card">
+      <View className="mb-6 overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
         <View className="h-32 bg-muted">
           {heroArt && (
             <Image
@@ -201,18 +201,18 @@ export default function ArtistListenersScreen() {
                 onError={handleHeroArtError}
               />
             ) : (
-              <Icon icon={Mic2} size={34} className="text-muted-foreground" />
+              <Icon icon={Mic2} size={34} className="text-ink-2" />
             )}
           </View>
           <View className="min-w-0 flex-1 pb-1">
-            <Text className="font-mono text-xs font-bold uppercase text-muted-foreground">
+            <Text className="font-mono text-xs font-bold uppercase text-ink-2">
               Artist leaderboard
             </Text>
-            <Text className="font-sans text-2xl font-black" numberOfLines={2}>
+            <Text className="font-sans text-2xl font-semibold" numberOfLines={2}>
               {title}
             </Text>
             {artist && (
-              <Text className="font-mono text-xs text-muted-foreground">
+              <Text className="font-mono text-xs text-ink-2">
                 {artist.playCount} indexed listens
               </Text>
             )}
@@ -240,9 +240,9 @@ export default function ArtistListenersScreen() {
           </Text>
         </View>
       ) : listeners.length === 0 ? (
-        <View className="items-center gap-2 rounded-lg border border-border bg-card p-8">
-          <Icon icon={Trophy} size={28} className="text-muted-foreground" />
-          <Text className="text-center text-muted-foreground">
+        <View className="items-center gap-2 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-8">
+          <Icon icon={Trophy} size={28} className="text-ink-2" />
+          <Text className="text-center text-ink-2">
             No indexed listeners for this period yet.
           </Text>
         </View>
@@ -255,7 +255,7 @@ export default function ArtistListenersScreen() {
             </View>
           )}
           {!cursor && (
-            <Text className="py-6 text-center font-mono text-xs text-muted-foreground">
+            <Text className="py-6 text-center font-mono text-xs text-ink-2">
               You reached the end of this artist leaderboard.
             </Text>
           )}
