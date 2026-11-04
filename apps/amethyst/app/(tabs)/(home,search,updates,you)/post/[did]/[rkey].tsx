@@ -67,9 +67,14 @@ export default function PostScreen() {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const confirmRef = useRef<View>(null);
-  // Keyboard focus follows the trash button into the confirmation that replaces it.
+  const trashRef = useRef<View>(null);
+  const armed = useRef(false);
+  // Keyboard focus follows the trash button into the confirmation, and back again on Cancel.
   useEffect(() => {
-    if (confirmDelete && Platform.OS === "web") (confirmRef.current as unknown as HTMLElement | null)?.focus();
+    if (Platform.OS !== "web") return;
+    if (confirmDelete) (confirmRef.current as unknown as HTMLElement | null)?.focus();
+    else if (armed.current) (trashRef.current as unknown as HTMLElement | null)?.focus();
+    armed.current = confirmDelete;
   }, [confirmDelete]);
   const [note, setNote] = useState<string | null>(null);
 
@@ -109,7 +114,7 @@ export default function PostScreen() {
     setNote(null);
     try {
       await agent.call("com.atproto.repo.deleteRecord", {}, socialPostDeleteParams(data.uri, agent.did, data.cid));
-      forgetPost(client, data.uri);
+      forgetPost(client, data.uri, data.replyParentUri);
       goBack();
     } catch {
       setNote("The post wasn't deleted. Try again.");
@@ -196,7 +201,7 @@ export default function PostScreen() {
                 <Text className="text-[14px] tabular-nums text-ink-2">{data.replyCount}</Text>
               </View>
               <IconButton icon={ShareIcon} label="Share" size={38} onPress={share} />
-              {isOwn && !confirmDelete ? <IconButton icon={Trash2} label="Delete post" size={38} onPress={remove} /> : null}
+              {isOwn && !confirmDelete ? <IconButton ref={trashRef} icon={Trash2} label="Delete post" size={38} onPress={remove} /> : null}
             </View>
             {isOwn && confirmDelete ? (
               <View role="alert" className="gap-2 rounded-[14px] bg-fill p-3">

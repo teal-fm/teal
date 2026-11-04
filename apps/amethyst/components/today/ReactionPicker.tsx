@@ -26,23 +26,20 @@ export function ReactionPicker({
   const placeholder = usePlaceholderColor();
   const panel = useRef<View>(null);
 
-  // On the web the modal gets keyboard focus and closes on Escape, like a native sheet.
+  // On the web, focus moves into the picker when it opens and returns when it closes.
+  // React Native Web's Modal already closes on Escape. This keys off `visible` alone,
+  // so a parent re-render (Today refetches every minute) can't pull focus out mid-typing.
   useEffect(() => {
     if (Platform.OS !== "web" || !visible) return;
     const previous = document.activeElement as HTMLElement | null;
     const frame = requestAnimationFrame(() =>
       (panel.current as unknown as HTMLElement | null)?.querySelector<HTMLElement>('[role="menuitem"]')?.focus(),
     );
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
     return () => {
       cancelAnimationFrame(frame);
-      document.removeEventListener("keydown", onKey);
       if (previous?.isConnected) previous.focus();
     };
-  }, [visible, onClose]);
+  }, [visible]);
   const pick = (emoji: string) => {
     setCustom("");
     onPick(emoji);
@@ -56,7 +53,7 @@ export function ReactionPicker({
         onPress={onClose}
       >
         <Pressable onPress={() => undefined}>
-          <View ref={panel} role="dialog" aria-modal aria-label="Add a reaction">
+          <View ref={panel} aria-label="Add a reaction">
           <Glass strong className="items-center gap-3 rounded-[28px] p-3">
             <View role="menu" className="flex-row gap-1">
               {QUICK_REACTIONS.map((emoji) => (

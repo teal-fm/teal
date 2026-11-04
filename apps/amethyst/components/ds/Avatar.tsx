@@ -25,7 +25,8 @@ export function Avatar({
 }) {
   const uri = did ? getProfileImageUrl(did, avatar, "avatar") : undefined;
   const ring = listeningNow ? Math.max(2, Math.round(size / 24)) : 0;
-  const [broken, setBroken] = useState(false);
+  // Remember which image failed, so a new avatar URL gets its own chance.
+  const [brokenUri, setBrokenUri] = useState<string>();
   return (
     <View
       className={cn("rounded-full", listeningNow && "bg-now", className)}
@@ -38,12 +39,12 @@ export function Avatar({
         <Text className="font-semibold text-ink-2" style={{ fontSize: size * 0.4 }}>
           {(name ?? "?").slice(0, 1).toUpperCase()}
         </Text>
-        {uri && !broken ? (
+        {uri && uri !== brokenUri ? (
           <Image
             source={{ uri }}
             style={{ position: "absolute", width: "100%", height: "100%" }}
             contentFit="cover"
-            onError={() => setBroken(true)}
+            onError={() => setBrokenUri(uri)}
           />
         ) : null}
       </View>

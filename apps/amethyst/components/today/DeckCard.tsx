@@ -184,7 +184,7 @@ function MomentCard({ moment, width }: { moment: MomentView; width: number }) {
       {href ? (
         <Link href={href as never} asChild>
           <Pressable className="mt-3 h-9 self-start justify-center rounded-full bg-fill px-3.5">
-            <Text className="text-[14.5px] font-semibold text-ink">See who's listening</Text>
+            <Text className="text-[14.5px] font-semibold text-ink">Open the album</Text>
           </Pressable>
         </Link>
       ) : null}

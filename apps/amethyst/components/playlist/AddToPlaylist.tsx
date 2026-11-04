@@ -4,6 +4,7 @@ import { Link } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ListPlus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import { getPlaylist } from "@/lib/teal/api";
 import { addPlaylistItem } from "@/lib/teal/playlists";
 import { useViewerDid } from "@/lib/teal/queries";
 import { playViewToTrackView } from "@/lib/teal/social";
@@ -30,10 +31,12 @@ export function AddToPlaylist({ play }: { play: PlayView }) {
     setBusy(playlist.uri);
     setError(false);
     try {
-      await addPlaylistItem(agent, playlist, playViewToTrackView(play), playlist.itemCount);
+      const item = await addPlaylistItem(agent, playlist, playViewToTrackView(play), playlist.itemCount);
       setAdded((current) => new Set(current).add(playlist.uri));
-      void client.invalidateQueries({ queryKey: ["actor-playlists", viewer] });
-      void client.invalidateQueries({ queryKey: ["playlist", playlist.uri] });
+      // The index lags writes, so update the cached playlist rather than refetching it.
+      client.setQueryData<Awaited<ReturnType<typeof getPlaylist>>>(["playlist", playlist.uri], (data) =>
+        data && { ...data, playlist: { ...data.playlist, itemCount: data.playlist.itemCount + 1 }, items: [...data.items, item] },
+      );
     } catch {
       setError(true);
     } finally {

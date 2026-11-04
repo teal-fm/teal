@@ -42,6 +42,9 @@ export const profileKeys = {
   graph: (did: string, viewer?: string) => ["graph", did, viewer ?? null] as const,
 };
 
+/** Neither teal nor Bluesky knows this account. */
+export class ProfileNotFoundError extends Error {}
+
 /** A handle or DID from the URL, resolved to a DID. */
 export function useActorDid(actor?: string) {
   return useQuery({
@@ -60,6 +63,7 @@ export function useProfile(did?: string, handleHint?: string) {
   return useQuery({
     queryKey: profileKeys.profile(did ?? ""),
     enabled: !!did,
+    retry: (count, error) => !(error instanceof ProfileNotFoundError) && !(error instanceof XrpcError && error.status < 500) && count < 2,
     queryFn: async () => {
       let profile: DisplayProfile;
       let fromBluesky = false;
@@ -74,6 +78,8 @@ export function useProfile(did?: string, handleHint?: string) {
       if (!profile.avatar || !profile.displayName || !profile.handle || !profile.description) {
         const bsky = await getBlueskyProfile(did!).catch(() => null);
         if (bsky) profile = withBluesky(profile, bsky);
+        // No teal profile and no Bluesky one: nobody's here.
+        else if (fromBluesky && !profile.displayName && !profile.avatar) throw new ProfileNotFoundError(did!);
       }
       return { profile, fromBluesky };
     },

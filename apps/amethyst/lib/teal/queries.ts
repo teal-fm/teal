@@ -155,7 +155,7 @@ export function useToggleReaction() {
  * Drops a deleted post from every cached list straight away. The index takes a
  * moment to catch up, so a refetch alone would bring it back.
  */
-export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: string) {
+export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: string, parentUri?: string) {
   const keep = (post: SocialPostView) => post.uri !== uri;
   for (const key of [["feed"], ["actor-posts"]]) {
     client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: key }, (pages) =>
@@ -164,6 +164,11 @@ export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: strin
   }
   client.setQueriesData<SocialPostView[]>({ queryKey: ["replies"] }, (replies) => replies?.filter(keep));
   client.removeQueries({ queryKey: ["post", uri] });
+  if (parentUri) {
+    client.setQueriesData<SocialPostView>({ queryKey: ["post", parentUri] }, (parent) =>
+      parent && { ...parent, replyCount: Math.max(0, parent.replyCount - 1) },
+    );
+  }
 }
 
 /**

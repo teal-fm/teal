@@ -157,13 +157,13 @@ function setCache(key: string, results: MusicBrainzRecording[]): void {
   searchCache.set(key, { results, timestamp: Date.now() });
 }
 
+/** MusicBrainz didn't answer (rate limited, an error status, or no connection) after retries. */
+export class MusicBrainzUnavailableError extends Error {}
+
 /**
  * Single search stage with specified matching strategy.
  * Caches results in-memory to avoid redundant API calls (MB rate limit: 1 req/sec).
  */
-/** MusicBrainz didn't answer (rate limited, an error status, or no connection) after retries. */
-export class MusicBrainzUnavailableError extends Error {}
-
 export async function searchStage(
   track: string | undefined,
   artist: string | undefined,

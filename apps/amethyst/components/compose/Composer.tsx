@@ -32,7 +32,7 @@ export function Composer({
 }) {
   const agent = useStore((state) => state.pdsAgent);
   const viewer = useViewerDid();
-  const author = useStore((state) => (viewer ? state.profiles[viewer]?.teal : undefined));
+  const profiles = useStore((state) => (viewer ? state.profiles[viewer] : undefined));
   const [selected, setSelected] = useState<PlayView | null>(track ?? null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -64,7 +64,13 @@ export function Composer({
         text,
         track: selected,
         replyTo,
-        author: author ? { did: viewer, displayName: author.displayName, avatar: author.avatar } : undefined,
+        // Shown until the index has the post: teal's details first, then Bluesky's.
+        author: {
+          did: viewer,
+          displayName: profiles?.teal?.displayName || profiles?.bsky?.displayName,
+          handle: profiles?.bsky?.handle,
+          avatar: profiles?.teal?.avatar || profiles?.bsky?.avatar,
+        } as SocialPostView["author"],
       });
       setText("");
       onPublished(post);

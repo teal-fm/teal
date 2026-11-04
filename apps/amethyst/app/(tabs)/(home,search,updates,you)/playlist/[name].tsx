@@ -125,10 +125,17 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
     setBusy(true);
     setStatus(null);
     try {
-      await addPlaylistItem(agent, playlist, playViewToTrackView(play), playlist.itemCount);
+      const item = await addPlaylistItem(agent, playlist, playViewToTrackView(play), playlist.itemCount);
+      // The index lags writes, so the new song joins the cached playlist straight away.
+      client.setQueryData<Awaited<ReturnType<typeof getPlaylist>>>(["playlist", playlist.uri], (data) =>
+        data && {
+          ...data,
+          playlist: { ...data.playlist, itemCount: data.playlist.itemCount + 1 },
+          items: [...data.items, item],
+        },
+      );
       setStatus(`Added ${play.trackName}.`);
       setSelected(null);
-      await client.invalidateQueries({ queryKey: ["playlist", playlist.uri] });
     } catch {
       setStatus("That song wasn't added. Try again.");
     } finally {

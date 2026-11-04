@@ -33,6 +33,7 @@ import {
   useActorPlaylists,
   useActorPosts,
   useGraphSummary,
+  ProfileNotFoundError,
   useProfile,
   type DisplayProfile,
 } from "@/hooks/useProfile";
@@ -73,7 +74,7 @@ export default function ProfileScreen() {
     return (
       <Screen back pageTitle="Profile">
         <ErrorNotice
-          title={didQuery.isError || !did ? "This profile could not be found" : "This profile didn't load"}
+          title={didQuery.isError || !did || profileQuery.error instanceof ProfileNotFoundError ? "This profile could not be found" : "This profile didn't load"}
           body="Check the handle or try again in a moment."
           onRetry={() => (didQuery.isError ? didQuery.refetch() : profileQuery.refetch())}
         />

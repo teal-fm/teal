@@ -39,18 +39,26 @@ export function Cover({
   const source = primary && fallback?.from === primary ? fallback.uri : primary;
   const onError = () => {
     if (!source) return;
-    // The archive redirects through archive.org and sometimes fails in passing, so try once more first.
-    if (!retried.includes(source)) {
-      setRetried((current) => [...current, source]);
-      setTimeout(() => setAttempt((n) => n + 1), 1200);
+    // A release with no art of its own usually has it on its release group, so ask
+    // for that first. Without one, or for any other image, retry once: the archive
+    // redirects through archive.org and sometimes fails in passing.
+    if (source === primary && !uri && releaseMbId && fallback?.from !== primary) {
+      setFallback({ from: primary, uri: primary });
+      void getReleaseGroupCoverArtUrl(releaseMbId, artSize).then((next) => {
+        if (next && next !== primary) setFallback({ from: primary, uri: next });
+        else retry(primary);
+      });
       return;
     }
-    setFailed((current) => [...current, source]);
-    if (source === primary && !uri && releaseMbId) {
-      void getReleaseGroupCoverArtUrl(releaseMbId, artSize).then((next) =>
-        setFallback({ from: source, uri: next !== source ? next : undefined }),
-      );
+    retry(source);
+  };
+  const retry = (target: string) => {
+    if (retried.includes(target)) {
+      setFailed((current) => [...current, target]);
+      return;
     }
+    setRetried((current) => [...current, target]);
+    setTimeout(() => setAttempt((n) => n + 1), 1200);
   };
   return (
     <View
