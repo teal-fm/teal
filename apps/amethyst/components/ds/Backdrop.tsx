@@ -43,6 +43,16 @@ const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 
 type Shown = { uri: string; weight: number; slot: number; since: number };
 
+/**
+ * The window backdrop's last state. Browser Back can rebuild the whole tree, and
+ * without this the colour would cut to the plain ground and fade back from nothing.
+ */
+const memory = {
+  shown: [] as Shown[],
+  opacity: new Map<string, number>(),
+  fill: new Map<string, number>(),
+};
+
 /** The blur hides detail, so the small thumbnail does, and feed covers share its cache. */
 function thumbnail(uri: string) {
   return uri.replace(/front-(250|500|1200)$/, "front-250");
@@ -63,19 +73,25 @@ function Blob({
   shown,
   size,
   solo,
+  remember,
   onGone,
 }: {
   shown: Shown;
   size: number;
   /** The only cover in play, so it fills the whole window instead of one spot. */
   solo: boolean;
+  remember: boolean;
   onGone: (uri: string) => void;
 }) {
   const { width, height } = useWindowDimensions();
-  const opacity = useSharedValue(0);
-  const fill = useSharedValue(solo ? 1 : 0);
+  const resumed = remember ? (memory.opacity.get(shown.uri) ?? 0) : 0;
+  const opacity = useSharedValue(resumed);
+  const fill = useSharedValue(
+    remember ? (memory.fill.get(shown.uri) ?? (solo ? 1 : 0)) : solo ? 1 : 0,
+  );
   const [source, setSource] = useState(() => thumbnail(shown.uri));
-  const [loaded, setLoaded] = useState(false);
+  // A resumed cover was showing a moment ago, so its image is already in memory.
+  const [loaded, setLoaded] = useState(resumed > 0);
   // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
   const target = loaded ? Math.pow(shown.weight, 0.7) : 0;
 
@@ -87,20 +103,23 @@ function Blob({
       easing: ease,
       reduceMotion: ReduceMotion.Never,
     });
+    if (remember) memory.opacity.set(shown.uri, target);
     if (shown.weight > 0) return;
-    // Stay mounted until the fade-out finishes, so a cover never blinks away.
-    const timer = setTimeout(() => onGone(shown.uri), FADE_OUT_MS);
+    // Stay mounted until the fade-out finishes, so a cover never blinks away. The
+    // margin covers the timer and the animation running on different clocks.
+    const timer = setTimeout(() => onGone(shown.uri), FADE_OUT_MS + 250);
     return () => clearTimeout(timer);
-  }, [target, shown.weight, opacity, onGone, shown.uri]);
+  }, [target, shown.weight, opacity, onGone, shown.uri, remember]);
 
   // Spot and full-window layers crossfade rather than resize, so nothing moves.
   useEffect(() => {
+    if (remember) memory.fill.set(shown.uri, solo ? 1 : 0);
     fill.value = withTiming(solo ? 1 : 0, {
       duration: FADE_IN_MS,
       easing: ease,
       reduceMotion: ReduceMotion.Never,
     });
-  }, [solo, fill]);
+  }, [solo, fill, remember, shown.uri]);
 
   const onError = () => {
     void fallbackFor(source, shown.uri).then((next) => {
@@ -175,18 +194,29 @@ const blurFilter =
  * iOS blurs with a system material over the blobs; Android and the web blur the
  * blob layer itself. A fixed veil per theme keeps text readable on any cover.
  */
-export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
+export function Backdrop({
+  blobs,
+  remember = false,
+}: {
+  blobs: AmbientBlob[];
+  /** Resume from the last state after a remount. Only for the one window backdrop. */
+  remember?: boolean;
+}) {
   const { width, height } = useWindowDimensions();
   const { isDarkColorScheme } = useColorScheme();
   const size = Math.max(width, height) * (width >= 1000 ? 0.75 : 0.95);
-  const [shown, setShown] = useState<Shown[]>([]);
-  const current = useRef<Shown[]>([]);
+  const [shown, setShown] = useState<Shown[]>(() => (remember ? memory.shown : []));
+  const current = useRef<Shown[]>(shown);
   const [recheck, setRecheck] = useState(0);
 
-  const commit = useCallback((next: Shown[]) => {
-    current.current = next;
-    setShown(next);
-  }, []);
+  const commit = useCallback(
+    (next: Shown[]) => {
+      current.current = next;
+      if (remember) memory.shown = next;
+      setShown(next);
+    },
+    [remember],
+  );
 
   // Covers that drop out fade to nothing in their spot; new ones take the emptiest spot.
   useEffect(() => {
@@ -241,6 +271,7 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
             shown={item}
             size={size}
             solo={solo === item.uri}
+            remember={remember}
             onGone={forget}
           />
         ))}

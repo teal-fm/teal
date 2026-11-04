@@ -31,14 +31,23 @@ const AmbientContext = createContext<AmbientApi | null>(null);
  * screen publishes its blobs here and the shell draws them. Native screens draw
  * their own, so a pushed page slides in with its own art.
  */
-export const useWindowBackdrop = create<{ blobs: AmbientBlob[] }>(() => ({
-  blobs: [],
-}));
+export const useWindowBackdrop = create<{ blobs: AmbientBlob[]; last: AmbientBlob[] }>(
+  () => ({ blobs: [], last: [] }),
+);
 const windowBackdrop = Platform.OS === "web";
+
+/** How strongly a screen with no covers of its own keeps the colour it arrived with. */
+const CARRIED = 0.5;
 
 export function WindowBackdrop() {
   const blobs = useWindowBackdrop((state) => state.blobs);
-  return <Backdrop blobs={blobs} />;
+  const last = useWindowBackdrop((state) => state.last);
+  // A screen without covers, like Activity, dims the colour rather than draining it.
+  const shown = useMemo(
+    () => (blobs.length ? blobs : last.map((blob) => ({ ...blob, weight: blob.weight * CARRIED }))),
+    [blobs, last],
+  );
+  return <Backdrop blobs={shown} remember />;
 }
 
 /** How many covers blend at once; more turns the backdrop to mud. */
@@ -130,7 +139,9 @@ export function AmbientScreen({
   }, []);
 
   useEffect(() => {
-    if (windowBackdrop && focused) useWindowBackdrop.setState({ blobs });
+    if (windowBackdrop && focused) {
+      useWindowBackdrop.setState(blobs.length ? { blobs, last: blobs } : { blobs });
+    }
   }, [blobs, focused]);
 
   useEffect(() => {
