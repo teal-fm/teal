@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { AmbientSource, coverUri } from "@/components/ds";
+import { AmbientSource, Cover, coverUri } from "@/components/ds";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
 import { HeatingShelf } from "@/components/today/HeatingUp";
 import { dedupeMoments } from "@/lib/teal/today";
@@ -11,7 +11,6 @@ import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { getProfileImageUrl } from "@/lib/teal/actors";
 import {
-  coverArtUrl,
   getSearchResults,
   getToday,
   searchBlueskyUsers,
@@ -169,17 +168,10 @@ function UserRow({ user }: { user: UserResult }) {
 }
 
 function SongRow({ song }: { song: SongResult }) {
-  const art = coverArtUrl(song.releaseMbId);
   return (
     <Link href={songHref(song) as any} asChild>
       <Pressable className="flex-row items-center gap-3 border-b border-border px-2 py-4 web:hover:bg-accent/45">
-        <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-muted">
-          {art ? (
-            <Image source={{ uri: art }} className="h-full w-full" />
-          ) : (
-            <Icon icon={Music2} size={23} className="text-ink-2" />
-          )}
-        </View>
+        <Cover releaseMbId={song.releaseMbId} size={56} radius={8} />
         <View className="min-w-0 flex-1">
           <Text className="font-black" numberOfLines={1}>
             {song.trackName}
@@ -225,7 +217,7 @@ function MusicEntityRow({
           {name || "Unknown"}
         </Text>
         <Text className="text-xs tabular-nums text-ink-2">
-          {playCount || 0} plays
+          {playCount || 0} {playCount === 1 ? "play" : "plays"}
         </Text>
       </Pressable>
     </Link>

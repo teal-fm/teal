@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { coverArtUrl } from "@/lib/teal/api";
+import { coverArtUrl, getReleaseGroupCoverArtUrl } from "@/lib/teal/api";
 import { cn } from "@/lib/utils";
 import { Disc3 } from "lucide-react-native";
 
@@ -28,19 +28,34 @@ export function Cover({
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }) {
-  const source = uri ?? coverUri(releaseMbId, size && size <= 250 ? 250 : 500);
-  // The Cover Art Archive has no art for some releases; fall back to the disc.
-  const [failed, setFailed] = useState<string | undefined>();
+  const artSize = size && size <= 250 ? 250 : 500;
+  const primary = uri ?? coverUri(releaseMbId, artSize);
+  // Some albums only have art on their release group, so a missing release cover
+  // tries that next; with neither, the disc placeholder shows.
+  const [fallback, setFallback] = useState<{ from: string; uri?: string }>();
+  const [failed, setFailed] = useState<string[]>([]);
+  const source = primary && fallback?.from === primary ? fallback.uri : primary;
+  const onError = () => {
+    if (!source) return;
+    setFailed((current) => [...current, source]);
+    if (source === primary && !uri && releaseMbId) {
+      void getReleaseGroupCoverArtUrl(releaseMbId, artSize).then((next) =>
+        setFallback({ from: source, uri: next !== source ? next : undefined }),
+      );
+    }
+  };
   return (
     <View
       className={cn("aspect-square overflow-hidden bg-fill", className)}
       style={[{ borderRadius: radius }, size ? { width: size, height: size } : null, style]}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityLabel ? "image" : undefined}
+      // Unlabelled covers sit beside text that names the album, so they're decorative.
+      aria-hidden={accessibilityLabel ? undefined : true}
     >
-      {source && failed !== source ? (
+      {source && !failed.includes(source) ? (
         <Image
-          onError={() => setFailed(source)}
+          onError={onError}
           source={{ uri: source }}
           style={{ width: "100%", height: "100%" }}
           contentFit="cover"

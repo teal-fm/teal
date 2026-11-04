@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, View } from "react-native";
+import { Link } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -370,6 +371,11 @@ export default function SocialComposer({
           Share a thought with a song attached. Your post is saved to your
           account.
         </Text>
+        <Link href="/auth/login" asChild>
+          <Pressable accessibilityRole="button" className="mt-3 self-start rounded-full bg-tint px-4 py-2">
+            <Text className="font-semibold text-on-tint">Sign in</Text>
+          </Pressable>
+        </Link>
       </View>
     );
   }

@@ -14,6 +14,7 @@ import {
 } from "@/components/teal/ArtistLeaderboard";
 import RightRail from "@/components/teal/RightRail";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
+import LoadFailure from "@/components/teal/LoadFailure";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import {
@@ -49,6 +50,7 @@ export default function ArtistListenersScreen() {
   );
   const [cursor, setCursor] = useState<string>();
   const [error, setError] = useState<string>();
+  const [retry, setRetry] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [artistImage, setArtistImage] = useState<string>();
@@ -100,7 +102,8 @@ export default function ArtistListenersScreen() {
     return () => {
       mounted = false;
     };
-  }, [artistLookup, mbid, period]);
+    // `retry` re-runs the fetch after a failure.
+  }, [artistLookup, mbid, period, retry]);
 
   useEffect(() => {
     let mounted = true;
@@ -224,7 +227,6 @@ export default function ArtistListenersScreen() {
         <SectionHeading
           eyebrow="Community"
           title="Listener leaderboard"
-          detail={period === "all" ? "ALL TIME" : period}
         />
         <ArtistListenerPeriodTabs period={period} onChange={setPeriod} />
       </View>
@@ -234,11 +236,10 @@ export default function ArtistListenersScreen() {
           <ActivityIndicator size="large" />
         </View>
       ) : error ? (
-        <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-          <Text className="font-bold text-destructive">
-            Could not load leaderboard: {error}
-          </Text>
-        </View>
+        <LoadFailure
+          title="The leaderboard didn't load"
+          onRetry={() => setRetry((value) => value + 1)}
+        />
       ) : listeners.length === 0 ? (
         <View className="items-center gap-2 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-8">
           <Icon icon={Trophy} size={28} className="text-ink-2" />

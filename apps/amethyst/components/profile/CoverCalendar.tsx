@@ -100,8 +100,8 @@ export function CoverCalendar({ actor, name }: { actor: string; name: string }) 
           ))}
         </View>
         {calendar.isError ? (
-          <View className="flex-row items-center justify-between gap-3">
-            <Text className="flex-1 text-[13px] text-ink-2">This month's listening didn't load.</Text>
+          <View className="items-start gap-2">
+            <Text className="text-[13px] text-ink-2">This month's listening didn't load.</Text>
             <Pressable onPress={() => calendar.refetch()} accessibilityRole="button" className="rounded-full bg-fill px-3.5 py-1.5">
               <Text className="text-[13px] font-semibold text-ink">Try again</Text>
             </Pressable>
