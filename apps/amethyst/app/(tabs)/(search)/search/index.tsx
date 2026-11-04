@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Link, Stack } from "expo-router";
 import RightRail from "@/components/teal/RightRail";
+import { useQuery } from "@tanstack/react-query";
 import TealShell, { SectionHeading } from "@/components/teal/TealShell";
+import { HeatingShelf } from "@/components/today/HeatingUp";
+import { dedupeMoments } from "@/lib/teal/today";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
@@ -10,6 +13,7 @@ import { getProfileImageUrl } from "@/lib/teal/actors";
 import {
   coverArtUrl,
   getSearchResults,
+  getToday,
   searchBlueskyUsers,
   type SearchResults,
 } from "@/lib/teal/api";
@@ -112,18 +116,18 @@ function SearchTabButton({
       <Icon
         icon={icon}
         size={17}
-        className={active ? "text-foreground" : "text-muted-foreground"}
+        className={active ? "text-foreground" : "text-ink-2"}
       />
       <Text
         className={
           active
             ? "text-sm font-black"
-            : "text-sm font-bold text-muted-foreground"
+            : "text-sm font-bold text-ink-2"
         }
       >
         {label}
       </Text>
-      <Text className="font-mono text-xs text-muted-foreground">{count}</Text>
+      <Text className="font-mono text-xs text-ink-2">{count}</Text>
     </Pressable>
   );
 }
@@ -149,7 +153,7 @@ function UserRow({ user }: { user: UserResult }) {
             {user.displayName || handle || user.did}
           </Text>
           <Text
-            className="font-mono text-xs text-muted-foreground"
+            className="font-mono text-xs text-ink-2"
             numberOfLines={1}
           >
             {handle ? `@${handle}` : user.did}
@@ -169,26 +173,26 @@ function SongRow({ song }: { song: SongResult }) {
           {art ? (
             <Image source={{ uri: art }} className="h-full w-full" />
           ) : (
-            <Icon icon={Music2} size={23} className="text-muted-foreground" />
+            <Icon icon={Music2} size={23} className="text-ink-2" />
           )}
         </View>
         <View className="min-w-0 flex-1">
           <Text className="font-black" numberOfLines={1}>
             {song.trackName}
           </Text>
-          <Text className="text-sm text-muted-foreground" numberOfLines={1}>
+          <Text className="text-sm text-ink-2" numberOfLines={1}>
             {song.artistName}
           </Text>
           {song.releaseName && (
             <Text
-              className="font-mono text-xs text-muted-foreground"
+              className="font-mono text-xs text-ink-2"
               numberOfLines={1}
             >
               {song.releaseName}
             </Text>
           )}
         </View>
-        <Text className="font-mono text-xs text-muted-foreground">
+        <Text className="font-mono text-xs text-ink-2">
           {song.playCount}
         </Text>
       </Pressable>
@@ -211,16 +215,46 @@ function MusicEntityRow({
     <Link href={href as any} asChild>
       <Pressable className="flex-row items-center gap-3 border-b border-border px-2 py-4 web:hover:bg-accent/45">
         <View className="h-12 w-12 items-center justify-center rounded-full bg-muted">
-          <Icon icon={icon} size={22} className="text-muted-foreground" />
+          <Icon icon={icon} size={22} className="text-ink-2" />
         </View>
         <Text className="min-w-0 flex-1 font-black" numberOfLines={1}>
           {name || "Unknown"}
         </Text>
-        <Text className="font-mono text-xs text-muted-foreground">
+        <Text className="font-mono text-xs text-ink-2">
           {playCount || 0} plays
         </Text>
       </Pressable>
     </Link>
+  );
+}
+
+/** With nothing typed, Explore shows what all of teal is listening to. */
+function Discover() {
+  const network = useQuery({
+    queryKey: ["today", "network"],
+    queryFn: () => getToday(),
+    select: (today) => ({
+      ...today,
+      moments: dedupeMoments(today.moments),
+      heatingUp: dedupeMoments(today.heatingUp),
+    }),
+    refetchInterval: 60_000,
+  });
+  if (network.isLoading) return <ActivityIndicator className="my-10" />;
+  const now = network.data?.moments ?? [];
+  const heating = network.data?.heatingUp ?? [];
+  if (now.length === 0 && heating.length === 0) {
+    return (
+      <Text className="mt-8 text-center text-[15px] text-ink-2">
+        Search for listeners, songs, artists, and albums across teal.
+      </Text>
+    );
+  }
+  return (
+    <View className="-mx-2.5 mt-6">
+      <HeatingShelf moments={now} title="Right now on teal" />
+      <HeatingShelf moments={heating} title="Heating up across teal" />
+    </View>
   );
 }
 
@@ -294,14 +328,10 @@ export default function Explore() {
   return (
     <TealShell rightRail={<RightRail />} pageTitle="Explore">
       <Stack.Screen options={{ title: "Explore", headerShown: false }} />
-      <SectionHeading
-        eyebrow="Discovery"
-        title="Explore the index"
-        detail="LIVE SEARCH"
-      />
-      <View className="overflow-hidden rounded-lg border border-border bg-card">
+      <SectionHeading title="Explore" level={1} />
+      <View className="overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
         <View className="flex-row items-center gap-3 px-4 py-4">
-          <Icon icon={Search} size={23} className="text-muted-foreground" />
+          <Icon icon={Search} size={23} className="text-ink-2" />
           <Input
             value={query}
             onChangeText={setQuery}
@@ -318,7 +348,7 @@ export default function Explore() {
                 onPress={() => setQuery("")}
                 className="h-9 w-9 items-center justify-center rounded-full bg-muted"
               >
-                <Icon icon={X} size={18} className="text-muted-foreground" />
+                <Icon icon={X} size={18} className="text-ink-2" />
               </Pressable>
             )
           )}
@@ -355,25 +385,21 @@ export default function Explore() {
         </View>
       </View>
 
-      <View className="mt-5 overflow-hidden rounded-lg border border-border bg-card px-3 py-1">
-        {!hasQuery && (
-          <View className="min-h-[20rem] items-center justify-center gap-3 px-8">
-            <Icon icon={Search} size={38} className="text-muted-foreground" />
-            <Text className="text-center font-sans text-2xl font-black">
-              Find something playing
-            </Text>
-            <Text className="text-center text-muted-foreground">
-              Search live Teal plays and listeners across the ATProto network.
-            </Text>
-          </View>
-        )}
+      {!hasQuery && <Discover />}
+      <View
+        className={
+          hasQuery
+            ? "mt-5 overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong px-3 py-1 web:backdrop-blur-2xl"
+            : "hidden"
+        }
+      >
         {error && (
           <Text className="py-8 text-center font-bold text-destructive">
             Search failed: {error}
           </Text>
         )}
         {hasQuery && !loading && !error && !hasResults && (
-          <Text className="py-12 text-center text-muted-foreground">
+          <Text className="py-12 text-center text-ink-2">
             No {activeTab} found for “{query.trim()}”.
           </Text>
         )}

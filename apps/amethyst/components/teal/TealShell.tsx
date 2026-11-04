@@ -10,7 +10,7 @@ import {
 import { useFocusEffect, usePathname } from "expo-router";
 import Head from "expo-router/head";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AmbientScreen, useAmbientScroll } from "@/components/ds";
+import { AmbientScreen, useAmbientScroll, useHalo } from "@/components/ds";
 
 import { Text } from "../ui/text";
 
@@ -33,20 +33,26 @@ export function SectionHeading({
   detail?: string;
   level?: 1 | 2 | 3;
 }) {
+  const halo = useHalo();
   return (
     <View className="mb-4 flex-row items-end justify-between gap-4">
       <View className="min-w-0 flex-1">
         <Text
           role="heading"
           aria-level={level}
-          className="font-sans text-2xl font-semibold"
+          style={halo}
+          className={
+            level === 1
+              ? "text-[34px] font-bold text-ink"
+              : "text-[22px] font-bold text-ink"
+          }
         >
           {title}
         </Text>
       </View>
-      {detail && (
-        <Text className="text-xs font-light text-muted-foreground">
-          {detail}
+      {!!detail && (
+        <Text style={halo} className="pb-1 text-[13px] tabular-nums text-ink-2">
+          {detail.toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
         </Text>
       )}
     </View>

@@ -22,7 +22,7 @@ export default function RecoveryPage({
     <TealShell pageTitle={title}>
       <Stack.Screen options={{ title, headerShown: false }} />
       <View className="min-h-[26rem] items-center justify-center gap-5 py-12">
-        <Icon icon={icon} size={40} className="text-muted-foreground" />
+        <Icon icon={icon} size={40} className="text-ink-2" />
         <Text
           role="heading"
           aria-level={1}
@@ -30,7 +30,7 @@ export default function RecoveryPage({
         >
           {title}
         </Text>
-        <Text className="max-w-md text-center leading-6 text-muted-foreground">
+        <Text className="max-w-md text-center leading-6 text-ink-2">
           {description}
         </Text>
         <View className="flex-row flex-wrap justify-center gap-3">

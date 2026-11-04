@@ -110,7 +110,7 @@ export default function AuthOptions() {
             ? "You're signed in"
             : "Finishing sign-in..."}
       </Text>
-      <Text className="text-center text-sm text-muted-foreground">
+      <Text className="text-center text-sm text-ink-2">
         {error
           ? "Your sign-in session may have expired. Start again to connect your account."
           : "Connecting your account to Teal. This may take a few seconds."}

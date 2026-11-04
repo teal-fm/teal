@@ -91,20 +91,20 @@ function TrackRow({
       >
         {selected && <Check size={15} className="text-primary-foreground" />}
       </View>
-      <Text className="w-8 font-mono text-xs text-muted-foreground">
+      <Text className="w-8 font-mono text-xs text-ink-2">
         {track.number || track.position || "—"}
       </Text>
       <View className="min-w-0 flex-1">
         <Text className="font-semibold" numberOfLines={1}>
           {track.recording.title || track.title || "Untitled track"}
         </Text>
-        <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+        <Text className="text-xs text-ink-2" numberOfLines={1}>
           {track.recording["artist-credit"]
             ?.map((credit) => credit.name || credit.artist.name)
             .join(", ") || "Album artist"}
         </Text>
       </View>
-      <Text className="font-mono text-xs text-muted-foreground">
+      <Text className="font-mono text-xs text-ink-2">
         {formatDuration(duration)}
         {!actualDuration && "*"}
       </Text>
@@ -295,7 +295,7 @@ export default function ManualListensPage() {
           </Button>
         </Link>
       </View>
-      <View className="mb-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <View className="mb-6 overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl shadow-sm">
         <View className="border-b border-border bg-primary px-5 py-4">
           <View className="flex-row items-center gap-3">
             <View className="h-10 w-10 items-center justify-center rounded-full bg-background/90">
@@ -355,15 +355,15 @@ export default function ManualListensPage() {
           <View className="flex-row flex-wrap items-end justify-between gap-3">
             <View className="min-w-0 flex-1">
               <Text className="font-semibold">Choose a release</Text>
-              <Text className="mt-1 text-sm text-muted-foreground">
+              <Text className="mt-1 text-sm text-ink-2">
                 MusicBrainz has several releases for many albums.
               </Text>
             </View>
-            <Text className="font-mono text-xs text-muted-foreground">
+            <Text className="font-mono text-xs text-ink-2">
               {searchResults.length} results
             </Text>
           </View>
-          <View className="overflow-hidden rounded-xl border border-border bg-card">
+          <View className="overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
             {searchResults.map((release) => (
               <Pressable
                 key={release.id}
@@ -382,16 +382,16 @@ export default function ManualListensPage() {
                     {release.title}
                   </Text>
                   <Text
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-ink-2"
                     numberOfLines={1}
                   >
                     {releaseArtist(release)}
                   </Text>
-                  <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                  <Text className="font-mono text-[10px] uppercase text-ink-2">
                     {releaseDetails(release) || "Release details unavailable"}
                   </Text>
                 </View>
-                <ChevronRight size={18} className="text-muted-foreground" />
+                <ChevronRight size={18} className="text-ink-2" />
               </Pressable>
             ))}
           </View>
@@ -400,9 +400,9 @@ export default function ManualListensPage() {
 
       {hasSearched && !loading && searchResults.length === 0 && !error && (
         <View className="mb-6 items-center rounded-xl border border-dashed border-border bg-card p-8">
-          <Disc3 size={28} className="mb-3 text-muted-foreground" />
+          <Disc3 size={28} className="mb-3 text-ink-2" />
           <Text className="font-semibold">No releases found</Text>
-          <Text className="mt-1 text-center text-sm text-muted-foreground">
+          <Text className="mt-1 text-center text-sm text-ink-2">
             Try a shorter album title, or add the artist name to narrow the
             search.
           </Text>
@@ -410,9 +410,9 @@ export default function ManualListensPage() {
       )}
 
       {loadingRelease && (
-        <View className="mb-6 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card p-5">
+        <View className="mb-6 flex-row items-center justify-center gap-2 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-5">
           <ActivityIndicator />
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             Loading tracklist…
           </Text>
         </View>
@@ -420,7 +420,7 @@ export default function ManualListensPage() {
 
       {selectedRelease && tracks.length > 0 && submittedCount === undefined && (
         <View className="gap-5">
-          <View className="overflow-hidden rounded-xl border border-border bg-card">
+          <View className="overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
             <View className="flex-row gap-4 p-4">
               <Image
                 source={{ uri: coverArtUrl(`mbid:${selectedRelease.id}`, 500) }}
@@ -434,12 +434,12 @@ export default function ManualListensPage() {
                   {selectedRelease.title}
                 </Text>
                 <Text
-                  className="text-sm text-muted-foreground"
+                  className="text-sm text-ink-2"
                   numberOfLines={1}
                 >
                   {releaseArtist(selectedRelease)}
                 </Text>
-                <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                <Text className="font-mono text-[10px] uppercase text-ink-2">
                   {releaseDetails(selectedRelease)} · {tracks.length} tracks
                 </Text>
               </View>
@@ -462,7 +462,7 @@ export default function ManualListensPage() {
               </Pressable>
             </View>
             <View className="flex-row items-center justify-between border-t border-border bg-muted/30 px-4 py-2">
-              <Text className="text-xs text-muted-foreground">
+              <Text className="text-xs text-ink-2">
                 {selectedTracks.length} of {tracks.length} selected
               </Text>
               <View className="flex-row gap-1">
@@ -482,7 +482,7 @@ export default function ManualListensPage() {
                   className="min-h-11 justify-center px-2"
                   onPress={clearTracks}
                 >
-                  <Text className="text-sm font-bold text-muted-foreground">
+                  <Text className="text-sm font-bold text-ink-2">
                     Clear
                   </Text>
                 </Pressable>
@@ -500,17 +500,17 @@ export default function ManualListensPage() {
                 />
               ))}
             </View>
-            <Text className="px-4 py-3 font-mono text-[10px] text-muted-foreground">
+            <Text className="px-4 py-3 font-mono text-[10px] text-ink-2">
               * no duration in MusicBrainz; timing uses 3:00
             </Text>
           </View>
 
-          <View className="rounded-xl border border-border bg-card p-5">
+          <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-5">
             <View className="mb-4 flex-row items-center gap-3">
               <CalendarClock size={20} className="text-primary" />
               <View className="min-w-0 flex-1">
                 <Text className="font-semibold">When did you listen?</Text>
-                <Text className="text-sm text-muted-foreground">
+                <Text className="text-sm text-ink-2">
                   Choose how to place the selected tracks in your listening
                   history.
                 </Text>
@@ -538,7 +538,7 @@ export default function ManualListensPage() {
                   >
                     {mode === "now" ? "Use current time" : "Choose a time"}
                   </Text>
-                  <Text className="mt-1 text-xs text-muted-foreground">
+                  <Text className="mt-1 text-xs text-ink-2">
                     {mode === "now"
                       ? "Newest selected track starts now"
                       : "First selected track starts at this time"}
@@ -551,7 +551,7 @@ export default function ManualListensPage() {
                 <Text className="text-sm font-semibold">
                   First track start time
                 </Text>
-                <Text className="text-xs text-muted-foreground">
+                <Text className="text-xs text-ink-2">
                   Use your local date and time.
                 </Text>
                 <Input
@@ -576,7 +576,7 @@ export default function ManualListensPage() {
                       key={`${track.key}-${playedTime}`}
                       className="flex-row flex-wrap items-center gap-3"
                     >
-                      <Text className="w-8 font-mono text-[10px] text-muted-foreground">
+                      <Text className="w-8 font-mono text-[10px] text-ink-2">
                         {track.number || track.position || "—"}
                       </Text>
                       <Text
@@ -585,7 +585,7 @@ export default function ManualListensPage() {
                       >
                         {track.recording.title}
                       </Text>
-                      <Text className="text-xs text-muted-foreground">
+                      <Text className="text-xs text-ink-2">
                         {new Date(playedTime).toLocaleString()}
                       </Text>
                     </View>
@@ -619,7 +619,7 @@ export default function ManualListensPage() {
       {submittedCount !== undefined && (
         <View className="mt-5 gap-3 rounded-xl border border-primary/30 bg-accent p-5">
           <Text className="font-sans text-2xl font-black">Listens saved</Text>
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             Added {submittedCount} listen{submittedCount === 1 ? "" : "s"}.
             Public listening history may take a moment to update.
           </Text>

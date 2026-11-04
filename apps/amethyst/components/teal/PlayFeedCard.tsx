@@ -119,7 +119,7 @@ export default function PlayFeedCard({
   return (
     <View
       className={cn(
-        "mb-4 w-full rounded-lg border border-border bg-card/80 p-4 web:transition-colors web:hover:border-primary/45",
+        "mb-4 w-full rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4 web:transition-colors web:hover:border-primary/45",
         compact ? "max-w-[34rem]" : "w-full",
       )}
     >
@@ -141,7 +141,7 @@ export default function PlayFeedCard({
           </Text>
           {authorHandle && (
             <Text
-              className="max-w-full font-mono text-xs text-muted-foreground"
+              className="max-w-full font-mono text-xs text-ink-2"
               numberOfLines={1}
             >
               @{authorHandle}
@@ -150,13 +150,13 @@ export default function PlayFeedCard({
           {permalink ? (
             <Link href={permalink as any} asChild>
               <Pressable>
-                <Text className="text-xs font-light text-muted-foreground">
+                <Text className="text-xs font-light text-ink-2">
                   listened {when}
                 </Text>
               </Pressable>
             </Link>
           ) : (
-            <Text className="text-xs font-light text-muted-foreground">
+            <Text className="text-xs font-light text-ink-2">
               listened {when}
             </Text>
           )}
@@ -174,7 +174,7 @@ export default function PlayFeedCard({
                 {play.trackName}
               </Text>
               <Text
-                className="max-w-full text-sm font-bold text-muted-foreground"
+                className="max-w-full text-sm font-bold text-ink-2"
                 numberOfLines={1}
               >
                 {displayArtists(play) || "Unknown artist"}
@@ -192,7 +192,7 @@ export default function PlayFeedCard({
                   <Icon
                     icon={Disc3}
                     size={26}
-                    className="text-muted-foreground"
+                    className="text-ink-2"
                   />
                 </View>
               )}

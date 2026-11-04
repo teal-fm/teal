@@ -94,9 +94,9 @@ export function ArtistListenerRow({
 
   return (
     <Link href={`/profile/${href}` as any} asChild>
-      <Pressable className="flex-row items-center gap-3 border-b border-border/70 py-3 web:transition-colors web:hover:bg-primary/5">
+      <Pressable className="flex-row items-center gap-3 border-b border-hair py-3 web:transition-colors web:hover:bg-primary/5">
         <View className="w-8 items-center">
-          <Text className="font-mono text-xs font-bold text-muted-foreground">
+          <Text className="font-mono text-xs font-bold text-ink-2">
             #{rank}
           </Text>
         </View>
@@ -115,14 +115,14 @@ export function ArtistListenerRow({
           </Text>
           {handle ? (
             <Text
-              className="font-mono text-xs text-muted-foreground"
+              className="font-mono text-xs text-ink-2"
               numberOfLines={1}
             >
               @{handle}
             </Text>
           ) : (
             <Text
-              className="font-mono text-xs text-muted-foreground"
+              className="font-mono text-xs text-ink-2"
               numberOfLines={1}
             >
               {did}
@@ -136,7 +136,7 @@ export function ArtistListenerRow({
               {listener.playCount}
             </Text>
           </View>
-          <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+          <Text className="font-mono text-[10px] uppercase text-ink-2">
             listens
           </Text>
         </View>
@@ -153,7 +153,7 @@ export function ArtistLeaderboardList({
   offset?: number;
 }) {
   return (
-    <View className="overflow-hidden rounded-lg border border-border bg-card px-3">
+    <View className="overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl px-3">
       {listeners.map((listener, index) => (
         <ArtistListenerRow
           key={listener.actor.did || `${listener.actor.handle}-${index}`}

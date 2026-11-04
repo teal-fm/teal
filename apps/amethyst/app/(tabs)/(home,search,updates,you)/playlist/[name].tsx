@@ -244,11 +244,11 @@ export default function PlaylistDetailScreen() {
         options={{ title: playlist?.name || "Playlist", headerShown: false }}
       />
       {!validUri && (
-        <View className="gap-3 rounded-xl border border-border bg-card p-5">
+        <View className="gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-5">
           <Text className="text-2xl font-black">
             This playlist link is incomplete
           </Text>
-          <Text className="text-muted-foreground">
+          <Text className="text-ink-2">
             Ask for the full playlist link, or open a playlist from its owner's
             profile.
           </Text>
@@ -280,7 +280,7 @@ export default function PlaylistDetailScreen() {
       )}
       {playlist && (
         <>
-          <View className="mb-8 rounded-lg border border-border bg-card p-6">
+          <View className="mb-8 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
             <View className="flex-row items-start gap-4">
               <Pressable
                 accessibilityRole="button"
@@ -316,7 +316,7 @@ export default function PlaylistDetailScreen() {
                       maxLength={5000}
                     />
                     <Text className="text-sm font-semibold">Collaborators</Text>
-                    <Text className="text-sm text-muted-foreground">
+                    <Text className="text-sm text-ink-2">
                       You own this playlist. Collaborators can add tracks. Enter
                       up to {MAX_PLAYLIST_COLLABORATORS} handles, one per line;
                       existing DIDs also work.
@@ -375,7 +375,7 @@ export default function PlaylistDetailScreen() {
                         facets={playlist.descriptionFacets}
                       />
                     )}
-                    <Text className="mt-2 font-mono text-[10px] uppercase text-muted-foreground">
+                    <Text className="mt-2 font-mono text-[10px] uppercase text-ink-2">
                       {items.length} tracks · {playlist.authors.length}{" "}
                       contributor
                       {playlist.authors.length === 1 ? "" : "s"}
@@ -402,7 +402,7 @@ export default function PlaylistDetailScreen() {
                   }}
                 />
                 {!currentTrack && (
-                  <Text className="w-full text-sm text-muted-foreground">
+                  <Text className="w-full text-sm text-ink-2">
                     No current track to add. Search for one below.
                   </Text>
                 )}
@@ -424,7 +424,7 @@ export default function PlaylistDetailScreen() {
 
           <SectionHeading eyebrow="Playlist" title="Tracks" />
           {items.length === 0 ? (
-            <Text className="text-muted-foreground">
+            <Text className="text-ink-2">
               This playlist is empty. Add the first track to get it started.
             </Text>
           ) : (
@@ -433,9 +433,9 @@ export default function PlaylistDetailScreen() {
                 const play = trackViewToPlayView(item.track);
                 return (
                   <Link key={item.uri} href={musicHref(play) as any} asChild>
-                    <Pressable className="rounded-lg border border-border bg-card p-4">
+                    <Pressable className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
                       <View className="flex-row items-center gap-3">
-                        <Text className="w-7 font-mono text-xs text-muted-foreground">
+                        <Text className="w-7 font-mono text-xs text-ink-2">
                           {String(index + 1).padStart(2, "0")}
                         </Text>
                         <View className="h-10 w-10 items-center justify-center rounded-lg bg-muted">
@@ -450,7 +450,7 @@ export default function PlaylistDetailScreen() {
                             {play.trackName}
                           </Text>
                           <Text
-                            className="text-sm text-muted-foreground"
+                            className="text-sm text-ink-2"
                             numberOfLines={1}
                           >
                             {displayArtists(play) || "Unknown artist"}

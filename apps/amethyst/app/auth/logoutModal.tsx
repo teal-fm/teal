@@ -43,7 +43,7 @@ export default function ModalScreen() {
           className="absolute right-2 top-2"
           onPress={handleGoBack}
         >
-          <Icon icon={X} className="text-muted-foreground" />
+          <Icon icon={X} className="text-ink-2" />
         </Button>
         <Text
           nativeID="teal-logout-title"
@@ -51,7 +51,7 @@ export default function ModalScreen() {
         >
           Sign out of Teal?
         </Text>
-        <Text className="text-center text-sm leading-5 text-muted-foreground">
+        <Text className="text-center text-sm leading-5 text-ink-2">
           Your profile and listening history stay with your account. You can
           sign in again whenever you like.
         </Text>

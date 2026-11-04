@@ -237,12 +237,12 @@ function OnboardingFlow() {
   if (!agent) {
     return (
       <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
-        <View className="w-full max-w-md gap-4 rounded-lg border border-border bg-card p-6">
+        <View className="w-full max-w-md gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
           <Icon icon={Disc3} size={42} className="text-primary" />
           <Text className="font-sans text-3xl font-black">
             Create your Teal profile
           </Text>
-          <Text className="text-muted-foreground">
+          <Text className="text-ink-2">
             Sign in with your Bluesky or other Atmosphere account to set up your
             music profile.
           </Text>
@@ -260,7 +260,7 @@ function OnboardingFlow() {
     return (
       <View className="min-h-screen flex-1 items-center justify-center gap-3 bg-background">
         <ActivityIndicator size="large" />
-        <Text className="text-muted-foreground">
+        <Text className="text-ink-2">
           Checking your Teal profile...
         </Text>
       </View>
@@ -274,7 +274,7 @@ function OnboardingFlow() {
           <Text accessibilityRole="header" className="text-2xl font-bold">
             Couldn't check your profile
           </Text>
-          <Text accessibilityRole="alert" className="text-muted-foreground">
+          <Text accessibilityRole="alert" className="text-ink-2">
             Check your connection and try again. Your profile hasn't been
             changed.
           </Text>
@@ -297,7 +297,7 @@ function OnboardingFlow() {
   ) {
     return (
       <SafeAreaView className="min-h-screen flex-1 items-center justify-center bg-background px-6">
-        <View className="w-full max-w-md items-start gap-4 rounded-lg border border-border bg-card p-6">
+        <View className="w-full max-w-md items-start gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
           <Icon icon={Check} size={42} className="text-primary" />
           <Text
             accessibilityRole="header"
@@ -305,7 +305,7 @@ function OnboardingFlow() {
           >
             Your Teal profile is ready
           </Text>
-          <Text className="text-muted-foreground">
+          <Text className="text-ink-2">
             {completed
               ? "Save your first listen to start sharing the music you love. You can update your profile any time."
               : "Your profile is already set up. Add a listen or return to your profile."}
@@ -325,7 +325,7 @@ function OnboardingFlow() {
             </Link>
           </View>
           {completed && (
-            <Text className="text-sm text-muted-foreground">
+            <Text className="text-sm text-ink-2">
               Profile saved. It may take a moment to appear for other listeners.
             </Text>
           )}
@@ -343,7 +343,7 @@ function OnboardingFlow() {
         <Text className="font-sans text-3xl font-black">
           {OnboardingSubmissionSteps[submissionStep]}
         </Text>
-        <Text className="text-muted-foreground">
+        <Text className="text-ink-2">
           Saving your profile. Your name, bio, and images will stay here if you
           need to retry.
         </Text>
@@ -435,11 +435,11 @@ function OnboardingFlow() {
                   teal.fm
                 </Text>
               </View>
-              <Text className="font-mono text-xs text-muted-foreground">
+              <Text className="font-mono text-xs text-ink-2">
                 Step {step} of 3
               </Text>
             </View>
-            <View className="flex-1 rounded-lg border border-border bg-card p-6 md:p-10">
+            <View className="flex-1 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6 md:p-10">
               {renderPage()}
             </View>
             <ProgressDots totalSteps={3} currentStep={step} />

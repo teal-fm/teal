@@ -17,11 +17,11 @@ export default function AuthOptions() {
           headerShown: false,
         }}
       />
-      <View className="w-full max-w-md gap-5 rounded-lg border border-border bg-card p-7">
+      <View className="w-full max-w-md gap-5 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-7">
         <Text className="font-sans text-4xl font-black text-foreground">
           Welcome to Teal
         </Text>
-        <Text className="leading-6 text-muted-foreground">
+        <Text className="leading-6 text-ink-2">
           Share the music you listen to. Use your Bluesky or other Atmosphere
           account, or create one to get started.
         </Text>

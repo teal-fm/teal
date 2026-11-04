@@ -46,7 +46,7 @@ export default function ProfileListeningRow({
     >
       <Pressable
         accessibilityLabel={`${play.trackName} by ${artists}${date ? `, listened ${date}` : ""}${syncing ? ", saved and syncing" : ""}`}
-        className="min-h-20 flex-row items-center gap-3 border-b border-border/70 py-3 web:hover:bg-muted/50"
+        className="min-h-20 flex-row items-center gap-3 border-b border-hair py-3 web:hover:bg-muted/50"
       >
         <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-md bg-muted">
           {art ? (
@@ -56,19 +56,19 @@ export default function ProfileListeningRow({
               onError={() => setArtFailed(true)}
             />
           ) : (
-            <Icon icon={Music2} size={22} className="text-muted-foreground" />
+            <Icon icon={Music2} size={22} className="text-ink-2" />
           )}
         </View>
         <View className="min-w-0 flex-1 gap-1">
           <Text className="font-sans font-bold" numberOfLines={1}>
             {play.trackName}
           </Text>
-          <Text className="text-sm text-muted-foreground" numberOfLines={1}>
+          <Text className="text-sm text-ink-2" numberOfLines={1}>
             {artists}
             {play.releaseName ? ` · ${play.releaseName}` : ""}
           </Text>
           {date && (
-            <Text className="text-xs text-muted-foreground">{date}</Text>
+            <Text className="text-xs text-ink-2">{date}</Text>
           )}
           {syncing && (
             <Text className="text-xs font-semibold text-primary">

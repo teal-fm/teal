@@ -207,14 +207,14 @@ export default function TopsterScreen() {
         >
           Top albums chart
         </Text>
-        <Text className="text-muted-foreground">
+        <Text className="text-ink-2">
           A cover chart ranked by listens received by Teal, using the same
           counts as listening stats. Pick a period and a grid size to make it
           yours.
         </Text>
       </View>
 
-      <View className="mb-5 gap-5 rounded-lg border border-border bg-card/70 p-4">
+      <View className="mb-5 gap-5 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
         <View className="gap-2">
           <Text className="font-sans font-bold">Listening period</Text>
           <View className="flex-row flex-wrap gap-2">
@@ -260,11 +260,11 @@ export default function TopsterScreen() {
           </Text>
         </View>
       ) : visible.length === 0 ? (
-        <View className="rounded-lg border border-border bg-card p-6">
+        <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-6">
           <Text className="font-sans text-xl font-bold">
             No albums for this period
           </Text>
-          <Text className="mt-2 text-muted-foreground">
+          <Text className="mt-2 text-ink-2">
             This listener has no album plays here yet. Try a longer period.
           </Text>
         </View>
@@ -288,11 +288,11 @@ export default function TopsterScreen() {
             )}
           </View>
           {actionMessage && (
-            <Text className="mb-3 text-sm text-muted-foreground">
+            <Text className="mb-3 text-sm text-ink-2">
               {actionMessage}
             </Text>
           )}
-          <Text className="mb-3 text-sm text-muted-foreground">
+          <Text className="mb-3 text-sm text-ink-2">
             Counts reflect listens received by Teal. Recent saves may take a
             moment to appear.
           </Text>

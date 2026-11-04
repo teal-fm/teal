@@ -232,7 +232,7 @@ const LoginScreen = () => {
               >
                 <Icon
                   icon={X}
-                  className="pointer-events-none text-muted-foreground"
+                  className="pointer-events-none text-ink-2"
                   size={18}
                 />
               </Button>
@@ -253,7 +253,7 @@ const LoginScreen = () => {
               >
                 Sign in to Teal
               </Text>
-              <Text className="text-center text-sm leading-5 text-muted-foreground">
+              <Text className="text-center text-sm leading-5 text-ink-2">
                 Use your Bluesky or other Atmosphere account. We'll send you to
                 your account provider to approve sign-in.
               </Text>
@@ -326,7 +326,7 @@ const LoginScreen = () => {
                           </Text>
                         </View>
                       ) : (
-                        <Text className="px-1 text-muted-foreground">
+                        <Text className="px-1 text-ink-2">
                           Finding your account...
                         </Text>
                       )}

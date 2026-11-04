@@ -8,7 +8,7 @@ import { Icon } from "@/lib/icons/iconWithClassName";
 import { normalizeHandle } from "@/lib/teal/actors";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/stores/mainStore";
-import { Bell, Compass, House, SquarePen, UserRound, type LucideIcon } from "lucide-react-native";
+import { Bell, Compass, House, Settings, SquarePen, UserRound, type LucideIcon } from "lucide-react-native";
 
 export const WIDE_BREAKPOINT = 1000;
 
@@ -138,8 +138,9 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
           <Text className="px-3 text-[11.5px] leading-4 text-ink-3">
             Early work in progress: expect bugs and the odd database wipe.
           </Text>
+          <View className="flex-row items-center gap-1.5">
           <Link href={me.signedIn ? "/me" : "/auth/login"} asChild>
-            <Pressable className="flex-row items-center gap-2.5 rounded-[20px] bg-fill p-2.5">
+            <Pressable className="flex-1 flex-row items-center gap-2.5 rounded-[20px] bg-fill p-2.5">
               {me.signedIn ? (
                 <Avatar did={me.did} avatar={me.avatar} name={me.name} size={40} />
               ) : (
@@ -157,6 +158,12 @@ export function WebNav({ state, navigation, wide }: BottomTabBarProps & { wide: 
               </View>
             </Pressable>
           </Link>
+          <Link href="/settings" asChild>
+            <Pressable accessibilityLabel="Settings" className="h-11 w-11 items-center justify-center rounded-full web:hover:bg-fill">
+              <Icon icon={Settings} size={20} className="text-ink-2" />
+            </Pressable>
+          </Link>
+          </View>
         </View>
       </Glass>
     </View>

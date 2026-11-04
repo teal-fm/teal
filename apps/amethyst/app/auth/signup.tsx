@@ -20,7 +20,7 @@ const LoginScreen = () => {
           headerShown: false,
         }}
       />
-      <View className="w-full max-w-md items-center justify-center gap-4 rounded-lg border border-border bg-card p-7">
+      <View className="w-full max-w-md items-center justify-center gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-7">
         <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
           <Icon
             icon={AtSignIcon}
@@ -36,7 +36,7 @@ const LoginScreen = () => {
             Teal uses the same account as Bluesky and other Atmosphere apps.
             Create one with Bluesky, then use its handle to sign in here.
           </Text>
-          <Text className="mb-4 text-center text-xs text-muted-foreground">
+          <Text className="mb-4 text-center text-xs text-ink-2">
             Already have an account? You can sign in directly. Creating an
             account opens Bluesky in another tab.
           </Text>
@@ -62,7 +62,7 @@ const LoginScreen = () => {
           {opened && (
             <Text
               accessibilityLiveRegion="polite"
-              className="mt-4 text-center text-muted-foreground"
+              className="mt-4 text-center text-ink-2"
             >
               Once your account is ready, return here and sign in with your new
               handle.

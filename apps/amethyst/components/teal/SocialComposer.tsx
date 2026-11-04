@@ -135,7 +135,7 @@ function TrackArtwork({ play, size = 44 }: { play: PlayView; size?: number }) {
         <Icon
           icon={Disc3}
           size={Math.max(18, size / 2)}
-          className="text-muted-foreground"
+          className="text-ink-2"
         />
       )}
     </View>
@@ -168,14 +168,14 @@ function TrackOption({
           {play.trackName}
         </Text>
         <Text
-          className="text-sm font-bold text-muted-foreground"
+          className="text-sm font-bold text-ink-2"
           numberOfLines={1}
         >
           {displayArtists(play) || "Unknown artist"}
         </Text>
         {(play.releaseName || detail) && (
           <Text
-            className="mt-1 font-mono text-[10px] uppercase text-muted-foreground"
+            className="mt-1 font-mono text-[10px] uppercase text-ink-2"
             numberOfLines={1}
           >
             {detail || play.releaseName}
@@ -362,11 +362,11 @@ export default function SocialComposer({
 
   if (status !== "loggedIn") {
     return (
-      <View className="rounded-lg border border-border bg-card/80 p-4">
+      <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
         <Text className="font-semibold">
           Sign in to {replyTo ? "reply" : "post"} about what you hear.
         </Text>
-        <Text className="mt-1 text-sm text-muted-foreground">
+        <Text className="mt-1 text-sm text-ink-2">
           Share a thought with a song attached. Your post is saved to your
           account.
         </Text>
@@ -375,7 +375,7 @@ export default function SocialComposer({
   }
 
   return (
-    <View className="rounded-lg border border-border bg-card/80 p-4">
+    <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
       <Text className="text-xs font-light text-primary">
         {replyTo ? "Reply to post" : "Create post"}
       </Text>
@@ -392,7 +392,7 @@ export default function SocialComposer({
             <Text className="font-semibold" numberOfLines={1}>
               {selectedTrack.trackName}
             </Text>
-            <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+            <Text className="text-xs text-ink-2" numberOfLines={1}>
               {displayArtists(selectedTrack) || "Unknown artist"}
             </Text>
           </View>
@@ -409,7 +409,7 @@ export default function SocialComposer({
           <Text className="font-semibold">
             {loadingRecent ? "Finding your latest listen..." : "Choose a song"}
           </Text>
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             Your latest listen attaches automatically. You can choose another
             song.
           </Text>
@@ -440,7 +440,7 @@ export default function SocialComposer({
           </View>
           {musicBrainzResults.length > 0 && (
             <View className="gap-2">
-              <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+              <Text className="font-mono text-[10px] uppercase text-ink-2">
                 MusicBrainz
               </Text>
               {musicBrainzResults.map((play) => (
@@ -460,7 +460,7 @@ export default function SocialComposer({
             </View>
           )}
           <View className="gap-2">
-            <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+            <Text className="font-mono text-[10px] uppercase text-ink-2">
               My recent plays
             </Text>
             <Input
@@ -469,7 +469,7 @@ export default function SocialComposer({
               onChangeText={setRecentQuery}
             />
             {loadingRecent && (
-              <Text className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
+              <Text className="rounded-lg border border-border p-3 text-sm text-ink-2">
                 Loading your recent plays...
               </Text>
             )}
@@ -486,7 +486,7 @@ export default function SocialComposer({
               />
             ))}
             {!loadingRecent && filteredRecent.length === 0 && (
-              <Text className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+              <Text className="rounded-lg border border-dashed border-border p-3 text-sm text-ink-2">
                 No recent listens yet. Search the catalog to choose a song.
               </Text>
             )}
@@ -502,7 +502,7 @@ export default function SocialComposer({
         onChangeText={setText}
       />
       {tags.length > 0 && (
-        <Text className="mt-2 font-mono text-[10px] uppercase text-muted-foreground">
+        <Text className="mt-2 font-mono text-[10px] uppercase text-ink-2">
           Tags: {tags.join(", ")}
         </Text>
       )}

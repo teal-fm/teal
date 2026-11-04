@@ -80,6 +80,7 @@ import {
   CheckSquare,
   Pencil,
   Save,
+  Settings,
   Square,
   Trash2,
   UserMinus,
@@ -167,7 +168,7 @@ function GraphActorRow({ actor }: { actor: MiniProfileView }) {
 
   return (
     <Link href={`/profile/${href}` as any} asChild>
-      <Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-card/75 p-3 web:transition-colors web:hover:border-primary/45">
+      <Pressable className="flex-row items-center gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-3 web:transition-colors web:hover:border-primary/45">
         <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary">
           {avatar ? (
             <Image source={{ uri: avatar }} className="h-full w-full" />
@@ -183,7 +184,7 @@ function GraphActorRow({ actor }: { actor: MiniProfileView }) {
           </Text>
           {handle && (
             <Text
-              className="font-mono text-xs text-muted-foreground"
+              className="font-mono text-xs text-ink-2"
               numberOfLines={1}
             >
               @{handle}
@@ -797,7 +798,7 @@ export default function ProfileScreen() {
   const emptyListening = (
     <View className="gap-3 py-3">
       <Text className="font-bold">No listens yet</Text>
-      <Text className="text-sm text-muted-foreground">
+      <Text className="text-sm text-ink-2">
         {isSelf
           ? "Add a track or an album to start your listening history. Saved listens can take a moment to appear."
           : "This listener has not shared any listens yet."}
@@ -830,6 +831,11 @@ export default function ProfileScreen() {
             <Icon icon={Pencil} size={15} />
             <Text>Edit profile</Text>
           </Button>
+          <Link href="/settings" asChild>
+            <Button size="sm" variant="outline" accessibilityLabel="Settings" className="px-2.5">
+              <Icon icon={Settings} size={16} />
+            </Button>
+          </Link>
         </>
       ) : (
         <Button
@@ -883,7 +889,7 @@ export default function ProfileScreen() {
               ? "We could not complete that action."
               : "This profile could not be found."}
           </Text>
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             Check the handle or try again in a moment.
           </Text>
           <View className="flex-row flex-wrap gap-2">
@@ -1010,7 +1016,7 @@ export default function ProfileScreen() {
               {graphLoading && graphActors.length === 0 ? (
                 <ActivityIndicator />
               ) : graphActors.length === 0 && !graphError ? (
-                <Text className="text-muted-foreground">
+                <Text className="text-ink-2">
                   {graphTab === "followers"
                     ? "No followers yet."
                     : "Not following anyone yet."}
@@ -1078,7 +1084,7 @@ export default function ProfileScreen() {
                   }}
                 >
                   <Text
-                    className={`text-sm font-bold ${activeTab === value ? "text-foreground" : "text-muted-foreground"}`}
+                    className={`text-sm font-bold ${activeTab === value ? "text-foreground" : "text-ink-2"}`}
                   >
                     {value.charAt(0).toUpperCase() + value.slice(1)}
                   </Text>
@@ -1106,7 +1112,7 @@ export default function ProfileScreen() {
                     >
                       Make this profile yours
                     </Text>
-                    <Text className="text-sm text-muted-foreground">
+                    <Text className="text-sm text-ink-2">
                       Your Bluesky details are here to get you started. Add your
                       Teal name, bio, and artwork.
                     </Text>
@@ -1179,7 +1185,7 @@ export default function ProfileScreen() {
                         className="h-auto items-start p-4"
                       >
                         <Text className="font-bold">{playlists[0].name}</Text>
-                        <Text className="text-sm text-muted-foreground">
+                        <Text className="text-sm text-ink-2">
                           {playlists[0].itemCount} tracks
                         </Text>
                       </Button>
@@ -1244,13 +1250,13 @@ export default function ProfileScreen() {
                   )}
                 </View>
                 {bulkEditOpen && isSelf && (
-                  <View className="mb-4 gap-3 rounded-lg border border-border bg-card/75 p-4">
+                  <View className="mb-4 gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
                     <View className="flex-row flex-wrap items-center justify-between gap-3">
                       <View>
                         <Text className="font-bold">
                           {selectedPlayCount} selected
                         </Text>
-                        <Text className="text-sm text-muted-foreground">
+                        <Text className="text-sm text-ink-2">
                           Changes are saved to your account.
                         </Text>
                       </View>
@@ -1281,7 +1287,7 @@ export default function ProfileScreen() {
                     </View>
                     <View className="grid-cols-1 gap-3 md:grid md:grid-cols-2">
                       <View className="gap-2">
-                        <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                        <Text className="font-mono text-[10px] uppercase text-ink-2">
                           Artists
                         </Text>
                         <Input
@@ -1292,7 +1298,7 @@ export default function ProfileScreen() {
                         />
                       </View>
                       <View className="gap-2">
-                        <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                        <Text className="font-mono text-[10px] uppercase text-ink-2">
                           Album or single
                         </Text>
                         <Input
@@ -1399,7 +1405,7 @@ export default function ProfileScreen() {
                   !sectionErrors.posts &&
                   posts.length === 0 && (
                     <View className="gap-3 py-3">
-                      <Text className="text-muted-foreground">
+                      <Text className="text-ink-2">
                         {isSelf
                           ? "Share a song or say what you have been listening to."
                           : "No posts yet."}
@@ -1456,7 +1462,7 @@ export default function ProfileScreen() {
                 {!sectionLoading.playlists &&
                   !sectionErrors.playlists &&
                   playlists.length === 0 && (
-                    <Text className="text-muted-foreground">
+                    <Text className="text-ink-2">
                       {isSelf
                         ? "Collect favorite tracks in your first playlist."
                         : "No playlists yet."}
@@ -1475,7 +1481,7 @@ export default function ProfileScreen() {
                       <Text className="font-bold" numberOfLines={2}>
                         {playlist.name}
                       </Text>
-                      <Text className="text-sm text-muted-foreground">
+                      <Text className="text-sm text-ink-2">
                         {playlist.itemCount} tracks
                       </Text>
                     </Button>

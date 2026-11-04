@@ -267,14 +267,14 @@ export default function SocialPostCard({
     return (
       <View
         role="status"
-        className="rounded-lg border border-border bg-card p-4"
+        className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4"
       >
         <Text>Post deleted.</Text>
       </View>
     );
 
   return (
-    <View className="rounded-lg border border-border bg-card/80 p-4">
+    <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1 flex-row gap-3">
           <Link href={`/profile/${authorHref}` as any} asChild>
@@ -301,7 +301,7 @@ export default function SocialPostCard({
             </Link>
             {authorHandle && (
               <Text
-                className="max-w-full font-mono text-xs text-muted-foreground"
+                className="max-w-full font-mono text-xs text-ink-2"
                 numberOfLines={1}
               >
                 @{authorHandle}
@@ -310,13 +310,13 @@ export default function SocialPostCard({
             {postHref ? (
               <Link href={postHref as any} asChild>
                 <Pressable>
-                  <Text className="text-xs font-light text-muted-foreground">
+                  <Text className="text-xs font-light text-ink-2">
                     posted {timeAgo(new Date(post.createdAt))}
                   </Text>
                 </Pressable>
               </Link>
             ) : (
-              <Text className="text-xs font-light text-muted-foreground">
+              <Text className="text-xs font-light text-ink-2">
                 posted {timeAgo(new Date(post.createdAt))}
               </Text>
             )}
@@ -344,7 +344,7 @@ export default function SocialPostCard({
           {ownerActions === "confirm" ? (
             <>
               <Text className="font-semibold">Delete this post?</Text>
-              <Text className="text-sm text-muted-foreground">
+              <Text className="text-sm text-ink-2">
                 This removes it from your account and cannot be undone.
               </Text>
               <View className="flex-row flex-wrap gap-2">
@@ -412,7 +412,7 @@ export default function SocialPostCard({
               <Text className="font-semibold" numberOfLines={1}>
                 {play.trackName}
               </Text>
-              <Text className="text-sm text-muted-foreground" numberOfLines={1}>
+              <Text className="text-sm text-ink-2" numberOfLines={1}>
                 {displayArtists(play) || "Unknown artist"}
               </Text>
             </View>
@@ -454,9 +454,9 @@ export default function SocialPostCard({
           <Icon
             icon={MessageCircle}
             size={15}
-            className="text-muted-foreground"
+            className="text-ink-2"
           />
-          <Text className="text-sm text-muted-foreground">{replyCount}</Text>
+          <Text className="text-sm text-ink-2">{replyCount}</Text>
         </View>
         <Button
           variant="ghost"
@@ -482,7 +482,7 @@ export default function SocialPostCard({
         </View>
       )}
       {status !== "loggedIn" && (
-        <Text className="mt-3 text-xs text-muted-foreground">
+        <Text className="mt-3 text-xs text-ink-2">
           Sign in to like or repost Teal social posts.
         </Text>
       )}

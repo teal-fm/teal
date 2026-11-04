@@ -321,7 +321,7 @@ powered by @teal.fm`;
               .join(", ")}
             releaseTitle={selectedTrack?.selectedRelease?.title}
           />
-          <Text className="mt-4 text-center text-sm text-muted-foreground">
+          <Text className="mt-4 text-center text-sm text-ink-2">
             Any missing info?{" "}
             <ExternalLink
               className="text-blue-600 dark:text-blue-400"
@@ -333,15 +333,15 @@ powered by @teal.fm`;
         </View>
 
         <View className="w-full flex-col items-center gap-4">
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             This listen will use the current time.
           </Text>
           {blueskyEmbedCard && shareWithBluesky ? (
             <View className="w-full gap-2">
-              <Text className="text-center text-sm text-muted-foreground">
+              <Text className="text-center text-sm text-ink-2">
                 Card Preview:
               </Text>
-              <View className="flex-col items-start rounded-xl border border-border bg-card">
+              <View className="flex-col items-start rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl">
                 <Image
                   source={{
                     uri: blueskyEmbedCard.external.cardyThumbUrl,
@@ -352,7 +352,7 @@ powered by @teal.fm`;
                   <Text className="text-start font-semibold text-card-foreground">
                     {blueskyEmbedCard.external.title}
                   </Text>
-                  <Text className="text-start text-muted-foreground">
+                  <Text className="text-start text-ink-2">
                     {blueskyEmbedCard.external.description}
                   </Text>
                 </View>
@@ -360,13 +360,13 @@ powered by @teal.fm`;
             </View>
           ) : (
             shareWithBluesky && (
-              <Text className="text-center text-sm text-muted-foreground">
+              <Text className="text-center text-sm text-ink-2">
                 Your Bluesky post will contain text without a music preview.
               </Text>
             )
           )}
           {shareWithBluesky && (
-            <View className="w-full items-end text-sm text-muted-foreground">
+            <View className="w-full items-end text-sm text-ink-2">
               <Textarea
                 className="max-h-[200px] min-h-[100px] w-full rounded-md border border-border bg-card p-2 pb-4 text-card-foreground"
                 multiline
@@ -378,7 +378,7 @@ powered by @teal.fm`;
               />
               <Text
                 className={cn(
-                  "absolute bottom-1 right-2 text-center text-sm text-muted-foreground",
+                  "absolute bottom-1 right-2 text-center text-sm text-ink-2",
                   blueskyPostText.length > 150 ? "text-foreground" : "",
                   blueskyPostText.length > 290 ? "text-red-500" : "",
                 )}
@@ -394,7 +394,7 @@ powered by @teal.fm`;
               value={shareWithBluesky}
               onValueChange={setShareWithBluesky}
             />
-            <Text className="text-center text-lg text-muted-foreground">
+            <Text className="text-center text-lg text-ink-2">
               Also publish to Bluesky
             </Text>
           </View>

@@ -179,7 +179,7 @@ function StatArtwork({ item }: { item: StatItem }) {
           onError={() => setFailed(true)}
         />
       ) : (
-        <Icon icon={fallbackIcon} size={24} className="text-muted-foreground" />
+        <Icon icon={fallbackIcon} size={24} className="text-ink-2" />
       )}
     </View>
   );
@@ -300,15 +300,15 @@ function StatListRow({
       accessibilityLabel={`${rank}. ${item.name}${artist ? ` by ${artist}` : ""}, ${playsLabel(item.playCount)}${canResolve ? ", find listening details" : ""}`}
       accessibilityState={{ busy: Boolean(state?.busy) }}
       onPress={canResolve ? openOlderTrack : undefined}
-      className="flex-row items-center gap-2 border-b border-border/70 py-3 web:hover:bg-muted/50"
+      className="flex-row items-center gap-2 border-b border-hair py-3 web:hover:bg-muted/50"
     >
-      <Text className="w-5 text-xs text-muted-foreground">{rank}</Text>
+      <Text className="w-5 text-xs text-ink-2">{rank}</Text>
       <StatArtwork item={item} />
       <View className="min-w-0 flex-1 gap-1">
         <Text className="font-sans text-sm font-bold" numberOfLines={2}>
           {item.name}
         </Text>
-        <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+        <Text className="text-xs text-ink-2" numberOfLines={1}>
           {artist ||
             (item.kind === "artists"
               ? "Artist"
@@ -321,7 +321,7 @@ function StatListRow({
         {state?.busy && (
           <Text
             accessibilityLiveRegion="polite"
-            className="text-xs text-muted-foreground"
+            className="text-xs text-ink-2"
           >
             Finding a matching listen…
           </Text>
@@ -329,7 +329,7 @@ function StatListRow({
         {!state?.busy && !href && state?.result && (
           <Text
             accessibilityLiveRegion="polite"
-            className="text-xs text-muted-foreground"
+            className="text-xs text-ink-2"
           >
             {state.result.exhausted
               ? "No matching listen available. Press to retry search."
@@ -346,7 +346,7 @@ function StatListRow({
         <Text className="text-sm font-bold">
           {item.playCount.toLocaleString()}
         </Text>
-        <Text className="text-xs text-muted-foreground">
+        <Text className="text-xs text-ink-2">
           {item.playCount === 1 ? "listen" : "listens"}
         </Text>
       </View>
@@ -485,8 +485,8 @@ function StatsPreviewSection({
           </Button>
         </View>
       ) : items.length === 0 ? (
-        <View className="rounded-lg border border-border bg-card/60 p-4">
-          <Text className="text-muted-foreground">
+        <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
+          <Text className="text-ink-2">
             No listens in this period yet.
           </Text>
         </View>
@@ -536,7 +536,7 @@ export function ProfileStatsSections({
           {compact ? "Listening taste" : "Listening stats"}
         </Text>
         <StatsPeriodTabs period={period} onChange={setPeriod} />
-        <Text className="text-xs text-muted-foreground">
+        <Text className="text-xs text-ink-2">
           Counts use listens received by Teal. Recent saves may take a moment to
           appear. Album charts use the same counts.
         </Text>
@@ -691,7 +691,7 @@ export function ProfileStatsMorePage({
         >
           {title}
         </Text>
-        <Text className="text-sm text-muted-foreground">
+        <Text className="text-sm text-ink-2">
           Ranked by listens received by Teal. Recent saves may take a moment to
           appear.
         </Text>
@@ -729,13 +729,13 @@ export function ProfileStatsMorePage({
           </Button>
         </View>
       ) : items.length === 0 ? (
-        <View className="rounded-lg border border-border bg-card/60 p-4">
-          <Text className="text-muted-foreground">
+        <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
+          <Text className="text-ink-2">
             No listens in this period yet.
           </Text>
         </View>
       ) : (
-        <View className="overflow-hidden rounded-lg border border-border bg-card px-3">
+        <View className="overflow-hidden rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl px-3">
           {items.map((item, index) => (
             <StatListRow
               key={`${item.id}-${index}`}

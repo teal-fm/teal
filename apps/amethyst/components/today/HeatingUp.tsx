@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, View } from "react-native";
 import { Link } from "expo-router";
-import { Avatar, Cover, Glass, useHalo } from "@/components/ds";
+import { AmbientSource, Avatar, Cover, coverUri, Glass, useHalo } from "@/components/ds";
 import { Text } from "@/components/ui/text";
 import type { MomentView } from "@/lib/teal/api";
 import { musicAlbumHref } from "@/lib/teal/routes";
@@ -8,6 +8,12 @@ import { musicAlbumHref } from "@/lib/teal/routes";
 function albumHref(m: MomentView) {
   const r = m.release;
   return r.releaseMbId && r.artistName ? musicAlbumHref(r.artistName, r.releaseName, r.releaseMbId) : undefined;
+}
+
+function caption(m: MomentView) {
+  const people = `${m.listenerCount} ${m.listenerCount === 1 ? "listener" : "listeners"}`;
+  if (m.kind === "trending" && m.changePercent) return `${people} · +${m.changePercent}%`;
+  return `${people} today`;
 }
 
 function Faces({ moment, size }: { moment: MomentView; size: number }) {
@@ -23,24 +29,26 @@ function Faces({ moment, size }: { moment: MomentView; size: number }) {
 }
 
 /** A horizontal shelf of albums your circle is converging on today (phones). */
-export function HeatingShelf({ moments }: { moments: MomentView[] }) {
+export function HeatingShelf({ moments, title = "Heating up" }: { moments: MomentView[]; title?: string }) {
   const halo = useHalo();
   if (moments.length === 0) return null;
   return (
     <View className="mb-5 mt-1">
       <Text style={halo} className="px-2.5 pb-3 text-[22px] font-bold text-ink">
-        Heating up
+        {title}
       </Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3.5 px-2.5">
         {moments.map((m) => (
           <Link key={m.release.releaseMbId ?? m.release.releaseName} href={(albumHref(m) ?? "/") as never} asChild>
             <Pressable className="w-[150px]">
-              <Cover releaseMbId={m.release.releaseMbId} size={150} radius={14} className="shadow-xl" />
+              <AmbientSource uri={coverUri(m.release.releaseMbId)}>
+                <Cover releaseMbId={m.release.releaseMbId} size={150} radius={14} className="shadow-xl" />
+              </AmbientSource>
               <Text style={halo} className="mt-2 text-sm font-semibold text-ink" numberOfLines={1}>
                 {m.release.releaseName}
               </Text>
               <Text style={halo} className="text-[13px] text-ink-2" numberOfLines={1}>
-                {m.listenerCount} {m.listenerCount === 1 ? "listener" : "listeners"} today
+                {caption(m)}
               </Text>
               <View className="mt-1.5">
                 <Faces moment={m} size={20} />

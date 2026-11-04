@@ -104,7 +104,7 @@ export default function StepOne() {
           <Text>Single track</Text>
         </Button>
       </View>
-      <View className="flex gap-3 rounded-lg border border-border bg-card p-4">
+      <View className="flex gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
         <Text className="text-sm font-bold">Search for a track</Text>
         <Input
           accessibilityLabel="Track name"
@@ -199,10 +199,10 @@ export default function StepOne() {
         ) : (
           hasSearched && (
             <View className="mt-4">
-              <Text className="mb-2 text-center text-lg text-muted-foreground">
+              <Text className="mb-2 text-center text-lg text-ink-2">
                 No search results found.
               </Text>
-              <Text className="mb-2 text-center text-lg text-muted-foreground">
+              <Text className="mb-2 text-center text-lg text-ink-2">
                 Please try importing with{" "}
                 <ExternalLink
                   href="https://harmony.pulsewidth.org.uk/"
@@ -332,7 +332,7 @@ export function SearchResult({
         />
         <View className="flex-1">
           <Text className="line-clamp-2 text-sm font-bold">{result.title}</Text>
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             {result["artist-credit"]?.[0]?.artist?.name ?? "Unknown Artist"}
           </Text>
 
@@ -343,7 +343,7 @@ export function SearchResult({
               className="flex w-full items-start justify-between rounded-lg bg-secondary/10 p-1 md:flex-row md:items-center md:gap-1"
             >
               <View className="flex w-full flex-1 items-start gap-1 overflow-hidden md:flex-row">
-                <Text className="whitespace-nowrap text-sm text-muted-foreground">
+                <Text className="whitespace-nowrap text-sm text-ink-2">
                   Release:
                 </Text>
                 <Text className="line-clamp-1 text-sm">
@@ -406,23 +406,23 @@ export function SearchResult({
               <Text className="font-medium">{release.title}</Text>
               <View className="flex-row gap-2">
                 {release.date && (
-                  <Text className="text-sm text-muted-foreground">
+                  <Text className="text-sm text-ink-2">
                     {release.date}
                   </Text>
                 )}
                 {release.country && (
-                  <Text className="text-sm text-muted-foreground">
+                  <Text className="text-sm text-ink-2">
                     {release.country}
                   </Text>
                 )}
                 {release.status && (
-                  <Text className="text-sm text-muted-foreground">
+                  <Text className="text-sm text-ink-2">
                     {release.status}
                   </Text>
                 )}
               </View>
               {release.disambiguation && (
-                <Text className="text-sm italic text-muted-foreground">
+                <Text className="text-sm italic text-ink-2">
                   {release.disambiguation}
                 </Text>
               )}

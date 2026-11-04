@@ -131,7 +131,7 @@ function reasonIconClass(reason: string) {
     case "reply":
       return "text-bsky";
     default:
-      return "text-muted-foreground";
+      return "text-ink-2";
   }
 }
 
@@ -169,13 +169,13 @@ function PostPreview({ post }: { post: SocialPostView }) {
   const art = coverArtUrl(play.releaseMbId);
 
   return (
-    <View className="rounded-lg border border-border bg-card/70 p-3">
+    <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-3">
       {post.text ? (
         <Text className="text-[15px] leading-6" numberOfLines={4}>
           {post.text}
         </Text>
       ) : (
-        <Text className="text-sm italic text-muted-foreground">
+        <Text className="text-sm italic text-ink-2">
           Shared a track
         </Text>
       )}
@@ -191,7 +191,7 @@ function PostPreview({ post }: { post: SocialPostView }) {
           <Text className="font-semibold" numberOfLines={1}>
             {play.trackName}
           </Text>
-          <Text className="text-sm text-muted-foreground" numberOfLines={1}>
+          <Text className="text-sm text-ink-2" numberOfLines={1}>
             {displayArtists(play) || "Unknown artist"}
           </Text>
         </View>
@@ -275,7 +275,7 @@ function NotificationRow({ group }: { group: NotificationGroup }) {
               <Icon
                 icon={ChevronRight}
                 size={18}
-                className="text-muted-foreground"
+                className="text-ink-2"
               />
             )}
           </View>
@@ -285,13 +285,13 @@ function NotificationRow({ group }: { group: NotificationGroup }) {
               ? ` and ${otherCount} ${otherCount === 1 ? "other" : "others"}`
               : ""}{" "}
             {reasonLabel(group.reason)}
-            <Text className="text-muted-foreground">
+            <Text className="text-ink-2">
               {` · ${compactTimeAgo(first.createdAt)}`}
             </Text>
           </Text>
 
           {postHref && post === undefined && (
-            <View className="mt-3 gap-2 rounded-lg border border-border bg-card/45 p-3">
+            <View className="mt-3 gap-2 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-3">
               <View className="h-3 w-4/5 rounded-full bg-muted" />
               <View className="h-3 w-2/5 rounded-full bg-muted" />
             </View>
@@ -313,7 +313,7 @@ function NotificationRow({ group }: { group: NotificationGroup }) {
               <View className="mt-3 items-start gap-2">
                 <Text
                   accessibilityRole="alert"
-                  className="text-sm text-muted-foreground"
+                  className="text-sm text-ink-2"
                 >
                   Couldn't load this post. Your notification is still here.
                 </Text>
@@ -326,7 +326,7 @@ function NotificationRow({ group }: { group: NotificationGroup }) {
                 </Button>
               </View>
             ) : (
-              <Text className="mt-3 text-sm italic text-muted-foreground">
+              <Text className="mt-3 text-sm italic text-ink-2">
                 The original post is no longer available.
               </Text>
             ))}
@@ -436,7 +436,7 @@ export default function Notifications() {
 
   if (status === "start") {
     return (
-      <TealShell pageTitle="Notifications">
+      <TealShell pageTitle="Activity">
         <ActivityIndicator
           accessibilityLabel="Checking your account"
           className="my-20"
@@ -447,18 +447,18 @@ export default function Notifications() {
 
   if (status !== "loggedIn") {
     return (
-      <TealShell pageTitle="Notifications">
+      <TealShell pageTitle="Activity">
         <Stack.Screen
           options={{ title: "Notifications", headerShown: false }}
         />
-        <View className="min-h-[32rem] items-center justify-center gap-4 rounded-lg border border-border bg-card px-8">
+        <View className="min-h-[32rem] items-center justify-center gap-4 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl px-8">
           <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
             <Icon icon={Bell} size={22} className="text-primary" />
           </View>
           <Text className="max-w-md text-center font-sans text-3xl font-black">
             Sign in to see your notifications
           </Text>
-          <Text className="max-w-sm text-center text-sm leading-5 text-muted-foreground">
+          <Text className="max-w-sm text-center text-sm leading-5 text-ink-2">
             Find replies, likes, reposts, and new followers here.
           </Text>
           <Link href="/auth/login" asChild>
@@ -472,9 +472,9 @@ export default function Notifications() {
   }
 
   return (
-    <TealShell pageTitle="Notifications" onScroll={handleScroll}>
+    <TealShell pageTitle="Activity" onScroll={handleScroll}>
       <Stack.Screen options={{ title: "Notifications", headerShown: false }} />
-      <SectionHeading title="Notifications" />
+      <SectionHeading title="Activity" level={1} />
       {!visibleItems && (
         <View className="min-h-[24rem] items-center justify-center">
           <ActivityIndicator size="large" />
@@ -496,11 +496,11 @@ export default function Notifications() {
         </View>
       )}
       {visibleItems?.length === 0 && !error && (
-        <View className="min-h-[24rem] items-center justify-center rounded-lg border border-border bg-card p-8">
+        <View className="min-h-[24rem] items-center justify-center rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-8">
           <Text className="text-center text-2xl font-black">
             No notifications yet.
           </Text>
-          <Text className="mt-2 text-center text-muted-foreground">
+          <Text className="mt-2 text-center text-ink-2">
             When someone follows you or responds to your music posts, you'll see
             it here.
           </Text>

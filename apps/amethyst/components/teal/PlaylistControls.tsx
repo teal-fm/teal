@@ -172,7 +172,7 @@ export function PlaylistCreator({
   }
 
   return (
-    <View className="rounded-lg border border-border bg-card p-4">
+    <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4">
       <Text className="text-lg font-bold">New playlist</Text>
       <Text className="mt-3 text-sm font-semibold">Playlist name</Text>
       <Input
@@ -480,7 +480,7 @@ export function PlaylistTrackPicker({
     <View className="mt-5 overflow-hidden rounded-lg border border-primary/25 bg-primary/5">
       <View className="border-b border-primary/15 px-4 pb-4 pt-5">
         <Text className="font-sans text-xl font-black">Add a track</Text>
-        <Text className="mt-1 text-sm leading-5 text-muted-foreground">
+        <Text className="mt-1 text-sm leading-5 text-ink-2">
           Pull from your listening history or browse the MusicBrainz catalog.
         </Text>
         <View className="mt-4 flex-row gap-2">
@@ -502,7 +502,7 @@ export function PlaylistTrackPicker({
         </View>
         <Text className="mt-3 text-sm font-semibold">Track name</Text>
         <View className="mt-3 flex-row items-center gap-2 rounded-md border border-border bg-background px-3">
-          <Icon icon={Search} size={18} className="text-muted-foreground" />
+          <Icon icon={Search} size={18} className="text-ink-2" />
           <Input
             accessibilityLabel="Search playlist tracks"
             value={query}
@@ -530,7 +530,7 @@ export function PlaylistTrackPicker({
           </View>
         )}
         {source === "history" && (
-          <Text className="mt-2 text-sm text-muted-foreground">
+          <Text className="mt-2 text-sm text-ink-2">
             Your saved listens are available while public listening history
             updates.
           </Text>
@@ -541,7 +541,7 @@ export function PlaylistTrackPicker({
         {results.length > 0 && loading && (
           <Text
             accessibilityLiveRegion="polite"
-            className="px-3 py-2 text-sm text-muted-foreground"
+            className="px-3 py-2 text-sm text-ink-2"
           >
             {source === "history"
               ? "Refreshing your history…"
@@ -563,21 +563,21 @@ export function PlaylistTrackPicker({
             <Text className="text-center font-black">
               Sign in to search your history
             </Text>
-            <Text className="mt-1 text-center text-sm text-muted-foreground">
+            <Text className="mt-1 text-center text-sm text-ink-2">
               MusicBrainz lookup is available without an account.
             </Text>
           </View>
         ) : query.trim().length < 2 ? (
           <View className="items-center px-6 py-8">
             <Icon icon={Music2} size={24} className="text-primary" />
-            <Text className="mt-2 text-center text-sm text-muted-foreground">
+            <Text className="mt-2 text-center text-sm text-ink-2">
               Type at least two characters to search.
             </Text>
           </View>
         ) : loading && results.length === 0 ? (
           <View className="items-center py-8">
             <ActivityIndicator />
-            <Text className="mt-2 text-sm text-muted-foreground">
+            <Text className="mt-2 text-sm text-ink-2">
               Searching...
             </Text>
           </View>
@@ -586,7 +586,7 @@ export function PlaylistTrackPicker({
             {error}
           </Text>
         ) : results.length === 0 ? (
-          <Text className="px-3 py-6 text-center text-sm text-muted-foreground">
+          <Text className="px-3 py-6 text-center text-sm text-ink-2">
             No tracks found in{" "}
             {source === "history" ? "your history" : "MusicBrainz"}.
           </Text>
@@ -606,7 +606,7 @@ export function PlaylistTrackPicker({
                   <Icon
                     icon={Music2}
                     size={19}
-                    className="text-muted-foreground"
+                    className="text-ink-2"
                   />
                 )}
               </View>
@@ -615,19 +615,19 @@ export function PlaylistTrackPicker({
                   {result.title}
                 </Text>
                 <Text
-                  className="text-sm text-muted-foreground"
+                  className="text-sm text-ink-2"
                   numberOfLines={1}
                 >
                   {result.artist}
                 </Text>
                 <Text
-                  className="font-mono text-[10px] uppercase text-muted-foreground"
+                  className="font-mono text-[10px] uppercase text-ink-2"
                   numberOfLines={1}
                 >
                   {result.release || result.detail}
                 </Text>
                 {result.pending && result.release && (
-                  <Text className="text-xs text-muted-foreground">
+                  <Text className="text-xs text-ink-2">
                     {result.detail}
                   </Text>
                 )}

@@ -35,11 +35,11 @@ export default function AtUriResolver() {
   return (
     <TealShell rightRail={<RightRail />} pageTitle="Open link">
       <Stack.Screen options={{ title: "AT URI", headerShown: false }} />
-      <View className="rounded-lg border border-border bg-card p-5">
+      <View className="rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-5">
         <Text className="mt-2 font-sans text-2xl font-black">
           Unsupported Teal link
         </Text>
-        <Text className="mt-2 text-muted-foreground">
+        <Text className="mt-2 text-ink-2">
           Teal can open profile, listen, post, and playlist AT-URIs. Check that
           this is the full record link.
         </Text>

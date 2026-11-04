@@ -45,7 +45,7 @@ export default function Settings() {
           <Text role="heading" aria-level={3} className="text-lg font-semibold">
             Appearance
           </Text>
-          <Text className="text-sm text-muted-foreground">
+          <Text className="text-sm text-ink-2">
             {canOverrideColorScheme
               ? "Choose a theme, or follow your device."
               : "Teal follows your device's light or dark setting."}
@@ -102,7 +102,7 @@ export default function Settings() {
               </Text>
               <Text
                 nativeID="provider-help"
-                className="text-sm text-muted-foreground"
+                className="text-sm text-ink-2"
               >
                 This identifies the service that supplies Teal's feeds and
                 statistics. Change it only when you want to use another
@@ -137,13 +137,13 @@ export default function Settings() {
                   className={
                     providerError
                       ? "text-sm text-destructive"
-                      : "text-sm text-muted-foreground"
+                      : "text-sm text-ink-2"
                   }
                 >
                   {providerMessage}
                 </Text>
               )}
-              <Text className="text-sm text-muted-foreground">
+              <Text className="text-sm text-ink-2">
                 Teal {pkg.version}
               </Text>
             </View>

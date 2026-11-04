@@ -15,12 +15,12 @@ export default function LoadFailure({
   return (
     <View
       role="alert"
-      className="mb-5 gap-3 rounded-lg border border-border bg-card p-4"
+      className="mb-5 gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl p-4"
     >
       <Text role="heading" aria-level={2} className="text-lg font-bold">
         {title}
       </Text>
-      <Text className="text-sm leading-6 text-muted-foreground">
+      <Text className="text-sm leading-6 text-ink-2">
         {description}
       </Text>
       <View className="flex-row flex-wrap gap-2">

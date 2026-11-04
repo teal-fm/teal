@@ -278,9 +278,9 @@ export default function EditProfileModal({
                       <Icon
                         icon={ImagePlus}
                         size={24}
-                        className="text-muted-foreground"
+                        className="text-ink-2"
                       />
-                      <Text className="text-sm text-muted-foreground">
+                      <Text className="text-sm text-ink-2">
                         Add banner image
                       </Text>
                     </View>
@@ -319,7 +319,7 @@ export default function EditProfileModal({
                 </View>
               </Pressable>
               <View className="gap-2">
-                <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                <Text className="font-mono text-[10px] uppercase text-ink-2">
                   Display name
                 </Text>
                 <Input
@@ -330,7 +330,7 @@ export default function EditProfileModal({
                 />
               </View>
               <View className="gap-2">
-                <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                <Text className="font-mono text-[10px] uppercase text-ink-2">
                   Bio
                 </Text>
                 <Textarea
@@ -342,7 +342,7 @@ export default function EditProfileModal({
                 />
               </View>
               <View className="gap-2">
-                <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+                <Text className="font-mono text-[10px] uppercase text-ink-2">
                   Default stats range
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
@@ -432,16 +432,16 @@ function FavouritesEditor({
 
   return (
     <View className="gap-2">
-      <Text className="font-mono text-[10px] uppercase text-muted-foreground">
+      <Text className="font-mono text-[10px] uppercase text-ink-2">
         Favourites ({favourites.length}/{MAX_FAVOURITES})
       </Text>
-      <Text className="text-sm text-muted-foreground">
+      <Text className="text-sm text-ink-2">
         Choose up to four albums from what you play most. Tap again to remove.
       </Text>
       {top.isLoading ? (
         <ActivityIndicator />
       ) : releases.length === 0 ? (
-        <Text className="text-sm text-muted-foreground">
+        <Text className="text-sm text-ink-2">
           Once you have listening history, your top albums appear here to choose from.
         </Text>
       ) : (

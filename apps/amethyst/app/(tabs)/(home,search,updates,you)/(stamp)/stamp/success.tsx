@@ -33,7 +33,7 @@ export default function StepThree() {
           headerShown: false,
         }}
       />
-      <View className="min-h-[30rem] items-center justify-center gap-3 rounded-lg border border-border bg-card px-6">
+      <View className="min-h-[30rem] items-center justify-center gap-3 rounded-[26px] border border-glass-edge bg-glass-strong web:backdrop-blur-2xl px-6">
         <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
           <Check size={24} className="text-primary" />
         </View>
@@ -44,7 +44,7 @@ export default function StepThree() {
         >
           Listen saved
         </Text>
-        <Text className="text-center text-muted-foreground">
+        <Text className="text-center text-ink-2">
           Your listen is saved. Public listening history may take a moment to
           update.
         </Text>
@@ -70,7 +70,7 @@ export default function StepThree() {
             </Button>
           </Link>
         )}
-        <Text className="text-sm text-muted-foreground">
+        <Text className="text-sm text-ink-2">
           <ExternalLink
             className="text-primary"
             href={`https://pdsls.dev/${state.submittedStamp.playAtUrl}`}
