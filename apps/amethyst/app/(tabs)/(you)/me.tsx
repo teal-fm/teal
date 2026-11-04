@@ -15,7 +15,9 @@ export default function Me() {
   }
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-ground px-8">
-      <Text className="text-center text-[28px] font-bold text-ink">Your listening, yours</Text>
+      <Text role="heading" aria-level={1} className="text-center text-[28px] font-bold text-ink">
+        Your listening, yours
+      </Text>
       <Text className="text-center text-[17px] text-ink-2">
         Sign in with your Atmosphere account to see your profile, favourites, and month in covers.
       </Text>

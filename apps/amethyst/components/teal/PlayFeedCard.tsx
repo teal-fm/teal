@@ -201,7 +201,7 @@ export default function PlayFeedCard({
         </Link>
       </View>
 
-      {play.releaseName && (
+      {!!play.releaseName && (
         <Text
           className="mt-3 max-w-full text-xs font-light text-primary"
           numberOfLines={2}

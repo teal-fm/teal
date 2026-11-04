@@ -47,6 +47,7 @@ export function ArtistListenerPeriodTabs({
           key={item.value}
           size="sm"
           variant={period === item.value ? "default" : "outline"}
+          aria-pressed={period === item.value}
           onPress={() => onChange(item.value)}
         >
           <Text>{item.label}</Text>

@@ -60,7 +60,7 @@ export default function VerticalPlayView({
       />
       <Text className={cn(textSizes[size], "text-center")}>{trackTitle}</Text>
       {/* Apply main text size based on variant */}
-      {artistName && (
+      {!!artistName && (
         <Text
           className={cn(
             secondaryTextSizes[size],

@@ -487,6 +487,7 @@ export function PlaylistTrackPicker({
           <Button
             size="sm"
             variant={source === "history" ? "default" : "outline"}
+            aria-pressed={source === "history"}
             disabled={!pdsAgent?.did}
             onPress={() => setSource("history")}
           >
@@ -495,6 +496,7 @@ export function PlaylistTrackPicker({
           <Button
             size="sm"
             variant={source === "musicbrainz" ? "default" : "outline"}
+            aria-pressed={source === "musicbrainz"}
             onPress={() => setSource("musicbrainz")}
           >
             <Text>MusicBrainz</Text>

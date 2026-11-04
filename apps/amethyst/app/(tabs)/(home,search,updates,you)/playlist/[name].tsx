@@ -370,7 +370,7 @@ export default function PlaylistDetailScreen() {
                     <Text className="font-sans text-3xl font-black">
                       {playlist.name}
                     </Text>
-                    {playlist.description && (
+                    {!!playlist.description && (
                       <RichText
                         className="mt-3 text-base"
                         text={playlist.description}

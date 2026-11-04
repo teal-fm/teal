@@ -1243,6 +1243,7 @@ export default function ProfileScreen() {
                     <Button
                       size="sm"
                       variant={bulkEditOpen ? "default" : "outline"}
+                      aria-pressed={bulkEditOpen}
                       disabled={bulkBusy}
                       onPress={toggleBulkEdit}
                     >

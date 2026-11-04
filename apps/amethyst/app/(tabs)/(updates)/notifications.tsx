@@ -455,7 +455,7 @@ export default function Notifications() {
           <View className="h-12 w-12 items-center justify-center rounded-full bg-accent">
             <Icon icon={Bell} size={22} className="text-primary" />
           </View>
-          <Text className="max-w-md text-center font-sans text-3xl font-black">
+          <Text role="heading" aria-level={1} className="max-w-md text-center font-sans text-3xl font-black">
             Sign in to see your notifications
           </Text>
           <Text className="max-w-sm text-center text-sm leading-5 text-ink-2">

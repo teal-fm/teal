@@ -179,7 +179,7 @@ function SongRow({ song }: { song: SongResult }) {
           <Text className="text-sm text-ink-2" numberOfLines={1}>
             {song.artistName}
           </Text>
-          {song.releaseName && (
+          {!!song.releaseName && (
             <Text
               className="text-xs tabular-nums text-ink-2"
               numberOfLines={1}

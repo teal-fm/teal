@@ -129,6 +129,7 @@ function StatsPeriodTabs({
           key={item.value}
           size="sm"
           variant={period === item.value ? "default" : "outline"}
+          aria-pressed={period === item.value}
           accessibilityState={{ selected: period === item.value }}
           onPress={() => onChange(item.value)}
         >

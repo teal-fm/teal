@@ -223,6 +223,7 @@ export default function TopsterScreen() {
                 key={item.value}
                 size="sm"
                 variant={period === item.value ? "default" : "outline"}
+                aria-pressed={period === item.value}
                 onPress={() => setChartParams({ period: item.value })}
               >
                 <Text>{item.label}</Text>
@@ -238,6 +239,7 @@ export default function TopsterScreen() {
                 key={size}
                 size="sm"
                 variant={columns === size ? "default" : "outline"}
+                aria-pressed={columns === size}
                 onPress={() => setChartParams({ size: String(size) })}
               >
                 <Text>

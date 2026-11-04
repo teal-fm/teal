@@ -27,7 +27,7 @@ export default function PlayView({
         <Text className="-mt-0.5 line-clamp-1 overflow-ellipsis text-foreground">
           {trackTitle}
         </Text>
-        {artistName && (
+        {!!artistName && (
           <Text className="line-clamp-1 overflow-ellipsis text-left text-sm text-foreground">
             {artistName}
           </Text>
