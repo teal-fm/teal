@@ -21,9 +21,22 @@ export function Tabs<T extends string>({
   label: string;
   className?: string;
 }) {
-  const move = (from: number, delta: number) => {
-    const next = tabs[(from + delta + tabs.length) % tabs.length];
-    if (next) onChange(next.value);
+  // Arrow keys, Home, and End move both the selection and keyboard focus (WAI-ARIA tabs pattern).
+  const onKey = (event: KeyboardEvent & { currentTarget: HTMLElement }, index: number) => {
+    const target =
+      event.key === "ArrowRight"
+        ? (index + 1) % tabs.length
+        : event.key === "ArrowLeft"
+          ? (index - 1 + tabs.length) % tabs.length
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? tabs.length - 1
+              : undefined;
+    if (target === undefined) return;
+    event.preventDefault();
+    onChange(tabs[target].value);
+    event.currentTarget.parentElement?.querySelectorAll<HTMLElement>('[role="tab"]')[target]?.focus();
   };
   return (
     <View role="tablist" aria-label={label} className={cn("flex-row border-b border-hair", className)}>
@@ -38,10 +51,7 @@ export function Tabs<T extends string>({
             accessibilityLabel={tab.count === undefined ? tab.label : `${tab.label}, ${tab.count}`}
             onPress={() => onChange(tab.value)}
             // @ts-expect-error onKeyDown is web-only.
-            onKeyDown={(event: KeyboardEvent) => {
-              if (event.key === "ArrowRight") move(index, 1);
-              if (event.key === "ArrowLeft") move(index, -1);
-            }}
+            onKeyDown={(event: KeyboardEvent & { currentTarget: HTMLElement }) => onKey(event, index)}
             className={cn(
               "min-h-12 min-w-0 flex-1 flex-row items-center justify-center gap-1.5 border-b-2 px-1",
               on ? "border-ink" : "border-transparent",

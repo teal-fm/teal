@@ -10,7 +10,7 @@ import { displayArtists, getPlaylist, getProfile, type SocialPlaylistView } from
 import { MAX_PLAYLIST_COLLABORATORS, resolvePlaylistAuthors } from "@/lib/teal/playlistEditing";
 import { addPlaylistItem, savePlaylistRecord } from "@/lib/teal/playlists";
 import { useViewerDid } from "@/lib/teal/queries";
-import { musicTrackHref, playlistHrefFromUri } from "@/lib/teal/routes";
+import { musicAlbumHref, playlistHrefFromUri } from "@/lib/teal/routes";
 import { playViewToTrackView, trackViewToPlayView } from "@/lib/teal/social";
 import {
   AmbientSource,
@@ -115,7 +115,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const nowPlaying = useQuery({
-    queryKey: ["profile-status", viewer],
+    queryKey: ["now-playing", viewer],
     queryFn: () => getProfile(viewer!).then((r) => (r.profile.status?.item as PlayView | undefined) ?? null),
     enabled: !!viewer,
   });
@@ -239,7 +239,8 @@ export default function PlaylistScreen() {
           tracks.map(({ item, play }, i) => (
             <Row
               key={item.uri}
-              href={musicTrackHref(displayArtists(play) || "music", play.releaseName, play.trackName) as never}
+              // Playlist items aren't listens, so there's no listen to open; the album page always resolves.
+              href={play.releaseMbId ? (musicAlbumHref(displayArtists(play) || "music", play.releaseName || "Album", play.releaseMbId) as never) : undefined}
               leading={
                 <View className="flex-row items-center gap-3">
                   <Text className="w-6 text-center text-[13px] tabular-nums text-ink-2">{i + 1}</Text>

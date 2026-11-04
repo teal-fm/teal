@@ -11,9 +11,9 @@ export function useDisplayActor(actor: DisplayActor | MiniProfileView | undefine
   const needsFallback = !!id && (!actor?.displayName || !actor?.handle);
   const bluesky = useQuery({
     queryKey: ["bsky-actor", id],
-    queryFn: () => getCachedBlueskyProfile(id!),
+    queryFn: async () => (await getCachedBlueskyProfile(id!)) ?? null,
     enabled: needsFallback,
-    staleTime: Infinity,
+    staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
   const merged: DisplayActor | undefined = bluesky.data
     ? {

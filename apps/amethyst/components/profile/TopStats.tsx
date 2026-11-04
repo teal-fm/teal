@@ -31,10 +31,11 @@ const FALLBACK_ICON = { artists: Mic2, albums: Disc3, tracks: Music2 } as const;
 function TopArt({ item, size = 48 }: { item: TopItem; size?: number }) {
   const lookup = useQuery({
     queryKey: ["top-art", item.kind, item.mbid],
-    queryFn: () =>
-      item.kind === "artists" ? getArtistImageUrl(item.mbid, 160) : getRecordingCoverArtUrl(item.mbid, 250),
+    queryFn: async () =>
+      (await (item.kind === "artists" ? getArtistImageUrl(item.mbid, 160) : getRecordingCoverArtUrl(item.mbid, 250))) ?? null,
     enabled: item.kind !== "albums" && !!item.mbid,
-    staleTime: Infinity,
+    // A miss may be a passing MusicBrainz outage, so it's retried later rather than cached for good.
+    staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
   if (item.kind === "albums") return <Cover releaseMbId={item.mbid} size={size} radius={8} />;
   if (lookup.data) {

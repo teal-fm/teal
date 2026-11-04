@@ -92,7 +92,7 @@ export default function TopsterScreen() {
   };
 
   return (
-    <Screen back title="Album chart" subtitle="Your most-played albums as a cover grid. Pick a period and size, then share it." width="wide">
+    <Screen back title="Album chart" subtitle="Most-played albums as a cover grid. Pick a period and size, then share it." width="wide">
       <Glass className="gap-4 p-4">
         <View className="gap-2">
           <Text className="text-[14px] font-semibold">Period</Text>

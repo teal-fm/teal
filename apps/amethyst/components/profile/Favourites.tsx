@@ -72,7 +72,8 @@ export function Favourites({
               </View>
             );
           })}
-          {Array.from({ length: 4 - favourites.length }, (_, i) => (
+          {/* Empty slots invite you to fill them, so only you see them. */}
+          {Array.from({ length: isSelf ? 4 - favourites.length : 0 }, (_, i) => (
             <View key={`empty-${i}`} className="aspect-square flex-1 rounded-[10px] border border-dashed border-hair" />
           ))}
         </View>

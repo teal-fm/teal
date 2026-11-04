@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { ListChecks, Plus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
@@ -60,7 +60,20 @@ function BulkEditor({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const editable = plays.filter((play) => play.rkey && !syncing.has(play.uri ?? ""));
-  const refresh = () => client.invalidateQueries({ queryKey: ["actor-plays", did] });
+  // The index lags writes, so the cached history is updated in place rather than refetched.
+  const patchPlays = (update: (play: PlayView) => PlayView | null) =>
+    client.setQueryData<InfiniteData<{ plays: PlayView[]; cursor?: string }>>(["actor-plays", did], (data) =>
+      data && {
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          plays: page.plays.flatMap((play) => {
+            const next = update(play);
+            return next ? [next] : [];
+          }),
+        })),
+      },
+    );
 
   const toggle = (rkey: string) => {
     setConfirmDelete(false);
@@ -93,10 +106,14 @@ function BulkEditor({
           confirmed: (write) => retainConfirmedListens(did, [write]),
         },
       );
+      const changes = {
+        ...(artists.trim() ? { artists: artistsFromText(artists.trim()) } : {}),
+        ...(release.trim() ? { releaseName: release.trim() } : {}),
+      };
+      patchPlays((play) => (play.rkey && selected.has(play.rkey) ? ({ ...play, ...changes } as PlayView) : play));
       setSelected(new Set());
       setArtists("");
       setRelease("");
-      await refresh();
     } catch {
       setError("Some listens didn't update. Try again.");
     } finally {
@@ -113,13 +130,14 @@ function BulkEditor({
     setBusy(true);
     setError(null);
     try {
+      // Hide each listen as soon as its delete succeeds, so a later failure doesn't bring earlier ones back.
       for (const rkey of selected) {
         await deletePlayRecord(agent, did, rkey);
         removePendingListens(did, [`at://${did}/fm.teal.feed.play/${rkey}`]);
+        patchPlays((play) => (play.rkey === rkey ? null : play));
       }
       setSelected(new Set());
       setConfirmDelete(false);
-      await refresh();
     } catch {
       setError("Some listens didn't delete. Try again.");
     } finally {

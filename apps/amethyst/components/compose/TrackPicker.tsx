@@ -68,7 +68,7 @@ export function TrackPicker({
     setSearching(true);
     setError(false);
     try {
-      const found = await searchMusicbrainz({ track: q, artist: "", release: "" });
+      const found = await searchMusicbrainz({ track: q, artist: "", release: "" }, { throwOnError: true });
       setResults(found.slice(0, 8).map((r) => musicBrainzToPlayView(r)));
     } catch {
       setError(true);

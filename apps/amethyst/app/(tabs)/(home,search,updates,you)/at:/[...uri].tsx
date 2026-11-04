@@ -1,10 +1,11 @@
 import { useMemo } from "react";
+import { Platform } from "react-native";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { atUriFromRoutePath, hrefFromAtUri } from "@/lib/teal/routes";
 import { Button, Notice, Screen } from "@/components/ds";
 
 function atUriFromParams(param: string | string[] | undefined) {
-  if (typeof window !== "undefined") {
+  if (Platform.OS === "web") {
     const fromPath = atUriFromRoutePath(window.location.pathname);
     if (fromPath) return fromPath;
   }

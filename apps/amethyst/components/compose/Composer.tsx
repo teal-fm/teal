@@ -6,7 +6,7 @@ import type { SocialPostView } from "@/lib/teal/api";
 import { publishPost, type ReplyTarget } from "@/lib/teal/compose";
 import { useViewerDid } from "@/lib/teal/queries";
 import { cn } from "@/lib/utils";
-import { Button, Text } from "@/components/ds";
+import { Button, Text, usePlaceholderColor } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
 
 import { TrackPicker } from "./TrackPicker";
@@ -37,6 +37,7 @@ export function Composer({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const placeholder = usePlaceholderColor();
   const remaining = useMemo(() => MAX_GRAPHEMES - Array.from(text).length, [text]);
 
   useEffect(() => {
@@ -84,7 +85,7 @@ export function Composer({
         maxLength={MAX_LENGTH}
         accessibilityLabel={replyTo ? "Your reply" : "What do you think of it?"}
         placeholder={replyTo ? "Write a reply" : "What do you think of it?"}
-        placeholderTextColor="rgba(120,120,128,0.9)"
+        placeholderTextColor={placeholder}
         textAlignVertical="top"
         className={cn("rounded-[14px] border border-hair bg-fill px-3.5 py-3 font-sans text-[17px] text-ink", replyTo ? "min-h-20" : "min-h-28")}
       />

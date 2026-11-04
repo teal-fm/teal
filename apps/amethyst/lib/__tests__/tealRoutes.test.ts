@@ -39,3 +39,11 @@ it("routes alpha-era posts to the post page and back to their original URI", () 
     "at://did:plc:owner/fm.teal.feed.social.post/3test",
   );
 });
+
+it("opens alpha-era playlists as well as current ones", () => {
+  for (const collection of ["fm.teal.feed.social.playlist", "fm.teal.alpha.feed.social.playlist"]) {
+    const uri = `at://did:plc:owner/${collection}/3test`;
+    expect(playlistHrefFromUri(uri)).toBe(`/playlist/playlist?uri=${encodeURIComponent(uri)}`);
+  }
+  expect(playlistHrefFromUri("at://did:plc:owner/fm.teal.feed.social.playlistItem/3test")).toBeUndefined();
+});

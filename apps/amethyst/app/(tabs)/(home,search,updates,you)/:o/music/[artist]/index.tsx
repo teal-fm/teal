@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react-native";
 import { getArtist, getArtistImageUrl, getArtistListeners } from "@/lib/teal/api";
@@ -27,9 +27,9 @@ export default function ArtistScreen() {
   });
   const photo = useQuery({
     queryKey: ["artist-image", artist.data?.mbid],
-    queryFn: () => getArtistImageUrl(artist.data!.mbid, 500),
+    queryFn: async () => (await getArtistImageUrl(artist.data!.mbid, 500)) ?? null,
     enabled: !!artist.data?.mbid,
-    staleTime: Infinity,
+    staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
   const listeners = useQuery({
     queryKey: ["artist-listeners", mbid, lookup, period, 5],
@@ -56,7 +56,7 @@ export default function ArtistScreen() {
   return (
     <Screen back pageTitle={a.name} width="wide">
       <MusicHero
-        imageUri={photo.data}
+        imageUri={photo.data ?? undefined}
         releaseMbId={photo.data ? undefined : a.albums[0]?.mbid}
         round={!!photo.data}
         title={a.name}
@@ -64,7 +64,15 @@ export default function ArtistScreen() {
       />
 
       <Section title="Top listeners" panel>
-        <Choices label="Period" value={period} onChange={setPeriod} options={LISTENER_PERIODS} />
+        <Choices
+          label="Period"
+          value={period}
+          onChange={(next) => {
+            setPeriod(next);
+            router.setParams({ period: next });
+          }}
+          options={LISTENER_PERIODS}
+        />
         {listeners.isLoading ? (
           <Loading className="py-8" />
         ) : listeners.isError ? (

@@ -33,6 +33,7 @@ import {
 } from "@/components/ds";
 import { listenedAt } from "@/components/listen/ListenRow";
 import { MusicHero } from "@/components/music/MusicHero";
+import { useRecordingArt } from "@/hooks/useRecordingArt";
 import { ReactionBar } from "@/components/today/ReactionBar";
 import { useDisplayActor } from "@/hooks/useDisplayActor";
 import { useStore } from "@/stores/mainStore";
@@ -146,6 +147,7 @@ export default function ListenScreen() {
   const play: PlayView | undefined = listen.data?.play;
   const author = useDisplayActor(play?.author as never, did);
   const reactions = useReactionsQuery(play?.uri);
+  const recordingArt = useRecordingArt(play);
   const isOwn = !!viewer && viewer === did;
 
   const remove = async () => {
@@ -204,6 +206,7 @@ export default function ListenScreen() {
     <Screen back pageTitle={`${play.trackName} · ${artists}`} width="wide">
       <MusicHero
         releaseMbId={play.releaseMbId}
+        imageUri={recordingArt}
         title={play.trackName}
         lines={[
           play.artists?.[0]?.artistMbId ? (

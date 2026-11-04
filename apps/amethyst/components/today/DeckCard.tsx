@@ -47,7 +47,8 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
   const react = (emoji: string) => {
     if (!viewer) return;
     const existing = listen.reactions.find((r) => r.emoji === emoji)?.viewerReaction;
-    toggle.mutate({ subject, emoji, existing: existing === "pending" ? undefined : existing });
+    if (existing === "pending") return;
+    toggle.mutate({ subject, emoji, existing });
   };
   // Double-tap the cover for 🔥: the fastest way to say "yes, this".
   const onCoverPress = () => {
@@ -65,7 +66,7 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
       <Pressable
         onPress={onCoverPress}
         onLongPress={() => viewer && setPicking(true)}
-        accessibilityLabel={`${name} is playing ${listen.trackName}${listen.artistName ? ` by ${listen.artistName}` : ""}. Double tap to react with fire.`}
+        accessibilityLabel={`${name} is playing ${listen.trackName}${listen.artistName ? ` by ${listen.artistName}` : ""}.${viewer ? " Double tap to react with fire." : ""}`}
       >
         <Cover releaseMbId={listen.releaseMbId} radius={18} style={{ width, height: width }} className="shadow-2xl" />
         <Link href={`/profile/${actor?.did}`} asChild>

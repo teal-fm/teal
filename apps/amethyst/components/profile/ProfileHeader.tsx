@@ -25,7 +25,7 @@ function FollowButton({ did, graph }: { did: string; graph?: GraphSummaryView })
         variant={following ? "secondary" : "primary"}
         size="sm"
         loading={toggle.isPending}
-        accessibilityLabel={following ? "Unfollow" : "Follow"}
+        aria-pressed={!!following}
         onPress={() => (viewer ? toggle.mutate(following) : router.push("/auth/login"))}
       />
       {toggle.isError ? (
@@ -112,7 +112,8 @@ export function ProfileHeader({
                   className="min-h-10 justify-center"
                 >
                   <Text className="text-[15px] text-ink-2">
-                    <Text className="font-semibold tabular-nums text-ink">{count ?? 0}</Text> {kind}
+                    <Text className="font-semibold tabular-nums text-ink">{count ?? 0}</Text>{" "}
+                    {kind === "followers" ? (count === 1 ? "follower" : "followers") : "following"}
                   </Text>
                 </Pressable>
               );

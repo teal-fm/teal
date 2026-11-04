@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getArtistListeners } from "@/lib/teal/api";
 import { LISTENER_PERIODS, normalizeListenerPeriod } from "@/lib/teal/music";
@@ -25,7 +25,15 @@ export default function ArtistListeners() {
   const all = listeners.data?.pages.flatMap((p) => p.listeners) ?? [];
   return (
     <Screen back title={name ? `${name} listeners` : "Listeners"}>
-      <Choices label="Period" value={period} onChange={setPeriod} options={LISTENER_PERIODS} />
+      <Choices
+        label="Period"
+        value={period}
+        onChange={(next) => {
+          setPeriod(next);
+          router.setParams({ period: next });
+        }}
+        options={LISTENER_PERIODS}
+      />
       {listeners.isLoading ? (
         <Loading />
       ) : listeners.isError ? (

@@ -34,9 +34,17 @@ export function Cover({
   // tries that next; with neither, the disc placeholder shows.
   const [fallback, setFallback] = useState<{ from: string; uri?: string }>();
   const [failed, setFailed] = useState<string[]>([]);
+  const [retried, setRetried] = useState<string[]>([]);
+  const [attempt, setAttempt] = useState(0);
   const source = primary && fallback?.from === primary ? fallback.uri : primary;
   const onError = () => {
     if (!source) return;
+    // The archive redirects through archive.org and sometimes fails in passing, so try once more first.
+    if (!retried.includes(source)) {
+      setRetried((current) => [...current, source]);
+      setTimeout(() => setAttempt((n) => n + 1), 1200);
+      return;
+    }
     setFailed((current) => [...current, source]);
     if (source === primary && !uri && releaseMbId) {
       void getReleaseGroupCoverArtUrl(releaseMbId, artSize).then((next) =>
@@ -55,6 +63,7 @@ export function Cover({
     >
       {source && !failed.includes(source) ? (
         <Image
+          key={`${source}#${attempt}`}
           onError={onError}
           source={{ uri: source }}
           style={{ width: "100%", height: "100%" }}

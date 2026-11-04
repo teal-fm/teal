@@ -2,7 +2,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import { Link } from "expo-router";
 import type { MomentView } from "@/lib/teal/api";
 import { musicAlbumHref } from "@/lib/teal/routes";
-import { AmbientSource, Avatar, Cover, Glass, Text, coverUri, useHalo } from "@/components/ds";
+import { AmbientSource, Avatar, Cover, Glass, Heading, Text, coverUri, useHalo } from "@/components/ds";
 
 function albumHref(m: MomentView) {
   const r = m.release;
@@ -33,9 +33,9 @@ export function HeatingShelf({ moments, title = "Heating up" }: { moments: Momen
   if (moments.length === 0) return null;
   return (
     <View className="mb-5 mt-1">
-      <Text style={halo} className="px-2.5 pb-3 text-[22px] font-bold text-ink">
+      <Heading level={2} onBackdrop className="px-2.5 pb-3">
         {title}
-      </Text>
+      </Heading>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3.5 px-2.5">
         {moments.map((m) => (
           <Link key={m.release.releaseMbId ?? m.release.releaseName} href={(albumHref(m) ?? "/") as never} asChild>

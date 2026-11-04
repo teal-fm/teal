@@ -26,7 +26,7 @@ function MeIcon({ me, size, focused }: { me: ReturnType<typeof useMe>; size: num
 function useMe() {
   const did = useStore((state) => state.pdsAgent?.did);
   const status = useStore((state) => state.status);
-  const profile = did ? useStore.getState().profiles[did] : undefined;
+  const profile = useStore((state) => (did ? state.profiles[did] : undefined));
   const teal = profile?.teal as
     | { avatar?: string; displayName?: string; handle?: string }
     | null

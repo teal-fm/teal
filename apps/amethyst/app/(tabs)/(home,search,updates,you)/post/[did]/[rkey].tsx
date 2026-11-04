@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Linking, Pressable, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Linking, Platform, Pressable, View } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, MessageCircle, Share as ShareIcon, Trash2 } from "lucide-react-native";
 import { getSocialPost, getSocialPostReplies, type SocialPostView } from "@/lib/teal/api";
-import { useViewerDid } from "@/lib/teal/queries";
+import { forgetPost, useViewerDid } from "@/lib/teal/queries";
 import { absoluteUrl, musicArtistHref, postHrefFromUri, postUriFromRoute } from "@/lib/teal/routes";
 import { shareLink } from "@/lib/teal/share";
 import { socialPostDeleteParams, trackViewToPlayView } from "@/lib/teal/social";
@@ -64,6 +64,7 @@ export default function PostScreen() {
   const client = useQueryClient();
   const layout = useLayout();
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
   const post = useQuery({
@@ -77,6 +78,12 @@ export default function PostScreen() {
     enabled: !!uri,
   });
 
+  // A reply-count link lands on #replies; bring the replies into view once they've loaded.
+  useEffect(() => {
+    if (Platform.OS !== "web" || replies.isLoading || window.location.hash !== "#replies") return;
+    document.getElementById("replies")?.scrollIntoView({ block: "start" });
+  }, [replies.isLoading]);
+
   const data = post.data;
   const play = data ? trackViewToPlayView(data.track) : undefined;
   const artist = play?.artists?.[0];
@@ -86,11 +93,15 @@ export default function PostScreen() {
 
   const remove = async () => {
     if (!agent?.did || !data || deleting) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     setDeleting(true);
     setNote(null);
     try {
       await agent.call("com.atproto.repo.deleteRecord", {}, socialPostDeleteParams(data.uri, agent.did, data.cid));
-      void client.invalidateQueries({ queryKey: ["feed"] });
+      forgetPost(client, data.uri);
       goBack();
     } catch {
       setNote("The post wasn't deleted. Try again.");
@@ -177,7 +188,13 @@ export default function PostScreen() {
                 <Text className="text-[14px] tabular-nums text-ink-2">{data.replyCount}</Text>
               </View>
               <IconButton icon={ShareIcon} label="Share" size={38} onPress={share} />
-              {isOwn ? <IconButton icon={Trash2} label="Delete post" size={38} disabled={deleting} onPress={remove} /> : null}
+              {isOwn ? (
+                confirmDelete ? (
+                  <Button label={deleting ? "Deleting" : "Delete post?"} size="sm" variant="destructive" loading={deleting} onPress={remove} />
+                ) : (
+                  <IconButton icon={Trash2} label="Delete post" size={38} onPress={remove} />
+                )
+              ) : null}
             </View>
             {note ? (
               <Text role="status" className="text-[14px] text-ink-2">

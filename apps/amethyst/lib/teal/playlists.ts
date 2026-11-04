@@ -74,10 +74,11 @@ export async function savePlaylistRecord(
   edits: PlaylistEdits,
   resolveAuthors: (input: string, ownerDid: string) => Promise<string[]>,
 ) {
-  const rkey = playlist.uri.split("/").pop() || "";
+  // Alpha-era playlists stay in their own collection, with its record type.
+  const [, , , collection = "fm.teal.feed.social.playlist", rkey = ""] = playlist.uri.split("/");
   const authors = await resolveAuthors(edits.collaboratorsText, playlist.authorDid);
   const current = await agent
-    .call("com.atproto.repo.getRecord", { repo: playlist.authorDid, collection: "fm.teal.feed.social.playlist", rkey })
+    .call("com.atproto.repo.getRecord", { repo: playlist.authorDid, collection, rkey })
     .then((res) => res.data.value as { cover?: unknown });
   let cover = current.cover;
   if (edits.newCoverUri) {
@@ -96,10 +97,10 @@ export async function savePlaylistRecord(
     {},
     {
       repo: playlist.authorDid,
-      collection: "fm.teal.feed.social.playlist",
+      collection,
       rkey,
       record: {
-        $type: "fm.teal.feed.social.playlist",
+        $type: collection,
         name: edits.name.trim(),
         description: text || undefined,
         descriptionFacets,

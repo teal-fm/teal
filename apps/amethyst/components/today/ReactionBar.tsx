@@ -22,7 +22,9 @@ export function ReactionBar({
   const [picking, setPicking] = useState(false);
   const react = (emoji: string) => {
     const existing = reactions.find((r) => r.emoji === emoji)?.viewerReaction;
-    toggle.mutate({ subject, emoji, existing: existing === "pending" ? undefined : existing });
+    // While a reaction is still saving there's no record to remove yet, and a second add would duplicate it.
+    if (existing === "pending") return;
+    toggle.mutate({ subject, emoji, existing });
   };
 
   return (
@@ -30,10 +32,12 @@ export function ReactionBar({
       {reactions.map((r) => (
         <Pressable
           key={r.emoji}
-          disabled={!viewer}
+          disabled={!viewer || r.viewerReaction === "pending"}
           onPress={() => react(r.emoji)}
+          accessibilityRole="button"
+          aria-pressed={!!r.viewerReaction}
+          aria-busy={r.viewerReaction === "pending" || undefined}
           accessibilityLabel={`${r.emoji} ${r.count}${r.viewerReaction ? ", yours" : ""}`}
-          accessibilityState={{ selected: !!r.viewerReaction }}
           className={cn(
             "h-8 flex-row items-center gap-1.5 rounded-full px-2.5 active:scale-95",
             r.viewerReaction ? "border border-tint/40 bg-tint-soft" : "bg-fill",
@@ -54,6 +58,7 @@ export function ReactionBar({
         <>
           <Pressable
             onPress={() => setPicking(true)}
+            accessibilityRole="button"
             accessibilityLabel="Add reaction"
             className="h-8 w-9 items-center justify-center rounded-full bg-fill"
           >

@@ -95,6 +95,7 @@ function patchReactions(
     posts && { ...posts, pages: posts.pages.map((page) => ({ ...page, items: page.items.map(patchPost) })) },
   );
   client.setQueriesData<SocialPostView>({ queryKey: ["post", subjectUri] }, (post) => post && patchPost(post));
+  client.setQueriesData<SocialPostView[]>({ queryKey: ["replies"] }, (replies) => replies?.map(patchPost));
   client.setQueryData<ReactionSummary[]>(keys.reactions(subjectUri, viewer), (summaries) => summaries && update(summaries));
 }
 
@@ -148,4 +149,19 @@ export function useToggleReaction() {
       );
     },
   });
+}
+
+/**
+ * Drops a deleted post from every cached list straight away. The index takes a
+ * moment to catch up, so a refetch alone would bring it back.
+ */
+export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: string) {
+  const keep = (post: SocialPostView) => post.uri !== uri;
+  for (const key of [["feed"], ["actor-posts"]]) {
+    client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: key }, (pages) =>
+      pages && { ...pages, pages: pages.pages.map((page) => ({ ...page, items: page.items.filter(keep) })) },
+    );
+  }
+  client.setQueriesData<SocialPostView[]>({ queryKey: ["replies"] }, (replies) => replies?.filter(keep));
+  client.removeQueries({ queryKey: ["post", uri] });
 }

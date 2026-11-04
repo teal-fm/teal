@@ -2,6 +2,7 @@ import { forwardRef, useId } from "react";
 import { TextInput, View, type TextInputProps } from "react-native";
 import { cn } from "@/lib/utils";
 
+import { usePlaceholderColor } from "./halo";
 import { Text } from "./Text";
 
 export type FieldProps = TextInputProps & {
@@ -19,6 +20,7 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
   ref,
 ) {
   const id = useId();
+  const placeholder = usePlaceholderColor();
   return (
     <View className="gap-1.5">
       {!hideLabel && (
@@ -32,7 +34,7 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
         accessibilityLabel={hideLabel ? label : undefined}
         aria-invalid={error ? true : undefined}
         multiline={multiline}
-        placeholderTextColor="rgba(120,120,128,0.9)"
+        placeholderTextColor={placeholder}
         className={cn(
           "rounded-[14px] border bg-fill px-3.5 font-sans text-[16px] text-ink",
           multiline ? "min-h-24 py-3" : "h-12",

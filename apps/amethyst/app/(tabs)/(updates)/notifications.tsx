@@ -12,7 +12,7 @@ import {
   type SocialNotificationView,
 } from "@/lib/teal/api";
 import { useViewerDid } from "@/lib/teal/queries";
-import { postHrefFromUri } from "@/lib/teal/routes";
+import { hrefFromAtUri, postHrefFromUri } from "@/lib/teal/routes";
 import { trackViewToPlayView } from "@/lib/teal/social";
 import { shortAgo } from "@/lib/teal/today";
 import {
@@ -119,6 +119,8 @@ function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
   const first = g.items[0];
   const others = g.items.length - 1;
   const href = g.contextUri ? postHrefFromUri(g.contextUri) : undefined;
+  // Reactions on a listen point at the listen rather than a post.
+  const otherHref = !href && g.contextUri ? hrefFromAtUri(g.contextUri) : undefined;
 
   return (
     <View className={last ? "py-4" : "border-b border-hair py-4"}>
@@ -146,6 +148,13 @@ function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
             <Text className="text-ink-2"> · {shortAgo(first.createdAt)}</Text>
           </Text>
           {href && g.contextUri ? <PostPreview uri={g.contextUri} href={href} /> : null}
+          {otherHref ? (
+            <Link href={otherHref as never} asChild>
+              <Pressable accessibilityRole="link" className="self-start">
+                <Text className="text-[14px] font-semibold text-tint">Open your listen</Text>
+              </Pressable>
+            </Link>
+          ) : null}
         </View>
       </View>
     </View>

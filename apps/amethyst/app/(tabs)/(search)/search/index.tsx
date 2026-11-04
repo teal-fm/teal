@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TextInput, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Disc3, Mic2, Music2, Search, UsersRound, X } from "lucide-react-native";
 import type { AppBskyActorDefs } from "@atproto/api";
@@ -22,6 +23,8 @@ import {
   Screen,
   Tabs,
   Text,
+  useLayout,
+  usePlaceholderColor,
 } from "@/components/ds";
 import { HeatingShelf } from "@/components/today/HeatingUp";
 import { useDebounced } from "@/hooks/useDebounced";
@@ -51,11 +54,22 @@ function mergePeople(teal: MiniProfileView[], bluesky: AppBskyActorDefs.ProfileV
 
 const plays = (count?: number) => `${count ?? 0} ${count === 1 ? "play" : "plays"}`;
 
+const KINDS = ["people", "songs", "artists", "albums"] as const;
+
 export default function Explore() {
-  const [query, setQuery] = useState("");
-  const [kind, setKind] = useState<Kind>("songs");
+  // The search and tab live in the URL, so browser Back and shared links restore them.
+  const params = useLocalSearchParams();
+  const kind: Kind = KINDS.includes(params.kind as Kind) ? (params.kind as Kind) : "songs";
+  const [query, setQuery] = useState(() => (typeof params.q === "string" ? params.q : ""));
   const term = useDebounced(query.trim());
   const searching = term.length >= 2;
+  const layout = useLayout();
+  const placeholder = usePlaceholderColor();
+  const urlQuery = typeof params.q === "string" ? params.q : "";
+  useEffect(() => {
+    // Only write when the search changed; writing on the first render navigates before the router mounts.
+    if (term !== urlQuery) router.setParams({ q: term || undefined });
+  }, [term, urlQuery]);
 
   const results = useQuery({
     queryKey: ["search", term],
@@ -87,7 +101,7 @@ export default function Explore() {
             onChangeText={setQuery}
             placeholder="Search people and music"
             accessibilityLabel="Search listeners, songs, artists, and albums"
-            placeholderTextColor="rgba(120,120,128,0.9)"
+            placeholderTextColor={placeholder}
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="search"
@@ -98,13 +112,14 @@ export default function Explore() {
         <Tabs
           label="Result type"
           value={kind}
-          onChange={setKind}
+          onChange={(next) => router.setParams({ kind: next })}
           className="border-b-0 border-t"
+          // Counts only mean something once there's a search; icons drop on phones so labels fit.
           tabs={[
-            { value: "people", label: "People", icon: UsersRound, count: counts.people },
-            { value: "songs", label: "Songs", icon: Music2, count: counts.songs },
-            { value: "artists", label: "Artists", icon: Mic2, count: counts.artists },
-            { value: "albums", label: "Albums", icon: Disc3, count: counts.albums },
+            { value: "people", label: "People", icon: layout.phone ? undefined : UsersRound, count: searching ? counts.people : undefined },
+            { value: "songs", label: "Songs", icon: layout.phone ? undefined : Music2, count: searching ? counts.songs : undefined },
+            { value: "artists", label: "Artists", icon: layout.phone ? undefined : Mic2, count: searching ? counts.artists : undefined },
+            { value: "albums", label: "Albums", icon: layout.phone ? undefined : Disc3, count: searching ? counts.albums : undefined },
           ]}
         />
       </Glass>
@@ -163,7 +178,7 @@ export default function Explore() {
               data.albums.map((album, i) => (
                 <Row
                   key={`${album.mbid}-${album.name}`}
-                  href={musicAlbumHref("album", album.name || "Unknown", album.mbid ?? "") as never}
+                  href={musicAlbumHref("music", album.name || "Unknown", album.mbid ?? "") as never}
                   leading={<Cover releaseMbId={album.mbid} size={52} radius={8} />}
                   title={album.name || "Unknown album"}
                   meta={plays(album.playCount)}

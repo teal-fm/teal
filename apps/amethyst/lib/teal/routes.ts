@@ -157,16 +157,13 @@ export function hrefFromAtUri(uri?: string) {
   );
 }
 
+export const PLAYLIST_COLLECTIONS = ["fm.teal.feed.social.playlist", "fm.teal.alpha.feed.social.playlist"];
+
+/** A playlist record's URI, in either the current or the alpha-era collection. */
 export function playlistHrefFromUri(uri?: string) {
-  if (
-    !uri ||
-    !/^at:\/\/[^/\s]+\/fm\.teal\.feed\.social\.playlist\/[^/\s?#]+$/.test(uri)
-  )
-    return undefined;
+  if (!uri || !/^at:\/\/[^/\s]+\/[a-z.]+\/[^/\s?#]+$/.test(uri)) return undefined;
   const parsed = parseAtUri(uri);
-  if (!parsed?.rkey || parsed.collection !== "fm.teal.feed.social.playlist") {
-    return undefined;
-  }
+  if (!parsed?.rkey || !PLAYLIST_COLLECTIONS.includes(parsed.collection ?? "")) return undefined;
   return playlistHref("playlist", uri);
 }
 

@@ -3,11 +3,13 @@ import { Link, useLocalSearchParams } from "expo-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react-native";
 import { displayArtists, getAlbum, getPlayByUri, getSearchResults, getSocialPost } from "@/lib/teal/api";
+import { useViewerDid } from "@/lib/teal/queries";
 import { musicAlbumHref, musicArtistHref, routePart } from "@/lib/teal/routes";
 import { appendTrackHistory } from "@/lib/teal/trackHistory";
 import { Button, ErrorNotice, Loading, Screen, Section, Text } from "@/components/ds";
 import { ListenCard } from "@/components/listen/ListenCard";
 import { MusicHero } from "@/components/music/MusicHero";
+import { useRecordingArt } from "@/hooks/useRecordingArt";
 import { AddToPlaylist } from "@/components/playlist/AddToPlaylist";
 import { PostCard } from "@/components/today/PostCard";
 
@@ -40,6 +42,7 @@ export default function TrackScreen() {
     queryFn: () => (uri ? getPlayByUri(uri).then((r) => r.play) : playFromSlugs(param(params.artist), param(params.release), param(params.track))),
   });
   const p = play.data;
+  const recordingArt = useRecordingArt(p);
   const history = useInfiniteQuery({
     queryKey: ["album-history", p?.releaseMbId],
     queryFn: ({ pageParam }) => getAlbum(p!.releaseMbId!, 100, pageParam),
@@ -47,9 +50,10 @@ export default function TrackScreen() {
     getNextPageParam: (last) => last.cursor,
     enabled: !!p?.releaseMbId,
   });
+  const viewer = useViewerDid();
   const source = useQuery({
-    queryKey: ["post", postUri, null],
-    queryFn: () => getSocialPost(postUri!).then((r) => r.post),
+    queryKey: ["post", postUri, viewer ?? null],
+    queryFn: () => getSocialPost(postUri!, viewer).then((r) => r.post),
     enabled: !!postUri,
   });
 
@@ -76,6 +80,7 @@ export default function TrackScreen() {
     <Screen back pageTitle={`${p.trackName} · ${artists}`} width="wide">
       <MusicHero
         releaseMbId={p.releaseMbId}
+        imageUri={recordingArt}
         title={p.trackName}
         lines={[
           firstArtist?.artistMbId ? (
