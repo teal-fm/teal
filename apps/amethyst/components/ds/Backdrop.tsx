@@ -60,16 +60,23 @@ function thumbnail(uri: string) {
   return uri.replace(/front-(250|500|1200)$/, "front-250");
 }
 
-/** The next image to try after `failed`, mirroring Cover: release group, then the other size. */
+/**
+ * The next image to try after `failed`: the release group's cover, then the other
+ * size. The group goes straight to 500, since the archive builds small thumbnails
+ * lazily and they're the ones that time out.
+ */
 async function fallbackFor(failed: string, original: string) {
   const release = original.match(/coverartarchive\.org\/release\/([^/]+)\//)?.[1];
   if (release && failed === thumbnail(original)) {
-    const group = await getReleaseGroupCoverArtUrl(release, 250);
+    const group = await getReleaseGroupCoverArtUrl(release, 500);
     if (group && group !== failed) return group;
   }
-  const other = failed.replace(/front-250$/, "front-500");
-  return other !== failed ? other : undefined;
+  const other = failed.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
+  return other !== failed && other !== thumbnail(original) ? other : undefined;
 }
+
+/** After every fallback fails, start over after these waits, so a flaky archive heals. */
+const RETRY_MS = [2000, 6000, 20000, 60000];
 
 function Blob({
   shown,
@@ -148,9 +155,27 @@ function Blob({
     });
   }, [solo, fill]);
 
+  const [attempt, setAttempt] = useState(0);
+  const tried = useRef(new Set<string>());
+  const retry = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (retry.current) clearTimeout(retry.current);
+  }, []);
   const onError = () => {
+    tried.current.add(source);
     void fallbackFor(source, shown.uri).then((next) => {
-      if (next) setSource(next);
+      if (next && !tried.current.has(next)) {
+        setSource(next);
+        return;
+      }
+      // Out of fallbacks: try the whole chain again later rather than giving up.
+      if (retry.current) return;
+      retry.current = setTimeout(() => {
+        retry.current = null;
+        tried.current.clear();
+        setSource(thumbnail(shown.uri));
+        setAttempt((n) => n + 1);
+      }, RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)]);
     });
   };
 
@@ -163,6 +188,7 @@ function Blob({
   const [fx, fy] = SLOTS[shown.slot];
   const image = (onLoad?: () => void) => (
     <Image
+      key={`${source}#${attempt}`}
       source={{ uri: source }}
       style={StyleSheet.absoluteFill}
       contentFit="cover"

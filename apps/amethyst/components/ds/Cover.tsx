@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { Icon } from "./Icon";
@@ -36,6 +36,13 @@ export function Cover({
   const [failed, setFailed] = useState<string[]>([]);
   const [retried, setRetried] = useState<string[]>([]);
   const [attempt, setAttempt] = useState(0);
+  // Settling on the disc isn't final: the archive fails in streaks, so the whole
+  // chain runs again a little later, a couple of times.
+  const restarts = useRef(0);
+  const restart = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (restart.current) clearTimeout(restart.current);
+  }, []);
   const source = primary && fallback?.from === primary ? fallback.uri : primary;
   const onError = () => {
     if (!source) return;
@@ -58,7 +65,18 @@ export function Cover({
       // The archive's thumbnail sizes are separate files, so a size that keeps failing
       // can be swapped for the other before settling on the disc.
       const other = target.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
-      if (other !== target && !failed.includes(other)) setFallback({ from: primary ?? target, uri: other });
+      if (other !== target && !failed.includes(other)) {
+        setFallback({ from: primary ?? target, uri: other });
+      } else if (!restart.current && restarts.current < 2) {
+        restart.current = setTimeout(() => {
+          restart.current = null;
+          restarts.current += 1;
+          setFallback(undefined);
+          setFailed([]);
+          setRetried([]);
+          setAttempt((n) => n + 1);
+        }, 20000 * (restarts.current + 1));
+      }
       return;
     }
     setRetried((current) => [...current, target]);
