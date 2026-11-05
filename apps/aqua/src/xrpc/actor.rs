@@ -39,15 +39,20 @@ pub async fn get_actor(
             .or_else(|| identity.starts_with("did:").then(|| identity.to_string())),
         _ => None,
     };
+    // Bounded like feed lookups, so a slow PDS can't hold the profile page.
     if let Some(did) = unindexed
-        && ctx
-            .actors
-            .backfill_teal_profile(&did)
-            .await
-            .unwrap_or_else(|error| {
+        && tokio::time::timeout(
+            crate::identity::WAIT,
+            ctx.actors.backfill_teal_profile(&did),
+        )
+        .await
+        .map(|result| {
+            result.unwrap_or_else(|error| {
                 tracing::warn!("Couldn't backfill the profile for {did}: {error:#}");
                 false
             })
+        })
+        .unwrap_or(false)
     {
         found = repo.get_actor_profile(identity).await;
     }

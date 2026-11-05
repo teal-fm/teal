@@ -9,7 +9,7 @@ use std::{collections::HashMap, sync::Arc};
 use axum::{
     body::{Body, to_bytes},
     extract::{Request, State},
-    http::header,
+    http::{StatusCode, header},
     middleware::Next,
     response::Response,
 };
@@ -41,7 +41,10 @@ pub async fn hydrate_actors(
     let (mut parts, body) = response.into_parts();
     // XRPC bodies are serialized JSON already in memory, so buffering costs nothing extra.
     let Ok(bytes) = to_bytes(body, usize::MAX).await else {
-        return Response::from_parts(parts, Body::empty());
+        // The handler's body failed mid-stream; say so rather than send a truncated 200.
+        let mut response = Response::new(Body::from("response body failed"));
+        *response.status_mut() = StatusCode::BAD_GATEWAY;
+        return response;
     };
     let Ok(mut value) = serde_json::from_slice::<Value>(&bytes) else {
         return Response::from_parts(parts, Body::from(bytes));

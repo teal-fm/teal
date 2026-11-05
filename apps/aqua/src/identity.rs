@@ -27,7 +27,7 @@ const PROFILE_COLLECTIONS: [&str; 2] = ["fm.teal.actor.profile", "fm.teal.alpha.
 const BLUESKY_APPVIEW: &str = "https://public.api.bsky.app";
 const PLC_DIRECTORY: &str = "https://plc.directory";
 /// How long a request waits for lookups; slower ones finish in the background.
-const WAIT: Duration = Duration::from_millis(2500);
+pub const WAIT: Duration = Duration::from_millis(2500);
 const FOUND_TTL: Duration = Duration::from_secs(60 * 60);
 const MISSING_TTL: Duration = Duration::from_secs(10 * 60);
 const FAILED_TTL: Duration = Duration::from_secs(2 * 60);
@@ -134,10 +134,17 @@ impl ActorResolver {
         let key = did.clone();
         // Spawned so a lookup that outlasts this request still fills the cache.
         let task = tokio::spawn(async move {
-            let lookup = match resolver.permits.clone().acquire_owned().await {
-                Ok(_permit) => resolver.lookup(&key, has_teal_profile).await,
-                Err(_) => Lookup::Failed,
-            };
+            // A panicking lookup still clears its entry, or every later request for
+            // this DID would join a dead lookup until Aqua restarts.
+            let lookup = std::panic::AssertUnwindSafe(async {
+                match resolver.permits.clone().acquire_owned().await {
+                    Ok(_permit) => resolver.lookup(&key, has_teal_profile).await,
+                    Err(_) => Lookup::Failed,
+                }
+            })
+            .catch_unwind()
+            .await
+            .unwrap_or(Lookup::Failed);
             resolver.remember(&key, lookup.clone()).await;
             resolver.in_flight.lock().await.remove(&key);
             lookup
