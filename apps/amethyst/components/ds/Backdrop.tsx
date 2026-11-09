@@ -56,7 +56,15 @@ const memory = {
    * Each cover's animated values. The rebuilt tree renders before the old one's
    * cleanups run, so it reads the old instance's values directly.
    */
-  live: new Map<string, { opacity: SharedValue<number>; fill: SharedValue<number> }>(),
+  live: new Map<
+    string,
+    {
+      opacity: SharedValue<number>;
+      fill: SharedValue<number>;
+      /** The image that loaded, which may be a fallback. */
+      source: { current?: string };
+    }
+  >(),
 };
 
 /** The blur hides detail, so the small thumbnail does, and feed covers share its cache. */
@@ -81,7 +89,9 @@ async function fallbackFor(failed: string, original: string, tried: Set<string>)
 }
 
 /** After every fallback fails, start over after these waits, so a flaky archive heals. */
-const RETRY_MS = [2000, 6000, 20000, 60000];
+const RETRY_MS = [1000, 4000, 15000, 60000];
+/** How long a cover's state outlives it, enough for a rebuild but not a later visit. */
+const RESUME_MS = 2000;
 
 function Blob({
   shown,
@@ -107,12 +117,19 @@ function Blob({
   const { width, height } = useWindowDimensions();
   const [resumedFrom] = useState(() => {
     const previous = remember ? memory.live.get(shown.uri) : undefined;
-    return previous && { opacity: previous.opacity.value, fill: previous.fill.value };
+    return (
+      previous && {
+        opacity: previous.opacity.value,
+        fill: previous.fill.value,
+        source: previous.source.current,
+      }
+    );
   });
   const resumed = resumedFrom?.opacity ?? 0;
   const opacity = useSharedValue(resumed);
   const fill = useSharedValue(resumedFrom?.fill ?? (solo ? 1 : 0));
-  const [source, setSource] = useState(() => thumbnail(shown.uri));
+  const [source, setSource] = useState(() => resumedFrom?.source ?? thumbnail(shown.uri));
+  const loadedSource = useRef<string | undefined>(resumedFrom?.source);
   // A resumed cover was showing a moment ago, so its image is already in memory.
   const [loaded, setLoaded] = useState(resumed > 0);
   // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
@@ -138,14 +155,16 @@ function Blob({
   }, [target, leaving, hold, opacity, onGone, shown.uri]);
 
   // A remount picks up from these values, mid-fade included, rather than from
-  // where the fade was heading. Covers that have faded out are forgotten.
+  // where the fade was heading. Soon after a cover goes, they're forgotten.
   useEffect(() => {
     if (!remember) return;
     const uri = shown.uri;
-    const values = { opacity, fill };
+    const values = { opacity, fill, source: loadedSource };
     memory.live.set(uri, values);
     return () => {
-      if (memory.live.get(uri) === values && opacity.value <= 0.01) memory.live.delete(uri);
+      setTimeout(() => {
+        if (memory.live.get(uri) === values) memory.live.delete(uri);
+      }, RESUME_MS);
     };
   }, [remember, shown.uri, opacity, fill]);
 
@@ -221,6 +240,7 @@ function Blob({
         ]}
       >
         {image(() => {
+          loadedSource.current = source;
           setLoaded(true);
           onLoaded(shown.uri);
         })}
