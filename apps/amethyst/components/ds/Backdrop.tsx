@@ -3,6 +3,7 @@ import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   Easing,
   ReduceMotion,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -51,8 +52,11 @@ type Shown = { uri: string; weight: number; slot: number; since: number };
  */
 const memory = {
   shown: [] as Shown[],
-  opacity: new Map<string, number>(),
-  fill: new Map<string, number>(),
+  /**
+   * Each cover's animated values. The rebuilt tree renders before the old one's
+   * cleanups run, so it reads the old instance's values directly.
+   */
+  live: new Map<string, { opacity: SharedValue<number>; fill: SharedValue<number> }>(),
 };
 
 /** The blur hides detail, so the small thumbnail does, and feed covers share its cache. */
@@ -65,14 +69,15 @@ function thumbnail(uri: string) {
  * size. The group goes straight to 500, since the archive builds small thumbnails
  * lazily and they're the ones that time out.
  */
-async function fallbackFor(failed: string, original: string) {
+async function fallbackFor(failed: string, original: string, tried: Set<string>) {
   const release = original.match(/coverartarchive\.org\/release\/([^/]+)\//)?.[1];
-  if (release && failed === thumbnail(original)) {
-    const group = await getReleaseGroupCoverArtUrl(release, 500);
-    if (group && group !== failed) return group;
-  }
-  const other = failed.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
-  return other !== failed && other !== thumbnail(original) ? other : undefined;
+  const group =
+    release && failed === thumbnail(original)
+      ? await getReleaseGroupCoverArtUrl(release, 500)
+      : undefined;
+  const otherSize = failed.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
+  const releaseLarge = thumbnail(original).replace(/front-250$/, "front-500");
+  return [group, otherSize, releaseLarge].find((next) => next && !tried.has(next));
 }
 
 /** After every fallback fails, start over after these waits, so a flaky archive heals. */
@@ -100,11 +105,13 @@ function Blob({
   onGone: (uri: string) => void;
 }) {
   const { width, height } = useWindowDimensions();
-  const resumed = remember ? (memory.opacity.get(shown.uri) ?? 0) : 0;
+  const [resumedFrom] = useState(() => {
+    const previous = remember ? memory.live.get(shown.uri) : undefined;
+    return previous && { opacity: previous.opacity.value, fill: previous.fill.value };
+  });
+  const resumed = resumedFrom?.opacity ?? 0;
   const opacity = useSharedValue(resumed);
-  const fill = useSharedValue(
-    remember ? (memory.fill.get(shown.uri) ?? (solo ? 1 : 0)) : solo ? 1 : 0,
-  );
+  const fill = useSharedValue(resumedFrom?.fill ?? (solo ? 1 : 0));
   const [source, setSource] = useState(() => thumbnail(shown.uri));
   // A resumed cover was showing a moment ago, so its image is already in memory.
   const [loaded, setLoaded] = useState(resumed > 0);
@@ -130,30 +137,28 @@ function Blob({
     return () => clearTimeout(timer);
   }, [target, leaving, hold, opacity, onGone, shown.uri]);
 
-  // Keep what's on screen at the moment of a remount, mid-fade included, so the
-  // next mount carries on from there rather than from where the fade was heading.
+  // A remount picks up from these values, mid-fade included, rather than from
+  // where the fade was heading. Covers that have faded out are forgotten.
   useEffect(() => {
     if (!remember) return;
     const uri = shown.uri;
+    const values = { opacity, fill };
+    memory.live.set(uri, values);
     return () => {
-      if (opacity.value > 0.01) {
-        memory.opacity.set(uri, opacity.value);
-        memory.fill.set(uri, fill.value);
-      } else {
-        memory.opacity.delete(uri);
-        memory.fill.delete(uri);
-      }
+      if (memory.live.get(uri) === values && opacity.value <= 0.01) memory.live.delete(uri);
     };
   }, [remember, shown.uri, opacity, fill]);
 
   // Spot and full-window layers crossfade rather than resize, so nothing moves.
   useEffect(() => {
+    // A leaving cover fades where it is, however long it's held.
+    if (leaving) return;
     fill.value = withTiming(solo ? 1 : 0, {
       duration: FADE_IN_MS,
       easing: ease,
       reduceMotion: ReduceMotion.Never,
     });
-  }, [solo, fill]);
+  }, [solo, leaving, fill]);
 
   const [attempt, setAttempt] = useState(0);
   const tried = useRef(new Set<string>());
@@ -163,19 +168,20 @@ function Blob({
   }, []);
   const onError = () => {
     tried.current.add(source);
-    void fallbackFor(source, shown.uri).then((next) => {
-      if (next && !tried.current.has(next)) {
+    void fallbackFor(source, shown.uri, tried.current).then((next) => {
+      if (next) {
         setSource(next);
         return;
       }
-      // Out of fallbacks: try the whole chain again later rather than giving up.
-      if (retry.current) return;
+      // Out of fallbacks: try the whole chain again later, a few times, in case
+      // the archive is having a bad minute. A cover with no art stops here.
+      if (retry.current || attempt >= RETRY_MS.length) return;
       retry.current = setTimeout(() => {
         retry.current = null;
         tried.current.clear();
         setSource(thumbnail(shown.uri));
         setAttempt((n) => n + 1);
-      }, RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)]);
+      }, RETRY_MS[attempt]);
     });
   };
 
@@ -317,15 +323,20 @@ export function Backdrop({
   // Leaving covers wait for an arriving one to load, up to a limit, so moving to a
   // screen whose art is still downloading doesn't drain the colour in between.
   const [loadedUris, setLoadedUris] = useState(() => new Set<string>());
-  const waiting = active.length > 0 && !active.some((item) => loadedUris.has(item.uri));
-  const [patient, setPatient] = useState(true);
+  const waitingFor =
+    active.length > 0 && !active.some((item) => loadedUris.has(item.uri))
+      ? active.map((item) => item.uri).join()
+      : "";
+  const [gaveUpOn, setGaveUpOn] = useState("");
   useEffect(() => {
-    if (!waiting) return;
-    setPatient(true);
-    const timer = setTimeout(() => setPatient(false), WAIT_FOR_ART_MS);
+    if (!waitingFor) {
+      setGaveUpOn("");
+      return;
+    }
+    const timer = setTimeout(() => setGaveUpOn(waitingFor), WAIT_FOR_ART_MS);
     return () => clearTimeout(timer);
-  }, [waiting]);
-  const hold = waiting && patient;
+  }, [waitingFor]);
+  const hold = !!waitingFor && gaveUpOn !== waitingFor;
 
   const loaded = useCallback((uri: string) => {
     setLoadedUris((prev) => (prev.has(uri) ? prev : new Set(prev).add(uri)));

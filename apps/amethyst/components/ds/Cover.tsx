@@ -43,6 +43,9 @@ export function Cover({
   useEffect(() => () => {
     if (restart.current) clearTimeout(restart.current);
   }, []);
+  useEffect(() => {
+    restarts.current = 0;
+  }, [primary]);
   const source = primary && fallback?.from === primary ? fallback.uri : primary;
   const onError = () => {
     if (!source) return;

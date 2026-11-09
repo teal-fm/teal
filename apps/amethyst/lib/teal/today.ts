@@ -28,7 +28,7 @@ export function listeningFact(l: ListeningView): string | undefined {
 }
 
 function names(m: MomentView) {
-  const shown = m.listeners.map((p) => p.displayName || p.handle || "someone");
+  const shown = m.listeners.map((p) => p.displayName || p.handle || p.did);
   if (shown.length === 0) return undefined;
   const others = m.listenerCount - shown.length;
   if (others > 0) return `${shown.slice(0, 2).join(", ")} and ${others + shown.slice(2).length} others`;
