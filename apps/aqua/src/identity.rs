@@ -27,7 +27,7 @@ const PROFILE_COLLECTIONS: [&str; 2] = ["fm.teal.actor.profile", "fm.teal.alpha.
 const BLUESKY_APPVIEW: &str = "https://public.api.bsky.app";
 const PLC_DIRECTORY: &str = "https://plc.directory";
 /// How long a request waits for lookups; slower ones finish in the background.
-pub const WAIT: Duration = Duration::from_millis(2500);
+const WAIT: Duration = Duration::from_millis(2500);
 const FOUND_TTL: Duration = Duration::from_secs(60 * 60);
 const MISSING_TTL: Duration = Duration::from_secs(10 * 60);
 const FAILED_TTL: Duration = Duration::from_secs(2 * 60);
@@ -50,6 +50,8 @@ pub struct ActorIdentity {
 #[derive(Clone)]
 enum Lookup {
     Found(ActorIdentity),
+    /// What the DID document gave while Bluesky was failing, so ask again soon.
+    Partial(ActorIdentity),
     /// Nobody knows this account beyond its DID.
     Missing,
     /// A directory or PDS didn't answer, so try again soon.
@@ -57,6 +59,7 @@ enum Lookup {
 }
 
 type InFlight = Shared<BoxFuture<'static, Lookup>>;
+type Backfill = Shared<BoxFuture<'static, bool>>;
 
 pub struct ActorResolver {
     db: PgPool,
@@ -67,6 +70,8 @@ pub struct ActorResolver {
     permits: Arc<Semaphore>,
     /// When getProfile last looked for a DID's teal profile and found none.
     profile_checks: Mutex<HashMap<String, Instant>>,
+    /// Profile backfills underway, shared by concurrent profile requests.
+    backfills: Mutex<HashMap<String, Backfill>>,
 }
 
 impl ActorResolver {
@@ -78,6 +83,7 @@ impl ActorResolver {
             in_flight: Mutex::new(HashMap::new()),
             permits: Arc::new(Semaphore::new(CONCURRENT_LOOKUPS)),
             profile_checks: Mutex::new(HashMap::new()),
+            backfills: Mutex::new(HashMap::new()),
         }))
     }
 
@@ -94,7 +100,7 @@ impl ActorResolver {
                 }
                 match cache.get(&did) {
                     Some((lookup, at)) if at.elapsed() < ttl(lookup) => {
-                        if let Lookup::Found(identity) = lookup {
+                        if let Lookup::Found(identity) | Lookup::Partial(identity) = lookup {
                             found.insert(did, identity.clone());
                         }
                     }
@@ -117,7 +123,7 @@ impl ActorResolver {
         // Keep whatever finishes in time; the rest land in the cache for next time.
         let deadline = tokio::time::Instant::now() + WAIT;
         while let Ok(Some((did, lookup))) = tokio::time::timeout_at(deadline, lookups.next()).await {
-            if let Lookup::Found(identity) = lookup {
+            if let Lookup::Found(identity) | Lookup::Partial(identity) = lookup {
                 found.insert(did, identity);
             }
         }
@@ -165,9 +171,41 @@ impl ActorResolver {
         cache.insert(did.to_string(), (lookup, Instant::now()));
     }
 
+    /// Backfills `did`'s teal profile, waiting at most `WAIT`. The backfill itself
+    /// runs to completion in the background and is shared with concurrent callers,
+    /// so a slow PDS still ends up indexed instead of being cancelled and restarted.
+    pub async fn backfill_within_wait(self: &Arc<Self>, did: &str) -> bool {
+        let backfill = {
+            let mut backfills = self.backfills.lock().await;
+            match backfills.get(did) {
+                Some(backfill) => backfill.clone(),
+                None => {
+                    let resolver = Arc::clone(self);
+                    let key = did.to_string();
+                    let task = tokio::spawn(async move {
+                        let found = std::panic::AssertUnwindSafe(resolver.backfill_teal_profile(&key))
+                            .catch_unwind()
+                            .await
+                            .unwrap_or(Ok(false))
+                            .unwrap_or_else(|error| {
+                                warn!("Couldn't backfill the profile for {key}: {error:#}");
+                                false
+                            });
+                        resolver.backfills.lock().await.remove(&key);
+                        found
+                    });
+                    let backfill = task.map(|result| result.unwrap_or(false)).boxed().shared();
+                    backfills.insert(did.to_string(), backfill.clone());
+                    backfill
+                }
+            }
+        };
+        tokio::time::timeout(WAIT, backfill).await.unwrap_or(false)
+    }
+
     /// Fetches and stores the teal profile for `did` if its PDS has one. Returns
     /// whether a profile was stored.
-    pub async fn backfill_teal_profile(&self, did: &str) -> anyhow::Result<bool> {
+    async fn backfill_teal_profile(&self, did: &str) -> anyhow::Result<bool> {
         if !is_did(did) {
             return Ok(false);
         }
@@ -190,6 +228,9 @@ impl ActorResolver {
             let mut checks = self.profile_checks.lock().await;
             if checks.len() >= MAX_CACHED {
                 checks.retain(|_, at| at.elapsed() < MISSING_TTL);
+                if checks.len() >= MAX_CACHED {
+                    checks.clear();
+                }
             }
             checks.insert(did.to_string(), Instant::now());
         }
@@ -198,8 +239,7 @@ impl ActorResolver {
 
     async fn lookup(&self, did: &str, has_teal_profile: bool) -> Lookup {
         match self.try_lookup(did, has_teal_profile).await {
-            Ok(Some(identity)) => Lookup::Found(identity),
-            Ok(None) => Lookup::Missing,
+            Ok(lookup) => lookup,
             Err(error) => {
                 warn!("Couldn't look up {did}: {error:#}");
                 Lookup::Failed
@@ -211,17 +251,21 @@ impl ActorResolver {
         &self,
         did: &str,
         has_teal_profile: bool,
-    ) -> anyhow::Result<Option<ActorIdentity>> {
+    ) -> anyhow::Result<Lookup> {
         let doc = self.did_document(did).await.ok();
         if !has_teal_profile && let Some(doc) = &doc {
             match self.teal_profile(did, doc).await {
-                Ok(Some(identity)) => return Ok(Some(identity)),
+                Ok(Some(identity)) => return Ok(Lookup::Found(identity)),
                 Ok(None) => {}
                 Err(error) => warn!("Couldn't read the teal profile for {did}: {error:#}"),
             }
         }
 
-        let bluesky = self.bluesky_profile(did).await?;
+        // Bluesky failing shouldn't cost the account the handle its DID document names.
+        let (bluesky, bluesky_error) = match self.bluesky_profile(did).await {
+            Ok(profile) => (profile, None),
+            Err(error) => (None, Some(error)),
+        };
         let handle = match bluesky.as_ref().and_then(|p| p.handle.clone()) {
             Some(handle) => Some(handle),
             None => match doc.as_ref().and_then(document_handle) {
@@ -237,7 +281,15 @@ impl ActorResolver {
             display_name: bluesky.as_ref().and_then(|p| p.display_name.clone()),
             avatar: bluesky.and_then(|p| p.avatar),
         };
-        Ok((identity != ActorIdentity::default()).then_some(identity))
+        match (identity != ActorIdentity::default(), bluesky_error) {
+            (true, None) => Ok(Lookup::Found(identity)),
+            (true, Some(error)) => {
+                warn!("Couldn't read the Bluesky profile for {did}: {error:#}");
+                Ok(Lookup::Partial(identity))
+            }
+            (false, None) => Ok(Lookup::Missing),
+            (false, Some(error)) => Err(error),
+        }
     }
 
     /// DIDs among `dids` that already have a teal profile row, as opposed to the
@@ -482,11 +534,12 @@ fn is_public_ip(ip: IpAddr) -> bool {
         IpAddr::V6(ip) => match ip.to_ipv4_mapped() {
             Some(v4) => is_public_ip(IpAddr::V4(v4)),
             None => {
-                !(ip.is_loopback()
-                    || ip.is_unspecified()
-                    || ip.is_multicast()
-                    || ip.is_unique_local()
-                    || ip.is_unicast_link_local())
+                // Only global unicast is routable. Within it, documentation addresses
+                // and the Teredo and 6to4 tunnels, which can wrap a private IPv4.
+                let [first, second, ..] = ip.segments();
+                first & 0xe000 == 0x2000
+                    && first != 0x2002
+                    && !(first == 0x2001 && (second == 0 || second == 0x0db8))
             }
         },
     }
@@ -496,7 +549,7 @@ fn ttl(lookup: &Lookup) -> Duration {
     match lookup {
         Lookup::Found(_) => FOUND_TTL,
         Lookup::Missing => MISSING_TTL,
-        Lookup::Failed => FAILED_TTL,
+        Lookup::Partial(_) | Lookup::Failed => FAILED_TTL,
     }
 }
 
@@ -581,6 +634,10 @@ mod tests {
             "::1",
             "fd00::1",
             "fe80::1",
+            "::7f00:1",
+            "64:ff9b::7f00:1",
+            "2002:7f00:1::",
+            "2001:db8::1",
             "::ffff:127.0.0.1",
         ] {
             assert!(!is_public_ip(ip.parse().unwrap()), "{ip} should not be public");
