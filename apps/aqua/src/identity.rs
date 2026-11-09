@@ -34,6 +34,10 @@ const FAILED_TTL: Duration = Duration::from_secs(2 * 60);
 const MAX_LOOKUPS: usize = 24;
 /// Lookups running at once across all requests.
 const CONCURRENT_LOOKUPS: usize = 16;
+/// Profile backfills outlive their request, so they get their own small budget
+/// and can't starve feed lookups. Past the queue limit, new ones are skipped.
+const CONCURRENT_BACKFILLS: usize = 4;
+const MAX_QUEUED_BACKFILLS: usize = 64;
 /// Past this, expired entries are dropped, and if that isn't enough, everything.
 const MAX_CACHED: usize = 20_000;
 const HTTP_TIMEOUT: Duration = Duration::from_secs(5);
@@ -50,7 +54,7 @@ pub struct ActorIdentity {
 #[derive(Clone)]
 enum Lookup {
     Found(ActorIdentity),
-    /// What the DID document gave while Bluesky was failing, so ask again soon.
+    /// An answer with a source missing because it was failing, so ask again soon.
     Partial(ActorIdentity),
     /// Nobody knows this account beyond its DID.
     Missing,
@@ -68,8 +72,9 @@ pub struct ActorResolver {
     /// Lookups underway, so concurrent requests for one DID share a single fetch.
     in_flight: Mutex<HashMap<String, InFlight>>,
     permits: Arc<Semaphore>,
-    /// When getProfile last looked for a DID's teal profile and found none.
+    /// When getProfile may next look for a DID's teal profile, after finding none.
     profile_checks: Mutex<HashMap<String, Instant>>,
+    backfill_permits: Semaphore,
     /// Profile backfills underway, shared by concurrent profile requests.
     backfills: Mutex<HashMap<String, Backfill>>,
 }
@@ -83,6 +88,7 @@ impl ActorResolver {
             in_flight: Mutex::new(HashMap::new()),
             permits: Arc::new(Semaphore::new(CONCURRENT_LOOKUPS)),
             profile_checks: Mutex::new(HashMap::new()),
+            backfill_permits: Semaphore::new(CONCURRENT_BACKFILLS),
             backfills: Mutex::new(HashMap::new()),
         }))
     }
@@ -179,6 +185,7 @@ impl ActorResolver {
             let mut backfills = self.backfills.lock().await;
             match backfills.get(did) {
                 Some(backfill) => backfill.clone(),
+                None if backfills.len() >= MAX_QUEUED_BACKFILLS => return false,
                 None => {
                     let resolver = Arc::clone(self);
                     let key = did.to_string();
@@ -215,26 +222,33 @@ impl ActorResolver {
             .lock()
             .await
             .get(did)
-            .is_some_and(|at| at.elapsed() < MISSING_TTL)
+            .is_some_and(|next| Instant::now() < *next)
         {
             return Ok(false);
         }
-        let _permit = self.permits.acquire().await?;
-        let found = match self.did_document(did).await {
-            Ok(doc) => self.teal_profile(did, &doc).await?.is_some(),
-            Err(_) => false,
+        let _permit = self.backfill_permits.acquire().await?;
+        let outcome = match self.did_document(did).await {
+            Ok(doc) => self.teal_profile(did, &doc).await.map(|found| found.is_some()),
+            Err(error) => Err(error),
         };
-        if !found {
+        // A failure says nothing about the account, so it's asked about again sooner.
+        let wait = match &outcome {
+            Ok(true) => None,
+            Ok(false) => Some(MISSING_TTL),
+            Err(_) => Some(FAILED_TTL),
+        };
+        if let Some(wait) = wait {
+            let now = Instant::now();
             let mut checks = self.profile_checks.lock().await;
             if checks.len() >= MAX_CACHED {
-                checks.retain(|_, at| at.elapsed() < MISSING_TTL);
+                checks.retain(|_, next| now < *next);
                 if checks.len() >= MAX_CACHED {
                     checks.clear();
                 }
             }
-            checks.insert(did.to_string(), Instant::now());
+            checks.insert(did.to_string(), now + wait);
         }
-        Ok(found)
+        outcome
     }
 
     async fn lookup(&self, did: &str, has_teal_profile: bool) -> Lookup {
@@ -253,11 +267,16 @@ impl ActorResolver {
         has_teal_profile: bool,
     ) -> anyhow::Result<Lookup> {
         let doc = self.did_document(did).await.ok();
+        // Without an answer about the teal profile, Bluesky's is only a stopgap.
+        let mut incomplete = !has_teal_profile && doc.is_none();
         if !has_teal_profile && let Some(doc) = &doc {
             match self.teal_profile(did, doc).await {
                 Ok(Some(identity)) => return Ok(Lookup::Found(identity)),
                 Ok(None) => {}
-                Err(error) => warn!("Couldn't read the teal profile for {did}: {error:#}"),
+                Err(error) => {
+                    warn!("Couldn't read the teal profile for {did}: {error:#}");
+                    incomplete = true;
+                }
             }
         }
 
@@ -282,11 +301,13 @@ impl ActorResolver {
             avatar: bluesky.and_then(|p| p.avatar),
         };
         match (identity != ActorIdentity::default(), bluesky_error) {
-            (true, None) => Ok(Lookup::Found(identity)),
+            (true, None) if !incomplete => Ok(Lookup::Found(identity)),
+            (true, None) => Ok(Lookup::Partial(identity)),
             (true, Some(error)) => {
                 warn!("Couldn't read the Bluesky profile for {did}: {error:#}");
                 Ok(Lookup::Partial(identity))
             }
+            (false, None) if incomplete => Ok(Lookup::Failed),
             (false, None) => Ok(Lookup::Missing),
             (false, Some(error)) => Err(error),
         }
@@ -505,7 +526,9 @@ async fn public_client(host: &str) -> anyhow::Result<reqwest::Client> {
         !host.eq_ignore_ascii_case("localhost") && !host.ends_with(".localhost"),
         "{host} is not a public host"
     );
-    let addrs: Vec<SocketAddr> = tokio::net::lookup_host((host, 443)).await?.collect();
+    let addrs: Vec<SocketAddr> = tokio::time::timeout(HTTP_TIMEOUT, tokio::net::lookup_host((host, 443)))
+        .await??
+        .collect();
     anyhow::ensure!(!addrs.is_empty(), "{host} did not resolve");
     anyhow::ensure!(
         addrs.iter().all(|addr| is_public_ip(addr.ip())),
