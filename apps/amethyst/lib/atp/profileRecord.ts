@@ -77,17 +77,28 @@ export async function saveProfileRecord(
   const avatar = await uploadIfChanged(agent, edits.avatarUri, existing?.avatar, current.avatarUrl);
   const banner = await uploadIfChanged(agent, edits.bannerUri, existing?.banner, current.bannerUrl);
 
-  const record: ProfileRecord = parseProfileRecord({
+  // Only validate what this save changes. Older records can hold images and bios over
+  // today's limits, and those shouldn't block editing something else. The API client also
+  // returns images as BlobRef instances the validator rejects; new uploads are already
+  // checked by prepareProfileImage.
+  const bioUnchanged = description.text === existing?.description;
+  const validated = parseProfileRecord({
     ...existing,
     $type: "fm.teal.actor.profile",
     displayName: edits.displayName.trim(),
-    description: description.text,
+    description: bioUnchanged ? undefined : description.text,
     descriptionFacets: description.facets,
-    avatar,
-    banner,
+    avatar: undefined,
+    banner: undefined,
     statsDefaultPeriod: edits.statsDefaultPeriod ?? existing?.statsDefaultPeriod,
     favorites: edits.favourites ? (edits.favourites.length ? edits.favourites : undefined) : existing?.favorites,
   });
+  const record: ProfileRecord = {
+    ...validated,
+    ...(bioUnchanged ? { description: description.text } : {}),
+    ...(avatar ? { avatar } : {}),
+    ...(banner ? { banner } : {}),
+  };
 
   await agent.call(
     swapRecord ? "com.atproto.repo.putRecord" : "com.atproto.repo.createRecord",
