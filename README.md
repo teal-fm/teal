@@ -95,10 +95,13 @@ pnpm dev
 ```
 
 Open http://localhost:8081. Keep `pnpm dev` running in your terminal.
-Docker runs PostgreSQL, Garnet, and Caddy. Expo runs locally on port 8082 with
-Fast Refresh; Aqua, Cadet, and Satellite run under `cargo watch`. Caddy forwards
-`/xrpc/*` to Aqua on port 3000 and all other app requests, including WebSockets,
-to Expo. Nothing is exposed to the internet by default, and no application
+Docker runs PostgreSQL, Garnet, and Caddy. The web app (`apps/web`, TanStack
+Start) runs locally on port 8082 with hot reload; Aqua, Cadet, and Satellite run
+under `cargo watch`. Caddy forwards `/xrpc/*` to Aqua on port 3000 and all other
+app requests, including WebSockets, to the web app.
+
+The native app (`apps/amethyst`, Expo) is separate. Run `pnpm dev:native` and
+open it on an iOS or Android device or simulator. Nothing is exposed to the internet by default, and no application
 images are built.
 
 To serve the same stack through the stable public Cloudflare tunnel for OAuth
@@ -113,7 +116,7 @@ pnpm dev:proxy
 This starts the `cloudflared-named` tunnel and serves the app at
 `https://sigilyph.teal.fm`. Set `CLOUDFLARED_TUNNEL_TOKEN` in the ignored root
 `.env` before using it. The tunnel must route the public hostname to
-`http://amethyst:80`.
+`http://amethyst:80`, which the `edge` Caddy service answers as an alias.
 
 `DEV_PUBLIC_ORIGIN` overrides the origin in either mode. It must be an origin
 with no path or trailing slash, and `--proxy` requires HTTPS:
@@ -123,8 +126,7 @@ DEV_PUBLIC_ORIGIN=http://localhost:9000 pnpm dev
 DEV_PUBLIC_ORIGIN=https://your-public-dev.example.com pnpm dev --proxy
 ```
 
-The origin is applied to OAuth metadata, the browser API URL, and Expo's public
-packager URL together. ATProto OAuth requires publicly reachable metadata, so
+The origin is applied to the web app's OAuth metadata and share links. ATProto OAuth requires publicly reachable metadata, so
 use `pnpm dev --proxy` for sign-in. `http://localhost:8081` is the default for
 local checks that should not be reachable from the open web.
 
@@ -139,9 +141,7 @@ The CLI's TypeScript compiler watcher is not a schema generator.
 
 Ctrl+C stops the host processes. Docker infrastructure, and in `--proxy` mode the
 tunnel, remain available for the next run. `pnpm tunnel:verify` checks public
-metadata and XRPC. The watch overlay needs Docker Compose 2.24.4 or newer. It
-uses the Caddy image, or reuses the Caddy runtime in an already-installed
-`teal-amethyst` image.
+metadata and XRPC. The watch overlay needs Docker Compose 2.24.4 or newer.
 
 ### Production image preview
 
@@ -154,7 +154,7 @@ It is recommended if you are running aqua to make a publicly accessible endpoint
 - Set up the traditional port forward on your router
 - Use a tool like [ngrok](https://ngrok.com/) with the command `ngrok http 8080` or [Cloudflare tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/) (follow the 2a. portion of the guide when you get to that point).
 
-If you do the cloudflare tunnels for amethyst as well,
+If you do the cloudflare tunnels for the web app as well,
 you will also need
 to follow [this](https://caddy.community/t/caddy-with-cloudflare-tunnel/18569) for routing to work properly.
 Although you can just run it locally and it will work.

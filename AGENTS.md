@@ -2,6 +2,7 @@
 
 ## Build Commands
 - Dev stack: `pnpm dev` at `http://localhost:8081` (add `--proxy` for `https://sigilyph.teal.fm`)
+- Native app: `pnpm dev:native` (Expo for iOS and Android)
 - Build all: `pnpm build`
 - Build Rust: `pnpm build:rust`
 - Test: `pnpm test`
@@ -14,6 +15,9 @@
 ```
 teal/
 ├── apps/aqua/              # Main Rust/Axum web app
+├── apps/web/               # Web app (TanStack Start, React DOM, SSR)
+├── apps/amethyst/          # Native app (Expo / React Native, iOS + Android)
+├── packages/client/        # @teal/client: shared, platform-neutral client logic
 ├── services/
 │   ├── cadet/             # AT Protocol jetstream consumer
 │   ├── rocketman/         # Jetstream library
@@ -153,6 +157,11 @@ pnpm lex:diff      # Show changes
 - Include a preview URL only when needed for an unfinished task; remove it when the task is done or the URL expires.
 - Do not commit secrets, tunnel tokens, OAuth codes, or private credentials.
 
+## Frontend Layout
+- **Shared logic** lives in `packages/client` (`@teal/client/<path>`): Aqua XRPC, ATProto records, MusicBrainz search, TanStack Query hooks. No React Native, DOM, or bundler imports there. Hooks read the account from `SessionProvider`; each app calls `configureClient()` at startup.
+- **Web** (`apps/web`): TanStack Start with SSR. UI is DOM-native (`src/ds`), styled with Tailwind v4 on the same tokens as the native app. Public pages load their main query in a route loader with the component's own query key, so the first HTML carries the content and link-preview tags. Public URLs match the native app's (`/:o/music/…`, `/at://…`) via a router rewrite onto internal `/music` and `/at` routes.
+- **Native** (`apps/amethyst`): Expo for iOS and Android only.
+
 ## Code Standards
 - **TypeScript**: Biome format (`pnpm fix`), explicit types
 - **DB**: Snake_case, migrations, indexes, constraints
@@ -173,7 +182,9 @@ Run the relevant subset before checkpoint commits:
 pnpm lex:gen-server
 SQLX_OFFLINE=true cargo check -p aqua -p cadet
 SQLX_OFFLINE=true cargo test -p cadet stores_and_loads_cursor_from_file_when_redis_is_unavailable
-pnpm --filter=@teal/amethyst build:web
+pnpm --filter=@teal/client test
+pnpm typecheck
+pnpm --filter=@teal/web build
 docker compose -f compose.dev.yml config
 docker compose -f compose.yaml config
 ```
@@ -209,7 +220,7 @@ docker compose exec aqua-api pnpm db:migrate
 - **Async-first**: Tokio runtime throughout
 
 ## Public Preview Workflow
-- Use `pnpm dev` for daily development at `http://localhost:8081`. `pnpm dev` stays local and never starts the Cloudflare tunnel. `compose.watch.yml` runs Caddy as `amethyst:80` so `/xrpc/*` and OAuth metadata share the local origin. Keep the host watch processes running.
+- Use `pnpm dev` for daily development at `http://localhost:8081`. `pnpm dev` stays local and never starts the Cloudflare tunnel. `compose.watch.yml` runs Caddy as `edge:80` (aliased `amethyst:80` for the named tunnel) so `/xrpc/*` and OAuth metadata share the local origin. Keep the host watch processes running.
 - Use `pnpm dev --proxy` only when a public origin is needed, such as ATProto OAuth. It starts the named Cloudflare tunnel and serves the stack at `https://sigilyph.teal.fm`.
 - Do not export production web bundles or rebuild application images for routine edits. Use Fast Refresh and scoped Rust watchers, plus checks relevant to the changed files. Production image builds are for explicit release/image verification.
 - Use OrbStack for local Docker services when available.
@@ -232,13 +243,13 @@ JETSTREAM_URL=wss://jetstream1.us-east.bsky.network/subscribe \
 SQLX_OFFLINE=true cargo run -p cadet --bin cadet
 ```
 
-- Serve Amethyst and proxy `/xrpc/*` to Aqua through the same hostname. Local mode uses `http://localhost:8081`; `--proxy` mode uses `https://sigilyph.teal.fm`.
+- Serve the web app and proxy `/xrpc/*` to Aqua through the same hostname. Local mode uses `http://localhost:8081`; `--proxy` mode uses `https://sigilyph.teal.fm`.
 - Verify public changes on the live development preview at `https://sigilyph.teal.fm` with `pnpm dev --proxy` through the Cloudflare tunnel.
 - For temporary demos, a Cloudflare quick tunnel is acceptable. Record the active URL in `todo.md`.
 - Treat quick-tunnel URLs as ephemeral. A tunnel restart changes the hostname.
 
 ## OAuth Tunnel Rule
-- Before testing ATProto OAuth, start Expo with the active public origin. Restart `pnpm dev --proxy` if the origin changes:
+- Before testing ATProto OAuth, start the web app with the active public origin. Restart `pnpm dev --proxy` if the origin changes:
 
 ```bash
 DEV_PUBLIC_ORIGIN=https://<tunnel-host> pnpm dev --proxy
@@ -252,14 +263,14 @@ client_id=https://<tunnel-host>/client-metadata.json
 redirect_uris=["https://<tunnel-host>/auth/callback"]
 ```
 
-- Verify the deployed web bundle contains the active tunnel hostname.
+- The web app builds `/client-metadata.json` from `PUBLIC_ORIGIN` at request time (`pnpm dev` sets it from `DEV_PUBLIC_ORIGIN`).
 - Verify `/client-metadata.json` publicly before initiating login.
-- Never test public OAuth with a bundle that falls back to `localhost` or `127.0.0.1`.
+- Never test public OAuth against metadata that falls back to `localhost` or `127.0.0.1`.
 
 ## Live Feed Rule
 - The production data path is Cadet Jetstream ingestion into Postgres, surfaced by Aqua XRPC.
-- Keep `/xrpc/*` same-origin through the Amethyst reverse proxy.
-- Never add backup, seeded, mocked, or demo play data to Amethyst.
+- Keep `/xrpc/*` same-origin through the edge reverse proxy.
+- Never add backup, seeded, mocked, or demo play data to the web or native app.
 - If Aqua is unavailable, show an error state.
 - If Aqua has not indexed plays yet, show an empty state.
 
