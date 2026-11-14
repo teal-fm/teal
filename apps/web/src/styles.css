@@ -105,8 +105,11 @@
 }
 
 @layer base {
-  html,
-  body {
+  /*
+   * Only the root gets the ground colour. A body background paints above the
+   * backdrop, which sits at a negative z-index, and would hide the covers.
+   */
+  html {
     background-color: var(--ground);
     color: var(--ink);
   }
