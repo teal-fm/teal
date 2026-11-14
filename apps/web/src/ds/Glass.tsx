@@ -2,7 +2,7 @@ import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@teal/client/utils";
 
 /** A frosted panel over the backdrop. */
-export const Glass = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & { strong?: boolean; as?: "div" | "section" | "nav" | "aside" | "article" }>(
+export const Glass = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & { strong?: boolean; as?: "div" | "section" | "nav" | "aside" | "article" | "header" }>(
   function Glass({ className, strong, as: Tag = "div", ...props }, ref) {
     return (
       <Tag

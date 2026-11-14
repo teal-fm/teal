@@ -1,4 +1,12 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from "@tanstack/react-query";
 import type { AppBskyActorDefs } from "@atproto/api";
 import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
@@ -46,29 +54,27 @@ export const profileKeys = {
 export class ProfileNotFoundError extends Error {}
 
 /** A handle or DID from the URL, resolved to a DID. */
-export function useActorDid(actor?: string) {
-  return useQuery({
-    queryKey: profileKeys.did(actor ?? ""),
-    queryFn: () => (actor!.startsWith("did:") ? actor! : resolveHandle(actor!)),
-    enabled: !!actor,
+export function actorDidQuery(actor: string) {
+  return queryOptions({
+    queryKey: profileKeys.did(actor),
+    queryFn: () => (actor.startsWith("did:") ? actor : resolveHandle(actor)),
     staleTime: Infinity,
   });
 }
 
-/**
- * Someone's profile. Without a teal profile yet, Bluesky's details stand in and
- * `fromBluesky` says so, so their own page can offer to set one up.
- */
-export function useProfile(did?: string, handleHint?: string) {
-  return useQuery({
-    queryKey: profileKeys.profile(did ?? ""),
-    enabled: !!did,
+export function useActorDid(actor?: string) {
+  return useQuery({ ...actorDidQuery(actor ?? ""), enabled: !!actor });
+}
+
+export function profileQuery(did: string, handleHint?: string) {
+  return queryOptions({
+    queryKey: profileKeys.profile(did),
     retry: (count, error) => !(error instanceof ProfileNotFoundError) && !(error instanceof XrpcError && error.status < 500) && count < 2,
     queryFn: async () => {
       let profile: DisplayProfile;
       let fromBluesky = false;
       try {
-        profile = (await getProfile(did!)).profile;
+        profile = (await getProfile(did)).profile;
         fromBluesky = !profile.displayName && !profile.description && !profile.avatar && !profile.banner;
       } catch (error) {
         if (!(error instanceof XrpcError) || error.status !== 404) throw error;
@@ -79,7 +85,7 @@ export function useProfile(did?: string, handleHint?: string) {
         // Only Bluesky answering 400 means the account doesn't exist. An outage, rate
         // limit, or blocked network just means no Bluesky details this time.
         let unknownToBluesky = false;
-        const bsky = await getBlueskyProfile(did!).catch((error) => {
+        const bsky = await getBlueskyProfile(did).catch((error) => {
           unknownToBluesky = error instanceof XrpcError && error.status === 400;
           return null;
         });
@@ -87,14 +93,22 @@ export function useProfile(did?: string, handleHint?: string) {
         else if (fromBluesky && unknownToBluesky && !profile.displayName && !profile.avatar) {
           // An account off Bluesky still exists while its DID document resolves, and
           // then shows its handle, or just its DID.
-          const documented = await documentIdentity(did!);
-          if (!documented) throw new ProfileNotFoundError(did!);
+          const documented = await documentIdentity(did);
+          if (!documented) throw new ProfileNotFoundError(did);
           profile = { ...profile, handle: profile.handle ?? documented.handle };
         }
       }
       return { profile, fromBluesky };
     },
   });
+}
+
+/**
+ * Someone's profile. Without a teal profile yet, Bluesky's details stand in and
+ * `fromBluesky` says so, so their own page can offer to set one up.
+ */
+export function useProfile(did?: string, handleHint?: string) {
+  return useQuery({ ...profileQuery(did ?? "", handleHint), enabled: !!did });
 }
 
 export function useGraphSummary(did?: string) {

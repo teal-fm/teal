@@ -26,3 +26,14 @@ export function useLayout() {
 export function useReducedMotion() {
   return useMedia("(prefers-reduced-motion: reduce)", false);
 }
+
+const noop = () => () => {};
+
+/** False on the server and during hydration, true after: for UI that reads browser-only state. */
+export function useHydrated() {
+  return useSyncExternalStore(
+    noop,
+    () => true,
+    () => false,
+  );
+}

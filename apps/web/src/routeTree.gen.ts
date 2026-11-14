@@ -11,10 +11,22 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientMetadataDotjsonRouteImport } from './routes/client-metadata[.]json'
+import { Route as MeRouteImport } from './routes/me'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthLogoutRouteImport } from './routes/auth/logout'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
+import { Route as PlaylistNameRouteImport } from './routes/playlist/$name'
+import { Route as ListenDidRkeyRouteImport } from './routes/listen/$did/$rkey'
+import { Route as MusicArtistIndexRouteImport } from './routes/music/$artist/index'
+import { Route as MusicArtistListenersRouteImport } from './routes/music/$artist/listeners'
+import { Route as PostDidRkeyRouteImport } from './routes/post/$did/$rkey'
+import { Route as ProfileHandleIndexRouteImport } from './routes/profile/$handle/index'
+import { Route as MusicArtistReleaseIndexRouteImport } from './routes/music/$artist/$release/index'
+import { Route as MusicArtistReleaseTrackRouteImport } from './routes/music/$artist/$release/$track'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,6 +36,26 @@ const IndexRoute = IndexRouteImport.update({
 const ClientMetadataDotjsonRoute = ClientMetadataDotjsonRouteImport.update({
   id: '/client-metadata.json',
   path: '/client-metadata.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeRoute = MeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -46,66 +78,190 @@ const AuthSignupRoute = AuthSignupRouteImport.update({
   path: '/auth/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlaylistNameRoute = PlaylistNameRouteImport.update({
+  id: '/playlist/$name',
+  path: '/playlist/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListenDidRkeyRoute = ListenDidRkeyRouteImport.update({
+  id: '/listen/$did/$rkey',
+  path: '/listen/$did/$rkey',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicArtistIndexRoute = MusicArtistIndexRouteImport.update({
+  id: '/music/$artist/',
+  path: '/music/$artist/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicArtistListenersRoute = MusicArtistListenersRouteImport.update({
+  id: '/music/$artist/listeners',
+  path: '/music/$artist/listeners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostDidRkeyRoute = PostDidRkeyRouteImport.update({
+  id: '/post/$did/$rkey',
+  path: '/post/$did/$rkey',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
+  id: '/profile/$handle/',
+  path: '/profile/$handle/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicArtistReleaseIndexRoute = MusicArtistReleaseIndexRouteImport.update({
+  id: '/music/$artist/$release/',
+  path: '/music/$artist/$release/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicArtistReleaseTrackRoute = MusicArtistReleaseTrackRouteImport.update({
+  id: '/music/$artist/$release/$track',
+  path: '/music/$artist/$release/$track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
+  '/me': typeof MeRoute
+  '/notifications': typeof NotificationsRoute
+  '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/playlist/$name': typeof PlaylistNameRoute
+  '/listen/$did/$rkey': typeof ListenDidRkeyRoute
+  '/music/$artist/listeners': typeof MusicArtistListenersRoute
+  '/post/$did/$rkey': typeof PostDidRkeyRoute
+  '/music/$artist/': typeof MusicArtistIndexRoute
+  '/profile/$handle/': typeof ProfileHandleIndexRoute
+  '/music/$artist/$release/$track': typeof MusicArtistReleaseTrackRoute
+  '/music/$artist/$release/': typeof MusicArtistReleaseIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
+  '/me': typeof MeRoute
+  '/notifications': typeof NotificationsRoute
+  '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/playlist/$name': typeof PlaylistNameRoute
+  '/listen/$did/$rkey': typeof ListenDidRkeyRoute
+  '/music/$artist/listeners': typeof MusicArtistListenersRoute
+  '/post/$did/$rkey': typeof PostDidRkeyRoute
+  '/music/$artist': typeof MusicArtistIndexRoute
+  '/profile/$handle': typeof ProfileHandleIndexRoute
+  '/music/$artist/$release/$track': typeof MusicArtistReleaseTrackRoute
+  '/music/$artist/$release': typeof MusicArtistReleaseIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
+  '/me': typeof MeRoute
+  '/notifications': typeof NotificationsRoute
+  '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/playlist/$name': typeof PlaylistNameRoute
+  '/listen/$did/$rkey': typeof ListenDidRkeyRoute
+  '/music/$artist/listeners': typeof MusicArtistListenersRoute
+  '/post/$did/$rkey': typeof PostDidRkeyRoute
+  '/music/$artist/': typeof MusicArtistIndexRoute
+  '/profile/$handle/': typeof ProfileHandleIndexRoute
+  '/music/$artist/$release/$track': typeof MusicArtistReleaseTrackRoute
+  '/music/$artist/$release/': typeof MusicArtistReleaseIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/client-metadata.json'
+    | '/me'
+    | '/notifications'
+    | '/search'
+    | '/settings'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
     | '/auth/signup'
+    | '/playlist/$name'
+    | '/listen/$did/$rkey'
+    | '/music/$artist/listeners'
+    | '/post/$did/$rkey'
+    | '/music/$artist/'
+    | '/profile/$handle/'
+    | '/music/$artist/$release/$track'
+    | '/music/$artist/$release/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/client-metadata.json'
+    | '/me'
+    | '/notifications'
+    | '/search'
+    | '/settings'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
     | '/auth/signup'
+    | '/playlist/$name'
+    | '/listen/$did/$rkey'
+    | '/music/$artist/listeners'
+    | '/post/$did/$rkey'
+    | '/music/$artist'
+    | '/profile/$handle'
+    | '/music/$artist/$release/$track'
+    | '/music/$artist/$release'
   id:
     | '__root__'
     | '/'
     | '/client-metadata.json'
+    | '/me'
+    | '/notifications'
+    | '/search'
+    | '/settings'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
     | '/auth/signup'
+    | '/playlist/$name'
+    | '/listen/$did/$rkey'
+    | '/music/$artist/listeners'
+    | '/post/$did/$rkey'
+    | '/music/$artist/'
+    | '/profile/$handle/'
+    | '/music/$artist/$release/$track'
+    | '/music/$artist/$release/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClientMetadataDotjsonRoute: typeof ClientMetadataDotjsonRoute
+  MeRoute: typeof MeRoute
+  NotificationsRoute: typeof NotificationsRoute
+  SearchRoute: typeof SearchRoute
+  SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthLogoutRoute: typeof AuthLogoutRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  PlaylistNameRoute: typeof PlaylistNameRoute
+  ListenDidRkeyRoute: typeof ListenDidRkeyRoute
+  MusicArtistListenersRoute: typeof MusicArtistListenersRoute
+  PostDidRkeyRoute: typeof PostDidRkeyRoute
+  MusicArtistIndexRoute: typeof MusicArtistIndexRoute
+  ProfileHandleIndexRoute: typeof ProfileHandleIndexRoute
+  MusicArtistReleaseTrackRoute: typeof MusicArtistReleaseTrackRoute
+  MusicArtistReleaseIndexRoute: typeof MusicArtistReleaseIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -122,6 +278,34 @@ declare module '@tanstack/react-router' {
       path: '/client-metadata.json'
       fullPath: '/client-metadata.json'
       preLoaderRoute: typeof ClientMetadataDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/me': {
+      id: '/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -152,16 +336,84 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/playlist/$name': {
+      id: '/playlist/$name'
+      path: '/playlist/$name'
+      fullPath: '/playlist/$name'
+      preLoaderRoute: typeof PlaylistNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listen/$did/$rkey': {
+      id: '/listen/$did/$rkey'
+      path: '/listen/$did/$rkey'
+      fullPath: '/listen/$did/$rkey'
+      preLoaderRoute: typeof ListenDidRkeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music/$artist/': {
+      id: '/music/$artist/'
+      path: '/music/$artist'
+      fullPath: '/music/$artist/'
+      preLoaderRoute: typeof MusicArtistIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music/$artist/listeners': {
+      id: '/music/$artist/listeners'
+      path: '/music/$artist/listeners'
+      fullPath: '/music/$artist/listeners'
+      preLoaderRoute: typeof MusicArtistListenersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/post/$did/$rkey': {
+      id: '/post/$did/$rkey'
+      path: '/post/$did/$rkey'
+      fullPath: '/post/$did/$rkey'
+      preLoaderRoute: typeof PostDidRkeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$handle/': {
+      id: '/profile/$handle/'
+      path: '/profile/$handle'
+      fullPath: '/profile/$handle/'
+      preLoaderRoute: typeof ProfileHandleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music/$artist/$release/': {
+      id: '/music/$artist/$release/'
+      path: '/music/$artist/$release'
+      fullPath: '/music/$artist/$release/'
+      preLoaderRoute: typeof MusicArtistReleaseIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music/$artist/$release/$track': {
+      id: '/music/$artist/$release/$track'
+      path: '/music/$artist/$release/$track'
+      fullPath: '/music/$artist/$release/$track'
+      preLoaderRoute: typeof MusicArtistReleaseTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientMetadataDotjsonRoute: ClientMetadataDotjsonRoute,
+  MeRoute: MeRoute,
+  NotificationsRoute: NotificationsRoute,
+  SearchRoute: SearchRoute,
+  SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthLogoutRoute: AuthLogoutRoute,
   AuthSignupRoute: AuthSignupRoute,
+  PlaylistNameRoute: PlaylistNameRoute,
+  ListenDidRkeyRoute: ListenDidRkeyRoute,
+  MusicArtistListenersRoute: MusicArtistListenersRoute,
+  PostDidRkeyRoute: PostDidRkeyRoute,
+  MusicArtistIndexRoute: MusicArtistIndexRoute,
+  ProfileHandleIndexRoute: ProfileHandleIndexRoute,
+  MusicArtistReleaseTrackRoute: MusicArtistReleaseTrackRoute,
+  MusicArtistReleaseIndexRoute: MusicArtistReleaseIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

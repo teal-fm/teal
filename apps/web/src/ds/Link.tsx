@@ -3,8 +3,9 @@ import { useRouter } from "@tanstack/react-router";
 
 export type AProps = AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; replace?: boolean };
 
+/** Anything with a scheme (https:, spotify:, mailto:) leaves the app; app paths start with "/". */
 function isExternal(href: string) {
-  return /^[a-z][a-z0-9+.-]*:\/\//i.test(href) && !href.startsWith("at://");
+  return !href.startsWith("/") && /^[a-z][a-z0-9+.-]*:/i.test(href);
 }
 
 /**
