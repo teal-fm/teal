@@ -243,7 +243,7 @@ function PlaylistScreen() {
                   leading={
                     <span className="flex items-center gap-3">
                       <span className="w-6 text-center text-[13px] tabular-nums text-ink-2">{i + 1}</span>
-                      <Cover releaseMbId={play.releaseMbId} size={44} radius={8} />
+                      <Cover releaseMbId={play.releaseMbId} size={44} radius={8} ambient />
                     </span>
                   }
                   title={play.trackName}

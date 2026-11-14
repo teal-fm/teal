@@ -3,11 +3,14 @@ import { Disc3 } from "lucide-react";
 import { coverArtUrl, getReleaseGroupCoverArtUrl } from "@teal/client/teal/api";
 import { cn } from "@teal/client/utils";
 
+import { useAmbient } from "./ambient";
 import { Icon } from "./Icon";
 
 export function coverUri(releaseMbId?: string, size = 500) {
   return coverArtUrl(releaseMbId, size);
 }
+
+let nextKey = 0;
 
 const otherSize = (uri: string) =>
   uri.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
@@ -26,6 +29,7 @@ export function Cover({
   style,
   label,
   eager,
+  ambient,
 }: {
   releaseMbId?: string;
   uri?: string;
@@ -38,6 +42,8 @@ export function Cover({
   label?: string;
   /** Load straight away, for covers above the fold. */
   eager?: boolean;
+  /** Feed the page's backdrop while this cover is near the middle of the screen, for covers in long lists. */
+  ambient?: boolean;
 }) {
   const artSize = size && size <= 250 ? 250 : 500;
   const primary = uri ?? coverUri(releaseMbId, artSize);
@@ -56,6 +62,16 @@ export function Cover({
     [],
   );
   const source = primary && fallback?.from === primary ? fallback.uri : primary;
+
+  const page = useAmbient();
+  const frame = useRef<HTMLSpanElement>(null);
+  const [key] = useState(() => `cover-${nextKey++}`);
+  const backdropUri = ambient ? coverUri(releaseMbId) ?? uri : undefined;
+  useEffect(() => {
+    if (!page || !backdropUri || !frame.current) return;
+    page.register(key, { uri: backdropUri, node: frame.current });
+    return () => page.unregister(key);
+  }, [page, key, backdropUri]);
 
   const retry = (target: string) => {
     if (retried.includes(target)) {
@@ -95,6 +111,7 @@ export function Cover({
   const src = source && !failed.includes(source) ? source : undefined;
   return (
     <span
+      ref={frame}
       role={label ? "img" : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}

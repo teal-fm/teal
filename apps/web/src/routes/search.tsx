@@ -9,7 +9,7 @@ import { getProfileImageUrl, normalizeHandle } from "@teal/client/teal/actors";
 import { getSearchResults, getToday, searchBlueskyUsers } from "@teal/client/teal/api";
 import { musicAlbumHref, musicArtistHref, musicTrackHref } from "@teal/client/teal/routes";
 import { dedupeMoments } from "@teal/client/teal/today";
-import { AmbientSource, Avatar, Cover, coverUri, ErrorNotice, Glass, Icon, IconButton, Loading, Row, Screen, Tabs } from "~/ds";
+import { Avatar, Cover, ErrorNotice, Glass, Icon, IconButton, Loading, Row, Screen, Tabs } from "~/ds";
 import { HeatingShelf } from "~/components/today/HeatingUp";
 import { useLayout } from "~/lib/media";
 
@@ -79,7 +79,6 @@ function Explore() {
     artists: data?.artists.length ?? 0,
     albums: data?.albums.length ?? 0,
   };
-  const topCover = data?.songs[0]?.releaseMbId ?? data?.albums[0]?.mbid;
 
   return (
     <Screen title="Explore">
@@ -122,65 +121,62 @@ function Explore() {
       ) : !data ? (
         <Loading />
       ) : (
-        // The top result's cover keeps the backdrop alive while searching.
-        <AmbientSource uri={coverUri(topCover)}>
-          <Glass className="px-4 py-1" aria-live="polite">
-            {counts[kind] === 0 ? (
-              <p className="py-10 text-center text-ink-2">
-                No {kind} found for “{term}”.
-              </p>
-            ) : kind === "people" ? (
-              data.people.map((person, i) => (
-                <Row
-                  key={person.did}
-                  href={`/profile/${person.did}`}
-                  leading={<Avatar did={person.did} avatar={person.avatar} name={person.displayName ?? person.handle} size={44} />}
-                  title={person.displayName || person.handle || person.did}
-                  subtitle={person.handle ? `@${person.handle}` : undefined}
-                  divider={i < data.people.length - 1}
-                />
-              ))
-            ) : kind === "songs" ? (
-              data.songs.map((song, i) => (
-                <Row
-                  key={song.uri ?? `${song.trackName}-${i}`}
-                  href={musicTrackHref(song.artistName, song.releaseName, song.trackName, song.uri)}
-                  leading={<Cover releaseMbId={song.releaseMbId} size={52} radius={8} />}
-                  title={song.trackName}
-                  subtitle={[song.artistName, song.releaseName].filter(Boolean).join(" · ")}
-                  meta={plays(song.playCount)}
-                  divider={i < data.songs.length - 1}
-                />
-              ))
-            ) : kind === "artists" ? (
-              data.artists.map((artist, i) => (
-                <Row
-                  key={`${artist.mbid}-${artist.name}`}
-                  href={musicArtistHref(artist.name || "Unknown", artist.mbid)}
-                  leading={
-                    <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-fill">
-                      <Icon icon={Mic2} size={22} className="text-ink-2" />
-                    </span>
-                  }
-                  title={artist.name || "Unknown artist"}
-                  meta={plays(artist.playCount)}
-                  divider={i < data.artists.length - 1}
-                />
-              ))
-            ) : (
-              data.albums.map((album, i) => (
-                <Row
-                  key={`${album.mbid}-${album.name}`}
-                  href={musicAlbumHref("music", album.name || "Unknown", album.mbid ?? "")}
-                  leading={<Cover releaseMbId={album.mbid} size={52} radius={8} />}
-                  title={album.name || "Unknown album"}
-                  meta={plays(album.playCount)}
-                  divider={i < data.albums.length - 1}
-                />
-              ))
-            )}
-          </Glass>
-        </AmbientSource>
+        <Glass className="px-4 py-1" aria-live="polite">
+          {counts[kind] === 0 ? (
+            <p className="py-10 text-center text-ink-2">
+              No {kind} found for “{term}”.
+            </p>
+          ) : kind === "people" ? (
+            data.people.map((person, i) => (
+              <Row
+                key={person.did}
+                href={`/profile/${person.did}`}
+                leading={<Avatar did={person.did} avatar={person.avatar} name={person.displayName ?? person.handle} size={44} />}
+                title={person.displayName || person.handle || person.did}
+                subtitle={person.handle ? `@${person.handle}` : undefined}
+                divider={i < data.people.length - 1}
+              />
+            ))
+          ) : kind === "songs" ? (
+            data.songs.map((song, i) => (
+              <Row
+                key={song.uri ?? `${song.trackName}-${i}`}
+                href={musicTrackHref(song.artistName, song.releaseName, song.trackName, song.uri)}
+                leading={<Cover releaseMbId={song.releaseMbId} size={52} radius={8} ambient />}
+                title={song.trackName}
+                subtitle={[song.artistName, song.releaseName].filter(Boolean).join(" · ")}
+                meta={plays(song.playCount)}
+                divider={i < data.songs.length - 1}
+              />
+            ))
+          ) : kind === "artists" ? (
+            data.artists.map((artist, i) => (
+              <Row
+                key={`${artist.mbid}-${artist.name}`}
+                href={musicArtistHref(artist.name || "Unknown", artist.mbid)}
+                leading={
+                  <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-fill">
+                    <Icon icon={Mic2} size={22} className="text-ink-2" />
+                  </span>
+                }
+                title={artist.name || "Unknown artist"}
+                meta={plays(artist.playCount)}
+                divider={i < data.artists.length - 1}
+              />
+            ))
+          ) : (
+            data.albums.map((album, i) => (
+              <Row
+                key={`${album.mbid}-${album.name}`}
+                href={musicAlbumHref("music", album.name || "Unknown", album.mbid ?? "")}
+                leading={<Cover releaseMbId={album.mbid} size={52} radius={8} ambient />}
+                title={album.name || "Unknown album"}
+                meta={plays(album.playCount)}
+                divider={i < data.albums.length - 1}
+              />
+            ))
+          )}
+        </Glass>
       )}
     </Screen>
   );

@@ -183,7 +183,7 @@ function PostPreview({ uri, href }: { uri: string; href: string }) {
   const play = trackViewToPlayView(post.data.track);
   return (
     <A href={href} aria-label="Open the post" className="flex items-center gap-3 rounded-[16px] bg-fill p-2.5 hover:opacity-85">
-      <Cover releaseMbId={play.releaseMbId} size={44} radius={8} />
+      <Cover releaseMbId={play.releaseMbId} size={44} radius={8} ambient />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="line-clamp-2 text-[15px] text-ink">{post.data.text || play.trackName}</span>
         <span className="truncate text-[13px] text-ink-2">

@@ -122,6 +122,7 @@ export function AmbientScreen({ children }: { children: ReactNode }) {
       window.removeEventListener("scroll", refresh, { capture: true });
       window.removeEventListener("resize", refresh);
       if (pending.current) clearTimeout(pending.current);
+      pending.current = null;
     };
   }, [refresh]);
 

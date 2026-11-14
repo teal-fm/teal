@@ -21,8 +21,8 @@ function TopArt({ item, size = 48 }: { item: TopItem; size?: number }) {
     // A miss may be a passing MusicBrainz outage, so it's retried later rather than cached for good.
     staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
-  if (item.kind === "albums") return <Cover releaseMbId={item.mbid} size={size} radius={8} />;
-  if (lookup.data) return <Cover uri={lookup.data} size={size} radius={item.kind === "artists" ? size / 2 : 8} />;
+  if (item.kind === "albums") return <Cover releaseMbId={item.mbid} size={size} radius={8} ambient />;
+  if (lookup.data) return <Cover uri={lookup.data} size={size} radius={item.kind === "artists" ? size / 2 : 8} ambient={item.kind !== "artists"} />;
   return (
     <span
       className="flex shrink-0 items-center justify-center bg-fill"

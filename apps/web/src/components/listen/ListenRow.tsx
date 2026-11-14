@@ -52,7 +52,7 @@ export function ListenRow({
           {selected ? <Icon icon={Check} size={14} className="text-on-tint" /> : null}
         </span>
       ) : null}
-      <Cover releaseMbId={play.releaseMbId} size={48} radius={8} />
+      <Cover releaseMbId={play.releaseMbId} size={48} radius={8} ambient />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-semibold text-ink">{play.trackName}</span>
         <span className="truncate text-[14px] text-ink-2">
