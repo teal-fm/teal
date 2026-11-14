@@ -37,6 +37,14 @@ let started: Promise<void> | undefined;
 
 /** Restores the saved session or finishes an OAuth callback. Once per page load, in the browser. */
 export function startAuth() {
+  // A loopback OAuth client returns to 127.0.0.1, and sign-in state lives in that
+  // origin's storage, so localhost pages move there before any OAuth work.
+  if (window.location.hostname === "localhost") {
+    const url = new URL(window.location.href);
+    url.hostname = "127.0.0.1";
+    window.location.replace(url);
+    started ??= new Promise(() => {});
+  }
   started ??= session().then((m) => m.restore());
   return started;
 }
