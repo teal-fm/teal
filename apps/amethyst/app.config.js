@@ -12,6 +12,8 @@ export default () => {
       orientation: "portrait",
       icon: "./assets/images/icon.png",
       scheme: "fm.teal.amethyst",
+      // The web app is apps/web; this one ships to iOS and Android only.
+      platforms: ["ios", "android"],
       userInterfaceStyle: "automatic",
       splash: {
         image: "./assets/images/splash-icon.png",
@@ -28,11 +30,6 @@ export default () => {
           foregroundImage: "./assets/images/adaptive-icon.png",
           backgroundColor: "#ffffff",
         },
-      },
-      web: {
-        bundler: "metro",
-        output: "single",
-        favicon: "./assets/images/favicon.png",
       },
       plugins: [
         [

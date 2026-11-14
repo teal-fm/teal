@@ -20,7 +20,7 @@ import { Glass } from "./Glass";
 import { Icon } from "./Icon";
 import { Heading, Text } from "./Text";
 
-/** Widths the shell switches at; keep in step with WebNav. */
+/** Widths the shell switches at on large screens. */
 export const BREAKPOINTS = { sidebar: 1000, rail: 1280 } as const;
 
 /** Bottom space so content clears the floating tab bar on phones. */

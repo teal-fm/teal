@@ -1,6 +1,7 @@
 # Amethyst
 
-The teal.fm app.
+The teal.fm native app for iOS and Android. The web app is [`apps/web`](../web);
+logic both apps share lives in [`packages/client`](../../packages/client).
 
 ## What?
 
@@ -17,4 +18,6 @@ set `EXPO_PUBLIC_DID_WEB` to the domain aqua is running on.
 For example if it's running at `aqua.teal.fm` it would be
 `EXPO_PUBLIC_DID_WEB=did:web:aqua.teal.fm`. This is how amethyst sends requests to the appview.
 
-TODO
+Run `pnpm dev:native` from the repository root (or `pnpm start` here), then open
+the app in a simulator or on a device with a development build (`pnpm ios` /
+`pnpm android`).

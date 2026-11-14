@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Platform, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Link2 } from "lucide-react-native";
+import { Link2 } from "lucide-react-native";
 import { normalizeHandle } from "@teal/client/teal/actors";
 import { getProfile, getUserTopReleases } from "@teal/client/teal/api";
 import { absoluteUrl, musicAlbumHref } from "@teal/client/teal/routes";
@@ -48,7 +48,6 @@ export default function TopsterScreen() {
   const layout = useLayout();
   const [width, setWidth] = useState(0);
   const [note, setNote] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
 
   const chart = useQuery({
     queryKey: ["topster", actor, period, columns],
@@ -77,20 +76,6 @@ export default function TopsterScreen() {
     setNote(result === "copied" ? "Chart link copied." : result === "failed" ? "Couldn't share the chart." : null);
   };
 
-  const download = async () => {
-    if (Platform.OS !== "web" || exporting) return;
-    setExporting(true);
-    setNote(null);
-    try {
-      const { downloadTopsterPng } = await import("@/lib/teal/topsterExport.web");
-      await downloadTopsterPng({ releases, columns, title, period: periodLabel(period) });
-    } catch {
-      setNote("The image didn't download. Try again.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
     <Screen back title="Album chart" subtitle="Most-played albums as a cover grid. Pick a period and size, then share it." width="wide">
       <Glass className="gap-4 p-4">
@@ -104,9 +89,6 @@ export default function TopsterScreen() {
         </View>
         <ButtonRow>
           <Button label="Share link" icon={Link2} variant="secondary" onPress={share} />
-          {Platform.OS === "web" ? (
-            <Button label={exporting ? "Making image" : "Download PNG"} icon={Download} loading={exporting} disabled={!releases.length} onPress={download} />
-          ) : null}
         </ButtonRow>
         {note ? (
           <Text role="status" className="text-[14px] text-ink-2">
