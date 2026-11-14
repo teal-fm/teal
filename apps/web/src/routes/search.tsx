@@ -11,6 +11,7 @@ import { musicAlbumHref, musicArtistHref, musicTrackHref } from "@teal/client/te
 import { dedupeMoments } from "@teal/client/teal/today";
 import { AmbientSource, Avatar, Cover, coverUri, ErrorNotice, Glass, Icon, IconButton, Loading, Row, Screen, Tabs } from "~/ds";
 import { HeatingShelf } from "~/components/today/HeatingUp";
+import { useLayout } from "~/lib/media";
 
 const KINDS = ["people", "songs", "artists", "albums"] as const;
 type Kind = (typeof KINDS)[number];
@@ -52,6 +53,7 @@ function Explore() {
   const params = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const kind: Kind = params.kind ?? "songs";
+  const { phone } = useLayout();
   const [query, setQuery] = useState(params.q ?? "");
   const term = useDebounced(query.trim());
   const searching = term.length >= 2;
@@ -103,11 +105,12 @@ function Explore() {
           value={kind}
           onChange={(next) => void navigate({ search: (prev) => ({ ...prev, kind: next }), replace: true, resetScroll: false })}
           className="border-t border-b-0"
+          // Icons drop on phones so the labels fit.
           tabs={[
-            { value: "people", label: "People", icon: UsersRound, count: searching ? counts.people : undefined },
-            { value: "songs", label: "Songs", icon: Music2, count: searching ? counts.songs : undefined },
-            { value: "artists", label: "Artists", icon: Mic2, count: searching ? counts.artists : undefined },
-            { value: "albums", label: "Albums", icon: Disc3, count: searching ? counts.albums : undefined },
+            { value: "people", label: "People", icon: phone ? undefined : UsersRound, count: searching ? counts.people : undefined },
+            { value: "songs", label: "Songs", icon: phone ? undefined : Music2, count: searching ? counts.songs : undefined },
+            { value: "artists", label: "Artists", icon: phone ? undefined : Mic2, count: searching ? counts.artists : undefined },
+            { value: "albums", label: "Albums", icon: phone ? undefined : Disc3, count: searching ? counts.albums : undefined },
           ]}
         />
       </Glass>

@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { UserRound } from "lucide-react";
-import { LinkButton, Loading, Notice, Screen } from "~/ds";
+import { ButtonRow, LinkButton, Loading, Notice, Screen } from "~/ds";
 import { useAuth } from "~/lib/auth";
 
 export const Route = createFileRoute("/me")({
@@ -23,7 +23,13 @@ function Me() {
           icon={UserRound}
           title="Your listening, yours"
           body="Sign in with your Atmosphere account to see your profile, favourites, and month in covers."
-          action={<LinkButton href="/auth/login" label="Sign in" />}
+          action={
+            // Phones have no sidebar, so Settings (and the theme) is reachable from here too.
+            <ButtonRow className="justify-center">
+              <LinkButton href="/auth/login" label="Sign in" />
+              <LinkButton href="/settings" label="Settings" variant="secondary" />
+            </ButtonRow>
+          }
         />
       )}
     </Screen>

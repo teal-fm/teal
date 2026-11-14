@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { usePeople } from "@teal/client/hooks/useProfile";
 import { actorAvatarUrl, actorProfileHref, displayActorName, normalizeHandle } from "@teal/client/teal/actors";
@@ -8,11 +9,23 @@ export function PeopleList({ did, kind, onClose }: { did: string; kind: "followe
   const people = usePeople(did, kind);
   const actors = people.data?.pages.flatMap((p) => p.actors) ?? [];
   const title = kind === "followers" ? "Followers" : "Following";
+  // Keyboard users land in the list they opened, and Escape closes it.
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+  }, [kind]);
   return (
-    <Glass as="section" className="p-4">
+    <Glass
+      as="section"
+      aria-label={title}
+      className="p-4"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
+    >
       <div className="mb-2 flex items-center justify-between">
         <Heading level={2}>{title}</Heading>
-        <IconButton icon={X} label={`Close ${title.toLowerCase()}`} size={34} onClick={onClose} />
+        <IconButton ref={closeRef} icon={X} label={`Close ${title.toLowerCase()}`} size={34} onClick={onClose} />
       </div>
       {people.isLoading ? (
         <Loading className="py-8" />
