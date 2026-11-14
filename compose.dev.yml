@@ -118,7 +118,7 @@ services:
       - app_network
 
   postgres:
-    image: postgres:16
+    image: postgres:17
     container_name: postgres_db
     environment:
       POSTGRES_USER: ${DB_USER:-teal}
