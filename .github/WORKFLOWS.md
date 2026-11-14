@@ -52,12 +52,17 @@ The project uses GitHub Actions for continuous integration, deployment, and secu
 
 **Triggers:** Push/PR to `main` with changes to `apps/amethyst/**`
 
-**Purpose:** Builds the React Native/Expo application for different platforms.
+**Purpose:** Checks the React Native/Expo application, which ships to iOS and Android only.
 
 **Jobs:**
-- **build-web**: Builds web version and uploads artifacts
+- **build**: Type checking and the shared `@teal/client` tests
 - **build-ios**: Builds iOS version (only on main branch pushes, requires macOS runner)
-- **lint-and-test**: Type checking and testing
+
+### 🌐 Web (`web.yml`)
+
+**Triggers:** Push/PR to `main` with changes to `apps/web/**`, `packages/**`, or `lexicons/**`
+
+**Purpose:** Type checks and builds the TanStack Start web app (`apps/web`) and uploads its `.output` server bundle.
 
 **Features:**
 - Generates lexicons before building
@@ -94,7 +99,7 @@ The project uses GitHub Actions for continuous integration, deployment, and secu
 - **build-and-release-aqua**: Builds and tags Aqua for release
 - **build-and-release-cadet**: Builds and tags Cadet for release
 - **release-other-services**: Builds other services (rocketman, satellite)
-- **build-and-release-amethyst**: Builds Amethyst and uploads to release
+- **build-and-release-web**: Builds the web app and uploads its server bundle to the release
 
 **Features:**
 - Automatic changelog extraction

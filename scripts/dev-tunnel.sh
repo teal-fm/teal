@@ -18,7 +18,7 @@ load_local_env() {
     value="${value%"${value##*[![:space:]]}"}"
 
     case "$key" in
-      TUNNEL_HOST|CLIENT_ADDRESS|EXPO_PUBLIC_BASE_URL|EXPO_PUBLIC_AQUA_URL|EXPO_PUBLIC_DID_WEB|CLOUDFLARED_TUNNEL_TOKEN)
+      TUNNEL_HOST|CLIENT_ADDRESS|PUBLIC_ORIGIN|CLOUDFLARED_TUNNEL_TOKEN)
         if [[ -z "${!key:-}" ]]; then
           export "$key=$value"
         fi
@@ -30,7 +30,7 @@ load_local_env() {
 load_local_env
 
 TUNNEL_HOST="${TUNNEL_HOST:-sigilyph.teal.fm}"
-PUBLIC_ORIGIN="https://${TUNNEL_HOST}"
+PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://${TUNNEL_HOST}}"
 
 usage() {
   cat <<USAGE
@@ -60,11 +60,8 @@ require_token() {
 
 export_preview_env() {
   export CLIENT_ADDRESS="${CLIENT_ADDRESS:-:80}"
-  export EXPO_PUBLIC_BASE_URL="${EXPO_PUBLIC_BASE_URL:-$PUBLIC_ORIGIN}"
-  export EXPO_PUBLIC_AQUA_URL="${EXPO_PUBLIC_AQUA_URL:-$PUBLIC_ORIGIN}"
-  export EXPO_PUBLIC_DID_WEB="${EXPO_PUBLIC_DID_WEB:-did:web:${TUNNEL_HOST}}"
-  export EXPO_PUBLIC_GIT_BRANCH="$(git symbolic-ref --short -q HEAD || echo detached)"
-  export EXPO_PUBLIC_GIT_COMMIT="$(git rev-parse HEAD)"
+  export PUBLIC_ORIGIN
+  export GIT_COMMIT="$(git rev-parse --short HEAD)"
 }
 
 curl_preview() {
@@ -143,7 +140,7 @@ case "${1:-}" in
   up)
     require_token
     export_preview_env
-    "${COMPOSE[@]}" up -d --build postgres garnet aqua-api cadet amethyst cloudflared-named
+    "${COMPOSE[@]}" up -d --build postgres garnet aqua-api cadet web edge cloudflared-named
     echo "Stable preview: $PUBLIC_ORIGIN"
     verify_preview
     ;;
@@ -154,7 +151,7 @@ case "${1:-}" in
     "${COMPOSE[@]}" ps
     ;;
   logs)
-    "${COMPOSE[@]}" logs -f amethyst aqua-api cadet cloudflared-named
+    "${COMPOSE[@]}" logs -f web edge aqua-api cadet cloudflared-named
     ;;
   verify)
     verify_preview

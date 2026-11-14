@@ -44,21 +44,14 @@ jobs:
       - name: Build lex tool
         run: cd tools/lexicon-cli && pnpm i && pnpm build
 
-      - name: Build web
-        run: pnpm turbo build:web --filter=@teal/amethyst
+      - name: Generate lexicons
+        run: pnpm --filter=@teal/lexicons lex:gen
 
       - name: Type check
-        run: pnpm turbo check-types --filter=@teal/amethyst
+        run: pnpm --filter=@teal/amethyst exec tsc --noEmit
 
-      - name: Run tests
-        run: pnpm turbo test --filter=@teal/amethyst
-
-      - name: Upload web build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: amethyst-web-build
-          path: apps/amethyst/build/
-          retention-days: 7
+      - name: Run shared client tests
+        run: pnpm --filter=@teal/client test
 
   build-ios:
     name: Build iOS

@@ -1,15 +1,15 @@
-# Overlay for host watch processes. Replaces the Amethyst image with a Caddy
-# proxy so /xrpc/* and OAuth metadata stay on one origin. The named tunnel in
-# compose.dev.yml still targets amethyst:80 when the named-tunnel profile is on.
+# Overlay for host watch processes (pnpm dev). The edge Caddy proxies to the
+# web app and Aqua running on the host, so /xrpc/* and OAuth metadata stay on
+# one origin. The named tunnel in compose.dev.yml targets edge:80 when the
+# named-tunnel profile is on.
 services:
-  amethyst:
-    build: !reset null
+  edge:
     image: ${DEV_PROXY_IMAGE:-caddy:2.8-alpine}
     ports: !override
       - "127.0.0.1:8081:80"
     environment:
       DEV_PUBLIC_ORIGIN: ${DEV_PUBLIC_ORIGIN:-http://localhost:8081}
-    volumes:
+    volumes: !override
       - ./scripts/Caddyfile.dev:/etc/caddy/Caddyfile:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"

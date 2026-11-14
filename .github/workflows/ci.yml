@@ -57,7 +57,7 @@ jobs:
           name: node-builds
           path: |
             packages/*/dist/
-            apps/amethyst/build/
+            apps/web/.output/
           retention-days: 1
 
       - name: Upload Rust build artifacts

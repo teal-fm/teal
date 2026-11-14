@@ -1,13 +1,21 @@
 services:
-  amethyst:
+  web:
     build:
       context: .
-      dockerfile: apps/amethyst/Dockerfile
+      dockerfile: apps/web/Dockerfile
       args:
-        CLIENT_ADDRESS: ${CLIENT_ADDRESS:-localhost}
-        EXPO_PUBLIC_BASE_URL: ${EXPO_PUBLIC_BASE_URL:-http://localhost}
-        EXPO_PUBLIC_AQUA_URL: ${EXPO_PUBLIC_AQUA_URL:-http://localhost:3000}
-        EXPO_PUBLIC_DID_WEB: ${EXPO_PUBLIC_DID_WEB:-did:web:localhost}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    environment:
+      AQUA_URL: http://aqua-api:3000
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost}
+    networks:
+      - app_network
+    depends_on:
+      - aqua-api
+
+  # Caddy terminates TLS for CLIENT_ADDRESS and splits /xrpc (Aqua) from the web app.
+  edge:
+    image: caddy:2.8-alpine
     ports:
       - "80:80"
       - "443:443"
@@ -15,11 +23,13 @@ services:
     environment:
       CLIENT_ADDRESS: ${CLIENT_ADDRESS:-:80}
     volumes:
+      - ./apps/web/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     networks:
       - app_network
     depends_on:
+      - web
       - aqua-api
 
   aqua-api:

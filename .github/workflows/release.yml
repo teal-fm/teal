@@ -87,7 +87,6 @@ jobs:
       - name: Build Node.js artifacts
         run: |
           pnpm build
-          cd apps/amethyst && pnpm build
 
       - name: Build Rust services (x86_64)
         run: |
@@ -109,10 +108,10 @@ jobs:
           cd apps/aqua
           cross build --release --all-features --target aarch64-unknown-linux-gnu
 
-      - name: Create Amethyst build archive
+      - name: Create web build archive
         run: |
-          cd apps/amethyst
-          tar -czf amethyst-${{ needs.create-release.outputs.tag }}.tar.gz build/
+          cd apps/web
+          tar -czf web-${{ needs.create-release.outputs.tag }}.tar.gz .output/
 
       - name: Upload Rust build artifacts
         id: upload-rust
@@ -133,18 +132,18 @@ jobs:
           name: node-release-builds
           path: |
             packages/*/dist/
-            apps/amethyst/build/
-            apps/amethyst/amethyst-${{ needs.create-release.outputs.tag }}.tar.gz
+            apps/web/.output/
+            apps/web/web-${{ needs.create-release.outputs.tag }}.tar.gz
           retention-days: 7
 
-      - name: Upload Amethyst build to release
+      - name: Upload web build to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./apps/amethyst/amethyst-${{ needs.create-release.outputs.tag }}.tar.gz
-          asset_name: amethyst-${{ needs.create-release.outputs.tag }}.tar.gz
+          asset_path: ./apps/web/web-${{ needs.create-release.outputs.tag }}.tar.gz
+          asset_name: web-${{ needs.create-release.outputs.tag }}.tar.gz
           asset_content_type: application/gzip
 
   release-services:

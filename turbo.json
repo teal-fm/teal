@@ -63,9 +63,14 @@
       "dependsOn": ["@teal/lexicons#lex:gen"],
       "outputs": ["./build/**"]
     },
-    "@teal/amethyst#build:web": {
+    "@teal/web#build": {
       "dependsOn": ["@teal/lexicons#lex:gen"],
-      "outputs": ["./build/**"]
+      "outputs": ["./.output/**"]
+    },
+    "@teal/web#dev": {
+      "dependsOn": ["@teal/lexicons#lex:gen"],
+      "persistent": true,
+      "cache": false
     },
     "@teal/amethyst#build:ios": {
       "dependsOn": ["@teal/lexicons#lex:gen"],

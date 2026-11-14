@@ -2,10 +2,20 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 type Color = [number, number, number, number];
-const css = readFileSync(join(__dirname, "../../../../apps/amethyst/global.css"), "utf8");
-const blocks = {
-  light: css.match(/\s:root\s*\{([^}]+)\}/)?.[1] || "",
-  dark: css.match(/@variant dark\s*\{([^}]+)\}/)?.[1] || "",
+const root = join(__dirname, "../../../..");
+const nativeCss = readFileSync(join(root, "apps/amethyst/global.css"), "utf8");
+const webCss = readFileSync(join(root, "apps/web/src/styles.css"), "utf8");
+/** Each app's light and dark token blocks. The web also has a system-dark block under a media query. */
+const apps = {
+  native: {
+    light: nativeCss.match(/\s:root\s*\{([^}]+)\}/)?.[1] || "",
+    dark: nativeCss.match(/@variant dark\s*\{([^}]+)\}/)?.[1] || "",
+  },
+  web: {
+    light: webCss.match(/\s:root\s*\{([^}]+)\}/)?.[1] || "",
+    dark: webCss.match(/:root\[data-theme="dark"\]\s*\{([^}]+)\}/)?.[1] || "",
+    systemDark: webCss.match(/:root:not\(\[data-theme="light"\]\)\s*\{([^}]+)\}/)?.[1] || "",
+  },
 };
 
 /** Reads a token written as #rrggbb, rgba(r, g, b, a), or the bare "h s% l%" form. */
@@ -48,8 +58,13 @@ function contrast(first: Color, second: Color) {
   return (high + 0.05) / (low + 0.05);
 }
 
-describe.each(["light", "dark"] as const)("%s theme", (theme) => {
-  const block = blocks[theme];
+describe.each([
+  ["native", "light"],
+  ["native", "dark"],
+  ["web", "light"],
+  ["web", "dark"],
+] as const)("%s %s theme", (app, theme) => {
+  const block = apps[app][theme];
   const grounds = ["ground", "ground-2"].map((name) => token(block, name));
 
   // Buttons darken on hover rather than fading, so the resting colours are the ones to check.
@@ -67,5 +82,18 @@ describe.each(["light", "dark"] as const)("%s theme", (theme) => {
 
   it("keeps the listening-now ring visible against the ground", () => {
     expect(contrast(token(block, "now"), grounds[0])).toBeGreaterThanOrEqual(3);
+  });
+});
+
+// The web app and the native app are separate codebases on one palette.
+const SHARED = ["ground", "ground-2", "ink", "ink-2", "ink-3", "hair", "tint", "on-tint", "tint-soft", "glass", "glass-strong", "glass-edge", "fill", "now", "destructive"];
+
+describe("web and native palettes", () => {
+  it.each(["light", "dark"] as const)("match in the %s theme", (theme) => {
+    for (const name of SHARED) expect(token(apps.web[theme], name)).toEqual(token(apps.native[theme], name));
+  });
+
+  it("uses the same dark tokens whether dark comes from the system or the theme setting", () => {
+    for (const name of SHARED) expect(token(apps.web.systemDark, name)).toEqual(token(apps.web.dark, name));
   });
 });

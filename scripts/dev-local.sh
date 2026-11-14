@@ -9,10 +9,12 @@ usage() {
   cat <<'USAGE'
 Usage: pnpm dev [--proxy]
 
-Run the full Teal stack. Postgres, Garnet, and Caddy run in Docker; Expo, Aqua,
-Cadet, and Satellite run on the host under their watchers. The app is served at
-DEV_PUBLIC_ORIGIN (default http://localhost:8081) with /xrpc/* and OAuth
-metadata on the same origin. Nothing is exposed publicly by default.
+Run the full Teal stack. Postgres, Garnet, and Caddy run in Docker; the web app
+(Vite), Aqua, Cadet, and Satellite run on the host under their watchers. The web
+app is served at DEV_PUBLIC_ORIGIN (default http://localhost:8081) with /xrpc/*
+and OAuth metadata on the same origin. Nothing is exposed publicly by default.
+
+The native app is separate: run `pnpm dev:native` for Expo on iOS and Android.
 
 Options:
   --proxy   Also start the named Cloudflare tunnel and serve the stack at the
@@ -54,12 +56,6 @@ if [[ $PROXY == 1 ]]; then
   COMPOSE+=(--profile named-tunnel)
 fi
 
-# Reuse the already-installed Caddy runtime when available. Its bundled static
-# files are unused by Caddyfile.dev; no application image build is needed.
-if [[ -z ${DEV_PROXY_IMAGE:-} ]] && ! docker image inspect caddy:2.8-alpine >/dev/null 2>&1 && docker image inspect teal-amethyst >/dev/null 2>&1; then
-  export DEV_PROXY_IMAGE=teal-amethyst
-fi
-
 # Reject a second runner before changing the running stack. Port 8081 is owned
 # by the reused Caddy container, so it is intentionally not checked here.
 for port in 3000 3001 8082; do
@@ -97,16 +93,15 @@ export CURSOR_FILE=$DEV_CADET_CURSOR_FILE
 export SQLX_OFFLINE=${SQLX_OFFLINE:-true}
 # Keep incremental builds without multi-gigabyte debug symbols by default.
 export CARGO_PROFILE_DEV_DEBUG=${CARGO_PROFILE_DEV_DEBUG:-0}
-export EXPO_PUBLIC_BASE_URL=$DEV_PUBLIC_ORIGIN
-export EXPO_PUBLIC_AQUA_URL=$DEV_PUBLIC_ORIGIN
-export EXPO_PACKAGER_PROXY_URL=$DEV_PUBLIC_ORIGIN
+# The web app's server renders against Aqua directly, and names itself by the public origin.
+export PUBLIC_ORIGIN=$DEV_PUBLIC_ORIGIN
+export AQUA_URL=http://127.0.0.1:3000
 export CADET_STREAM_MODE=jetstream
 export CADET_DEFER_MATERIALIZED_VIEW_REFRESH=1
 export CADET_MATERIALIZED_VIEW_REFRESH_INTERVAL_SECS=60
-export EXPO_PUBLIC_GIT_BRANCH=${EXPO_PUBLIC_GIT_BRANCH:-$(git branch --show-current)}
-export EXPO_PUBLIC_GIT_COMMIT=${EXPO_PUBLIC_GIT_COMMIT:-$(git rev-parse --short HEAD)}
+export GIT_COMMIT=${GIT_COMMIT:-$(git rev-parse --short HEAD)}
 
-"${COMPOSE[@]}" up -d --no-build --no-deps amethyst
+"${COMPOSE[@]}" up -d --no-build --no-deps edge
 if [[ $PROXY == 1 ]]; then
   "${COMPOSE[@]}" up -d --no-build --no-deps cloudflared-named
   echo "Public development preview: $DEV_PUBLIC_ORIGIN"

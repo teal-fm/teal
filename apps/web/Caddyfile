@@ -1,0 +1,12 @@
+# The public edge: Aqua answers /xrpc, the web app renders everything else.
+{$CLIENT_ADDRESS} {
+	encode zstd gzip
+
+	handle /xrpc/* {
+		reverse_proxy aqua-api:3000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
