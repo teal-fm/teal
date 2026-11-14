@@ -25,13 +25,14 @@ const SLOTS: [number, number][] = [
 ];
 // Leaving covers fade slower than new ones arrive, so a fast scroll hands colour
 // over rather than washing out between covers.
-const FADE_IN_MS = 900;
-const FADE_OUT_MS = 1600;
+const FADE_IN_MS = 2400;
+const FADE_OUT_MS = 3600;
 /** A cover stays at least this long once it arrives, so a flick can't churn the set. */
-const HOLD_MS = 700;
+const HOLD_MS = 1200;
 /** The longest leaving covers wait for an arriving one's image. */
 const WAIT_FOR_ART_MS = 2000;
-const EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";
+// Eases in and out, so a cover neither pops on nor cuts off at either end of its fade.
+const EASE = "cubic-bezier(0.45, 0, 0.55, 1)";
 /**
  * With only a few covers, each also shows in mirrored spots, so their colour
  * fills the window instead of leaving patches of ground between them.
