@@ -205,6 +205,19 @@
   }
 }
 
+/* Each cover layer is blurred once; the Settings colour choice tones it down. */
+.backdrop-layer {
+  filter: blur(56px) saturate(var(--backdrop-saturate, 2));
+}
+
+:root[data-backdrop-colour="muted"] {
+  --backdrop-saturate: 0.7;
+}
+
+:root[data-backdrop="off"] .backdrop-root {
+  display: none;
+}
+
 .backdrop-wander {
   animation: backdrop-wander 40s ease-in-out infinite;
   will-change: transform;
@@ -220,6 +233,10 @@
   .backdrop-spin {
     animation: none;
   }
+}
+
+:root[data-backdrop-motion="still"] :is(.backdrop-wander, .backdrop-spin) {
+  animation: none;
 }
 
 /* Reaction stickers spring in when someone reacts. */

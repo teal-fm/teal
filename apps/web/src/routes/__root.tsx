@@ -5,6 +5,7 @@ import { CircleAlert } from "lucide-react";
 import { SessionProvider } from "@teal/client/session";
 import { ButtonRow, Glass, Heading, Icon, LinkButton, WindowBackdrop } from "~/ds";
 import { startAuth, useAuth } from "~/lib/auth";
+import { backdropBootScript } from "~/lib/backdrop";
 import { themeBootScript } from "~/lib/theme";
 import { Nav } from "~/shell/Nav";
 import appCss from "~/styles.css?url";
@@ -35,7 +36,7 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript + backdropBootScript }} />
         <HeadContent />
       </head>
       <body>

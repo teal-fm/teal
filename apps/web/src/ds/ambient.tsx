@@ -11,6 +11,8 @@ import {
 } from "react";
 import { create } from "zustand";
 
+import { useBackdropPreferences } from "~/lib/backdrop";
+
 import { Backdrop, type AmbientBlob } from "./Backdrop";
 
 type AmbientApi = {
@@ -37,10 +39,13 @@ const CARRIED = 0.5;
 export function WindowBackdrop() {
   const blobs = useWindowBackdrop((state) => state.blobs);
   const last = useWindowBackdrop((state) => state.last);
+  const off = useBackdropPreferences().preferences.backdrop === "off";
   // A page without covers, like Activity, dims the colour rather than draining it.
+  // Turned off, it loads no covers at all.
   const shown = useMemo(
-    () => (blobs.length ? blobs : last.map((blob) => ({ ...blob, weight: blob.weight * CARRIED }))),
-    [blobs, last],
+    () =>
+      off ? [] : blobs.length ? blobs : last.map((blob) => ({ ...blob, weight: blob.weight * CARRIED })),
+    [blobs, last, off],
   );
   return <Backdrop blobs={shown} />;
 }

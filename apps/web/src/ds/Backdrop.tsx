@@ -180,12 +180,10 @@ function Blob({
               }}
             >
               <div
-                className="backdrop-spin size-full overflow-hidden rounded-full"
+                className="backdrop-spin backdrop-layer size-full overflow-hidden rounded-full"
                 style={{
                   animationDuration: `${SPIN_S[seed % SPIN_S.length]}s`,
                   animationDirection: seed % 2 ? "reverse" : "normal",
-                  // Each copy is blurred on its own, so the drift only moves finished layers.
-                  filter: "blur(56px) saturate(2)",
                 }}
               >
                 {copy === 0 ? (
@@ -293,7 +291,7 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
   );
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ground">
+    <div aria-hidden className="backdrop-root pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ground">
       <div className="absolute inset-0">
         {width > 0
           ? shown.map((item) => (
