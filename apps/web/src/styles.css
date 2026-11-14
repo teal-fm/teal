@@ -50,7 +50,6 @@
     /* Text on the backdrop gets a halo in the ground colour; covers get a veil. */
     --halo: rgba(255, 255, 255, 0.8);
     --veil: rgba(250, 250, 252, 0.46);
-    --veil-solo: rgba(255, 255, 255, 0.3);
     --placeholder: #636366;
     color-scheme: light;
   }
@@ -74,7 +73,6 @@
       --destructive: 5 85% 72%;
       --halo: rgba(0, 0, 0, 0.6);
       --veil: rgba(0, 0, 0, 0.42);
-      --veil-solo: rgba(0, 0, 0, 0.5);
       --placeholder: #98989d;
       color-scheme: dark;
     }
@@ -98,7 +96,6 @@
     --destructive: 5 85% 72%;
     --halo: rgba(0, 0, 0, 0.6);
     --veil: rgba(0, 0, 0, 0.42);
-    --veil-solo: rgba(0, 0, 0, 0.5);
     --placeholder: #98989d;
     color-scheme: dark;
   }
@@ -186,6 +183,43 @@
 @theme {
   --breakpoint-nav: 1000px;
   --breakpoint-rail: 1280px;
+}
+
+/* The backdrop's covers drift and turn slowly, so the colour is never still. */
+@keyframes backdrop-wander {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(9%, -7%) scale(1.1);
+  }
+  66% {
+    transform: translate(-7%, 8%) scale(0.94);
+  }
+}
+
+@keyframes backdrop-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.backdrop-wander {
+  animation: backdrop-wander 40s ease-in-out infinite;
+  will-change: transform;
+}
+
+.backdrop-spin {
+  animation: backdrop-spin 80s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop-wander,
+  .backdrop-spin {
+    animation: none;
+  }
 }
 
 /* Reaction stickers spring in when someone reacts. */

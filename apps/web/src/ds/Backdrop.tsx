@@ -8,9 +8,10 @@ export type AmbientBlob = {
 };
 
 /**
- * Fixed spots, as fractions of the window, that covers take as they arrive.
- * The colour stays put while the page scrolls: following the content at any
- * other pace reads as the background swimming, which can make people queasy.
+ * Home spots, as fractions of the window, that covers take as they arrive.
+ * The colour doesn't follow the page as it scrolls: moving with the content at
+ * any other pace reads as the background swimming, which can make people queasy.
+ * Instead each spot drifts and turns slowly on its own.
  */
 const SLOTS: [number, number][] = [
   [0.15, 0.25],
@@ -31,6 +32,18 @@ const HOLD_MS = 700;
 /** The longest leaving covers wait for an arriving one's image. */
 const WAIT_FOR_ART_MS = 2000;
 const EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";
+/**
+ * With only a few covers, each also shows in mirrored spots, so their colour
+ * fills the window instead of leaving patches of ground between them.
+ */
+const ECHOES: ((x: number, y: number) => [number, number])[] = [
+  (x, y) => [1 - x, 1 - y],
+  (x, y) => [1 - x, y],
+  (x, y) => [x, 1 - y],
+];
+/** Drift timings, in seconds, picked per layer so no two move in step. */
+const WANDER_S = [31, 43, 37, 53, 29, 47, 41, 59];
+const SPIN_S = [67, 89, 73, 97, 61, 83, 79, 103];
 /** After every fallback fails, start over after these waits, so a flaky archive heals. */
 const RETRY_MS = [2000, 6000, 20000, 60000];
 
@@ -72,15 +85,15 @@ function useWindowSize() {
 function Blob({
   shown,
   size,
-  solo,
+  echoes,
   hold,
   onLoaded,
   onGone,
 }: {
   shown: Shown;
   size: number;
-  /** The only cover in play, so it fills the whole window instead of one spot. */
-  solo: boolean;
+  /** How many mirrored copies to show, when there are few covers to fill the window. */
+  echoes: number;
   /** Keep showing while it leaves, because nothing has loaded to replace it yet. */
   hold: boolean;
   onLoaded: (uri: string) => void;
@@ -138,44 +151,64 @@ function Blob({
   };
 
   const transition = `opacity ${target > 0 ? FADE_IN_MS : FADE_OUT_MS}ms ${EASE}`;
-  const fill = solo ? 1 : 0;
-  const [fx, fy] = SLOTS[shown.slot];
+  const [hx, hy] = SLOTS[shown.slot];
+  const spots = [[hx, hy] as [number, number], ...ECHOES.map((echo) => echo(hx, hy))];
   return (
     <>
-      <div
-        className="absolute overflow-hidden rounded-full"
-        style={{
-          width: size,
-          height: size,
-          left: fx * width - size / 2,
-          top: fy * height - size / 2,
-          opacity: opacity * (1 - fill),
-          transition,
-        }}
-      >
-        <img
-          key={`${source}#${attempt}`}
-          src={source}
-          alt=""
-          decoding="async"
-          className="size-full object-cover"
-          onLoad={() => {
-            setLoaded(true);
-            onLoaded(shown.uri);
-          }}
-          onError={onError}
-        />
-      </div>
-      {/* Overscanned so the blur doesn't fade the window's edges to the ground. */}
-      <div
-        className="absolute -inset-[10%]"
-        style={{ opacity: opacity * fill, transition }}
-      >
-        {/* The same file as the spot above, so the browser serves it from cache. */}
-        <img key={`${source}#${attempt}`} src={source} alt="" decoding="async" className="size-full object-cover" />
-        {/* A cover filling the window needs a deeper veil than a few spots of it. */}
-        <div className="absolute inset-0" style={{ background: "var(--veil-solo)" }} />
-      </div>
+      {spots.map(([fx, fy], copy) => {
+        const seed = shown.slot * 3 + copy;
+        return (
+          <div
+            key={copy}
+            className="absolute"
+            style={{
+              width: size,
+              height: size,
+              left: fx * width - size / 2,
+              top: fy * height - size / 2,
+              // Copies come and go with the number of covers, so they fade like covers do.
+              opacity: copy <= echoes ? opacity : 0,
+              transition,
+            }}
+          >
+            <div
+              className="backdrop-wander size-full"
+              style={{
+                animationDuration: `${WANDER_S[seed % WANDER_S.length]}s`,
+                animationDelay: `-${(seed * 7) % 30}s`,
+              }}
+            >
+              <div
+                className="backdrop-spin size-full overflow-hidden rounded-full"
+                style={{
+                  animationDuration: `${SPIN_S[seed % SPIN_S.length]}s`,
+                  animationDirection: seed % 2 ? "reverse" : "normal",
+                  // Each copy is blurred on its own, so the drift only moves finished layers.
+                  filter: "blur(56px) saturate(2)",
+                }}
+              >
+                {copy === 0 ? (
+                  <img
+                    key={`${source}#${attempt}`}
+                    src={source}
+                    alt=""
+                    decoding="async"
+                    className="size-full object-cover"
+                    onLoad={() => {
+                      setLoaded(true);
+                      onLoaded(shown.uri);
+                    }}
+                    onError={onError}
+                  />
+                ) : (
+                  // The same file as the first copy, so the browser serves it from cache.
+                  <img key={`${source}#${attempt}`} src={source} alt="" decoding="async" className="size-full object-cover" />
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -186,7 +219,7 @@ function Blob({
  */
 export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
   const [width, height] = useWindowSize();
-  const size = Math.max(width, height) * (width >= 1000 ? 0.75 : 0.95);
+  const size = Math.max(width, height) * (width >= 1000 ? 0.85 : 1.05);
   const [shown, setShown] = useState<Shown[]>([]);
   const current = useRef<Shown[]>(shown);
   const [recheck, setRecheck] = useState(0);
@@ -226,7 +259,7 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
   }, [blobs, recheck, commit]);
 
   const active = shown.filter((item) => item.weight > 0);
-  const solo = active.length === 1 ? active[0].uri : undefined;
+  const echoes = Math.max(0, ECHOES.length + 1 - active.length);
 
   // Leaving covers wait for an arriving one to load, up to a limit, so moving to a
   // screen whose art is still downloading doesn't drain the colour in between.
@@ -260,14 +293,14 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-ground">
-      <div className="absolute inset-0" style={{ filter: "blur(56px) saturate(2)" }}>
+      <div className="absolute inset-0">
         {width > 0
           ? shown.map((item) => (
               <Blob
                 key={item.uri}
                 shown={item}
                 size={size}
-                solo={solo === item.uri}
+                echoes={echoes}
                 hold={hold}
                 onLoaded={loaded}
                 onGone={forget}
