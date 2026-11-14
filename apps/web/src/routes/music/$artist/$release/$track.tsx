@@ -12,7 +12,7 @@ import { ListenCard } from "~/components/listen/ListenCard";
 import { MusicHero } from "~/components/music/MusicHero";
 import { AddToPlaylist } from "~/components/playlist/AddToPlaylist";
 import { PostCard } from "~/components/today/PostCard";
-import { pageMeta, serverAwait } from "~/lib/meta";
+import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { pickStrings } from "~/lib/search";
 
 /** Old links carry only slugs; find the indexed play they meant. */
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/music/$artist/$release/$track")({
   loaderDeps: ({ search }) => ({ uri: search.uri }),
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {
-      const play = await queryClient.ensureQueryData(playQuery(deps.uri, params.artist, params.release, params.track));
+      const play = await queryClient.ensureQueryData(once(playQuery(deps.uri, params.artist, params.release, params.track)));
       return {
         title: `${play.trackName} · ${displayArtists(play) || "Unknown artist"}`,
         description: [play.releaseName, "On Teal"].filter(Boolean).join(" · "),

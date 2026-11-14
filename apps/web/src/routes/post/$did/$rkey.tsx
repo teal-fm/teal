@@ -16,7 +16,7 @@ import { Composer } from "~/components/compose/Composer";
 import { RichText } from "~/components/post/RichText";
 import { ReactionBar } from "~/components/today/ReactionBar";
 import { shareLink } from "~/components/today/share";
-import { pageMeta, serverAwait } from "~/lib/meta";
+import { once, pageMeta, serverAwait } from "~/lib/meta";
 
 const postQuery = (uri: string, viewer?: string) => ({
   queryKey: ["post", uri, viewer ?? null] as const,
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/post/$did/$rkey")({
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {
       const uri = postUriFromRoute(params.did, params.rkey, deps.alpha)!;
-      const post = await queryClient.ensureQueryData(postQuery(uri));
+      const post = await queryClient.ensureQueryData(once(postQuery(uri)));
       const play = trackViewToPlayView(post.track);
       const name = post.author?.displayName || post.author?.handle || "Someone";
       const artist = play.artists?.[0]?.artistName;

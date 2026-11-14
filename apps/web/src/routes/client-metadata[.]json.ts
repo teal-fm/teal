@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { clientMetadataFor } from "~/lib/oauth";
+import { clientMetadataFor } from "~/lib/oauthMetadata";
 
 /** The OAuth client document; its URL is the client_id the browser client uses. */
 export const Route = createFileRoute("/client-metadata.json")({

@@ -19,17 +19,17 @@ import { A, Avatar, Button, ButtonRow, ErrorNotice, Field, Glass, Heading, LinkB
 import { listenedAt } from "~/components/listen/ListenRow";
 import { MusicHero } from "~/components/music/MusicHero";
 import { ReactionBar } from "~/components/today/ReactionBar";
-import { pageMeta, serverAwait } from "~/lib/meta";
+import { once, pageMeta, serverAwait } from "~/lib/meta";
 
 const listenKey = (did: string, rkey: string, viewer?: string) => ["listen", did, rkey, viewer ?? null] as const;
 
 export const Route = createFileRoute("/listen/$did/$rkey")({
   loader: ({ params, context: { queryClient } }) =>
     serverAwait(async () => {
-      const { play } = await queryClient.ensureQueryData({
+      const { play } = await queryClient.ensureQueryData(once({
         queryKey: listenKey(params.did, params.rkey),
         queryFn: () => readListenDetail(params.did, params.rkey, undefined, () => undefined, getPlayByAuthorRkey),
-      });
+      }));
       if (!play) return undefined;
       const artists = displayArtists(play) || "Unknown artist";
       return {

@@ -4,6 +4,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 import pkg from "./package.json" with { type: "json" };
@@ -22,7 +23,8 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
     __GIT_COMMIT__: JSON.stringify(gitCommit()),
   },
-  resolve: { tsconfigPaths: true },
+  // Mirrors the `~/*` path in tsconfig.json.
+  resolve: { alias: { "~": fileURLToPath(new URL("./src", import.meta.url)) } },
   server: {
     // Caddy (pnpm dev) and the Cloudflare tunnel reach this server by other names.
     allowedHosts: true,

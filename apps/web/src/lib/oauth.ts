@@ -1,31 +1,8 @@
-import {
-  atprotoLoopbackClientMetadata,
-  BrowserOAuthClient,
-  type OAuthClientMetadataInput,
-} from "@atproto/oauth-client-browser";
+import { atprotoLoopbackClientMetadata, BrowserOAuthClient } from "@atproto/oauth-client-browser";
 
-export const OAUTH_SCOPE = "atproto transition:generic";
+import { clientMetadataFor, OAUTH_SCOPE } from "./oauthMetadata";
 
 const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])$/;
-
-/**
- * The client metadata served at /client-metadata.json for a public origin.
- * The server route and the browser client build it from the same function.
- */
-export function clientMetadataFor(origin: string): OAuthClientMetadataInput {
-  return {
-    client_id: `${origin}/client-metadata.json`,
-    client_name: "teal",
-    client_uri: origin,
-    redirect_uris: [`${origin}/auth/callback`],
-    response_types: ["code"],
-    grant_types: ["authorization_code", "refresh_token"],
-    scope: OAUTH_SCOPE,
-    token_endpoint_auth_method: "none",
-    application_type: "web",
-    dpop_bound_access_tokens: true,
-  };
-}
 
 /**
  * On localhost the client is a loopback client: no metadata document, and the

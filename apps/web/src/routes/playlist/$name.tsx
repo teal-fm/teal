@@ -15,7 +15,7 @@ import { A, AmbientSource, Button, ButtonRow, Cover, coverUri, ErrorNotice, Fiel
 import { TrackPicker } from "~/components/compose/TrackPicker";
 import { RichText } from "~/components/post/RichText";
 import { ImagePick } from "~/components/profile/ImagePick";
-import { pageMeta, serverAwait } from "~/lib/meta";
+import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { pickStrings } from "~/lib/search";
 
 const playlistQuery = (uri: string) => ({ queryKey: ["playlist", uri] as const, queryFn: () => getPlaylist(uri) });
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/playlist/$name")({
   loader: ({ deps, context: { queryClient } }) =>
     serverAwait(async () => {
       if (!deps.uri || !playlistHrefFromUri(deps.uri)) return undefined;
-      const { playlist, items } = await queryClient.ensureQueryData(playlistQuery(deps.uri));
+      const { playlist, items } = await queryClient.ensureQueryData(once(playlistQuery(deps.uri)));
       const by = playlist.author?.displayName || playlist.author?.handle;
       return {
         title: playlist.name,

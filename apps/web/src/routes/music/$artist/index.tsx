@@ -8,7 +8,7 @@ import { Choices, coverUri, ErrorNotice, LinkButton, Loading, Screen, Section } 
 import { Leaderboard } from "~/components/music/Leaderboard";
 import { MusicHero } from "~/components/music/MusicHero";
 import { ReleaseGrid } from "~/components/music/ReleaseGrid";
-import { pageMeta, serverAwait } from "~/lib/meta";
+import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { pickStrings } from "~/lib/search";
 
 const artistQuery = (mbid?: string, name?: string) => ({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/music/$artist/")({
   loaderDeps: ({ search }) => ({ mbid: search.mbid, name: search.name }),
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {
-      const artist = await queryClient.ensureQueryData(artistQuery(deps.mbid, deps.name || params.artist));
+      const artist = await queryClient.ensureQueryData(once(artistQuery(deps.mbid, deps.name || params.artist)));
       return {
         title: artist.name,
         description: `${countLabel(artist.playCount, "listen")} on Teal`,

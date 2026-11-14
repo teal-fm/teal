@@ -11,10 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientMetadataDotjsonRouteImport } from './routes/client-metadata[.]json'
+import { Route as ComposeRouteImport } from './routes/compose'
+import { Route as ManualListensRouteImport } from './routes/manual-listens'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as StampRouteImport } from './routes/stamp'
+import { Route as AtSplatRouteImport } from './routes/at/$'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthLogoutRouteImport } from './routes/auth/logout'
@@ -25,8 +30,10 @@ import { Route as MusicArtistIndexRouteImport } from './routes/music/$artist/ind
 import { Route as MusicArtistListenersRouteImport } from './routes/music/$artist/listeners'
 import { Route as PostDidRkeyRouteImport } from './routes/post/$did/$rkey'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile/$handle/index'
+import { Route as ProfileHandleTopsterRouteImport } from './routes/profile/$handle/topster'
 import { Route as MusicArtistReleaseIndexRouteImport } from './routes/music/$artist/$release/index'
 import { Route as MusicArtistReleaseTrackRouteImport } from './routes/music/$artist/$release/$track'
+import { Route as ProfileHandleStatsKindRouteImport } from './routes/profile/$handle/stats/$kind'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,6 +43,16 @@ const IndexRoute = IndexRouteImport.update({
 const ClientMetadataDotjsonRoute = ClientMetadataDotjsonRouteImport.update({
   id: '/client-metadata.json',
   path: '/client-metadata.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComposeRoute = ComposeRouteImport.update({
+  id: '/compose',
+  path: '/compose',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManualListensRoute = ManualListensRouteImport.update({
+  id: '/manual-listens',
+  path: '/manual-listens',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeRoute = MeRouteImport.update({
@@ -48,6 +65,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -56,6 +78,16 @@ const SearchRoute = SearchRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StampRoute = StampRouteImport.update({
+  id: '/stamp',
+  path: '/stamp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AtSplatRoute = AtSplatRouteImport.update({
+  id: '/at/$',
+  path: '/at/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -108,6 +140,11 @@ const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
   path: '/profile/$handle/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileHandleTopsterRoute = ProfileHandleTopsterRouteImport.update({
+  id: '/profile/$handle/topster',
+  path: '/profile/$handle/topster',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MusicArtistReleaseIndexRoute = MusicArtistReleaseIndexRouteImport.update({
   id: '/music/$artist/$release/',
   path: '/music/$artist/$release/',
@@ -118,14 +155,24 @@ const MusicArtistReleaseTrackRoute = MusicArtistReleaseTrackRouteImport.update({
   path: '/music/$artist/$release/$track',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileHandleStatsKindRoute = ProfileHandleStatsKindRouteImport.update({
+  id: '/profile/$handle/stats/$kind',
+  path: '/profile/$handle/stats/$kind',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
+  '/compose': typeof ComposeRoute
+  '/manual-listens': typeof ManualListensRoute
   '/me': typeof MeRoute
   '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/stamp': typeof StampRoute
+  '/at/$': typeof AtSplatRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
@@ -134,18 +181,25 @@ export interface FileRoutesByFullPath {
   '/listen/$did/$rkey': typeof ListenDidRkeyRoute
   '/music/$artist/listeners': typeof MusicArtistListenersRoute
   '/post/$did/$rkey': typeof PostDidRkeyRoute
+  '/profile/$handle/topster': typeof ProfileHandleTopsterRoute
   '/music/$artist/': typeof MusicArtistIndexRoute
   '/profile/$handle/': typeof ProfileHandleIndexRoute
   '/music/$artist/$release/$track': typeof MusicArtistReleaseTrackRoute
+  '/profile/$handle/stats/$kind': typeof ProfileHandleStatsKindRoute
   '/music/$artist/$release/': typeof MusicArtistReleaseIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
+  '/compose': typeof ComposeRoute
+  '/manual-listens': typeof ManualListensRoute
   '/me': typeof MeRoute
   '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/stamp': typeof StampRoute
+  '/at/$': typeof AtSplatRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
@@ -154,19 +208,26 @@ export interface FileRoutesByTo {
   '/listen/$did/$rkey': typeof ListenDidRkeyRoute
   '/music/$artist/listeners': typeof MusicArtistListenersRoute
   '/post/$did/$rkey': typeof PostDidRkeyRoute
+  '/profile/$handle/topster': typeof ProfileHandleTopsterRoute
   '/music/$artist': typeof MusicArtistIndexRoute
   '/profile/$handle': typeof ProfileHandleIndexRoute
   '/music/$artist/$release/$track': typeof MusicArtistReleaseTrackRoute
+  '/profile/$handle/stats/$kind': typeof ProfileHandleStatsKindRoute
   '/music/$artist/$release': typeof MusicArtistReleaseIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
+  '/compose': typeof ComposeRoute
+  '/manual-listens': typeof ManualListensRoute
   '/me': typeof MeRoute
   '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/stamp': typeof StampRoute
+  '/at/$': typeof AtSplatRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
@@ -175,9 +236,11 @@ export interface FileRoutesById {
   '/listen/$did/$rkey': typeof ListenDidRkeyRoute
   '/music/$artist/listeners': typeof MusicArtistListenersRoute
   '/post/$did/$rkey': typeof PostDidRkeyRoute
+  '/profile/$handle/topster': typeof ProfileHandleTopsterRoute
   '/music/$artist/': typeof MusicArtistIndexRoute
   '/profile/$handle/': typeof ProfileHandleIndexRoute
   '/music/$artist/$release/$track': typeof MusicArtistReleaseTrackRoute
+  '/profile/$handle/stats/$kind': typeof ProfileHandleStatsKindRoute
   '/music/$artist/$release/': typeof MusicArtistReleaseIndexRoute
 }
 export interface FileRouteTypes {
@@ -185,10 +248,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/client-metadata.json'
+    | '/compose'
+    | '/manual-listens'
     | '/me'
     | '/notifications'
+    | '/onboarding'
     | '/search'
     | '/settings'
+    | '/stamp'
+    | '/at/$'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
@@ -197,18 +265,25 @@ export interface FileRouteTypes {
     | '/listen/$did/$rkey'
     | '/music/$artist/listeners'
     | '/post/$did/$rkey'
+    | '/profile/$handle/topster'
     | '/music/$artist/'
     | '/profile/$handle/'
     | '/music/$artist/$release/$track'
+    | '/profile/$handle/stats/$kind'
     | '/music/$artist/$release/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/client-metadata.json'
+    | '/compose'
+    | '/manual-listens'
     | '/me'
     | '/notifications'
+    | '/onboarding'
     | '/search'
     | '/settings'
+    | '/stamp'
+    | '/at/$'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
@@ -217,18 +292,25 @@ export interface FileRouteTypes {
     | '/listen/$did/$rkey'
     | '/music/$artist/listeners'
     | '/post/$did/$rkey'
+    | '/profile/$handle/topster'
     | '/music/$artist'
     | '/profile/$handle'
     | '/music/$artist/$release/$track'
+    | '/profile/$handle/stats/$kind'
     | '/music/$artist/$release'
   id:
     | '__root__'
     | '/'
     | '/client-metadata.json'
+    | '/compose'
+    | '/manual-listens'
     | '/me'
     | '/notifications'
+    | '/onboarding'
     | '/search'
     | '/settings'
+    | '/stamp'
+    | '/at/$'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
@@ -237,19 +319,26 @@ export interface FileRouteTypes {
     | '/listen/$did/$rkey'
     | '/music/$artist/listeners'
     | '/post/$did/$rkey'
+    | '/profile/$handle/topster'
     | '/music/$artist/'
     | '/profile/$handle/'
     | '/music/$artist/$release/$track'
+    | '/profile/$handle/stats/$kind'
     | '/music/$artist/$release/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClientMetadataDotjsonRoute: typeof ClientMetadataDotjsonRoute
+  ComposeRoute: typeof ComposeRoute
+  ManualListensRoute: typeof ManualListensRoute
   MeRoute: typeof MeRoute
   NotificationsRoute: typeof NotificationsRoute
+  OnboardingRoute: typeof OnboardingRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  StampRoute: typeof StampRoute
+  AtSplatRoute: typeof AtSplatRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthLogoutRoute: typeof AuthLogoutRoute
@@ -258,9 +347,11 @@ export interface RootRouteChildren {
   ListenDidRkeyRoute: typeof ListenDidRkeyRoute
   MusicArtistListenersRoute: typeof MusicArtistListenersRoute
   PostDidRkeyRoute: typeof PostDidRkeyRoute
+  ProfileHandleTopsterRoute: typeof ProfileHandleTopsterRoute
   MusicArtistIndexRoute: typeof MusicArtistIndexRoute
   ProfileHandleIndexRoute: typeof ProfileHandleIndexRoute
   MusicArtistReleaseTrackRoute: typeof MusicArtistReleaseTrackRoute
+  ProfileHandleStatsKindRoute: typeof ProfileHandleStatsKindRoute
   MusicArtistReleaseIndexRoute: typeof MusicArtistReleaseIndexRoute
 }
 
@@ -280,6 +371,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientMetadataDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compose': {
+      id: '/compose'
+      path: '/compose'
+      fullPath: '/compose'
+      preLoaderRoute: typeof ComposeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manual-listens': {
+      id: '/manual-listens'
+      path: '/manual-listens'
+      fullPath: '/manual-listens'
+      preLoaderRoute: typeof ManualListensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/me': {
       id: '/me'
       path: '/me'
@@ -294,6 +399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
@@ -306,6 +418,20 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stamp': {
+      id: '/stamp'
+      path: '/stamp'
+      fullPath: '/stamp'
+      preLoaderRoute: typeof StampRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/at/$': {
+      id: '/at/$'
+      path: '/at/$'
+      fullPath: '/at/$'
+      preLoaderRoute: typeof AtSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -378,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileHandleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$handle/topster': {
+      id: '/profile/$handle/topster'
+      path: '/profile/$handle/topster'
+      fullPath: '/profile/$handle/topster'
+      preLoaderRoute: typeof ProfileHandleTopsterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/music/$artist/$release/': {
       id: '/music/$artist/$release/'
       path: '/music/$artist/$release'
@@ -392,16 +525,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MusicArtistReleaseTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$handle/stats/$kind': {
+      id: '/profile/$handle/stats/$kind'
+      path: '/profile/$handle/stats/$kind'
+      fullPath: '/profile/$handle/stats/$kind'
+      preLoaderRoute: typeof ProfileHandleStatsKindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientMetadataDotjsonRoute: ClientMetadataDotjsonRoute,
+  ComposeRoute: ComposeRoute,
+  ManualListensRoute: ManualListensRoute,
   MeRoute: MeRoute,
   NotificationsRoute: NotificationsRoute,
+  OnboardingRoute: OnboardingRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  StampRoute: StampRoute,
+  AtSplatRoute: AtSplatRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthLogoutRoute: AuthLogoutRoute,
@@ -410,9 +555,11 @@ const rootRouteChildren: RootRouteChildren = {
   ListenDidRkeyRoute: ListenDidRkeyRoute,
   MusicArtistListenersRoute: MusicArtistListenersRoute,
   PostDidRkeyRoute: PostDidRkeyRoute,
+  ProfileHandleTopsterRoute: ProfileHandleTopsterRoute,
   MusicArtistIndexRoute: MusicArtistIndexRoute,
   ProfileHandleIndexRoute: ProfileHandleIndexRoute,
   MusicArtistReleaseTrackRoute: MusicArtistReleaseTrackRoute,
+  ProfileHandleStatsKindRoute: ProfileHandleStatsKindRoute,
   MusicArtistReleaseIndexRoute: MusicArtistReleaseIndexRoute,
 }
 export const routeTree = rootRouteImport

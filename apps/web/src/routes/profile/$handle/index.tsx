@@ -29,7 +29,7 @@ import { TasteMatch } from "~/components/profile/TasteMatch";
 import { TopStats } from "~/components/profile/TopStats";
 import { PostCard } from "~/components/today/PostCard";
 import { useLayout } from "~/lib/media";
-import { pageMeta, serverAwait } from "~/lib/meta";
+import { once, pageMeta, serverAwait } from "~/lib/meta";
 
 const TABS = ["overview", "listening", "posts", "playlists"] as const;
 type Tab = (typeof TABS)[number];
@@ -40,9 +40,9 @@ export const Route = createFileRoute("/profile/$handle/")({
   }),
   loader: ({ params, context: { queryClient } }) =>
     serverAwait(async () => {
-      const did = await queryClient.ensureQueryData(actorDidQuery(params.handle));
+      const did = await queryClient.ensureQueryData(once(actorDidQuery(params.handle)));
       const hint = params.handle.startsWith("did:") ? undefined : params.handle;
-      const { profile } = await queryClient.ensureQueryData(profileQuery(did, hint));
+      const { profile } = await queryClient.ensureQueryData(once(profileQuery(did, hint)));
       const handle = normalizeHandle(profile.handle);
       return {
         title: profile.displayName || (handle ? `@${handle}` : did),

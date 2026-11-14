@@ -9,7 +9,7 @@ import { A, coverUri, ErrorNotice, Icon, Loading, Screen, Section } from "~/ds";
 import { ListenCard } from "~/components/listen/ListenCard";
 import { MusicHero } from "~/components/music/MusicHero";
 import { useEndReached } from "~/hooks/useEndReached";
-import { pageMeta, serverAwait } from "~/lib/meta";
+import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { pickStrings } from "~/lib/search";
 
 const albumQuery = (mbid: string) =>
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/music/$artist/$release/")({
   loader: ({ deps, context: { queryClient } }) =>
     serverAwait(async () => {
       if (!deps.mbid) return undefined;
-      const data = await queryClient.ensureInfiniteQueryData(albumQuery(deps.mbid));
+      const data = await queryClient.ensureInfiniteQueryData(once(albumQuery(deps.mbid)));
       const album = data.pages[0]?.album;
       if (!album) return undefined;
       return {
