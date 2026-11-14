@@ -2,8 +2,8 @@ import { Pressable, View } from "react-native";
 import type { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs/types";
 import { Link } from "expo-router";
 import { Avatar, Glass, Icon, Text } from "@/components/ds";
-import { normalizeHandle } from "@/lib/teal/actors";
-import { cn } from "@/lib/utils";
+import { normalizeHandle } from "@teal/client/teal/actors";
+import { cn } from "@teal/client/utils";
 import { useStore } from "@/stores/mainStore";
 import { Bell, Compass, House, Settings, SquarePen, UserRound, type LucideIcon } from "lucide-react-native";
 

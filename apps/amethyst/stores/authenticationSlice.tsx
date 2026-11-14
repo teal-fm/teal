@@ -1,4 +1,4 @@
-import { resolveFromIdentity } from "@/lib/atp/pid";
+import { resolveFromIdentity } from "@teal/client/atp/pid";
 import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
@@ -6,8 +6,8 @@ import * as Lexicons from "@teal/lexicons/src/documents";
 import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 
 import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
-import { pdsHostFromOAuthIssuer } from "../lib/atp/oauthIssuer";
-import { getProfile, XrpcError } from "../lib/teal/api";
+import { pdsHostFromOAuthIssuer } from "@teal/client/atp/oauthIssuer";
+import { getProfile, XrpcError } from "@teal/client/teal/api";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {

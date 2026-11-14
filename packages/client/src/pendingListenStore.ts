@@ -1,24 +1,34 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 
+import { clientConfig } from "./config";
 import {
   createPendingListenStore,
   type ConfirmedListenWrite,
   type PendingListen,
-} from "../lib/teal/pendingListens";
+} from "./teal/pendingListens";
 
-const pendingListenStore = createPendingListenStore(AsyncStorage);
 const EMPTY: readonly PendingListen[] = [];
-void pendingListenStore.hydrate();
+let instance: ReturnType<typeof createPendingListenStore> | undefined;
+
+/** Created on first use, so it reads whatever storage the app configured at startup. */
+function store() {
+  if (!instance) {
+    instance = createPendingListenStore(clientConfig().storage);
+    void instance.hydrate();
+  }
+  return instance;
+}
+const subscribe = (listener: () => void) => store().subscribe(listener);
+const snapshot = () => store().getSnapshot();
 
 export function retainConfirmedListens(
   actor: string,
   writes: readonly ConfirmedListenWrite[],
 ) {
   try {
-    pendingListenStore.addConfirmed(actor, writes);
+    store().addConfirmed(actor, writes);
   } catch {
     // The PDS write already succeeded. Do not invite a duplicate submission if
     // this device cannot retain the local readback cache.
@@ -30,25 +40,25 @@ export function retireIndexedListens(
   actor: string,
   indexed: readonly Pick<PlayView, "uri" | "authorDid" | "cid">[],
 ) {
-  pendingListenStore.retireIndexed(actor, indexed);
+  store().retireIndexed(actor, indexed);
 }
 
 export function removePendingListens(actor: string, uris: readonly string[]) {
-  pendingListenStore.removeConfirmed(actor, uris);
+  store().removeConfirmed(actor, uris);
 }
 
 export function usePendingListens(
   actor?: string | null,
 ): readonly PendingListen[] {
   const pending = useSyncExternalStore(
-    pendingListenStore.subscribe,
-    pendingListenStore.getSnapshot,
+    subscribe,
+    snapshot,
     () => EMPTY,
   );
   useEffect(() => {
     if (!actor) return;
-    pendingListenStore.prune();
-    const interval = setInterval(() => pendingListenStore.prune(), 60_000);
+    store().prune();
+    const interval = setInterval(() => store().prune(), 60_000);
     return () => clearInterval(interval);
   }, [actor]);
   return useMemo(

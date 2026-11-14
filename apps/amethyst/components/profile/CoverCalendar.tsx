@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { getListeningCalendar } from "@/lib/teal/api";
-import { isoDay, mondayOffset, monthRange } from "@/lib/teal/calendar";
+import { getListeningCalendar } from "@teal/client/teal/api";
+import { isoDay, mondayOffset, monthRange } from "@teal/client/teal/calendar";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { AmbientSource, Cover, Glass, Icon, Text, coverUri } from "@/components/ds";
 

@@ -4,19 +4,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { ListChecks, Plus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { updateSelectedPlayRecords } from "@/lib/teal/bulkPlayRecords";
-import { mergePendingListens } from "@/lib/teal/pendingListens";
-import { artistsFromText, deletePlayRecord, loadPlayRecord, putPlayRecord } from "@/lib/teal/playRecords";
+import { updateSelectedPlayRecords } from "@teal/client/teal/bulkPlayRecords";
+import { mergePendingListens } from "@teal/client/teal/pendingListens";
+import { artistsFromText, deletePlayRecord, loadPlayRecord, putPlayRecord } from "@teal/client/teal/playRecords";
 import { Button, ButtonRow, ErrorNotice, Field, Glass, Heading, Loading, Notice, Text } from "@/components/ds";
 import { ListenRow } from "@/components/listen/ListenRow";
-import { patchActorPlays, useActorPlays } from "@/hooks/useProfile";
+import { patchActorPlays, useActorPlays } from "@teal/client/hooks/useProfile";
 import { useStore } from "@/stores/mainStore";
 import {
   removePendingListens,
   retainConfirmedListens,
   retireIndexedListens,
   usePendingListens,
-} from "@/stores/pendingListenStore";
+} from "@teal/client/pendingListenStore";
 
 /** Indexed plays plus your own listens that are saved but not indexed yet. */
 export function usePlaysWithPending(did: string, isSelf: boolean) {

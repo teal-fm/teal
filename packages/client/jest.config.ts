@@ -1,11 +1,8 @@
-/**
- * Jest config for pure TypeScript library tests (no React Native / Expo deps).
- * Run: npx jest --config jest.lib.config.ts
- */
+/** Pure TypeScript library tests (no React Native, DOM, or bundler). */
 import type { Config } from "jest";
 
 const config: Config = {
-  testMatch: ["<rootDir>/lib/__tests__/**/*.test.ts"],
+  testMatch: ["<rootDir>/src/__tests__/**/*.test.ts"],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",

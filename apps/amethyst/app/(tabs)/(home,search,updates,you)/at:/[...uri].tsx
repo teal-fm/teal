@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Platform } from "react-native";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
-import { atUriFromRoutePath, hrefFromAtUri } from "@/lib/teal/routes";
+import { atUriFromRoutePath, hrefFromAtUri } from "@teal/client/teal/routes";
 import { Button, Notice, Screen } from "@/components/ds";
 
 function atUriFromParams(param: string | string[] | undefined) {

@@ -4,12 +4,12 @@ import { Link } from "expo-router";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { Check, ListPlus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { getActorPlaylists, getPlaylist } from "@/lib/teal/api";
-import { addPlaylistItem } from "@/lib/teal/playlists";
-import { useViewerDid } from "@/lib/teal/queries";
-import { playViewToTrackView } from "@/lib/teal/social";
+import { getActorPlaylists, getPlaylist } from "@teal/client/teal/api";
+import { addPlaylistItem } from "@teal/client/teal/playlists";
+import { useViewerDid } from "@teal/client/teal/queries";
+import { playViewToTrackView } from "@teal/client/teal/social";
 import { Button, Glass, Icon, Row, Text } from "@/components/ds";
-import { useActorPlaylists } from "@/hooks/useProfile";
+import { useActorPlaylists } from "@teal/client/hooks/useProfile";
 import { useStore } from "@/stores/mainStore";
 
 /** Add this song to one of your playlists. Opens a short list of them in place. */

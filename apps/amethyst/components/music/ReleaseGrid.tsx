@@ -1,8 +1,8 @@
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import type { AlbumSummary } from "@teal/lexicons/src/fm/teal/music/defs";
-import { countLabel } from "@/lib/teal/music";
-import { musicAlbumHref } from "@/lib/teal/routes";
+import { countLabel } from "@teal/client/teal/music";
+import { musicAlbumHref } from "@teal/client/teal/routes";
 import { AmbientSource, Cover, coverUri, Text } from "@/components/ds";
 
 /** A grid of releases, each tinting the backdrop as it scrolls past. */

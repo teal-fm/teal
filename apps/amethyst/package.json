@@ -11,7 +11,6 @@
     "build": "expo export --output-dir ./build --platform all",
     "build:web": "expo export --output-dir ./build --platform web --clear",
     "build:ios": "expo export --output-dir ./build --platform ios --clear",
-    "test": "CI=1 jest --config jest.lib.config.ts --runInBand --watchAll=false",
     "lexgen": "pnpm --filter=@teal/lexicons lex:gen",
     "prebuild:native": "CI=1 EXPO_NO_TELEMETRY=1 expo prebuild --no-install",
     "install": ":"
@@ -44,6 +43,7 @@
     "@rn-primitives/tooltip": "^1.5.2",
     "@rn-primitives/types": "^1.5.2",
     "@tanstack/react-query": "5.105.3",
+    "@teal/client": "workspace:*",
     "@teal/lexicons": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

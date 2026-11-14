@@ -18,8 +18,8 @@ import {
 import {
   cleanTrackName,
   cleanArtistName,
-} from "../../apps/amethyst/lib/musicbrainzCleaner.js";
-import { escapeLucene } from "../../apps/amethyst/lib/musicbrainzSearchUtils.js";
+} from "../../packages/client/src/musicbrainzCleaner.js";
+import { escapeLucene } from "../../packages/client/src/musicbrainzSearchUtils.js";
 import type { LastFMCache } from "./evaluate-lastfm-cache.js";
 import { generateSignature } from "./auth.js";
 import {

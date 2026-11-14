@@ -1,8 +1,8 @@
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { useQueries } from "@tanstack/react-query";
-import { getAlbum } from "@/lib/teal/api";
-import { musicAlbumHref } from "@/lib/teal/routes";
+import { getAlbum } from "@teal/client/teal/api";
+import { musicAlbumHref } from "@teal/client/teal/routes";
 import { AmbientSource, Cover, Glass, Text, coverUri } from "@/components/ds";
 
 export type Favourite = { mbid: string; type: string };

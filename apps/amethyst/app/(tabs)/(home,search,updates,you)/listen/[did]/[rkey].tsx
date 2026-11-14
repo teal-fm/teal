@@ -5,8 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, Pencil } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
-import { displayArtists, getPlayByAuthorRkey, XrpcError } from "@/lib/teal/api";
-import { readListenDetail } from "@/lib/teal/listenReadback";
+import { displayArtists, getPlayByAuthorRkey, XrpcError } from "@teal/client/teal/api";
+import { readListenDetail } from "@teal/client/teal/listenReadback";
 import {
   applyEditableFields,
   artistTextFromRecord,
@@ -14,10 +14,10 @@ import {
   loadPlayRecord,
   putPlayRecord,
   type EditablePlayRecord,
-} from "@/lib/teal/playRecords";
-import { useReactionsQuery, useViewerDid } from "@/lib/teal/queries";
-import { musicAlbumHref, musicArtistHref, musicTrackHref } from "@/lib/teal/routes";
-import { shortAgo } from "@/lib/teal/today";
+} from "@teal/client/teal/playRecords";
+import { useReactionsQuery, useViewerDid } from "@teal/client/teal/queries";
+import { musicAlbumHref, musicArtistHref, musicTrackHref } from "@teal/client/teal/routes";
+import { shortAgo } from "@teal/client/teal/today";
 import {
   Avatar,
   Button,
@@ -33,12 +33,12 @@ import {
 } from "@/components/ds";
 import { listenedAt } from "@/components/listen/ListenRow";
 import { MusicHero } from "@/components/music/MusicHero";
-import { useRecordingArt } from "@/hooks/useRecordingArt";
+import { useRecordingArt } from "@teal/client/hooks/useRecordingArt";
 import { ReactionBar } from "@/components/today/ReactionBar";
-import { useDisplayActor } from "@/hooks/useDisplayActor";
-import { patchActorPlays } from "@/hooks/useProfile";
+import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
+import { patchActorPlays } from "@teal/client/hooks/useProfile";
 import { useStore } from "@/stores/mainStore";
-import { removePendingListens, retainConfirmedListens, retireIndexedListens, usePendingListens } from "@/stores/pendingListenStore";
+import { removePendingListens, retainConfirmedListens, retireIndexedListens, usePendingListens } from "@teal/client/pendingListenStore";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;

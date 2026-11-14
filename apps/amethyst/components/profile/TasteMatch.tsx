@@ -1,8 +1,8 @@
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { getTasteMatch } from "@/lib/teal/api";
-import { musicAlbumHref } from "@/lib/teal/routes";
+import { getTasteMatch } from "@teal/client/teal/api";
+import { musicAlbumHref } from "@teal/client/teal/routes";
 import { ChevronRight } from "lucide-react-native";
 import { Avatar, Cover, Glass, Icon, Text } from "@/components/ds";
 

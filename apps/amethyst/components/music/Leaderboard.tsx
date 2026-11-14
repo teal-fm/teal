@@ -1,9 +1,9 @@
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import type { ArtistListenerView } from "@teal/lexicons/src/fm/teal/music/defs";
-import { countLabel } from "@/lib/teal/music";
+import { countLabel } from "@teal/client/teal/music";
 import { Avatar, Text } from "@/components/ds";
-import { useDisplayActor } from "@/hooks/useDisplayActor";
+import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 function ListenerRow({ listener, rank, last }: { listener: ArtistListenerView; rank: number; last: boolean }) {
   const actor = useDisplayActor(listener.actor, listener.actor.did);

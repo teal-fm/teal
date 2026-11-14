@@ -6,8 +6,8 @@ import { Link, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Disc3, ImagePlus, UserRoundPen } from "lucide-react-native";
-import { isMissingProfileRecord } from "@/lib/atp/firstLogin";
-import { ProfileImageError, saveProfileRecord } from "@/lib/atp/profileRecord";
+import { isMissingProfileRecord } from "@teal/client/atp/firstLogin";
+import { ProfileImageError, saveProfileRecord } from "@teal/client/atp/profileRecord";
 import {
   Button,
   ButtonRow,

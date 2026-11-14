@@ -2,9 +2,9 @@ import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { Check } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { displayArtists } from "@/lib/teal/api";
-import { listenHref, musicTrackHref } from "@/lib/teal/routes";
-import { cn } from "@/lib/utils";
+import { displayArtists } from "@teal/client/teal/api";
+import { listenHref, musicTrackHref } from "@teal/client/teal/routes";
+import { cn } from "@teal/client/utils";
 import { Cover, Icon, Text } from "@/components/ds";
 
 export function listenedAt(value?: string) {

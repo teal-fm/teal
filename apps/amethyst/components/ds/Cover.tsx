@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { Icon } from "./Icon";
-import { coverArtUrl, getReleaseGroupCoverArtUrl } from "@/lib/teal/api";
-import { cn } from "@/lib/utils";
+import { coverArtUrl, getReleaseGroupCoverArtUrl } from "@teal/client/teal/api";
+import { cn } from "@teal/client/utils";
 import { Disc3 } from "lucide-react-native";
 
 export function coverUri(releaseMbId?: string, size = 500) {

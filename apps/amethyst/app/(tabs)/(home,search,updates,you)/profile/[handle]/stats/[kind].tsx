@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { loadTop, normalizeKind, normalizePeriod, STATS_PERIODS, withContext, type TopKind } from "@/lib/teal/topStats";
+import { loadTop, normalizeKind, normalizePeriod, STATS_PERIODS, withContext, type TopKind } from "@teal/client/teal/topStats";
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen, Tabs } from "@/components/ds";
 import { TopRow } from "@/components/profile/TopStats";
-import { useActorDid, useActorPlays } from "@/hooks/useProfile";
+import { useActorDid, useActorPlays } from "@teal/client/hooks/useProfile";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;

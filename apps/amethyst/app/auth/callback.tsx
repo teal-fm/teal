@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Link, router, useLocalSearchParams, usePathname } from "expo-router";
-import { firstLoginHref } from "@/lib/atp/firstLogin";
+import { firstLoginHref } from "@teal/client/atp/firstLogin";
 import { Button, Glass, Heading, Loading, PageTitle, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
 

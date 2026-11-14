@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal, Platform, Pressable, TextInput, View } from "react-native";
-import { QUICK_REACTIONS } from "@/lib/teal/reactions";
+import { QUICK_REACTIONS } from "@teal/client/teal/reactions";
 import { Glass, Text, usePlaceholderColor } from "@/components/ds";
 
 /** A single grapheme-ish emoji: no letters, digits, or spaces. */

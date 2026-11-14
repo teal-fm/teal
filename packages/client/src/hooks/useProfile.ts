@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteD
 import type { AppBskyActorDefs } from "@atproto/api";
 import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { resolveHandle } from "@/lib/atp/pid";
+import { resolveHandle } from "../atp/pid";
 import {
   getActorFeed,
   getActorPlaylists,
@@ -14,11 +14,10 @@ import {
   getSocialFeed,
   XrpcError,
   type GraphSummaryView,
-} from "@/lib/teal/api";
-import { documentIdentity } from "@/lib/teal/actors";
-import { useViewerDid } from "@/lib/teal/queries";
-import { rkeyFromAtUri } from "@/lib/teal/routes";
-import { useStore } from "@/stores/mainStore";
+} from "../teal/api";
+import { documentIdentity } from "../teal/actors";
+import { rkeyFromAtUri } from "../teal/routes";
+import { usePdsAgent, useViewerDid } from "../session";
 
 export type DisplayProfile = Pick<
   ProfileView,
@@ -110,7 +109,7 @@ export function useGraphSummary(did?: string) {
 /** Follow or unfollow, updating the count and button straight away. */
 export function useToggleFollow(did?: string) {
   const viewer = useViewerDid();
-  const agent = useStore((state) => state.pdsAgent);
+  const agent = usePdsAgent();
   const client = useQueryClient();
   const key = profileKeys.graph(did ?? "", viewer);
   return useMutation({

@@ -10,8 +10,8 @@ import {
   getRecordingCoverArtUrl,
   getSearchResults,
   type StatsPeriod,
-} from "@/lib/teal/api";
-import { resolveRankedTrack } from "@/lib/teal/profileRankedTrack";
+} from "@teal/client/teal/api";
+import { resolveRankedTrack } from "@teal/client/teal/profileRankedTrack";
 import {
   loadTop,
   periodLabel,
@@ -21,7 +21,7 @@ import {
   withContext,
   type TopItem,
   type TopKind,
-} from "@/lib/teal/topStats";
+} from "@teal/client/teal/topStats";
 import { Button, Choices, Cover, ErrorNotice, Glass, Heading, Icon, Text } from "@/components/ds";
 
 const TITLES: Record<TopKind, string> = { artists: "Top artists", albums: "Top albums", tracks: "Top tracks" };

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { getArtistListeners } from "@/lib/teal/api";
-import { LISTENER_PERIODS, normalizeListenerPeriod } from "@/lib/teal/music";
+import { getArtistListeners } from "@teal/client/teal/api";
+import { LISTENER_PERIODS, normalizeListenerPeriod } from "@teal/client/teal/music";
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen } from "@/components/ds";
 import { Leaderboard } from "@/components/music/Leaderboard";
 

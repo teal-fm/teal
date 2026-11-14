@@ -1,7 +1,7 @@
 import { Pressable, View } from "react-native";
-import { displayActorName } from "@/lib/teal/actors";
-import { parseAtUri } from "@/lib/teal/routes";
-import { cn } from "@/lib/utils";
+import { displayActorName } from "@teal/client/teal/actors";
+import { parseAtUri } from "@teal/client/teal/routes";
+import { cn } from "@teal/client/utils";
 import { ChevronDown } from "lucide-react-native";
 import { Avatar, Cover, Glass, Icon, Text } from "@/components/ds";
 

@@ -7,7 +7,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 import { AmbientSource, Avatar, Cover, coverUri } from "@/components/ds";
 
 import { DeckCard, type DeckItem } from "./DeckCard";

@@ -21,7 +21,7 @@ struct MusicBrainzCleaner;
 
 impl MusicBrainzCleaner {
     /// Words commonly found in parenthetical/bracketed content that can be removed.
-    /// Kept in sync with apps/amethyst/lib/musicbrainzCleaner.ts GUFF_WORDS.
+    /// Kept in sync with packages/client/src/musicbrainzCleaner.ts GUFF_WORDS.
     const GUFF_WORDS: &'static [&'static str] = &[
         "a cappella",
         "acoustic",

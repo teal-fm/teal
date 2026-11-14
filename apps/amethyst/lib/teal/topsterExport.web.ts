@@ -1,6 +1,6 @@
 import type { ReleaseView } from "@teal/lexicons/src/fm/teal/stats/defs";
 
-import { coverArtUrl } from "./api";
+import { coverArtUrl } from "@teal/client/teal/api";
 
 type ChartOptions = {
   releases: ReleaseView[];

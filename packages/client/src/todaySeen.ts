@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { clientConfig } from "./config";
 
 const KEY = "teal-today-seen";
 
@@ -16,7 +16,7 @@ export function useTodaySeen() {
   const [marked, setMarked] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(KEY)
+    clientConfig().storage.getItem(KEY)
       .then((day) => {
         if (day === localDay()) {
           setCollapsed(true);
@@ -29,7 +29,7 @@ export function useTodaySeen() {
   const markSeen = useCallback(() => {
     if (marked) return;
     setMarked(true);
-    AsyncStorage.setItem(KEY, localDay()).catch(() => undefined);
+    clientConfig().storage.setItem(KEY, localDay()).catch(() => undefined);
   }, [marked]);
 
   const collapse = useCallback(() => {

@@ -4,7 +4,7 @@ import { BlobRef, jsonToLex, lexToJson } from "@atproto/api";
 
 import { $parse as parseProfileRecord } from "@teal/lexicons/src/fm/teal/actor/profile";
 
-import { profileRecordBlob } from "../lib/atp/profileBlob";
+import { profileRecordBlob } from "../src/atp/profileBlob";
 
 const cid = "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku";
 const publicBlob = {

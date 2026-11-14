@@ -5,13 +5,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { ListMusic, Plus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import getImageCdnLink from "@/lib/atp/getImageCdnLink";
-import { displayArtists, getPlaylist, getProfile, type SocialPlaylistView } from "@/lib/teal/api";
-import { MAX_PLAYLIST_COLLABORATORS, resolvePlaylistAuthors } from "@/lib/teal/playlistEditing";
-import { addPlaylistItem, savePlaylistRecord } from "@/lib/teal/playlists";
-import { useViewerDid } from "@/lib/teal/queries";
-import { musicAlbumHref, playlistHrefFromUri } from "@/lib/teal/routes";
-import { playViewToTrackView, trackViewToPlayView } from "@/lib/teal/social";
+import getImageCdnLink from "@teal/client/atp/getImageCdnLink";
+import { displayArtists, getPlaylist, getProfile, type SocialPlaylistView } from "@teal/client/teal/api";
+import { MAX_PLAYLIST_COLLABORATORS, resolvePlaylistAuthors } from "@teal/client/teal/playlistEditing";
+import { addPlaylistItem, savePlaylistRecord } from "@teal/client/teal/playlists";
+import { useViewerDid } from "@teal/client/teal/queries";
+import { musicAlbumHref, playlistHrefFromUri } from "@teal/client/teal/routes";
+import { playViewToTrackView, trackViewToPlayView } from "@teal/client/teal/social";
 import {
   AmbientSource,
   Button,

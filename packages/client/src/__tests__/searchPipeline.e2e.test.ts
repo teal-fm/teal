@@ -2,7 +2,7 @@
  * End-to-end tests for the MusicBrainz search pipeline.
  * Hits the real MusicBrainz API -- run manually, not on CI.
  *
- * Run: cd apps/amethyst && npx jest --config jest.lib.config.ts searchPipeline.e2e
+ * Run: cd packages/client && npx jest searchPipeline.e2e
  *
  * Tests the full chain: raw input -> cleaning -> multi-stage search -> ranking -> result
  */

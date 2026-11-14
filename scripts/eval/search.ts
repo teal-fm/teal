@@ -22,18 +22,18 @@ import {
   cleanArtistName,
   cleanReleaseName,
   normalizeForComparison,
-} from "../../apps/amethyst/lib/musicbrainzCleaner.js";
+} from "../../packages/client/src/musicbrainzCleaner.js";
 import {
   escapeLucene,
   searchStage,
   hasCJK,
   resolveArtistAlias,
   PARTIAL_THRESHOLD,
-} from "../../apps/amethyst/lib/musicbrainzSearchUtils.js";
+} from "../../packages/client/src/musicbrainzSearchUtils.js";
 import {
   rankMultiStageResults,
   type RankingQuery,
-} from "../../apps/amethyst/lib/musicbrainzRanking.js";
+} from "../../packages/client/src/musicbrainzRanking.js";
 
 /**
  * Baseline search (original "funny search string").

@@ -1,7 +1,7 @@
 import { forwardRef, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, View, type PressableProps } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 import { Glass } from "./Glass";
 import { Icon } from "./Icon";

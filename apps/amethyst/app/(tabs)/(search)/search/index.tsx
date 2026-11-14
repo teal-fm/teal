@@ -5,10 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Disc3, Mic2, Music2, Search, UsersRound, X } from "lucide-react-native";
 import type { AppBskyActorDefs } from "@atproto/api";
 import type { MiniProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
-import { getProfileImageUrl, normalizeHandle } from "@/lib/teal/actors";
-import { getSearchResults, getToday, searchBlueskyUsers } from "@/lib/teal/api";
-import { musicAlbumHref, musicArtistHref, musicTrackHref } from "@/lib/teal/routes";
-import { dedupeMoments } from "@/lib/teal/today";
+import { getProfileImageUrl, normalizeHandle } from "@teal/client/teal/actors";
+import { getSearchResults, getToday, searchBlueskyUsers } from "@teal/client/teal/api";
+import { musicAlbumHref, musicArtistHref, musicTrackHref } from "@teal/client/teal/routes";
+import { dedupeMoments } from "@teal/client/teal/today";
 import {
   AmbientSource,
   Avatar,
@@ -27,7 +27,7 @@ import {
   usePlaceholderColor,
 } from "@/components/ds";
 import { HeatingShelf } from "@/components/today/HeatingUp";
-import { useDebounced } from "@/hooks/useDebounced";
+import { useDebounced } from "@teal/client/hooks/useDebounced";
 
 type Kind = "people" | "songs" | "artists" | "albums";
 

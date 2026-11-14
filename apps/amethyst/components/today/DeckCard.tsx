@@ -2,15 +2,15 @@ import { useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
 import { Link } from "expo-router";
-import type { ListeningView, MomentView } from "@/lib/teal/api";
-import { useToggleReaction, useViewerDid } from "@/lib/teal/queries";
-import { QUICK_REACTIONS } from "@/lib/teal/reactions";
-import { musicAlbumHref, parseAtUri } from "@/lib/teal/routes";
-import { listeningFact, momentLabel, momentLine, shortAgo } from "@/lib/teal/today";
-import { cn } from "@/lib/utils";
+import type { ListeningView, MomentView } from "@teal/client/teal/api";
+import { useToggleReaction, useViewerDid } from "@teal/client/teal/queries";
+import { QUICK_REACTIONS } from "@teal/client/teal/reactions";
+import { musicAlbumHref, parseAtUri } from "@teal/client/teal/routes";
+import { listeningFact, momentLabel, momentLine, shortAgo } from "@teal/client/teal/today";
+import { cn } from "@teal/client/utils";
 import { Compass, SmilePlus, TrendingUp } from "lucide-react-native";
 import { Avatar, Cover, Icon, Text, useHalo } from "@/components/ds";
-import { useDisplayActor } from "@/hooks/useDisplayActor";
+import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 import { ReactionPicker } from "./ReactionPicker";
 

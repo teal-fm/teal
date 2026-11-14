@@ -2,15 +2,15 @@ import { useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import RichText from "@/components/post/RichText";
-import type { SocialPostView } from "@/lib/teal/api";
-import { absoluteUrl, musicArtistHref, postHrefFromUri } from "@/lib/teal/routes";
+import type { SocialPostView } from "@teal/client/teal/api";
+import { absoluteUrl, musicArtistHref, postHrefFromUri } from "@teal/client/teal/routes";
 import { shareLink } from "@/lib/teal/share";
-import { trackViewToPlayView } from "@/lib/teal/social";
-import { shortAgo } from "@/lib/teal/today";
+import { trackViewToPlayView } from "@teal/client/teal/social";
+import { shortAgo } from "@teal/client/teal/today";
 import { ArrowUpRight, MessageCircle, Share as ShareIcon } from "lucide-react-native";
 import { AmbientSource, Avatar, Cover, Glass, Icon, Text, coverUri } from "@/components/ds";
 
-import { useDisplayActor } from "@/hooks/useDisplayActor";
+import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 import { ReactionBar } from "./ReactionBar";
 

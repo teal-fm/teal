@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 type Color = [number, number, number, number];
-const css = readFileSync(join(__dirname, "../../global.css"), "utf8");
+const css = readFileSync(join(__dirname, "../../../../apps/amethyst/global.css"), "utf8");
 const blocks = {
   light: css.match(/\s:root\s*\{([^}]+)\}/)?.[1] || "",
   dark: css.match(/@variant dark\s*\{([^}]+)\}/)?.[1] || "",

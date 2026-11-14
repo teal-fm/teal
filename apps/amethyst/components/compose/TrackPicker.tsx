@@ -3,11 +3,11 @@ import { Pressable, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Search } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { searchMusicbrainz } from "@/lib/oldStamp";
-import { displayArtists, getActorFeed } from "@/lib/teal/api";
-import { musicBrainzToPlayView } from "@/lib/teal/compose";
-import { useViewerDid } from "@/lib/teal/queries";
-import { cn } from "@/lib/utils";
+import { searchMusicbrainz } from "@teal/client/oldStamp";
+import { displayArtists, getActorFeed } from "@teal/client/teal/api";
+import { musicBrainzToPlayView } from "@teal/client/teal/compose";
+import { useViewerDid } from "@teal/client/teal/queries";
+import { cn } from "@teal/client/utils";
 import { Button, Cover, Field, Icon, Loading, Text } from "@/components/ds";
 
 function TrackOption({ play, selected, onPress }: { play: PlayView; selected: boolean; onPress: () => void }) {

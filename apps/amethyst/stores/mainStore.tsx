@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create, StateCreator as ZustandStateCreator } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { mergeAuthentication, persistAuthentication } from "../lib/authPersistence";
+import { mergeAuthentication, persistAuthentication } from "@teal/client/authPersistence";
 
 import {
   AuthenticationSlice,

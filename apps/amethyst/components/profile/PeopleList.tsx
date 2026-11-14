@@ -1,8 +1,8 @@
 import { X } from "lucide-react-native";
 import { View } from "react-native";
-import { actorAvatarUrl, actorProfileHref, displayActorName, normalizeHandle } from "@/lib/teal/actors";
+import { actorAvatarUrl, actorProfileHref, displayActorName, normalizeHandle } from "@teal/client/teal/actors";
 import { Avatar, Button, ErrorNotice, Glass, Heading, IconButton, Loading, Row, Text } from "@/components/ds";
-import { usePeople } from "@/hooks/useProfile";
+import { usePeople } from "@teal/client/hooks/useProfile";
 
 /** Followers or following, opened from the counts in the profile header. */
 export function PeopleList({ did, kind, onClose }: { did: string; kind: "followers" | "following"; onClose: () => void }) {

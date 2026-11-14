@@ -13,7 +13,7 @@ import { router, useFocusEffect } from "expo-router";
 import Head from "expo-router/head";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft } from "lucide-react-native";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 import { AmbientScreen, useAmbientScroll } from "./ambient";
 import { Glass } from "./Glass";

@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, View } from "react-native";
 import { Link } from "expo-router";
-import type { MomentView } from "@/lib/teal/api";
-import { musicAlbumHref } from "@/lib/teal/routes";
+import type { MomentView } from "@teal/client/teal/api";
+import { musicAlbumHref } from "@teal/client/teal/routes";
 import { AmbientSource, Avatar, Cover, Glass, Heading, Text, coverUri, useHalo } from "@/components/ds";
 
 function albumHref(m: MomentView) {

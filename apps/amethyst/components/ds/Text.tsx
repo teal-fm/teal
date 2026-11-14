@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { Text as RNText, type TextProps } from "react-native";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 import { useHalo } from "./halo";
 

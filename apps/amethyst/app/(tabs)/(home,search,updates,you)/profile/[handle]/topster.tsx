@@ -3,11 +3,11 @@ import { Platform, Pressable, View } from "react-native";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Link2 } from "lucide-react-native";
-import { normalizeHandle } from "@/lib/teal/actors";
-import { getProfile, getUserTopReleases } from "@/lib/teal/api";
-import { absoluteUrl, musicAlbumHref } from "@/lib/teal/routes";
+import { normalizeHandle } from "@teal/client/teal/actors";
+import { getProfile, getUserTopReleases } from "@teal/client/teal/api";
+import { absoluteUrl, musicAlbumHref } from "@teal/client/teal/routes";
 import { shareLink } from "@/lib/teal/share";
-import { normalizePeriod, periodLabel, STATS_PERIODS } from "@/lib/teal/topStats";
+import { normalizePeriod, periodLabel, STATS_PERIODS } from "@teal/client/teal/topStats";
 import {
   AmbientSource,
   Button,

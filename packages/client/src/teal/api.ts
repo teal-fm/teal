@@ -17,8 +17,7 @@ import type {
   ReleaseView,
 } from "@teal/lexicons/src/fm/teal/stats/defs";
 
-const rawBase =
-  process.env.EXPO_PUBLIC_AQUA_URL || process.env.EXPO_PUBLIC_APPVIEW_URL || "";
+import { clientConfig } from "../config";
 
 const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])$/;
 
@@ -44,13 +43,15 @@ export function resolveRequestBase(
   return configured;
 }
 
-const requestBase = resolveRequestBase(
-  rawBase,
-  typeof window === "undefined" ? undefined : window.location?.origin,
-);
-const xrpcBase = requestBase.endsWith("/xrpc")
-  ? requestBase
-  : `${requestBase.replace(/\/$/, "")}/xrpc`;
+function xrpcBase() {
+  const requestBase = resolveRequestBase(
+    clientConfig().aquaUrl,
+    typeof window === "undefined" ? undefined : window.location?.origin,
+  );
+  return requestBase.endsWith("/xrpc")
+    ? requestBase
+    : `${requestBase.replace(/\/$/, "")}/xrpc`;
+}
 
 export class XrpcError extends Error {
   constructor(
@@ -197,7 +198,7 @@ async function getXrpc<T>(
   method: string,
   params: Record<string, string | number | undefined> = {},
 ): Promise<T> {
-  const url = new URL(`${xrpcBase}/${method}`);
+  const url = new URL(`${xrpcBase()}/${method}`);
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined) {
       url.searchParams.set(key, String(value));

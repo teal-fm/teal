@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { View } from "react-native";
 import { Image } from "expo-image";
-import { getProfileImageUrl } from "@/lib/teal/actors";
-import { cn } from "@/lib/utils";
+import { getProfileImageUrl } from "@teal/client/teal/actors";
+import { cn } from "@teal/client/utils";
 
 import { Text } from "./Text";
 

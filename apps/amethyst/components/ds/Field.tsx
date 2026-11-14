@@ -1,6 +1,6 @@
 import { forwardRef, useId } from "react";
 import { TextInput, View, type TextInputProps } from "react-native";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 import { usePlaceholderColor } from "./halo";
 import { Text } from "./Text";

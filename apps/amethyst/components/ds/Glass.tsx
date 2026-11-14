@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Platform, StyleSheet, View, type ViewProps } from "react-native";
 import { BlurView } from "expo-blur";
 import { useColorScheme } from "@/lib/useColorScheme";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 /**
  * A frosted panel over the backdrop. iOS uses the system material; the web uses

@@ -9,7 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
-import { getReleaseGroupCoverArtUrl } from "@/lib/teal/api";
+import { getReleaseGroupCoverArtUrl } from "@teal/client/teal/api";
 import { useColorScheme } from "@/lib/useColorScheme";
 
 export type AmbientBlob = {

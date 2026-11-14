@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { Link, type Href } from "expo-router";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 import { Glass } from "./Glass";
 import { Heading, Text } from "./Text";

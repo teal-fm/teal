@@ -7,7 +7,7 @@ import {
   getCachedBlueskyProfile,
   normalizeHandle,
   type DisplayActor,
-} from "@/lib/teal/actors";
+} from "../teal/actors";
 
 /**
  * An indexed actor, with Bluesky filling a missing name or handle. Returns what a

@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import type { LucideIcon } from "lucide-react-native";
 import { styled } from "nativewind";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 // Icons read colour as a prop on native, so class colours are mapped onto it.
 const styledIcons = new WeakMap<object, ComponentType<any>>();

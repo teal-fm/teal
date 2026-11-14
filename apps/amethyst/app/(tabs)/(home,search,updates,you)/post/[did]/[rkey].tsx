@@ -3,12 +3,12 @@ import { Linking, Platform, Pressable, View } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, MessageCircle, Share as ShareIcon, Trash2 } from "lucide-react-native";
-import { getSocialPost, getSocialPostReplies, type SocialPostView } from "@/lib/teal/api";
-import { forgetPost, rememberPost, useViewerDid } from "@/lib/teal/queries";
-import { absoluteUrl, musicArtistHref, postHrefFromUri, postUriFromRoute } from "@/lib/teal/routes";
+import { getSocialPost, getSocialPostReplies, type SocialPostView } from "@teal/client/teal/api";
+import { forgetPost, rememberPost, useViewerDid } from "@teal/client/teal/queries";
+import { absoluteUrl, musicArtistHref, postHrefFromUri, postUriFromRoute } from "@teal/client/teal/routes";
 import { shareLink } from "@/lib/teal/share";
-import { socialPostDeleteParams, trackViewToPlayView } from "@/lib/teal/social";
-import { shortAgo } from "@/lib/teal/today";
+import { socialPostDeleteParams, trackViewToPlayView } from "@teal/client/teal/social";
+import { shortAgo } from "@teal/client/teal/today";
 import { Composer } from "@/components/compose/Composer";
 import {
   AmbientSource,
@@ -30,8 +30,8 @@ import {
 } from "@/components/ds";
 import RichText from "@/components/post/RichText";
 import { ReactionBar } from "@/components/today/ReactionBar";
-import { useDisplayActor } from "@/hooks/useDisplayActor";
-import { displayActorName } from "@/lib/teal/actors";
+import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
+import { displayActorName } from "@teal/client/teal/actors";
 import { useStore } from "@/stores/mainStore";
 
 function param(value: string | string[] | undefined) {

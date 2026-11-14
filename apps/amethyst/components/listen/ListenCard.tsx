@@ -1,11 +1,11 @@
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { displayArtists } from "@/lib/teal/api";
-import { listenHref, musicTrackHref } from "@/lib/teal/routes";
-import { shortAgo } from "@/lib/teal/today";
+import { displayArtists } from "@teal/client/teal/api";
+import { listenHref, musicTrackHref } from "@teal/client/teal/routes";
+import { shortAgo } from "@teal/client/teal/today";
 import { Avatar, Text } from "@/components/ds";
-import { useDisplayActor } from "@/hooks/useDisplayActor";
+import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 /** Someone's listen in a list of listeners: who, what, and when, linking to the listen itself. */
 export function ListenCard({ play, last, showTrack = true }: { play: PlayView; last?: boolean; showTrack?: boolean }) {

@@ -5,7 +5,7 @@ import {
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query";
-import { useStore } from "@/stores/mainStore";
+import { usePdsAgent, useViewerDid } from "../session";
 
 import {
   getReactions,
@@ -29,11 +29,7 @@ export const keys = {
   reactions: (subject: string, viewer?: string) => ["reactions", subject, viewer ?? null] as const,
 };
 
-export function useViewerDid() {
-  const status = useStore((state) => state.status);
-  const did = useStore((state) => state.pdsAgent?.did);
-  return status === "loggedIn" ? did : undefined;
-}
+export { useViewerDid };
 
 export function useTodayQuery() {
   const viewer = useViewerDid();
@@ -115,7 +111,7 @@ export function useReactionsQuery(subject?: string) {
  */
 export function useToggleReaction() {
   const client = useQueryClient();
-  const agent = useStore((state) => state.pdsAgent);
+  const agent = usePdsAgent();
   const viewer = useViewerDid();
   return useMutation({
     mutationFn: async (input: {

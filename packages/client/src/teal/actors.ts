@@ -1,5 +1,5 @@
-import { getDidDocument, resolveHandle } from "@/lib/atp/pid";
-import { getBlueskyProfile } from "@/lib/teal/api";
+import { getDidDocument, resolveHandle } from "../atp/pid";
+import { getBlueskyProfile } from "./api";
 
 import type { MiniProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 

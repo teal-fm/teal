@@ -9,9 +9,9 @@ import {
 import { Link } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, ChevronRight, ChevronUp, SquarePen } from "lucide-react-native";
-import type { ListeningView, SocialPostView } from "@/lib/teal/api";
-import { useFeedQuery, useTodayQuery, useViewerDid } from "@/lib/teal/queries";
-import { useTodaySeen } from "@/lib/todaySeen";
+import type { ListeningView, SocialPostView } from "@teal/client/teal/api";
+import { useFeedQuery, useTodayQuery, useViewerDid } from "@teal/client/teal/queries";
+import { useTodaySeen } from "@teal/client/todaySeen";
 import {
   AmbientScreen,
   Button,

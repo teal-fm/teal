@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { rememberPost } from "@/lib/teal/queries";
+import { rememberPost } from "@teal/client/teal/queries";
 import { Composer } from "@/components/compose/Composer";
 import { Glass, goBack, Screen } from "@/components/ds";
 

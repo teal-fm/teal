@@ -1,5 +1,5 @@
 import { Link, router, useLocalSearchParams } from "expo-router";
-import { useViewerDid } from "@/lib/teal/queries";
+import { useViewerDid } from "@teal/client/teal/queries";
 import { Button, Choices, Notice, Screen } from "@/components/ds";
 import { AlbumLog } from "@/components/log/AlbumLog";
 import { SongLog } from "@/components/log/SongLog";

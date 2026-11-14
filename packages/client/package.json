@@ -1,0 +1,36 @@
+{
+  "name": "@teal/client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Platform-neutral Teal client logic shared by the native app and the web app.",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "CI=1 jest --runInBand --watchAll=false",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.20.27",
+    "@teal/lexicons": "workspace:*",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.6.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.105.3",
+    "react": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "5.105.3",
+    "@types/jest": "29.5.14",
+    "@types/node": "^26.1.1",
+    "@types/react": "~19.2.17",
+    "jest": "~29.7.0",
+    "react": "19.2.3",
+    "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.0",
+    "typescript": "~6.0.3",
+    "zustand": "^5.0.14"
+  }
+}

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import type { ReactionSummary } from "@/lib/teal/api";
-import { useToggleReaction, useViewerDid } from "@/lib/teal/queries";
-import type { ReactionSubject } from "@/lib/teal/reactions";
-import { cn } from "@/lib/utils";
+import type { ReactionSummary } from "@teal/client/teal/api";
+import { useToggleReaction, useViewerDid } from "@teal/client/teal/queries";
+import type { ReactionSubject } from "@teal/client/teal/reactions";
+import { cn } from "@teal/client/utils";
 import { SmilePlus } from "lucide-react-native";
 import { Icon, Text } from "@/components/ds";
 

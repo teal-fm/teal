@@ -17,7 +17,7 @@
     "tunnel:status": "./scripts/dev-tunnel.sh status",
     "tunnel:logs": "./scripts/dev-tunnel.sh logs",
     "tunnel:verify": "./scripts/dev-tunnel.sh verify",
-    "typecheck": "pnpm --filter=@teal/amethyst exec tsc --noEmit",
+    "typecheck": "pnpm --filter=@teal/client --filter=@teal/amethyst --filter=@teal/web exec tsc --noEmit",
     "test": "turbo run test test:rust",
     "rust:fmt": "pnpm rust:fmt:services && pnpm rust:fmt:apps",
     "rust:clippy": "pnpm rust:clippy:services && pnpm rust:clippy:apps",
@@ -47,7 +47,7 @@
     "eval:auth": "tsx scripts/eval/evaluate.ts --auth-only",
     "eval:run": "tsx scripts/eval/evaluate.ts",
     "eval:resolve-lb": "tsx scripts/eval/listenbrainz-resolve.ts",
-    "test:musicbrainz": "pnpm test --filter=@teal/amethyst -- --testPathPattern=\"musicbrainz|fuzzy\" --passWithNoTests"
+    "test:musicbrainz": "pnpm --filter=@teal/client test -- --testPathPattern=\"musicbrainz|fuzzy\" --passWithNoTests"
   },
   "dependencies": {
     "@atproto/oauth-client": "^0.7.9",

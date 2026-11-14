@@ -3,14 +3,14 @@ import { Linking, Pressable, Switch, View } from "react-native";
 import { Link } from "expo-router";
 import { Check, ExternalLink, Search } from "lucide-react-native";
 import { $validate as validatePlay } from "@teal/lexicons/src/fm/teal/feed/play";
-import { createPlayRecordFromRecording } from "@/lib/manualListens";
-import { searchMusicbrainz, type MusicBrainzRecording, type MusicBrainzRelease } from "@/lib/oldStamp";
-import { crossPostListen, crossPostText } from "@/lib/teal/crosspost";
-import { listenHrefFromUri } from "@/lib/teal/routes";
-import { cn } from "@/lib/utils";
+import { createPlayRecordFromRecording } from "@teal/client/manualListens";
+import { searchMusicbrainz, type MusicBrainzRecording, type MusicBrainzRelease } from "@teal/client/oldStamp";
+import { crossPostListen, crossPostText } from "@teal/client/teal/crosspost";
+import { listenHrefFromUri } from "@teal/client/teal/routes";
+import { cn } from "@teal/client/utils";
 import { Button, ButtonRow, Cover, ErrorNotice, Field, Glass, Heading, Icon, Loading, Notice, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
-import { retainConfirmedListens } from "@/stores/pendingListenStore";
+import { retainConfirmedListens } from "@teal/client/pendingListenStore";
 
 const artistNames = (recording: MusicBrainzRecording) =>
   recording["artist-credit"]?.map((credit) => credit.name || credit.artist.name).join(", ") || "Unknown artist";

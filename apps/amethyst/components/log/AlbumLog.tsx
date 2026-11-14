@@ -17,11 +17,11 @@ import {
   submitManualListenRecords,
   type ListenTimestampMode,
   type MusicBrainzAlbumRelease,
-} from "@/lib/manualListens";
-import { cn } from "@/lib/utils";
+} from "@teal/client/manualListens";
+import { cn } from "@teal/client/utils";
 import { Button, ButtonRow, Choices, Cover, ErrorNotice, Field, Glass, Heading, Icon, Loading, Notice, Row, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
-import { retainConfirmedListens } from "@/stores/pendingListenStore";
+import { retainConfirmedListens } from "@teal/client/pendingListenStore";
 
 const WHEN: readonly { value: ListenTimestampMode; label: string }[] = [
   { value: "now", label: "Just finished" },

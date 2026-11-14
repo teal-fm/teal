@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { TextInput, View } from "react-native";
 import { Link } from "expo-router";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import type { SocialPostView } from "@/lib/teal/api";
-import { publishPost, type ReplyTarget } from "@/lib/teal/compose";
-import { useViewerDid } from "@/lib/teal/queries";
-import { cn } from "@/lib/utils";
+import type { SocialPostView } from "@teal/client/teal/api";
+import { publishPost, type ReplyTarget } from "@teal/client/teal/compose";
+import { useViewerDid } from "@teal/client/teal/queries";
+import { cn } from "@teal/client/utils";
 import { Button, Text, usePlaceholderColor } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
 

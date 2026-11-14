@@ -3,18 +3,18 @@ import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Bell, Heart, MessageCircle, Repeat2, SmilePlus, UserPlus, type LucideIcon } from "lucide-react-native";
-import { actorAvatarUrl, actorProfileHref, displayActorName } from "@/lib/teal/actors";
+import { actorAvatarUrl, actorProfileHref, displayActorName } from "@teal/client/teal/actors";
 import {
   displayArtists,
   getNotifications,
   getSocialPost,
   XrpcError,
   type SocialNotificationView,
-} from "@/lib/teal/api";
-import { useViewerDid } from "@/lib/teal/queries";
-import { hrefFromAtUri, postHrefFromUri } from "@/lib/teal/routes";
-import { trackViewToPlayView } from "@/lib/teal/social";
-import { shortAgo } from "@/lib/teal/today";
+} from "@teal/client/teal/api";
+import { useViewerDid } from "@teal/client/teal/queries";
+import { hrefFromAtUri, postHrefFromUri } from "@teal/client/teal/routes";
+import { trackViewToPlayView } from "@teal/client/teal/social";
+import { shortAgo } from "@teal/client/teal/today";
 import {
   Avatar,
   Button,

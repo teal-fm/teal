@@ -2,10 +2,10 @@ import { useState } from "react";
 import { View } from "react-native";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { normalizeHandle } from "@/lib/teal/actors";
-import { useViewerDid } from "@/lib/teal/queries";
-import { playlistHref } from "@/lib/teal/routes";
-import { normalizePeriod } from "@/lib/teal/topStats";
+import { normalizeHandle } from "@teal/client/teal/actors";
+import { useViewerDid } from "@teal/client/teal/queries";
+import { playlistHref } from "@teal/client/teal/routes";
+import { normalizePeriod } from "@teal/client/teal/topStats";
 import {
   Button,
   ErrorNotice,
@@ -36,7 +36,7 @@ import {
   ProfileNotFoundError,
   useProfile,
   type DisplayProfile,
-} from "@/hooks/useProfile";
+} from "@teal/client/hooks/useProfile";
 
 type Tab = "overview" | "listening" | "posts" | "playlists";
 const TABS = ["overview", "listening", "posts", "playlists"] as const;

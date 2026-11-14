@@ -1,6 +1,6 @@
 import { Pressable, View } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
-import { cn } from "@/lib/utils";
+import { cn } from "@teal/client/utils";
 
 import { Icon } from "./Icon";
 import { Text } from "./Text";

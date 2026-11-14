@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { getRecordingCoverArtUrl } from "@/lib/teal/api";
+import { getRecordingCoverArtUrl } from "../teal/api";
 
 /** Art for a listen that has no release: the first release MusicBrainz lists for its recording. */
 export function useRecordingArt(play?: Pick<PlayView, "releaseMbId" | "recordingMbId">) {

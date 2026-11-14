@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Link, router } from "expo-router";
 import { Pencil, Settings, UserMinus, UserPlus } from "lucide-react-native";
-import { normalizeHandle } from "@/lib/teal/actors";
-import type { GraphSummaryView } from "@/lib/teal/api";
-import { useViewerDid } from "@/lib/teal/queries";
+import { normalizeHandle } from "@teal/client/teal/actors";
+import type { GraphSummaryView } from "@teal/client/teal/api";
+import { useViewerDid } from "@teal/client/teal/queries";
 import { Avatar, Button, ButtonRow, Glass, Heading, IconButton, Text, useLayout } from "@/components/ds";
 import RichText from "@/components/post/RichText";
-import { useToggleFollow, type DisplayProfile } from "@/hooks/useProfile";
+import { useToggleFollow, type DisplayProfile } from "@teal/client/hooks/useProfile";
 
 import { Fingerprint } from "./Fingerprint";
 

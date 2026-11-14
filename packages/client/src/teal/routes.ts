@@ -1,3 +1,5 @@
+import { clientConfig } from "../config";
+
 export function routePart(value?: string) {
   return encodeURIComponent(
     (value || "unknown")
@@ -176,6 +178,6 @@ export function absoluteUrl(path: string) {
   const origin =
     typeof window !== "undefined" && window.location?.origin
       ? window.location.origin
-      : process.env.EXPO_PUBLIC_BASE_URL || "https://teal.fm";
+      : clientConfig().publicOrigin;
   return `${origin.replace(/\/$/, "")}${path}`;
 }

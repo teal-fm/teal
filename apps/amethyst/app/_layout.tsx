@@ -1,12 +1,15 @@
+// Configures the shared client (Aqua, storage) before anything else loads.
+import { queryClient } from "@/lib/client";
+import { useMemo, type ReactNode } from "react";
 import { Platform } from "react-native";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { queryClient } from "@/lib/query";
 import { restoreColorSchemePreference, useColorScheme } from "@/lib/useColorScheme";
 // Importing the store restores a saved session on launch (see stores/mainStore).
-import "@/stores/mainStore";
+import { useStore } from "@/stores/mainStore";
+import { SessionProvider } from "@teal/client/session";
 
 // global.entry.css imports global.css; metro.config.js explains why it exists.
 import "../global.entry.css";
@@ -52,10 +55,22 @@ const modal = {
   headerShown: false,
 } as const;
 
+/** Hands the signed-in account to the shared hooks in @teal/client. */
+function StoreSession({ children }: { children: ReactNode }) {
+  const status = useStore((state) => state.status);
+  const agent = useStore((state) => state.pdsAgent);
+  const value = useMemo(
+    () => ({ agent, viewer: status === "loggedIn" ? agent?.did : undefined }),
+    [agent, status],
+  );
+  return <SessionProvider value={value}>{children}</SessionProvider>;
+}
+
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
   return (
     <QueryClientProvider client={queryClient}>
+      <StoreSession>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider value={themes[colorScheme === "dark" ? "dark" : "light"]}>
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}>
@@ -65,6 +80,7 @@ export default function RootLayout() {
           </Stack>
         </ThemeProvider>
       </GestureHandlerRootView>
+      </StoreSession>
     </QueryClientProvider>
   );
 }
