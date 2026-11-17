@@ -33,10 +33,7 @@ import { TrackPicker } from "@/components/compose/TrackPicker";
 import RichText from "@/components/post/RichText";
 import { useStore } from "@/stores/mainStore";
 import { appHref } from "@/lib/href";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
 
 function playlistCover(playlist: SocialPlaylistView) {
   return playlist.coverCid ? getImageCdnLink({ did: playlist.authorDid, hash: playlist.coverCid }) : undefined;
@@ -120,7 +117,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
 
   const nowPlaying = useQuery({
     queryKey: ["now-playing", viewer],
-    queryFn: () => getProfile(viewer!).then((r) => (r.profile.status?.item as PlayView | undefined) ?? null),
+    queryFn: () => getProfile(viewer!).then((r) => r.profile.status?.item ?? null),
     enabled: !!viewer,
   });
 

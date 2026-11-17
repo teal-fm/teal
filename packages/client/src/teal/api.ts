@@ -89,7 +89,7 @@ export type SocialPostView = {
   replyRootCid?: string;
   replyParentUri?: string;
   replyParentCid?: string;
-  facets?: unknown[];
+  facets?: RichTextFacet[];
   langs?: string[];
   tags?: string[];
   createdAt: string;
@@ -174,7 +174,7 @@ export type SocialPlaylistView = {
   author?: MiniProfileView;
   name: string;
   description?: string;
-  descriptionFacets?: unknown;
+  descriptionFacets?: RichTextFacet[];
   authors: string[];
   coverCid?: string;
   createdAt: string;
@@ -194,6 +194,12 @@ export type GraphSummaryView = {
   followersCount: number;
   followsCount: number;
   viewerFollowing?: string;
+};
+
+/** A rich-text facet as Bluesky-style composers write it; every field may be missing in old records. */
+export type RichTextFacet = {
+  index?: { byteStart: number; byteEnd: number };
+  features?: { $type?: string; did?: string; uri?: string; tag?: string }[];
 };
 
 export type ArtistListenerPeriod = "all" | "30days" | "7days";

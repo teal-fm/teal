@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode } from "react";
 import { View } from "react-native";
 import { AmbientSource, Cover, coverUri, Heading, Text } from "@/components/ds";
 
@@ -40,7 +40,7 @@ export function MusicHero({
           {title}
         </Heading>
         {lines.map((line, i) =>
-          typeof line === "string" ? (
+          !isValidElement(line) && line != null && line !== false ? (
             <Text key={i} onBackdrop className="text-[16px] text-ink-2">
               {line}
             </Text>

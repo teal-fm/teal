@@ -120,7 +120,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
 
   const nowPlaying = useQuery({
     queryKey: ["now-playing", viewer],
-    queryFn: () => getProfile(viewer!).then((r) => (r.profile.status?.item as PlayView | undefined) ?? null),
+    queryFn: () => getProfile(viewer!).then((r) => r.profile.status?.item ?? null),
     enabled: !!viewer,
   });
 

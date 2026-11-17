@@ -23,7 +23,7 @@ export function Tabs<T extends string>({
 }) {
   return (
     <View role="tablist" aria-label={label} className={cn("flex-row border-b border-hair", className)}>
-      {tabs.map((tab, index) => {
+      {tabs.map((tab) => {
         const on = tab.value === value;
 
         return (

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { Link, router } from "expo-router";
 import { openAuthSessionAsync } from "expo-web-browser";
 import { Check, ChevronRight, CircleAlert } from "lucide-react-native";
@@ -7,7 +7,6 @@ import { resolveFromIdentity } from "@teal/client/atp/pid";
 import { normalizeAuthHandle } from "@teal/client/authHandle";
 import { Button, Dialog, Field, goBack, Icon, PageTitle, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
-import { appHref } from "@/lib/href";
 
 const RESOLVE_DELAY = 500;
 

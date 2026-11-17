@@ -19,16 +19,18 @@ export const Route = createFileRoute("/notifications")({
   component: Activity,
 });
 
-const REASONS: Record<string, { label: string; icon: LucideIcon; tone: string }> = {
-  like: { label: "liked your", icon: Heart, tone: "text-rose-500" },
-  repost: { label: "reposted your", icon: Repeat2, tone: "text-tint" },
-  reply: { label: "replied to your post", icon: MessageCircle, tone: "text-tint" },
-  reaction: { label: "reacted to your", icon: SmilePlus, tone: "text-tint" },
-  follow: { label: "followed you", icon: UserPlus, tone: "text-tint" },
-  badgeAssignment: { label: "gave you a badge", icon: Bell, tone: "text-ink-2" },
-};
+type Reason = { label: string; icon: LucideIcon; tone: string };
 
-const OTHER = { label: "interacted with your profile", icon: Bell, tone: "text-ink-2" };
+const REASONS = new Map<string, Reason>([
+  ["like", { label: "liked your", icon: Heart, tone: "text-rose-500" }],
+  ["repost", { label: "reposted your", icon: Repeat2, tone: "text-tint" }],
+  ["reply", { label: "replied to your post", icon: MessageCircle, tone: "text-tint" }],
+  ["reaction", { label: "reacted to your", icon: SmilePlus, tone: "text-tint" }],
+  ["follow", { label: "followed you", icon: UserPlus, tone: "text-tint" }],
+  ["badgeAssignment", { label: "gave you a badge", icon: Bell, tone: "text-ink-2" }],
+]);
+
+const OTHER: Reason = { label: "interacted with your profile", icon: Bell, tone: "text-ink-2" };
 
 function targetKind(uri?: string) {
   if (uri?.includes(".feed.play/")) return "listen";
@@ -118,7 +120,7 @@ function Activity() {
 }
 
 function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
-  const known = REASONS[g.reason] ?? OTHER;
+  const known = REASONS.get(g.reason) ?? OTHER;
   // Likes, reposts, and reactions can land on a listen or a playlist as well as a post.
   const target = targetKind(g.contextUri);
   const reason = known.label.endsWith(" your") ? { ...known, label: `${known.label} ${target}` } : known;

@@ -38,19 +38,15 @@ import {
   type DisplayProfile,
 } from "@teal/client/hooks/useProfile";
 import { appHref } from "@/lib/href";
+import { param, paramOneOf } from "@/lib/params";
 
-type Tab = "overview" | "listening" | "posts" | "playlists";
 
 const TABS = ["overview", "listening", "posts", "playlists"] as const;
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 export default function ProfileScreen() {
   const params = useLocalSearchParams();
   const actor = param(params.handle);
-  const tab: Tab = TABS.includes(param(params.tab) as Tab) ? (param(params.tab) as Tab) : "overview";
+  const tab = paramOneOf(params.tab, TABS, "overview");
   const viewer = useViewerDid();
   const layout = useLayout();
   const didQuery = useActorDid(actor);

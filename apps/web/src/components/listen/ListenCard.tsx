@@ -8,7 +8,7 @@ import { A, Avatar } from "~/ds";
 
 /** Someone's listen in a list of listeners: who, what, and when, linking to the listen itself. */
 export function ListenCard({ play, last, showTrack = true }: { play: PlayView; last?: boolean; showTrack?: boolean }) {
-  const actor = useDisplayActor(play.author as never, play.authorDid);
+  const actor = useDisplayActor(play.author, play.authorDid);
   const permalink = listenHref(play.authorDid, play.rkey);
   const artists = displayArtists(play) || "Unknown artist";
 

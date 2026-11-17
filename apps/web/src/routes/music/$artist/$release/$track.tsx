@@ -98,7 +98,7 @@ function TrackScreen() {
 
   const artists = displayArtists(p) || "Unknown artist";
   const firstArtist = p.artists?.[0];
-  const related = (history.data?.pages ?? []).reduce((acc, page) => appendTrackHistory(acc, page.plays, p), [] as PlayView[]);
+  const related = (history.data?.pages ?? []).reduce<PlayView[]>((acc, page) => appendTrackHistory(acc, page.plays, p), []);
 
   return (
     <Screen back pageTitle={`${p.trackName} · ${artists}`} width="wide">

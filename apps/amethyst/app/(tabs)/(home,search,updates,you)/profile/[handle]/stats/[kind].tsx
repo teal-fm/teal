@@ -6,10 +6,7 @@ import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen, Tabs } fr
 import { TopRow } from "@/components/profile/TopStats";
 import { useActorDid, useActorPlays } from "@teal/client/hooks/useProfile";
 import { FIRST_PAGE } from "@teal/client/query";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
 
 const TITLES: Record<TopKind, string> = { artists: "Top artists", albums: "Top albums", tracks: "Top tracks" };
 

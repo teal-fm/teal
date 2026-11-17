@@ -66,6 +66,7 @@ export function Composer({
         track: selected,
         replyTo,
         // Shown until the index has the post: teal's details first, then Bluesky's.
+        // SAFETY: `viewer` is the signed-in account's DID, so this is a valid mini profile.
         author: {
           did: viewer,
           displayName: profiles?.teal?.displayName || profiles?.bsky?.displayName,

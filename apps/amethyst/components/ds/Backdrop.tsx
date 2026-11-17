@@ -3,7 +3,6 @@ import { StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   Easing,
   ReduceMotion,
-  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -348,7 +347,7 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
       style={[StyleSheet.absoluteFill, { overflow: "hidden" }]}
       className="bg-ground"
     >
-      <View style={[StyleSheet.absoluteFill, { filter: blurFilter } as object]}>
+      <View style={[StyleSheet.absoluteFill, { filter: blurFilter }]}>
         {shown.map((item) => (
           <Blob
             key={item.uri}

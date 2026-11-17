@@ -14,10 +14,8 @@ import { AddToPlaylist } from "@/components/playlist/AddToPlaylist";
 import { PostCard } from "@/components/today/PostCard";
 import { FIRST_PAGE } from "@teal/client/query";
 import { appHref } from "@/lib/href";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 
 /** Old links carry only slugs; find the indexed play they meant. */
 async function playFromSlugs(artist?: string, release?: string, track?: string) {
@@ -84,7 +82,7 @@ export default function TrackScreen() {
 
   const artists = displayArtists(p) || "Unknown artist";
   const firstArtist = p.artists?.[0];
-  const related = (history.data?.pages ?? []).reduce((acc, page) => appendTrackHistory(acc, page.plays, p), [] as typeof p[]);
+  const related = (history.data?.pages ?? []).reduce<PlayView[]>((acc, page) => appendTrackHistory(acc, page.plays, p), []);
 
   return (
     <Screen back pageTitle={`${p.trackName} · ${artists}`} width="wide">
@@ -118,7 +116,7 @@ export default function TrackScreen() {
         ]}
         actions={
           <>
-            {p.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(p.originUri as string)} /> : null}
+            {p.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(p.originUri ?? "")} /> : null}
             <AddToPlaylist play={p} />
           </>
         }

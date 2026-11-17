@@ -4,9 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { ListChecks, Plus } from "lucide-react-native";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
-import { updateSelectedPlayRecords } from "@teal/client/teal/bulkPlayRecords";
+import { applyBulkChanges, bulkChangesFromText, updateSelectedPlayRecords } from "@teal/client/teal/bulkPlayRecords";
 import { mergePendingListens } from "@teal/client/teal/pendingListens";
-import { artistsFromText, deletePlayRecord, loadPlayRecord, putPlayRecord } from "@teal/client/teal/playRecords";
+import { deletePlayRecord, loadPlayRecord, putPlayRecord } from "@teal/client/teal/playRecords";
 import { Button, ButtonRow, ErrorNotice, Field, Glass, Heading, Loading, Notice, Text } from "@/components/ds";
 import { ListenRow } from "@/components/listen/ListenRow";
 import { patchActorPlays, useActorPlays } from "@teal/client/hooks/useProfile";
@@ -27,10 +27,12 @@ export function usePlaysWithPending(did: string, isSelf: boolean) {
 
   const syncing = useMemo(
     () =>
-      new Set(
-        pending
-          .filter((entry) => !indexed.some((play) => play.uri === entry.play.uri && play.cid === entry.play.cid))
-          .map((entry) => entry.play.uri as string),
+      new Set<string>(
+        pending.flatMap(({ play: pendingPlay }) =>
+          pendingPlay.uri && !indexed.some((play) => play.uri === pendingPlay.uri && play.cid === pendingPlay.cid)
+            ? [pendingPlay.uri]
+            : [],
+        ),
       ),
     [pending, indexed],
   );
@@ -90,12 +92,11 @@ function BulkEditor({
     setError(null);
 
     try {
+      const changes = bulkChangesFromText(artists, release);
+
       await updateSelectedPlayRecords(
         [...selected],
-        {
-          ...(artists.trim() ? { artists: artistsFromText(artists.trim()) } : {}),
-          ...(release.trim() ? { releaseName: release.trim() } : {}),
-        },
+        changes,
         {
           load: (rkey) => loadPlayRecord(agent, did, rkey),
           put: (rkey, record, cid) => putPlayRecord(agent, did, rkey, record, cid),
@@ -103,12 +104,7 @@ function BulkEditor({
         },
       );
 
-      const changes = {
-        ...(artists.trim() ? { artists: artistsFromText(artists.trim()) } : {}),
-        ...(release.trim() ? { releaseName: release.trim() } : {}),
-      };
-
-      patchPlays((play) => (play.rkey && selected.has(play.rkey) ? ({ ...play, ...changes } as PlayView) : play));
+      patchPlays((play) => (play.rkey && selected.has(play.rkey) ? applyBulkChanges(play, changes) : play));
       setSelected(new Set());
       setArtists("");
       setRelease("");

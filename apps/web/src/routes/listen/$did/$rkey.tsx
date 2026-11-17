@@ -80,6 +80,7 @@ function EditListen({ did, rkey, uri, onSaved, onCancel }: { did: string; rkey: 
       removePendingListens(did, [uri]);
 
       if (receipt.uri === uri && receipt.cid) {
+        // SAFETY: putPlayRecord just wrote this record, so the PDS accepted it as a play.
         retainConfirmedListens(did, [{ record: { ...record, $type: "fm.teal.feed.play" } as PlayRecord, ...receipt }]);
       }
 
@@ -143,7 +144,7 @@ function ListenScreen() {
   });
 
   const play: PlayView | undefined = listen.data?.play;
-  const author = useDisplayActor(play?.author as never, did);
+  const author = useDisplayActor(play?.author, did);
   const reactions = useReactionsQuery(play?.uri);
   const recordingArt = useRecordingArt(play);
   const isOwn = !!viewer && viewer === did;

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode } from "react";
 import { AmbientSource, Cover, coverUri, Heading } from "~/ds";
 
 /**
@@ -33,7 +33,7 @@ export function MusicHero({
           {title}
         </Heading>
         {lines.map((line, i) =>
-          typeof line === "string" ? (
+          !isValidElement(line) && line != null && line !== false ? (
             <p key={i} className="halo text-[16px] text-ink-2">
               {line}
             </p>

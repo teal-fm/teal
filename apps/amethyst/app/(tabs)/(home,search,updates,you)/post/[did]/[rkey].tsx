@@ -34,10 +34,7 @@ import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 import { displayActorName } from "@teal/client/teal/actors";
 import { useStore } from "@/stores/mainStore";
 import { appHref } from "@/lib/href";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
 
 function Reply({ reply, last }: { reply: SocialPostView; last: boolean }) {
   const author = useDisplayActor(reply.author, reply.authorDid);
@@ -161,7 +158,7 @@ export default function PostScreen() {
         </Text>
       </View>
       {play.originUri ? (
-        <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(play.originUri as string)} />
+        <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(play.originUri ?? "")} />
       ) : null}
     </View>
   );

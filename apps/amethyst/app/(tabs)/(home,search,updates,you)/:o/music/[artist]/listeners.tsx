@@ -6,10 +6,7 @@ import { LISTENER_PERIODS, normalizeListenerPeriod } from "@teal/client/teal/mus
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen } from "@/components/ds";
 import { Leaderboard } from "@/components/music/Leaderboard";
 import { FIRST_PAGE } from "@teal/client/query";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
 
 /** Everyone who listens to an artist, ranked, for a period. */
 export default function ArtistListeners() {

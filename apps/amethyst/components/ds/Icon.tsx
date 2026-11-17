@@ -10,6 +10,8 @@ function styledIcon(icon: LucideIcon) {
   let StyledIcon = styledIcons.get(icon);
 
   if (!StyledIcon) {
+    // SAFETY: Lucide icons are components that accept a style prop, which is all
+    // nativewind's styled() needs; its generic signature can't see that through LucideIcon.
     StyledIcon = styled(icon as ComponentType<any>, {
       className: { target: "style", nativeStyleMapping: { color: true, opacity: true } },
     }) as ComponentType<any>;

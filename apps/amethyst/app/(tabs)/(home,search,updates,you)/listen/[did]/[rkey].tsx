@@ -40,10 +40,7 @@ import { patchActorPlays } from "@teal/client/hooks/useProfile";
 import { useStore } from "@/stores/mainStore";
 import { removePendingListens, retainConfirmedListens, retireIndexedListens, usePendingListens } from "@teal/client/pendingListenStore";
 import { appHref } from "@/lib/href";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
 
 /** Fix the track, artists, album, or time of your own listen. Reads the record first so a stale view can't overwrite it. */
 function EditListen({
@@ -91,6 +88,7 @@ function EditListen({
       removePendingListens(did, [uri]);
 
       if (receipt.uri === uri && receipt.cid) {
+        // SAFETY: putPlayRecord just wrote this record, so the PDS accepted it as a play.
         retainConfirmedListens(did, [{ record: { ...record, $type: "fm.teal.feed.play" } as PlayRecord, ...receipt }]);
       }
 
@@ -255,7 +253,7 @@ export default function ListenScreen() {
             <Link href={appHref(musicTrackHref(artists, play.releaseName, play.trackName, play.uri))} asChild>
               <Button label="Song page" variant="secondary" />
             </Link>
-            {play.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(play.originUri as string)} /> : null}
+            {play.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(play.originUri ?? "")} /> : null}
           </>
         }
       />

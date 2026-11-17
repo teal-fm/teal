@@ -10,13 +10,11 @@ export function listenedAt(value?: string) {
 
   if (Number.isNaN(time.getTime())) return undefined;
 
-  return time.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    ...(time.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
-  });
+  const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" };
+
+  if (time.getFullYear() !== new Date().getFullYear()) options.year = "numeric";
+
+  return time.toLocaleString(undefined, options);
 }
 
 /**

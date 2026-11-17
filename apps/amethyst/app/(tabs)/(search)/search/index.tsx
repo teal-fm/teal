@@ -29,6 +29,7 @@ import {
 import { HeatingShelf } from "@/components/today/HeatingUp";
 import { useDebounced } from "@teal/client/hooks/useDebounced";
 import { appHref } from "@/lib/href";
+import { param, paramOneOf } from "@/lib/params";
 
 type Kind = "people" | "songs" | "artists" | "albums";
 
@@ -63,13 +64,13 @@ const KINDS = ["people", "songs", "artists", "albums"] as const;
 export default function Explore() {
   // The search and tab live in the URL, so browser Back and shared links restore them.
   const params = useLocalSearchParams();
-  const kind: Kind = KINDS.includes(params.kind as Kind) ? (params.kind as Kind) : "songs";
-  const [query, setQuery] = useState(() => (typeof params.q === "string" ? params.q : ""));
+  const kind = paramOneOf(params.kind, KINDS, "songs");
+  const [query, setQuery] = useState(() => param(params.q) ?? "");
   const term = useDebounced(query.trim());
   const searching = term.length >= 2;
   const layout = useLayout();
   const placeholder = usePlaceholderColor();
-  const urlQuery = typeof params.q === "string" ? params.q : "";
+  const urlQuery = param(params.q) ?? "";
   useEffect(() => {
     // Only write when the search changed; writing on the first render navigates before the router mounts.
     if (term !== urlQuery) router.setParams({ q: term || undefined });

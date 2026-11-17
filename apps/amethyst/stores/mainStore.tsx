@@ -8,10 +8,9 @@ import {
   createAuthenticationSlice,
 } from "./authenticationSlice";
 import { createPreferenceSlice, PreferenceSlice } from "./preferenceSlice";
-import { createTempSlice, TempSlice } from "./tempSlice";
 
 /// Put all your non-shared slices here
-export type Slices = AuthenticationSlice & TempSlice & PreferenceSlice;
+export type Slices = AuthenticationSlice & PreferenceSlice;
 
 /// Put all your shared slices here
 export type PlusSharedSlices = Slices;
@@ -24,7 +23,6 @@ export const useStore = create<PlusSharedSlices>()(
   persist(
     (...a) => ({
       ...createAuthenticationSlice(...a),
-      ...createTempSlice(...a),
       ...createPreferenceSlice(...a),
     }),
     {

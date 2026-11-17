@@ -21,7 +21,9 @@ const SIZES = [
 ] as const;
 
 function gridSize(value?: string): GridSize {
-  return value === "3" || value === "5" ? (Number(value) as GridSize) : 4;
+  if (value === "3") return 3;
+
+  return value === "5" ? 5 : 4;
 }
 
 export const Route = createFileRoute("/profile/$handle/topster")({
@@ -50,7 +52,7 @@ function TopsterScreen() {
     queryFn: () => getProfile(actor).then((r) => r.profile),
   });
 
-  const name = profile.data?.displayName || normalizeHandle((profile.data as { handle?: string } | undefined)?.handle) || normalizeHandle(actor);
+  const name = profile.data?.displayName || normalizeHandle(actor);
   const title = `${name}'s top albums`;
   const releases = chart.data ?? [];
 

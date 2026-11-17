@@ -1,4 +1,3 @@
-import { View } from "react-native";
 import type { ListeningView } from "@teal/client/teal/api";
 import { Avatar, Cover, Glass, Text } from "@/components/ds";
 import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";

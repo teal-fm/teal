@@ -49,6 +49,7 @@ export default function Onboarding() {
           rkey: "self",
         });
 
+        // SAFETY: the account's own fm.teal.actor.profileStatus record.
         return res.data.value as ProfileStatus;
       } catch (e) {
         if (isRecordNotFound(e)) return null;

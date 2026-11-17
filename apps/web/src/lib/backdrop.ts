@@ -15,19 +15,23 @@ export type BackdropPreferences = {
 
 const DEFAULTS: BackdropPreferences = { backdrop: "on", motion: "moving", colour: "vivid" };
 const ATTRIBUTES = { backdrop: "backdrop", motion: "backdropMotion", colour: "backdropColour" } as const;
+const NAMES = ["backdrop", "motion", "colour"] as const satisfies readonly (keyof BackdropPreferences)[];
+
 const KEY = (name: keyof BackdropPreferences) => `teal-${name}`;
 
-function readOne<K extends keyof BackdropPreferences>(name: K): BackdropPreferences[K] {
+/** A saved setting, or its default when nothing (or something unknown) is saved. */
+function readOne<K extends keyof BackdropPreferences>(name: K, values: readonly BackdropPreferences[K][]): BackdropPreferences[K] {
   try {
-    return (localStorage.getItem(KEY(name)) as BackdropPreferences[K] | null) ?? DEFAULTS[name];
+    const saved = localStorage.getItem(KEY(name));
+
+    return values.find((value) => value === saved) ?? DEFAULTS[name];
   } catch {
     return DEFAULTS[name];
   }
 }
 
 /** Runs in <head> before first paint, alongside the theme. Only non-default values are saved. */
-export const backdropBootScript = `try{${(Object.keys(ATTRIBUTES) as (keyof BackdropPreferences)[])
-  .map(
+export const backdropBootScript = `try{${NAMES.map(
     (name) =>
       `var ${name}=localStorage.getItem(${JSON.stringify(KEY(name))});if(${name})document.documentElement.dataset.${ATTRIBUTES[name]}=${name};`,
   )
@@ -37,9 +41,13 @@ const listeners = new Set<() => void>();
 let snapshot: BackdropPreferences | undefined;
 
 function read() {
-  const next = { backdrop: readOne("backdrop"), motion: readOne("motion"), colour: readOne("colour") };
+  const next: BackdropPreferences = {
+    backdrop: readOne("backdrop", ["on", "off"]),
+    motion: readOne("motion", ["moving", "still"]),
+    colour: readOne("colour", ["vivid", "muted"]),
+  };
 
-  if (!snapshot || (Object.keys(next) as (keyof BackdropPreferences)[]).some((k) => next[k] !== snapshot?.[k])) {
+  if (!snapshot || NAMES.some((k) => next[k] !== snapshot?.[k])) {
     snapshot = next;
   }
 

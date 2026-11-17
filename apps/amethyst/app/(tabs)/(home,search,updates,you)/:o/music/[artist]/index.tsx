@@ -10,10 +10,7 @@ import { Leaderboard } from "@/components/music/Leaderboard";
 import { MusicHero } from "@/components/music/MusicHero";
 import { ReleaseGrid } from "@/components/music/ReleaseGrid";
 import { appHref } from "@/lib/href";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
 
 /** An artist: who they are on teal, who listens most, and their releases. */
 export default function ArtistScreen() {

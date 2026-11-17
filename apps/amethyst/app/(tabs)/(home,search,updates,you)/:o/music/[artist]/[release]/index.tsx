@@ -5,15 +5,12 @@ import { ChevronRight } from "lucide-react-native";
 import { getAlbum } from "@teal/client/teal/api";
 import { countLabel } from "@teal/client/teal/music";
 import { musicArtistHref, musicTrackHref } from "@teal/client/teal/routes";
-import { ErrorNotice, Glass, Icon, Loading, Screen, Section, Text } from "@/components/ds";
+import { ErrorNotice, Icon, Loading, Screen, Section, Text } from "@/components/ds";
 import { ListenCard } from "@/components/listen/ListenCard";
 import { MusicHero } from "@/components/music/MusicHero";
 import { FIRST_PAGE } from "@teal/client/query";
 import { appHref } from "@/lib/href";
-
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from "@/lib/params";
 
 /** An album: its cover, track list, and everyone who has listened to it on teal. */
 export default function AlbumScreen() {

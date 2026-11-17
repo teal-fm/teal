@@ -82,6 +82,7 @@ async function fallbackFor(failed: string, original: string) {
 }
 
 function useWindowSize() {
+  // SAFETY: the snapshot is always "<width>x<height>", which splits into two numbers.
   return useSyncExternalStore(
     (listener) => {
       window.addEventListener("resize", listener);
@@ -171,7 +172,8 @@ function Blob({
 
   const transition = `opacity ${target > 0 ? FADE_IN_MS : FADE_OUT_MS}ms ${EASE}`;
   const [hx, hy] = SLOTS[shown.slot];
-  const spots = [[hx, hy] as [number, number], ...ECHOES.map((echo) => echo(hx, hy))];
+  const home: [number, number] = [hx, hy];
+  const spots = [home, ...ECHOES.map((echo) => echo(hx, hy))];
 
   return (
     <>

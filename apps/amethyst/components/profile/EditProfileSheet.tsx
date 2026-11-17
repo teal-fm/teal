@@ -105,7 +105,7 @@ export function EditProfileSheet({
     setDisplayName(profile?.displayName || "");
     setDescription(profile?.description || "");
     setPeriod(normalizePeriod(profile?.statsDefaultPeriod));
-    setFavourites((profile?.favorites as FavouriteItem[] | undefined) ?? []);
+    setFavourites(profile?.favorites ?? []);
     setAvatarUri(avatarUrl || "");
     setBannerUri(bannerUrl || "");
     setError(null);

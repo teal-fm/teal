@@ -1,10 +1,32 @@
+import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+
 import type { ConfirmedListenWrite } from "./pendingListens";
-import type { EditablePlayRecord, LoadedPlayRecord } from "./playRecords";
+import { artistsFromText, type EditablePlayRecord, type LoadedPlayRecord } from "./playRecords";
+
+export type BulkPlayChanges = Pick<EditablePlayRecord, "artists" | "releaseName">;
+
+/** The fields a bulk edit changes: only the ones the form filled in. */
+export function bulkChangesFromText(artistsText: string, releaseText: string): BulkPlayChanges {
+  const changes: BulkPlayChanges = {};
+  const artists = artistsText.trim();
+  const release = releaseText.trim();
+
+  if (artists) changes.artists = artistsFromText(artists);
+
+  if (release) changes.releaseName = release;
+
+  return changes;
+}
+
+/** A play as shown after a bulk edit, until the index catches up. */
+export function applyBulkChanges(play: PlayView, changes: BulkPlayChanges): PlayView {
+  return { ...play, ...changes };
+}
 
 /** Retain each successful edit before proceeding, even if a later write fails. */
 export async function updateSelectedPlayRecords(
   rkeys: readonly string[],
-  changes: Pick<EditablePlayRecord, "artists" | "releaseName">,
+  changes: BulkPlayChanges,
   dependencies: {
     load: (rkey: string) => Promise<LoadedPlayRecord>;
     put: (

@@ -116,7 +116,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
           </View>
           {play.originUri ? (
             <Pressable
-              onPress={() => Linking.openURL(play.originUri as string)}
+              onPress={() => Linking.openURL(play.originUri ?? "")}
               accessibilityLabel="Open in your music app"
               className="h-9 w-9 items-center justify-center self-start rounded-full bg-fill"
             >

@@ -119,8 +119,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         const agent = new Agent(session);
         set({
           auth: callbackAuth,
-          // TODO: fork or update auth lib
-          oauthSession: session as any,
+          oauthSession: session,
           oauthIssuer: oauthIssuer ?? get().oauthIssuer,
           oauthState,
           status: "loggedIn",
@@ -128,14 +127,14 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           isAgentReady: true,
         });
         get().populateLoggedInProfile();
-      } catch (error: any) {
+      } catch (error) {
         console.error("OAuth callback failed:", error);
         set({
           status: "loggedOut",
           login: {
             loading: false,
             error:
-              (error?.message as string) ||
+              (error instanceof Error && error.message) ||
               "Unknown error during OAuth callback",
           },
         });

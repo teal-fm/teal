@@ -24,6 +24,7 @@ import {
   useLayout,
 } from "@/components/ds";
 import { appHref } from "@/lib/href";
+import { param } from "@/lib/params";
 
 type GridSize = 3 | 4 | 5;
 
@@ -33,12 +34,10 @@ const SIZES = [
   { value: 5, label: "5 × 5" },
 ] as const;
 
-function param(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
 function gridSize(value?: string): GridSize {
-  return value === "3" || value === "5" ? (Number(value) as GridSize) : 4;
+  if (value === "3") return 3;
+
+  return value === "5" ? 5 : 4;
 }
 
 /** A cover grid of someone's most-played albums, shareable as a link or a PNG. */
@@ -63,7 +62,7 @@ export default function TopsterScreen() {
     enabled: !!actor,
   });
 
-  const name = profile.data?.displayName || normalizeHandle((profile.data as { handle?: string } | undefined)?.handle) || normalizeHandle(actor);
+  const name = profile.data?.displayName || normalizeHandle(actor);
   const title = `${name}'s top albums`;
   const releases = chart.data ?? [];
   const gap = 4;
