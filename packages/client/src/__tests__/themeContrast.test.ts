@@ -31,6 +31,7 @@ function token(block: string, name: string): Color {
     // SAFETY: three captured channels plus alpha make four numbers.
     return [...hex.slice(1, 4).map((h) => parseInt(h, 16) / 255), 1] as Color;
   }
+
   const rgba = value.match(/^rgba\(([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)$/);
 
   if (rgba) return [Number(rgba[1]) / 255, Number(rgba[2]) / 255, Number(rgba[3]) / 255, Number(rgba[4])];
