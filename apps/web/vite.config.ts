@@ -11,6 +11,7 @@ import pkg from "./package.json" with { type: "json" };
 
 function gitCommit() {
   if (process.env.GIT_COMMIT) return process.env.GIT_COMMIT;
+
   try {
     return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
   } catch {

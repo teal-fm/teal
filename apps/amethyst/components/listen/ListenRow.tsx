@@ -9,7 +9,9 @@ import { Cover, Icon, Text } from "@/components/ds";
 
 export function listenedAt(value?: string) {
   const time = new Date(value || "");
+
   if (Number.isNaN(time.getTime())) return undefined;
+
   return time.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -42,6 +44,7 @@ export function ListenRow({
   const artists = displayArtists(play) || "Unknown artist";
   const when = listenedAt(play.playedTime);
   const label = `${play.trackName} by ${artists}${when ? `, listened ${when}` : ""}${syncing ? ", saved and syncing" : ""}`;
+
   const body = (
     <View className={cn("flex-row items-center gap-3 py-2.5", !last && "border-b border-hair")}>
       {selecting ? (
@@ -79,7 +82,9 @@ export function ListenRow({
       </Pressable>
     );
   }
+
   const href = (syncing && listenHref(play.authorDid, play.rkey)) || musicTrackHref(artists, play.releaseName, play.trackName, play.uri);
+
   return (
     <Link href={href as never} asChild>
       <Pressable accessibilityLabel={label} className="web:hover:opacity-80">

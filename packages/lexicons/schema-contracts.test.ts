@@ -27,6 +27,7 @@ test("play validation rejects malformed service URIs", () => {
     playedTime: "2026-10-03T00:00:00Z",
     musicServiceUri: "local:manual",
   };
+
   assert.doesNotThrow(() => validatePlay(play));
   assert.throws(() => validatePlay({ ...play, musicServiceUri: "local" }));
 });
@@ -38,6 +39,7 @@ test("rich text facet validation checks features", () => {
       { $type: "app.bsky.richtext.facet#link", uri: "https://teal.fm" },
     ],
   };
+
   assert.doesNotThrow(() => facet.$validate(valid));
   assert.throws(() =>
     facet.$validate({ ...valid, index: { byteStart: -1, byteEnd: 5 } }),

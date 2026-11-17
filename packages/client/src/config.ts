@@ -7,6 +7,7 @@ export type KeyValueStorage = {
 
 export function memoryStorage(): KeyValueStorage {
   const items = new Map<string, string>();
+
   return {
     getItem: async (key) => items.get(key) ?? null,
     setItem: async (key, value) => void items.set(key, value),

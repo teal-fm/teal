@@ -49,6 +49,7 @@ function Inner({ label, icon, loading, size = "md" }: Look) {
 }
 
 export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & Look & { href?: undefined };
+
 export type LinkButtonProps = Look & { href: string; replace?: boolean; target?: string; "aria-label"?: string };
 
 /** A pill button. Pass `href` to make it a link. */
@@ -139,6 +140,7 @@ export function Choices<T extends string | number>({
     <div role="group" aria-label={label} className="flex flex-wrap gap-2">
       {options.map((option) => {
         const on = option.value === value;
+
         return (
           <button
             key={String(option.value)}

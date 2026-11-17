@@ -61,6 +61,7 @@ export function artistsFromText(value: string) {
 
 function optionalTrim(value: string) {
   const trimmed = value.trim();
+
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
@@ -92,17 +93,21 @@ export function applyEditableFields(
   },
 ): EditablePlayRecord {
   const trackName = fields.trackName.trim();
+
   if (!trackName) {
     throw new Error("Track name is required.");
   }
 
   let playedTime: PlayRecord["playedTime"];
   const playedTimeText = fields.playedTime.trim();
+
   if (playedTimeText) {
     const parsed = new Date(playedTimeText);
+
     if (Number.isNaN(parsed.getTime())) {
       throw new Error("Played time must be a valid date and time.");
     }
+
     playedTime = parsed.toISOString() as PlayRecord["playedTime"];
   }
 
@@ -128,12 +133,14 @@ export async function loadPlayRecord(
       collection: PLAY_COLLECTION,
       rkey,
     });
+
     return {
       record: response.data.value as EditablePlayRecord,
       swapRecord: response.data.cid,
     };
   } catch (error) {
     if (!fallback) throw error;
+
     return { record: editableRecordFromPlay(fallback) };
   }
 }
@@ -156,6 +163,7 @@ export async function putPlayRecord(
       swapRecord,
     },
   );
+
   return { uri: response.data.uri, cid: response.data.cid };
 }
 

@@ -14,6 +14,7 @@ export function PeopleList({ did, kind, onClose }: { did: string; kind: "followe
   useEffect(() => {
     closeRef.current?.focus();
   }, [kind]);
+
   return (
     <Glass
       as="section"

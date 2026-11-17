@@ -16,6 +16,7 @@ function param(value: string | string[] | undefined) {
 /** An album: its cover, track list, and everyone who has listened to it on teal. */
 export default function AlbumScreen() {
   const mbid = param(useLocalSearchParams().mbid);
+
   const album = useInfiniteQuery({
     queryKey: ["album", mbid],
     queryFn: ({ pageParam }) => getAlbum(mbid!, 30, pageParam),
@@ -31,7 +32,9 @@ export default function AlbumScreen() {
       </Screen>
     );
   }
+
   const info = album.data?.pages[0]?.album;
+
   if (!info) {
     return (
       <Screen back pageTitle="Album">
@@ -39,6 +42,7 @@ export default function AlbumScreen() {
       </Screen>
     );
   }
+
   const plays = album.data?.pages.flatMap((p) => p.plays) ?? [];
 
   return (
@@ -49,6 +53,7 @@ export default function AlbumScreen() {
       onScroll={(event) => {
         const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
         const nearEnd = contentSize.height - (contentOffset.y + layoutMeasurement.height) < 800;
+
         if (nearEnd && album.hasNextPage && !album.isFetchingNextPage) void album.fetchNextPage();
       }}
     >
@@ -88,6 +93,7 @@ export default function AlbumScreen() {
               {track.uri ? <Icon icon={ChevronRight} size={18} className="text-ink-2" /> : null}
             </View>
           );
+
           return track.uri ? (
             <Link key={track.uri} href={musicTrackHref(track.artistName, info.name, track.name, track.uri) as never} asChild>
               <Pressable className="web:hover:opacity-80">{row}</Pressable>

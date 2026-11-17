@@ -45,7 +45,9 @@ export function startAuth() {
     window.location.replace(url);
     started ??= new Promise(() => {});
   }
+
   started ??= session().then((m) => m.restore());
+
   return started;
 }
 
@@ -57,11 +59,13 @@ export async function signIn(handle: string) {
 export async function signOut() {
   const current = useAuth.getState().session;
   useAuth.setState({ status: "loggedOut", agent: null, session: null, profile: null });
+
   if (current) await current.signOut().catch(() => undefined);
 }
 
 /** Re-reads the viewer's profile, e.g. after editing it. */
 export function refreshViewerProfile() {
   const { agent } = useAuth.getState();
+
   if (agent) void session().then((m) => m.loadViewerProfile(agent));
 }

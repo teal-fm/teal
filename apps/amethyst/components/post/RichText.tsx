@@ -27,13 +27,17 @@ type RichTextProps = {
 function byteToCodeUnitOffsets(text: string) {
   const offsets: number[] = [];
   let byteOffset = 0;
+
   for (let i = 0; i < text.length; i += 1) {
     offsets[byteOffset] = i;
     const codePoint = text.codePointAt(i) || 0;
     byteOffset += new TextEncoder().encode(String.fromCodePoint(codePoint)).length;
+
     if (codePoint > 0xffff) i += 1;
   }
+
   offsets[byteOffset] = text.length;
+
   return offsets;
 }
 
@@ -57,17 +61,21 @@ export default function RichText({ text = "", facets, className }: RichTextProps
   for (const facet of normalized) {
     const start = offsets[facet.index?.byteStart || 0];
     const end = offsets[facet.index?.byteEnd || 0];
+
     if (start === undefined || end === undefined || start < cursor) continue;
+
     if (start > cursor) parts.push({ text: text.slice(cursor, start) });
     parts.push({ text: text.slice(start, end), feature: facet.features?.[0] });
     cursor = end;
   }
+
   if (cursor < text.length) parts.push({ text: text.slice(cursor) });
 
   return (
     <Text className={className}>
       {parts.map((part, index) => {
         const key = `${part.text}-${index}`;
+
         if (part.feature?.did) {
           return (
             <Link key={key} href={`/profile/${part.feature.did}` as any} asChild>
@@ -75,6 +83,7 @@ export default function RichText({ text = "", facets, className }: RichTextProps
             </Link>
           );
         }
+
         if (part.feature?.uri) {
           return (
             <Pressable
@@ -85,6 +94,7 @@ export default function RichText({ text = "", facets, className }: RichTextProps
             </Pressable>
           );
         }
+
         return part.text;
       })}
     </Text>

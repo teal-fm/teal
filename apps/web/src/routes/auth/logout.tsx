@@ -10,6 +10,7 @@ export const Route = createFileRoute("/auth/logout")({
 function SignOut() {
   const back = useGoBack();
   const go = useGo();
+
   return (
     <Dialog
       title="Sign out of Teal?"

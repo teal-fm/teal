@@ -11,6 +11,7 @@ type ChartOptions = {
 
 function loadArtwork(url?: string): Promise<HTMLImageElement | undefined> {
   if (!url) return Promise.resolve(undefined);
+
   return new Promise((resolve) => {
     const image = new window.Image();
     const timeout = window.setTimeout(() => resolve(undefined), 10000);
@@ -19,10 +20,12 @@ function loadArtwork(url?: string): Promise<HTMLImageElement | undefined> {
       window.clearTimeout(timeout);
       resolve(image);
     };
+
     image.onerror = () => {
       window.clearTimeout(timeout);
       resolve(undefined);
     };
+
     image.src = url;
   });
 }
@@ -34,9 +37,11 @@ function shortText(
 ) {
   if (context.measureText(value).width <= width) return value;
   let shortened = value;
+
   while (shortened && context.measureText(`${shortened}…`).width > width) {
     shortened = shortened.slice(0, -1);
   }
+
   return `${shortened}…`;
 }
 
@@ -56,6 +61,7 @@ export async function downloadTopsterPng({
   canvas.width = padding * 3 + gridSize + listWidth;
   canvas.height = padding * 2 + 114 + gridSize;
   const context = canvas.getContext("2d");
+
   if (!context)
     throw new Error("Your browser could not create the chart image.");
 
@@ -77,15 +83,18 @@ export async function downloadTopsterPng({
   );
 
   const top = 154;
+
   const artwork = await Promise.all(
     releases.map((release) => loadArtwork(coverArtUrl(release.mbid, 250))),
   );
+
   for (let index = 0; index < columns * rows; index++) {
     const x = padding + (index % columns) * (cell + gap);
     const y = top + Math.floor(index / columns) * (cell + gap);
     context.fillStyle = "#244238";
     context.fillRect(x, y, cell, cell);
     const image = artwork[index];
+
     if (image) {
       const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
       context.drawImage(

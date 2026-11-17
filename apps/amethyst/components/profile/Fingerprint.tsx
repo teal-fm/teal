@@ -17,11 +17,13 @@ const GAP = 2;
 export function Fingerprint({ actor, height = 168 }: { actor: string; height?: number }) {
   const [width, setWidth] = useState(0);
   const [from, to] = lastDays(DAYS);
+
   const calendar = useQuery({
     queryKey: ["calendar", actor, from, to],
     queryFn: () => getListeningCalendar(actor, from, to),
     staleTime: 5 * 60_000,
   });
+
   const days = calendar.data?.days ?? [];
   const cell = width ? (width - GAP * (DAYS - 1)) / DAYS : 0;
   const rowHeight = (height - GAP * (ROWS - 1)) / ROWS;
@@ -38,6 +40,7 @@ export function Fingerprint({ actor, height = 168 }: { actor: string; height?: n
         <View className="flex-row" style={{ gap: GAP }}>
           {Array.from({ length: DAYS }, (_, d) => {
             const bins = hourBins(days[d], ROWS);
+
             return (
               <View key={d} style={{ width: cell, gap: GAP }}>
                 {bins.map((bin, r) => (

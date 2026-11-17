@@ -93,6 +93,7 @@ describe("manual listen timeline", () => {
 describe("manual listen record mapping", () => {
   it("normalizes MusicBrainz IDs and preserves release metadata", () => {
     const first = track("1", "33333333-3333-4333-8333-333333333333", "First", 120000);
+
     const records = buildManualListenRecords(
       release,
       [first],
@@ -144,7 +145,9 @@ describe("atomic repository submission", () => {
         data: { results: [{ uri: "at://listen/1" }] },
       }),
     );
+
     const agent = { did: "did:plc:test", call };
+
     const records = buildManualListenRecords(
       release,
       [track("1", "33333333-3333-4333-8333-333333333333", "First", 120000)],
@@ -170,6 +173,7 @@ describe("atomic repository submission", () => {
 
   it("does not submit an empty transaction", async () => {
     const call = jest.fn();
+
     const agent = {
       did: "did:plc:test",
       call: call as unknown as (method: string, params: Record<string, never>, body: unknown) => Promise<{ data: unknown }>,

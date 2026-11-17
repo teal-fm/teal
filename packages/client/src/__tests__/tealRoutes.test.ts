@@ -8,9 +8,11 @@ import {
 
 it("opens a playlist AT URI with the required identity query intact", () => {
   const uri = "at://did:plc:owner/fm.teal.feed.social.playlist/3test";
+
   const href = hrefFromAtUri(
     atUriFromRoutePath(`/at:/${encodeURIComponent(uri.slice(5))}`),
   );
+
   expect(href).toBe(`/playlist/playlist?uri=${encodeURIComponent(uri)}`);
 });
 
@@ -45,5 +47,6 @@ it("opens alpha-era playlists as well as current ones", () => {
     const uri = `at://did:plc:owner/${collection}/3test`;
     expect(playlistHrefFromUri(uri)).toBe(`/playlist/playlist?uri=${encodeURIComponent(uri)}`);
   }
+
   expect(playlistHrefFromUri("at://did:plc:owner/fm.teal.feed.social.playlistItem/3test")).toBeUndefined();
 });

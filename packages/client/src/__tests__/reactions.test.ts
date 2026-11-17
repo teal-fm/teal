@@ -39,6 +39,7 @@ describe("dedupeMoments", () => {
       release: { releaseMbId: id, releaseName: name, artistName: "Fontaines D.C." },
       listenerCount: n,
     });
+
     expect(
       dedupeMoments([m("a", "Dopamine Chamber", 3), m("b", "Le Tigre", 2), m("c", "dopamine chamber", 2)]).map(
         (x) => x.release.releaseMbId,

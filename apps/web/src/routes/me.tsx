@@ -12,7 +12,9 @@ export const Route = createFileRoute("/me")({
 function Me() {
   const status = useAuth((state) => state.status);
   const did = useAuth((state) => state.agent?.did);
+
   if (status === "loggedIn" && did) return <Navigate to="/profile/$handle" params={{ handle: did }} replace />;
+
   return (
     <Screen title="You">
       {status === "start" ? (

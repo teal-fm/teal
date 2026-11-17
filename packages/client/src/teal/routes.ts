@@ -12,7 +12,9 @@ export function routePart(value?: string) {
 
 export function musicArtistHref(name: string, mbid?: string) {
   const query = new URLSearchParams({ name });
+
   if (mbid) query.set("mbid", mbid);
+
   return `/:o/music/${routePart(name)}?${query.toString()}`;
 }
 
@@ -22,8 +24,11 @@ export function musicArtistListenersHref(
   period?: string,
 ) {
   const query = new URLSearchParams({ name });
+
   if (mbid) query.set("mbid", mbid);
+
   if (period) query.set("period", period);
+
   return `/:o/music/${routePart(name)}/listeners?${query.toString()}`;
 }
 
@@ -43,38 +48,47 @@ export function musicTrackHref(
   postUri?: string,
 ) {
   const query = new URLSearchParams();
+
   if (uri) query.set("uri", uri);
+
   if (postUri) query.set("postUri", postUri);
   const suffix = query.size ? `?${query.toString()}` : "";
+
   return `/:o/music/${routePart(artistName)}/${routePart(releaseName)}/${routePart(trackName)}${suffix}`;
 }
 
 export function listenHref(authorDid?: string, rkey?: string) {
   if (!authorDid || !rkey) return undefined;
+
   return `/listen/${encodeURIComponent(authorDid)}/${encodeURIComponent(rkey)}`;
 }
 
 export function listenHrefFromUri(uri?: string) {
   const parsed = parseAtUri(uri);
+
   if (!parsed || parsed.collection !== "fm.teal.feed.play") {
     return undefined;
   }
+
   return listenHref(parsed.did, parsed.rkey);
 }
 
 export const POST_COLLECTION = "fm.teal.feed.social.post";
+
 // Posts written before the lexicons left alpha keep their original collection in the URI.
 export const ALPHA_POST_COLLECTION = "fm.teal.alpha.feed.social.post";
 
 export function postHref(authorDid?: string, rkey?: string, collection?: string) {
   if (!authorDid || !rkey) return undefined;
   const path = `/post/${encodeURIComponent(authorDid)}/${encodeURIComponent(rkey)}`;
+
   return collection === ALPHA_POST_COLLECTION ? `${path}?alpha=1` : path;
 }
 
 /** The AT URI a /post route points at; `alpha` comes from postHref's query. */
 export function postUriFromRoute(did?: string, rkey?: string, alpha?: string) {
   if (!did || !rkey) return undefined;
+
   return `at://${did}/${alpha === "1" ? ALPHA_POST_COLLECTION : POST_COLLECTION}/${rkey}`;
 }
 
@@ -84,6 +98,7 @@ export function rkeyFromAtUri(uri?: string) {
 
 export function postHrefFromUri(uri?: string) {
   const parsed = parseAtUri(uri);
+
   if (
     !parsed ||
     (parsed.collection !== POST_COLLECTION &&
@@ -91,6 +106,7 @@ export function postHrefFromUri(uri?: string) {
   ) {
     return undefined;
   }
+
   return postHref(parsed.did, parsed.rkey, parsed.collection);
 }
 
@@ -102,15 +118,18 @@ type ParsedAtUri = {
 
 function decodePath(value: string) {
   let decoded = value;
+
   for (let i = 0; i < 2; i++) {
     try {
       const next = decodeURIComponent(decoded);
+
       if (next === decoded) break;
       decoded = next;
     } catch {
       break;
     }
   }
+
   return decoded;
 }
 
@@ -118,35 +137,45 @@ export function parseAtUri(uri?: string): ParsedAtUri | undefined {
   if (!uri?.startsWith("at://")) return undefined;
   const rest = uri.slice("at://".length);
   const [did, collection, rkey] = rest.split("/");
+
   if (!did) return undefined;
+
   return { did, collection, rkey };
 }
 
 export function atUriFromRoutePath(pathname?: string) {
   if (!pathname) return undefined;
   const path = decodePath(pathname);
+
   if (path.startsWith("/at://")) {
     return `at://${path.slice("/at://".length)}`;
   }
+
   if (path.startsWith("/at:/")) {
     return `at://${path.slice("/at:/".length)}`;
   }
+
   if (path.startsWith("at://")) {
     return path;
   }
+
   return undefined;
 }
 
 export function profileHrefFromAtUri(uri?: string) {
   const parsed = parseAtUri(uri);
+
   if (!parsed) return undefined;
+
   if (!parsed.collection) return `/profile/${encodeURIComponent(parsed.did)}`;
+
   if (
     parsed.collection === "fm.teal.actor.profile" ||
     parsed.collection === "app.bsky.actor.profile"
   ) {
     return `/profile/${encodeURIComponent(parsed.did)}`;
   }
+
   return undefined;
 }
 
@@ -165,7 +194,9 @@ export const PLAYLIST_COLLECTIONS = ["fm.teal.feed.social.playlist", "fm.teal.al
 export function playlistHrefFromUri(uri?: string) {
   if (!uri || !/^at:\/\/[^/\s]+\/[a-z.]+\/[^/\s?#]+$/.test(uri)) return undefined;
   const parsed = parseAtUri(uri);
+
   if (!parsed?.rkey || !PLAYLIST_COLLECTIONS.includes(parsed.collection ?? "")) return undefined;
+
   return playlistHref("playlist", uri);
 }
 
@@ -179,5 +210,6 @@ export function absoluteUrl(path: string) {
     typeof window !== "undefined" && window.location?.origin
       ? window.location.origin
       : clientConfig().publicOrigin;
+
   return `${origin.replace(/\/$/, "")}${path}`;
 }

@@ -21,13 +21,16 @@ function param(value: string | string[] | undefined) {
 async function playFromSlugs(artist?: string, release?: string, track?: string) {
   if (!track) throw new Error("missing track");
   const results = await getSearchResults(track.replace(/-/g, " "), 25);
+
   const match = results.songs.find(
     (song) =>
       routePart(song.trackName) === track &&
       (!release || routePart(song.releaseName) === release) &&
       (!artist || routePart(song.artistName) === artist),
   );
+
   if (!match?.uri) throw new Error("no match");
+
   return (await getPlayByUri(match.uri)).play;
 }
 
@@ -41,8 +44,10 @@ export default function TrackScreen() {
     queryKey: ["play", uri, param(params.artist), param(params.release), param(params.track)],
     queryFn: () => (uri ? getPlayByUri(uri).then((r) => r.play) : playFromSlugs(param(params.artist), param(params.release), param(params.track))),
   });
+
   const p = play.data;
   const recordingArt = useRecordingArt(p);
+
   const history = useInfiniteQuery({
     queryKey: ["album-history", p?.releaseMbId],
     queryFn: ({ pageParam }) => getAlbum(p!.releaseMbId!, 100, pageParam),
@@ -50,7 +55,9 @@ export default function TrackScreen() {
     getNextPageParam: (last) => last.cursor,
     enabled: !!p?.releaseMbId,
   });
+
   const viewer = useViewerDid();
+
   const source = useQuery({
     queryKey: ["post", postUri, viewer ?? null],
     queryFn: () => getSocialPost(postUri!, viewer).then((r) => r.post),
@@ -64,6 +71,7 @@ export default function TrackScreen() {
       </Screen>
     );
   }
+
   if (play.isError || !p) {
     return (
       <Screen back pageTitle="Song">

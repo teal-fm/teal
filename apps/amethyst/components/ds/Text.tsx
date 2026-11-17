@@ -16,6 +16,7 @@ export const Text = forwardRef<RNText, DsTextProps>(function Text(
   ref,
 ) {
   const halo = useHalo();
+
   return (
     <RNText
       ref={ref}

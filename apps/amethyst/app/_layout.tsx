@@ -20,6 +20,7 @@ const SYSTEM_FONT = Platform.select({
   web: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Roboto, "Segoe UI", sans-serif',
   default: "System",
 });
+
 const fonts = Object.fromEntries(
   (["regular", "medium", "bold", "heavy"] as const).map((key, i) => [
     key,
@@ -59,15 +60,18 @@ const modal = {
 function StoreSession({ children }: { children: ReactNode }) {
   const status = useStore((state) => state.status);
   const agent = useStore((state) => state.pdsAgent);
+
   const value = useMemo(
     () => ({ agent, viewer: status === "loggedIn" ? agent?.did : undefined }),
     [agent, status],
   );
+
   return <SessionProvider value={value}>{children}</SessionProvider>;
 }
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
+
   return (
     <QueryClientProvider client={queryClient}>
       <StoreSession>

@@ -20,17 +20,24 @@ function AuthCallback() {
     let cancelled = false;
     void startAuth().then(async () => {
       const { status, agent } = useAuth.getState();
+
       if (cancelled) return;
+
       if (status !== "loggedIn" || !agent?.did) {
         setFailed(true);
+
         return;
       }
+
       const did = agent.did;
+
       const destination = await firstLoginHref(did, () =>
         agent.call("com.atproto.repo.getRecord", { repo: did, collection: "fm.teal.actor.profile", rkey: "self" }),
       );
+
       if (!cancelled && useAuth.getState().agent?.did === did) void go(destination, { replace: true });
     });
+
     return () => {
       cancelled = true;
     };

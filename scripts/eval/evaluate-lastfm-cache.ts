@@ -143,6 +143,7 @@ export class LastFMCache {
     try {
       this.db.exec(`ALTER TABLE evaluation_result_cache ADD COLUMN improved_top_ids TEXT`);
     } catch (_) { /* column already exists */ }
+
     try {
       this.db.exec(`ALTER TABLE evaluation_result_cache ADD COLUMN baseline_top_ids TEXT`);
     } catch (_) { /* column already exists */ }
@@ -218,6 +219,7 @@ export class LastFMCache {
     try {
       this.db.exec(`ALTER TABLE scrobbles ADD COLUMN mbid_source TEXT`);
     } catch (_) { /* column already exists */ }
+
     try {
       this.db.exec(`ALTER TABLE mbid_cache ADD COLUMN mbid_source TEXT`);
     } catch (_) { /* column already exists */ }
@@ -242,6 +244,7 @@ export class LastFMCache {
       ORDER BY timestamp DESC
       LIMIT ?
     `);
+
     return stmt.all(username, limit) as Array<{
       track: string;
       artist: string;
@@ -269,6 +272,7 @@ export class LastFMCache {
       ORDER BY date DESC
       LIMIT ?
     `);
+
     return stmt.all(username, limit) as Array<{
       track: string;
       artist: string;
@@ -295,14 +299,17 @@ export class LastFMCache {
     `);
     
     let added = 0;
+
     const insert = this.db.transaction((tracks) => {
       for (const t of tracks) {
         const info = stmt.run(username, t.track, t.artist, t.mbid || null, t.date);
+
         if (info.changes > 0) added++;
       }
     });
     
     insert(tracks);
+
     return added;
   }
 
@@ -315,7 +322,9 @@ export class LastFMCache {
       FROM scrobbles
       WHERE username = ?
     `);
+
     const result = stmt.get(username) as { count: number };
+
     return result.count;
   }
 
@@ -340,14 +349,17 @@ export class LastFMCache {
     `);
 
     let added = 0;
+
     const insert = this.db.transaction((scrobbles) => {
       for (const s of scrobbles) {
         const info = stmt.run(username, s.track, s.artist, s.album || null, s.mbid || null, s.mbid_source || null, s.timestamp);
+
         if (info.changes > 0) added++;
       }
     });
 
     insert(scrobbles);
+
     return added;
   }
 
@@ -358,7 +370,9 @@ export class LastFMCache {
     const stmt = this.db.prepare(`
       SELECT mbid FROM mbid_cache WHERE track = ? AND artist = ?
     `);
+
     const result = stmt.get(track, artist) as { mbid: string | null } | undefined;
+
     return result?.mbid;
   }
 
@@ -370,6 +384,7 @@ export class LastFMCache {
       INSERT OR REPLACE INTO mbid_cache (track, artist, mbid)
       VALUES (?, ?, ?)
     `);
+
     stmt.run(track, artist, mbid);
   }
 
@@ -381,8 +396,11 @@ export class LastFMCache {
     const stmt = this.db.prepare(`
       SELECT mbid, mbid_source FROM mbid_cache WHERE track = ? AND artist = ?
     `);
+
     const result = stmt.get(track, artist) as { mbid: string | null; mbid_source: string | null } | undefined;
+
     if (result === undefined) return undefined;
+
     return { mbid: result.mbid, source: result.mbid_source };
   }
 
@@ -394,6 +412,7 @@ export class LastFMCache {
       INSERT OR REPLACE INTO mbid_cache (track, artist, mbid, mbid_source)
       VALUES (?, ?, ?, ?)
     `);
+
     stmt.run(track, artist, mbid, source);
   }
 
@@ -412,11 +431,15 @@ export class LastFMCache {
       FROM track_correction_cache
       WHERE track = ? AND artist = ?
     `);
+
     const row = stmt.get(track, artist) as
       | { corrected_track: string | null; corrected_artist: string | null }
       | undefined;
+
     if (!row) return undefined;
+
     if (!row.corrected_track || !row.corrected_artist) return null;
+
     return { correctedTrack: row.corrected_track, correctedArtist: row.corrected_artist };
   }
 
@@ -430,6 +453,7 @@ export class LastFMCache {
       INSERT OR REPLACE INTO track_correction_cache (track, artist, corrected_track, corrected_artist)
       VALUES (?, ?, ?, ?)
     `);
+
     stmt.run(track, artist, correctedTrack, correctedArtist);
   }
 
@@ -445,18 +469,24 @@ export class LastFMCache {
       FROM artist_info_cache
       WHERE artist = ?
     `);
+
     const row = stmt.get(artist) as { mbid: string | null; aliases_json: string | null } | undefined;
+
     if (!row) return undefined;
+
     if (!row.mbid && !row.aliases_json) return null;
     let aliases: string[] | undefined;
+
     if (row.aliases_json) {
       try {
         const parsed = JSON.parse(row.aliases_json);
+
         if (Array.isArray(parsed)) aliases = parsed.filter((x) => typeof x === "string");
       } catch {
         // ignore parse errors; treat as no aliases
       }
     }
+
     return { mbid: row.mbid, aliases };
   }
 
@@ -465,10 +495,13 @@ export class LastFMCache {
       INSERT OR REPLACE INTO artist_info_cache (artist, mbid, aliases_json)
       VALUES (?, ?, ?)
     `);
+
     if (!info) {
       stmt.run(artist, null, null);
+
       return;
     }
+
     stmt.run(artist, info.mbid, info.aliases ? JSON.stringify(info.aliases) : null);
   }
 
@@ -484,9 +517,13 @@ export class LastFMCache {
       FROM album_info_cache
       WHERE artist = ? AND album = ?
     `);
+
     const row = stmt.get(artist, album) as { mbid: string | null } | undefined;
+
     if (!row) return undefined;
+
     if (!row.mbid) return null;
+
     return { mbid: row.mbid };
   }
 
@@ -495,6 +532,7 @@ export class LastFMCache {
       INSERT OR REPLACE INTO album_info_cache (artist, album, mbid)
       VALUES (?, ?, ?)
     `);
+
     stmt.run(artist, album, info?.mbid ?? null);
   }
 
@@ -518,13 +556,17 @@ export class LastFMCache {
     strategy?: string
   ): any[] | null {
     const queryHash = this.hashSearchQuery(track, artist, album, strategy);
+
     const stmt = this.db.prepare(`
       SELECT results FROM mb_search_cache WHERE query_hash = ?
     `);
+
     const result = stmt.get(queryHash) as { results: string } | undefined;
+
     if (result) {
       return JSON.parse(result.results);
     }
+
     return null;
   }
 
@@ -543,10 +585,12 @@ export class LastFMCache {
     strategy?: string
   ) {
     const queryHash = this.hashSearchQuery(track, artist, album, strategy);
+
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO mb_search_cache (query_hash, track, artist, album, results)
       VALUES (?, ?, ?, ?, ?)
     `);
+
     stmt.run(queryHash, track, artist, album || null, JSON.stringify(results));
   }
 
@@ -568,6 +612,7 @@ export class LastFMCache {
     const normalizedAlbum = (album || "").toLowerCase().trim();
     const stratStr = strategy || "default";
     const str = `${normalizedTrack}|${normalizedArtist}|${normalizedAlbum}|${stratStr}`;
+
     return createHash("md5").update(str).digest("hex");
   }
 
@@ -578,7 +623,9 @@ export class LastFMCache {
     const stmt = this.db.prepare(`
       SELECT is_valid FROM mbid_validation_cache WHERE mbid = ?
     `);
+
     const result = stmt.get(mbid) as { is_valid: number } | undefined;
+
     return result !== undefined ? result.is_valid === 1 : undefined;
   }
 
@@ -589,8 +636,11 @@ export class LastFMCache {
     const stmt = this.db.prepare(`
       SELECT is_valid, http_status FROM mbid_validation_cache WHERE mbid = ?
     `);
+
     const result = stmt.get(mbid) as { is_valid: number; http_status: number | null } | undefined;
+
     if (result === undefined) return undefined;
+
     return { isValid: result.is_valid === 1, httpStatus: result.http_status };
   }
 
@@ -614,6 +664,7 @@ export class LastFMCache {
       SELECT COUNT(*) as count FROM mbid_validation_cache
       WHERE http_status IS NULL OR http_status NOT IN (200, 301, 404)
     `).get() as { count: number };
+
     return result.count;
   }
 
@@ -625,6 +676,7 @@ export class LastFMCache {
       DELETE FROM mbid_validation_cache
       WHERE http_status IS NULL OR http_status NOT IN (200, 301, 404)
     `).run();
+
     return result.changes;
   }
 
@@ -636,6 +688,7 @@ export class LastFMCache {
       INSERT OR REPLACE INTO mbid_validation_cache (mbid, is_valid, http_status, error_message, canonical_mbid)
       VALUES (?, ?, ?, ?, ?)
     `);
+
     stmt.run(mbid, isValid ? 1 : 0, httpStatus || null, errorMessage || null, canonicalMbid || null);
   }
 
@@ -647,7 +700,9 @@ export class LastFMCache {
     const stmt = this.db.prepare(`
       SELECT canonical_mbid FROM mbid_validation_cache WHERE mbid = ?
     `);
+
     const result = stmt.get(mbid) as { canonical_mbid: string | null } | undefined;
+
     return result?.canonical_mbid || mbid;
   }
 
@@ -656,7 +711,9 @@ export class LastFMCache {
     const stmt = this.db.prepare(`
       SELECT canonical_mbid FROM mbid_validation_cache WHERE mbid = ?
     `);
+
     const result = stmt.get(mbid) as { canonical_mbid: string | null } | undefined;
+
     return result?.canonical_mbid != null;
   }
 
@@ -672,6 +729,7 @@ export class LastFMCache {
     cachedEvaluationResults: number;
   } {
     const scrobbleCount = this.getScrobbleCount(username);
+
     const withMBID = this.db
       .prepare(`SELECT COUNT(*) as count FROM scrobbles WHERE username = ? AND mbid IS NOT NULL`)
       .get(username) as { count: number };
@@ -724,6 +782,7 @@ export class LastFMCache {
     const configStr = `${searchConfig.enableCleaning ? "1" : "0"}|${searchConfig.enableFuzzy ? "1" : "0"}|${searchConfig.enableMultiStage ? "1" : "0"}`;
     // Include fieldCombination in hash to distinguish track-only vs track+artist
     const str = `${normalizedTrack}|${normalizedArtist}|${normalizedAlbum}|${normalizedMBID}|${configStr}|${fieldCombination}|${EVALUATION_LOGIC_VERSION}`;
+
     return createHash("md5").update(str).digest("hex");
   }
 
@@ -752,6 +811,7 @@ export class LastFMCache {
   } | null {
     try {
       const resultHash = this.hashEvaluationCase(track, artist, album, mbid, searchConfig, fieldCombination);
+
       const result = this.stmtGetEvaluationResult.get(resultHash) as {
         baseline_pos: number;
         improved_pos: number;
@@ -779,10 +839,12 @@ export class LastFMCache {
           baselineTopIds: result.baseline_top_ids ? JSON.parse(result.baseline_top_ids) : undefined,
         };
       }
+
       return null;
     } catch (error) {
       // If cache read fails, return null (graceful degradation)
       console.warn(`Cache read error for evaluation result: ${error instanceof Error ? error.message : String(error)}`);
+
       return null;
     }
   }
@@ -855,7 +917,9 @@ export class LastFMCache {
     const result = this.db.prepare(`
       SELECT work_id, work_title FROM recording_work_cache WHERE recording_mbid = ?
     `).get(recordingMbid) as { work_id: string | null; work_title: string | null } | undefined;
+
     if (result === undefined) return undefined;
+
     return { workId: result.work_id, workTitle: result.work_title };
   }
 

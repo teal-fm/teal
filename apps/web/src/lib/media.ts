@@ -8,6 +8,7 @@ function useMedia(query: string, serverValue: boolean) {
     (listener) => {
       const media = window.matchMedia(query);
       media.addEventListener("change", listener);
+
       return () => media.removeEventListener("change", listener);
     },
     () => window.matchMedia(query).matches,
@@ -20,6 +21,7 @@ export function useLayout() {
   const sidebar = useMedia(`(min-width: ${BREAKPOINTS.sidebar}px)`, false);
   const rail = useMedia(`(min-width: ${BREAKPOINTS.rail}px)`, false);
   const phone = !useMedia(`(min-width: ${BREAKPOINTS.phone}px)`, false);
+
   return { sidebar, rail, phone };
 }
 

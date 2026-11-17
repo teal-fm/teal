@@ -10,6 +10,7 @@ export const Route = createFileRoute("/at/$")({
   beforeLoad: ({ params }) => {
     const rest = (params._splat ?? "").replace(/^\/+/, "");
     const href = rest ? hrefFromAtUri(`at://${decodeURIComponent(rest)}`) : undefined;
+
     if (href) throw redirect({ href, replace: true });
   },
   head: () => ({ meta: [{ title: "Unsupported link · Teal" }] }),

@@ -34,12 +34,15 @@ const SLOTS: [number, number][] = [
   [0.3, 0.5],
   [0.7, 0.55],
 ];
+
 // Leaving covers fade slower than new ones arrive, so a fast scroll hands colour
 // over rather than washing out between covers.
 const FADE_IN_MS = 900;
 const FADE_OUT_MS = 1600;
+
 /** A cover stays at least this long once it arrives, so a flick can't churn the set. */
 const HOLD_MS = 700;
+
 /** The longest leaving covers wait for an arriving one's image. */
 const WAIT_FOR_ART_MS = 2000;
 const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
@@ -79,17 +82,21 @@ function thumbnail(uri: string) {
  */
 async function fallbackFor(failed: string, original: string, tried: Set<string>) {
   const release = original.match(/coverartarchive\.org\/release\/([^/]+)\//)?.[1];
+
   const group =
     release && failed === thumbnail(original)
       ? await getReleaseGroupCoverArtUrl(release, 500)
       : undefined;
+
   const otherSize = failed.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
   const releaseLarge = thumbnail(original).replace(/front-250$/, "front-500");
+
   return [group, otherSize, releaseLarge].find((next) => next && !tried.has(next));
 }
 
 /** After every fallback fails, start over after these waits, so a flaky archive heals. */
 const RETRY_MS = [1000, 4000, 15000, 60000];
+
 /** How long a cover's state outlives it, enough for a rebuild but not a later visit. */
 const RESUME_MS = 2000;
 
@@ -115,8 +122,10 @@ function Blob({
   onGone: (uri: string) => void;
 }) {
   const { width, height } = useWindowDimensions();
+
   const [resumedFrom] = useState(() => {
     const previous = remember ? memory.live.get(shown.uri) : undefined;
+
     return (
       previous && {
         opacity: previous.opacity.value,
@@ -125,6 +134,7 @@ function Blob({
       }
     );
   });
+
   const resumed = resumedFrom?.opacity ?? 0;
   const opacity = useSharedValue(resumed);
   const fill = useSharedValue(resumedFrom?.fill ?? (solo ? 1 : 0));
@@ -135,6 +145,7 @@ function Blob({
   // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
   const live = loaded ? Math.pow(shown.weight, 0.7) : 0;
   const shownAt = useRef(live);
+
   if (live > 0) shownAt.current = live;
   const leaving = shown.weight === 0;
   const target = leaving && hold ? shownAt.current : live;
@@ -147,10 +158,12 @@ function Blob({
       easing: ease,
       reduceMotion: ReduceMotion.Never,
     });
+
     if (!leaving || hold) return;
     // Stay mounted until the fade-out finishes, so a cover never blinks away. The
     // margin covers the timer and the animation running on different clocks.
     const timer = setTimeout(() => onGone(shown.uri), FADE_OUT_MS + 250);
+
     return () => clearTimeout(timer);
   }, [target, leaving, hold, opacity, onGone, shown.uri]);
 
@@ -161,6 +174,7 @@ function Blob({
     const uri = shown.uri;
     const values = { opacity, fill, source: loadedSource };
     memory.live.set(uri, values);
+
     return () => {
       setTimeout(() => {
         if (memory.live.get(uri) === values) memory.live.delete(uri);
@@ -185,13 +199,16 @@ function Blob({
   useEffect(() => () => {
     if (retry.current) clearTimeout(retry.current);
   }, []);
+
   const onError = () => {
     tried.current.add(source);
     void fallbackFor(source, shown.uri, tried.current).then((next) => {
       if (next) {
         setSource(next);
+
         return;
       }
+
       // Out of fallbacks: try the whole chain again later, a few times, in case
       // the archive is having a bad minute. A cover with no art stops here.
       if (retry.current || attempt >= RETRY_MS.length) return;
@@ -207,10 +224,13 @@ function Blob({
   const spotStyle = useAnimatedStyle(() => ({
     opacity: opacity.value * (1 - fill.value),
   }));
+
   const fullStyle = useAnimatedStyle(() => ({
     opacity: opacity.value * fill.value,
   }));
+
   const [fx, fy] = SLOTS[shown.slot];
+
   const image = (onLoad?: () => void) => (
     <Image
       key={`${source}#${attempt}`}
@@ -302,6 +322,7 @@ export function Backdrop({
   const commit = useCallback(
     (next: Shown[]) => {
       current.current = next;
+
       if (remember) memory.shown = next;
       setShown(next);
     },
@@ -314,26 +335,35 @@ export function Backdrop({
     const prev = current.current;
     const incoming = new Map(blobs.map((blob) => [blob.uri, blob.weight]));
     let wake = Infinity;
+
     const next = prev.map((item) => {
       const weight = incoming.get(item.uri);
+
       if (weight !== undefined) {
         return { ...item, weight, since: item.weight > 0 ? item.since : now };
       }
+
       if (item.weight > 0 && now - item.since < HOLD_MS) {
         wake = Math.min(wake, item.since + HOLD_MS);
+
         return item;
       }
+
       return { ...item, weight: 0 };
     });
+
     for (const blob of blobs) {
       if (prev.some((item) => item.uri === blob.uri)) continue;
       const crowd = SLOTS.map((_, index) => next.filter((item) => item.slot === index).length);
       const slot = crowd.indexOf(Math.min(...crowd));
       next.push({ uri: blob.uri, weight: blob.weight, slot, since: now });
     }
+
     commit(next);
+
     if (wake === Infinity) return;
     const timer = setTimeout(() => setRecheck((n) => n + 1), wake - now);
+
     return () => clearTimeout(timer);
   }, [blobs, recheck, commit]);
 
@@ -343,17 +373,22 @@ export function Backdrop({
   // Leaving covers wait for an arriving one to load, up to a limit, so moving to a
   // screen whose art is still downloading doesn't drain the colour in between.
   const [loadedUris, setLoadedUris] = useState(() => new Set<string>());
+
   const waitingFor =
     active.length > 0 && !active.some((item) => loadedUris.has(item.uri))
       ? active.map((item) => item.uri).join()
       : "";
+
   const [gaveUpOn, setGaveUpOn] = useState("");
   useEffect(() => {
     if (!waitingFor) {
       setGaveUpOn("");
+
       return;
     }
+
     const timer = setTimeout(() => setGaveUpOn(waitingFor), WAIT_FOR_ART_MS);
+
     return () => clearTimeout(timer);
   }, [waitingFor]);
   const hold = !!waitingFor && gaveUpOn !== waitingFor;
@@ -369,6 +404,7 @@ export function Backdrop({
         if (!prev.has(uri)) return prev;
         const next = new Set(prev);
         next.delete(uri);
+
         return next;
       });
     },

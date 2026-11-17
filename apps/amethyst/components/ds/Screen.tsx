@@ -29,6 +29,7 @@ export const TAB_BAR_CLEARANCE = 110;
 export function useLayout() {
   const { width } = useWindowDimensions();
   const web = Platform.OS === "web";
+
   return {
     width,
     sidebar: web && width >= BREAKPOINTS.sidebar,
@@ -43,10 +44,13 @@ export function PageTitle({ title }: { title?: string }) {
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
+
       return () => setFocused(false);
     }, []),
   );
+
   if (!focused || !title) return null;
+
   return (
     <Head>
       <title>{`${title} · Teal`}</title>

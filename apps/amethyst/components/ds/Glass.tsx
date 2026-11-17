@@ -16,8 +16,10 @@ export function Glass({
   ...props
 }: ViewProps & { children?: ReactNode; className?: string; strong?: boolean }) {
   const { isDarkColorScheme } = useColorScheme();
+
   const fill =
     Platform.OS === "android" || strong ? "bg-glass-strong" : "bg-glass";
+
   return (
     <View
       className={cn(

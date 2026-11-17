@@ -44,11 +44,13 @@ export function TrackPicker({
   autoSelect?: boolean;
 }) {
   const viewer = useViewerDid();
+
   const recent = useQuery({
     queryKey: ["actor-plays-recent", viewer],
     queryFn: () => getActorFeed(viewer!, 20).then((r) => r.plays),
     enabled: !!viewer,
   });
+
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlayView[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -61,9 +63,11 @@ export function TrackPicker({
   const search = async (event: FormEvent) => {
     event.preventDefault();
     const q = query.trim();
+
     if (!q) return;
     setSearching(true);
     setError(false);
+
     try {
       const found = await searchMusicbrainz({ track: q, artist: "", release: "" }, { throwOnError: true });
       setResults(found.slice(0, 8).map((r) => musicBrainzToPlayView(r)));
@@ -75,6 +79,7 @@ export function TrackPicker({
   };
 
   const list = results ?? recent.data ?? [];
+
   return (
     <div className="flex flex-col gap-2">
       <form role="search" onSubmit={search} className="flex items-center gap-2">
@@ -88,6 +93,7 @@ export function TrackPicker({
             enterKeyHint="search"
             onChange={(event) => {
               setQuery(event.target.value);
+
               if (!event.target.value.trim()) setResults(null);
             }}
           />

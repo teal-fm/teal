@@ -33,6 +33,7 @@ export { useViewerDid };
 
 export function useTodayQuery() {
   const viewer = useViewerDid();
+
   return useQuery({
     queryKey: keys.today(viewer),
     queryFn: () => getToday(viewer),
@@ -49,6 +50,7 @@ type FeedPage = Awaited<ReturnType<typeof getSocialFeed>>;
 
 export function useFeedQuery() {
   const viewer = useViewerDid();
+
   return useInfiniteQuery({
     queryKey: keys.feed(viewer),
     queryFn: ({ pageParam }) => getSocialFeed(20, pageParam, viewer),
@@ -85,8 +87,10 @@ function patchReactions(
       })),
     },
   );
+
   const patchPost = (post: SocialPostView) =>
     post.uri === subjectUri ? { ...post, reactions: update(post.reactions ?? []) } : post;
+
   client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: ["actor-posts"] }, (posts) =>
     posts && { ...posts, pages: posts.pages.map((page) => ({ ...page, items: page.items.map(patchPost) })) },
   );
@@ -98,6 +102,7 @@ function patchReactions(
 /** The reactions on one subject, for pages (like a listen) whose views don't carry them. */
 export function useReactionsQuery(subject?: string) {
   const viewer = useViewerDid();
+
   return useQuery({
     queryKey: keys.reactions(subject ?? "", viewer),
     queryFn: () => getReactions(subject!, viewer).then((r) => r.summary),
@@ -113,6 +118,7 @@ export function useToggleReaction() {
   const client = useQueryClient();
   const agent = usePdsAgent();
   const viewer = useViewerDid();
+
   return useMutation({
     mutationFn: async (input: {
       subject: ReactionSubject;
@@ -120,10 +126,13 @@ export function useToggleReaction() {
       existing?: string;
     }) => {
       if (!agent) throw new Error("Sign in to react.");
+
       if (input.existing) {
         await removeReaction(agent, input.existing);
+
         return undefined;
       }
+
       return addReaction(agent, input.subject, input.emoji);
     },
     onMutate: async ({ subject, emoji, existing }) => {
@@ -153,13 +162,16 @@ export function useToggleReaction() {
  */
 export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: string, parentUri?: string) {
   const keep = (post: SocialPostView) => post.uri !== uri;
+
   for (const key of [["feed"], ["actor-posts"]]) {
     client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: key }, (pages) =>
       pages && { ...pages, pages: pages.pages.map((page) => ({ ...page, items: page.items.filter(keep) })) },
     );
   }
+
   client.setQueriesData<SocialPostView[]>({ queryKey: ["replies"] }, (replies) => replies?.filter(keep));
   client.removeQueries({ queryKey: ["post", uri] });
+
   if (parentUri) bumpReplyCount(client, parentUri, -1);
 }
 
@@ -167,6 +179,7 @@ export function forgetPost(client: ReturnType<typeof useQueryClient>, uri: strin
 function bumpReplyCount(client: ReturnType<typeof useQueryClient>, uri: string, by: number) {
   const bump = (post: SocialPostView) => (post.uri === uri ? { ...post, replyCount: Math.max(0, post.replyCount + by) } : post);
   client.setQueriesData<SocialPostView>({ queryKey: ["post", uri] }, (post) => post && bump(post));
+
   for (const key of [["feed"], ["actor-posts"]]) {
     client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: key }, (pages) =>
       pages && { ...pages, pages: pages.pages.map((page) => ({ ...page, items: page.items.map(bump) })) },
@@ -184,13 +197,16 @@ export function rememberPost(client: ReturnType<typeof useQueryClient>, viewer: 
       replies && !replies.some((r) => r.uri === post.uri) ? [...replies, post] : replies,
     );
     bumpReplyCount(client, post.replyParentUri, 1);
+
     return;
   }
+
   const prepend = (pages: InfiniteData<FeedPage> | undefined) =>
     pages && {
       ...pages,
       pages: pages.pages.map((page, i) => (i === 0 ? { ...page, items: [post, ...page.items.filter((p) => p.uri !== post.uri)] } : page)),
     };
+
   client.setQueryData<InfiniteData<FeedPage>>(keys.feed(viewer), prepend);
   client.setQueriesData<InfiniteData<FeedPage>>({ queryKey: ["actor-posts", viewer] }, prepend);
 }

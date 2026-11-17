@@ -28,6 +28,7 @@ export function clientMetadataFor(origin: string): OAuthClientMetadataInput {
  */
 export function iosClientMetadataFor(origin: string): OAuthClientMetadataInput {
   const scheme = new URL(origin).hostname.split(".").reverse().join(".");
+
   return {
     client_id: `${origin}/ios-client-metadata.json`,
     client_name: "teal",

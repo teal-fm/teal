@@ -37,6 +37,7 @@ export function Section({
       ) : null}
     </div>
   );
+
   if (panel) {
     return (
       <Glass as="section" className={cn("p-4", className)}>
@@ -45,6 +46,7 @@ export function Section({
       </Glass>
     );
   }
+
   return (
     <section className={className}>
       {header}
@@ -86,7 +88,9 @@ export function Row({
       </span>
     </>
   );
+
   const rowClass = cn("flex items-center gap-3 py-2.5", divider && "border-b border-hair");
+
   if (href) {
     return (
       <div className={rowClass}>
@@ -97,6 +101,7 @@ export function Row({
       </div>
     );
   }
+
   if (onClick) {
     return (
       <div className={rowClass}>
@@ -107,6 +112,7 @@ export function Row({
       </div>
     );
   }
+
   return (
     <div className={rowClass}>
       {body}

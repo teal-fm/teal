@@ -7,11 +7,13 @@ import { useStore } from "@/stores/mainStore";
 
 function toSearchParams(params: Record<string, string | string[] | undefined>) {
   const search = new URLSearchParams();
+
   for (const [key, value] of Object.entries(params)) {
     for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) {
       search.append(key, item);
     }
   }
+
   return search;
 }
 
@@ -35,12 +37,17 @@ export default function AuthCallback() {
       .then(async () => {
         // The store reports failures in state rather than rejecting.
         const { status, pdsAgent } = useStore.getState();
+
         if (!stillHere()) return;
+
         if (status !== "loggedIn" || !pdsAgent?.did) {
           setFailed(true);
+
           return;
         }
+
         const did = pdsAgent.did;
+
         const destination = await firstLoginHref(did, () =>
           pdsAgent.call("com.atproto.repo.getRecord", {
             repo: did,
@@ -48,7 +55,9 @@ export default function AuthCallback() {
             rkey: "self",
           }),
         );
+
         const current = useStore.getState();
+
         if (stillHere() && current.status === "loggedIn" && current.pdsAgent?.did === did) {
           router.replace(destination as never);
         }

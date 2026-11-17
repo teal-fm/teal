@@ -12,6 +12,7 @@ import { shareLink } from "~/components/today/share";
 import { pickStrings } from "~/lib/search";
 
 type GridSize = 3 | 4 | 5;
+
 const SIZES = [
   { value: 3, label: "3 × 3" },
   { value: 4, label: "4 × 4" },
@@ -42,10 +43,12 @@ function TopsterScreen() {
     queryKey: ["topster", actor, period, columns],
     queryFn: () => getUserTopReleases(actor, period, columns * columns).then((r) => r.releases),
   });
+
   const profile = useQuery({
     queryKey: ["topster-name", actor],
     queryFn: () => getProfile(actor).then((r) => r.profile),
   });
+
   const name = profile.data?.displayName || normalizeHandle((profile.data as { handle?: string } | undefined)?.handle) || normalizeHandle(actor);
   const title = `${name}'s top albums`;
   const releases = chart.data ?? [];
@@ -64,6 +67,7 @@ function TopsterScreen() {
     if (exporting) return;
     setExporting(true);
     setNote(null);
+
     try {
       const { downloadTopsterPng } = await import("~/lib/topsterExport");
       await downloadTopsterPng({ releases, columns, title, period: periodLabel(period) });
@@ -112,13 +116,16 @@ function TopsterScreen() {
             <div className="grid w-full gap-1 sm:w-[62%] sm:shrink-0" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
               {Array.from({ length: columns * columns }, (_, i) => {
                 const release = releases[i];
+
                 if (!release) return <span key={`empty-${i}`} aria-hidden className="aspect-square rounded-[6px] bg-fill" />;
                 const label = `${i + 1}. ${release.name || "Unknown album"}, ${release.playCount || 0} plays`;
+
                 const art = (
                   <AmbientSource uri={coverUri(release.mbid)}>
                     <Cover releaseMbId={release.mbid} radius={6} />
                   </AmbientSource>
                 );
+
                 return release.mbid ? (
                   <A key={`${release.mbid}-${i}`} href={musicAlbumHref("music", release.name || "Unknown album", release.mbid)} aria-label={label} className="hover:opacity-85">
                     {art}

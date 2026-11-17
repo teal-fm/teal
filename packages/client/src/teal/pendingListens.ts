@@ -27,6 +27,7 @@ function recordKey(actor: string, uri: string) {
   if (!/^did:[a-z]+:[^/\s]+$/.test(actor)) return undefined;
   const prefix = `at://${actor}/fm.teal.feed.play/`;
   const rkey = uri.startsWith(prefix) ? uri.slice(prefix.length) : "";
+
   return /^[A-Za-z0-9._~:-]+$/.test(rkey) && rkey !== "." && rkey !== ".."
     ? rkey
     : undefined;
@@ -42,8 +43,11 @@ function isOptionalTimestamp(value: unknown) {
 function comparePlayedTime(a: PlayView, b: PlayView) {
   const first = Date.parse(a.playedTime || "");
   const second = Date.parse(b.playedTime || "");
+
   if (!Number.isFinite(first)) return Number.isFinite(second) ? 1 : 0;
+
   if (!Number.isFinite(second)) return -1;
+
   return second - first;
 }
 
@@ -52,6 +56,7 @@ function confirmedPlay(
   { record, uri, cid }: ConfirmedListenWrite,
 ): PlayView | undefined {
   const rkey = recordKey(actor, uri);
+
   if (
     !rkey ||
     !cid ||
@@ -59,6 +64,7 @@ function confirmedPlay(
     !isOptionalTimestamp(record.playedTime)
   )
     return undefined;
+
   return {
     $type: "fm.teal.feed.defs#playView",
     trackName: record.trackName,
@@ -91,15 +97,19 @@ function pruneEntries(entries: readonly PendingListen[], now: number) {
   const actors = new Map<string, number>();
   let storedCharacters = 0;
   const seen = new Set<string>();
+
   const unique = entries.filter((entry) => {
     if (!entry.play.uri || seen.has(entry.play.uri)) return false;
     seen.add(entry.play.uri);
+
     return true;
   });
+
   return unique
     .sort((a, b) => b.savedAt - a.savedAt || comparePlayedTime(a.play, b.play))
     .filter((entry) => {
       const { uri, authorDid } = entry.play;
+
       if (
         !uri ||
         !authorDid ||
@@ -108,27 +118,34 @@ function pruneEntries(entries: readonly PendingListen[], now: number) {
       )
         return false;
       const count = actors.get(authorDid) || 0;
+
       if (
         (!count && actors.size >= MAX_PENDING_LISTEN_ACTORS) ||
         count >= MAX_PENDING_LISTENS_PER_ACTOR
       )
         return false;
       const characters = JSON.stringify(entry).length;
+
       if (storedCharacters + characters > MAX_STORED_CHARACTERS) return false;
       storedCharacters += characters;
       actors.set(authorDid, count + 1);
+
       return true;
     });
 }
 
 function restoreEntries(raw: string | null): PendingListen[] {
   if (!raw || raw.length > 2_000_000) return [];
+
   try {
     const value = JSON.parse(raw) as { version?: unknown; listens?: unknown };
+
     if (value?.version !== 1 || !Array.isArray(value.listens)) return [];
+
     return value.listens.flatMap((entry: unknown) => {
       if (!entry || typeof entry !== "object") return [];
       const { play, savedAt } = entry as Partial<PendingListen>;
+
       if (
         !play ||
         typeof play !== "object" ||
@@ -165,11 +182,13 @@ function restoreEntries(raw: string | null): PendingListen[] {
         (play.duration !== undefined && !Number.isFinite(play.duration))
       )
         return [];
+
       const sanitized = confirmedPlay(play.authorDid, {
         record: { ...play, $type: "fm.teal.feed.play" },
         uri: play.uri,
         cid: play.cid,
       });
+
       return sanitized ? [{ play: sanitized, savedAt: savedAt as number }] : [];
     });
   } catch {
@@ -197,8 +216,10 @@ export function createPendingListenStore(
     )
       return;
     snapshot = next;
+
     for (const listener of listeners) listener();
   }
+
   function persist() {
     if (!storage || !hydrated) return;
     const data = JSON.stringify({ version: 1, listens: snapshot });
@@ -208,17 +229,20 @@ export function createPendingListenStore(
       .then(() => undefined)
       .catch(() => undefined);
   }
+
   function hydrate(): Promise<void> {
     if (!hydration)
       hydration = (async () => {
         const raw = storage
           ? await storage.getItem(STORAGE_KEY).catch(() => null)
           : null;
+
         const restored = restoreEntries(raw).filter(
           (entry) =>
             !removedDuringHydration.has(entry.play.uri!) &&
             !retiredDuringHydration.get(entry.play.uri!)?.has(entry.play.cid!),
         );
+
         // A write completed while storage was loading takes precedence over its older saved copy.
         publish(pruneEntries([...snapshot, ...restored], now()));
         retiredDuringHydration.clear();
@@ -226,23 +250,29 @@ export function createPendingListenStore(
         hydrated = true;
         persist();
       })();
+
     return hydration;
   }
+
   return {
     hydrate,
     getSnapshot: () => snapshot,
     subscribe(listener: () => void) {
       listeners.add(listener);
+
       return () => {
         listeners.delete(listener);
       };
     },
     addConfirmed(actor: string, confirmed: readonly ConfirmedListenWrite[]) {
       const savedAt = now();
+
       const next = confirmed.flatMap((write) => {
         const play = confirmedPlay(actor, write);
+
         return play ? [{ play, savedAt }] : [];
       });
+
       publish(pruneEntries([...next, ...snapshot], savedAt));
       persist();
       void hydrate();
@@ -260,12 +290,14 @@ export function createPendingListenStore(
               : [],
           ),
       );
+
       if (!hydrated)
         for (const [uri, cid] of versions) {
           const cids = retiredDuringHydration.get(uri) || new Set<string>();
           cids.add(cid);
           retiredDuringHydration.set(uri, cids);
         }
+
       publish(
         pruneEntries(
           snapshot.filter(
@@ -281,6 +313,7 @@ export function createPendingListenStore(
     },
     removeConfirmed(actor: string, uris: readonly string[]) {
       const ownUris = new Set(uris.filter((uri) => recordKey(actor, uri)));
+
       if (!hydrated) for (const uri of ownUris) removedDuringHydration.add(uri);
       publish(
         pruneEntries(
@@ -313,18 +346,23 @@ export function mergePendingListens(
       .filter((entry) => entry.play.authorDid === actor)
       .map((entry) => [entry.play.uri, entry.play]),
   );
+
   const seen = new Set<string>();
+
   return [
     ...indexed.map((play) => {
       const confirmed = play.uri ? local.get(play.uri) : undefined;
+
       return confirmed && confirmed.cid !== play.cid ? confirmed : play;
     }),
     ...local.values(),
   ]
     .filter((play) => {
       if (!play.uri) return true;
+
       if (seen.has(play.uri)) return false;
       seen.add(play.uri);
+
       return true;
     })
     .sort(comparePlayedTime);
@@ -336,7 +374,9 @@ export function searchPendingListens(
   pending: readonly PendingListen[],
 ) {
   const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+
   if (!terms.length) return [];
+
   return pending
     .filter(({ play }) => {
       const text = [
@@ -346,6 +386,7 @@ export function searchPendingListens(
       ]
         .join(" ")
         .toLocaleLowerCase();
+
       return (
         play.authorDid === actor && terms.every((term) => text.includes(term))
       );

@@ -21,6 +21,7 @@ it("links a ranked recording to its exact indexed listen and keeps the artist cr
     listen.recordingMbId?.replace("mbid:", ""),
     [listen],
   );
+
   expect(context?.artist).toBe("Ninajirachi");
   expect(context?.href).toContain(
     "/ninajirachi/i-love-my-computer/london-song?uri=",
@@ -53,6 +54,7 @@ it("keeps one copy of each live record when cursor pages overlap", () => {
     ...listen,
     uri: "at://did:plc:listener/fm.teal.feed.play/2",
   };
+
   expect(appendUniqueRecords([listen], [listen, second, second])).toEqual([
     listen,
     second,
@@ -74,6 +76,7 @@ it("accepts a follow completion only while the subject and signed-in viewer are 
     targetDid: "did:plc:listener",
     viewerDid: "did:plc:viewer",
   };
+
   expect(isCurrentProfileRequest(started, { ...started })).toBe(true);
   expect(
     isCurrentProfileRequest(started, {
@@ -96,6 +99,7 @@ it("rejects an earlier follow completion after navigating away and back to the s
     targetDid: "did:plc:listener",
     viewerDid: "did:plc:viewer",
   };
+
   expect(isCurrentProfileRequest(started, { ...started, generation: 2 })).toBe(
     false,
   );

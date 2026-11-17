@@ -33,6 +33,7 @@ async function validateTypeScriptGeneration(workspaceRoot: string) {
   
   if (!existsSync(packagesLexiconsPath)) {
     console.log(pc.yellow('    ⚠️  TypeScript lexicons package not found, skipping validation'));
+
     return;
   }
   
@@ -51,6 +52,7 @@ async function validateTypeScriptGeneration(workspaceRoot: string) {
       .split('/')
       .flatMap((segment) => segment.split('.'))
       .join('/');
+
     const expectedTypeFile = join(typesPath, namespace + '.defs.ts');
     
     if (!existsSync(expectedTypeFile)) {
@@ -78,6 +80,7 @@ async function validateRustGeneration(workspaceRoot: string) {
   
   // Check if Cargo.toml exists
   const cargoTomlPath = join(typesPath, 'Cargo.toml');
+
   if (!existsSync(cargoTomlPath)) {
     throw new Error('Cargo.toml not found in types directory');
   }

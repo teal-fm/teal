@@ -83,9 +83,11 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             error: null,
           },
         });
+
         return url;
       } catch (error) {
         console.error("Failed to get login URL:", error);
+
         return null;
       }
     },
@@ -95,11 +97,14 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         if (!(state.has("code") && state.has("state") && state.has("iss"))) {
           throw new Error("Missing params, got: " + state);
         }
+
         // are we already logged in?
         if (get().status === "loggedIn") {
           return;
         }
+
         const oauthIssuer = state.get("iss");
+
         const callbackAuth = createOAuthClient(
           baseUrl,
           pdsHostFromOAuthIssuer(
@@ -107,8 +112,10 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             pdsHostFromOAuthIssuer(get().oauthIssuer),
           ),
         );
+
         const { session, state: oauthState } =
           await callbackAuth.callback(state);
+
         const agent = new Agent(session);
         set({
           auth: callbackAuth,
@@ -136,16 +143,20 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     },
     restorePdsAgent: async () => {
       let did = get().oauthSession?.sub;
+
       if (!did) {
         set({ status: "loggedOut" });
+
         return;
       }
+
       try {
         // restore session
         const restoreAuth = createOAuthClient(
           baseUrl,
           pdsHostFromOAuthIssuer(get().oauthIssuer),
         );
+
         let sess = await restoreAuth.restore(did);
 
         if (!sess) {
@@ -186,19 +197,24 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     populateLoggedInProfile: async () => {
       console.log("Populating logged in profile");
       const agent = get().pdsAgent;
+
       if (!agent) {
         throw new Error("No agent");
       }
+
       if (!agent.did) {
         throw new Error("No agent did! This is bad!");
       }
+
       try {
         let bskyProfile = await agent
           .getProfile({ actor: agent.did })
           .then((profile) => {
             console.log(profile);
+
             return profile.data || null;
           });
+
         // get teal did
         try {
           // Aqua is the source of truth for Teal identity data. Fetching it
@@ -217,6 +233,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           if (!(error instanceof XrpcError && error.status === 404)) {
             console.error("Failed to get teal profile:", error);
           }
+
           // insert bsky profile
           set({
             profiles: {
@@ -241,5 +258,6 @@ function addDocs(agent: Agent) {
         console.error("Failed to add schema:", e);
       }
     });
+
   return agent;
 }

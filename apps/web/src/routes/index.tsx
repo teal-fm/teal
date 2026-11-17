@@ -27,6 +27,7 @@ type Row =
 /** Today: what your circle is listening to, then song posts with listening woven in. */
 function TodayScreen() {
   useDocumentTitle("Today");
+
   return (
     <AmbientScreen>
       <Today />
@@ -47,6 +48,7 @@ function Today() {
     () => deckItems(today.data?.listening ?? [], today.data?.moments ?? []),
     [today.data],
   );
+
   const listeningNow = today.data?.listening.filter((l) => l.listeningNow).length ?? 0;
   const posts = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
 
@@ -57,23 +59,30 @@ function Today() {
     const out: Row[] = [];
     posts.forEach((post, i) => {
       out.push({ type: "post", key: post.uri, post });
+
       if ((i === 0 || i === 2 || i === 5) && weaves.length) {
         const listen = weaves.shift()!;
         out.push({ type: "weave", key: `weave-${listen.playUri}`, listen });
       }
+
       if (i === 1 && !layout.rail && heating.length) out.push({ type: "shelf", key: "shelf" });
     });
+
     return out;
   }, [posts, today.data, layout.rail]);
 
   // Scrolling past the deck counts as having seen Today.
   useEffect(() => {
     const node = deckEnd.current;
+
     if (!node) return;
+
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting && entry.boundingClientRect.top < 0) markSeen();
     });
+
     observer.observe(node);
+
     return () => observer.disconnect();
   }, [markSeen]);
 
@@ -82,11 +91,14 @@ function Today() {
   }, !!feed.hasNextPage);
 
   const date = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+
   const openToday = (index?: number) => {
     expand();
     window.scrollTo({ top: 0, behavior: "smooth" });
+
     if (index !== undefined) setTimeout(() => deck.current?.step(index), 50);
   };
+
   const showDeck = !collapsed && items.length > 0;
 
   return (

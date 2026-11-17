@@ -15,6 +15,7 @@ const PUBLIC_TO_INTERNAL: [RegExp, string][] = [
   [/^\/(?::|%3A)o\/music(?=\/|$)/i, "/music"],
   [/^\/at(?::|%3A)\/*/i, "/at/"],
 ];
+
 const INTERNAL_TO_PUBLIC: [RegExp, string][] = [
   [/^\/music(?=\/|$)/, "/:o/music"],
   [/^\/at\//, "/at://"],
@@ -24,9 +25,11 @@ function rewritePath(url: URL, rules: [RegExp, string][]) {
   for (const [pattern, replacement] of rules) {
     if (pattern.test(url.pathname)) {
       url.pathname = url.pathname.replace(pattern, replacement);
+
       return url;
     }
   }
+
   return undefined;
 }
 
@@ -34,6 +37,7 @@ export function getRouter() {
   setupClient();
   // One query client per request on the server, so viewers never share a cache.
   const queryClient = createQueryClient();
+
   const router = createRouter({
     routeTree,
     context: { queryClient },
@@ -46,7 +50,9 @@ export function getRouter() {
       output: ({ url }) => rewritePath(url, INTERNAL_TO_PUBLIC),
     },
   });
+
   setupRouterSsrQueryIntegration({ router, queryClient });
+
   return router;
 }
 

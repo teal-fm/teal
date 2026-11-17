@@ -28,8 +28,11 @@ function mockRecording(
       ? [{ id: "release-id", title: release, ...(opts?.releaseStatus ? { status: opts.releaseStatus } : {}) }]
       : [],
   };
+
   if (opts?.disambiguation) rec.disambiguation = opts.disambiguation;
+
   if (opts?.score != null) rec.score = opts.score;
+
   return rec;
 }
 
@@ -242,10 +245,12 @@ describe("scoreResult", () => {
         ...mockRecording("Track", "Artist"),
         releases: [{ id: "r1", title: "Album", status: "Official" }],
       };
+
       const bootleg = {
         ...mockRecording("Track", "Artist"),
         releases: [{ id: "r2", title: "Album", status: "Bootleg" }],
       };
+
       const query: RankingQuery = { cleanedTrack: "Track", cleanedArtist: "Artist" };
 
       const offScore = scoreResult(official, query, "exact");
@@ -294,9 +299,11 @@ describe("rankMultiStageResults", () => {
     const exactResults: MusicBrainzRecording[] = [
       mockRecording("Exact Match", "Artist"),
     ];
+
     const fuzzyResults: MusicBrainzRecording[] = [
       mockRecording("Fuzzy Match", "Artist"),
     ];
+
     const partialResults: MusicBrainzRecording[] = [
       mockRecording("Partial Match", "Artist"),
     ];

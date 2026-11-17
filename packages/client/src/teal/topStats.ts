@@ -67,13 +67,18 @@ function toItem(kind: TopKind) {
 export async function loadTop(actor: string, kind: TopKind, period: StatsPeriod, limit: number, cursor?: string) {
   if (kind === "artists") {
     const res = await getUserTopArtists(actor, period, limit, cursor);
+
     return { items: res.artists.map(toItem(kind)), cursor: res.cursor };
   }
+
   if (kind === "albums") {
     const res = await getUserTopReleases(actor, period, limit, cursor);
+
     return { items: res.releases.map(toItem(kind)), cursor: res.cursor };
   }
+
   const res = await getUserTopRecordings(actor, period, limit, cursor);
+
   return { items: res.recordings.map(toItem(kind)), cursor: res.cursor };
 }
 
@@ -81,8 +86,11 @@ export async function loadTop(actor: string, kind: TopKind, period: StatsPeriod,
 export function withContext(item: TopItem, plays: PlayView[]): TopItem {
   if (item.kind === "artists") return { ...item, href: musicArtistHref(item.name, item.mbid) };
   const context = indexedStatContext(item.kind, item.mbid, plays);
+
   if (context) return { ...item, artist: context.artist, href: context.href };
+
   if (item.kind === "albums" && item.mbid) return { ...item, href: musicAlbumHref("music", item.name, item.mbid) };
+
   return item;
 }
 

@@ -41,6 +41,7 @@ function param(value: string | string[] | undefined) {
 function Reply({ reply, last }: { reply: SocialPostView; last: boolean }) {
   const author = useDisplayActor(reply.author, reply.authorDid);
   const name = author.name;
+
   return (
     <View className={last ? "flex-row gap-3 py-3.5" : "flex-row gap-3 border-b border-hair py-3.5"}>
       <Link href={author.href as never} asChild>
@@ -75,6 +76,7 @@ export default function PostScreen() {
   // Keyboard focus follows the trash button into the confirmation, and back again on Cancel.
   useEffect(() => {
     if (Platform.OS !== "web") return;
+
     if (confirmDelete) (confirmRef.current as unknown as HTMLElement | null)?.focus();
     else if (armed.current) (trashRef.current as unknown as HTMLElement | null)?.focus();
     armed.current = confirmDelete;
@@ -86,6 +88,7 @@ export default function PostScreen() {
     queryFn: () => getSocialPost(uri!, viewer).then((r) => r.post),
     enabled: !!uri,
   });
+
   const replies = useQuery({
     queryKey: ["replies", uri, viewer ?? null],
     queryFn: () => getSocialPostReplies(uri!, 50, undefined, viewer).then((r) => r.items),
@@ -109,12 +112,16 @@ export default function PostScreen() {
 
   const remove = async () => {
     if (!agent?.did || !data || deleting) return;
+
     if (!confirmDelete) {
       setConfirmDelete(true);
+
       return;
     }
+
     setDeleting(true);
     setNote(null);
+
     try {
       await agent.call("com.atproto.repo.deleteRecord", {}, socialPostDeleteParams(data.uri, agent.did, data.cid));
       forgetPost(client, data.uri, data.replyParentUri);
@@ -127,10 +134,12 @@ export default function PostScreen() {
 
   const share = async () => {
     if (!data) return;
+
     const result = await shareLink(
       `${data.text ? `${data.text} ` : ""}${play?.trackName ?? ""}`,
       absoluteUrl(postHrefFromUri(data.uri) ?? "/"),
     );
+
     setNote(result === "copied" ? "Link copied." : result === "failed" ? "Couldn't share this post." : null);
   };
 
@@ -141,6 +150,7 @@ export default function PostScreen() {
       </Screen>
     );
   }
+
   if (post.isError || !data || !play) {
     return (
       <Screen back pageTitle="Post">

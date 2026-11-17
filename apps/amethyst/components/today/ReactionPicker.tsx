@@ -6,9 +6,12 @@ import { Glass, Text, usePlaceholderColor } from "@/components/ds";
 /** A single grapheme-ish emoji: no letters, digits, or spaces. */
 function asEmoji(value: string) {
   const trimmed = value.trim();
+
   if (!trimmed || /[\p{L}\p{N}\s]/u.test(trimmed)) return undefined;
+
   // Hermes may lack Intl.Segmenter; then accept short input whole (ZWJ emoji are long).
   if (typeof Intl.Segmenter === "undefined") return trimmed.length <= 16 ? trimmed : undefined;
+
   return [...new Intl.Segmenter().segment(trimmed)][0]?.segment;
 }
 
@@ -32,19 +35,24 @@ export function ReactionPicker({
   useEffect(() => {
     if (Platform.OS !== "web" || !visible) return;
     const previous = document.activeElement as HTMLElement | null;
+
     const frame = requestAnimationFrame(() =>
       (panel.current as unknown as HTMLElement | null)?.querySelector<HTMLElement>('[role="menuitem"]')?.focus(),
     );
+
     return () => {
       cancelAnimationFrame(frame);
+
       if (previous?.isConnected) previous.focus();
     };
   }, [visible]);
+
   const pick = (emoji: string) => {
     setCustom("");
     onPick(emoji);
     onClose();
   };
+
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable
@@ -73,6 +81,7 @@ export function ReactionPicker({
                 value={custom}
                 onChangeText={(text) => {
                   const emoji = asEmoji(text);
+
                   if (emoji) pick(emoji);
                   else setCustom(text);
                 }}

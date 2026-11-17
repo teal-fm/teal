@@ -29,6 +29,7 @@ export function getProfileImageUrl(
   kind: "avatar" | "banner" = "avatar",
 ) {
   if (!value) return undefined;
+
   if (
     isHttpUrl(value) ||
     value.startsWith("data:") ||
@@ -36,7 +37,9 @@ export function getProfileImageUrl(
   ) {
     return value;
   }
+
   if (value.startsWith("at://")) return value;
+
   return `https://cdn.bsky.app/img/${kind}/plain/${did}/${value}@jpeg`;
 }
 
@@ -49,12 +52,16 @@ export async function documentIdentity(did: string): Promise<{ handle?: string }
   const doc = (await getDidDocument(did).catch(() => undefined)) as
     | { alsoKnownAs?: string[] }
     | undefined;
+
   if (!doc) return undefined;
+
   const handle = doc.alsoKnownAs
     ?.find((aka) => aka.startsWith("at://"))
     ?.slice("at://".length);
+
   if (!handle) return {};
   const verified = (await resolveHandle(handle).catch(() => undefined)) === did;
+
   return verified ? { handle } : {};
 }
 
@@ -68,27 +75,35 @@ async function verifiedDocumentHandle(did: string) {
  */
 async function lookupActor(did: string): Promise<DisplayActor | undefined> {
   const bluesky = await getBlueskyProfile(did).catch(() => undefined);
+
   const handle =
     bluesky?.handle && bluesky.handle !== "handle.invalid" ? bluesky.handle : undefined;
+
   if (handle) {
     return { avatar: bluesky?.avatar, did, displayName: bluesky?.displayName, handle };
   }
+
   const documented = await verifiedDocumentHandle(did);
+
   if (!bluesky && !documented) throw new Error(`No identity found for ${did}`);
+
   return { avatar: bluesky?.avatar, did, displayName: bluesky?.displayName, handle: documented };
 }
 
 export function getCachedBlueskyProfile(did: string) {
   let profile = blueskyProfileCache.get(did);
+
   if (!profile) {
     profile = lookupActor(did)
       .catch(() => {
         // A temporary lookup failure must not become a permanent cached identity.
         blueskyProfileCache.delete(did);
+
         return undefined;
       });
     blueskyProfileCache.set(did, profile);
   }
+
   return profile;
 }
 
@@ -97,6 +112,7 @@ export function displayActorName(
   did?: string,
 ) {
   const handle = normalizeHandle(actor?.handle);
+
   return (
     actor?.displayName ||
     handle ||
@@ -118,6 +134,8 @@ export function actorAvatarUrl(
   did?: string,
 ) {
   const authorDid = actor?.did || did;
+
   if (!authorDid || !actor?.avatar) return undefined;
+
   return getProfileImageUrl(authorDid, actor.avatar, "avatar");
 }

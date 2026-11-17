@@ -20,10 +20,13 @@ export default function Settings() {
 
   const saveProvider = () => {
     const value = provider.trim();
+
     if (!DID.test(value)) {
       setMessage({ text: "Enter a valid provider DID, such as did:web:teal.fm.", error: true });
+
       return;
     }
+
     setAppviewDid(value);
     setMessage({ text: "Provider saved.", error: false });
   };

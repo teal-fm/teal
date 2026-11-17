@@ -17,6 +17,7 @@ export function useDocumentTitle(title?: string) {
 /** Goes back within the app, or to Today when the page was opened directly. */
 export function useGoBack() {
   const router = useRouter();
+
   return () => {
     if (router.history.canGoBack()) router.history.back();
     else void router.navigate({ to: "/", replace: true });
@@ -25,6 +26,7 @@ export function useGoBack() {
 
 export function BackButton({ label = "Back" }: { label?: string }) {
   const back = useGoBack();
+
   return (
     <button
       type="button"
@@ -58,6 +60,7 @@ type ScreenProps = {
  */
 export function Screen({ children, pageTitle, title, subtitle, actions, back, rail, width = "narrow" }: ScreenProps) {
   useDocumentTitle(pageTitle ?? title);
+
   return (
     <AmbientScreen>
       <div className="flex justify-center">

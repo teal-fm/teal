@@ -13,6 +13,7 @@ export const Route = createFileRoute("/compose")({
 function Compose() {
   const client = useQueryClient();
   const back = useGoBack();
+
   return (
     <Screen title="Post a song" back>
       <Glass strong className="p-4">

@@ -22,6 +22,7 @@ export function levenshteinDistance(str1: string, str2: string): number {
     .map(() => Array(len2 + 1).fill(0));
 
   for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+
   for (let j = 0; j <= len2; j++) matrix[0][j] = j;
 
   for (let i = 1; i <= len1; i++) {
@@ -44,9 +45,11 @@ export function levenshteinDistance(str1: string, str2: string): number {
  */
 export function similarityRatio(str1: string, str2: string): number {
   const maxLen = Math.max(str1.length, str2.length);
+
   if (maxLen === 0) return 1.0;
 
   const distance = levenshteinDistance(str1, str2);
+
   return 1 - distance / maxLen;
 }
 
@@ -80,7 +83,9 @@ export function fuzzyScore(query: string, candidate: string): number {
   // "Hello World" in "Hello World (Live)" (high coverage) scores near the cap;
   // "Love" in "I Will Always Love You" (low coverage) scores much lower.
   const coverage = queryNorm.length / candidateNorm.length;
+
   if (candidateNorm.startsWith(queryNorm)) return 0.7 + 0.2 * coverage;
+
   if (candidateNorm.includes(queryNorm)) return 0.5 + 0.3 * coverage;
 
   return similarityRatio(queryNorm, candidateNorm);

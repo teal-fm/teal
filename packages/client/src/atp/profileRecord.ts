@@ -8,6 +8,7 @@ import { prepareProfileImage } from "../profileImage";
 import type { StatsPeriod } from "../teal/api";
 
 export type BlobRef = NonNullable<ProfileRecord["avatar"]>;
+
 export type FavouriteItem = { mbid: string; type: string };
 
 export const MAX_FAVOURITES = 4;
@@ -16,6 +17,7 @@ export const MAX_FAVOURITES = 4;
 export function blobCid(blob?: BlobRef) {
   if (!blob) return undefined;
   const value = blob as unknown as { ref?: { $link?: string }; ["r#ref"]?: string; cid?: string };
+
   return value.ref?.$link || value["r#ref"] || value.cid;
 }
 
@@ -26,15 +28,19 @@ export function blobCid(blob?: BlobRef) {
  */
 async function uploadIfChanged(agent: Agent, uri: string, currentBlob?: BlobRef, currentUrl?: string) {
   if (!uri) return undefined;
+
   if (currentBlob && uri === currentUrl) return currentBlob;
   const response = await fetch(uri);
+
   if (!response.ok) throw new ProfileImageError("Couldn't read the image. Choose it again.");
   let image;
+
   try {
     image = await prepareProfileImage(await response.blob());
   } catch (error) {
     throw new ProfileImageError(error instanceof Error ? error.message : "Choose a PNG or JPEG image.");
   }
+
   return (await agent.uploadBlob(image.blob, { encoding: image.encoding })).data.blob as unknown as BlobRef;
 }
 
@@ -64,6 +70,7 @@ export async function saveProfileRecord(
   const repo = agent.assertDid;
   let existing: ProfileRecord | undefined;
   let swapRecord: string | undefined;
+
   try {
     const res = await agent.call("com.atproto.repo.getRecord", { repo, collection: "fm.teal.actor.profile", rkey: "self" });
     existing = res.data.value as ProfileRecord;
@@ -82,6 +89,7 @@ export async function saveProfileRecord(
   // returns images as BlobRef instances the validator rejects; new uploads are already
   // checked by prepareProfileImage.
   const bioUnchanged = description.text === existing?.description;
+
   const validated = parseProfileRecord({
     ...existing,
     $type: "fm.teal.actor.profile",
@@ -93,6 +101,7 @@ export async function saveProfileRecord(
     statsDefaultPeriod: edits.statsDefaultPeriod ?? existing?.statsDefaultPeriod,
     favorites: edits.favourites ? (edits.favourites.length ? edits.favourites : undefined) : existing?.favorites,
   });
+
   const record: ProfileRecord = {
     ...validated,
     ...(bioUnchanged ? { description: description.text } : {}),
@@ -105,5 +114,6 @@ export async function saveProfileRecord(
     {},
     { repo, collection: "fm.teal.actor.profile", rkey: "self", record, ...(swapRecord ? { swapRecord } : {}) },
   );
+
   return { record, avatar: blobCid(avatar), banner: blobCid(banner) };
 }

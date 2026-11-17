@@ -32,6 +32,7 @@ export const Route = createFileRoute("/playlist/$name")({
       if (!deps.uri || !playlistHrefFromUri(deps.uri)) return undefined;
       const { playlist, items } = await queryClient.ensureQueryData(once(playlistQuery(deps.uri)));
       const by = playlist.author?.displayName || playlist.author?.handle;
+
       return {
         title: playlist.name,
         description: playlist.description || `${items.length} songs${by ? ` · by ${by}` : ""}`,
@@ -54,9 +55,11 @@ function EditPlaylist({ playlist, onDone }: { playlist: SocialPlaylistView; onDo
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
+
     if (!agent || busy || !name.trim()) return;
     setBusy(true);
     setError(null);
+
     try {
       await savePlaylistRecord(agent, playlist, { name, description, collaboratorsText: collaborators, newCoverUri: cover }, (input, owner) =>
         resolvePlaylistAuthors(input, owner, async (handle) => (await agent.resolveHandle({ handle })).data.did),
@@ -113,6 +116,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
   const [selected, setSelected] = useState<PlayView | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+
   const nowPlaying = useQuery({
     queryKey: ["now-playing", viewer],
     queryFn: () => getProfile(viewer!).then((r) => (r.profile.status?.item as PlayView | undefined) ?? null),
@@ -123,6 +127,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
     if (!agent || busy) return;
     setBusy(true);
     setStatus(null);
+
     try {
       const item = await addPlaylistItem(agent, playlist, playViewToTrackView(play), playlist.itemCount);
       // The index lags writes, so the new song joins the cached playlist straight away.
@@ -174,6 +179,7 @@ function PlaylistScreen() {
       </Screen>
     );
   }
+
   if (query.isLoading) {
     return (
       <Screen back pageTitle="Playlist">
@@ -181,6 +187,7 @@ function PlaylistScreen() {
       </Screen>
     );
   }
+
   if (query.isError || !query.data) {
     return (
       <Screen back pageTitle="Playlist">

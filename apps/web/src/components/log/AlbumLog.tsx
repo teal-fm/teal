@@ -46,6 +46,7 @@ export function AlbumLog() {
   const tracks = useMemo(() => (release ? flattenTracks(release) : []), [release]);
   const chosen = tracks.filter((track) => selected.has(track.key));
   const startDate = parseLocalDateTime(start);
+
   const timeline = useMemo(() => {
     try {
       return chosen.length ? buildListenTimeline(chosen, mode, startDate, new Date()) : [];
@@ -56,10 +57,12 @@ export function AlbumLog() {
 
   const search = async (event?: FormEvent) => {
     event?.preventDefault();
+
     if (!album.trim()) return;
     setSearching(true);
     setSearchFailed(false);
     setRelease(null);
+
     try {
       setResults(await searchMusicBrainzReleases(album, artist));
     } catch {
@@ -73,9 +76,11 @@ export function AlbumLog() {
   const pick = async (candidate: MusicBrainzAlbumRelease) => {
     setLoadingRelease(true);
     setError(null);
+
     try {
       const details = await getMusicBrainzRelease(candidate.id);
       const list = flattenTracks(details);
+
       if (!list.length) throw new Error("no tracks");
       setRelease(details);
       setSelected(new Set(list.map((t) => t.key)));
@@ -90,19 +95,25 @@ export function AlbumLog() {
   const toggle = (key: string) =>
     setSelected((current) => {
       const next = new Set(current);
+
       if (next.has(key)) next.delete(key);
       else next.add(key);
+
       return next;
     });
 
   const save = async () => {
     if (!agent || !release || !chosen.length || saving) return;
+
     if (mode === "custom" && !startDate) {
       setError("Enter a valid start date and time.");
+
       return;
     }
+
     setSaving(true);
     setError(null);
+
     try {
       const records = buildManualListenRecords(release, chosen, mode, startDate, new Date());
       setSavedCount(await submitManualListenRecords(agent, records, (writes) => agent.did && retainConfirmedListens(agent.did, writes)));
@@ -204,6 +215,7 @@ export function AlbumLog() {
           <div className="flex flex-col gap-0.5" role="group" aria-label="Tracks">
             {tracks.map((track) => {
               const on = selected.has(track.key);
+
               return (
                 <button
                   key={track.key}

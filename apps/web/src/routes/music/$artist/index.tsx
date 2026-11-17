@@ -22,6 +22,7 @@ export const Route = createFileRoute("/music/$artist/")({
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {
       const artist = await queryClient.ensureQueryData(once(artistQuery(deps.mbid, deps.name || params.artist)));
+
       return {
         title: artist.name,
         description: `${countLabel(artist.playCount, "listen")} on Teal`,
@@ -41,12 +42,14 @@ function ArtistScreen() {
   const period = normalizeListenerPeriod(search.period);
 
   const artist = useQuery(artistQuery(search.mbid, lookup));
+
   const photo = useQuery({
     queryKey: ["artist-image", artist.data?.mbid],
     queryFn: async () => (await getArtistImageUrl(artist.data!.mbid, 500)) ?? null,
     enabled: !!artist.data?.mbid,
     staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
+
   const listeners = useQuery({
     queryKey: ["artist-listeners", search.mbid, lookup, period, 5],
     queryFn: () => getArtistListeners(search.mbid, lookup, period, 5).then((r) => r.listeners),
@@ -59,6 +62,7 @@ function ArtistScreen() {
       </Screen>
     );
   }
+
   if (artist.isError || !artist.data) {
     return (
       <Screen back pageTitle="Artist">
@@ -69,6 +73,7 @@ function ArtistScreen() {
 
   const a = artist.data;
   const albums = a.albums.filter((r) => r.releaseType === "album").length;
+
   return (
     <Screen back pageTitle={a.name} width="wide">
       <MusicHero

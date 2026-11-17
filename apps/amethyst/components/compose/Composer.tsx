@@ -59,6 +59,7 @@ export function Composer({
     if (!agent || !selected || !text.trim() || busy) return;
     setBusy(true);
     setError(null);
+
     try {
       const post = await publishPost(agent, {
         text,
@@ -72,6 +73,7 @@ export function Composer({
           avatar: profiles?.teal?.avatar || profiles?.bsky?.avatar,
         } as SocialPostView["author"],
       });
+
       setText("");
       onPublished(post);
     } catch {

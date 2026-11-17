@@ -33,6 +33,7 @@ function rustFiles(root: string): string[] {
 function canonicalizeRustSource(source: string): string {
   let output = canonicalizeStateModules(source);
   output = sortIsSetBounds(output);
+
   return output;
 }
 
@@ -65,10 +66,12 @@ function findMatchingBrace(source: string, openBrace: number): number {
 
   for (let index = openBrace; index < source.length; index += 1) {
     const char = source[index];
+
     if (char === "{") {
       depth += 1;
     } else if (char === "}") {
       depth -= 1;
+
       if (depth === 0) {
         return index;
       }
@@ -82,6 +85,7 @@ function canonicalizeStateModule(block: string): string {
   let output = sortTypeLines(block);
   output = sortTransitionBlocks(output);
   output = sortMembers(output);
+
   return output;
 }
 
@@ -92,9 +96,11 @@ function sortTypeLines(source: string): string {
   for (let index = 0; index < lines.length;) {
     if (isSortableTypeLine(lines[index])) {
       const start = index;
+
       while (index < lines.length && isSortableTypeLine(lines[index])) {
         index += 1;
       }
+
       sorted.push(...lines.slice(start, index).sort(compareByTypeName));
     } else {
       sorted.push(lines[index]);
@@ -117,6 +123,7 @@ function sortTransitionBlocks(source: string): string {
   const prefix = source.slice(0, firstTransition);
   const transitionsSource = source.slice(firstTransition, membersIndex);
   const suffix = source.slice(membersIndex);
+
   const transitions = transitionsSource
     .split(`\n${marker}`)
     .map((part, index) => index === 0 ? part : `${marker}${part}`)
@@ -144,6 +151,7 @@ function sortMembers(source: string): string {
   entries.sort((a, b) => compareKeys(memberKey(a), memberKey(b)));
 
   const replacement = `    pub mod members {\n${entries.join("")}    }`;
+
   return source.slice(0, match.index) + replacement + source.slice(match.index + match[0].length);
 }
 

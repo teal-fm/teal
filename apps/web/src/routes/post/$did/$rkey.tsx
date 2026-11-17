@@ -35,6 +35,7 @@ export const Route = createFileRoute("/post/$did/$rkey")({
       const play = trackViewToPlayView(post.track);
       const name = post.author?.displayName || post.author?.handle || "Someone";
       const artist = play.artists?.[0]?.artistName;
+
       return {
         title: `${name} on ${play.trackName}`,
         description: post.text || [play.trackName, artist].filter(Boolean).join(" · "),
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/post/$did/$rkey")({
 
 function Reply({ reply, last }: { reply: SocialPostView; last: boolean }) {
   const author = useDisplayActor(reply.author, reply.authorDid);
+
   return (
     <li className={cn("flex gap-3 py-3.5", !last && "border-b border-hair")}>
       <A href={author.href} aria-label={`${author.name}'s profile`} className="self-start">
@@ -89,6 +91,7 @@ function PostScreen() {
   }, [confirmDelete]);
 
   const post = useQuery(postQuery(uri, viewer));
+
   const replies = useQuery({
     queryKey: ["replies", uri, viewer ?? null],
     queryFn: () => getSocialPostReplies(uri, 50, undefined, viewer).then((r) => r.items),
@@ -110,12 +113,16 @@ function PostScreen() {
 
   const remove = async () => {
     if (!agent?.did || !data || deleting) return;
+
     if (!confirmDelete) {
       setConfirmDelete(true);
+
       return;
     }
+
     setDeleting(true);
     setNote(null);
+
     try {
       await agent.call("com.atproto.repo.deleteRecord", {}, socialPostDeleteParams(data.uri, agent.did, data.cid));
       forgetPost(client, data.uri, data.replyParentUri);
@@ -139,6 +146,7 @@ function PostScreen() {
       </Screen>
     );
   }
+
   if (post.isError || !data || !play) {
     return (
       <Screen back pageTitle="Post">

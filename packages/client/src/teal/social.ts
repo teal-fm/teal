@@ -10,6 +10,7 @@ export function socialPostDeleteParams(
     /^at:\/\/([^/]+)\/fm\.teal\.feed\.social\.post\/([A-Za-z0-9._~:-]+)$/.exec(
       uri,
     );
+
   if (
     !match ||
     match[1] !== viewerDid ||
@@ -20,6 +21,7 @@ export function socialPostDeleteParams(
   ) {
     throw new Error("Only your own Teal post can be deleted.");
   }
+
   return {
     repo: viewerDid,
     collection: "fm.teal.feed.social.post",
@@ -51,6 +53,7 @@ export type TrackViewLike = {
 
 export function trackViewToPlayView(track: unknown): PlayView {
   const value = (track || {}) as TrackViewLike;
+
   const artists =
     value.artists?.map((artist, index) => ({
       artistName:

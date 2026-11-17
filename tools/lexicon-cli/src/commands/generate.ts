@@ -45,12 +45,14 @@ async function generateTypeScript(workspaceRoot: string, force?: boolean) {
 
   // Check if packages/lexicons exists for TypeScript generation
   const packagesLexiconsPath = join(workspaceRoot, "packages/lexicons");
+
   if (!existsSync(packagesLexiconsPath)) {
     console.log(
       pc.yellow(
         "    ⚠️  TypeScript lexicons package not found, skipping TypeScript generation",
       ),
     );
+
     return;
   }
 
@@ -91,10 +93,12 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
     // creates noisy, non-obvious diffs in CI. Check the version, not just that
     // a binary happens to be on PATH.
     let hasCompatibleCodegen = false;
+
     try {
       const { stdout } = await execa("jacquard-codegen", ["--version"], {
         stdio: "pipe",
       });
+
       hasCompatibleCodegen = stdout.trim() === requiredJacquardOutput;
     } catch {
       // Install below when the binary is missing or cannot report its version.
@@ -106,6 +110,7 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
           `    ⚠️  jacquard-codegen ${requiredJacquardVersion} not found. Installing...`,
         ),
       );
+
       try {
         // Prefer the prebuilt binary to keep CI setup fast. --force replaces
         // an older jacquard-codegen already installed by the runner.
@@ -143,6 +148,7 @@ async function generateRust(workspaceRoot: string, force?: boolean) {
             { stdio: "inherit" },
           );
         }
+
         console.log(pc.green("    ✓ jacquard-codegen installed successfully"));
       } catch (installError) {
         throw new Error(

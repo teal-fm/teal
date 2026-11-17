@@ -17,6 +17,7 @@ type ProfileStatus = { completedOnboarding?: string; createdAt?: string };
 
 function Shell({ children }: { children: ReactNode }) {
   useDocumentTitle("Set up your profile");
+
   return (
     <AmbientScreen>
       <main className="flex justify-center px-4 pt-8 pb-[110px] nav:pb-10">
@@ -45,6 +46,7 @@ function Onboarding() {
     queryFn: async (): Promise<ProfileStatus | null> => {
       try {
         const res = await agent!.call("com.atproto.repo.getRecord", { repo: agent!.did!, collection: "fm.teal.actor.profileStatus", rkey: "self" });
+
         return res.data.value as ProfileStatus;
       } catch (e) {
         if (isMissingProfileRecord(e)) return null;
@@ -63,9 +65,11 @@ function Onboarding() {
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
+
     if (!agent?.did || saving) return;
     setSaving(true);
     setError(null);
+
     try {
       await saveProfileRecord(agent, { displayName: name, description: bio, avatarUri: avatar, bannerUri: banner }, {});
       const now = new Date().toISOString();
@@ -100,6 +104,7 @@ function Onboarding() {
       </Shell>
     );
   }
+
   if (!agent?.did) {
     return (
       <Shell>
@@ -112,6 +117,7 @@ function Onboarding() {
       </Shell>
     );
   }
+
   if (existing.isLoading) {
     return (
       <Shell>
@@ -119,6 +125,7 @@ function Onboarding() {
       </Shell>
     );
   }
+
   if (existing.isError) {
     return (
       <Shell>

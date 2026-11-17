@@ -7,7 +7,9 @@ import { A, Cover, Icon } from "~/ds";
 
 export function listenedAt(value?: string) {
   const time = new Date(value || "");
+
   if (Number.isNaN(time.getTime())) return undefined;
+
   return time.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -39,6 +41,7 @@ export function ListenRow({
 }) {
   const artists = displayArtists(play) || "Unknown artist";
   const when = listenedAt(play.playedTime);
+
   const body = (
     <>
       {selecting ? (
@@ -67,6 +70,7 @@ export function ListenRow({
       </span>
     </>
   );
+
   const rowClass = cn("flex w-full items-center gap-3 py-2.5 text-left", !last && "border-b border-hair");
 
   if (selecting) {
@@ -76,7 +80,9 @@ export function ListenRow({
       </button>
     );
   }
+
   const href = (syncing && listenHref(play.authorDid, play.rkey)) || musicTrackHref(artists, play.releaseName, play.trackName, play.uri);
+
   return (
     <A href={href} className={cn(rowClass, "hover:opacity-80")}>
       {body}

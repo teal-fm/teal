@@ -7,9 +7,11 @@ import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 export function Weave({ listen }: { listen: ListeningView }) {
   const a = useDisplayActor(listen.actor, listen.actor?.did);
   const name = a.name;
+
   const what = listen.firstReleaseListen
     ? ["found ", listen.releaseName, " for the first time"]
     : [`has played ${listen.releasePlaysToday} songs from `, listen.releaseName, " today"];
+
   return (
     <Glass className="mx-1.5 mb-3.5 flex-row items-center gap-3 rounded-full py-2 pl-2 pr-2">
       <Avatar did={a.did} avatar={a.avatar} name={name} size={32} listeningNow={listen.listeningNow} />

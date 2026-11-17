@@ -15,27 +15,35 @@ export default function createOAuthClient(
   if (!baseUrl) {
     throw new Error("baseUrl is required");
   }
+
   let meta: ClientMetadata;
 
   const isWeb = Platform.OS === "web";
   const u = new URL(baseUrl);
   let hostname = u.hostname;
+
   if (hostname === "localhost") {
     hostname = "127.0.0.1";
   }
+
   let redirect = `${u.protocol}//${hostname}`;
+
   if (u.port !== "") {
     redirect = `${redirect}:${u.port}`;
   }
+
   if (isWeb) {
     redirect = `${redirect}/auth/callback`;
   } else {
     const scheme = Constants.expoConfig?.scheme;
+
     if (!scheme) {
       throw new Error("unable to resolve scheme for oauth redirect");
     }
+
     redirect = `${redirect}/app-return/${scheme}`;
   }
+
   const queryParams = new URLSearchParams();
   queryParams.set("scope", "atproto transition:generic");
   queryParams.set("redirect_uri", redirect);
@@ -59,6 +67,7 @@ export default function createOAuthClient(
     dpop_bound_access_tokens: true,
   };
   clientMetadataSchema.parse(meta);
+
   return new ExpoOAuthClient({
     handleResolver: "https://" + pdsBaseUrl, // backend instances should use a DNS based resolver
     responseMode: "query", // or "fragment" (frontend only) or "form_post" (backend only)

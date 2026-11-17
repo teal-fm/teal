@@ -70,6 +70,7 @@ export function Cover({
   useEffect(() => {
     if (!page || !backdropUri || !frame.current) return;
     page.register(key, { uri: backdropUri, node: frame.current });
+
     return () => page.unregister(key);
   }, [page, key, backdropUri]);
 
@@ -77,6 +78,7 @@ export function Cover({
     if (retried.includes(target)) {
       setFailed((current) => [...current, target]);
       const other = otherSize(target);
+
       if (other !== target && !failed.includes(other)) {
         setFallback({ from: primary ?? target, uri: other });
       } else if (!timer.current && restarts.current < 2) {
@@ -89,26 +91,32 @@ export function Cover({
           setAttempt((n) => n + 1);
         }, 20000 * (restarts.current + 1));
       }
+
       return;
     }
+
     setRetried((current) => [...current, target]);
     setTimeout(() => setAttempt((n) => n + 1), 1200);
   };
 
   const onError = () => {
     if (!source) return;
+
     if (source === primary && !uri && releaseMbId && fallback?.from !== primary) {
       setFallback({ from: primary, uri: primary });
       void getReleaseGroupCoverArtUrl(releaseMbId, artSize).then((next) => {
         if (next && next !== primary) setFallback({ from: primary, uri: next });
         else retry(primary);
       });
+
       return;
     }
+
     retry(source);
   };
 
   const src = source && !failed.includes(source) ? source : undefined;
+
   return (
     <span
       ref={frame}
@@ -132,8 +140,10 @@ export function Cover({
           // A server-rendered image can finish before hydration attaches these handlers.
           ref={(img) => {
             const key = `${src}#${attempt}`;
+
             if (!img?.complete || checked.current === key) return;
             checked.current = key;
+
             if (img.naturalWidth > 0) setLoaded(src);
             else onError();
           }}

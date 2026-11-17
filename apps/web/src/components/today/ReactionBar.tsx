@@ -13,8 +13,10 @@ export function ReactionBar({ subject, reactions }: { subject: ReactionSubject; 
   const viewer = useViewerDid();
   const toggle = useToggleReaction();
   const [picking, setPicking] = useState(false);
+
   const react = (emoji: string) => {
     const existing = reactions.find((r) => r.emoji === emoji)?.viewerReaction;
+
     // While a reaction is still saving there's no record to remove yet, and a second add would duplicate it.
     if (existing === "pending") return;
     toggle.mutate({ subject, emoji, existing });

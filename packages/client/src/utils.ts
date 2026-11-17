@@ -8,6 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function capFirstLetter(str: string) {
   let arr = str.split("");
   let first = arr.shift()?.toUpperCase();
+
   return (first || "") + arr.join("");
 }
 
@@ -24,9 +25,12 @@ export function timeAgo(date: Date) {
       hour: "numeric",
       minute: "numeric",
     });
+
     return "on " + formatter.format(date);
   }
+
   interval = Math.floor(seconds / 86400);
+
   // return date without years
   if (interval > 1) {
     const formatter = new Intl.DateTimeFormat("en-US", {
@@ -35,15 +39,21 @@ export function timeAgo(date: Date) {
       hour: "numeric",
       minute: "numeric",
     });
+
     return "on " + formatter.format(date);
   }
+
   interval = Math.floor(seconds / 3600);
+
   if (interval > 1) {
     return interval + " hours ago";
   }
+
   interval = Math.floor(seconds / 60);
+
   if (interval > 1) {
     return interval + " minutes ago";
   }
+
   return Math.floor(seconds) + " seconds ago";
 }

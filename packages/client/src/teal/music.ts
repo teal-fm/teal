@@ -18,6 +18,7 @@ export function discography(all: readonly AlbumSummary[]) {
   const seen = new Set<string>();
   const releases = all.filter((r) => !seen.has(r.mbid) && seen.add(r.mbid));
   const of = (test: (type?: string) => boolean) => releases.filter((r) => test(r.releaseType));
+
   return [
     { title: "Albums", releases: of((t) => t === "album") },
     { title: "EPs", releases: of((t) => t === "ep") },

@@ -67,6 +67,7 @@ function Today() {
     () => deckItems(today.data?.listening ?? [], today.data?.moments ?? []),
     [today.data],
   );
+
   const listeningNow = today.data?.listening.filter((l) => l.listeningNow).length ?? 0;
   const posts = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
 
@@ -77,23 +78,28 @@ function Today() {
     const out: Row[] = [];
     posts.forEach((post, i) => {
       out.push({ type: "post", key: post.uri, post });
+
       if ((i === 0 || i === 2 || i === 5) && weaves.length) {
         const listen = weaves.shift()!;
         out.push({ type: "weave", key: `weave-${listen.playUri}`, listen });
       }
+
       if (i === 1 && !layout.rail && heating.length) out.push({ type: "shelf", key: "shelf" });
     });
+
     return out;
   }, [posts, today.data, layout.rail]);
 
   const contentWidth = layout.sidebar
     ? Math.min(660, layout.width - SIDEBAR_WIDTH - (layout.rail ? RAIL_WIDTH : 40))
     : layout.width;
+
   const date = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       ambientScroll();
+
       // Scrolling past the deck counts as having seen Today.
       if (deckBottom && event.nativeEvent.contentOffset.y > deckBottom) markSeen();
     },
@@ -103,10 +109,12 @@ function Today() {
   const openToday = (index?: number) => {
     expand();
     list.current?.scrollToOffset({ offset: 0, animated: true });
+
     if (index !== undefined) setTimeout(() => deck.current?.step(index), 50);
   };
 
   const showDeck = !collapsed && items.length > 0;
+
   const header = (
     <View style={{ paddingTop: insets.top + (layout.sidebar ? 24 : 12) }}>
       <View className="flex-row items-end justify-between px-5">
@@ -204,6 +212,7 @@ function Today() {
   );
 
   if (!layout.sidebar) return feedList;
+
   return (
     <View className="flex-1 flex-row justify-center">
       <View style={{ width: contentWidth + 40 }}>{feedList}</View>

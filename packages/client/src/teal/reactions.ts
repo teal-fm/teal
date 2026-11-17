@@ -17,7 +17,9 @@ export async function addReaction(
   emoji: string,
 ): Promise<string> {
   if (!agent.did) throw new Error("Sign in to react.");
+
   if (!subject.cid) throw new Error("This item can't be reacted to yet.");
+
   const res = await agent.call(
     "com.atproto.repo.createRecord",
     {},
@@ -32,6 +34,7 @@ export async function addReaction(
       },
     },
   );
+
   return (res.data as { uri: string }).uri;
 }
 
@@ -54,14 +57,17 @@ export function withViewerReaction(
   viewerReaction: string | undefined,
 ): ReactionSummary[] {
   const existing = summaries.find((s) => s.emoji === emoji);
+
   if (!existing) {
     return viewerReaction
       ? [...summaries, { emoji, count: 1, viewerReaction }]
       : summaries;
   }
+
   const had = !!existing.viewerReaction;
   const has = !!viewerReaction;
   const count = existing.count + (has === had ? 0 : has ? 1 : -1);
+
   return summaries
     .map((s) => (s.emoji === emoji ? { ...s, count, viewerReaction } : s))
     .filter((s) => s.count > 0);

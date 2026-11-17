@@ -13,17 +13,21 @@ export function PlaylistCreator({ onCreated }: { onCreated: () => void }) {
 
   const create = async (event: FormEvent) => {
     event.preventDefault();
+
     if (!agent?.did || !name.trim() || busy) return;
     setBusy(true);
     setError(null);
+
     try {
       let facets: RichText["facets"];
       const text = description.trim();
+
       if (text) {
         const rich = new RichText({ text });
         await rich.detectFacets(agent);
         facets = rich.facets;
       }
+
       await agent.call(
         "com.atproto.repo.createRecord",
         {},

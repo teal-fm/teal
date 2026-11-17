@@ -18,8 +18,11 @@ function summary(items: DeckItem[]) {
   const now = items.filter((i) => i.kind === "listen" && i.listen.listeningNow).length;
   const moments = items.filter((i) => i.kind === "moment").length;
   const parts = [];
+
   if (now) parts.push(`${now} ${now === 1 ? "friend" : "friends"} listening now`);
+
   if (moments) parts.push(`${moments} group ${moments === 1 ? "moment" : "moments"}`);
+
   return parts.join(" · ") || "Your circle today";
 }
 
@@ -70,10 +73,12 @@ export function TodayRailGrid({ items, onOpen }: { items: DeckItem[]; onOpen: (i
       <div className="flex flex-wrap gap-2">
         {items.map((item, index) => {
           const listening = item.kind === "listen" && item.listen.listeningNow;
+
           const label =
             item.kind === "listen"
               ? `${listener(item)}: ${item.listen.trackName}${listening ? ", listening now" : ""}`
               : item.moment.release.releaseName;
+
           return (
             <button
               key={item.key}

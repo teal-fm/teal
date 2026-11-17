@@ -7,9 +7,12 @@ import { Button, Notice, Screen } from "@/components/ds";
 function atUriFromParams(param: string | string[] | undefined) {
   if (Platform.OS === "web") {
     const fromPath = atUriFromRoutePath(window.location.pathname);
+
     if (fromPath) return fromPath;
   }
+
   const parts = Array.isArray(param) ? param : param ? [param] : [];
+
   return parts.length ? `at://${parts.join("/")}` : undefined;
 }
 
@@ -18,7 +21,9 @@ export default function AtUriLink() {
   const params = useLocalSearchParams();
   const uri = useMemo(() => atUriFromParams(params.uri), [params.uri]);
   const href = hrefFromAtUri(uri);
+
   if (href) return <Redirect href={href as never} />;
+
   return (
     <Screen back pageTitle="Unsupported link">
       <Notice

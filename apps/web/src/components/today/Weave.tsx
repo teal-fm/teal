@@ -5,9 +5,11 @@ import { A, Avatar, Cover, Glass } from "~/ds";
 /** A short note about someone's listening, woven between posts. */
 export function Weave({ listen }: { listen: ListeningView }) {
   const a = useDisplayActor(listen.actor, listen.actor?.did);
+
   const what = listen.firstReleaseListen
     ? ["found ", listen.releaseName, " for the first time"]
     : [`has played ${listen.releasePlaysToday} songs from `, listen.releaseName, " today"];
+
   return (
     <Glass className="mx-1.5 mb-3.5 flex items-center gap-3 rounded-full py-2 pr-2 pl-2">
       <A href={a.href} aria-label={`${a.name}'s profile`}>

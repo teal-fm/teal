@@ -19,6 +19,7 @@ function useMe() {
   const did = useAuth((state) => state.agent?.did);
   const teal = useAuth((state) => state.profile?.teal);
   const handle = normalizeHandle(useAuth((state) => state.profile?.bsky?.handle));
+
   return {
     did,
     signedIn: status === "loggedIn" && !!did,
@@ -30,11 +31,17 @@ function useMe() {
 
 function useCurrent(me: ReturnType<typeof useMe>) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+
   if (pathname === "/") return "today";
+
   if (pathname.startsWith("/search")) return "explore";
+
   if (pathname.startsWith("/notifications")) return "activity";
+
   if (pathname === "/me" || (me.did && pathname.startsWith(`/profile/${me.did}`))) return "you";
+
   if (me.handle && pathname.startsWith(`/profile/${me.handle}`)) return "you";
+
   return undefined;
 }
 
@@ -53,6 +60,7 @@ function MeIcon({ me, size, on }: { me: ReturnType<typeof useMe>; size: number; 
 export function Nav() {
   const me = useMe();
   const current = useCurrent(me);
+
   return (
     <>
       <div className="fixed inset-x-4 bottom-3.5 z-30 flex justify-center nav:hidden">
@@ -64,6 +72,7 @@ export function Nav() {
         >
           {ITEMS.map((item) => {
             const on = current === item.key;
+
             return (
               <A
                 key={item.key}
@@ -90,6 +99,7 @@ export function Nav() {
           </A>
           {ITEMS.map((item) => {
             const on = current === item.key;
+
             return (
               <A
                 key={item.key}

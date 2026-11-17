@@ -56,11 +56,14 @@ function exactResultsSufficient(
   // Track-only: need >= 2 results OR first result must match well
   if (results.length >= 2) return true;
   const first = results[0];
+
   if (first?.title && cleanedTrack) {
     const norm = normalizeForComparison(first.title);
     const trackNorm = normalizeForComparison(cleanedTrack);
+
     return norm === trackNorm || norm.startsWith(trackNorm + " ");
   }
+
   return false;
 }
 
@@ -88,12 +91,14 @@ export async function searchMusicbrainz(
   // find results. If none do and any stage failed, the search failed rather than
   // finding nothing.
   let unavailable: MusicBrainzUnavailableError | undefined;
+
   const searchStage = async (...args: Parameters<typeof runStage>) => {
     try {
       return await runStage(...args);
     } catch (error) {
       if (!(error instanceof MusicBrainzUnavailableError)) throw error;
       unavailable = error;
+
       return [];
     }
   };
@@ -102,15 +107,18 @@ export async function searchMusicbrainz(
     const cleanedTrack = searchParams.track
       ? cleanTrackName(searchParams.track) || undefined
       : undefined;
+
     const cleanedArtist = searchParams.artist
       ? cleanArtistName(searchParams.artist) || undefined
       : undefined;
+
     const cleanedRelease = searchParams.release
       ? cleanReleaseName(searchParams.release) || undefined
       : undefined;
 
     const cleaningChangedTrack =
       cleanedTrack !== undefined && cleanedTrack !== searchParams.track;
+
     const cleaningChangedArtist =
       cleanedArtist !== undefined && cleanedArtist !== searchParams.artist;
 
@@ -118,6 +126,7 @@ export async function searchMusicbrainz(
     // When release matches, this narrows to the specific recording on that album,
     // which is critical for popular tracks with many recordings in MB.
     let exactWithRelease: MusicBrainzRecording[] = [];
+
     if (cleanedRelease) {
       exactWithRelease = await searchStage(
         cleanedTrack,
@@ -131,6 +140,7 @@ export async function searchMusicbrainz(
     // Skip if 1a already got sufficient results (saves 1 API call in the common case).
     // Still run if 1a got 0 results (release name might differ between scrobbler and MB).
     let exactWithoutRelease: MusicBrainzRecording[] = [];
+
     if (!exactResultsSufficient(exactWithRelease, cleanedTrack, !!cleanedArtist)) {
       exactWithoutRelease = await searchStage(
         cleanedTrack,
@@ -142,6 +152,7 @@ export async function searchMusicbrainz(
 
     // Stage 1c: If cleaning changed names and both stages got 0, retry with originals.
     let originalExactResults: MusicBrainzRecording[] = [];
+
     if (exactWithRelease.length === 0 && exactWithoutRelease.length === 0 &&
         (cleaningChangedTrack || cleaningChangedArtist)) {
       originalExactResults = await searchStage(
@@ -158,6 +169,7 @@ export async function searchMusicbrainz(
     // then re-search recordings with the romanized name.
     let cjkAliasResults: MusicBrainzRecording[] = [];
     const artistForSearch = cleanedArtist || searchParams.artist;
+
     if (
       exactWithRelease.length === 0 &&
       exactWithoutRelease.length === 0 &&
@@ -166,6 +178,7 @@ export async function searchMusicbrainz(
       hasCJK(artistForSearch)
     ) {
       const romanized = await resolveArtistAlias(artistForSearch);
+
       if (romanized && romanized !== artistForSearch) {
         cjkAliasResults = await searchStage(
           cleanedTrack,
@@ -182,6 +195,7 @@ export async function searchMusicbrainz(
       ...originalExactResults,
       ...cjkAliasResults,
     ];
+
     const hasArtist = !!cleanedArtist;
 
     // Early exit: good exact results -> skip later stages but still rank.
@@ -196,6 +210,7 @@ export async function searchMusicbrainz(
         cleanedArtist,
         cleanedRelease,
       };
+
       return rankMultiStageResults(
         [{ results: combinedExact, strategy: "exact" as const }],
         rankingQuery,
@@ -208,6 +223,7 @@ export async function searchMusicbrainz(
 
     // Stage 2: Fuzzy match (typos, Unicode, word reordering)
     let fuzzyResults: MusicBrainzRecording[] = [];
+
     if (needsMoreStages && (cleanedTrack || cleanedArtist)) {
       fuzzyResults = await searchStage(
         cleanedTrack,
@@ -220,6 +236,7 @@ export async function searchMusicbrainz(
     // Stage 3: Track-only fallback (when artist name doesn't match MB's data)
     let trackOnlyResults: MusicBrainzRecording[] = [];
     const totalSoFar = combinedExact.length + fuzzyResults.length;
+
     if (needsMoreStages && totalSoFar < PARTIAL_THRESHOLD &&
         searchParams.track && searchParams.artist) {
       trackOnlyResults = await searchStage(
@@ -250,7 +267,9 @@ export async function searchMusicbrainz(
     };
 
     const ranked = rankMultiStageResults(stageResults, rankingQuery).slice(0, 25);
+
     if (ranked.length === 0 && unavailable) throw unavailable;
+
     return ranked;
   } catch (error) {
     if (error instanceof Error) {
@@ -258,9 +277,11 @@ export async function searchMusicbrainz(
     } else {
       console.error("Failed to fetch MusicBrainz data:", error);
     }
+
     if (options.throwOnError) {
       throw error instanceof Error ? error : new Error(String(error));
     }
+
     return [];
   }
 }

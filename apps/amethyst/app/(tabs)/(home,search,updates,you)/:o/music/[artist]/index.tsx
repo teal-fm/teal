@@ -25,12 +25,14 @@ export default function ArtistScreen() {
     queryKey: ["artist", mbid, lookup],
     queryFn: () => getArtist(mbid, lookup).then((r) => r.artist),
   });
+
   const photo = useQuery({
     queryKey: ["artist-image", artist.data?.mbid],
     queryFn: async () => (await getArtistImageUrl(artist.data!.mbid, 500)) ?? null,
     enabled: !!artist.data?.mbid,
     staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
+
   const listeners = useQuery({
     queryKey: ["artist-listeners", mbid, lookup, period, 5],
     queryFn: () => getArtistListeners(mbid, lookup, period, 5).then((r) => r.listeners),
@@ -43,6 +45,7 @@ export default function ArtistScreen() {
       </Screen>
     );
   }
+
   if (artist.isError || !artist.data) {
     return (
       <Screen back pageTitle="Artist">
@@ -53,6 +56,7 @@ export default function ArtistScreen() {
 
   const a = artist.data;
   const albums = a.albums.filter((r) => r.releaseType === "album").length;
+
   return (
     <Screen back pageTitle={a.name} width="wide">
       <MusicHero

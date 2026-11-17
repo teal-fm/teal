@@ -18,8 +18,10 @@ function store() {
     instance = createPendingListenStore(clientConfig().storage);
     void instance.hydrate();
   }
+
   return instance;
 }
+
 const subscribe = (listener: () => void) => store().subscribe(listener);
 const snapshot = () => store().getSnapshot();
 
@@ -55,12 +57,15 @@ export function usePendingListens(
     snapshot,
     () => EMPTY,
   );
+
   useEffect(() => {
     if (!actor) return;
     store().prune();
     const interval = setInterval(() => store().prune(), 60_000);
+
     return () => clearInterval(interval);
   }, [actor]);
+
   return useMemo(
     () => pending.filter((entry) => entry.play.authorDid === actor),
     [actor, pending],

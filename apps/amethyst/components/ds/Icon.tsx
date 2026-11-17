@@ -8,12 +8,14 @@ const styledIcons = new WeakMap<object, ComponentType<any>>();
 
 function styledIcon(icon: LucideIcon) {
   let StyledIcon = styledIcons.get(icon);
+
   if (!StyledIcon) {
     StyledIcon = styled(icon as ComponentType<any>, {
       className: { target: "style", nativeStyleMapping: { color: true, opacity: true } },
     }) as ComponentType<any>;
     styledIcons.set(icon, StyledIcon);
   }
+
   return StyledIcon;
 }
 
@@ -30,6 +32,7 @@ export function Icon({
   label?: string;
 }) {
   const StyledIcon = styledIcon(icon);
+
   return (
     <StyledIcon
       size={size}

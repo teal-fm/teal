@@ -19,8 +19,10 @@ export const A = forwardRef<HTMLAnchorElement, AProps>(function A(
 ) {
   const router = useRouter();
   const external = isExternal(href);
+
   const handle = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
+
     if (
       external ||
       event.defaultPrevented ||
@@ -33,9 +35,11 @@ export const A = forwardRef<HTMLAnchorElement, AProps>(function A(
     ) {
       return;
     }
+
     event.preventDefault();
     void router.navigate({ href, replace });
   };
+
   return (
     <a
       ref={ref}
@@ -51,5 +55,6 @@ export const A = forwardRef<HTMLAnchorElement, AProps>(function A(
 /** Navigates to an app path from code. */
 export function useGo() {
   const router = useRouter();
+
   return (href: string, options?: { replace?: boolean }) => router.navigate({ href, replace: options?.replace });
 }

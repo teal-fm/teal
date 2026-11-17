@@ -7,6 +7,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const COLOR_SCHEME_STORAGE_KEY = "teal-color-scheme";
+
 export type ThemePreference = "light" | "dark" | "system";
 
 function isPreference(value: unknown): value is ThemePreference {
@@ -28,8 +29,10 @@ function applyPreference(preference: ThemePreference) {
 
 export async function restoreColorSchemePreference() {
   if (!canOverrideColorScheme) return;
+
   try {
     const stored = await AsyncStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
+
     if (isPreference(stored)) applyPreference(stored);
   } catch {
     // Storage can be unavailable; the system appearance still applies.
@@ -52,11 +55,14 @@ export function useColorScheme() {
   const setColorScheme = useCallback((next: ThemePreference) => {
     setPreference(next);
     applyPreference(next);
+
     if (!canOverrideColorScheme) return;
+
     const write =
       next === "system"
         ? AsyncStorage.removeItem(COLOR_SCHEME_STORAGE_KEY)
         : AsyncStorage.setItem(COLOR_SCHEME_STORAGE_KEY, next);
+
     write.catch(() => undefined);
   }, []);
 

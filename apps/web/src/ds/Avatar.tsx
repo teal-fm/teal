@@ -23,6 +23,7 @@ export function Avatar({
   const ring = listeningNow ? Math.max(2, Math.round(size / 24)) : 0;
   // Remember which image failed, so a new avatar URL gets its own chance.
   const [brokenUri, setBrokenUri] = useState<string>();
+
   return (
     <span
       aria-hidden

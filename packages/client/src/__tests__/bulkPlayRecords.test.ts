@@ -7,6 +7,7 @@ import type { EditablePlayRecord } from "../teal/playRecords";
 
 const actor = "did:plc:qa";
 const uri = (rkey: string) => `at://${actor}/fm.teal.feed.play/${rkey}`;
+
 const record: EditablePlayRecord = {
   $type: "fm.teal.feed.play",
   trackName: "London Song",
@@ -17,10 +18,12 @@ const record: EditablePlayRecord = {
 
 it("retains the exact successful bulk-edit CID and keeps it over stale indexed data", async () => {
   const store = createPendingListenStore();
+
   const put = jest.fn(async (rkey: string) => ({
     uri: uri(rkey),
     cid: "new-cid",
   }));
+
   await updateSelectedPlayRecords(
     ["one"],
     { releaseName: "Edited" },
@@ -35,11 +38,13 @@ it("retains the exact successful bulk-edit CID and keeps it over stale indexed d
     { ...record, releaseName: "Edited" },
     "old-cid",
   );
+
   const stale = {
     ...store.getSnapshot()[0].play,
     cid: "old-cid",
     releaseName: "Original",
   };
+
   expect(
     mergePendingListens(actor, [stale], store.getSnapshot())[0],
   ).toMatchObject({ cid: "new-cid", releaseName: "Edited" });
@@ -55,6 +60,7 @@ it("keeps completed edits when a later selected record fails, without retaining 
         load: async () => ({ record }),
         put: async (rkey) => {
           if (rkey === "two") throw new Error("write failed");
+
           return { uri: uri(rkey), cid: "new-cid" };
         },
         confirmed,

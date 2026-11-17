@@ -14,6 +14,7 @@ export type RankedTrackContinuation = {
 };
 
 type TrackContext = { artist: string; href?: string };
+
 export type RankedTrackResolution = RankedTrackContinuation & {
   context?: TrackContext;
 };
@@ -31,6 +32,7 @@ const identity = (value?: string) => value?.replace(/^mbid:/, "").toLowerCase();
 
 function actorOwnsListen(uri: string | undefined, actor: string) {
   const record = parseAtUri(uri);
+
   return (
     record?.did === actor &&
     record.collection === "fm.teal.feed.play" &&
@@ -48,20 +50,25 @@ export async function resolveRankedTrack(
   isCurrent = () => true,
 ): Promise<RankedTrackResolution> {
   const target = identity(recordingMbid);
+
   if (!target) throw new Error("This ranking does not identify a recording.");
   let searched = continuation?.searched || false;
+
   if (!searched) {
     try {
       const results = await deps.search(
         Array.from(title).slice(0, 128).join(""),
         actorDid,
       );
+
       if (!isCurrent()) return { searched: false };
+
       const song = results.songs.find(
         (candidate) =>
           identity(candidate.recordingMbId) === target &&
           actorOwnsListen(candidate.uri, actorDid),
       );
+
       if (song)
         return {
           searched: true,
@@ -81,27 +88,35 @@ export async function resolveRankedTrack(
       if (!isCurrent()) return { searched: false };
     }
   }
+
   if (continuation?.exhausted) return { searched, exhausted: true };
   let cursor = continuation?.cursor;
   const seen = new Set(cursor ? [cursor] : []);
+
   for (
     let pageIndex = 0;
     pageIndex < HISTORY_PAGES_PER_LOOKUP && isCurrent();
     pageIndex += 1
   ) {
     const page = await deps.history(actorDid, HISTORY_PAGE_SIZE, cursor);
+
     if (!isCurrent()) return { searched, cursor };
+
     const context = indexedStatContext(
       "tracks",
       recordingMbid,
       page.plays.filter((play) => actorOwnsListen(play.uri, actorDid)),
     );
+
     if (context?.href) return { searched, context, cursor: page.cursor };
+
     if (!page.cursor) return { searched, exhausted: true };
+
     if (seen.has(page.cursor))
       throw new Error("Listening history could not advance. Try again later.");
     seen.add(page.cursor);
     cursor = page.cursor;
   }
+
   return { searched, cursor };
 }

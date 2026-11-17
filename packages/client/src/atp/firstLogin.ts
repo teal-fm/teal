@@ -14,6 +14,7 @@ export async function firstLoginHref(
   timeoutMs = 4_000,
 ): Promise<string> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
+
   try {
     await Promise.race([
       readProfile(),
@@ -24,6 +25,7 @@ export async function firstLoginHref(
         );
       }),
     ]);
+
     return "/";
   } catch (error) {
     return isMissingProfileRecord(error)

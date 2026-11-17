@@ -7,6 +7,7 @@ import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 function ListenerRow({ listener, rank, last }: { listener: ArtistListenerView; rank: number; last: boolean }) {
   const actor = useDisplayActor(listener.actor, listener.actor.did);
+
   return (
     <Link href={actor.href as never} asChild>
       <Pressable

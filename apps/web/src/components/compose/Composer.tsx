@@ -53,9 +53,11 @@ export function Composer({
 
   const publish = async (event: FormEvent) => {
     event.preventDefault();
+
     if (!agent || !selected || !text.trim() || busy || remaining < 0) return;
     setBusy(true);
     setError(null);
+
     try {
       const post = await publishPost(agent, {
         text,
@@ -69,6 +71,7 @@ export function Composer({
           avatar: profiles?.teal?.avatar || profiles?.bsky?.avatar,
         } as SocialPostView["author"],
       });
+
       setText("");
       onPublished(post);
     } catch {

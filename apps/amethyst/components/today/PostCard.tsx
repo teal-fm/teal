@@ -16,15 +16,21 @@ import { ReactionBar } from "./ReactionBar";
 
 function contextLine(post: SocialPostView) {
   const c = post.listenContext;
+
   if (!c) return undefined;
+
   if (c.circleListenerCount > 0) {
     const named = c.circleSample.map((p) => p.displayName || p.handle).filter(Boolean).slice(0, 2);
     const others = c.circleListenerCount - named.length;
     const who = others > 0 ? `${named.join(", ")} and ${others} other${others === 1 ? "" : "s"}` : named.join(" and ");
+
     return `${who || `${c.circleListenerCount} people you follow`} played this today`;
   }
+
   if (c.viewerPlayCount) return `You've played this ${c.viewerPlayCount} time${c.viewerPlayCount === 1 ? "" : "s"}`;
+
   if (c.authorPlayCount && c.authorPlayCount > 1) return `${c.authorPlayCount} plays from ${post.author?.displayName || "them"}`;
+
   return undefined;
 }
 
@@ -42,6 +48,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
 
   const share = async () => {
     const result = await shareLink(`${post.text ? `${post.text} ` : ""}${play.trackName}`, absoluteUrl(href));
+
     if (result !== "copied") return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

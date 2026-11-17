@@ -16,12 +16,14 @@ import { oauthClient, onSessionDeleted } from "./oauth";
 function withTealLexicons(agent: Agent) {
   for (const schema of Lexicons.schemas) {
     if (!schema.id.startsWith("fm.teal.")) continue;
+
     try {
       agent.lex.add(schema);
     } catch {
       // Already added.
     }
   }
+
   return agent;
 }
 
@@ -38,8 +40,10 @@ export async function restore() {
     if (useAuth.getState().agent?.did !== sub) return;
     useAuth.setState({ status: "loggedOut", agent: null, session: null, profile: null });
   });
+
   try {
     const result = await client.init();
+
     if (result) signedIn(result.session);
     else useAuth.setState({ status: "loggedOut" });
   } catch (error) {
@@ -58,11 +62,14 @@ export async function redirectToSignIn(handle: string) {
 
 export async function loadViewerProfile(agent: Agent) {
   const did = agent.did;
+
   if (!did) return;
+
   const bsky = await agent
     .getProfile({ actor: did })
     .then((res) => res.data)
     .catch(() => null);
+
   // Aqua is the source of truth for Teal identity, so read it directly rather
   // than through the user's PDS proxy.
   const teal = await getProfile(did)
@@ -71,7 +78,9 @@ export async function loadViewerProfile(agent: Agent) {
       if (!(error instanceof XrpcError && error.status === 404)) {
         console.error("Failed to load the teal profile", error);
       }
+
       return null;
     });
+
   if (useAuth.getState().agent?.did === did) useAuth.setState({ profile: { bsky, teal } });
 }

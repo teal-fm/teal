@@ -29,6 +29,7 @@ export function Favourites({
       staleTime: 60 * 60_000,
     })),
   });
+
   if (favourites.length === 0 && !isSelf) return null;
 
   return (
@@ -52,6 +53,7 @@ export function Favourites({
           {favourites.map((f, i) => {
             const album = albums[i]?.data?.album;
             const id = favouriteId(f);
+
             const body = (
               <AmbientSource uri={coverUri(id)} className="flex-1">
                 <Cover releaseMbId={id} radius={10} className="w-full shadow-lg" accessibilityLabel={album?.name} />
@@ -63,6 +65,7 @@ export function Favourites({
                 </Text>
               </AmbientSource>
             );
+
             return album?.artistName ? (
               <Link key={id} href={musicAlbumHref(album.artistName, album.name, id) as never} asChild>
                 <Pressable className="flex-1">{body}</Pressable>

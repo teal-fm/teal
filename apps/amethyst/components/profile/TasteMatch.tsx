@@ -25,7 +25,9 @@ export function TasteMatch({
     queryFn: () => getTasteMatch(actor, viewer),
     staleTime: 10 * 60_000,
   });
+
   const data = match.data;
+
   if (!data || data.topArtistCount === 0) return null;
   const s = data.suggestion;
 

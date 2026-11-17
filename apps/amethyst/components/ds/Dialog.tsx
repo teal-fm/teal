@@ -24,6 +24,7 @@ export function Dialog({
 }) {
   const titleId = useId();
   const ref = useDialogFocus(onClose, titleId, usePathname());
+
   return (
     <View className="flex-1 items-center justify-center px-4">
       <Pressable

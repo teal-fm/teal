@@ -38,19 +38,23 @@ let snapshot: BackdropPreferences | undefined;
 
 function read() {
   const next = { backdrop: readOne("backdrop"), motion: readOne("motion"), colour: readOne("colour") };
+
   if (!snapshot || (Object.keys(next) as (keyof BackdropPreferences)[]).some((k) => next[k] !== snapshot?.[k])) {
     snapshot = next;
   }
+
   return snapshot;
 }
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
+
   return () => listeners.delete(listener);
 }
 
 export function useBackdropPreferences() {
   const preferences = useSyncExternalStore(subscribe, read, () => DEFAULTS);
+
   const set = useCallback(<K extends keyof BackdropPreferences>(name: K, value: BackdropPreferences[K]) => {
     try {
       if (value === DEFAULTS[name]) localStorage.removeItem(KEY(name));
@@ -58,10 +62,14 @@ export function useBackdropPreferences() {
     } catch {
       // Unsaved, but still applied for this visit.
     }
+
     const root = document.documentElement;
+
     if (value === DEFAULTS[name]) delete root.dataset[ATTRIBUTES[name]];
     else root.dataset[ATTRIBUTES[name]] = value;
+
     for (const listener of listeners) listener();
   }, []);
+
   return { preferences, set };
 }

@@ -20,6 +20,7 @@ function suggestedRelease(recording: MusicBrainzRecording) {
   const releases = [...(recording.releases || [])].sort(
     (a, b) => (a.date || "ZZZ").localeCompare(b.date || "ZZZ") || a.title.localeCompare(b.title) || a.id.localeCompare(b.id),
   );
+
   return (
     releases.find((r) => (r.country === "XW" || r.country === "US") && r.title !== recording.title) ||
     releases.find((r) => r.title !== recording.title) ||
@@ -39,6 +40,7 @@ function Result({
   const [release, setRelease] = useState(suggestedRelease(recording));
   const [showEditions, setShowEditions] = useState(false);
   const editions = recording.releases ?? [];
+
   return (
     <View className={cn("gap-2 rounded-[16px] p-3", chosen ? "bg-tint-soft" : "bg-fill")}>
       <Pressable
@@ -115,6 +117,7 @@ export function SongLog() {
     setSearching(true);
     setSearchFailed(false);
     setChosen(null);
+
     try {
       setResults(await searchMusicbrainz(fields, { throwOnError: true }));
     } catch {
@@ -136,6 +139,7 @@ export function SongLog() {
     if (!agent?.did || !chosen || saving) return;
     setSaving(true);
     setError(null);
+
     try {
       const record = createPlayRecordFromRecording(chosen);
       validatePlay(record);
@@ -143,6 +147,7 @@ export function SongLog() {
       const { uri, cid } = res.data as { uri: string; cid: string };
       retainConfirmedListens(agent.did, [{ record, uri, cid }]);
       let result: Saved = { listenUri: uri };
+
       if (crossPost) {
         // The listen is saved; a failed cross-post must never prompt a second listen write.
         try {
@@ -151,6 +156,7 @@ export function SongLog() {
           result = { ...result, crossPostFailed: true };
         }
       }
+
       setSaved(result);
     } catch {
       setError("Your listen didn't save. Try again.");
@@ -169,6 +175,7 @@ export function SongLog() {
 
   if (saved) {
     const href = listenHrefFromUri(saved.listenUri);
+
     return (
       <Notice
         center

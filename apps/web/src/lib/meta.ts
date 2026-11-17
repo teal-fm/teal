@@ -1,6 +1,7 @@
 /** Link-preview tags for a page, so shared links unfurl with a title, line, and image. */
 export function pageMeta({ title, description, image }: { title: string; description?: string; image?: string }) {
   const full = `${title} · Teal`;
+
   return [
     { title: full },
     { property: "og:title", content: title },
@@ -34,6 +35,7 @@ const SSR_BUDGET_MS = 1500;
 export async function serverAwait<T>(work: () => Promise<T>): Promise<T | undefined> {
   if (import.meta.env.SSR) {
     let timer: ReturnType<typeof setTimeout> | undefined;
+
     try {
       return await Promise.race([
         work(),
@@ -47,7 +49,9 @@ export async function serverAwait<T>(work: () => Promise<T>): Promise<T | undefi
       clearTimeout(timer);
     }
   }
+
   void work().catch(() => undefined);
+
   return undefined;
 }
 

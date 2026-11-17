@@ -22,12 +22,16 @@ function FavouritesPicker({ did, value, onChange }: { did: string; value: Favour
     queryFn: () => getUserTopReleases(did, "all", 24),
     staleTime: 10 * 60_000,
   });
+
   const releases = (top.data?.releases ?? []).filter((r) => r.mbid);
+
   const toggle = (mbid: string) => {
     const index = value.findIndex((f) => plain(f.mbid) === mbid);
+
     if (index >= 0) onChange(value.filter((_, i) => i !== index));
     else if (value.length < MAX_FAVOURITES) onChange([...value, { mbid: `mbid:${mbid}`, type: "release" }]);
   };
+
   return (
     <View className="gap-2">
       <Text className="text-[14px] font-semibold">
@@ -44,6 +48,7 @@ function FavouritesPicker({ did, value, onChange }: { did: string; value: Favour
             const mbid = plain(release.mbid!);
             const order = value.findIndex((f) => plain(f.mbid) === mbid);
             const full = order < 0 && value.length >= MAX_FAVOURITES;
+
             return (
               <Pressable
                 key={mbid}
@@ -113,7 +118,9 @@ export function EditProfileSheet({
       aspect: kind === "avatar" ? [1, 1] : [3, 1],
       quality: 0.92,
     });
+
     if (result.canceled) return;
+
     if (kind === "avatar") setAvatarUri(result.assets[0].uri);
     else setBannerUri(result.assets[0].uri);
   };
@@ -122,6 +129,7 @@ export function EditProfileSheet({
     if (!agent || saving) return;
     setSaving(true);
     setError(null);
+
     try {
       await saveProfileRecord(
         agent,

@@ -53,6 +53,7 @@ function EditPlaylist({ playlist, onDone }: { playlist: SocialPlaylistView; onDo
 
   const pick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.92 });
+
     if (!result.canceled) setCover(result.assets[0].uri);
   };
 
@@ -60,6 +61,7 @@ function EditPlaylist({ playlist, onDone }: { playlist: SocialPlaylistView; onDo
     if (!agent || busy || !name.trim()) return;
     setBusy(true);
     setError(null);
+
     try {
       await savePlaylistRecord(agent, playlist, { name, description, collaboratorsText: collaborators, newCoverUri: cover }, (input, owner) =>
         resolvePlaylistAuthors(input, owner, async (handle) => (await agent.resolveHandle({ handle })).data.did),
@@ -114,6 +116,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
   const [selected, setSelected] = useState<PlayView | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+
   const nowPlaying = useQuery({
     queryKey: ["now-playing", viewer],
     queryFn: () => getProfile(viewer!).then((r) => (r.profile.status?.item as PlayView | undefined) ?? null),
@@ -124,6 +127,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
     if (!agent || busy) return;
     setBusy(true);
     setStatus(null);
+
     try {
       const item = await addPlaylistItem(agent, playlist, playViewToTrackView(play), playlist.itemCount);
       // The index lags writes, so the new song joins the cached playlist straight away.
@@ -172,6 +176,7 @@ export default function PlaylistScreen() {
   const viewer = useViewerDid();
   const valid = !!playlistHrefFromUri(uri);
   const [editing, setEditing] = useState(false);
+
   const query = useQuery({
     queryKey: ["playlist", uri],
     queryFn: () => getPlaylist(uri!),
@@ -185,6 +190,7 @@ export default function PlaylistScreen() {
       </Screen>
     );
   }
+
   if (query.isLoading) {
     return (
       <Screen back pageTitle="Playlist">
@@ -192,6 +198,7 @@ export default function PlaylistScreen() {
       </Screen>
     );
   }
+
   if (query.isError || !query.data) {
     return (
       <Screen back pageTitle="Playlist">

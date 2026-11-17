@@ -25,6 +25,7 @@ import {
 } from "@/components/ds";
 
 type GridSize = 3 | 4 | 5;
+
 const SIZES = [
   { value: 3, label: "3 × 3" },
   { value: 4, label: "4 × 4" },
@@ -54,11 +55,13 @@ export default function TopsterScreen() {
     queryFn: () => getUserTopReleases(actor, period, columns * columns).then((r) => r.releases),
     enabled: !!actor,
   });
+
   const profile = useQuery({
     queryKey: ["topster-name", actor],
     queryFn: () => getProfile(actor).then((r) => r.profile),
     enabled: !!actor,
   });
+
   const name = profile.data?.displayName || normalizeHandle((profile.data as { handle?: string } | undefined)?.handle) || normalizeHandle(actor);
   const title = `${name}'s top albums`;
   const releases = chart.data ?? [];
@@ -113,15 +116,19 @@ export default function TopsterScreen() {
             <View className="flex-row flex-wrap" style={{ width: gridWidth, gap }}>
               {Array.from({ length: columns * columns }, (_, i) => {
                 const release = releases[i];
+
                 if (!release) {
                   return <View key={`empty-${i}`} aria-hidden className="rounded-[6px] bg-fill" style={{ width: tile, height: tile }} />;
                 }
+
                 const label = `${i + 1}. ${release.name || "Unknown album"}, ${release.playCount || 0} plays`;
+
                 const art = (
                   <AmbientSource uri={coverUri(release.mbid)}>
                     <Cover releaseMbId={release.mbid} size={tile} radius={6} />
                   </AmbientSource>
                 );
+
                 return release.mbid ? (
                   <Link key={`${release.mbid}-${i}`} href={musicAlbumHref("music", release.name || "Unknown album", release.mbid) as never} asChild>
                     <Pressable accessibilityLabel={label} className="web:hover:opacity-85">

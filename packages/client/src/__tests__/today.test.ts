@@ -43,6 +43,7 @@ describe("today copy", () => {
       listenerCount: 3,
       listeners: [{ displayName: "rhea" }, { displayName: "jo" }, { displayName: "sam" }] as MomentView["listeners"],
     };
+
     expect(momentLine(m)).toBe("rhea, jo and sam are on it right now");
     expect(momentLine({ ...m, kind: "network", listenerCount: 212 })).toBe("212 people listening right now");
     expect(momentLine({ ...m, kind: "trending", changePercent: 340, listenerCount: 18 })).toBe("+340% today · 18 listeners");

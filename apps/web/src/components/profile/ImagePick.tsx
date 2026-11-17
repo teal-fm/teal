@@ -23,6 +23,7 @@ export function ImagePick({
     },
     [],
   );
+
   return (
     <>
       <button type="button" aria-label={label} onClick={() => input.current?.click()} className={className}>
@@ -36,6 +37,7 @@ export function ImagePick({
         onChange={(event) => {
           const file = event.target.files?.[0];
           event.target.value = "";
+
           if (!file) return;
           const uri = URL.createObjectURL(file);
           made.current.push(uri);

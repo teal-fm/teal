@@ -26,7 +26,9 @@ export default function SharedStack() {
       const tabs = navigation.getState();
       setSelected(!tabs || tabs.routes[tabs.index]?.key === route.key);
     };
+
     update();
+
     return navigation.addListener("state", update);
   }, [navigation, route.key]);
   const ref = useRef<View>(null);

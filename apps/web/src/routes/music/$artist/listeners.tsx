@@ -19,13 +19,16 @@ function ArtistListeners() {
   const navigate = useNavigate({ from: Route.fullPath });
   const name = search.name || slug;
   const period = normalizeListenerPeriod(search.period);
+
   const listeners = useInfiniteQuery({
     queryKey: ["artist-listeners-all", search.mbid, name, period],
     queryFn: ({ pageParam }) => getArtistListeners(search.mbid, name, period, 50, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.cursor,
   });
+
   const all = listeners.data?.pages.flatMap((p) => p.listeners) ?? [];
+
   return (
     <Screen back title={search.name ? `${search.name} listeners` : "Listeners"}>
       <Choices

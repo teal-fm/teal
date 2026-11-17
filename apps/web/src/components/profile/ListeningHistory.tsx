@@ -17,6 +17,7 @@ export function usePlaysWithPending(did: string, isSelf: boolean) {
   const indexed = useMemo(() => query.data?.pages.flatMap((p) => p.plays) ?? [], [query.data]);
   const pending = usePendingListens(isSelf ? did : null);
   const plays = useMemo(() => mergePendingListens(did, indexed, pending), [did, indexed, pending]);
+
   const syncing = useMemo(
     () =>
       new Set(
@@ -26,9 +27,11 @@ export function usePlaysWithPending(did: string, isSelf: boolean) {
       ),
     [pending, indexed],
   );
+
   useEffect(() => {
     if (isSelf) retireIndexedListens(did, indexed);
   }, [did, indexed, isSelf]);
+
   return { query, indexed, plays, syncing };
 }
 
@@ -49,24 +52,31 @@ function BulkEditor({ did, plays, syncing, onDone }: { did: string; plays: PlayV
     setConfirmDelete(false);
     setSelected((current) => {
       const next = new Set(current);
+
       if (next.has(rkey)) next.delete(rkey);
       else next.add(rkey);
+
       return next;
     });
   };
 
   const apply = async () => {
     if (!agent || !selected.size || busy) return;
+
     if (!artists.trim() && !release.trim()) {
       setError("Enter artists or an album name first.");
+
       return;
     }
+
     setBusy(true);
     setError(null);
+
     const changes = {
       ...(artists.trim() ? { artists: artistsFromText(artists.trim()) } : {}),
       ...(release.trim() ? { releaseName: release.trim() } : {}),
     };
+
     try {
       await updateSelectedPlayRecords([...selected], changes, {
         load: (rkey) => loadPlayRecord(agent, did, rkey),
@@ -86,12 +96,16 @@ function BulkEditor({ did, plays, syncing, onDone }: { did: string; plays: PlayV
 
   const remove = async () => {
     if (!agent || !selected.size || busy) return;
+
     if (!confirmDelete) {
       setConfirmDelete(true);
+
       return;
     }
+
     setBusy(true);
     setError(null);
+
     try {
       // Hide each listen as soon as its delete succeeds, so a later failure doesn't bring earlier ones back.
       for (const rkey of selected) {
@@ -99,6 +113,7 @@ function BulkEditor({ did, plays, syncing, onDone }: { did: string; plays: PlayV
         removePendingListens(did, [`at://${did}/fm.teal.feed.play/${rkey}`]);
         patchPlays((play) => (play.rkey === rkey ? null : play));
       }
+
       setSelected(new Set());
       setConfirmDelete(false);
     } catch {
@@ -160,6 +175,7 @@ export function ListeningHistory({ did, isSelf }: { did: string; isSelf: boolean
   const [editing, setEditing] = useState(false);
 
   if (query.isLoading) return <Loading />;
+
   if (query.isError) return <ErrorNotice title="Listening history didn't load" onRetry={() => query.refetch()} />;
 
   return (

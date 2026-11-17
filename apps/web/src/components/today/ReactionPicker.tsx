@@ -4,7 +4,9 @@ import { QUICK_REACTIONS } from "@teal/client/teal/reactions";
 /** A single grapheme-ish emoji: no letters, digits, or spaces. */
 function asEmoji(value: string) {
   const trimmed = value.trim();
+
   if (!trimmed || /[\p{L}\p{N}\s]/u.test(trimmed)) return undefined;
+
   return [...new Intl.Segmenter().segment(trimmed)][0]?.segment;
 }
 
@@ -22,18 +24,23 @@ export function ReactionPicker({
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
+
     if (!dialog) return;
+
     if (visible && !dialog.open) {
       dialog.showModal();
       dialog.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     }
+
     if (!visible && dialog.open) dialog.close();
   }, [visible]);
+
   const pick = (emoji: string) => {
     setCustom("");
     onPick(emoji);
     onClose();
   };
+
   return (
     <dialog
       ref={ref}
@@ -66,6 +73,7 @@ export function ReactionPicker({
           value={custom}
           onChange={(event) => {
             const emoji = asEmoji(event.target.value);
+
             if (emoji) pick(emoji);
             else setCustom(event.target.value);
           }}

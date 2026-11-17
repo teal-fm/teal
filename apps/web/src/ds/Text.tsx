@@ -21,5 +21,6 @@ export function Heading({
   onBackdrop?: boolean;
 }) {
   const Tag = `h${level}` as const;
+
   return <Tag className={cn("text-ink", HEADING_SIZES[size], onBackdrop && "halo", className)} {...props} />;
 }

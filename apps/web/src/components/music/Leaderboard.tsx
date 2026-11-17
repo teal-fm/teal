@@ -6,6 +6,7 @@ import { A, Avatar } from "~/ds";
 
 function ListenerRow({ listener, rank, last }: { listener: ArtistListenerView; rank: number; last: boolean }) {
   const actor = useDisplayActor(listener.actor, listener.actor.did);
+
   return (
     <li>
       <A

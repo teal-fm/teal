@@ -36,9 +36,11 @@ type Person = { did: string; displayName?: string; handle?: string; avatar?: str
 /** Teal's own profiles win over Bluesky's for the same person. */
 function mergePeople(teal: MiniProfileView[], bluesky: AppBskyActorDefs.ProfileViewBasic[]): Person[] {
   const people = new Map<string, Person>();
+
   for (const user of bluesky) {
     people.set(user.did, { did: user.did, displayName: user.displayName, handle: user.handle, avatar: user.avatar });
   }
+
   for (const user of teal) {
     if (!user.did) continue;
     const previous = people.get(user.did);
@@ -49,6 +51,7 @@ function mergePeople(teal: MiniProfileView[], bluesky: AppBskyActorDefs.ProfileV
       avatar: user.avatar ? getProfileImageUrl(user.did, user.avatar, "avatar") : previous?.avatar,
     });
   }
+
   return [...people.values()];
 }
 
@@ -83,12 +86,14 @@ export default function Explore() {
   });
 
   const data = searching ? results.data : undefined;
+
   const counts: Record<Kind, number> = {
     people: data?.people.length ?? 0,
     songs: data?.songs.length ?? 0,
     artists: data?.artists.length ?? 0,
     albums: data?.albums.length ?? 0,
   };
+
   const topCover = data?.songs[0]?.releaseMbId ?? data?.albums[0]?.mbid;
 
   return (
@@ -200,13 +205,16 @@ function Discover() {
     queryFn: () => getToday(),
     refetchInterval: 60_000,
   });
+
   const moments = useMemo(() => dedupeMoments(network.data?.moments ?? []), [network.data]);
   const heating = useMemo(() => dedupeMoments(network.data?.heatingUp ?? []), [network.data]);
 
   if (network.isLoading) return <Loading />;
+
   if (network.isError) {
     return <ErrorNotice title="What's playing across teal didn't load" onRetry={() => network.refetch()} />;
   }
+
   if (moments.length === 0 && heating.length === 0) {
     return (
       <Text onBackdrop className="mt-6 text-center text-[15px] text-ink-2">
@@ -214,6 +222,7 @@ function Discover() {
       </Text>
     );
   }
+
   return (
     <View className="-mx-2.5 mt-2">
       <HeatingShelf moments={moments} title="Right now on teal" />

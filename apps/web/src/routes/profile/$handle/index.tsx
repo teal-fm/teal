@@ -32,6 +32,7 @@ import { useLayout } from "~/lib/media";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
 
 const TABS = ["overview", "listening", "posts", "playlists"] as const;
+
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/profile/$handle/")({
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/profile/$handle/")({
       const hint = params.handle.startsWith("did:") ? undefined : params.handle;
       const { profile } = await queryClient.ensureQueryData(once(profileQuery(did, hint)));
       const handle = normalizeHandle(profile.handle);
+
       return {
         title: profile.displayName || (handle ? `@${handle}` : did),
         description: profile.description || (handle ? `@${handle} on Teal` : undefined),
@@ -79,6 +81,7 @@ function ProfileScreen() {
       </Screen>
     );
   }
+
   if (failed || !did) {
     return (
       <Screen back pageTitle="Profile">
@@ -212,8 +215,11 @@ function Overview({
 function Posts({ did, isSelf }: { did: string; isSelf: boolean }) {
   const posts = useActorPosts(did);
   const items = posts.data?.pages.flatMap((p) => p.items) ?? [];
+
   if (posts.isLoading) return <Loading />;
+
   if (posts.isError) return <ErrorNotice title="Posts didn't load" onRetry={() => posts.refetch()} />;
+
   if (!items.length) {
     return (
       <Notice
@@ -223,6 +229,7 @@ function Posts({ did, isSelf }: { did: string; isSelf: boolean }) {
       />
     );
   }
+
   return (
     <div className="flex flex-col">
       {items.map((post) => (
@@ -245,6 +252,7 @@ function Playlists({ did, isSelf }: { did: string; isSelf: boolean }) {
   const playlists = useActorPlaylists(did);
   const client = useQueryClient();
   const items = playlists.data?.pages.flatMap((p) => p.items) ?? [];
+
   return (
     <div className="flex flex-col gap-4">
       {isSelf ? <PlaylistCreator onCreated={() => client.invalidateQueries({ queryKey: ["actor-playlists", did] })} /> : null}

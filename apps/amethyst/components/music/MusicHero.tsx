@@ -23,6 +23,7 @@ export function MusicHero({
   actions?: ReactNode;
 }) {
   const ambient = imageUri ?? coverUri(releaseMbId);
+
   return (
     <View className="gap-5 sm:flex-row sm:items-end">
       <AmbientSource uri={ambient}>

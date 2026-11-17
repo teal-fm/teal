@@ -23,16 +23,21 @@ const SLOTS: [number, number][] = [
   [0.3, 0.5],
   [0.7, 0.55],
 ];
+
 // Leaving covers fade slower than new ones arrive, so a fast scroll hands colour
 // over rather than washing out between covers.
 const FADE_IN_MS = 2400;
 const FADE_OUT_MS = 3600;
+
 /** A cover stays at least this long once it arrives, so a flick can't churn the set. */
 const HOLD_MS = 1200;
+
 /** The longest leaving covers wait for an arriving one's image. */
 const WAIT_FOR_ART_MS = 2000;
+
 // Eases in and out, so a cover neither pops on nor cuts off at either end of its fade.
 const EASE = "cubic-bezier(0.45, 0, 0.55, 1)";
+
 /**
  * With only a few covers, each also shows in mirrored spots, so their colour
  * fills the window instead of leaving patches of ground between them.
@@ -42,9 +47,11 @@ const ECHOES: ((x: number, y: number) => [number, number])[] = [
   (x, y) => [1 - x, y],
   (x, y) => [x, 1 - y],
 ];
+
 /** Drift timings, in seconds, picked per layer so no two move in step. */
 const WANDER_S = [31, 43, 37, 53, 29, 47, 41, 59];
 const SPIN_S = [67, 89, 73, 97, 61, 83, 79, 103];
+
 /** After every fallback fails, start over after these waits, so a flaky archive heals. */
 const RETRY_MS = [2000, 6000, 20000, 60000];
 
@@ -62,11 +69,15 @@ function thumbnail(uri: string) {
  */
 async function fallbackFor(failed: string, original: string) {
   const release = original.match(/coverartarchive\.org\/release\/([^/]+)\//)?.[1];
+
   if (release && failed === thumbnail(original)) {
     const group = await getReleaseGroupCoverArtUrl(release, 500);
+
     if (group && group !== failed) return group;
   }
+
   const other = failed.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
+
   return other !== failed && other !== thumbnail(original) ? other : undefined;
 }
 
@@ -74,6 +85,7 @@ function useWindowSize() {
   return useSyncExternalStore(
     (listener) => {
       window.addEventListener("resize", listener);
+
       return () => window.removeEventListener("resize", listener);
     },
     () => `${window.innerWidth}x${window.innerHeight}`,
@@ -106,6 +118,7 @@ function Blob({
   // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
   const live = loaded ? Math.pow(shown.weight, 0.7) : 0;
   const shownAt = useRef(live);
+
   if (live > 0) shownAt.current = live;
   const leaving = shown.weight === 0;
   const target = leaving && hold ? shownAt.current : live;
@@ -113,6 +126,7 @@ function Blob({
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     const frame = requestAnimationFrame(() => setMounted(true));
+
     return () => cancelAnimationFrame(frame);
   }, []);
   const opacity = mounted ? target : 0;
@@ -121,6 +135,7 @@ function Blob({
     if (!leaving || hold) return;
     // Stay mounted until the fade-out finishes, so a cover never blinks away.
     const timer = setTimeout(() => onGone(shown.uri), FADE_OUT_MS + 250);
+
     return () => clearTimeout(timer);
   }, [leaving, hold, onGone, shown.uri]);
 
@@ -133,13 +148,16 @@ function Blob({
     },
     [],
   );
+
   const onError = () => {
     tried.current.add(source);
     void fallbackFor(source, shown.uri).then((next) => {
       if (next && !tried.current.has(next)) {
         setSource(next);
+
         return;
       }
+
       // Out of fallbacks: try the whole chain again later rather than giving up.
       if (retry.current) return;
       retry.current = setTimeout(() => {
@@ -154,10 +172,12 @@ function Blob({
   const transition = `opacity ${target > 0 ? FADE_IN_MS : FADE_OUT_MS}ms ${EASE}`;
   const [hx, hy] = SLOTS[shown.slot];
   const spots = [[hx, hy] as [number, number], ...ECHOES.map((echo) => echo(hx, hy))];
+
   return (
     <>
       {spots.map(([fx, fy], copy) => {
         const seed = shown.slot * 3 + copy;
+
         return (
           <div
             key={copy}
@@ -234,26 +254,35 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
     const prev = current.current;
     const incoming = new Map(blobs.map((blob) => [blob.uri, blob.weight]));
     let wake = Infinity;
+
     const next = prev.map((item) => {
       const weight = incoming.get(item.uri);
+
       if (weight !== undefined) {
         return { ...item, weight, since: item.weight > 0 ? item.since : now };
       }
+
       if (item.weight > 0 && now - item.since < HOLD_MS) {
         wake = Math.min(wake, item.since + HOLD_MS);
+
         return item;
       }
+
       return { ...item, weight: 0 };
     });
+
     for (const blob of blobs) {
       if (prev.some((item) => item.uri === blob.uri)) continue;
       const crowd = SLOTS.map((_, index) => next.filter((item) => item.slot === index).length);
       const slot = crowd.indexOf(Math.min(...crowd));
       next.push({ uri: blob.uri, weight: blob.weight, slot, since: now });
     }
+
     commit(next);
+
     if (wake === Infinity) return;
     const timer = setTimeout(() => setRecheck((n) => n + 1), wake - now);
+
     return () => clearTimeout(timer);
   }, [blobs, recheck, commit]);
 
@@ -269,6 +298,7 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
     if (!waiting) return;
     setPatient(true);
     const timer = setTimeout(() => setPatient(false), WAIT_FOR_ART_MS);
+
     return () => clearTimeout(timer);
   }, [waiting]);
   const hold = waiting && patient;
@@ -284,6 +314,7 @@ export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
         if (!prev.has(uri)) return prev;
         const next = new Set(prev);
         next.delete(uri);
+
         return next;
       });
     },

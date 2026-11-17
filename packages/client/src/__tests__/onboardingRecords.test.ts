@@ -99,6 +99,7 @@ describe("readRepoRecordWithLegacyFallback", () => {
       error: "NetworkError",
       message: "legacy read failed",
     };
+
     const agent = createAgent();
     const { call } = agent;
     call
@@ -119,6 +120,7 @@ describe("readRepoRecordWithLegacyFallback", () => {
       error: "NetworkError",
       message: "stable read failed",
     };
+
     const agent = createAgent();
     const { call } = agent;
     call

@@ -275,10 +275,10 @@ pub(crate) async fn mini_profiles(
         .collect();
     // Accounts without an indexed teal profile still get a DID-only view.
     for did in dids {
-        if !found.contains_key(did) {
-            if let Some(profile) = mini_profile(Some(did.clone()), None, None, None) {
-                found.insert(did.clone(), profile);
-            }
+        if !found.contains_key(did)
+            && let Some(profile) = mini_profile(Some(did.clone()), None, None, None)
+        {
+            found.insert(did.clone(), profile);
         }
     }
     Ok(found)

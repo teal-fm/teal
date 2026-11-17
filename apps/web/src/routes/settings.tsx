@@ -17,6 +17,7 @@ function Settings() {
   const status = useAuth((state) => state.status);
   // The theme lives in browser storage, so its control waits for hydration.
   const mounted = useHydrated();
+
   return (
     <Screen title="Settings" back>
       <Section title="Appearance" panel>

@@ -4,6 +4,7 @@ import { A, AmbientSource, Avatar, Cover, coverUri, Glass, Heading } from "~/ds"
 
 function albumHref(m: MomentView) {
   const r = m.release;
+
   return r.releaseMbId && r.artistName ? musicAlbumHref(r.artistName, r.releaseName, r.releaseMbId) : undefined;
 }
 
@@ -11,7 +12,9 @@ function albumHref(m: MomentView) {
 function caption(m: MomentView) {
   const noun = m.kind === "circle" ? ["friend", "friends"] : ["listener", "listeners"];
   const people = `${m.listenerCount} ${m.listenerCount === 1 ? noun[0] : noun[1]}`;
+
   if (m.kind === "trending" && m.changePercent) return `${people} · +${m.changePercent}%`;
+
   return `${people} today`;
 }
 
@@ -40,6 +43,7 @@ function MaybeLink({ href, className, children }: { href?: string; className?: s
 /** A horizontal shelf of albums people are converging on today. */
 export function HeatingShelf({ moments, title = "Heating up" }: { moments: MomentView[]; title?: string }) {
   if (moments.length === 0) return null;
+
   return (
     <section className="mt-1 mb-5">
       <Heading level={2} onBackdrop className="px-2.5 pb-3">
@@ -68,6 +72,7 @@ export function HeatingShelf({ moments, title = "Heating up" }: { moments: Momen
 /** The same albums as a compact list for the desktop rail. */
 export function HeatingRail({ moments }: { moments: MomentView[] }) {
   if (moments.length === 0) return null;
+
   return (
     <Glass as="section" className="flex flex-col gap-1 p-4">
       <Heading level={2} className="mb-1 text-[19px]">

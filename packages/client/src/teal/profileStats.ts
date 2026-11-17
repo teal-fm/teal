@@ -14,15 +14,19 @@ export function indexedStatContext(
   plays: PlayView[],
 ) {
   const target = identity(mbid);
+
   if (!target) return undefined;
+
   const play = plays.find(
     (candidate) =>
       identity(
         kind === "albums" ? candidate.releaseMbId : candidate.recordingMbId,
       ) === target,
   );
+
   if (!play) return undefined;
   const artist = displayArtists(play);
+
   return {
     artist,
     href:
@@ -49,12 +53,15 @@ export function appendUniqueRecords<T extends { uri?: string }>(
   next: T[],
 ) {
   const seen = new Set(current.flatMap((item) => (item.uri ? [item.uri] : [])));
+
   return [
     ...current,
     ...next.filter((item) => {
       if (!item.uri) return true;
+
       if (seen.has(item.uri)) return false;
       seen.add(item.uri);
+
       return true;
     }),
   ];

@@ -8,8 +8,10 @@ export const FALLBACK_DURATION_SECONDS = 180;
 export const SUBMISSION_CLIENT_AGENT = "teal.amethyst/1.0.0";
 
 const MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2";
+
 const MUSICBRAINZ_USER_AGENT =
   "teal.amethyst/1.0.0 (https://teal.fm; manual listens)";
+
 const MUSICBRAINZ_RATE_LIMIT_MS = 1100;
 const MUSICBRAINZ_TIMEOUT_MS = 15_000;
 
@@ -66,6 +68,7 @@ function normalizeArtistCredit(
   credit?: MusicBrainzArtistCredit[],
 ): MusicBrainzArtistCredit[] | undefined {
   if (!credit || credit.length === 0) return undefined;
+
   return credit;
 }
 
@@ -101,6 +104,7 @@ function asOptionalNumber(value: unknown) {
 function parseRelease(value: unknown): MusicBrainzAlbumRelease | undefined {
   if (!value || typeof value !== "object") return undefined;
   const release = value as Record<string, unknown>;
+
   if (typeof release.id !== "string" || typeof release.title !== "string") {
     return undefined;
   }
@@ -118,6 +122,7 @@ function parseRelease(value: unknown): MusicBrainzAlbumRelease | undefined {
       ? release.media.flatMap((value) => {
           if (!value || typeof value !== "object") return [];
           const medium = value as Record<string, unknown>;
+
           return [
             {
               format: asOptionalString(medium.format),
@@ -136,9 +141,11 @@ function parseAlbumTrack(
   if (!value || typeof value !== "object") return undefined;
   const track = value as Record<string, unknown>;
   const recording = track.recording;
+
   if (!recording || typeof recording !== "object") return undefined;
 
   const parsedRecording = recording as Record<string, unknown>;
+
   if (
     typeof parsedRecording.id !== "string" ||
     typeof parsedRecording.title !== "string"
@@ -171,18 +178,22 @@ function parseAlbumTrack(
 
 function parseReleaseDetails(value: unknown): MusicBrainzAlbumRelease {
   const parsed = parseRelease(value);
+
   if (!parsed) throw new Error("MusicBrainz returned an invalid release.");
 
   const rawRelease = value as Record<string, unknown>;
+
   const media = Array.isArray(rawRelease.media)
     ? rawRelease.media.flatMap((mediumValue, mediumIndex) => {
         if (!mediumValue || typeof mediumValue !== "object") return [];
         const medium = mediumValue as Record<string, unknown>;
+
         const tracks = Array.isArray(medium.tracks)
           ? medium.tracks
               .map((track, index) => parseAlbumTrack(track, index))
               .filter((track): track is MusicBrainzAlbumTrack => !!track)
           : [];
+
         return [
           {
             position: asOptionalNumber(medium.position) || mediumIndex + 1,
@@ -201,7 +212,9 @@ function parseReleaseDetails(value: unknown): MusicBrainzAlbumRelease {
 function releaseSearchResults(value: unknown): MusicBrainzAlbumRelease[] {
   if (!value || typeof value !== "object") return [];
   const releases = (value as Record<string, unknown>).releases;
+
   if (!Array.isArray(releases)) return [];
+
   return releases
     .map(parseRelease)
     .filter((release): release is MusicBrainzAlbumRelease => !!release);
@@ -213,11 +226,13 @@ function escapeMusicBrainzQuery(value: string) {
 
 async function waitForMusicBrainzTurn() {
   const elapsed = Date.now() - lastMusicBrainzRequestAt;
+
   if (lastMusicBrainzRequestAt > 0 && elapsed < MUSICBRAINZ_RATE_LIMIT_MS) {
     await new Promise((resolve) =>
       setTimeout(resolve, MUSICBRAINZ_RATE_LIMIT_MS - elapsed),
     );
   }
+
   lastMusicBrainzRequestAt = Date.now();
 }
 
@@ -226,34 +241,42 @@ async function musicBrainzJson(url: string): Promise<unknown> {
     await waitForMusicBrainzTurn();
 
     let lastError: unknown;
+
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const controller = new AbortController();
+
       const timeout = setTimeout(
         () => controller.abort(),
         MUSICBRAINZ_TIMEOUT_MS,
       );
+
       try {
         const response = await fetch(url, {
           headers: { "User-Agent": MUSICBRAINZ_USER_AGENT },
           signal: controller.signal,
         });
+
         if (response.status === 503 && attempt < 2) {
           await new Promise((resolve) =>
             setTimeout(resolve, 1000 * 2 ** attempt),
           );
           continue;
         }
+
         if (!response.ok) {
           throw new Error(
             `MusicBrainz request failed with ${response.status}.`,
           );
         }
+
         return await response.json();
       } catch (error) {
         if (controller.signal.aborted) {
           throw new Error("MusicBrainz timed out. Please try again.");
         }
+
         lastError = error;
+
         if (attempt < 2) {
           await new Promise((resolve) =>
             setTimeout(resolve, 500 * 2 ** attempt),
@@ -263,6 +286,7 @@ async function musicBrainzJson(url: string): Promise<unknown> {
         clearTimeout(timeout);
       }
     }
+
     throw lastError instanceof Error
       ? lastError
       : new Error("MusicBrainz request failed.");
@@ -272,6 +296,7 @@ async function musicBrainzJson(url: string): Promise<unknown> {
     () => undefined,
     () => undefined,
   );
+
   return request;
 }
 
@@ -280,6 +305,7 @@ export async function searchMusicBrainzReleases(
   artist?: string,
 ): Promise<MusicBrainzAlbumRelease[]> {
   const queryParts = [`release:"${escapeMusicBrainzQuery(album.trim())}"`];
+
   if (artist?.trim()) {
     queryParts.push(`artist:"${escapeMusicBrainzQuery(artist.trim())}"`);
   }
@@ -290,9 +316,11 @@ export async function searchMusicBrainzReleases(
     limit: "20",
     inc: "artist-credits",
   });
+
   const value = await musicBrainzJson(
     `${MUSICBRAINZ_BASE_URL}/release?${params}`,
   );
+
   return releaseSearchResults(value);
 }
 
@@ -303,26 +331,32 @@ export async function getMusicBrainzRelease(
     inc: "recordings+artist-credits+isrcs",
     fmt: "json",
   });
+
   const value = await musicBrainzJson(
     `${MUSICBRAINZ_BASE_URL}/release/${encodeURIComponent(releaseId)}?${params}`,
   );
+
   return parseReleaseDetails(value);
 }
 
 export function normalizeMbid(value?: string): `mbid:${string}` | undefined {
   if (!value) return undefined;
+
   return `mbid:${value.replace(/^mbid:/, "")}`;
 }
 
 export function effectiveDurationSeconds(track: MusicBrainzAlbumTrack) {
   const milliseconds = track.length ?? track.recording.length;
+
   if (!milliseconds || milliseconds <= 0) return FALLBACK_DURATION_SECONDS;
+
   return Math.max(1, Math.floor(milliseconds / 1000));
 }
 
 export function formatDuration(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
+
   return `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
@@ -344,10 +378,13 @@ export function buildListenTimeline(
   if (tracks.length === 0) return [];
 
   const timestamps: Date[] = new Array(tracks.length);
+
   if (mode === "now") {
     let cursor = now.getTime();
+
     for (let index = tracks.length - 1; index >= 0; index -= 1) {
       timestamps[index] = new Date(cursor);
+
       if (index > 0) {
         cursor -= effectiveDurationSeconds(tracks[index - 1]) * 1000;
       }
@@ -356,7 +393,9 @@ export function buildListenTimeline(
     if (!customStart || Number.isNaN(customStart.getTime())) {
       throw new Error("Choose a valid starting date and time.");
     }
+
     let cursor = customStart.getTime();
+
     for (let index = 0; index < tracks.length; index += 1) {
       timestamps[index] = new Date(cursor);
       cursor += effectiveDurationSeconds(tracks[index]) * 1000;
@@ -375,6 +414,7 @@ export function createPlayRecordFromRecording(
 ): PlayRecord {
   const release = recording.selectedRelease;
   const artists = artistsFromCredits(recording["artist-credit"]);
+
   return {
     $type: PLAY_COLLECTION,
     trackName: recording.title,
@@ -399,9 +439,11 @@ export function createPlayRecordFromAlbumTrack(
   playedTime: string,
 ): PlayRecord {
   const recording = track.recording;
+
   const artists = artistsFromCredits(
     recording["artist-credit"] || release.artistCredit,
   );
+
   const durationMilliseconds = track.length ?? recording.length;
 
   return {
@@ -441,6 +483,7 @@ export async function submitManualListenRecords(
   onSaved?: (writes: ConfirmedListenWrite[]) => void,
 ) {
   if (records.length === 0) throw new Error("Select at least one track.");
+
   if (!agent.did) throw new Error("Your repository is not ready.");
 
   const response = await agent.call(
@@ -460,14 +503,17 @@ export async function submitManualListenRecords(
     throw new Error("Could not save these listens. Try again.");
 
   const results = (response.data as { results?: unknown[] }).results;
+
   if (Array.isArray(results) && onSaved) {
     const confirmed = results.flatMap((result, index) => {
       if (!result || typeof result !== "object" || !records[index]) return [];
       const receipt = result as { uri?: unknown; cid?: unknown };
+
       return typeof receipt.uri === "string" && typeof receipt.cid === "string"
         ? [{ record: records[index], uri: receipt.uri, cid: receipt.cid }]
         : [];
     });
+
     try {
       onSaved(confirmed);
     } catch {
@@ -475,6 +521,7 @@ export async function submitManualListenRecords(
       console.warn("Listens saved, but local pending-listen retention failed.");
     }
   }
+
   return Array.isArray(results) && results.length > 0
     ? results.length
     : records.length;
@@ -483,11 +530,13 @@ export async function submitManualListenRecords(
 /** A `datetime-local` style value for now, in local time. */
 export function localDateTimeValue(date = new Date()) {
   const pad = (value: number) => String(value).padStart(2, "0");
+
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 export function parseLocalDateTime(value: string) {
   const parsed = new Date(value);
+
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
@@ -498,6 +547,7 @@ export function releaseArtist(release: MusicBrainzAlbumRelease) {
 /** Date, country, format, and status: enough to tell editions of an album apart. */
 export function releaseDetails(release: MusicBrainzAlbumRelease) {
   const formats = [...new Set(release.media?.map((medium) => medium.format).filter(Boolean))].join(" + ");
+
   return [release.date, release.country, formats, release.status, release.disambiguation].filter(Boolean).join(" · ");
 }
 

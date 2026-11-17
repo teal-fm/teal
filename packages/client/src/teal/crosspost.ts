@@ -8,9 +8,11 @@ type CardyBResponse = {
   description: string;
   image: string;
 };
+
 // call CardyB API to get embed card
 const getUrlMetadata = async (url: string): Promise<CardyBResponse> => {
   const response = await fetch(`https://cardyb.bsky.app/v1/extract?url=${url}`);
+
   if (response.status === 200) {
     return await response.json();
   } else {
@@ -59,18 +61,23 @@ export const getBlueskyEmbedCard = async (
     return;
   }
 };
+
 interface EmbedInfo {
   urlEmbed: string;
   customUrl: string;
 }
+
 export const getEmbedInfo = async (mbid: string): Promise<EmbedInfo | null> => {
   let appleMusicResponse = await fetch(
     `https://labs.api.listenbrainz.org/apple-music-id-from-mbid/json?recording_mbid=${mbid}`,
   );
+
   if (appleMusicResponse.status === 200) {
     const appleMusicData = await appleMusicResponse.json();
+
     if (appleMusicData[0].apple_music_track_ids.length > 0) {
       let trackId = appleMusicData[0].apple_music_track_ids[0];
+
       return {
         urlEmbed: `https://music.apple.com/us/song/its-not-living-if-its-not-with-you/${trackId}`,
         customUrl: `https://song.link/i/${trackId}`,
@@ -79,10 +86,13 @@ export const getEmbedInfo = async (mbid: string): Promise<EmbedInfo | null> => {
       let spotifyResponse = await fetch(
         `https://labs.api.listenbrainz.org/spotify-id-from-mbid/json?recording_mbid=${mbid}`,
       );
+
       if (spotifyResponse.status === 200) {
         const spotifyData = await spotifyResponse.json();
+
         if (spotifyData[0].spotify_track_ids.length > 0) {
           let trackId = spotifyData[0].spotify_track_ids[0];
+
           return {
             urlEmbed: `https://open.spotify.com/track/${trackId}`,
             customUrl: `https://song.link/s/${trackId}`,
@@ -91,6 +101,7 @@ export const getEmbedInfo = async (mbid: string): Promise<EmbedInfo | null> => {
       }
     }
   }
+
   return null;
 };
 
@@ -99,6 +110,7 @@ export const ms2hms = (ms: number): string => {
   let minutes = Math.floor(seconds / 60);
   seconds = seconds % 60;
   minutes = minutes % 60;
+
   return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
 
@@ -106,6 +118,7 @@ export const ms2hms = (ms: number): string => {
 /** The default Bluesky post text for a listen. */
 export function crossPostText(recording: { title: string; "artist-credit"?: { artist: { name: string } }[] }) {
   const artists = recording["artist-credit"]?.map((credit) => credit.artist.name).join(", ");
+
   return `💮 now playing:\n${recording.title}${artists ? ` by ${artists}` : ""}\npowered by @teal.fm`;
 }
 
@@ -124,9 +137,12 @@ export async function crossPostListen(
   const links = await getEmbedInfo(recording.id).catch(() => null);
   const year = recording.selectedRelease?.date?.split("-")[0];
   const description = ["Song", year, recording.length ? ms2hms(recording.length) : undefined].filter(Boolean).join(" · ");
+
   const embed = links?.urlEmbed
     ? await getBlueskyEmbedCard(links.urlEmbed, agent, links.customUrl, `${recording.title} by ${artistNames}`, description)
     : undefined;
+
   const post = await agent.post({ text: rich.text, facets: rich.facets, embed: embed as never });
+
   return post.uri.replace("at://", "https://bsky.app/profile/").replace("app.bsky.feed.post", "post");
 }

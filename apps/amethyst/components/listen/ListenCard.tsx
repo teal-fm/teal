@@ -12,6 +12,7 @@ export function ListenCard({ play, last, showTrack = true }: { play: PlayView; l
   const actor = useDisplayActor(play.author as never, play.authorDid);
   const permalink = listenHref(play.authorDid, play.rkey);
   const artists = displayArtists(play) || "Unknown artist";
+
   return (
     <View className={last ? "flex-row items-center gap-3 py-2.5" : "flex-row items-center gap-3 border-b border-hair py-2.5"}>
       <Link href={actor.href as never} asChild>

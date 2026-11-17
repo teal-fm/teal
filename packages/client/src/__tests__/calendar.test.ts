@@ -23,6 +23,7 @@ describe("calendar helpers", () => {
         { hour: 7, playCount: 2 },
       ],
     });
+
     expect(bins).toHaveLength(12);
     expect(bins[10]).toEqual({ playCount: 7, releaseMbId: "b" });
     expect(bins[3]).toEqual({ playCount: 2, releaseMbId: undefined });

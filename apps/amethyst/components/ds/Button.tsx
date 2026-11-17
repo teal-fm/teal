@@ -36,6 +36,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
 ) {
   const v = VARIANTS[variant];
   const s = SIZES[size];
+
   return (
     <Pressable
       ref={ref}
@@ -75,6 +76,7 @@ export const IconButton = forwardRef<
   const inner = (
     <Icon icon={icon} size={Math.round(size * 0.48)} className={tint ? "text-tint" : "text-ink"} />
   );
+
   return (
     <Pressable
       ref={ref}
@@ -114,6 +116,7 @@ export function Choices<T extends string | number>({
     <View role="group" aria-label={label} className="flex-row flex-wrap gap-2">
       {options.map((option) => {
         const on = option.value === value;
+
         return (
           <Pressable
             key={String(option.value)}

@@ -10,5 +10,6 @@ export function useRecordingArt(play?: Pick<PlayView, "releaseMbId" | "recording
     enabled: !!play && !play.releaseMbId && !!play.recordingMbId,
     staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
+
   return art.data ?? undefined;
 }

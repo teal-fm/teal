@@ -40,15 +40,20 @@ export async function getRecentTracks(
 
   let retries = 3;
   let delay = 1000;
+
   while (retries > 0) {
     try {
       const res = await fetch(url);
+
       if (res.ok) {
         const data: LastFMResponse = await res.json();
+
         if (data.recenttracks?.track) {
           const tracks = data.recenttracks.track;
+
           return Array.isArray(tracks) ? tracks : [tracks];
         }
+
         return [];
       }
 
@@ -63,6 +68,7 @@ export async function getRecentTracks(
       throw new Error(`Last.fm API error: ${res.statusText} - ${errorText}`);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : "";
+
       if (
         retries > 1 &&
         (errorMsg.includes("500") ||
@@ -74,6 +80,7 @@ export async function getRecentTracks(
         delay *= 2;
         continue;
       }
+
       throw error;
     }
   }
@@ -95,6 +102,7 @@ export async function getTrackCorrection(
 ): Promise<{ track: string; artist: string } | null> {
   if (cache) {
     const cached = cache.getTrackCorrection(track, artist);
+
     if (cached !== undefined) {
       return cached
         ? { track: cached.correctedTrack, artist: cached.correctedArtist }
@@ -121,15 +129,19 @@ export async function getTrackCorrection(
 
   let retries = 3;
   let delay = 200;
+
   while (retries > 0) {
     try {
       const res = await fetch(url);
+
       if (res.ok) {
         const data = await res.json();
+
         if (data.corrections?.correction?.track) {
           const corrected = data.corrections.correction.track;
           const correctedTrack = corrected.name || track;
           const correctedArtist = corrected.artist?.name || artist;
+
           if (cache)
             cache.setTrackCorrection(
               track,
@@ -137,8 +149,10 @@ export async function getTrackCorrection(
               correctedTrack,
               correctedArtist,
             );
+
           return { track: correctedTrack, artist: correctedArtist };
         }
+
         break;
       }
 
@@ -155,16 +169,19 @@ export async function getTrackCorrection(
     } catch (e) {
       if (apiMetrics) apiMetrics.lastfmErrors++;
       retries--;
+
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
         continue;
       }
+
       break;
     }
   }
 
   if (cache) cache.setTrackCorrection(track, artist, null, null);
+
   return null;
 }
 
@@ -202,21 +219,26 @@ export async function searchTracksOnLastFM(
 
   let retries = 3;
   let delay = 200;
+
   while (retries > 0) {
     try {
       const res = await fetch(url);
+
       if (res.ok) {
         const data = await res.json();
+
         if (data.results?.trackmatches?.track) {
           const tracks = Array.isArray(data.results.trackmatches.track)
             ? data.results.trackmatches.track
             : [data.results.trackmatches.track];
+
           return tracks.map((t: any) => ({
             track: t.name,
             artist: t.artist,
             mbid: t.mbid || null,
           }));
         }
+
         return [];
       }
 
@@ -229,15 +251,18 @@ export async function searchTracksOnLastFM(
       }
 
       if (apiMetrics && res.status >= 400) apiMetrics.lastfmErrors++;
+
       return [];
     } catch (e) {
       if (apiMetrics) apiMetrics.lastfmErrors++;
       retries--;
+
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
         continue;
       }
+
       return [];
     }
   }
@@ -258,6 +283,7 @@ export async function getArtistInfo(
 ): Promise<{ mbid: string | null; aliases: string[] } | null> {
   if (cache) {
     const cached = cache.getArtistInfo(artist);
+
     if (cached !== undefined) return cached;
   }
 
@@ -279,13 +305,17 @@ export async function getArtistInfo(
 
   let retries = 3;
   let delay = 200;
+
   while (retries > 0) {
     try {
       const res = await fetch(url);
+
       if (res.ok) {
         const data = await res.json();
+
         if (data.artist) {
           const mbid = data.artist.mbid || null;
+
           const aliases = data.artist.alias
             ? (Array.isArray(data.artist.alias)
                 ? data.artist.alias
@@ -296,9 +326,12 @@ export async function getArtistInfo(
             : [];
 
           const result = { mbid, aliases };
+
           if (cache) cache.setArtistInfo(artist, result);
+
           return result;
         }
+
         break;
       }
 
@@ -315,16 +348,19 @@ export async function getArtistInfo(
     } catch (e) {
       if (apiMetrics) apiMetrics.lastfmErrors++;
       retries--;
+
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
         continue;
       }
+
       break;
     }
   }
 
   if (cache) cache.setArtistInfo(artist, null);
+
   return null;
 }
 
@@ -342,6 +378,7 @@ export async function getAlbumInfo(
 ): Promise<{ mbid: string | null } | null> {
   if (cache) {
     const cached = cache.getAlbumInfo(artist, album);
+
     if (cached !== undefined) return cached;
   }
 
@@ -364,16 +401,22 @@ export async function getAlbumInfo(
 
   let retries = 3;
   let delay = 200;
+
   while (retries > 0) {
     try {
       const res = await fetch(url);
+
       if (res.ok) {
         const data = await res.json();
+
         if (data.album) {
           const result = { mbid: data.album.mbid || null };
+
           if (cache) cache.setAlbumInfo(artist, album, result);
+
           return result;
         }
+
         break;
       }
 
@@ -390,15 +433,18 @@ export async function getAlbumInfo(
     } catch (e) {
       if (apiMetrics) apiMetrics.lastfmErrors++;
       retries--;
+
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
         continue;
       }
+
       break;
     }
   }
 
   if (cache) cache.setAlbumInfo(artist, album, null);
+
   return null;
 }

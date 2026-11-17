@@ -31,15 +31,19 @@ export function resolveRequestBase(
   pageOrigin: string | undefined,
 ) {
   if (!pageOrigin) return configured || "http://localhost:3000";
+
   if (!configured) return pageOrigin;
+
   try {
     const page = new URL(pageOrigin).hostname;
+
     if (LOOPBACK.test(new URL(configured).hostname) && !LOOPBACK.test(page)) {
       return pageOrigin;
     }
   } catch {
     // An unparseable base is left for fetch to report.
   }
+
   return configured;
 }
 
@@ -48,6 +52,7 @@ function xrpcBase() {
     clientConfig().aquaUrl,
     typeof window === "undefined" ? undefined : window.location?.origin,
   );
+
   return requestBase.endsWith("/xrpc")
     ? requestBase
     : `${requestBase.replace(/\/$/, "")}/xrpc`;
@@ -191,6 +196,7 @@ export type GraphSummaryView = {
 };
 
 export type ArtistListenerPeriod = "all" | "30days" | "7days";
+
 export type StatsPeriod =
   "7days" | "30days" | "90days" | "180days" | "365days" | "all";
 
@@ -206,14 +212,17 @@ async function getXrpc<T>(
   });
 
   const response = await fetch(url.toString());
+
   if (!response.ok) {
     throw new XrpcError(method, response.status);
   }
+
   return response.json() as Promise<T>;
 }
 
 export function getToday(viewer?: string, limit = 12) {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return getXrpc<TodayView>("fm.teal.feed.getToday", { viewer, tz, limit });
 }
 
@@ -237,6 +246,7 @@ export function getTasteMatch(actor: string, viewer: string) {
 
 export function getListeningCalendar(actor: string, from: string, to: string) {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return getXrpc<{ days: ListeningDay[] }>("fm.teal.stats.getListeningCalendar", {
     actor,
     from,
@@ -320,9 +330,11 @@ export async function getBlueskyProfile(actor: string) {
   const url = new URL(
     "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile",
   );
+
   url.searchParams.set("actor", actor);
 
   const response = await fetch(url.toString());
+
   if (!response.ok) {
     throw new XrpcError("app.bsky.actor.getProfile", response.status);
   }
@@ -471,10 +483,12 @@ export async function searchBlueskyUsers(q: string, limit = 8) {
   const url = new URL(
     "https://public.api.bsky.app/xrpc/app.bsky.actor.searchActors",
   );
+
   url.searchParams.set("q", q);
   url.searchParams.set("limit", String(limit));
 
   const response = await fetch(url.toString());
+
   if (!response.ok) {
     throw new XrpcError("app.bsky.actor.searchActors", response.status);
   }
@@ -498,6 +512,7 @@ function coverArtUrlFor(
   size = 250,
 ) {
   const mbid = mbId?.replace(/^mbid:/, "");
+
   return mbid
     ? `https://coverartarchive.org/${entity}/${mbid}/front-${coverArtSize(size)}`
     : undefined;
@@ -512,42 +527,53 @@ export function releaseGroupCoverArtUrl(releaseGroupMbId?: string, size = 250) {
 }
 
 const recordingCoverArtCache = new Map<string, Promise<string | undefined>>();
+
 const releaseGroupCoverArtCache = new Map<
   string,
   { expiresAt: number; request: Promise<string | undefined> }
 >();
+
 const artistImageCache = new Map<string, Promise<string | undefined>>();
 
 export function getReleaseGroupCoverArtUrl(releaseMbId?: string, size = 250) {
   const mbid = releaseMbId?.replace(/^mbid:/, "");
+
   if (!mbid) return Promise.resolve(undefined);
 
   let cached = releaseGroupCoverArtCache.get(mbid);
+
   if (!cached || cached.expiresAt <= Date.now()) {
     if (!cached && releaseGroupCoverArtCache.size >= 1024) {
       const oldestKey = releaseGroupCoverArtCache.keys().next().value;
+
       if (oldestKey) releaseGroupCoverArtCache.delete(oldestKey);
     }
+
     const previousRequest = cached?.request;
+
     const entry = {
       expiresAt: Number.POSITIVE_INFINITY,
       request: Promise.resolve<string | undefined>(undefined),
     };
+
     entry.request = getXrpc<{ releaseGroupMbid?: string }>(
       "fm.teal.music.getReleaseGroup",
       { mbid: `mbid:${mbid}` },
     )
       .then(({ releaseGroupMbid }) => {
         entry.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
         return releaseGroupMbid;
       })
       .catch(() => {
         entry.expiresAt = Date.now() + 30 * 1000;
+
         return previousRequest ?? undefined;
       });
     releaseGroupCoverArtCache.set(mbid, entry);
     cached = entry;
   }
+
   return cached.request.then((groupMbid) =>
     releaseGroupCoverArtUrl(groupMbid, size),
   );
@@ -555,10 +581,12 @@ export function getReleaseGroupCoverArtUrl(releaseMbId?: string, size = 250) {
 
 export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
   const mbid = recordingMbId?.replace(/^mbid:/, "");
+
   if (!mbid) return Promise.resolve(undefined);
 
   const cacheKey = `${mbid}:${size}`;
   let cached = recordingCoverArtCache.get(cacheKey);
+
   if (!cached) {
     cached = fetch(
       `https://musicbrainz.org/ws/2/recording/${encodeURIComponent(mbid)}?inc=releases&fmt=json`,
@@ -568,16 +596,19 @@ export function getRecordingCoverArtUrl(recordingMbId?: string, size = 250) {
         const releaseId = recording?.releases?.find(
           (release) => release.id,
         )?.id;
+
         return releaseId ? coverArtUrl(releaseId, size) : undefined;
       })
       .catch(() => undefined)
       .then((url) => {
         // Keep hits for the session; a miss may be a passing outage, so let the next call ask again.
         if (!url) recordingCoverArtCache.delete(cacheKey);
+
         return url;
       });
     recordingCoverArtCache.set(cacheKey, cached);
   }
+
   return cached;
 }
 
@@ -609,6 +640,7 @@ type WikidataEntityResponse = {
 
 function extractWikidataId(resource?: string) {
   const match = resource?.match(/wikidata\.org\/(?:wiki|entity)\/(Q\d+)/i);
+
   return match?.[1];
 }
 
@@ -618,10 +650,12 @@ function commonsFilePath(filename: string, width: number) {
 
 export function getArtistImageUrl(artistMbId?: string, width = 500) {
   const mbid = artistMbId?.replace(/^mbid:/, "");
+
   if (!mbid) return Promise.resolve(undefined);
 
   const cacheKey = `${mbid}:${width}`;
   let cached = artistImageCache.get(cacheKey);
+
   if (!cached) {
     cached = fetch(
       `https://musicbrainz.org/ws/2/artist/${encodeURIComponent(mbid)}?inc=url-rels&fmt=json`,
@@ -632,6 +666,7 @@ export function getArtistImageUrl(artistMbId?: string, width = 500) {
           ?.map((relation) => relation.url?.resource)
           .map(extractWikidataId)
           .find(Boolean);
+
         return wikidataId
           ? fetch(
               `https://www.wikidata.org/wiki/Special:EntityData/${wikidataId}.json`,
@@ -643,17 +678,21 @@ export function getArtistImageUrl(artistMbId?: string, width = 500) {
         const entity = data?.entities
           ? Object.values(data.entities)[0]
           : undefined;
+
         const filename = entity?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+
         return filename ? commonsFilePath(filename, width) : undefined;
       })
       .catch(() => undefined)
       .then((url) => {
         // Keep hits for the session; a miss may be a passing outage, so let the next call ask again.
         if (!url) artistImageCache.delete(cacheKey);
+
         return url;
       });
     artistImageCache.set(cacheKey, cached);
   }
+
   return cached;
 }
 

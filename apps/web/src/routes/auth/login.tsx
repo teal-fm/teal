@@ -17,6 +17,7 @@ const RESOLVE_DELAY = 500;
 function providerName(pds: URL) {
   if (!pds.hostname.endsWith("bsky.network")) return pds.hostname;
   const shroom = pds.hostname.split(".")[0] ?? "";
+
   return `Bluesky (${shroom.charAt(0).toUpperCase()}${shroom.slice(1)})`;
 }
 
@@ -41,8 +42,10 @@ function Login() {
   const resolve = async (value: string) => {
     const current = ++version.current;
     setLookup({ state: "resolving" });
+
     try {
       const identity = await resolveFromIdentity(value);
+
       if (current !== version.current) return;
       setLookup(identity?.pds ? { state: "found", pds: identity.pds } : { state: "missing" });
     } catch {
@@ -54,8 +57,10 @@ function Login() {
     setHandle(text);
     setError(null);
     version.current += 1;
+
     if (timer.current) clearTimeout(timer.current);
     const value = normalizeAuthHandle(text);
+
     if (value.length > 3) {
       setLookup({ state: "resolving" });
       timer.current = setTimeout(() => void resolve(value), RESOLVE_DELAY);
@@ -67,15 +72,18 @@ function Login() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const value = normalizeAuthHandle(handle);
+
     if (busy || lookup.state !== "found" || !value) return;
     setBusy(true);
     setError(null);
+
     try {
       // Navigates away to the account provider; returning means it didn't start.
       await signIn(value);
     } catch {
       setError("Sign-in didn't start. Check your handle and try again.");
     }
+
     setBusy(false);
   };
 

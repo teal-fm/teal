@@ -21,6 +21,7 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
 ) {
   const id = useId();
   const placeholder = usePlaceholderColor();
+
   return (
     <View className="gap-1.5">
       {!hideLabel && (

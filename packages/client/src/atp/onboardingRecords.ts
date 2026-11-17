@@ -1,6 +1,7 @@
 export const STABLE_PROFILE_COLLECTION = "fm.teal.actor.profile";
 export const LEGACY_PROFILE_COLLECTION = "fm.teal.alpha.actor.profile";
 export const STABLE_PROFILE_STATUS_COLLECTION = "fm.teal.actor.profileStatus";
+
 export const LEGACY_PROFILE_STATUS_COLLECTION =
   "fm.teal.alpha.actor.profileStatus";
 
@@ -79,15 +80,20 @@ function isRecordNotFound(error: unknown): boolean {
 
 export function getBlobHash(blob: unknown): string | undefined {
   if (typeof blob === "string") return blob;
+
   if (!blob || typeof blob !== "object") return undefined;
 
   const ref = (blob as { ref?: unknown }).ref;
+
   if (typeof ref === "string") return ref;
+
   if (ref && typeof ref === "object") {
     const link = (ref as { $link?: unknown }).$link;
+
     if (typeof link === "string") return link;
 
     const stringified = String(ref);
+
     if (stringified !== "[object Object]") return stringified;
   }
 

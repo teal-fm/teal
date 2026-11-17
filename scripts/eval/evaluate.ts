@@ -53,6 +53,7 @@ import { LastFMCache } from "./evaluate-lastfm-cache.js";
 const SCRIPT_DIR = import.meta.dirname ?? new URL(".", import.meta.url).pathname;
 const REPO_ROOT = join(SCRIPT_DIR, "..", "..");
 const envResult = config({ path: join(REPO_ROOT, ".env") });
+
 if (envResult.error) {
   console.warn(`Warning: Could not load .env file: ${envResult.error.message}`);
   console.warn(`  Expected at: ${join(REPO_ROOT, ".env")}`);
@@ -62,7 +63,9 @@ if (envResult.error) {
 // Proxy support: route all fetch calls through a proxy when PROXY_URL is set.
 function setupProxy() {
   const proxyUrl = process.env.PROXY_URL;
+
   if (!proxyUrl) return;
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ProxyAgent, setGlobalDispatcher } = require("undici");
@@ -73,12 +76,14 @@ function setupProxy() {
     console.warn("Continuing without proxy.\n");
   }
 }
+
 setupProxy();
 
 const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
 const LASTFM_API_SECRET = process.env.LASTFM_API_SECRET;
 
 const HAS_LASTFM_KEYS = !!(LASTFM_API_KEY && LASTFM_API_SECRET);
+
 if (!HAS_LASTFM_KEYS) {
   console.warn("Warning: LASTFM_API_KEY/LASTFM_API_SECRET not found in environment");
   console.warn("Will attempt to run from cached scrobbles only.\n");
@@ -107,11 +112,13 @@ async function main() {
   const noFuzzy = args.includes("--no-fuzzy");
   const noMultiStage = args.includes("--no-multistage");
   const parallel = !args.includes("--no-parallel");
+
   const concurrency = parallel
     ? (args.findIndex((a) => a === "--concurrency") >= 0
       ? parseInt(args[args.findIndex((a) => a === "--concurrency") + 1]) || 5
       : 5)
     : 1;
+
   const useAdditionalAPIs = args.includes("--use-additional-apis");
 
   const searchConfig: SearchConfig = {
@@ -130,17 +137,21 @@ async function main() {
     console.log(`  Cleaning: ${searchConfig.enableCleaning ? "enabled" : "disabled"}`);
     console.log(`  Fuzzy matching: ${searchConfig.enableFuzzy ? "enabled" : "disabled"}`);
     console.log(`  Multi-stage: ${searchConfig.enableMultiStage ? "enabled" : "disabled"}`);
+
     if (parallel) {
       console.log(`  Parallel: enabled (concurrency: ${concurrency})`);
     } else {
       console.log(`  Parallel: disabled (--no-parallel)`);
     }
+
     if (useAdditionalAPIs) {
       console.log(`  Additional APIs: enabled (MusicBrainz ISRC lookup for MBID resolution)`);
     }
+
     if (useAll) {
       console.log(`  Dataset: all cached scrobbles`);
     }
+
     console.log();
   }
 
@@ -164,6 +175,7 @@ async function main() {
   if (HAS_LASTFM_KEYS) {
     if (!username) {
       console.log("No username provided - using OAuth authentication\n");
+
       try {
         sessionKey = await getLastFMSession(LASTFM_API_KEY!, LASTFM_API_SECRET!);
       } catch (error: unknown) {
@@ -178,6 +190,7 @@ async function main() {
     if (authOnly) {
       console.log("\nAuthenticated. Session key is cached locally.");
       cache.close();
+
       return;
     }
 
@@ -190,6 +203,7 @@ async function main() {
       console.error("Error: --auth-only requires LASTFM_API_KEY and LASTFM_API_SECRET");
       process.exit(1);
     }
+
     targetUsername = targetUsername || "authenticated";
     console.log(`Running in cache-only mode (no Last.fm API keys). Using cached user: "${targetUsername}"\n`);
   }
@@ -260,6 +274,7 @@ async function main() {
         }
 
         const pagesNeeded = useAll ? Number.MAX_SAFE_INTEGER : Math.ceil(needCount / 200);
+
         const allTracks: Array<{
           name: string;
           artist: { "#text": string; mbid?: string };
@@ -270,9 +285,11 @@ async function main() {
         }> = [];
 
         const fetchStartTime = Date.now();
+
         for (let page = 1; page <= pagesNeeded && allTracks.length < needCount; page++) {
           const pageLimit = Math.min(200, needCount - allTracks.length);
           const pageStartTime = Date.now();
+
           const pageTracks = await getRecentTracks(
             LASTFM_API_KEY!,
             LASTFM_API_SECRET!,
@@ -281,6 +298,7 @@ async function main() {
             sessionKey,
             page,
           );
+
           if (useAll && pageTracks.length === 0) break;
           allTracks.push(...pageTracks);
           fetched += pageTracks.length;
@@ -327,6 +345,7 @@ async function main() {
             mbid: string | null;
             mbid_source: MBIDSource | null;
           }> = [];
+
           let cacheHits = 0;
 
           for (const track of allTracks) {
@@ -360,19 +379,23 @@ async function main() {
 
           if (needMBID.length > 0) {
             console.log(`  Fetching MBIDs for ${needMBID.length} tracks in parallel (concurrency: ${concurrency})...`);
+
             if (useAdditionalAPIs) {
               console.log(`  Additional APIs enabled: MusicBrainz ISRC lookup (fallback if Last.fm fails)`);
             }
 
             const mbidChunks: Array<typeof needMBID> = [];
+
             for (let i = 0; i < needMBID.length; i += concurrency) {
               mbidChunks.push(needMBID.slice(i, i + concurrency));
             }
 
             const mbidFetchStartTime = Date.now();
+
             for (let chunkIdx = 0; chunkIdx < mbidChunks.length; chunkIdx++) {
               const chunk = mbidChunks[chunkIdx];
               const chunkStartTime = Date.now();
+
               const mbidPromises = chunk.map(async (item) => {
                 const result = await getTrackMBID(
                   item.track.name,
@@ -384,12 +407,15 @@ async function main() {
                   useAdditionalAPIs,
                   apiMetrics,
                 );
+
                 return { ...item, mbid: result.mbid, mbid_source: result.source };
               });
 
               const results = await Promise.all(mbidPromises);
+
               for (const result of results) {
                 const idx = tracksNeedingMBID.findIndex((t) => t.track === result.track);
+
                 if (idx >= 0) {
                   tracksNeedingMBID[idx].mbid = result.mbid;
                   tracksNeedingMBID[idx].mbid_source = result.mbid_source;
@@ -446,6 +472,7 @@ async function main() {
             mbid_source: (track.mbid ? "track_data" : null) as MBIDSource | null,
             timestamp: track.date?.["#text"] || new Date().toISOString(),
           }));
+
           added = cache.addScrobbles(cacheUsername, scrobblesToAdd);
           console.log(`  Added ${added} new scrobbles to cache\n`);
         }
@@ -478,10 +505,12 @@ async function main() {
   if (validScrobbles.length === 0) {
     validScrobbles = scrobbles.filter((s) => {
       if (!s.mbid) return false;
+
       // If we have provenance info, enforce ground-truth safety
       if (s.mbid_source) {
         return GROUND_TRUTH_SOURCES.has(s.mbid_source);
       }
+
       // Legacy data without provenance: allow (conservative -- these are
       // pre-existing cache entries from before provenance tracking)
       return true;
@@ -504,6 +533,7 @@ async function main() {
 
     const validationChunks: Array<typeof validScrobbles> = [];
     const validationConcurrency = 3;
+
     for (let i = 0; i < validScrobbles.length; i += validationConcurrency) {
       validationChunks.push(validScrobbles.slice(i, i + validationConcurrency));
     }
@@ -512,12 +542,15 @@ async function main() {
 
     for (let chunkIdx = 0; chunkIdx < validationChunks.length; chunkIdx++) {
       const chunk = validationChunks[chunkIdx];
+
       const validationPromises = chunk.map(async (s) => {
         const isValid = await validateMBID(s.mbid!, cache, apiMetrics);
+
         return { scrobble: s, isValid };
       });
 
       const results = await Promise.all(validationPromises);
+
       for (const result of results) {
         if (result.isValid) {
           validatedCount++;
@@ -537,6 +570,7 @@ async function main() {
 
     const validationElapsed = Date.now() - validationStartTime;
     console.log(`MBID validation complete: ${validatedCount} valid, ${invalidCount} invalid (removed from evaluation) in ${formatTime(validationElapsed)}`);
+
     if (invalidCount > 0) {
       console.log(`  (Removed ${invalidCount} invalid MBIDs to ensure ground truth quality)\n`);
     } else {
@@ -554,8 +588,10 @@ async function main() {
     const preValidationStartTime = Date.now();
 
     const validationStats = cache.getMBIDValidationStats();
+
     if (validationStats.length > 0) {
       console.log("  Validation cache breakdown:");
+
       for (const row of validationStats) {
         const status = row.http_status === null ? "unknown" : String(row.http_status);
         const validity = row.is_valid ? "valid" : "invalid";
@@ -564,6 +600,7 @@ async function main() {
     }
 
     const staleCount = cache.countStaleValidations();
+
     if (staleCount > 0) {
       const cleared = cache.clearStaleValidations();
       console.log(`  Cleared ${cleared} stale validation entries (503/error) for re-validation`);
@@ -576,6 +613,7 @@ async function main() {
     for (const s of validScrobbles) {
       if (s.mbid) {
         const cached = cache.getMBIDValidationDetailed(s.mbid);
+
         if (cached === undefined) {
           mbidsToValidate.add(s.mbid);
         } else if (cached.httpStatus === 200 || cached.httpStatus === 301) {
@@ -597,6 +635,7 @@ async function main() {
       console.log(`  Validating ${uniqueMBIDsToValidate.length} unique MBIDs (concurrency: ${concurrency})...`);
 
       const validationChunks: string[][] = [];
+
       for (let i = 0; i < uniqueMBIDsToValidate.length; i += concurrency) {
         validationChunks.push(uniqueMBIDsToValidate.slice(i, i + concurrency));
       }
@@ -606,12 +645,15 @@ async function main() {
 
       for (let chunkIdx = 0; chunkIdx < validationChunks.length; chunkIdx++) {
         const chunk = validationChunks[chunkIdx];
+
         const validationPromises = chunk.map(async (mbid) => {
           const isValid = await validateMBID(mbid, cache, apiMetrics);
+
           return { mbid, isValid };
         });
 
         const results = await Promise.all(validationPromises);
+
         for (const { isValid } of results) {
           if (isValid) validatedCount++;
           else invalidCount++;
@@ -633,9 +675,11 @@ async function main() {
     // Old code followed redirects transparently; new code uses redirect:"manual".
     // Re-check valid MBIDs that lack canonical_mbid to catch merges.
     const mbidsNeedingMergeCheck = new Set<string>();
+
     for (const s of validScrobbles) {
       if (!s.mbid) continue;
       const cached = cache.getMBIDValidationDetailed(s.mbid);
+
       if (cached?.httpStatus === 200 && !cache.hasMergeCheckResult(s.mbid)) {
         // HTTP 200 but never merge-checked with redirect:"manual"
         mbidsNeedingMergeCheck.add(s.mbid);
@@ -648,33 +692,41 @@ async function main() {
       let mergeCount = 0;
 
       const mergeChunks: string[][] = [];
+
       for (let i = 0; i < mergeCheckMBIDs.length; i += concurrency) {
         mergeChunks.push(mergeCheckMBIDs.slice(i, i + concurrency));
       }
 
       for (let ci = 0; ci < mergeChunks.length; ci++) {
         const chunk = mergeChunks[ci];
+
         const promises = chunk.map(async (mbid) => {
           const delay = RATE_LIMIT_DELAY;
           await new Promise((resolve) => setTimeout(resolve, delay));
 
           const lookupUrl = `${MUSICBRAINZ_BASE_URL}/recording/${mbid}?fmt=json`;
+
           try {
             const res = await fetch(lookupUrl, {
               headers: { "User-Agent": USER_AGENT },
               redirect: "manual",
             });
+
             if (apiMetrics) apiMetrics.musicbrainzCalls++;
 
             if (res.status === 301) {
               const location = res.headers.get("location");
               let canonicalMbid: string | undefined;
+
               if (location) {
                 const match = location.match(/\/recording\/([0-9a-f-]{36})/);
+
                 if (match) canonicalMbid = match[1];
               }
+
               if (canonicalMbid) {
                 cache.setMBIDValidation(mbid, true, 301, `merged -> ${canonicalMbid}`, canonicalMbid);
+
                 return true; // was merged
               }
             } else if (res.status === 200) {
@@ -684,6 +736,7 @@ async function main() {
           } catch {
             // Skip on error, keep existing cache entry
           }
+
           return false;
         });
 
@@ -695,6 +748,7 @@ async function main() {
           console.log(`  ${ci + 1}/${mergeChunks.length} chunks (${progress}%): ${mergeCount} merges found`);
         }
       }
+
       console.log(`  Merge detection complete: ${mergeCount} merged recordings resolved\n`);
     }
 
@@ -704,7 +758,9 @@ async function main() {
       if (!s.mbid) return false;
       const cached = cache.getMBIDValidationDetailed(s.mbid);
       const valid = cached !== undefined && (cached.httpStatus === 200 || cached.httpStatus === 301);
+
       if (!valid && s.mbid) invalidScrobbles.push(s);
+
       return valid;
     });
     console.log(`  Filtered to ${validScrobbles.length} scrobbles with confirmed-valid MBIDs`);
@@ -714,8 +770,10 @@ async function main() {
     // source="listenbrainz_acr" for tracks whose Last.fm MBID is 404.
     if (invalidScrobbles.length > 0) {
       let recovered = 0;
+
       for (const s of invalidScrobbles) {
         const lbResult = cache.getMBIDWithSource(s.track, s.artist);
+
         if (lbResult?.mbid && lbResult.source === "listenbrainz_acr") {
           validScrobbles.push({
             ...s,
@@ -725,10 +783,12 @@ async function main() {
           recovered++;
         }
       }
+
       if (recovered > 0) {
         console.log(`  Recovered ${recovered} scrobbles via ListenBrainz ACR fallback`);
       }
     }
+
     console.log();
   }
 
@@ -745,12 +805,16 @@ async function main() {
 
     for (let i = 0; i < scrobbles.length; i++) {
       const s = scrobbles[i];
+
       if (i % 10 === 0 || i === scrobbles.length - 1) {
         console.log(`  Evaluating ${i + 1}/${scrobbles.length}: "${s.track}" by ${s.artist}...`);
       }
+
       const baselineRes = await baselineSearch(s.track, s.artist, s.album, cache, apiMetrics);
       const improvedRes = await improvedSearchWithConfig(s.track, s.artist, s.album, searchConfig, cache, apiMetrics);
+
       if (baselineRes.length > 0) baselineCount++;
+
       if (improvedRes.length > 0) improvedCount++;
       baselineTotalResults += baselineRes.length;
       improvedTotalResults += improvedRes.length;
@@ -764,6 +828,7 @@ async function main() {
     console.log(`  Avg results per query: ${(improvedTotalResults / scrobbles.length).toFixed(1)}`);
     console.log(`\nIMPROVEMENT: +${improvedCount - baselineCount} scrobbles (${((improvedCount - baselineCount) / scrobbles.length * 100).toFixed(1)}%)`);
     cache.close();
+
     return;
   }
 
@@ -774,8 +839,10 @@ async function main() {
     `${s.track.toLowerCase().trim()}::${s.artist.toLowerCase().trim()}::${s.mbid}`;
 
   const seen = new Map<string, typeof validScrobbles[0] & { count: number }>();
+
   for (const s of validScrobbles) {
     const key = deduplicationKey(s);
+
     if (seen.has(key)) {
       seen.get(key)!.count++;
     } else {
@@ -784,6 +851,7 @@ async function main() {
   }
 
   const uniqueScrobbles = Array.from(seen.values());
+
   const duplicateStats = {
     total: validScrobbles.length,
     unique: uniqueScrobbles.length,
@@ -803,6 +871,7 @@ async function main() {
 
   for (const scrobble of uniqueScrobbles) {
     expandedCases.push({ ...scrobble, fieldCombination: "track+artist" });
+
     if (scrobble.track && scrobble.track.trim().length >= 3) {
       expandedCases.push({
         ...scrobble,
@@ -832,6 +901,7 @@ async function main() {
     const logInterval = total > 200 ? 50 : total > 50 ? 25 : 10;
 
     const fieldCombo = s.fieldCombination || (s.artist ? "track+artist" : "track_only");
+
     const cachedResult = cache.getEvaluationResult(
       s.track,
       s.artist || "",
@@ -844,6 +914,7 @@ async function main() {
     if (cachedResult) {
       const now = Date.now();
       const shouldLog = index % logInterval === 0 || index === total - 1 || (now - lastLogTime) > 2000;
+
       if (shouldLog) {
         const progress = ((index + 1) / total * 100).toFixed(1);
         const elapsed = now - evaluationStartTime;
@@ -859,6 +930,7 @@ async function main() {
         cachedResult.baselinePos,
         cachedResult.baselineFound,
       );
+
       return {
         track: s.track,
         artist: s.artist,
@@ -895,6 +967,7 @@ async function main() {
     const now = Date.now();
     const caseElapsed = now - caseStartTime;
     const shouldLog = index % logInterval === 0 || index === total - 1 || (now - lastLogTime) > 2000;
+
     if (shouldLog) {
       const progress = ((index + 1) / total * 100).toFixed(1);
       const elapsed = now - evaluationStartTime;
@@ -981,22 +1054,27 @@ async function main() {
   if (parallel && concurrency > 1) {
     console.log(`  Using parallel evaluation (concurrency: ${concurrency})...\n`);
     const chunks: Array<typeof expandedCases[0]>[] = [];
+
     for (let i = 0; i < expandedCases.length; i += concurrency) {
       chunks.push(expandedCases.slice(i, i + concurrency));
     }
 
     for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
       const chunk = chunks[chunkIdx];
+
       const chunkCases = await Promise.all(
         chunk.map((s, idx) => evaluateCase(s, chunkIdx * concurrency + idx, expandedCases.length)),
       );
 
       for (const caseResult of chunkCases) {
         if (caseResult.baselineCacheHit) baselineCacheHits++;
+
         if (caseResult.improvedCacheHit) improvedCacheHits++;
+
         if (caseResult.baselineCacheHit && caseResult.improvedCacheHit) {
           evaluationResultCacheHits++;
         }
+
         totalSearches += 2;
 
         const hardness = classifyHardness(
@@ -1006,17 +1084,22 @@ async function main() {
           caseResult.baselinePos,
           caseResult.baselineFound,
         );
+
         cases.push({ ...caseResult, hardness });
       }
     }
   } else {
     for (let i = 0; i < expandedCases.length; i++) {
       const caseResult = await evaluateCase(expandedCases[i], i, expandedCases.length);
+
       if (caseResult.baselineCacheHit) baselineCacheHits++;
+
       if (caseResult.improvedCacheHit) improvedCacheHits++;
+
       if (caseResult.baselineCacheHit && caseResult.improvedCacheHit) {
         evaluationResultCacheHits++;
       }
+
       totalSearches += 2;
 
       const hardness = classifyHardness(
@@ -1026,6 +1109,7 @@ async function main() {
         caseResult.baselinePos,
         caseResult.baselineFound,
       );
+
       cases.push({ ...caseResult, hardness });
     }
   }
@@ -1037,6 +1121,7 @@ async function main() {
   // ── Work-equivalence post-processing ──────────────────────────────
 
   const unmatchableForWorkCheck = cases.filter((c) => !c.improvedFound || !c.baselineFound);
+
   if (unmatchableForWorkCheck.length > 0) {
     console.log(`Work-equivalence post-processing: checking ${unmatchableForWorkCheck.length} unmatchable cases...`);
     let workEquivFound = 0;
@@ -1050,6 +1135,7 @@ async function main() {
         for (let j = 0; j < c.improvedTopIds.length; j++) {
           workChecksPerformed++;
           const equiv = await areRecordingsWorkEquivalent(c.mbid, c.improvedTopIds[j], cache, apiMetrics);
+
           if (equiv) {
             c.workEquivalentPos = j;
             c.workEquivalentSource = "improved";
@@ -1063,6 +1149,7 @@ async function main() {
         for (let j = 0; j < c.baselineTopIds.length; j++) {
           workChecksPerformed++;
           const equiv = await areRecordingsWorkEquivalent(c.mbid, c.baselineTopIds[j], cache, apiMetrics);
+
           if (equiv) {
             c.workEquivalentPos = j;
             c.workEquivalentSource = "baseline";
@@ -1085,6 +1172,7 @@ async function main() {
   // ── Duplicate distribution ────────────────────────────────────────
 
   const duplicateDistribution: Record<number, number> = {};
+
   for (const c of cases) {
     const count = c.duplicateCount || 1;
     duplicateDistribution[count] = (duplicateDistribution[count] || 0) + 1;

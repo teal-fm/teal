@@ -5,6 +5,7 @@ describe("profile image uploads", () => {
     const blob = new Blob([new Uint8Array([137, 80, 78, 71])], {
       type: "image/png",
     });
+
     const image = await prepareProfileImage(blob);
     expect(image.encoding).toBe("image/png");
     expect(image.blob.type).toBe("image/png");
@@ -22,6 +23,7 @@ describe("profile image uploads", () => {
     const blob = new Blob([new Uint8Array([255, 216, 255, 224])], {
       type: "application/octet-stream",
     });
+
     expect((await prepareProfileImage(blob)).encoding).toBe("image/jpeg");
   });
   it("rejects unsupported or unidentified formats with a useful recovery", async () => {

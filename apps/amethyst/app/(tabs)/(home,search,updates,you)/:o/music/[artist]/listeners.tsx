@@ -16,13 +16,16 @@ export default function ArtistListeners() {
   const mbid = param(params.mbid);
   const name = param(params.name) || param(params.artist);
   const [period, setPeriod] = useState(normalizeListenerPeriod(param(params.period)));
+
   const listeners = useInfiniteQuery({
     queryKey: ["artist-listeners-all", mbid, name, period],
     queryFn: ({ pageParam }) => getArtistListeners(mbid, name, period, 50, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.cursor,
   });
+
   const all = listeners.data?.pages.flatMap((p) => p.listeners) ?? [];
+
   return (
     <Screen back title={name ? `${name} listeners` : "Listeners"}>
       <Choices

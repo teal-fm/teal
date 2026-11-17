@@ -9,11 +9,13 @@ const SIGNUP_URL = "https://bsky.app/signup";
 /** Teal uses an Atmosphere account, so creating one happens at Bluesky. */
 export default function SignUp() {
   const [opened, setOpened] = useState(false);
+
   const open = () => {
     if (Platform.OS === "web") window.open(SIGNUP_URL, "_blank", "noopener,noreferrer");
     else void Linking.openURL(SIGNUP_URL);
     setOpened(true);
   };
+
   return (
     <View className="flex-1 items-center justify-center bg-ground px-4">
       <PageTitle title="Create an account" />

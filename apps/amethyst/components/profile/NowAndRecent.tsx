@@ -10,6 +10,7 @@ import { AmbientSource, Cover, Glass, Text, coverUri } from "@/components/ds";
 /** What someone is listening to now, then their last few plays as covers. */
 export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView[] }) {
   if (!now && recent.length === 0) return null;
+
   return (
     // The latest cover tints the profile's backdrop even when nothing is playing now.
     <AmbientSource uri={now ? undefined : coverUri(recent[0]?.releaseMbId)}>
@@ -34,6 +35,7 @@ export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2">
           {recent.map((play) => {
             const href = listenHrefFromUri(play.uri);
+
             const tile = (
               <View className="w-[58px] items-center">
                 <Cover releaseMbId={play.releaseMbId} size={58} radius={8} accessibilityLabel={`${play.trackName}, ${displayArtists(play)}`} />
@@ -42,6 +44,7 @@ export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView
                 </Text>
               </View>
             );
+
             return href ? (
               <Link key={play.uri} href={href as never} asChild>
                 <Pressable>{tile}</Pressable>

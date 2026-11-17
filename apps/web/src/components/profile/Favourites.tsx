@@ -19,6 +19,7 @@ export function Favourites({ favourites, isSelf, onEdit }: { favourites: Favouri
       staleTime: 60 * 60_000,
     })),
   });
+
   if (favourites.length === 0 && !isSelf) return null;
 
   return (
@@ -40,6 +41,7 @@ export function Favourites({ favourites, isSelf, onEdit }: { favourites: Favouri
           {favourites.map((f, i) => {
             const album = albums[i]?.data?.album;
             const id = favouriteId(f);
+
             const body = (
               <AmbientSource uri={coverUri(id)}>
                 <Cover releaseMbId={id} radius={10} className="shadow-lg" label={album?.name} />
@@ -47,6 +49,7 @@ export function Favourites({ favourites, isSelf, onEdit }: { favourites: Favouri
                 <p className="truncate text-xs text-ink-2">{album?.artistName ?? " "}</p>
               </AmbientSource>
             );
+
             return (
               <li key={id} className="min-w-0">
                 {album?.artistName ? (

@@ -7,6 +7,7 @@ export const Route = createFileRoute("/ios-client-metadata.json")({
     handlers: {
       GET: ({ request }) => {
         const origin = process.env.PUBLIC_ORIGIN || new URL(request.url).origin;
+
         return Response.json(iosClientMetadataFor(origin), {
           headers: { "Cache-Control": "public, max-age=300" },
         });

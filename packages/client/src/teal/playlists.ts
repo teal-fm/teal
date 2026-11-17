@@ -12,6 +12,7 @@ export function toTrackRecord(track: TrackViewLike) {
     })) ||
     track.artistNames?.map((artistName, index) => ({ artistName, artistMbId: track.artistMbIds?.[index] })) ||
     [];
+
   return {
     trackName: track.trackName?.trim() || "Unknown track",
     trackMbId: track.trackMbId,
@@ -30,8 +31,10 @@ export function toTrackRecord(track: TrackViewLike) {
 /** Same song, by recording MBID or, without one, by title and first artist. */
 export function trackKey(track: unknown) {
   const value = (track || {}) as TrackViewLike;
+
   if (value.recordingMbId) return value.recordingMbId;
   const artist = value.artists?.[0]?.artistName || value.artistNames?.[0] || "";
+
   return `${value.trackName || ""}\u0000${artist}`.toLocaleLowerCase();
 }
 
@@ -43,6 +46,7 @@ export async function addPlaylistItem(
   order: number,
 ): Promise<SocialPlaylistItemView> {
   const repo = agent.assertDid;
+
   const record = {
     $type: "fm.teal.feed.social.playlistItem",
     subject: { uri: playlist.uri, cid: playlist.cid },
@@ -50,8 +54,10 @@ export async function addPlaylistItem(
     order,
     createdAt: new Date().toISOString(),
   };
+
   const res = await agent.call("com.atproto.repo.createRecord", {}, { repo, collection: "fm.teal.feed.social.playlistItem", record });
   const { uri = "", cid = "" } = res.data as { uri?: string; cid?: string };
+
   return { uri, cid, authorDid: repo, track: record.track, order, createdAt: record.createdAt };
 }
 
@@ -77,21 +83,27 @@ export async function savePlaylistRecord(
   // Alpha-era playlists stay in their own collection, with its record type.
   const [, , , collection = "fm.teal.feed.social.playlist", rkey = ""] = playlist.uri.split("/");
   const authors = await resolveAuthors(edits.collaboratorsText, playlist.authorDid);
+
   const current = await agent
     .call("com.atproto.repo.getRecord", { repo: playlist.authorDid, collection, rkey })
     .then((res) => res.data.value as { cover?: unknown });
+
   let cover = current.cover;
+
   if (edits.newCoverUri) {
     const data = await (await fetch(edits.newCoverUri)).blob();
     cover = (await agent.uploadBlob(data, { encoding: data.type || "image/jpeg" })).data.blob;
   }
+
   const text = edits.description.trim();
   let descriptionFacets: unknown[] | undefined;
+
   if (text) {
     const rich = new RichText({ text });
     await rich.detectFacets(agent);
     descriptionFacets = rich.facets;
   }
+
   await agent.call(
     "com.atproto.repo.putRecord",
     {},

@@ -23,9 +23,11 @@ export const ListeningDeck = forwardRef<ListeningDeckHandle, { items: DeckItem[]
   const reduced = useReducedMotion();
   useEffect(() => {
     const node = list.current;
+
     if (!node) return;
     const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
     observer.observe(node);
+
     return () => observer.disconnect();
   }, []);
   // Until measured (and on the server), assume a phone-sized card.
@@ -40,16 +42,20 @@ export const ListeningDeck = forwardRef<ListeningDeckHandle, { items: DeckItem[]
     },
     [cardWidth, items.length, reduced],
   );
+
   useImperativeHandle(ref, () => ({ step: (delta) => go(focused + delta) }), [focused, go]);
 
   const onScroll = () => {
     const node = list.current;
+
     if (!node) return;
     const index = Math.round(node.scrollLeft / (cardWidth + GAP));
+
     if (index !== focused) setFocused(Math.max(0, Math.min(items.length - 1, index)));
   };
 
   const focusedItem = items[focused];
+
   const focusedCover =
     focusedItem && coverUri(focusedItem.kind === "listen" ? focusedItem.listen.releaseMbId : focusedItem.moment.release.releaseMbId);
 
@@ -82,8 +88,10 @@ export const ListeningDeck = forwardRef<ListeningDeckHandle, { items: DeckItem[]
         <div className={cn("flex flex-wrap gap-2.5 px-5 pt-3.5", !wide && "justify-center")} role="group" aria-label="Jump to">
           {items.map((item, index) => {
             const on = index === focused;
+
             if (item.kind === "listen") {
               const a = item.listen.actor;
+
               return (
                 <button
                   key={item.key}
@@ -97,6 +105,7 @@ export const ListeningDeck = forwardRef<ListeningDeckHandle, { items: DeckItem[]
                 </button>
               );
             }
+
             return (
               <button
                 key={item.key}

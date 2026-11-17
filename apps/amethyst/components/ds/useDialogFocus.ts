@@ -16,12 +16,14 @@ export function useDialogFocus(
   useEffect(() => {
     if (Platform.OS !== "web" || !isFocused) return;
     const dialog = dialogRef.current as unknown as HTMLElement | null;
+
     if (!dialog) return;
     const previous = document.activeElement as HTMLElement | null;
     dialog.setAttribute("role", "dialog");
     dialog.setAttribute("aria-modal", "true");
     dialog.setAttribute("aria-labelledby", titleId);
     dialog.tabIndex = -1;
+
     const elements = () =>
       Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
         (element) =>
@@ -29,6 +31,7 @@ export function useDialogFocus(
           element.getAttribute("aria-disabled") !== "true" &&
           element.getClientRects().length > 0,
       );
+
     const frame = requestAnimationFrame(() => {
       (
         dialog.querySelector<HTMLElement>("input") ||
@@ -36,6 +39,7 @@ export function useDialogFocus(
         dialog
       ).focus();
     });
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -44,6 +48,7 @@ export function useDialogFocus(
         const items = elements();
         const first = items[0];
         const last = items.at(-1);
+
         if (!first || !last) {
           event.preventDefault();
           dialog.focus();
@@ -64,18 +69,23 @@ export function useDialogFocus(
         }
       }
     };
+
     const onFocus = (event: FocusEvent) => {
       if (!dialog.contains(event.target as Node))
         (elements()[0] || dialog).focus();
     };
+
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("focusin", onFocus);
+
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("focusin", onFocus);
+
       if (previous?.isConnected) previous.focus();
     };
   }, [onClose, titleId, isFocused]);
+
   return dialogRef;
 }

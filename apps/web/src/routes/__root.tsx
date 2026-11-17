@@ -54,10 +54,12 @@ function AuthSession({ children }: { children: ReactNode }) {
   useEffect(() => {
     void startAuth();
   }, []);
+
   const value = useMemo(
     () => ({ agent, viewer: status === "loggedIn" ? agent?.did : undefined }),
     [agent, status],
   );
+
   return <SessionProvider value={value}>{children}</SessionProvider>;
 }
 

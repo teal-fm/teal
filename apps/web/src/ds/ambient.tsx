@@ -40,6 +40,7 @@ export function WindowBackdrop() {
   const blobs = useWindowBackdrop((state) => state.blobs);
   const last = useWindowBackdrop((state) => state.last);
   const off = useBackdropPreferences().preferences.backdrop === "off";
+
   // A page without covers, like Activity, dims the colour rather than draining it.
   // Turned off, it loads no covers at all.
   const shown = useMemo(
@@ -47,16 +48,19 @@ export function WindowBackdrop() {
       off ? [] : blobs.length ? blobs : last.map((blob) => ({ ...blob, weight: blob.weight * CARRIED })),
     [blobs, last, off],
   );
+
   return <Backdrop blobs={shown} />;
 }
 
 /** How many covers blend at once; more turns the backdrop to mud. */
 const MAX_BLOBS = 6;
+
 /** The nearest cover counts as at least this close, so a lone far one stays faint. */
 const MIN_LEAD = 0.6;
 
 function weightFor(top: number, bottom: number, height: number) {
   const mid = height * 0.45;
+
   return Math.max(0, 1 - Math.abs((top + bottom) / 2 - mid) / (height * 1.1));
 }
 
@@ -75,19 +79,26 @@ export function AmbientScreen({ children }: { children: ReactNode }) {
     // A page with one cover in it, like an album or a listen, keeps that cover
     // at full strength however far it scrolls, so it can fill the backdrop.
     const uris = new Set(all.map((source) => source.uri));
+
     if (uris.size === 1) {
       const [uri] = uris;
       setBlobs((prev) => (prev.length === 1 && prev[0].uri === uri && prev[0].weight === 1 ? prev : [{ uri, weight: 1 }]));
+
       return;
     }
+
     const seen = new Map<string, AmbientBlob>();
+
     for (const source of all) {
       const rect = source.node.getBoundingClientRect();
+
       if (rect.height <= 0) continue;
       const weight = weightFor(rect.top, rect.bottom, height);
       const prev = seen.get(source.uri);
+
       if (weight > 0 && (!prev || prev.weight < weight)) seen.set(source.uri, { uri: source.uri, weight });
     }
+
     const top = [...seen.values()].sort((a, b) => b.weight - a.weight).slice(0, MAX_BLOBS);
     // Scale to the nearest cover, so a fast scroll between covers shifts the colour
     // instead of draining it.
@@ -123,9 +134,11 @@ export function AmbientScreen({ children }: { children: ReactNode }) {
     window.addEventListener("scroll", refresh, { passive: true, capture: true });
     window.addEventListener("resize", refresh, { passive: true });
     refresh();
+
     return () => {
       window.removeEventListener("scroll", refresh, { capture: true });
       window.removeEventListener("resize", refresh);
+
       if (pending.current) clearTimeout(pending.current);
       pending.current = null;
     };
@@ -157,6 +170,7 @@ export function AmbientSource({
   useEffect(() => {
     if (!ambient || !uri || !ref.current) return;
     ambient.register(key, { uri, node: ref.current });
+
     return () => ambient.unregister(key);
   }, [ambient, key, uri]);
 

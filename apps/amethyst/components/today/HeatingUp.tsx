@@ -6,6 +6,7 @@ import { AmbientSource, Avatar, Cover, Glass, Heading, Text, coverUri, useHalo }
 
 function albumHref(m: MomentView) {
   const r = m.release;
+
   return r.releaseMbId && r.artistName ? musicAlbumHref(r.artistName, r.releaseName, r.releaseMbId) : undefined;
 }
 
@@ -13,7 +14,9 @@ function albumHref(m: MomentView) {
 function caption(m: MomentView) {
   const noun = m.kind === "circle" ? ["friend", "friends"] : ["listener", "listeners"];
   const people = `${m.listenerCount} ${m.listenerCount === 1 ? noun[0] : noun[1]}`;
+
   if (m.kind === "trending" && m.changePercent) return `${people} · +${m.changePercent}%`;
+
   return `${people} today`;
 }
 
@@ -32,7 +35,9 @@ function Faces({ moment, size }: { moment: MomentView; size: number }) {
 /** A horizontal shelf of albums your circle is converging on today (phones). */
 export function HeatingShelf({ moments, title = "Heating up" }: { moments: MomentView[]; title?: string }) {
   const halo = useHalo();
+
   if (moments.length === 0) return null;
+
   return (
     <View className="mb-5 mt-1">
       <Heading level={2} onBackdrop className="px-2.5 pb-3">
@@ -65,6 +70,7 @@ export function HeatingShelf({ moments, title = "Heating up" }: { moments: Momen
 /** The same albums as a compact list for the desktop rail. */
 export function HeatingRail({ moments }: { moments: MomentView[] }) {
   if (moments.length === 0) return null;
+
   return (
     <Glass className="gap-1 p-4">
       <Heading level={2} className="mb-1 text-[19px]">

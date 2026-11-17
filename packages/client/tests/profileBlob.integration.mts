@@ -7,15 +7,18 @@ import { $parse as parseProfileRecord } from "@teal/lexicons/src/fm/teal/actor/p
 import { profileRecordBlob } from "../src/atp/profileBlob";
 
 const cid = "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku";
+
 const publicBlob = {
   $type: "blob",
   ref: { $link: cid },
   mimeType: "image/png",
   size: 64,
 };
+
 // This is the real SDK decoding of uploadBlob's public JSON response, not a
 // mock of the class or of the generated schema.
 const uploaded = jsonToLex(publicBlob);
+
 assert.ok(uploaded instanceof BlobRef);
 
 test("SDK upload refs need conversion before generated profile validation", () => {
@@ -27,16 +30,19 @@ test("SDK upload refs need conversion before generated profile validation", () =
       }),
     /Expected blob value type/,
   );
+
   const record = parseProfileRecord({
     $type: "fm.teal.actor.profile",
     displayName: "Teal QA",
     avatar: profileRecordBlob(uploaded, jsonToLex),
     banner: profileRecordBlob(uploaded, jsonToLex),
   });
+
   const wire = lexToJson(record) as {
     avatar: typeof publicBlob;
     banner: typeof publicBlob;
   };
+
   assert.deepEqual(wire.avatar, publicBlob);
   assert.deepEqual(wire.banner, publicBlob);
 });
@@ -47,21 +53,25 @@ test("retained SDK and serialized repository blobs preserve their wire encoding"
     avatar: profileRecordBlob(uploaded, jsonToLex),
     banner: profileRecordBlob(uploaded.toJSON(), jsonToLex),
   });
+
   const wire = lexToJson(record) as {
     avatar: typeof publicBlob;
     banner: typeof publicBlob;
   };
+
   assert.deepEqual(wire.avatar, publicBlob);
   assert.deepEqual(wire.banner, publicBlob);
 });
 
 test("already-decoded refs and omitted images remain valid", () => {
   const decoded = uploaded.ipld();
+
   const record = parseProfileRecord({
     $type: "fm.teal.actor.profile",
     avatar: profileRecordBlob(decoded, jsonToLex),
     banner: profileRecordBlob(undefined, jsonToLex),
   });
+
   assert.equal(record.avatar, decoded);
   assert.equal(record.banner, undefined);
 });

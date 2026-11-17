@@ -6,13 +6,17 @@ export async function shareLink(message: string, url: string): Promise<"shared" 
   try {
     if (!navigator.share) {
       await navigator.clipboard.writeText(url);
+
       return "copied";
     }
+
     await navigator.share({ text: message, url });
+
     return "shared";
   } catch (error) {
     // Dismissing the share sheet isn't a failure worth reporting.
     if (error instanceof DOMException && error.name === "AbortError") return "shared";
+
     return "failed";
   }
 }

@@ -204,6 +204,7 @@ function shouldKeepForDisambiguation(
   // "edition" and "mix" are remix-like only when accompanied by an artist name
   // (e.g., "Kaytranada Edition" / "Zomby mix" = named remix, "Deluxe Edition" / "Original Mix" = guff)
   const GENERIC_MIX_WORDS = /^(?:edition|deluxe|special|expanded|anniversary|bonus|limited|original|remastered|collector|club|radio|dance|dub|instrumental|extended|vocal|single|version|maxi|mega|short|long|main|mix|\d+\w*)$/;
+
   const isNamedVariantWithArtist = type === "remix"
     && /\b(?:edition|mix)\b/.test(contentLower)
     && contentLower.split(/\s+/).some(
@@ -217,6 +218,7 @@ function shouldKeepForDisambiguation(
   const isGenericWord = GENERIC_TRACK_NAMES.some(
     word => baseNameLower === word || baseNameLower.startsWith(word + " ")
   );
+
   const isShort = baseName.length < SHORT_NAME_THRESHOLD;
   const isCommonPhrase = baseName.split(/\s+/).length <= 3 && baseName.length < COMMON_PHRASE_LENGTH;
 
@@ -226,6 +228,7 @@ function shouldKeepForDisambiguation(
     : type === "version"
     ? /mono|stereo|quadraphonic|remaster(?:ed)?/i
     : /feat\.?|ft\.?|featuring/i;
+
   const hasArtistName = contentLower.split(/\s+/).some(
     word => word.length >= MIN_ARTIST_NAME_LENGTH && !keywordPattern.test(word)
   );
@@ -242,8 +245,10 @@ function isLikelyGuff(content: string): boolean {
 
   // Count guff words (strip trailing punctuation for matching: "prod." -> "prod")
   const guffWordSet = new Set<string>(GUFF_WORDS);
+
   const guffWordCount = words.filter((word) => {
     const stripped = word.replace(/[.,!?;:]+$/, ""); // Strip trailing punctuation
+
     return guffWordSet.has(word) || guffWordSet.has(stripped);
   }).length;
 
@@ -271,8 +276,10 @@ export function cleanArtistName(name: string): string {
     /\s+ft\.?\s+/i,
     /\s+featuring\s+/i,
   ];
+
   for (const pattern of featPatterns) {
     const match = cleaned.match(pattern);
+
     if (match && match.index !== undefined) {
       cleaned = cleaned.substring(0, match.index).trim();
     }
@@ -285,14 +292,17 @@ export function cleanArtistName(name: string): string {
     // Find matching closing paren (handle nested)
     let depth = 1;
     let end = start + 1;
+
     while (end < cleaned.length && depth > 0) {
       if (cleaned[end] === "(") depth++;
       else if (cleaned[end] === ")") depth--;
       end++;
     }
+
     if (depth === 0) {
       end--; // Adjust for final increment
       const parenContent = cleaned.substring(start + 1, end).toLowerCase();
+
       if (isLikelyGuff(parenContent)) {
         cleaned = (cleaned.substring(0, start) + cleaned.substring(end + 1)).trim();
         // Normalize whitespace after removal (fixes double spaces)
@@ -308,14 +318,17 @@ export function cleanArtistName(name: string): string {
     // Find matching closing bracket (handle nested)
     let depth = 1;
     let end = start + 1;
+
     while (end < cleaned.length && depth > 0) {
       if (cleaned[end] === "[") depth++;
       else if (cleaned[end] === "]") depth--;
       end++;
     }
+
     if (depth === 0) {
       end--; // Adjust for final increment
       const bracketContent = cleaned.substring(start + 1, end).toLowerCase();
+
       if (isLikelyGuff(bracketContent)) {
         cleaned = (cleaned.substring(0, start) + cleaned.substring(end + 1)).trim();
         // Normalize whitespace after removal
@@ -342,6 +355,7 @@ export function cleanTrackName(name: string): string {
 
   // Strip leading/trailing decorative characters (* ~ · • ★ etc.)
   const stripped = cleaned.replace(/^[\s*~·•★☆♪♫|_>]+/, "").replace(/[\s*~·•★☆♪♫|_<]+$/, "").trim();
+
   if (stripped.length > 0) cleaned = stripped;
 
   // Remove parenthetical content if it looks like guff.
@@ -351,15 +365,18 @@ export function cleanTrackName(name: string): string {
     // Collect all top-level paren groups
     const groups: Array<{ start: number; end: number; content: string }> = [];
     let i = 0;
+
     while (i < cleaned.length) {
       if (cleaned[i] === "(") {
         let depth = 1;
         let j = i + 1;
+
         while (j < cleaned.length && depth > 0) {
           if (cleaned[j] === "(") depth++;
           else if (cleaned[j] === ")") depth--;
           j++;
         }
+
         if (depth === 0) {
           groups.push({ start: i, end: j - 1, content: cleaned.substring(i + 1, j - 1) });
           i = j;
@@ -380,6 +397,7 @@ export function cleanTrackName(name: string): string {
       const shouldKeepVersion = shouldKeepForDisambiguation(content, baseName, "version");
       const shouldKeep = shouldKeepRemix || shouldKeepFeat || shouldKeepVersion;
       const wouldLeaveEmpty = baseName.length === 0 && cleaned.substring(end + 1).trim().length === 0;
+
       if (isLikelyGuff(content.toLowerCase()) && !shouldKeep && !wouldLeaveEmpty) {
         cleaned = (cleaned.substring(0, start) + cleaned.substring(end + 1)).trim();
         cleaned = cleaned.replace(/\s+/g, " ").trim();
@@ -391,15 +409,18 @@ export function cleanTrackName(name: string): string {
   {
     const groups: Array<{ start: number; end: number; content: string }> = [];
     let bi = 0;
+
     while (bi < cleaned.length) {
       if (cleaned[bi] === "[") {
         let depth = 1;
         let bj = bi + 1;
+
         while (bj < cleaned.length && depth > 0) {
           if (cleaned[bj] === "[") depth++;
           else if (cleaned[bj] === "]") depth--;
           bj++;
         }
+
         if (depth === 0) {
           groups.push({ start: bi, end: bj - 1, content: cleaned.substring(bi + 1, bj - 1) });
           bi = bj;
@@ -419,6 +440,7 @@ export function cleanTrackName(name: string): string {
       const shouldKeepVersion = shouldKeepForDisambiguation(content, baseName, "version");
       const shouldKeep = shouldKeepRemix || shouldKeepFeat || shouldKeepVersion;
       const wouldLeaveEmpty = baseName.length === 0 && cleaned.substring(end + 1).trim().length === 0;
+
       if (isLikelyGuff(content.toLowerCase()) && !shouldKeep && !wouldLeaveEmpty) {
         cleaned = (cleaned.substring(0, start) + cleaned.substring(end + 1)).trim();
         cleaned = cleaned.replace(/\s+/g, " ").trim();
@@ -430,6 +452,7 @@ export function cleanTrackName(name: string): string {
   // Common in Last.fm/scrobbler data: "Song - Single Version", "Song - Artist Remix"
   // Must run BEFORE feat removal so "Song - feat. Artist" also gets handled.
   const dashIndex = cleaned.indexOf(" - ");
+
   if (dashIndex > 0) {
     const baseName = cleaned.substring(0, dashIndex).trim();
     const suffix = cleaned.substring(dashIndex + 3).trim();
@@ -460,15 +483,18 @@ export function cleanTrackName(name: string): string {
 
   for (const pattern of featPatterns) {
     const match = cleaned.match(pattern);
+
     if (match && match.index !== undefined) {
       const baseName = cleaned.substring(0, match.index).trim();
       const featContent = cleaned.substring(match.index + match[0].length).trim();
 
       // Only remove if not needed for disambiguation
       const shouldKeep = shouldKeepForDisambiguation(featContent, baseName, "feat");
+
       if (!shouldKeep) {
         cleaned = baseName;
       }
+
       break;
     }
   }
@@ -533,6 +559,7 @@ export function normalizeForComparison(text: string): string {
 function isUnicodeAlphanumeric(c: string): boolean {
   // Fast path for ASCII
   if (/[a-zA-Z0-9]/.test(c)) return true;
+
   // Unicode letter or number (covers CJK, Cyrillic, Arabic, etc.)
   // \p{L} = any Unicode letter, \p{N} = any Unicode number
   return /[\p{L}\p{N}]/u.test(c);

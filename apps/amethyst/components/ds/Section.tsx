@@ -44,6 +44,7 @@ export function Section({
       ) : null}
     </View>
   );
+
   if (panel) {
     return (
       <Glass className={cn("p-4", className)}>
@@ -52,6 +53,7 @@ export function Section({
       </Glass>
     );
   }
+
   return (
     <View className={className}>
       {header}
@@ -104,6 +106,7 @@ export function Row({
       {trailing}
     </View>
   );
+
   if (href) {
     return (
       <Link href={href} asChild>
@@ -113,6 +116,7 @@ export function Row({
       </Link>
     );
   }
+
   if (onPress) {
     return (
       <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} className="active:opacity-70">
@@ -120,5 +124,6 @@ export function Row({
       </Pressable>
     );
   }
+
   return body;
 }

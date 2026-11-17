@@ -57,7 +57,9 @@ const CATALOG_PATTERN = /\b(BWV|Op\.?|K\.?|HWV|RV|D\.?|S\.?|Hob\.?|TrV|WAB|WoO)\
  */
 function extractCatalogNumber(text: string): { system: string; number: number } | null {
   const match = text.match(CATALOG_PATTERN);
+
   if (!match) return null;
+
   return {
     system: match[1].replace(/\.$/, "").toUpperCase(),
     number: parseInt(match[2], 10),
@@ -98,19 +100,23 @@ function extractFeaturedArtist(text: string): string | null {
 
   for (const parenMatch of text.matchAll(/\(([^)]+)\)/g)) {
     const found = extractFeatFromContent(parenMatch[1].toLowerCase());
+
     if (found) return found;
   }
 
   for (const bracketMatch of text.matchAll(/\[([^\]]+)\]/g)) {
     const found = extractFeatFromContent(bracketMatch[1].toLowerCase());
+
     if (found) return found;
   }
 
   for (const pattern of FEAT_PATTERNS) {
     const match = lower.match(pattern);
+
     if (match && match.index !== undefined) {
       const content = lower.substring(match.index + match[0].length).trim();
       const words = content.split(/\s+/).filter((w) => w.length > 2);
+
       if (words.length > 0) return words.slice(0, 3).join(" ");
     }
   }
@@ -121,12 +127,15 @@ function extractFeaturedArtist(text: string): string | null {
 function extractFeatFromContent(content: string): string | null {
   for (const pattern of FEAT_PATTERNS) {
     const match = content.match(pattern);
+
     if (match && match.index !== undefined) {
       const after = content.substring(match.index + match[0].length).trim();
       const words = after.split(/\s+/).filter((w) => w.length > 2);
+
       if (words.length > 0) return words.slice(0, 3).join(" ");
     }
   }
+
   return null;
 }
 
@@ -137,18 +146,24 @@ function extractFeatFromContent(content: string): string | null {
 /** Compare two normalized strings: "exact", "partial" (startsWith/contains), or "none". */
 function matchLevel(query: string, result: string): "exact" | "partial" | "none" {
   if (result === query) return "exact";
+
   if (result.includes(query)) return "partial";
+
   return "none";
 }
 
 /** Best match level across an array of candidates. */
 function bestMatch(query: string, candidates: string[]): "exact" | "partial" | "none" {
   let best: "exact" | "partial" | "none" = "none";
+
   for (const c of candidates) {
     const level = matchLevel(query, c);
+
     if (level === "exact") return "exact";
+
     if (level === "partial") best = "partial";
   }
+
   return best;
 }
 
@@ -167,9 +182,11 @@ export function scoreResult(
 
   const resultTitle = result.title || "";
   const credits = result["artist-credit"] ?? [];
+
   const resultArtist = credits.length > 0
     ? credits.map((c) => c.name).join(credits[0]?.joinphrase ?? " ")
     : "";
+
   const resultReleases = result.releases ?? [];
 
   // --- MB API score prior ---
@@ -185,10 +202,12 @@ export function scoreResult(
 
   // --- Strategy base ---
   score *= STRATEGY_SCORE[searchStrategy] ?? STRATEGY_SCORE.partial;
+
   if (searchStrategy === "fuzzy") {
     if (query.track || query.cleanedTrack) {
       score *= 0.5 + fuzzyScore(query.cleanedTrack || query.track!, resultTitle) * 0.5;
     }
+
     if (query.artist || query.cleanedArtist) {
       score *= 0.5 + fuzzyScore(query.cleanedArtist || query.artist!, resultArtist) * 0.5;
     }
@@ -202,8 +221,10 @@ export function scoreResult(
   // --- Track matching ---
   const queryTrackNorm = normalizeForComparison(query.cleanedTrack || query.track || "");
   let trackMatched = false;
+
   if (queryTrackNorm) {
     const level = matchLevel(queryTrackNorm, resultTitleNorm);
+
     if (level === "exact") { score *= MATCH_EXACT; trackMatched = true; }
     else if (level === "partial") { score *= MATCH_PARTIAL; trackMatched = true; }
   }
@@ -211,8 +232,10 @@ export function scoreResult(
   // --- Artist matching (check full credit string + individual credits) ---
   const queryArtistNorm = normalizeForComparison(query.cleanedArtist || query.artist || "");
   let artistMatched = false;
+
   if (queryArtistNorm) {
     const level = bestMatch(queryArtistNorm, [resultArtistNorm, ...individualCreditNorms]);
+
     if (level === "exact") { score *= MATCH_EXACT; artistMatched = true; }
     else if (level === "partial") { score *= MATCH_PARTIAL; artistMatched = true; }
   }
@@ -226,13 +249,16 @@ export function scoreResult(
   // MusicBrainz recordings appear on multiple releases (original, compilation, reissue).
   // The query album might match a non-first release.
   const queryReleaseNorm = normalizeForComparison(query.cleanedRelease || query.release || "");
+
   if (queryReleaseNorm && resultReleases.length > 0) {
     const releaseMatch = resultReleases.some((rel) => {
       if (!rel.title) return false;
       const relNorm = normalizeForComparison(rel.title);
+
       // Bidirectional: "Street Songs" matches "Street Songs (Deluxe Edition)" and vice versa
       return relNorm.includes(queryReleaseNorm) || queryReleaseNorm.includes(relNorm);
     });
+
     if (releaseMatch) {
       score *= RELEASE_MATCH;
     }
@@ -240,11 +266,14 @@ export function scoreResult(
 
   // --- Featuring artist bonus ---
   const queryFeat = extractFeaturedArtist(query.track || query.cleanedTrack || "");
+
   if (queryFeat) {
     const resultFeat = extractFeaturedArtist(resultTitle);
+
     if (resultFeat) {
       const qNorm = normalizeForComparison(queryFeat);
       const rNorm = normalizeForComparison(resultFeat);
+
       if (rNorm.includes(qNorm) || qNorm.includes(rNorm)) {
         score *= MATCH_PARTIAL;
       }
@@ -254,8 +283,10 @@ export function scoreResult(
   // --- Classical catalog number matching ---
   const queryTrackRaw = query.track || query.cleanedTrack || "";
   const queryCatalog = extractCatalogNumber(queryTrackRaw);
+
   if (queryCatalog) {
     const resultCatalog = extractCatalogNumber(resultTitle);
+
     if (resultCatalog && resultCatalog.system === queryCatalog.system) {
       score *= resultCatalog.number === queryCatalog.number
         ? CATALOG_MATCH
@@ -266,9 +297,11 @@ export function scoreResult(
   // --- Variant version matching ---
   const queryForVariants = (query.track || query.cleanedTrack || "").toLowerCase();
   const resultTitleLower = resultTitle.toLowerCase();
+
   const disambLower = (result.disambiguation && typeof result.disambiguation === "string")
     ? result.disambiguation.toLowerCase().trim()
     : "";
+
   const resultVariantText = `${resultTitleLower} ${disambLower}`;
 
   const queryVariants = VARIANT_KEYWORDS.filter((kw) => queryForVariants.includes(kw));
@@ -278,12 +311,14 @@ export function scoreResult(
     score *= resultHasVariant ? VARIANT_MATCH : VARIANT_PENALTY;
   } else if (disambLower.length > 0) {
     const resultHasVariant = VARIANT_KEYWORDS.some((kw) => disambLower.includes(kw));
+
     if (resultHasVariant) score *= VARIANT_PENALTY;
   }
 
   // --- Release quality signals ---
   const firstRelease = result.releases?.[0];
   const releaseStatus = firstRelease?.status?.toLowerCase();
+
   if (releaseStatus === "official") {
     score *= RELEASE_OFFICIAL;
   } else if (releaseStatus === "bootleg" || releaseStatus === "pseudo-release") {
@@ -308,6 +343,7 @@ export function rankResults(
 
   ranked.sort((a, b) => {
     if (Math.abs(a.score - b.score) > 0.01) return b.score - a.score;
+
     return 0;
   });
 
@@ -330,9 +366,11 @@ export function rankMultiStageResults(
   for (const { results, strategy } of stageResults) {
     for (let i = 0; i < results.length; i++) {
       const result = results[i];
+
       if (!result.id) continue;
       const score = scoreResult(result, query, strategy, i);
       const existing = bestByID.get(result.id);
+
       if (!existing || score > existing.score) {
         bestByID.set(result.id, { result, score });
       }
@@ -341,5 +379,6 @@ export function rankMultiStageResults(
 
   const allRanked = Array.from(bestByID.values());
   allRanked.sort((a, b) => b.score - a.score);
+
   return allRanked.map((r) => r.result);
 }

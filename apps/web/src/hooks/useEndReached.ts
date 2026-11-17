@@ -10,15 +10,20 @@ export function useEndReached(onEnd: () => void, enabled: boolean) {
   latest.current = onEnd;
   useEffect(() => {
     const node = ref.current;
+
     if (!node || !enabled) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) latest.current();
       },
       { rootMargin: "600px 0px" },
     );
+
     observer.observe(node);
+
     return () => observer.disconnect();
   }, [enabled]);
+
   return ref;
 }

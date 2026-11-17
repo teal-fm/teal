@@ -47,8 +47,10 @@ export function Cover({
     restarts.current = 0;
   }, [primary]);
   const source = primary && fallback?.from === primary ? fallback.uri : primary;
+
   const onError = () => {
     if (!source) return;
+
     // A release with no art of its own usually has it on its release group, so ask
     // for that first. Without one, or for any other image, retry once: the archive
     // redirects through archive.org and sometimes fails in passing.
@@ -58,16 +60,20 @@ export function Cover({
         if (next && next !== primary) setFallback({ from: primary, uri: next });
         else retry(primary);
       });
+
       return;
     }
+
     retry(source);
   };
+
   const retry = (target: string) => {
     if (retried.includes(target)) {
       setFailed((current) => [...current, target]);
       // The archive's thumbnail sizes are separate files, so a size that keeps failing
       // can be swapped for the other before settling on the disc.
       const other = target.replace(/front-(250|500)$/, (_, n) => `front-${n === "250" ? 500 : 250}`);
+
       if (other !== target && !failed.includes(other)) {
         setFallback({ from: primary ?? target, uri: other });
       } else if (!restart.current && restarts.current < 2) {
@@ -80,11 +86,14 @@ export function Cover({
           setAttempt((n) => n + 1);
         }, 20000 * (restarts.current + 1));
       }
+
       return;
     }
+
     setRetried((current) => [...current, target]);
     setTimeout(() => setAttempt((n) => n + 1), 1200);
   };
+
   return (
     <View
       className={cn("aspect-square overflow-hidden bg-fill", className)}

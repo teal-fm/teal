@@ -14,6 +14,7 @@ import { HeatingShelf } from "~/components/today/HeatingUp";
 import { useLayout } from "~/lib/media";
 
 const KINDS = ["people", "songs", "artists", "albums"] as const;
+
 type Kind = (typeof KINDS)[number];
 
 export const Route = createFileRoute("/search")({
@@ -30,9 +31,11 @@ type Person = { did: string; displayName?: string; handle?: string; avatar?: str
 /** Teal's own profiles win over Bluesky's for the same person. */
 function mergePeople(teal: MiniProfileView[], bluesky: AppBskyActorDefs.ProfileViewBasic[]): Person[] {
   const people = new Map<string, Person>();
+
   for (const user of bluesky) {
     people.set(user.did, { did: user.did, displayName: user.displayName, handle: user.handle, avatar: user.avatar });
   }
+
   for (const user of teal) {
     if (!user.did) continue;
     const previous = people.get(user.did);
@@ -43,6 +46,7 @@ function mergePeople(teal: MiniProfileView[], bluesky: AppBskyActorDefs.ProfileV
       avatar: user.avatar ? getProfileImageUrl(user.did, user.avatar, "avatar") : previous?.avatar,
     });
   }
+
   return [...people.values()];
 }
 
@@ -73,6 +77,7 @@ function Explore() {
   });
 
   const data = searching ? results.data : undefined;
+
   const counts: Record<Kind, number> = {
     people: data?.people.length ?? 0,
     songs: data?.songs.length ?? 0,
@@ -189,14 +194,18 @@ function Discover() {
     queryFn: () => getToday(),
     refetchInterval: 60_000,
   });
+
   const moments = useMemo(() => dedupeMoments(network.data?.moments ?? []), [network.data]);
   const heating = useMemo(() => dedupeMoments(network.data?.heatingUp ?? []), [network.data]);
 
   if (network.isLoading) return <Loading />;
+
   if (network.isError) return <ErrorNotice title="What's playing across teal didn't load" onRetry={() => network.refetch()} />;
+
   if (moments.length === 0 && heating.length === 0) {
     return <p className="halo mt-6 text-center text-[15px] text-ink-2">Search for listeners, songs, artists, and albums across teal.</p>;
   }
+
   return (
     <div className="-mx-2.5 mt-2">
       <HeatingShelf moments={moments} title="Right now on teal" />

@@ -45,10 +45,12 @@ it("appends later album pages without repeating the selected listen or overlappi
     ...selected,
     uri: "at://did:plc:owner/fm.teal.feed.play/first",
   };
+
   const second: PlayView = {
     ...selected,
     uri: "at://did:plc:owner/fm.teal.feed.play/second",
   };
+
   expect(
     appendTrackHistory(
       [first],

@@ -3,6 +3,7 @@ import { useId } from "react";
 /** An on/off switch: a checkbox with the switch role, labelled by its text. */
 export function Switch({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
   const id = useId();
+
   return (
     <label htmlFor={id} className="flex cursor-pointer items-center justify-between gap-3">
       <span className="flex-1 font-semibold">{label}</span>

@@ -13,6 +13,7 @@ const SIGNUP_URL = "https://bsky.app/signup";
 /** Teal uses an Atmosphere account, so creating one happens at Bluesky. */
 function SignUp() {
   const [opened, setOpened] = useState(false);
+
   return (
     <div className="flex min-h-dvh items-center justify-center px-4">
       <Glass className="flex w-full max-w-md flex-col gap-3 p-7">

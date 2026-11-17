@@ -36,11 +36,13 @@ const saved = {
 
 it("keeps protected routes loading until the saved session is restored", async () => {
   let stored = JSON.stringify({ state: saved, version: 0 });
+
   const storage: StateStorage = {
     getItem: async () => stored,
     setItem: async (_name, value) => { stored = value; },
     removeItem: async () => { stored = ""; },
   };
+
   const store = createStore<State>()(persist(() => ({ ...initial }), {
     name: "auth-test",
     storage: createJSONStorage(() => storage),

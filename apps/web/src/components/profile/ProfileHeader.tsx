@@ -16,6 +16,7 @@ function FollowButton({ did, graph }: { did: string; graph?: GraphSummaryView })
   const go = useGo();
   const toggle = useToggleFollow(did);
   const following = graph?.viewerFollowing;
+
   return (
     <div className="flex flex-col gap-1">
       <Button
@@ -101,6 +102,7 @@ export function ProfileHeader({
           <div className="flex flex-wrap gap-x-4">
             {(["followers", "following"] as const).map((kind) => {
               const count = kind === "followers" ? graph?.followersCount : graph?.followsCount;
+
               return (
                 <button
                   key={kind}

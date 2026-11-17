@@ -4,6 +4,7 @@ import { useStore } from "@/stores/mainStore";
 
 export default function SignOut() {
   const logOut = useStore((state) => state.logOut);
+
   return (
     <>
       <PageTitle title="Sign out" />

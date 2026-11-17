@@ -20,6 +20,7 @@ export function extractTags(text: string) {
 function currentLangs() {
   if (typeof navigator === "undefined") return undefined;
   const language = navigator.language?.split("-")[0];
+
   return language ? [language] : undefined;
 }
 
@@ -29,6 +30,7 @@ function bestRelease(recording: MusicBrainzRecording) {
     (a, b) =>
       (a.date || "9999").localeCompare(b.date || "9999") || a.title.localeCompare(b.title) || a.id.localeCompare(b.id),
   );
+
   return (
     releases.find((r) => (r.country === "XW" || r.country === "US") && r.title !== recording.title) ||
     releases.find((r) => r.title !== recording.title) ||
@@ -38,6 +40,7 @@ function bestRelease(recording: MusicBrainzRecording) {
 
 export function musicBrainzToPlayView(recording: MusicBrainzRecording, release?: MusicBrainzRelease): PlayView {
   const chosen = release || recording.selectedRelease || bestRelease(recording);
+
   return {
     trackName: recording.title || "Unknown track",
     trackMbId: recording.id ? `mbid:${recording.id}` : undefined,
@@ -68,6 +71,7 @@ export async function publishPost(
   const rich = new RichText({ text });
   await rich.detectFacets(agent);
   const tags = extractTags(text);
+
   const reply = input.replyTo
     ? {
         root: {
@@ -77,6 +81,7 @@ export async function publishPost(
         parent: { uri: input.replyTo.uri, cid: input.replyTo.cid },
       }
     : undefined;
+
   const record = {
     $type: "fm.teal.feed.social.post",
     text,
@@ -87,8 +92,10 @@ export async function publishPost(
     langs: currentLangs(),
     createdAt: new Date().toISOString(),
   };
+
   const res = await agent.call("com.atproto.repo.createRecord", {}, { repo, collection: "fm.teal.feed.social.post", record });
   const { uri = "", cid = "" } = res.data as { uri?: string; cid?: string };
+
   return {
     uri,
     cid,

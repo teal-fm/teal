@@ -73,6 +73,7 @@ export function profileQuery(did: string, handleHint?: string) {
     queryFn: async () => {
       let profile: DisplayProfile;
       let fromBluesky = false;
+
       try {
         profile = (await getProfile(did)).profile;
         fromBluesky = !profile.displayName && !profile.description && !profile.avatar && !profile.banner;
@@ -81,23 +82,29 @@ export function profileQuery(did: string, handleHint?: string) {
         profile = { handle: handleHint };
         fromBluesky = true;
       }
+
       if (!profile.avatar || !profile.displayName || !profile.handle || !profile.description) {
         // Only Bluesky answering 400 means the account doesn't exist. An outage, rate
         // limit, or blocked network just means no Bluesky details this time.
         let unknownToBluesky = false;
+
         const bsky = await getBlueskyProfile(did).catch((error) => {
           unknownToBluesky = error instanceof XrpcError && error.status === 400;
+
           return null;
         });
+
         if (bsky) profile = withBluesky(profile, bsky);
         else if (fromBluesky && unknownToBluesky && !profile.displayName && !profile.avatar) {
           // An account off Bluesky still exists while its DID document resolves, and
           // then shows its handle, or just its DID.
           const documented = await documentIdentity(did);
+
           if (!documented) throw new ProfileNotFoundError(did);
           profile = { ...profile, handle: profile.handle ?? documented.handle };
         }
       }
+
       return { profile, fromBluesky };
     },
   });
@@ -113,6 +120,7 @@ export function useProfile(did?: string, handleHint?: string) {
 
 export function useGraphSummary(did?: string) {
   const viewer = useViewerDid();
+
   return useQuery({
     queryKey: profileKeys.graph(did ?? "", viewer),
     queryFn: () => getGraphSummary(did!, viewer),
@@ -126,15 +134,20 @@ export function useToggleFollow(did?: string) {
   const agent = usePdsAgent();
   const client = useQueryClient();
   const key = profileKeys.graph(did ?? "", viewer);
+
   return useMutation({
     mutationFn: async (current?: string) => {
       if (!agent || !viewer || !did) throw new Error("not signed in");
+
       if (current) {
         const rkey = rkeyFromAtUri(current);
+
         if (!rkey) throw new Error("unknown follow record");
         await agent.call("com.atproto.repo.deleteRecord", {}, { repo: viewer, collection: "fm.teal.graph.follow", rkey });
+
         return undefined;
       }
+
       const res = await agent.call(
         "com.atproto.repo.createRecord",
         {},
@@ -144,6 +157,7 @@ export function useToggleFollow(did?: string) {
           record: { $type: "fm.teal.graph.follow", subject: did, createdAt: new Date().toISOString() },
         },
       );
+
       return (res.data as { uri?: string }).uri;
     },
     onSuccess: (uri, current) => {
@@ -179,6 +193,7 @@ export function useActorPlays(did?: string) {
 
 export function useActorPosts(did?: string) {
   const viewer = useViewerDid();
+
   return useInfiniteQuery({
     queryKey: ["actor-posts", did, viewer ?? null],
     queryFn: ({ pageParam }) => getSocialFeed(10, pageParam, viewer, did),
@@ -211,6 +226,7 @@ export function patchActorPlays(client: QueryClient, did: string, update: (play:
         ...page,
         plays: page.plays.flatMap((play) => {
           const next = update(play);
+
           return next ? [next] : [];
         }),
       })),

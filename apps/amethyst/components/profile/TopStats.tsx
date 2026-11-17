@@ -37,10 +37,13 @@ function TopArt({ item, size = 48 }: { item: TopItem; size?: number }) {
     // A miss may be a passing MusicBrainz outage, so it's retried later rather than cached for good.
     staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
+
   if (item.kind === "albums") return <Cover releaseMbId={item.mbid} size={size} radius={8} />;
+
   if (lookup.data) {
     return <Cover uri={lookup.data} size={size} radius={item.kind === "artists" ? size / 2 : 8} />;
   }
+
   return (
     <View
       className="items-center justify-center bg-fill"
@@ -64,11 +67,13 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
     if (!canFind || finding) return;
     setFinding(true);
     setNotFound(false);
+
     try {
       const result = await resolveRankedTrack(actor, item.mbid!, item.name, undefined, {
         search: (query, did) => getSearchResults(query, 25, did),
         history: getActorFeed,
       });
+
       if (result.context?.href) router.push(result.context.href as never);
       else setNotFound(true);
     } catch {
@@ -93,7 +98,9 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
       {finding ? <ActivityIndicator size="small" /> : null}
     </View>
   );
+
   const label = `${rank}. ${item.name}${item.artist ? ` by ${item.artist}` : ""}, ${playsLabel(item.playCount)}`;
+
   if (item.href) {
     return (
       <Link href={item.href as never} asChild>
@@ -103,6 +110,7 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
       </Link>
     );
   }
+
   if (canFind) {
     return (
       <Pressable accessibilityRole="button" accessibilityLabel={label} aria-busy={finding} onPress={find}>
@@ -110,6 +118,7 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
       </Pressable>
     );
   }
+
   return <View accessibilityLabel={label}>{body}</View>;
 }
 
@@ -130,6 +139,7 @@ function TopList({
     queryKey: ["top", actor, kind, period, limit],
     queryFn: () => loadTop(actor, kind, period, limit),
   });
+
   return (
     <View className="min-w-0 flex-1">
       <View className="mb-1 flex-row items-center justify-between gap-2">
@@ -178,6 +188,7 @@ export function TopStats({
   wide?: boolean;
 }) {
   const [period, setPeriod] = useState(defaultPeriod);
+
   return (
     <Glass className="gap-4 p-4">
       <View className="flex-row flex-wrap items-center justify-between gap-3">

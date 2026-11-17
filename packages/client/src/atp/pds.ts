@@ -32,6 +32,7 @@ export const getServiceEndpoint = (
   const did = doc.id;
 
   const didServiceId = did + serviceId;
+
   const found = doc.service?.find(
     (service) => service.id === serviceId || service.id === didServiceId,
   );
@@ -46,8 +47,10 @@ export const getServiceEndpoint = (
 
   return validateUrl(found.serviceEndpoint);
 };
+
 const validateUrl = (urlStr: string): string | undefined => {
   let url;
+
   try {
     url = new URL(urlStr);
   } catch {

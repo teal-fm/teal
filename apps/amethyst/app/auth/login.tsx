@@ -14,6 +14,7 @@ const RESOLVE_DELAY = 500;
 function providerName(pds: URL) {
   if (!pds.hostname.endsWith("bsky.network")) return pds.hostname;
   const shroom = pds.hostname.split(".")[0] ?? "";
+
   return `Bluesky (${shroom.charAt(0).toUpperCase()}${shroom.slice(1)})`;
 }
 
@@ -41,8 +42,10 @@ export default function Login() {
   const resolve = useCallback(async (value: string) => {
     const current = ++version.current;
     setLookup({ state: "resolving" });
+
     try {
       const identity = await resolveFromIdentity(value);
+
       if (current !== version.current) return;
       setLookup(identity?.pds ? { state: "found", pds: identity.pds } : { state: "missing" });
     } catch {
@@ -54,8 +57,10 @@ export default function Login() {
     setHandle(text);
     setError(null);
     version.current += 1;
+
     if (timer.current) clearTimeout(timer.current);
     const value = normalizeAuthHandle(text);
+
     if (value.length > 3) {
       setLookup({ state: "resolving" });
       timer.current = setTimeout(() => void resolve(value), RESOLVE_DELAY);
@@ -66,18 +71,25 @@ export default function Login() {
 
   const signIn = async () => {
     const value = normalizeAuthHandle(handle);
+
     if (busy || lookup.state !== "found" || !value) return;
     setBusy("signing-in");
     setError(null);
+
     try {
       const url = await getLoginUrl(value);
+
       if (!url) throw new Error("no login url");
       setBusy("redirecting");
+
       if (Platform.OS === "web") {
         router.navigate(url.toString() as never);
+
         return;
       }
+
       const result = await openAuthSessionAsync(url.toString(), "http://127.0.0.1:8081/login");
+
       if (result.type === "success") {
         await oauthCallback(new URLSearchParams(result.url.split("?")[1]));
         router.replace("/");

@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { AmbientSource, Cover, Glass, Icon, Text, coverUri } from "@/components/ds";
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
+
 // Seven columns; widths are set as styles so they apply on every platform.
 const COLUMN = { width: `${100 / 7}%` } as const;
 const CELL = { width: `${100 / 7}%`, padding: 2.5 } as const;
@@ -16,22 +17,29 @@ export function CoverCalendar({ actor, name }: { actor: string; name: string }) 
   const now = new Date();
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [from, to] = monthRange(cursor.year, cursor.month);
+
   const calendar = useQuery({
     queryKey: ["calendar", actor, from, to],
     queryFn: () => getListeningCalendar(actor, from, to),
     staleTime: 5 * 60_000,
   });
+
   const offset = mondayOffset(cursor.year, cursor.month);
+
   const title = new Date(cursor.year, cursor.month, 1).toLocaleDateString(undefined, {
     month: "long",
     year: cursor.year === now.getFullYear() ? undefined : "numeric",
   });
+
   const isCurrent = cursor.year === now.getFullYear() && cursor.month === now.getMonth();
+
   const step = (delta: number) =>
     setCursor(({ year, month }) => {
       const date = new Date(year, month + delta, 1);
+
       return { year: date.getFullYear(), month: date.getMonth() };
     });
+
   const days = calendar.data?.days ?? [];
   const today = isoDay(now);
   const topCover = days.find((d) => d.topRelease?.releaseMbId)?.topRelease?.releaseMbId;

@@ -30,8 +30,10 @@ export const Route = createFileRoute("/listen/$did/$rkey")({
         queryKey: listenKey(params.did, params.rkey),
         queryFn: () => readListenDetail(params.did, params.rkey, undefined, () => undefined, getPlayByAuthorRkey),
       }));
+
       if (!play) return undefined;
       const artists = displayArtists(play) || "Unknown artist";
+
       return {
         title: `${play.trackName} · ${artists}`,
         description: [play.releaseName, "A listen on Teal"].filter(Boolean).join(" · "),
@@ -67,16 +69,20 @@ function EditListen({ did, rkey, uri, onSaved, onCancel }: { did: string; rkey: 
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
+
     if (!agent || !source || busy) return;
     setBusy(true);
     setError(null);
+
     try {
       const record = applyEditableFields(source.record, fields);
       const receipt = await putPlayRecord(agent, did, rkey, record, source.cid);
       removePendingListens(did, [uri]);
+
       if (receipt.uri === uri && receipt.cid) {
         retainConfirmedListens(did, [{ record: { ...record, $type: "fm.teal.feed.play" } as PlayRecord, ...receipt }]);
       }
+
       onSaved();
     } catch (e) {
       // applyEditableFields explains invalid input; anything else is a save failure.
@@ -88,6 +94,7 @@ function EditListen({ did, rkey, uri, onSaved, onCancel }: { did: string; rkey: 
 
   if (!source) return error ? <ErrorNotice title="The editor didn't open" body={error} /> : <Loading className="py-8" />;
   const set = (key: keyof typeof fields) => (event: { target: { value: string } }) => setFields((f) => ({ ...f, [key]: event.target.value }));
+
   return (
     <Glass strong as="section" className="p-4">
       <form onSubmit={save} className="flex flex-col gap-3">
@@ -128,10 +135,13 @@ function ListenScreen() {
     enabled: !deleted,
     queryFn: async () => {
       const result = await readListenDetail(did, rkey, viewer, () => pending.find((e) => e.play.uri === uri)?.play, getPlayByAuthorRkey);
+
       if (viewer === did && result.indexed) retireIndexedListens(did, [result.indexed]);
+
       return result;
     },
   });
+
   const play: PlayView | undefined = listen.data?.play;
   const author = useDisplayActor(play?.author as never, did);
   const reactions = useReactionsQuery(play?.uri);
@@ -140,11 +150,15 @@ function ListenScreen() {
 
   const remove = async () => {
     if (!agent) return;
+
     if (!confirmDelete) {
       setConfirmDelete(true);
+
       return;
     }
+
     setDeleteError(false);
+
     try {
       await deletePlayRecord(agent, did, rkey);
       removePendingListens(did, [uri]);
@@ -162,6 +176,7 @@ function ListenScreen() {
       </Screen>
     );
   }
+
   if (listen.isLoading) {
     return (
       <Screen back pageTitle="Listen">
@@ -169,8 +184,10 @@ function ListenScreen() {
       </Screen>
     );
   }
+
   if (listen.isError || !play) {
     const missing = listen.error instanceof XrpcError && listen.error.status === 404;
+
     return (
       <Screen back pageTitle="Listen">
         <ErrorNotice
@@ -183,6 +200,7 @@ function ListenScreen() {
   }
 
   const artists = displayArtists(play) || "Unknown artist";
+
   return (
     <Screen back pageTitle={`${play.trackName} · ${artists}`} width="wide">
       <MusicHero

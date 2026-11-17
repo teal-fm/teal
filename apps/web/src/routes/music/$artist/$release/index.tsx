@@ -28,7 +28,9 @@ export const Route = createFileRoute("/music/$artist/$release/")({
       if (!deps.mbid) return undefined;
       const data = await queryClient.ensureInfiniteQueryData(once(albumQuery(deps.mbid)));
       const album = data.pages[0]?.album;
+
       if (!album) return undefined;
+
       return {
         title: `${album.name} · ${album.artistName}`,
         description: `${countLabel(album.playCount, "listen")} on Teal · ${countLabel(album.tracks.length, "track")}`,
@@ -43,6 +45,7 @@ export const Route = createFileRoute("/music/$artist/$release/")({
 function AlbumScreen() {
   const { mbid } = Route.useSearch();
   const album = useInfiniteQuery({ ...albumQuery(mbid ?? ""), enabled: !!mbid });
+
   const more = useEndReached(() => {
     if (album.hasNextPage && !album.isFetchingNextPage) void album.fetchNextPage();
   }, !!album.hasNextPage);
@@ -54,7 +57,9 @@ function AlbumScreen() {
       </Screen>
     );
   }
+
   const info = album.data?.pages[0]?.album;
+
   if (!info) {
     return (
       <Screen back pageTitle="Album">
@@ -62,6 +67,7 @@ function AlbumScreen() {
       </Screen>
     );
   }
+
   const plays = album.data?.pages.flatMap((p) => p.plays) ?? [];
 
   return (
@@ -95,7 +101,9 @@ function AlbumScreen() {
                 {track.uri ? <Icon icon={ChevronRight} size={18} className="text-ink-2" /> : null}
               </>
             );
+
             const rowClass = cn("flex items-center gap-3 py-3", i !== info.tracks.length - 1 && "border-b border-hair");
+
             return (
               <li key={track.uri || track.recordingMbid || `${track.name}-${i}`}>
                 {track.uri ? (

@@ -4,6 +4,7 @@ export const MAX_PLAYLIST_COLLABORATORS = 20;
 export function createPlaylistRouteScope() {
   let uri: string | undefined;
   let generation = 0;
+
   return {
     setUri(nextUri: string | undefined) {
       if (nextUri !== uri) {
@@ -16,6 +17,7 @@ export function createPlaylistRouteScope() {
     },
     capture(operationUri: string | undefined) {
       const startedGeneration = generation;
+
       return () => operationUri === uri && startedGeneration === generation;
     },
   };
@@ -33,6 +35,7 @@ export async function resolvePlaylistAuthors(
         .split(/[\n,]/)
         .map((entry) => {
           const identity = entry.trim().replace(/^@/, "");
+
           return identity.startsWith("did:")
             ? identity
             : identity.toLowerCase();
@@ -40,11 +43,13 @@ export async function resolvePlaylistAuthors(
         .filter((identity) => identity && identity !== ownerDid),
     ),
   ];
+
   if (identities.length > MAX_PLAYLIST_COLLABORATORS) {
     throw new Error(
       `Add at most ${MAX_PLAYLIST_COLLABORATORS} collaborators. Remove some handles and try again.`,
     );
   }
+
   for (const identity of identities) {
     if (identity.startsWith("did:") && !/^did:[a-z]+:[^\s]+$/.test(identity)) {
       throw new Error(
@@ -52,9 +57,12 @@ export async function resolvePlaylistAuthors(
       );
     }
   }
+
   const authors = [ownerDid];
+
   for (const identity of identities) {
     let did: string;
+
     try {
       did = identity.startsWith("did:")
         ? identity
@@ -64,12 +72,15 @@ export async function resolvePlaylistAuthors(
         `Could not find @${identity}. Check the collaborator's handle and try again.`,
       );
     }
+
     if (!/^did:[a-z]+:[^\s]+$/.test(did)) {
       throw new Error(
         `Invalid collaborator: ${identity}. Enter a handle or DID.`,
       );
     }
+
     if (!authors.includes(did)) authors.push(did);
   }
+
   return authors;
 }

@@ -8,6 +8,7 @@ import { SongLog } from "@/components/log/SongLog";
 export default function AddListen() {
   const viewer = useViewerDid();
   const mode = useLocalSearchParams().mode === "album" ? "album" : "song";
+
   if (!viewer) {
     return (
       <Screen back title="Add a listen">
@@ -23,6 +24,7 @@ export default function AddListen() {
       </Screen>
     );
   }
+
   return (
     <Screen back title="Add a listen">
       <Choices

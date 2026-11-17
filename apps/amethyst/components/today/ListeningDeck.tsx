@@ -37,14 +37,17 @@ export const ListeningDeck = forwardRef<
     },
     [cardWidth, items.length],
   );
+
   useImperativeHandle(ref, () => ({ step: (delta) => go(focused + delta) }), [focused, go]);
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / (cardWidth + GAP));
+
     if (index !== focused) setFocused(Math.max(0, Math.min(items.length - 1, index)));
   };
 
   const focusedItem = items[focused];
+
   const focusedCover =
     focusedItem &&
     coverUri(
@@ -89,8 +92,10 @@ export const ListeningDeck = forwardRef<
       >
         {items.map((item, index) => {
           const on = index === focused;
+
           if (item.kind === "listen") {
             const a = item.listen.actor;
+
             return (
               <Pressable
                 key={item.key}
@@ -110,6 +115,7 @@ export const ListeningDeck = forwardRef<
               </Pressable>
             );
           }
+
           return (
             <Pressable
               key={item.key}

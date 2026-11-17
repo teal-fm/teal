@@ -43,12 +43,15 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
   const react = (emoji: string) => {
     if (!viewer) return;
     const existing = listen.reactions.find((r) => r.emoji === emoji)?.viewerReaction;
+
     if (existing === "pending") return;
     toggle.mutate({ subject, emoji, existing });
   };
+
   // Double-click the cover for 🔥: the fastest way to say "yes, this".
   const onCoverClick = () => {
     const now = Date.now();
+
     if (now - lastTap.current < 300) {
       react("🔥");
       lastTap.current = 0;
@@ -100,6 +103,7 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
         <div className="mt-2 -ml-1.5 flex">
           {QUICK_REACTIONS.map((emoji) => {
             const mine = listen.reactions.some((r) => r.emoji === emoji && r.viewerReaction);
+
             return (
               <button
                 key={emoji}
@@ -133,10 +137,12 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
 
 function MomentCard({ moment, width }: { moment: MomentView; width: number }) {
   const { release } = moment;
+
   const href =
     release.releaseMbId && release.artistName
       ? musicAlbumHref(release.artistName, release.releaseName, release.releaseMbId)
       : undefined;
+
   const chip =
     moment.kind === "mutuals" || moment.kind === "circle" ? (
       <div className="flex">
@@ -197,5 +203,6 @@ export function deckItems(listening: ListeningView[], moments: MomentView[]): De
       moment,
     });
   });
+
   return items;
 }

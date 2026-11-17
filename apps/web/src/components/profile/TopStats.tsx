@@ -21,8 +21,11 @@ function TopArt({ item, size = 48 }: { item: TopItem; size?: number }) {
     // A miss may be a passing MusicBrainz outage, so it's retried later rather than cached for good.
     staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
+
   if (item.kind === "albums") return <Cover releaseMbId={item.mbid} size={size} radius={8} ambient />;
+
   if (lookup.data) return <Cover uri={lookup.data} size={size} radius={item.kind === "artists" ? size / 2 : 8} ambient={item.kind !== "artists"} />;
+
   return (
     <span
       className="flex shrink-0 items-center justify-center bg-fill"
@@ -47,11 +50,13 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
     if (!canFind || finding) return;
     setFinding(true);
     setNotFound(false);
+
     try {
       const result = await resolveRankedTrack(actor, item.mbid!, item.name, undefined, {
         search: (query, did) => getSearchResults(query, 25, did),
         history: getActorFeed,
       });
+
       if (result.context?.href) void go(result.context.href);
       else setNotFound(true);
     } catch {
@@ -74,8 +79,10 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
       {finding ? <Spinner className="size-4" /> : null}
     </>
   );
+
   const rowClass = cn("flex w-full items-center gap-3 py-2.5 text-left", !last && "border-b border-hair");
   const label = `${rank}. ${item.name}${item.artist ? ` by ${item.artist}` : ""}, ${playsLabel(item.playCount)}`;
+
   if (item.href) {
     return (
       <A href={item.href} aria-label={label} className={cn(rowClass, "hover:opacity-80")}>
@@ -83,6 +90,7 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
       </A>
     );
   }
+
   if (canFind) {
     return (
       <button type="button" aria-label={label} aria-busy={finding} onClick={find} className={cn(rowClass, "hover:opacity-80")}>
@@ -90,6 +98,7 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
       </button>
     );
   }
+
   return (
     <div aria-label={label} className={rowClass}>
       {body}
@@ -102,6 +111,7 @@ function TopList({ actor, kind, period, plays, limit }: { actor: string; kind: T
     queryKey: ["top", actor, kind, period, limit],
     queryFn: () => loadTop(actor, kind, period, limit),
   });
+
   return (
     <div className="min-w-0 flex-1">
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -136,6 +146,7 @@ function TopList({ actor, kind, period, plays, limit }: { actor: string; kind: T
 /** Someone's top artists, albums, and tracks for a period they can switch. */
 export function TopStats({ actor, defaultPeriod, plays }: { actor: string; defaultPeriod: StatsPeriod; plays: PlayView[] }) {
   const [period, setPeriod] = useState(defaultPeriod);
+
   return (
     <Glass as="section" className="flex flex-col gap-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">

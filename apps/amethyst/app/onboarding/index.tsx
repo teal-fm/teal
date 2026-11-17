@@ -48,6 +48,7 @@ export default function Onboarding() {
           collection: "fm.teal.actor.profileStatus",
           rkey: "self",
         });
+
         return res.data.value as ProfileStatus;
       } catch (e) {
         if (isMissingProfileRecord(e)) return null;
@@ -71,7 +72,9 @@ export default function Onboarding() {
       aspect: kind === "avatar" ? [1, 1] : [3, 1],
       quality: 0.9,
     });
+
     if (result.canceled) return;
+
     if (kind === "avatar") setAvatar(result.assets[0].uri);
     else setBanner(result.assets[0].uri);
   };
@@ -80,6 +83,7 @@ export default function Onboarding() {
     if (!agent?.did || saving) return;
     setSaving(true);
     setError(null);
+
     try {
       await saveProfileRecord(agent, { displayName: name, description: bio, avatarUri: avatar, bannerUri: banner }, {});
       const now = new Date().toISOString();
@@ -119,6 +123,7 @@ export default function Onboarding() {
   );
 
   if (status === "start") return shell(<Loading />);
+
   if (!agent?.did) {
     return shell(
       <Notice
@@ -133,7 +138,9 @@ export default function Onboarding() {
       />,
     );
   }
+
   if (existing.isLoading) return shell(<Loading label="Checking your profile" />);
+
   if (existing.isError) {
     return shell(<ErrorNotice title="Couldn't check your profile" body="Your profile hasn't changed. Check your connection and try again." onRetry={() => existing.refetch()} />);
   }

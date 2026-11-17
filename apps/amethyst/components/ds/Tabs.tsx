@@ -33,15 +33,18 @@ export function Tabs<T extends string>({
             : event.key === "End"
               ? tabs.length - 1
               : undefined;
+
     if (target === undefined) return;
     event.preventDefault();
     onChange(tabs[target].value);
     event.currentTarget.parentElement?.querySelectorAll<HTMLElement>('[role="tab"]')[target]?.focus();
   };
+
   return (
     <View role="tablist" aria-label={label} className={cn("flex-row border-b border-hair", className)}>
       {tabs.map((tab, index) => {
         const on = tab.value === value;
+
         return (
           <Pressable
             key={tab.value}

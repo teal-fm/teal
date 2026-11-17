@@ -22,6 +22,7 @@ export default function TopStatsScreen() {
   // Recent history supplies artist names and links for albums and tracks.
   const history = useActorPlays(did);
   const plays = history.data?.pages.flatMap((p) => p.plays) ?? [];
+
   const top = useInfiniteQuery({
     queryKey: ["top-all", actor, kind, period],
     queryFn: ({ pageParam }) => loadTop(actor, kind, period, 50, pageParam),
@@ -29,6 +30,7 @@ export default function TopStatsScreen() {
     getNextPageParam: (last) => last.cursor,
     enabled: !!actor,
   });
+
   const items = top.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (

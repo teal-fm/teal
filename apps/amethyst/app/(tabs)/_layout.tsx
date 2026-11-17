@@ -12,6 +12,7 @@ export const unstable_settings = {
  */
 export default function TabLayout() {
   const { isDarkColorScheme } = useColorScheme();
+
   return (
     <NativeTabs tintColor={isDarkColorScheme ? "#3fc9bd" : "#0b7a73"}>
       <NativeTabs.Trigger name="(home)">

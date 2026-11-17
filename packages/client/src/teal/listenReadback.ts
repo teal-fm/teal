@@ -11,8 +11,10 @@ export async function readListenDetail(
   fetchIndexed: (did: string, rkey: string) => Promise<{ play: PlayView }>,
 ): Promise<{ play: PlayView; syncing: boolean; indexed?: PlayView }> {
   const uri = `at://${authorDid}/fm.teal.feed.play/${rkey}`;
+
   function ownConfirmed() {
     const play = confirmed();
+
     return viewerDid === authorDid &&
       play?.authorDid === viewerDid &&
       play.uri === uri &&
@@ -20,14 +22,17 @@ export async function readListenDetail(
       ? play
       : undefined;
   }
+
   try {
     const { play: indexed } = await fetchIndexed(authorDid, rkey);
     const local = ownConfirmed();
+
     return local && local.cid !== indexed.cid
       ? { play: local, syncing: true, indexed }
       : { play: indexed, syncing: false, indexed };
   } catch (error) {
     const local = ownConfirmed();
+
     if (error instanceof XrpcError && error.status === 404 && local)
       return { play: local, syncing: true };
     throw error;

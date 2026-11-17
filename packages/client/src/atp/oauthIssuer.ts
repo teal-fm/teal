@@ -8,6 +8,7 @@ export function pdsHostFromOAuthIssuer(
 
   try {
     const hostname = new URL(issuer).hostname.trim();
+
     return hostname || fallback;
   } catch {
     return fallback;

@@ -9,6 +9,7 @@ export function PeopleList({ did, kind, onClose }: { did: string; kind: "followe
   const people = usePeople(did, kind);
   const actors = people.data?.pages.flatMap((p) => p.actors) ?? [];
   const title = kind === "followers" ? "Followers" : "Following";
+
   return (
     <Glass className="p-4">
       <View className="mb-2 flex-row items-center justify-between">

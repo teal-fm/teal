@@ -13,11 +13,13 @@ const ROWS = 12;
  */
 export function Fingerprint({ actor }: { actor: string }) {
   const [from, to] = lastDays(DAYS);
+
   const calendar = useQuery({
     queryKey: ["calendar", actor, from, to],
     queryFn: () => getListeningCalendar(actor, from, to),
     staleTime: 5 * 60_000,
   });
+
   const days = calendar.data?.days ?? [];
   const peak = Math.max(1, ...days.flatMap((d) => hourBins(d, ROWS).map((b) => b.playCount)));
 

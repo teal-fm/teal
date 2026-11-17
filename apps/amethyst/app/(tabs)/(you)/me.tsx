@@ -7,7 +7,9 @@ import { useStore } from "@/stores/mainStore";
 export default function Me() {
   const status = useStore((state) => state.status);
   const did = useStore((state) => state.pdsAgent?.did);
+
   if (status === "loggedIn" && did) return <Redirect href={`/profile/${did}`} />;
+
   return (
     <Screen title="You">
       <Notice

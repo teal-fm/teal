@@ -19,13 +19,16 @@ import { pickStrings } from "~/lib/search";
 async function playFromSlugs(artist?: string, release?: string, track?: string) {
   if (!track) throw new Error("missing track");
   const results = await getSearchResults(track.replace(/-/g, " "), 25);
+
   const match = results.songs.find(
     (song) =>
       routePart(song.trackName) === track &&
       (!release || routePart(song.releaseName) === release) &&
       (!artist || routePart(song.artistName) === artist),
   );
+
   if (!match?.uri) throw new Error("no match");
+
   return (await getPlayByUri(match.uri)).play;
 }
 
@@ -40,6 +43,7 @@ export const Route = createFileRoute("/music/$artist/$release/$track")({
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {
       const play = await queryClient.ensureQueryData(once(playQuery(deps.uri, params.artist, params.release, params.track)));
+
       return {
         title: `${play.trackName} · ${displayArtists(play) || "Unknown artist"}`,
         description: [play.releaseName, "On Teal"].filter(Boolean).join(" · "),
@@ -57,6 +61,7 @@ function TrackScreen() {
   const play = useQuery(playQuery(uri, params.artist, params.release, params.track));
   const p = play.data;
   const recordingArt = useRecordingArt(p);
+
   const history = useInfiniteQuery({
     queryKey: ["album-history", p?.releaseMbId],
     queryFn: ({ pageParam }) => getAlbum(p!.releaseMbId!, 100, pageParam),
@@ -64,7 +69,9 @@ function TrackScreen() {
     getNextPageParam: (last) => last.cursor,
     enabled: !!p?.releaseMbId,
   });
+
   const viewer = useViewerDid();
+
   const source = useQuery({
     queryKey: ["post", postUri, viewer ?? null],
     queryFn: () => getSocialPost(postUri!, viewer).then((r) => r.post),
@@ -78,6 +85,7 @@ function TrackScreen() {
       </Screen>
     );
   }
+
   if (play.isError || !p) {
     return (
       <Screen back pageTitle="Song">

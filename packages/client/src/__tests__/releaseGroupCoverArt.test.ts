@@ -13,11 +13,14 @@ it("shares Aqua metadata across card image sizes", async () => {
     .mockResolvedValue(
       new Response(JSON.stringify({ releaseGroupMbid: `mbid:${groupMbid}` })),
     );
+
   const releaseMbid = "a5e766b8-650c-40ce-a19f-3dc3c865a3e2";
+
   const [small, large] = await Promise.all([
     getReleaseGroupCoverArtUrl(`mbid:${releaseMbid}`, 250),
     getReleaseGroupCoverArtUrl(releaseMbid, 500),
   ]);
+
   expect(small).toBe(
     `https://coverartarchive.org/release-group/${groupMbid}/front-250`,
   );
@@ -33,12 +36,14 @@ it("shares Aqua metadata across card image sizes", async () => {
 it("retries a transient Aqua failure after the cooldown", async () => {
   jest.useFakeTimers();
   const releaseMbid = "260b6184-8828-48eb-945c-bc4cb6fc34ca";
+
   const fetch = jest
     .spyOn(global, "fetch")
     .mockResolvedValueOnce(new Response("", { status: 503 }))
     .mockResolvedValueOnce(
       new Response(JSON.stringify({ releaseGroupMbid: `mbid:${groupMbid}` })),
     );
+
   await expect(
     getReleaseGroupCoverArtUrl(releaseMbid),
   ).resolves.toBeUndefined();
@@ -57,6 +62,7 @@ it("caches a successful lookup with no release group", async () => {
   const fetch = jest
     .spyOn(global, "fetch")
     .mockResolvedValue(new Response("{}"));
+
   const releaseMbid = "1be5c516-22ec-48e0-9b45-dc6837ad6f03";
   await expect(
     getReleaseGroupCoverArtUrl(releaseMbid),
@@ -70,12 +76,14 @@ it("caches a successful lookup with no release group", async () => {
 it("keeps known cover art when an expired lookup cannot refresh", async () => {
   jest.useFakeTimers();
   const releaseMbid = "bdc9b9a1-8d7b-40c7-81ca-20d23dc40133";
+
   const fetch = jest
     .spyOn(global, "fetch")
     .mockResolvedValueOnce(
       new Response(JSON.stringify({ releaseGroupMbid: `mbid:${groupMbid}` })),
     )
     .mockResolvedValueOnce(new Response("", { status: 503 }));
+
   const knownCover = await getReleaseGroupCoverArtUrl(releaseMbid);
   jest.advanceTimersByTime(24 * 60 * 60 * 1000 + 1);
   await expect(getReleaseGroupCoverArtUrl(releaseMbid)).resolves.toBe(

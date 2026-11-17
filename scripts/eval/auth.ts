@@ -7,6 +7,7 @@ import { join } from "path";
 
 const SCRIPT_DIR =
   import.meta.dirname ?? new URL(".", import.meta.url).pathname;
+
 export const SESSION_KEY_FILE = join(SCRIPT_DIR, ".lastfm_session_key");
 
 /**
@@ -20,6 +21,7 @@ export async function generateSignature(
 ): Promise<string> {
   const crypto = await import("crypto");
   const paramsForSig: Record<string, string> = {};
+
   for (const [key, value] of Object.entries(params)) {
     if (key !== "api_sig" && key !== "format") {
       paramsForSig[key] = value;
@@ -27,6 +29,7 @@ export async function generateSignature(
   }
 
   const sortedKeys = Object.keys(paramsForSig).sort();
+
   const sigString =
     sortedKeys.map((key) => `${key}${paramsForSig[key]}`).join("") + apiSecret;
 
@@ -44,6 +47,7 @@ export async function getLastFMSession(
   // Try to load existing session key
   if (existsSync(SESSION_KEY_FILE)) {
     const sessionKey = readFileSync(SESSION_KEY_FILE, "utf-8").trim();
+
     if (sessionKey) {
       try {
         const testParams: Record<string, string> = {
@@ -52,12 +56,15 @@ export async function getLastFMSession(
           sk: sessionKey,
           format: "json",
         };
+
         const testSig = await generateSignature(testParams, apiSecret);
         testParams.api_sig = testSig;
         const testUrl = `https://ws.audioscrobbler.com/2.0/?${new URLSearchParams(testParams).toString()}`;
         const testRes = await fetch(testUrl);
+
         if (testRes.ok) {
           const data = await testRes.json();
+
           if (data.user && !data.error) {
             console.log(
               `Using existing session key (authenticated as: ${data.user.name})`,
@@ -65,6 +72,7 @@ export async function getLastFMSession(
             console.log(
               `(To force re-authentication, delete ${SESSION_KEY_FILE})\n`,
             );
+
             return sessionKey;
           }
         }
@@ -84,6 +92,7 @@ export async function getLastFMSession(
   console.log(`  API Key: ${apiKey.substring(0, 8)}...`);
 
   const tokenRes = await fetch(tokenUrl);
+
   if (!tokenRes.ok) {
     const errorText = await tokenRes.text();
     throw new Error(
@@ -92,6 +101,7 @@ export async function getLastFMSession(
   }
 
   const tokenData = await tokenRes.json();
+
   if (tokenData.error) {
     throw new Error(
       `Last.fm API error: ${tokenData.error} - ${tokenData.message || "Invalid API key or credentials"}`,
@@ -99,6 +109,7 @@ export async function getLastFMSession(
   }
 
   const token = tokenData.token;
+
   if (!token) {
     throw new Error(
       `No token received from Last.fm API. Response: ${JSON.stringify(tokenData)}`,
@@ -145,6 +156,7 @@ export async function getLastFMSession(
       );
       console.log(`  Please manually visit: ${authUrl}\n`);
     }
+
     if (browserOpened) console.log(`  Browser opened successfully\n`);
   } catch (e: unknown) {
     console.error(`  Error opening browser: ${e instanceof Error ? e.message : String(e)}`);
@@ -172,6 +184,7 @@ export async function getLastFMSession(
       { method: "auth.getSession", token, api_key: apiKey },
       apiSecret,
     );
+
     const sessionUrl = `https://ws.audioscrobbler.com/2.0/?method=auth.getSession&api_key=${apiKey}&token=${token}&api_sig=${sig}&format=json`;
 
     if (pollCount % 5 === 0) {
@@ -180,8 +193,10 @@ export async function getLastFMSession(
 
     try {
       const sessionRes = await fetch(sessionUrl);
+
       if (sessionRes.ok) {
         const sessionData = await sessionRes.json();
+
         if (sessionData.session?.key) {
           const sessionKey = sessionData.session.key;
           writeFileSync(SESSION_KEY_FILE, sessionKey);
@@ -189,6 +204,7 @@ export async function getLastFMSession(
             `  Authorization received! (after ${pollCount} polls)`,
           );
           console.log(`  Session key saved to ${SESSION_KEY_FILE}\n`);
+
           return sessionKey;
         } else if (sessionData.error && pollCount === 1) {
           console.log(`  (Waiting for user to authorize in browser...)`);
@@ -205,6 +221,7 @@ export async function getLastFMSession(
     }
 
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
     if (elapsed > 0 && elapsed % 10 === 0) {
       console.log(
         `  Still waiting... (${elapsed}s elapsed, ${pollCount} polls)`,

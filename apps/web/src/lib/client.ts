@@ -34,6 +34,7 @@ let configured = false;
 export function setupClient() {
   if (configured) return;
   configured = true;
+
   if (import.meta.env.SSR) {
     configureClient({
       aquaUrl: process.env.AQUA_URL || "http://localhost:3000",

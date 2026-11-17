@@ -23,8 +23,10 @@ export function hasCJK(text: string): boolean {
 export const PARTIAL_THRESHOLD = (() => {
   if (typeof process !== "undefined" && process.env?.PARTIAL_THRESHOLD) {
     const parsed = parseInt(process.env.PARTIAL_THRESHOLD, 10);
+
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
   }
+
   return 5;
 })();
 
@@ -93,16 +95,19 @@ export function buildQueryPart(
     let escaped = value
       .replace(/\\/g, "\\\\")
       .replace(/"/g, '\\"');
+
     return `${field}:"${escaped}"`;
   } else if (strategy === "fuzzy") {
     const escaped = escapeLucene(value);
     const words = value.split(/\s+/);
+
     if (words.length > 1) {
       return `${field}:"${escaped}"~${PROXIMITY_DISTANCE}`;
     } else {
       // Escape dashes for single-word fuzzy to prevent Lucene NOT operator
       // (e.g., "Jay-Z~" would be parsed as "Jay NOT Z~")
       let singleEscaped = escaped.replace(/-/g, "\\-");
+
       return `${field}:${singleEscaped}~`;
     }
   } else {
@@ -110,6 +115,7 @@ export function buildQueryPart(
     // (e.g., "Jay-Z" would otherwise be parsed as "Jay NOT Z")
     let escaped = escapeLucene(value);
     escaped = escaped.replace(/-/g, "\\-");
+
     return `${field}:${escaped}`;
   }
 }
@@ -119,10 +125,13 @@ export function buildQueryPart(
 const MB_RATE_LIMIT_MS = (() => {
   if (typeof process !== "undefined" && process.env?.MB_RATE_LIMIT_MS != null) {
     const v = parseInt(process.env.MB_RATE_LIMIT_MS, 10);
+
     return Number.isFinite(v) && v >= 0 ? v : 1100;
   }
+
   return 1100;
 })();
+
 let lastAPICallTime = 0;
 
 // In-memory cache for MusicBrainz search results.
@@ -140,11 +149,15 @@ const aliasCache = new Map<string, { value: string | null; timestamp: number }>(
 
 function getCached(key: string): MusicBrainzRecording[] | undefined {
   const entry = searchCache.get(key);
+
   if (!entry) return undefined;
+
   if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
     searchCache.delete(key);
+
     return undefined;
   }
+
   return entry.results;
 }
 
@@ -152,8 +165,10 @@ function setCache(key: string, results: MusicBrainzRecording[]): void {
   // Evict oldest entries when at capacity
   if (searchCache.size >= CACHE_MAX_ENTRIES) {
     const oldest = searchCache.keys().next().value;
+
     if (oldest !== undefined) searchCache.delete(oldest);
   }
+
   searchCache.set(key, { results, timestamp: Date.now() });
 }
 
@@ -202,15 +217,18 @@ export async function searchStage(
   // Check cache first
   const cacheKey = `${query}|${limit}`;
   const cached = getCached(cacheKey);
+
   if (cached) return cached;
 
   // Enforce MusicBrainz rate limit (1 request/second) between API calls.
   // Placed after cache check so cache hits are instant.
   const now = Date.now();
   const elapsed = now - lastAPICallTime;
+
   if (elapsed < MB_RATE_LIMIT_MS && lastAPICallTime > 0) {
     await new Promise((resolve) => setTimeout(resolve, MB_RATE_LIMIT_MS - elapsed));
   }
+
   lastAPICallTime = Date.now();
 
   // Retry with exponential backoff for rate limiting
@@ -231,11 +249,13 @@ export async function searchStage(
       // Handle rate limiting (503)
       if (res.status === 503) {
         retries--;
+
         if (retries > 0) {
           await new Promise((resolve) => setTimeout(resolve, delay));
           delay *= 2; // Exponential backoff
           continue;
         }
+
         throw new MusicBrainzUnavailableError(`MusicBrainz is rate limiting (${strategy})`);
       }
 
@@ -246,12 +266,15 @@ export async function searchStage(
       const data = (await res.json()) as {
         recordings?: MusicBrainzRecording[];
       };
+
       const results: MusicBrainzRecording[] = data.recordings || [];
       setCache(cacheKey, results);
+
       return results;
     } catch (error) {
       if (error instanceof MusicBrainzUnavailableError) throw error;
       retries--;
+
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
@@ -293,6 +316,7 @@ export async function resolveArtistAlias(
 
   const cacheKey = `artist-alias|${query}`;
   const cachedAlias = aliasCache.get(cacheKey);
+
   if (cachedAlias && Date.now() - cachedAlias.timestamp <= CACHE_TTL_MS) {
     return cachedAlias.value;
   }
@@ -300,9 +324,11 @@ export async function resolveArtistAlias(
   // Rate limit
   const now = Date.now();
   const elapsed = now - lastAPICallTime;
+
   if (elapsed < MB_RATE_LIMIT_MS && lastAPICallTime > 0) {
     await new Promise((resolve) => setTimeout(resolve, MB_RATE_LIMIT_MS - elapsed));
   }
+
   lastAPICallTime = Date.now();
 
   try {
@@ -316,16 +342,19 @@ export async function resolveArtistAlias(
     const data = (await res.json()) as {
       artists?: Array<{ name?: string }>;
     };
+
     const artists = data.artists || [];
 
     if (artists.length === 0) {
       aliasCache.set(cacheKey, { value: null, timestamp: Date.now() });
+
       return null;
     }
 
     // Return the canonical name of the highest-scoring artist
     const name: string | null = artists[0].name || null;
     aliasCache.set(cacheKey, { value: name, timestamp: Date.now() });
+
     return name;
   } catch {
     return null;

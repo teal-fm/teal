@@ -83,13 +83,16 @@ function EditListen({
     if (!agent || !source || busy) return;
     setBusy(true);
     setError(null);
+
     try {
       const record = applyEditableFields(source.record, fields);
       const receipt = await putPlayRecord(agent, did, rkey, record, source.cid);
       removePendingListens(did, [uri]);
+
       if (receipt.uri === uri && receipt.cid) {
         retainConfirmedListens(did, [{ record: { ...record, $type: "fm.teal.feed.play" } as PlayRecord, ...receipt }]);
       }
+
       onSaved();
     } catch (e) {
       // applyEditableFields explains invalid input; anything else is a save failure.
@@ -101,6 +104,7 @@ function EditListen({
 
   if (!source) return error ? <ErrorNotice title="The editor didn't open" body={error} /> : <Loading className="py-8" />;
   const set = (key: keyof typeof fields) => (value: string) => setFields((f) => ({ ...f, [key]: value }));
+
   return (
     <Glass strong className="gap-3 p-4">
       <Heading level={2}>Edit listen</Heading>
@@ -141,10 +145,13 @@ export default function ListenScreen() {
     enabled: !!did && !!rkey && !deleted,
     queryFn: async () => {
       const result = await readListenDetail(did!, rkey!, viewer, () => pending.find((e) => e.play.uri === uri)?.play, getPlayByAuthorRkey);
+
       if (viewer === did && result.indexed) retireIndexedListens(did!, [result.indexed]);
+
       return result;
     },
   });
+
   const play: PlayView | undefined = listen.data?.play;
   const author = useDisplayActor(play?.author as never, did);
   const reactions = useReactionsQuery(play?.uri);
@@ -153,11 +160,15 @@ export default function ListenScreen() {
 
   const remove = async () => {
     if (!agent || !did || !rkey || !uri) return;
+
     if (!confirmDelete) {
       setConfirmDelete(true);
+
       return;
     }
+
     setDeleteError(false);
+
     try {
       await deletePlayRecord(agent, did, rkey);
       removePendingListens(did, [uri]);
@@ -175,6 +186,7 @@ export default function ListenScreen() {
       </Screen>
     );
   }
+
   if (!did || !rkey) {
     return (
       <Screen back pageTitle="Listen">
@@ -182,6 +194,7 @@ export default function ListenScreen() {
       </Screen>
     );
   }
+
   if (listen.isLoading) {
     return (
       <Screen back pageTitle="Listen">
@@ -189,8 +202,10 @@ export default function ListenScreen() {
       </Screen>
     );
   }
+
   if (listen.isError || !play) {
     const missing = listen.error instanceof XrpcError && listen.error.status === 404;
+
     return (
       <Screen back pageTitle="Listen">
         <ErrorNotice
@@ -203,6 +218,7 @@ export default function ListenScreen() {
   }
 
   const artists = displayArtists(play) || "Unknown artist";
+
   return (
     <Screen back pageTitle={`${play.trackName} · ${artists}`} width="wide">
       <MusicHero

@@ -11,6 +11,7 @@ export function ListenCard({ play, last, showTrack = true }: { play: PlayView; l
   const actor = useDisplayActor(play.author as never, play.authorDid);
   const permalink = listenHref(play.authorDid, play.rkey);
   const artists = displayArtists(play) || "Unknown artist";
+
   return (
     <div className={cn("flex items-center gap-3 py-2.5", !last && "border-b border-hair")}>
       <A href={actor.href} aria-label={`${actor.name}'s profile`}>

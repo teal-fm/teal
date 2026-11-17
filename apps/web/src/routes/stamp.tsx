@@ -17,6 +17,7 @@ function AddListen() {
   const status = useAuth((state) => state.status);
   const navigate = useNavigate({ from: Route.fullPath });
   const mode = Route.useSearch().mode === "album" ? "album" : "song";
+
   if (!viewer) {
     return (
       <Screen back title="Add a listen">
@@ -32,6 +33,7 @@ function AddListen() {
       </Screen>
     );
   }
+
   return (
     <Screen back title="Add a listen">
       <Choices

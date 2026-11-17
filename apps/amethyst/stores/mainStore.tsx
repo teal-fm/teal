@@ -12,8 +12,10 @@ import { createTempSlice, TempSlice } from "./tempSlice";
 
 /// Put all your non-shared slices here
 export type Slices = AuthenticationSlice & TempSlice & PreferenceSlice;
+
 /// Put all your shared slices here
 export type PlusSharedSlices = Slices;
+
 /// Convenience type for creating a store. Uses the slices type defined above.
 /// Type parameter T is the type of the state object.
 export type StateCreator<T> = ZustandStateCreator<Slices, [], [], T>;

@@ -39,6 +39,7 @@ import {
 } from "@teal/client/hooks/useProfile";
 
 type Tab = "overview" | "listening" | "posts" | "playlists";
+
 const TABS = ["overview", "listening", "posts", "playlists"] as const;
 
 function param(value: string | string[] | undefined) {
@@ -70,6 +71,7 @@ export default function ProfileScreen() {
       </Screen>
     );
   }
+
   if (failed || !did) {
     return (
       <Screen back pageTitle="Profile">
@@ -208,8 +210,11 @@ function Overview({
 function Posts({ did, isSelf }: { did: string; isSelf: boolean }) {
   const posts = useActorPosts(did);
   const items = posts.data?.pages.flatMap((p) => p.items) ?? [];
+
   if (posts.isLoading) return <Loading />;
+
   if (posts.isError) return <ErrorNotice title="Posts didn't load" onRetry={() => posts.refetch()} />;
+
   if (!items.length) {
     return (
       <Notice
@@ -225,6 +230,7 @@ function Posts({ did, isSelf }: { did: string; isSelf: boolean }) {
       />
     );
   }
+
   return (
     <View>
       {items.map((post) => (
@@ -247,6 +253,7 @@ function Playlists({ did, isSelf }: { did: string; isSelf: boolean }) {
   const playlists = useActorPlaylists(did);
   const client = useQueryClient();
   const items = playlists.data?.pages.flatMap((p) => p.items) ?? [];
+
   return (
     <View className="gap-4">
       {isSelf ? <PlaylistCreator onCreated={() => client.invalidateQueries({ queryKey: ["actor-playlists", did] })} /> : null}

@@ -75,6 +75,7 @@ describe("cleaning pipeline", () => {
 describeE2E("e2e: search returns results (real MB API)", () => {
   it("finds Bohemian Rhapsody by Queen at P@1", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Bohemian Rhapsody",
       artist: "Queen",
@@ -88,28 +89,33 @@ describeE2E("e2e: search returns results (real MB API)", () => {
     const artists = (first["artist-credit"] || [])
       .map((a: any) => normalizeForComparison(a.artist?.name || ""))
       .join(" ");
+
     expect(artists).toContain("queen");
   });
 
   it("finds track with version suffix (dash-separated)", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Somebody's Watching Me - Single Version",
       artist: "Rockwell",
     });
 
     expect(results.length).toBeGreaterThan(0);
+
     // Check top 10 -- multi-stage search should find it even if not P@1
     const found = results
       .slice(0, 10)
       .some((r: any) =>
         normalizeForComparison(r.title).includes("somebody")
       );
+
     expect(found).toBe(true);
   });
 
   it("finds track with parenthetical remix", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Paper Planes (DFA Remix)",
       artist: "M.I.A.",
@@ -121,22 +127,26 @@ describeE2E("e2e: search returns results (real MB API)", () => {
 
   it("finds track-only search (no artist) somewhere in results", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Bohemian Rhapsody",
     });
 
     expect(results.length).toBeGreaterThan(0);
+
     // Track-only search without artist is inherently ambiguous.
     // Just verify the pipeline returns results and doesn't crash.
     // The correct track should appear somewhere in the result set.
     const found = results.some((r: any) =>
       normalizeForComparison(r.title).includes("bohemian rhapsody")
     );
+
     expect(found).toBe(true);
   });
 
   it("finds Japanese artist", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Merry-Go-Round",
       artist: "久石譲",
@@ -149,6 +159,7 @@ describeE2E("e2e: search returns results (real MB API)", () => {
 
   it("finds track with accented artist name", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Dios Nunca Muere",
       artist: "Orquesta Filarmónica",
@@ -159,16 +170,19 @@ describeE2E("e2e: search returns results (real MB API)", () => {
 
   it("handles featuring artist in title", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Unholy (feat. Kim Petras)",
       artist: "Sam Smith",
     });
 
     expect(results.length).toBeGreaterThan(0);
+
     // Check that "Unholy" appears somewhere in top 5 (not necessarily P@1)
     const top5Titles = results
       .slice(0, 5)
       .map((r: any) => normalizeForComparison(r.title));
+
     expect(top5Titles.some((t: string) => t.includes("unholy"))).toBe(true);
   });
 });
@@ -180,6 +194,7 @@ describeE2E("e2e: search returns results (real MB API)", () => {
 describeE2E("e2e: result structure matches PlayRecord contract", () => {
   it("returns all fields needed by createPlayRecord()", async () => {
     await sleep(RATE_LIMIT_MS);
+
     const results = await searchMusicbrainz({
       track: "Bohemian Rhapsody",
       artist: "Queen",
@@ -204,6 +219,7 @@ describeE2E("e2e: result structure matches PlayRecord contract", () => {
 
     // releases[].id and title (for releaseMbId)
     expect(r.releases).toBeDefined();
+
     if (r.releases && r.releases.length > 0) {
       expect(r.releases[0].id).toMatch(/^[0-9a-f-]{36}$/);
       expect(typeof r.releases[0].title).toBe("string");

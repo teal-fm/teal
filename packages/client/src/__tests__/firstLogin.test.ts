@@ -31,6 +31,7 @@ it.each([{ status: 404 }, new Error("Offline"), { error: "InvalidToken" }])(
 
 it("does not leave a successful sign-in waiting indefinitely for profile lookup", async () => {
   jest.useFakeTimers();
+
   try {
     const destination = firstLoginHref(did, () => new Promise(() => {}));
     await jest.advanceTimersByTimeAsync(4_000);

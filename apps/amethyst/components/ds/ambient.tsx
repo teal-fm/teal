@@ -15,6 +15,7 @@ import { create } from "zustand";
 import { Backdrop, type AmbientBlob } from "./Backdrop";
 
 type Measurable = Pick<View, "measureInWindow">;
+
 type Source = { uri: string; node: Measurable };
 
 type AmbientApi = {
@@ -34,6 +35,7 @@ const AmbientContext = createContext<AmbientApi | null>(null);
 export const useWindowBackdrop = create<{ blobs: AmbientBlob[]; last: AmbientBlob[] }>(
   () => ({ blobs: [], last: [] }),
 );
+
 const windowBackdrop = Platform.OS === "web";
 
 /** How strongly a screen with no covers of its own keeps the colour it arrived with. */
@@ -42,21 +44,25 @@ const CARRIED = 0.5;
 export function WindowBackdrop() {
   const blobs = useWindowBackdrop((state) => state.blobs);
   const last = useWindowBackdrop((state) => state.last);
+
   // A screen without covers, like Activity, dims the colour rather than draining it.
   const shown = useMemo(
     () => (blobs.length ? blobs : last.map((blob) => ({ ...blob, weight: blob.weight * CARRIED }))),
     [blobs, last],
   );
+
   return <Backdrop blobs={shown} remember />;
 }
 
 /** How many covers blend at once; more turns the backdrop to mud. */
 const MAX_BLOBS = 6;
+
 /** The nearest cover counts as at least this close, so a lone far one stays faint. */
 const MIN_LEAD = 0.6;
 
 function weightFor(top: number, bottom: number, height: number) {
   const mid = height * 0.45;
+
   return Math.max(0, 1 - Math.abs((top + bottom) / 2 - mid) / (height * 1.1));
 }
 
@@ -85,10 +91,12 @@ export function AmbientScreen({
               if (h > 0) {
                 const weight = weightFor(y, y + h, height);
                 const prev = seen.get(source.uri);
+
                 if (weight > 0 && (!prev || prev.weight < weight)) {
                   seen.set(source.uri, { uri: source.uri, weight });
                 }
               }
+
               resolve();
             });
           }),
@@ -97,14 +105,18 @@ export function AmbientScreen({
     // A page with one cover in it, like an album or a listen, keeps that cover
     // at full strength however far it scrolls, so it can fill the backdrop.
     const uris = new Set([...sources.current.values()].map((source) => source.uri));
+
     if (uris.size === 1) {
       const [uri] = uris;
       setBlobs([{ uri, weight: 1 }]);
+
       return;
     }
+
     const top = [...seen.values()]
       .sort((a, b) => b.weight - a.weight)
       .slice(0, MAX_BLOBS);
+
     // Scale to the nearest cover, so a fast scroll between covers shifts the colour
     // instead of draining it.
     const scale = 1 / Math.max(top[0]?.weight ?? 1, MIN_LEAD);
@@ -165,6 +177,7 @@ export function useAmbient() {
 /** Pass to a ScrollView/FlatList `onScroll` so the backdrop follows the content. */
 export function useAmbientScroll() {
   const ambient = useAmbient();
+
   return useCallback(() => ambient?.refresh(), [ambient]);
 }
 
@@ -183,6 +196,7 @@ export function AmbientSource({
   useEffect(() => {
     if (!ambient || !uri || !ref.current) return;
     ambient.register(key, { uri, node: ref.current });
+
     return () => ambient.unregister(key);
   }, [ambient, key, uri]);
 

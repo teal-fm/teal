@@ -28,12 +28,14 @@ export function AddToPlaylist({ play }: { play: PlayView }) {
     if (!agent || busy) return;
     setBusy(playlist.uri);
     setError(false);
+
     try {
       const item = await addPlaylistItem(agent, playlist, playViewToTrackView(play), playlist.itemCount);
       setAdded((current) => new Set(current).add(playlist.uri));
       // The index lags writes, so update the cached playlist rather than refetching it.
       // Load the playlist first if it isn't cached, so opening it next shows the new song too.
       const key = ["playlist", playlist.uri];
+
       if (!client.getQueryData(key)) await client.fetchQuery({ queryKey: key, queryFn: () => getPlaylist(playlist.uri) }).catch(() => undefined);
       client.setQueryData<Awaited<ReturnType<typeof getPlaylist>>>(key, (data) =>
         data && !data.items.some((i) => i.uri === item.uri)

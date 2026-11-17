@@ -3,6 +3,7 @@ import type { ListeningDay } from "./api";
 /** YYYY-MM-DD in local time. */
 export function isoDay(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
+
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
@@ -10,6 +11,7 @@ export function isoDay(date: Date) {
 export function lastDays(days: number, today = new Date()) {
   const from = new Date(today);
   from.setDate(today.getDate() - (days - 1));
+
   return [isoDay(from), isoDay(today)] as const;
 }
 
@@ -31,17 +33,21 @@ export type Bin = { playCount: number; releaseMbId?: string };
  */
 export function hourBins(day: ListeningDay | undefined, count = 12): Bin[] {
   const size = 24 / count;
+
   const bins: (Bin & { best: number })[] = Array.from({ length: count }, () => ({
     playCount: 0,
     best: 0,
   }));
+
   for (const hour of day?.hours ?? []) {
     const bin = bins[Math.floor(hour.hour / size)];
     bin.playCount += hour.playCount;
+
     if (hour.releaseMbId && hour.playCount > bin.best) {
       bin.best = hour.playCount;
       bin.releaseMbId = hour.releaseMbId;
     }
   }
+
   return bins.map(({ playCount, releaseMbId }) => ({ playCount, releaseMbId }));
 }

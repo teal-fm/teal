@@ -19,6 +19,7 @@ export const resolveHandle = async (
     `?handle=${handle}`;
 
   const response = await fetch(url);
+
   if (response.status === 400) {
     throw new Error(`domain handle not found`);
   } else if (!response.ok) {
@@ -26,6 +27,7 @@ export const resolveHandle = async (
   }
 
   const json = await response.json();
+
   return json.did;
 };
 
@@ -46,6 +48,7 @@ export const getDidDocument = async (did: string) => {
     }
 
     const json = await res.json();
+
     return json;
   } else if (type === "web") {
     if (
@@ -53,6 +56,7 @@ export const getDidDocument = async (did: string) => {
     ) {
       throw new Error(`invalid domain handle`);
     }
+
     const res = await fetch(`https://${ident}/.well-known/did.json`);
 
     if (res.status === 400) {
@@ -62,6 +66,7 @@ export const getDidDocument = async (did: string) => {
     }
 
     const json = await res.json();
+
     return json;
   }
 };
@@ -71,6 +76,7 @@ export const resolveFromIdentity = async (
   resolverAppViewUrl: string = "https://public.api.bsky.app",
 ) => {
   let did: string;
+
   // is this a did? regex
   if (isDid(identity)) {
     did = identity;

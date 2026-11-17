@@ -8,9 +8,12 @@ export async function shareLink(message: string, url: string): Promise<"shared" 
   try {
     if (Platform.OS === "web" && typeof navigator !== "undefined" && !navigator.share) {
       await navigator.clipboard.writeText(url);
+
       return "copied";
     }
+
     await Share.share(Platform.OS === "ios" ? { message, url } : { message: `${message} ${url}`.trim() });
+
     return "shared";
   } catch {
     return "failed";

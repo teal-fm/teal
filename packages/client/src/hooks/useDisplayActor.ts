@@ -16,12 +16,14 @@ import {
 export function useDisplayActor(actor: DisplayActor | MiniProfileView | undefined, did?: string) {
   const id = actor?.did || did;
   const needsFallback = !!id && (!actor?.displayName || !actor?.handle);
+
   const bluesky = useQuery({
     queryKey: ["bsky-actor", id],
     queryFn: async () => (await getCachedBlueskyProfile(id!)) ?? null,
     enabled: needsFallback,
     staleTime: (query) => (query.state.data ? Infinity : 10 * 60_000),
   });
+
   const merged: DisplayActor | undefined = bluesky.data
     ? {
         ...bluesky.data,
@@ -31,8 +33,10 @@ export function useDisplayActor(actor: DisplayActor | MiniProfileView | undefine
         handle: actor?.handle || bluesky.data.handle,
       }
     : actor;
+
   // While the lookup runs, show no name rather than a placeholder that reads as a person.
   const resolving = needsFallback && bluesky.isPending && !actor?.displayName && !actor?.handle;
+
   return {
     did: id,
     name: resolving ? "" : displayActorName(merged, id),

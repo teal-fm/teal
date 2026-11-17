@@ -26,11 +26,14 @@ const REASONS: Record<string, { label: string; icon: LucideIcon; tone: string }>
   follow: { label: "followed you", icon: UserPlus, tone: "text-tint" },
   badgeAssignment: { label: "gave you a badge", icon: Bell, tone: "text-ink-2" },
 };
+
 const OTHER = { label: "interacted with your profile", icon: Bell, tone: "text-ink-2" };
 
 function targetKind(uri?: string) {
   if (uri?.includes(".feed.play/")) return "listen";
+
   if (uri?.includes(".social.playlist/")) return "playlist";
+
   return "post";
 }
 
@@ -39,14 +42,17 @@ type Group = { key: string; reason: string; items: SocialNotificationView[]; con
 /** Likes, reposts, replies, and reactions on the same post fold into one row. */
 function group(items: SocialNotificationView[]) {
   const groups = new Map<string, Group>();
+
   for (const item of items) {
     const contextUri = item.reason === "reply" ? item.recordUri : item.subjectUri;
     const groupable = contextUri && ["like", "repost", "reply", "reaction"].includes(item.reason);
     const key = groupable ? `${item.reason}:${contextUri}` : `n:${item.id}`;
     const existing = groups.get(key);
+
     if (existing) existing.items.push(item);
     else groups.set(key, { key, reason: item.reason, items: [item], contextUri: groupable ? contextUri : undefined });
   }
+
   return [...groups.values()];
 }
 
@@ -54,6 +60,7 @@ function group(items: SocialNotificationView[]) {
 function Activity() {
   const viewer = useViewerDid();
   const status = useAuth((state) => state.status);
+
   const feed = useInfiniteQuery({
     queryKey: ["notifications", viewer],
     queryFn: ({ pageParam }) => getNotifications(viewer!, 30, pageParam),
@@ -61,7 +68,9 @@ function Activity() {
     getNextPageParam: (last) => last.cursor,
     enabled: !!viewer,
   });
+
   const groups = useMemo(() => group(feed.data?.pages.flatMap((p) => p.items) ?? []), [feed.data]);
+
   const more = useEndReached(() => {
     if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage();
   }, !!feed.hasNextPage);
@@ -129,6 +138,7 @@ function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
             {g.items.slice(0, 4).map((item, index) => {
               const did = item.actor?.did || item.actorDid;
               const name = displayActorName(item.actor, did);
+
               return (
                 <A
                   key={item.id}
@@ -168,9 +178,12 @@ function PostPreview({ uri, href }: { uri: string; href: string }) {
     queryFn: () => getSocialPost(uri).then((r) => r.post),
     retry: (count, error) => !(error instanceof XrpcError && error.status === 404) && count < 2,
   });
+
   if (post.isLoading) return <div className="h-16 rounded-[16px] bg-fill" />;
+
   if (post.isError || !post.data) {
     const gone = post.error instanceof XrpcError && post.error.status === 404;
+
     return gone ? (
       <p className="text-[14px] text-ink-2">The original post is no longer available.</p>
     ) : (
@@ -180,7 +193,9 @@ function PostPreview({ uri, href }: { uri: string; href: string }) {
       </div>
     );
   }
+
   const play = trackViewToPlayView(post.data.track);
+
   return (
     <A href={href} aria-label="Open the post" className="flex items-center gap-3 rounded-[16px] bg-fill p-2.5 hover:opacity-85">
       <Cover releaseMbId={play.releaseMbId} size={44} radius={8} ambient />
