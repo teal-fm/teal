@@ -198,8 +198,9 @@ pub async fn apply_status_event(
         return Ok(());
     }
 
-    let cid = cid.ok_or_else(|| anyhow::anyhow!("status event is missing cid"))?;
-    let record = record.ok_or_else(|| anyhow::anyhow!("status event is missing record"))?;
+    let cid = cid.ok_or_else(|| anyhow::Error::new(InvalidEvent("status event is missing cid")))?;
+    let record =
+        record.ok_or_else(|| anyhow::Error::new(InvalidEvent("status event is missing record")))?;
     let record = normalize_legacy_record_type(record);
 
     sqlx::query!(
@@ -360,6 +361,20 @@ struct ResolverError {
     error: Option<String>,
 }
 
+/// An event that can never be stored as sent (a required field is missing).
+/// Retrying it would only stall every event behind it.
+#[derive(Debug)]
+pub(crate) struct InvalidEvent(pub(crate) &'static str);
+
+impl std::fmt::Display for InvalidEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.0)
+    }
+}
+
+impl std::error::Error for InvalidEvent {}
+
+
 #[cfg(test)]
 mod tests {
     use super::{normalize_identity, normalize_legacy_record_type};
@@ -381,3 +396,4 @@ mod tests {
         assert_eq!(record["$type"], "fm.teal.actor.status");
     }
 }
+

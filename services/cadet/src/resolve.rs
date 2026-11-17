@@ -66,7 +66,9 @@ pub async fn resolve_handle(
     handle: &str,
     resolver_app_view: &str,
 ) -> Result<String, reqwest::Error> {
-    let res = reqwest::Client::new()
+    let res = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()?
         .get(format!(
             "{resolver_app_view}/xrpc/com.atproto.identity.resolveHandle"
         ))

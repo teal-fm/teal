@@ -44,7 +44,7 @@ export function richTextSegments(text: string, facets?: readonly RichTextFacet[]
     const start = offsets[facet.index?.byteStart || 0];
     const end = offsets[facet.index?.byteEnd || 0];
 
-    if (start === undefined || end === undefined || start < cursor) continue;
+    if (start === undefined || end === undefined || start < cursor || end < start) continue;
 
     if (start > cursor) segments.push({ text: text.slice(cursor, start) });
 

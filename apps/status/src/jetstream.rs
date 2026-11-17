@@ -86,11 +86,36 @@ async fn consume_connection(pool: &PgPool, endpoint: &str, cursor: Option<u64>) 
 
 const PROCESS_ATTEMPTS: u32 = 3;
 
+/// Whether `error` comes from the event itself rather than from the database
+/// being unavailable: a missing field, or Postgres rejecting the data (SQLSTATE
+/// class 22, data exception, such as `\u0000` in jsonb; or 23, a constraint).
+/// Replaying such an event can never succeed.
+fn is_permanent(error: &anyhow::Error) -> bool {
+    error.chain().any(|cause| {
+        cause.downcast_ref::<db::InvalidEvent>().is_some()
+            || cause
+                .downcast_ref::<sqlx::Error>()
+                .and_then(sqlx::Error::as_database_error)
+                .and_then(|db_error| db_error.code())
+                .is_some_and(|code| code.starts_with("22") || code.starts_with("23"))
+    })
+}
+
 async fn process_with_retry(pool: &PgPool, event: &JetstreamEvent) -> Result<()> {
     let mut delay = Duration::from_millis(250);
     for attempt in 1..=PROCESS_ATTEMPTS {
         match process_event(pool, event).await {
             Ok(()) => return Ok(()),
+            Err(error) if is_permanent(&error) => {
+                // Skip it, so one unstorable record can't stop the stream.
+                warn!(
+                    %error,
+                    did = %event.did,
+                    cursor = event.cursor,
+                    "Skipping Jetstream v2 event that can't be stored"
+                );
+                return Ok(());
+            }
             Err(error) if attempt < PROCESS_ATTEMPTS => {
                 warn!(
                     %error,
@@ -176,7 +201,9 @@ async fn process_event(pool: &PgPool, event: &JetstreamEvent) -> Result<()> {
             let commit = event
                 .commit
                 .as_ref()
-                .ok_or_else(|| anyhow!("commit event is missing commit payload"))?;
+                .ok_or_else(|| {
+                    anyhow::Error::new(db::InvalidEvent("commit event is missing commit payload"))
+                })?;
             if !STATUS_COLLECTIONS.contains(&commit.collection.as_str()) {
                 return Ok(());
             }
@@ -184,7 +211,11 @@ async fn process_event(pool: &PgPool, event: &JetstreamEvent) -> Result<()> {
             let record = match (&commit.operation[..], commit.record.as_ref()) {
                 ("delete", _) => None,
                 (_, Some(record)) => Some(record.clone()),
-                (_, None) => return Err(anyhow!("status commit is missing record")),
+                (_, None) => {
+                    return Err(anyhow::Error::new(db::InvalidEvent(
+                        "status commit is missing record",
+                    )));
+                }
             };
             db::apply_status_event(
                 pool,
@@ -241,6 +272,14 @@ struct Identity {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn invalid_events_are_permanent_and_other_errors_are_not() {
+        let invalid = anyhow::Error::new(crate::db::InvalidEvent("missing cid"))
+            .context("processing event at cursor 1");
+        assert!(super::is_permanent(&invalid));
+        assert!(!super::is_permanent(&anyhow::anyhow!("connection reset")));
+    }
+
     use super::{parse_event, stream_url};
 
     #[test]

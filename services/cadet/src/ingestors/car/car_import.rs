@@ -791,6 +791,9 @@ impl CarImportIngestor {
     }
 }
 
+/// How long an account waits between repo imports it requests itself.
+const IMPORT_REQUEST_WINDOW_SECS: u64 = 6 * 60 * 60;
+
 #[async_trait]
 impl LexiconIngestor for CarImportIngestor {
     async fn ingest(&self, message: Event<Value>) -> Result<()> {
@@ -830,6 +833,23 @@ impl LexiconIngestor for CarImportIngestor {
         };
         let job_payload = serde_json::to_string(&job)?;
         let mut conn = self.get_redis_connection().await?;
+
+        // Each request downloads the whole repo, so one account gets at most one
+        // queued import per window however many importRepo records it writes.
+        let claimed: bool = redis::cmd("SET")
+            .arg(format!("car_import_requested:{identity}"))
+            .arg(job.request_id.to_string())
+            .arg("NX")
+            .arg("EX")
+            .arg(IMPORT_REQUEST_WINDOW_SECS)
+            .query_async::<Option<String>>(&mut conn)
+            .await?
+            .is_some();
+        if !claimed {
+            tracing::info!(did = %message.did, "Skipping importRepo: one was requested recently");
+            return Ok(());
+        }
+
         // Specify the expected return type to avoid FromRedisValue fallback issues in edition 2024
         let _: () = conn.lpush(queue_keys::CAR_IMPORT_JOBS, job_payload).await?;
         tracing::info!("Enqueued CAR import job: {}", job.request_id);

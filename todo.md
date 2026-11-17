@@ -18,3 +18,4 @@
 - Aqua: XRPC handlers return client errors (bad cursor, unknown actor) as 500 with raw error text; use one typed XRPC error as `xrpc/listening.rs` does.
 - Cadet: flush the Jetstream cursor on shutdown and advance it only after an event is ingested.
 - Cadet: account events create an `account_states` row (and run the purge) for every DID on the network; limit them to known accounts.
+- Cadet: catalog names are first-write-wins for a MusicBrainz ID; fill canonical names from MusicBrainz on first insert (or a backfill job), or add a correction path.

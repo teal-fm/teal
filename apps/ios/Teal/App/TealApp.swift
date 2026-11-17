@@ -57,6 +57,11 @@ struct RootView: View {
         }
         .environment(\.navigate) { route in paths[tab, default: []].append(route) }
         .environment(\.openURL, OpenURLAction { url in
+            // Links come from anyone's records (a play's origin, a post's facets), so
+            // only web links open: never tel:, shortcuts:, or another app's scheme.
+            guard let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http" else {
+                return .discarded
+            }
             // Links to teal pages, including mentions in posts, open in the app.
             if url.host() == TealConfig.origin.host(), let route = Route(url: url) {
                 paths[tab, default: []].append(route)

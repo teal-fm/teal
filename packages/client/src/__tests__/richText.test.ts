@@ -33,3 +33,7 @@ it("only accepts http(s) URLs as safe links", () => {
   expect(safeHttpUrl("not a url")).toBeUndefined();
   expect(safeHttpUrl()).toBeUndefined();
 });
+
+it("ignores a facet that ends before it starts", () => {
+  expect(richTextSegments("hello world", [facet(6, 2, { uri: "https://x.test" })])).toEqual([{ text: "hello world" }]);
+});

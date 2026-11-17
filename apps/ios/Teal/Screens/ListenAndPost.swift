@@ -225,7 +225,13 @@ struct EditListenSheet: View {
         defer { busy = false }
         let oldArtists = (next["artists"] as? [[String: Any]]) ?? []
         let names = artists.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        next["trackName"] = track.trimmingCharacters(in: .whitespaces)
+        let trackName = track.trimmingCharacters(in: .whitespaces)
+        // A renamed track no longer matches its MusicBrainz recording, so its IDs go
+        // rather than keep the edit counted under the old recording (as web and Android do).
+        if trackName != (next["trackName"] as? String ?? "") {
+            for key in ["recordingMbId", "trackMbId", "isrc", "trackDiscriminant"] { next[key] = nil }
+        }
+        next["trackName"] = trackName
         // Keep an artist's MBID while its name is unchanged.
         next["artists"] = names.map { name -> [String: Any] in
             oldArtists.first { ($0["artistName"] as? String) == name } ?? ["artistName": name]
@@ -236,6 +242,7 @@ struct EditListenSheet: View {
         if release != (next["releaseName"] as? String ?? "") {
             next["releaseName"] = release.isEmpty ? nil : release
             next["releaseMbId"] = nil
+            next["releaseDiscriminant"] = nil
         }
         next["playedTime"] = Format.isoString(playedAt)
         do {

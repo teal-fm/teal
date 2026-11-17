@@ -10,6 +10,30 @@ use crate::{
     resolve::{resolve_handle, resolve_identity},
 };
 
+/// What a profile write does to the stored handle.
+#[derive(Debug, Clone, Copy)]
+enum HandleUpdate<'a> {
+    /// The DID document's handle resolved back to the DID.
+    Set(&'a str),
+    /// There is no handle, or it belongs to someone else.
+    Clear,
+    /// The handle couldn't be checked; keep whatever is stored.
+    Keep,
+}
+
+impl<'a> HandleUpdate<'a> {
+    fn value(self) -> Option<&'a str> {
+        match self {
+            Self::Set(handle) => Some(handle),
+            Self::Clear | Self::Keep => None,
+        }
+    }
+
+    fn keeps_existing(self) -> bool {
+        matches!(self, Self::Keep)
+    }
+}
+
 pub struct ActorProfileIngestor {
     sql: PgPool,
 }
@@ -49,12 +73,18 @@ impl ActorProfileIngestor {
 
         // A DID document can claim any handle; keep it only when that handle
         // resolves back to this DID, so nobody can borrow someone else's name.
+        // A failed lookup (an outage, a handle not indexed yet) proves nothing,
+        // so the stored handle is kept rather than cleared.
         let handle = match claimed {
             Some(handle) => match resolve_handle(handle, "https://public.api.bsky.app").await {
-                Ok(resolved) if resolved == did.did => Some(handle),
-                _ => None,
+                Ok(resolved) if resolved == did.did => HandleUpdate::Set(handle),
+                Ok(_) => HandleUpdate::Clear,
+                Err(error) => {
+                    tracing::warn!("Couldn't verify handle {handle} for {}: {error}", did.did);
+                    HandleUpdate::Keep
+                }
             },
-            None => None,
+            None => HandleUpdate::Clear,
         };
 
         self.upsert_profile(&did.identity, handle, profile).await
@@ -63,7 +93,7 @@ impl ActorProfileIngestor {
     async fn upsert_profile(
         &self,
         did: &str,
-        handle: Option<&str>,
+        handle: HandleUpdate<'_>,
         profile: &types::fm_teal::actor::profile::Profile,
     ) -> anyhow::Result<()> {
         let created_time = profile
@@ -101,7 +131,7 @@ impl ActorProfileIngestor {
                 INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, stats_default_period, created_at, favorites)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 ON CONFLICT (did) DO UPDATE SET
-                    handle = EXCLUDED.handle,
+                    handle = CASE WHEN $11 THEN profiles.handle ELSE EXCLUDED.handle END,
                     display_name = EXCLUDED.display_name,
                     description = EXCLUDED.description,
                     description_facets = EXCLUDED.description_facets,
@@ -113,7 +143,7 @@ impl ActorProfileIngestor {
             "#,
         )
         .bind(did)
-        .bind(handle)
+        .bind(handle.value())
         .bind(display_name)
         .bind(description)
         .bind(serde_json::to_value(profile.description_facets.clone())?)
@@ -122,6 +152,7 @@ impl ActorProfileIngestor {
         .bind(stats_default_period)
         .bind(time_datetime)
         .bind(favorites)
+        .bind(handle.keeps_existing())
         .execute(&mut *tx)
         .await?;
         tx.commit().await?;
@@ -187,7 +218,7 @@ mod tests {
     use sqlx::PgPool;
     use uuid::Uuid;
 
-    use super::{deserialize_profile, ActorProfileIngestor};
+    use super::{deserialize_profile, ActorProfileIngestor, HandleUpdate};
 
     async fn test_pool() -> anyhow::Result<PgPool> {
         let database_url = std::env::var("DATABASE_URL")?;
@@ -225,7 +256,7 @@ mod tests {
         ingestor
             .upsert_profile(
                 &did,
-                Some("first.example"),
+                HandleUpdate::Set("first.example"),
                 &profile("First Name", "Initial profile")?,
             )
             .await?;
@@ -257,7 +288,7 @@ mod tests {
         ingestor
             .upsert_profile(
                 &did,
-                Some("updated.example"),
+                HandleUpdate::Set("updated.example"),
                 &profile("Updated Name", "Updated profile")?,
             )
             .await?;

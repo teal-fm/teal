@@ -28,12 +28,12 @@ repos:
         files: \.(ts|tsx|js|jsx|json|md|yaml|yml)$
         pass_filenames: true
 
-      - id: biome-check
-        name: Biome Check
-        entry: pnpm biome check --apply
+      - id: oxlint
+        name: oxlint
+        entry: pnpm exec oxlint
         language: system
-        files: \.(ts|tsx|js|jsx)$
-        pass_filenames: false
+        files: \.(ts|tsx|js|jsx|mjs)$
+        pass_filenames: true
 
       # TypeScript check temporarily disabled due to vendor compilation issues
       # - id: typescript-check

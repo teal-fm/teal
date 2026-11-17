@@ -58,9 +58,9 @@ if [ -n "$TS_JS_FILES" ]; then
 
     # Check if biome is available and run it
     if command -v pnpm >/dev/null 2>&1; then
-        print_status "Running Biome formatting and linting..."
-        if ! pnpm biome check . --apply --no-errors-on-unmatched 2>/dev/null; then
-            print_error "Biome check failed. Please fix the issues and try again."
+        print_status "Running oxlint..."
+        if ! pnpm exec oxlint $TS_JS_FILES; then
+            print_error "oxlint found problems. Please fix them and try again."
             exit 1
         fi
 
