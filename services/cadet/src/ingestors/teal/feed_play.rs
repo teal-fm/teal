@@ -1089,10 +1089,11 @@ impl PlayIngestor {
             let artist_uuid = Uuid::parse_str(mbid_value(mbid))?;
             let res = sqlx::query!(
                 r#"
+                    -- A listen can't rename a shared MusicBrainz artist: the first
+                    -- indexed name stays, so one user's edit doesn't relabel it for all.
                     INSERT INTO artists_extended (mbid, name, mbid_type) VALUES ($1, $2, 'musicbrainz')
                     ON CONFLICT (mbid) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        updated_at = NOW()
+                        updated_at = artists_extended.updated_at
                     RETURNING id;
                 "#,
                 artist_uuid,
@@ -1136,10 +1137,11 @@ impl PlayIngestor {
 
         let res = sqlx::query!(
             r#"
+                -- A listen can't rename a shared MusicBrainz release; the first
+                -- indexed name stays and only a missing discriminant is filled in.
                 INSERT INTO releases (mbid, name, discriminant) VALUES ($1, $2, $3)
                 ON CONFLICT (mbid) DO UPDATE SET
-                    name = EXCLUDED.name,
-                    discriminant = COALESCE(EXCLUDED.discriminant, releases.discriminant)
+                    discriminant = COALESCE(releases.discriminant, EXCLUDED.discriminant)
                 RETURNING mbid;
             "#,
             release_uuid,
@@ -1170,10 +1172,11 @@ impl PlayIngestor {
 
         let res = sqlx::query!(
             r#"
+                -- A listen can't rename a shared MusicBrainz recording; the first
+                -- indexed name stays and only a missing discriminant is filled in.
                 INSERT INTO recordings (mbid, name, discriminant) VALUES ($1, $2, $3)
                 ON CONFLICT (mbid) DO UPDATE SET
-                    name = EXCLUDED.name,
-                    discriminant = COALESCE(EXCLUDED.discriminant, recordings.discriminant)
+                    discriminant = COALESCE(recordings.discriminant, EXCLUDED.discriminant)
                 RETURNING mbid;
             "#,
             recording_uuid,
@@ -1627,6 +1630,7 @@ mod tests {
                     "artistName": artist_name
                 }],
                 "musicServiceUri": "https://tests.teal.fm",
+                "originUri": "https://tests.teal.fm/track/1",
                 "submissionClientAgent": "cadet-test/1.0",
                 "playedTime": "2026-06-01T00:00:00Z"
             }),
@@ -1754,7 +1758,8 @@ mod tests {
         let ingestor = PlayIngestor::new(pool.clone());
         let did = format!("did:plc:cadet-play-test-{}", Uuid::new_v4());
         let rkey = "3k2akjdlkjsf";
-        let uri = format!("at://{did}/fm.teal.alpha.feed.play/{rkey}");
+        // Plays are stored under the stable collection; alpha events map onto it.
+        let uri = format!("at://{did}/fm.teal.feed.play/{rkey}");
         let release_mbid = Uuid::new_v4();
         let recording_mbid = Uuid::new_v4();
 
@@ -1773,15 +1778,17 @@ mod tests {
             )
             .await?;
 
-        let inserted = sqlx::query_as::<_, (String, Option<String>, Option<String>)>(
-            "SELECT track_name, release_name, music_service_base_domain FROM plays WHERE uri = $1",
+        let inserted = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>)>(
+            "SELECT track_name, release_name, music_service_base_domain, origin_url FROM plays WHERE uri = $1",
         )
         .bind(&uri)
         .fetch_one(&pool)
         .await?;
         assert_eq!(inserted.0, "First Cadet Test Track");
         assert_eq!(inserted.1.as_deref(), Some("Cadet Test Release"));
-        assert_eq!(inserted.2.as_deref(), Some("tests.teal.fm"));
+        // The column keeps the record's full musicServiceUri; Aqua accepts either form.
+        assert_eq!(inserted.2.as_deref(), Some("https://tests.teal.fm"));
+        assert_eq!(inserted.3.as_deref(), Some("https://tests.teal.fm/track/1"));
 
         ingestor
             .insert_play(
@@ -1798,14 +1805,16 @@ mod tests {
             )
             .await?;
 
-        let updated = sqlx::query_as::<_, (String, Option<serde_json::Value>)>(
-            "SELECT track_name, artist_names_raw FROM plays WHERE uri = $1",
+        let updated = sqlx::query_as::<_, (String, Option<serde_json::Value>, String)>(
+            "SELECT track_name, artist_names_raw, cid FROM plays WHERE uri = $1",
         )
         .bind(&uri)
         .fetch_one(&pool)
         .await?;
         assert_eq!(updated.0, "Updated Cadet Test Track");
         assert_eq!(updated.1, Some(json!(["Updated Cadet Test Artist"])));
+        // An edit carries its new CID, so Aqua returns the current version.
+        assert_eq!(updated.2, "bafyreicadetupdate");
 
         let extended_artist_links = sqlx::query_as::<_, (i64, Option<String>)>(
             "SELECT COUNT(*), MAX(artist_name) FROM play_to_artists_extended WHERE play_uri = $1",

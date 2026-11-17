@@ -20,7 +20,9 @@ async fn main() -> anyhow::Result<()> {
         .with_max_level(tracing::Level::INFO)
         .init();
 
-    let db = db::init_pool().await.context("connecting to the database")?;
+    let db = db::init_pool()
+        .await
+        .context("connecting to the database")?;
 
     // Cadet refreshes the materialized views this service reads, under an
     // advisory lock; refreshing here as well would only duplicate that work.

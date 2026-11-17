@@ -86,6 +86,39 @@ export function editableRecordFromPlay(play: PlayView): EditablePlayRecord {
   };
 }
 
+/**
+ * Applies changed names to a record. A renamed track or release no longer
+ * matches its MusicBrainz IDs, so those are cleared rather than left pointing at
+ * the old recording or release (which would also attach the new name to it).
+ * Artists whose names are unchanged keep their MBIDs.
+ */
+export function withEditedIdentity(
+  current: EditablePlayRecord,
+  changes: Partial<Pick<EditablePlayRecord, "trackName" | "releaseName" | "artists">>,
+): EditablePlayRecord {
+  const next: EditablePlayRecord = { ...current, ...changes };
+
+  if (changes.artists) {
+    next.artists = changes.artists.map(
+      (artist) => current.artists?.find((existing) => existing.artistName === artist.artistName) ?? artist,
+    );
+  }
+
+  if (changes.trackName !== undefined && changes.trackName !== current.trackName) {
+    next.recordingMbId = undefined;
+    next.trackMbId = undefined;
+    next.isrc = undefined;
+    next.trackDiscriminant = undefined;
+  }
+
+  if ("releaseName" in changes && changes.releaseName !== current.releaseName) {
+    next.releaseMbId = undefined;
+    next.releaseDiscriminant = undefined;
+  }
+
+  return next;
+}
+
 export function applyEditableFields(
   current: EditablePlayRecord,
   fields: {
@@ -115,11 +148,12 @@ export function applyEditableFields(
   }
 
   return {
-    ...current,
+    ...withEditedIdentity(current, {
+      trackName,
+      artists: artistsFromText(fields.artistsText),
+      releaseName: optionalTrim(fields.releaseName),
+    }),
     $type: PLAY_COLLECTION,
-    trackName,
-    artists: artistsFromText(fields.artistsText),
-    releaseName: optionalTrim(fields.releaseName),
     playedTime,
   };
 }

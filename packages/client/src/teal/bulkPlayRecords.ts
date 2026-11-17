@@ -1,7 +1,7 @@
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 
 import type { ConfirmedListenWrite } from "./pendingListens";
-import { artistsFromText, type EditablePlayRecord, type LoadedPlayRecord } from "./playRecords";
+import { artistsFromText, withEditedIdentity, type EditablePlayRecord, type LoadedPlayRecord } from "./playRecords";
 
 export type BulkPlayChanges = Pick<EditablePlayRecord, "artists" | "releaseName">;
 
@@ -39,7 +39,7 @@ export async function updateSelectedPlayRecords(
 ) {
   for (const rkey of rkeys) {
     const loaded = await dependencies.load(rkey);
-    const record = { ...loaded.record, ...changes };
+    const record = withEditedIdentity(loaded.record, changes);
     const receipt = await dependencies.put(rkey, record, loaded.swapRecord);
     dependencies.confirmed({
       ...receipt,

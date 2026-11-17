@@ -11,7 +11,7 @@
 //!
 //! ## Usage Example
 //!
-//! ```rust,ignore
+//! ```text
 //! // CAR data can be provided in a record like:
 //! {
 //!   "carData": "base64-encoded-car-file-here"
