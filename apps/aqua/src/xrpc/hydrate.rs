@@ -42,8 +42,13 @@ pub async fn hydrate_actors(
     // XRPC bodies are serialized JSON already in memory, so buffering costs nothing extra.
     let Ok(bytes) = to_bytes(body, usize::MAX).await else {
         // The handler's body failed mid-stream; say so rather than send a truncated 200.
-        let mut response = Response::new(Body::from("response body failed"));
+        let mut response = Response::new(Body::from(
+            r#"{"error":"UpstreamFailure","message":"response body failed"}"#,
+        ));
         *response.status_mut() = StatusCode::BAD_GATEWAY;
+        response
+            .headers_mut()
+            .insert(header::CONTENT_TYPE, header::HeaderValue::from_static("application/json"));
         return response;
     };
     let Ok(mut value) = serde_json::from_slice::<Value>(&bytes) else {
