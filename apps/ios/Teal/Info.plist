@@ -22,8 +22,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>TealOrigin</key>
-	<string>$(TEAL_ORIGIN)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -31,10 +29,12 @@
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose an avatar or banner for your teal profile.</string>
-	<key>UILaunchScreen</key>
-	<dict/>
+	<key>TealOrigin</key>
+	<string>$(TEAL_ORIGIN)</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UILaunchScreen</key>
+	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
