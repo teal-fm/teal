@@ -39,7 +39,7 @@ teal/
 - **Database**: PostgreSQL + Garnet/Redis
 - **Frontend**: TypeScript, Turbo, pnpm, Biome
 - **Protocol**: AT Protocol, IPLD/CAR, WebSocket streams
-- **Deploy**: Docker Compose, Traefik
+- **Deploy**: Docker Compose, Caddy edge
 
 ## Services
 - **Aqua**: HTTP API, OAuth, play submission, profiles, CAR import
