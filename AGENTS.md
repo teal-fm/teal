@@ -2,7 +2,8 @@
 
 ## Build Commands
 - Dev stack: `pnpm dev` at `http://localhost:8081` (add `--proxy` for `https://sigilyph.teal.fm`)
-- Native app: `pnpm dev:native` (Expo for iOS and Android)
+- Android app: `pnpm dev:native` (Expo)
+- iOS app: `pnpm dev:ios` (generates the Xcode project with XcodeGen and opens it)
 - Build all: `pnpm build`
 - Build Rust: `pnpm build:rust`
 - Test: `pnpm test`
@@ -16,7 +17,8 @@
 teal/
 ├── apps/aqua/              # Main Rust/Axum web app
 ├── apps/web/               # Web app (TanStack Start, React DOM, SSR)
-├── apps/amethyst/          # Native app (Expo / React Native, iOS + Android)
+├── apps/amethyst/          # Android app (Expo / React Native)
+├── apps/ios/               # iOS app (SwiftUI, XcodeGen project)
 ├── packages/client/        # @teal/client: shared, platform-neutral client logic
 ├── services/
 │   ├── cadet/             # AT Protocol jetstream consumer
@@ -160,7 +162,8 @@ pnpm lex:diff      # Show changes
 ## Frontend Layout
 - **Shared logic** lives in `packages/client` (`@teal/client/<path>`): Aqua XRPC, ATProto records, MusicBrainz search, TanStack Query hooks. No React Native, DOM, or bundler imports there. Hooks read the account from `SessionProvider`; each app calls `configureClient()` at startup.
 - **Web** (`apps/web`): TanStack Start with SSR. UI is DOM-native (`src/ds`), styled with Tailwind v4 on the same tokens as the native app. Public pages load their main query in a route loader with the component's own query key, so the first HTML carries the content and link-preview tags. Public URLs match the native app's (`/:o/music/…`, `/at://…`) via a router rewrite onto internal `/music` and `/at` routes.
-- **Native** (`apps/amethyst`): Expo for iOS and Android only.
+- **Android** (`apps/amethyst`): Expo, Android only.
+- **iOS** (`apps/ios`): SwiftUI, no third-party packages. It doesn't use `@teal/client`; it has its own Aqua client, OAuth (PAR, PKCE, DPoP), and PDS writes. Keep behaviour in step with the web and Android apps. OAuth client metadata for it is `apps/web`'s `/ios-client-metadata.json`. Regenerate the project with `pnpm ios:project` after adding files.
 
 ## Code Standards
 - **TypeScript**: Biome format (`pnpm fix`), explicit types
