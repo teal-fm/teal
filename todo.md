@@ -13,3 +13,8 @@
 - Client: top tracks fire one MusicBrainz lookup per row and hit HTTP 503s; queue `getRecordingCoverArtUrl` to MusicBrainz's 1 req/s.
 - Client: Explore People hides a failed Bluesky actor search; say results are partial and offer a retry.
 - Aqua: merge album track-list title variants (`Spaceship` vs `Spaceship (feat. Sheck Wes)`) and song results that differ only in artist credit order.
+- Aqua: song search scans `plays.track_name` with `ILIKE '%q%'`; add trigram indexes on `plays.track_name`/`releases.name` and a statement timeout.
+- Aqua: `get_actor_feed` aggregates artists over a user's whole history before `LIMIT`; page first (`WITH page AS (... LIMIT)`), then join artists.
+- Aqua: XRPC handlers return client errors (bad cursor, unknown actor) as 500 with raw error text; use one typed XRPC error as `xrpc/listening.rs` does.
+- Cadet: flush the Jetstream cursor on shutdown and advance it only after an event is ingested.
+- Cadet: account events create an `account_states` row (and run the purge) for every DID on the network; limit them to known accounts.
