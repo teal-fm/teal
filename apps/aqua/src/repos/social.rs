@@ -385,10 +385,14 @@ impl SocialRepo for PgDataSource {
             ),
         >(
             r#"
-                SELECT uri, cid, did, track, item_order, created_at
-                FROM social_playlist_items
-                WHERE playlist_uri = $1
-                ORDER BY item_order ASC NULLS LAST, created_at ASC
+                -- Anyone can publish an item that points at any playlist, so only
+                -- items by the playlist's owner or a current collaborator count.
+                SELECT i.uri, i.cid, i.did, i.track, i.item_order, i.created_at
+                FROM social_playlist_items i
+                JOIN social_playlists p ON p.uri = i.playlist_uri
+                WHERE i.playlist_uri = $1
+                  AND (i.did = p.did OR i.did = ANY(p.authors))
+                ORDER BY i.item_order ASC NULLS LAST, i.created_at ASC
                 LIMIT $2 OFFSET $3
             "#,
         )
@@ -783,10 +787,14 @@ async fn fetch_playlists(
                 p.uri, p.cid, p.did, p.name, p.description, p.description_facets,
                 p.authors, p.cover_cid, p.created_at,
                 profile.did, profile.handle, profile.display_name, profile.avatar,
-                COALESCE(c.playlist_item_count, 0)
+                (
+                    SELECT COUNT(*)::INTEGER
+                    FROM social_playlist_items i
+                    WHERE i.playlist_uri = p.uri
+                      AND (i.did = p.did OR i.did = ANY(p.authors))
+                )
             FROM social_playlists p
             LEFT JOIN profiles profile ON p.did = profile.did
-            LEFT JOIN social_subject_counts c ON p.uri = c.subject_uri
             {clause}
         "#
     );
