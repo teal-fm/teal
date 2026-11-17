@@ -37,8 +37,9 @@ services:
       context: .
       dockerfile: apps/aqua/Dockerfile
     container_name: aqua-app
+    # Reached through the edge; published on loopback only, for the host's own tools.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     env_file:
       - .env
     environment:
@@ -81,7 +82,7 @@ services:
     environment:
       DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
     ports:
-      - "3132:3001"
+      - "127.0.0.1:3132:3001"
     networks:
       - app_network
     depends_on:

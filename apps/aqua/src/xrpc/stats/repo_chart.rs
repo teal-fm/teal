@@ -8,12 +8,15 @@ use futures::StreamExt;
 use jacquard_common::types::string::UriValue;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
+use tokio::sync::Semaphore;
 use tracing::warn;
 use types::fm_teal::stats::{ReleaseView, get_repo_top_releases::GetRepoTopReleasesOutput};
 
 use crate::{api, redis_client::RedisClient};
 
 const CACHE_SECONDS: u64 = 15 * 60;
+
+static REPO_DOWNLOADS: Semaphore = Semaphore::const_new(2);
 
 #[derive(Deserialize)]
 pub(super) struct ChartQuery {
@@ -135,6 +138,9 @@ async fn load_snapshot(did: &str, pds: &str) -> Result<Snapshot> {
         }
     }
 
+    // Each uncached chart downloads and parses a whole repository (up to the CAR
+    // size limit) for an anonymous caller, so only a couple run at once.
+    let _permit = REPO_DOWNLOADS.acquire().await?;
     let car = api::fetch_car_from_pds(pds, did, None).await?;
     let plays = parse_repo_plays(car).await?;
     let snapshot = Snapshot {

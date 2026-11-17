@@ -98,28 +98,31 @@ async fn main() {
     let retry_ingestor = ingestors::teal::feed_play::PlayIngestor::new(pool.clone());
     tokio::spawn(ingestion_retry::run_worker(retry_store, retry_ingestor));
 
-    // Keep the indexed catalog normalized as new clients introduce alternate
-    // release/recording IDs for the same artist and title.
+    // Fuzzy catalog consolidation repoints plays and deletes rows when names are
+    // merely similar, which can merge distinct artists for good. It only runs
+    // when CADET_CONSOLIDATION_INTERVAL_SECS is set.
     let consolidation_interval_secs = std::env::var("CADET_CONSOLIDATION_INTERVAL_SECS")
         .ok()
         .and_then(|value| value.parse::<u64>().ok())
-        .filter(|value| *value > 0)
-        .unwrap_or(6 * 60 * 60);
+        .filter(|value| *value > 0);
     let consolidation_pool = pool.clone();
-    tokio::spawn(async move {
-        let mut interval =
-            tokio::time::interval(std::time::Duration::from_secs(consolidation_interval_secs));
-        interval.tick().await;
-
-        loop {
-            let ingestor =
-                ingestors::teal::feed_play::PlayIngestor::new(consolidation_pool.clone());
-            if let Err(error) = ingestor.run_full_consolidation().await {
-                error!("Automatic catalog consolidation failed: {}", error);
-            }
+    if let Some(consolidation_interval_secs) = consolidation_interval_secs {
+        info!("Catalog consolidation runs every {consolidation_interval_secs}s");
+        tokio::spawn(async move {
+            let mut interval =
+                tokio::time::interval(std::time::Duration::from_secs(consolidation_interval_secs));
             interval.tick().await;
-        }
-    });
+
+            loop {
+                let ingestor =
+                    ingestors::teal::feed_play::PlayIngestor::new(consolidation_pool.clone());
+                if let Err(error) = ingestor.run_full_consolidation().await {
+                    error!("Automatic catalog consolidation failed: {}", error);
+                }
+                interval.tick().await;
+            }
+        });
+    }
 
     // CAR import job worker
     let car_ingestor = ingestors::car::CarImportIngestor::new(pool.clone());

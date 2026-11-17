@@ -62,14 +62,20 @@ fn is_valid_domain(domain: &str) -> bool {
     true
 }
 
-async fn resolve_handle(handle: &str, resolver_app_view: &str) -> Result<String, reqwest::Error> {
-    let res = reqwest::get(format!(
-        "{}/xrpc/com.atproto.identity.resolveHandle?handle={}",
-        resolver_app_view, handle
-    ))
-    .await?
-    .json::<ResolvedHandle>()
-    .await?;
+pub async fn resolve_handle(
+    handle: &str,
+    resolver_app_view: &str,
+) -> Result<String, reqwest::Error> {
+    let res = reqwest::Client::new()
+        .get(format!(
+            "{resolver_app_view}/xrpc/com.atproto.identity.resolveHandle"
+        ))
+        .query(&[("handle", handle)])
+        .send()
+        .await?
+        .error_for_status()?
+        .json::<ResolvedHandle>()
+        .await?;
 
     Ok(res.did)
 }

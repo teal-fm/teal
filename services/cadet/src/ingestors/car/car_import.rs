@@ -806,22 +806,29 @@ async fn validate_public_host(host: &str) -> Result<()> {
 
 fn is_private_ip(ip: std::net::IpAddr) -> bool {
     match ip {
-        std::net::IpAddr::V4(ip) => {
-            ip.is_private()
-                || ip.is_loopback()
-                || ip.is_link_local()
-                || ip.is_unspecified()
-                || ip.is_multicast()
-                || ip.is_broadcast()
-        }
+        std::net::IpAddr::V4(ip) => is_private_ipv4(ip),
         std::net::IpAddr::V6(ip) => {
-            ip.is_loopback()
+            // ::ffff:a.b.c.d reaches the IPv4 address it embeds.
+            ip.to_ipv4_mapped().is_some_and(is_private_ipv4)
+                || ip.is_loopback()
                 || ip.is_unique_local()
                 || ip.is_unicast_link_local()
                 || ip.is_unspecified()
                 || ip.is_multicast()
         }
     }
+}
+
+fn is_private_ipv4(ip: std::net::Ipv4Addr) -> bool {
+    let [a, b, ..] = ip.octets();
+    ip.is_private()
+        || ip.is_loopback()
+        || ip.is_link_local()
+        || ip.is_unspecified()
+        || ip.is_multicast()
+        || ip.is_broadcast()
+        // Carrier-grade NAT (100.64.0.0/10) is not publicly routable either.
+        || (a == 100 && (64..128).contains(&b))
 }
 
 #[async_trait]
@@ -837,14 +844,26 @@ impl LexiconIngestor for CarImportIngestor {
             .as_ref()
             .ok_or_else(|| anyhow!("CarImportIngestor requires a record in the commit"))?;
 
+        let identity = record
+            .get("identity")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| anyhow!("Missing identity in record"))?;
+
+        // Anyone can publish this record, so it may only request an import of
+        // the publishing account's own repository.
+        if identity != message.did {
+            tracing::warn!(
+                did = %message.did,
+                identity,
+                "Ignoring importRepo record for another account"
+            );
+            return Ok(());
+        }
+
         // Enqueue CAR import job into Redis
         let job = CarImportJob {
             request_id: uuid::Uuid::new_v4(),
-            identity: record
-                .get("identity")
-                .and_then(|v| v.as_str())
-                .ok_or_else(|| anyhow!("Missing identity in record"))?
-                .to_string(),
+            identity: identity.to_string(),
             since: None,
             created_at: chrono::Utc::now(),
             description: None,

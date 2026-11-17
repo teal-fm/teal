@@ -44,20 +44,19 @@ async fn upsert_identity_handle(
         .map(str::trim)
         .filter(|handle| !handle.is_empty() && *handle != "handle.invalid");
 
-    sqlx::query(
-        r#"
-            INSERT INTO profiles (did, handle)
-            VALUES ($1, $2)
-            ON CONFLICT (did) DO UPDATE SET
-                handle = EXCLUDED.handle
-        "#,
-    )
-    .bind(did)
-    .bind(handle)
-    .execute(pool)
-    .await?;
+    // Jetstream sends identity events for every account on the network. Only
+    // accounts Teal already knows are updated; Aqua fills in handles for others
+    // when it looks them up.
+    let updated = sqlx::query("UPDATE profiles SET handle = $2 WHERE did = $1")
+        .bind(did)
+        .bind(handle)
+        .execute(pool)
+        .await?
+        .rows_affected();
 
-    info!("Indexed identity handle for {}: {:?}", did, handle);
+    if updated > 0 {
+        info!("Indexed identity handle for {}: {:?}", did, handle);
+    }
     Ok(())
 }
 

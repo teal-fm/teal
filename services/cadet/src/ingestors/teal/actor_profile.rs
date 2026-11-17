@@ -5,7 +5,10 @@ use serde_json::Value;
 use sqlx::PgPool;
 use tracing::info;
 
-use crate::{ingestors::teal::normalize_legacy_record_type, resolve::resolve_identity};
+use crate::{
+    ingestors::teal::normalize_legacy_record_type,
+    resolve::{resolve_handle, resolve_identity},
+};
 
 pub struct ActorProfileIngestor {
     sql: PgPool,
@@ -37,12 +40,22 @@ impl ActorProfileIngestor {
         // TODO: cache the doc for like 8 hours or something
         let did = resolve_identity(provided_did, "https://public.api.bsky.app").await?;
 
-        let handle = did
+        let claimed = did
             .doc
             .also_known_as
             .first()
             .map(String::as_str)
             .and_then(|alias| alias.strip_prefix("at://"));
+
+        // A DID document can claim any handle; keep it only when that handle
+        // resolves back to this DID, so nobody can borrow someone else's name.
+        let handle = match claimed {
+            Some(handle) => match resolve_handle(handle, "https://public.api.bsky.app").await {
+                Ok(resolved) if resolved == did.did => Some(handle),
+                _ => None,
+            },
+            None => None,
+        };
 
         self.upsert_profile(&did.identity, handle, profile).await
     }
@@ -127,6 +140,16 @@ impl ActorProfileIngestor {
 impl LexiconIngestor for ActorProfileIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
+            // The profile lexicon's key is "self"; any other record in the
+            // collection is not the account's profile and must not replace or
+            // delete it.
+            if commit.rkey != "self" {
+                info!(
+                    "{}: ignoring profile record with rkey {}",
+                    message.did, commit.rkey
+                );
+                return Ok(());
+            }
             if let Some(ref record) = &commit.record {
                 let record = deserialize_profile(record)?;
                 if let Some(ref commit) = message.commit {

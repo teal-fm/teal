@@ -99,7 +99,7 @@ impl LexiconIngestor for ActorStatusIngestor {
                         .await?;
                 }
             } else {
-                println!("{}: Status {} deleted", message.did, commit.rkey);
+                tracing::info!("{}: Status {} deleted", message.did, commit.rkey);
                 self.remove_status(&message.did, &commit.rkey).await?;
             }
         } else {

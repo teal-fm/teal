@@ -524,9 +524,16 @@ async fn read_json(mut response: reqwest::Response) -> anyhow::Result<Value> {
 }
 
 fn http_client(pinned: Option<(&str, &[SocketAddr])>) -> anyhow::Result<reqwest::Client> {
+    http_client_with_timeout(pinned, HTTP_TIMEOUT)
+}
+
+fn http_client_with_timeout(
+    pinned: Option<(&str, &[SocketAddr])>,
+    timeout: Duration,
+) -> anyhow::Result<reqwest::Client> {
     let mut builder = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
-        .timeout(HTTP_TIMEOUT)
+        .timeout(timeout)
         .user_agent("teal-aqua (+https://teal.fm)");
     if let Some((host, addrs)) = pinned {
         builder = builder.resolve_to_addrs(host, addrs);
@@ -537,6 +544,14 @@ fn http_client(pinned: Option<(&str, &[SocketAddr])>) -> anyhow::Result<reqwest:
 /// A client that can only reach `host` at the public addresses it resolves to now,
 /// so neither a private address nor a later DNS answer can redirect the request.
 async fn public_client(host: &str) -> anyhow::Result<reqwest::Client> {
+    public_client_with_timeout(host, HTTP_TIMEOUT).await
+}
+
+/// [`public_client`] with a longer request timeout, for downloads such as a repo CAR.
+pub(crate) async fn public_client_with_timeout(
+    host: &str,
+    timeout: Duration,
+) -> anyhow::Result<reqwest::Client> {
     anyhow::ensure!(
         !host.eq_ignore_ascii_case("localhost") && !host.ends_with(".localhost"),
         "{host} is not a public host"
@@ -549,7 +564,7 @@ async fn public_client(host: &str) -> anyhow::Result<reqwest::Client> {
         addrs.iter().all(|addr| is_public_ip(addr.ip())),
         "{host} resolves to a private address"
     );
-    http_client(Some((host, &addrs)))
+    http_client_with_timeout(Some((host, &addrs)), timeout)
 }
 
 fn is_public_ip(ip: IpAddr) -> bool {

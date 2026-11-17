@@ -289,12 +289,15 @@ async fn insert_follow(
         return Err(anyhow!("cannot follow yourself"));
     }
 
-    sqlx::query(
+    // A repo can hold more than one follow record for the same subject, and a
+    // replayed event repeats its URI; either way the follow is already indexed.
+    let inserted = sqlx::query(
         r#"
             INSERT INTO social_follows (
                 uri, did, rkey, cid, subject_did, created_at, record
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT DO NOTHING
         "#,
     )
     .bind(uri)
@@ -305,7 +308,12 @@ async fn insert_follow(
     .bind(required_datetime(record, "createdAt")?)
     .bind(record.clone())
     .execute(&mut **tx)
-    .await?;
+    .await?
+    .rows_affected();
+
+    if inserted == 0 {
+        return Ok(());
+    }
 
     insert_notification(tx, did, "follow", uri, None, record).await
 }
