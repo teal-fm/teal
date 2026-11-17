@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientMetadataDotjsonRouteImport } from './routes/client-metadata[.]json'
 import { Route as ComposeRouteImport } from './routes/compose'
+import { Route as IosClientMetadataDotjsonRouteImport } from './routes/ios-client-metadata[.]json'
 import { Route as ManualListensRouteImport } from './routes/manual-listens'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -50,6 +51,12 @@ const ComposeRoute = ComposeRouteImport.update({
   path: '/compose',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IosClientMetadataDotjsonRoute =
+  IosClientMetadataDotjsonRouteImport.update({
+    id: '/ios-client-metadata.json',
+    path: '/ios-client-metadata.json',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ManualListensRoute = ManualListensRouteImport.update({
   id: '/manual-listens',
   path: '/manual-listens',
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
   '/compose': typeof ComposeRoute
+  '/ios-client-metadata.json': typeof IosClientMetadataDotjsonRoute
   '/manual-listens': typeof ManualListensRoute
   '/me': typeof MeRoute
   '/notifications': typeof NotificationsRoute
@@ -192,6 +200,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
   '/compose': typeof ComposeRoute
+  '/ios-client-metadata.json': typeof IosClientMetadataDotjsonRoute
   '/manual-listens': typeof ManualListensRoute
   '/me': typeof MeRoute
   '/notifications': typeof NotificationsRoute
@@ -220,6 +229,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
   '/compose': typeof ComposeRoute
+  '/ios-client-metadata.json': typeof IosClientMetadataDotjsonRoute
   '/manual-listens': typeof ManualListensRoute
   '/me': typeof MeRoute
   '/notifications': typeof NotificationsRoute
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/'
     | '/client-metadata.json'
     | '/compose'
+    | '/ios-client-metadata.json'
     | '/manual-listens'
     | '/me'
     | '/notifications'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/'
     | '/client-metadata.json'
     | '/compose'
+    | '/ios-client-metadata.json'
     | '/manual-listens'
     | '/me'
     | '/notifications'
@@ -303,6 +315,7 @@ export interface FileRouteTypes {
     | '/'
     | '/client-metadata.json'
     | '/compose'
+    | '/ios-client-metadata.json'
     | '/manual-listens'
     | '/me'
     | '/notifications'
@@ -331,6 +344,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClientMetadataDotjsonRoute: typeof ClientMetadataDotjsonRoute
   ComposeRoute: typeof ComposeRoute
+  IosClientMetadataDotjsonRoute: typeof IosClientMetadataDotjsonRoute
   ManualListensRoute: typeof ManualListensRoute
   MeRoute: typeof MeRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -376,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/compose'
       fullPath: '/compose'
       preLoaderRoute: typeof ComposeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ios-client-metadata.json': {
+      id: '/ios-client-metadata.json'
+      path: '/ios-client-metadata.json'
+      fullPath: '/ios-client-metadata.json'
+      preLoaderRoute: typeof IosClientMetadataDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manual-listens': {
@@ -539,6 +560,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientMetadataDotjsonRoute: ClientMetadataDotjsonRoute,
   ComposeRoute: ComposeRoute,
+  IosClientMetadataDotjsonRoute: IosClientMetadataDotjsonRoute,
   ManualListensRoute: ManualListensRoute,
   MeRoute: MeRoute,
   NotificationsRoute: NotificationsRoute,

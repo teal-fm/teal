@@ -20,3 +20,24 @@ export function clientMetadataFor(origin: string): OAuthClientMetadataInput {
     dpop_bound_access_tokens: true,
   };
 }
+
+/**
+ * The native iOS app's client metadata, served at /ios-client-metadata.json. A
+ * native client redirects to a custom scheme made from its client_id's host,
+ * reversed (`sigilyph.teal.fm` → `fm.teal.sigilyph:/oauth/callback`).
+ */
+export function iosClientMetadataFor(origin: string): OAuthClientMetadataInput {
+  const scheme = new URL(origin).hostname.split(".").reverse().join(".");
+  return {
+    client_id: `${origin}/ios-client-metadata.json`,
+    client_name: "teal",
+    client_uri: origin,
+    redirect_uris: [`${scheme}:/oauth/callback`],
+    response_types: ["code"],
+    grant_types: ["authorization_code", "refresh_token"],
+    scope: OAUTH_SCOPE,
+    token_endpoint_auth_method: "none",
+    application_type: "native",
+    dpop_bound_access_tokens: true,
+  };
+}
