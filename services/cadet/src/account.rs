@@ -72,6 +72,26 @@ pub async fn lock_account(tx: &mut Transaction<'_, Postgres>, did: &str) -> anyh
     Ok(())
 }
 
+/// Takes the account lock and reports whether the account may publish. Writers
+/// that index an account's records call this inside their transaction, so a
+/// write that started before a deactivation can't land after its purge.
+pub async fn lock_active_account(
+    tx: &mut Transaction<'_, Postgres>,
+    did: &str,
+) -> anyhow::Result<bool> {
+    lock_account(tx, did).await?;
+    let active = sqlx::query_scalar::<_, bool>(
+        "SELECT COALESCE((SELECT active FROM account_states WHERE did = $1), TRUE)",
+    )
+    .bind(did)
+    .fetch_one(&mut **tx)
+    .await?;
+    if !active {
+        info!("Skipping write for inactive account {did}");
+    }
+    Ok(active)
+}
+
 pub async fn should_ingest_commit(pool: &PgPool, text: &str) -> anyhow::Result<bool> {
     if text.trim().is_empty() {
         return Ok(true);
@@ -234,6 +254,7 @@ async fn delete_social_records(
     delete_by_did(tx, "social_reactions", did).await?;
     delete_by_did(tx, "social_posts", did).await?;
     delete_by_did(tx, "social_follows", did).await?;
+    delete_by_did(tx, "social_follow_records", did).await?;
 
     decrement_subject_counts(tx, &reply_subjects, "reply_count").await?;
     decrement_subject_counts(tx, &like_subjects, "like_count").await?;

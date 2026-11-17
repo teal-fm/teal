@@ -152,6 +152,21 @@ describe("atomic repository submission", () => {
     expect(call.mock.calls.map(([, , body]) => body.writes.length)).toEqual([200, 1]);
   });
 
+  it("reports how many leading records saved when a later batch fails", async () => {
+    const call = jest
+      .fn<ReturnType<ManualListenAgent["call"]>, Parameters<ManualListenAgent["call"]>>()
+      .mockResolvedValueOnce({ data: { results: [] } })
+      .mockRejectedValueOnce(new Error("offline"));
+
+    const agent: ManualListenAgent = { did: "did:plc:test", call };
+    const [record] = buildManualListenRecords(release, [track("1", "33333333-3333-4333-8333-333333333333", "First", 120000)], "now");
+
+    await expect(submitManualListenRecords(agent, Array.from({ length: 250 }, () => record))).rejects.toMatchObject({
+      saved: 200,
+      total: 250,
+    });
+  });
+
   it("sends selected records as one applyWrites transaction", async () => {
     const call = jest.fn(
       async (..._args: [string, unknown, unknown]) => ({

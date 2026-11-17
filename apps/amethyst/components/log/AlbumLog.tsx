@@ -2,22 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { Check, Search } from "lucide-react-native";
-import {
-  buildListenTimeline,
-  buildManualListenRecords,
-  effectiveDurationSeconds,
-  flattenTracks,
-  formatDuration,
-  getMusicBrainzRelease,
-  localDateTimeValue,
-  parseLocalDateTime,
-  releaseArtist,
-  releaseDetails,
-  searchMusicBrainzReleases,
-  submitManualListenRecords,
-  type ListenTimestampMode,
-  type MusicBrainzAlbumRelease,
-} from "@teal/client/manualListens";
+import { buildListenTimeline, buildManualListenRecords, effectiveDurationSeconds, flattenTracks, formatDuration, getMusicBrainzRelease, type ListenTimestampMode, localDateTimeValue, type MusicBrainzAlbumRelease, parseLocalDateTime, PartialSaveError, releaseArtist, releaseDetails, searchMusicBrainzReleases, submitManualListenRecords } from "@teal/client/manualListens";
 import { cn } from "@teal/client/utils";
 import { Button, ButtonRow, Choices, Cover, ErrorNotice, Field, Glass, Heading, Icon, Loading, Notice, Row, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
@@ -117,8 +102,16 @@ export function AlbumLog() {
     try {
       const records = buildManualListenRecords(release, chosen, mode, startDate, new Date());
       setSavedCount(await submitManualListenRecords(agent, records, (writes) => agent.did && retainConfirmedListens(agent.did, writes)));
-    } catch {
-      setError("Your listens didn't save. Try again.");
+    } catch (error) {
+      if (error instanceof PartialSaveError) {
+        // The first `saved` tracks are in the history now; leave only the rest
+        // selected, so trying again doesn't log those twice.
+        const savedKeys = new Set(chosen.slice(0, error.saved).map((track) => track.key));
+        setSelected((current) => new Set([...current].filter((key) => !savedKeys.has(key))));
+        setError(`${error.saved} of ${error.total} listens saved. The rest didn't; try again to save them.`);
+      } else {
+        setError("Your listens didn't save. Try again.");
+      }
     } finally {
       setSaving(false);
     }

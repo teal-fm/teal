@@ -449,6 +449,21 @@ export function buildManualListenRecords(
   );
 }
 
+/**
+ * Some batches saved before one failed. `saved` counts the leading records that
+ * were written, in the order they were passed, so a retry can send only the rest.
+ */
+export class PartialSaveError extends Error {
+  readonly saved: number;
+  readonly total: number;
+
+  constructor(saved: number, total: number) {
+    super(`Saved ${saved} of ${total} listens; the rest didn't save.`);
+    this.saved = saved;
+    this.total = total;
+  }
+}
+
 /** The PDS accepts at most this many writes in one com.atproto.repo.applyWrites call. */
 const MAX_WRITES_PER_CALL = 200;
 
@@ -468,25 +483,29 @@ export async function submitManualListenRecords(
   for (let start = 0; start < records.length; start += MAX_WRITES_PER_CALL) {
     const batch = records.slice(start, start + MAX_WRITES_PER_CALL);
 
-    const response = await agent.call(
-      "com.atproto.repo.applyWrites",
-      {},
-      {
-        repo: agent.did,
-        writes: batch.map((record) => ({
-          $type: "com.atproto.repo.applyWrites#create",
-          collection: PLAY_COLLECTION,
-          value: record,
-        })),
-      },
-    );
+    let response: Awaited<ReturnType<ManualListenAgent["call"]>>;
+
+    try {
+      response = await agent.call(
+        "com.atproto.repo.applyWrites",
+        {},
+        {
+          repo: agent.did,
+          writes: batch.map((record) => ({
+            $type: "com.atproto.repo.applyWrites#create",
+            collection: PLAY_COLLECTION,
+            value: record,
+          })),
+        },
+      );
+    } catch (error) {
+      if (start > 0) throw new PartialSaveError(start, records.length);
+      throw error;
+    }
 
     if (response.success === false) {
-      throw new Error(
-        saved > 0
-          ? `Saved ${saved} listens, but the rest didn't save. Try those again.`
-          : "Could not save these listens. Try again.",
-      );
+      if (start > 0) throw new PartialSaveError(start, records.length);
+      throw new Error("Could not save these listens. Try again.");
     }
 
     const { results } = applyWritesResponseSchema.parse(response.data);

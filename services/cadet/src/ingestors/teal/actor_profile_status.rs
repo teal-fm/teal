@@ -28,6 +28,13 @@ impl ActorProfileStatusIngestor {
         let updated_at = status.updated_at.as_ref().and_then(datetime_to_time);
         let record_json = serde_json::to_value(status)?;
 
+        // Lock the account and skip deactivated ones, so a write that started
+        // before a deactivation can't land after its purge.
+        let mut tx = self.sql.begin().await?;
+        if !crate::account::lock_active_account(&mut tx, did).await? {
+            tx.rollback().await?;
+            return Ok(());
+        }
         sqlx::query(
             r#"
                 INSERT INTO profile_statuses (
@@ -54,8 +61,9 @@ impl ActorProfileStatusIngestor {
         .bind(created_at)
         .bind(updated_at)
         .bind(record_json)
-        .execute(&self.sql)
+        .execute(&mut *tx)
         .await?;
+        tx.commit().await?;
 
         info!("Indexed Teal profile status for {}", did);
         Ok(())

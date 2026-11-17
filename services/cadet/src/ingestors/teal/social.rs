@@ -54,6 +54,12 @@ impl SocialRecordIngestor {
         record: &Value,
     ) -> anyhow::Result<()> {
         let mut tx = self.sql.begin().await?;
+        // Lock the account and skip deactivated ones, so a write that started
+        // before a deactivation (a slow CAR import, say) can't land after its purge.
+        if !crate::account::lock_active_account(&mut tx, did).await? {
+            tx.rollback().await?;
+            return Ok(());
+        }
         let uri = assemble_at_uri(did, self.collection.nsid(), rkey);
 
         self.remove_record_in_tx(&mut tx, &uri).await?;
@@ -288,6 +294,21 @@ async fn insert_follow(
     if subject == did {
         return Err(anyhow!("cannot follow yourself"));
     }
+
+    // Every follow record is kept as a backing record; the pair row below is the
+    // follow itself, and outlives any one record while another remains.
+    sqlx::query(
+        r#"
+            INSERT INTO social_follow_records (uri, did, subject_did)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (uri) DO UPDATE SET subject_did = EXCLUDED.subject_did
+        "#,
+    )
+    .bind(uri)
+    .bind(did)
+    .bind(&subject)
+    .execute(&mut **tx)
+    .await?;
 
     // A repo can hold more than one follow record for the same subject, and a
     // replayed event repeats its URI; either way the follow is already indexed.
@@ -542,10 +563,45 @@ async fn remove_emoji_reaction(
 }
 
 async fn remove_follow(tx: &mut Transaction<'_, Postgres>, uri: &str) -> anyhow::Result<()> {
-    sqlx::query("DELETE FROM social_follows WHERE uri = $1")
-        .bind(uri)
-        .execute(&mut **tx)
-        .await?;
+    let pair = sqlx::query_as::<_, (String, String)>(
+        "DELETE FROM social_follow_records WHERE uri = $1 RETURNING did, subject_did",
+    )
+    .bind(uri)
+    .fetch_optional(&mut **tx)
+    .await?;
+
+    // If another record still backs this follow, point the follow at it instead
+    // of removing it.
+    let remaining = match &pair {
+        Some((did, subject)) => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT uri FROM social_follow_records WHERE did = $1 AND subject_did = $2 ORDER BY indexed_at LIMIT 1",
+            )
+            .bind(did)
+            .bind(subject)
+            .fetch_optional(&mut **tx)
+            .await?
+        }
+        None => None,
+    };
+
+    match remaining {
+        Some(other) => {
+            sqlx::query(
+                "UPDATE social_follows SET uri = $2, rkey = split_part($2, '/', 5) WHERE uri = $1",
+            )
+            .bind(uri)
+            .bind(&other)
+            .execute(&mut **tx)
+            .await?;
+        }
+        None => {
+            sqlx::query("DELETE FROM social_follows WHERE uri = $1")
+                .bind(uri)
+                .execute(&mut **tx)
+                .await?;
+        }
+    }
     cleanup_record_indexes(tx, uri).await
 }
 
@@ -918,5 +974,49 @@ mod tests {
         assert!(validated_emoji("").is_err());
         assert!(validated_emoji("lol").is_err());
         assert!(validated_emoji("🔥 🔥").is_err());
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn a_follow_lasts_until_its_last_backing_record_is_deleted() -> anyhow::Result<()> {
+        use super::{SocialCollection, SocialRecordIngestor};
+
+        let pool = sqlx::PgPool::connect(&std::env::var("DATABASE_URL")?).await?;
+        let follows = SocialRecordIngestor::new(pool.clone(), SocialCollection::Follow);
+        let did = format!("did:plc:follow-test-{}", uuid::Uuid::new_v4().simple());
+        let subject = format!("did:plc:followed-{}", uuid::Uuid::new_v4().simple());
+        let record = json!({ "subject": subject, "createdAt": "2026-11-01T00:00:00Z" });
+
+        follows
+            .insert_record(&did, "3first", "bafyfirst", &record)
+            .await?;
+        follows
+            .insert_record(&did, "3second", "bafysecond", &record)
+            .await?;
+
+        let follow_uri = || {
+            sqlx::query_scalar::<_, String>(
+                "SELECT uri FROM social_follows WHERE did = $1 AND subject_did = $2",
+            )
+            .bind(&did)
+            .bind(&subject)
+            .fetch_optional(&pool)
+        };
+
+        assert!(follow_uri()
+            .await?
+            .is_some_and(|uri| uri.ends_with("/3first")));
+
+        follows.remove_record(&did, "3first").await?;
+        assert!(
+            follow_uri()
+                .await?
+                .is_some_and(|uri| uri.ends_with("/3second")),
+            "the second record still backs the follow"
+        );
+
+        follows.remove_record(&did, "3second").await?;
+        assert_eq!(follow_uri().await?, None);
+        Ok(())
     }
 }

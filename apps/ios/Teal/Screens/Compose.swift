@@ -411,11 +411,19 @@ struct AlbumLog: View {
         let times = MusicBrainz.timeline(chosen, endingNow: endingNow, start: start)
         busy = true
         defer { busy = false }
+        let writes: [[String: Any]] = zip(chosen, times).map { track, time in
+            ["$type": "com.atproto.repo.applyWrites#create", "collection": Collections.play,
+             "value": MusicBrainz.playRecord(MusicBrainz.play(track, on: release), playedTime: time).merging(["$type": Collections.play]) { a, _ in a }]
+        }
+        // The PDS takes at most 200 writes per call. Each batch is saved before the
+        // next, so a failure part-way keeps what saved and leaves only the rest selected.
+        var saved = 0
         do {
-            try await pds.applyWrites(zip(chosen, times).map { track, time in
-                ["$type": "com.atproto.repo.applyWrites#create", "collection": Collections.play,
-                 "value": MusicBrainz.playRecord(MusicBrainz.play(track, on: release), playedTime: time).merging(["$type": Collections.play]) { a, _ in a }]
-            })
+            while saved < writes.count {
+                let batch = Array(writes[saved..<min(saved + 200, writes.count)])
+                try await pds.applyWrites(batch)
+                saved += batch.count
+            }
             message = "\(Format.count(chosen.count, "listen")) saved. \(release.title) is in your history once teal indexes it."
             self.release = nil
             results = nil
@@ -423,7 +431,13 @@ struct AlbumLog: View {
             artist = ""
             session.didWrite()
         } catch {
-            message = "Your listens didn't save. Try again."
+            if saved > 0 {
+                selected.subtract(chosen.prefix(saved).map(\.id))
+                session.didWrite()
+                message = "\(saved) of \(writes.count) listens saved. The rest didn't; try again to save them."
+            } else {
+                message = "Your listens didn't save. Try again."
+            }
         }
     }
 }

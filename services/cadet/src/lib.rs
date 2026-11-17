@@ -4,6 +4,7 @@ pub mod db;
 pub mod identity;
 pub mod ingestion_retry;
 pub mod ingestors;
+pub mod net;
 pub mod redis_client;
 pub mod refresh;
 pub mod resolve;

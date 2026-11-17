@@ -89,6 +89,13 @@ impl ActorProfileIngestor {
             )?),
             None => None,
         };
+        // Lock the account and skip deactivated ones, so a write that started
+        // before a deactivation can't land after its purge.
+        let mut tx = self.sql.begin().await?;
+        if !crate::account::lock_active_account(&mut tx, did).await? {
+            tx.rollback().await?;
+            return Ok(());
+        }
         sqlx::query(
             r#"
                 INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, stats_default_period, created_at, favorites)
@@ -115,8 +122,9 @@ impl ActorProfileIngestor {
         .bind(stats_default_period)
         .bind(time_datetime)
         .bind(favorites)
-        .execute(&self.sql)
+        .execute(&mut *tx)
         .await?;
+        tx.commit().await?;
 
         info!("Indexed Teal profile for {}", did);
         Ok(())

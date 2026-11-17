@@ -27,6 +27,13 @@ impl ActorStatusIngestor {
         let record_json = serde_json::to_value(status)?;
         let (status_time, expires_at) = status_times(&status.time, status.expiry.as_ref());
 
+        // Lock the account and skip deactivated ones, so a write that started
+        // before a deactivation can't land after its purge.
+        let mut tx = self.sql.begin().await?;
+        if !crate::account::lock_active_account(&mut tx, did).await? {
+            tx.rollback().await?;
+            return Ok(());
+        }
         sqlx::query(
             r#"
                 INSERT INTO statii (uri, did, rkey, cid, record, status_time, expires_at)
@@ -46,8 +53,9 @@ impl ActorStatusIngestor {
         .bind(record_json)
         .bind(status_time)
         .bind(expires_at)
-        .execute(&self.sql)
+        .execute(&mut *tx)
         .await?;
+        tx.commit().await?;
 
         Ok(())
     }

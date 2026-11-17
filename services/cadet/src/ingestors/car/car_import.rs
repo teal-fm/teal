@@ -193,7 +193,7 @@ impl CarImportIngestor {
             .map_err(|e| anyhow!("Failed to re-import CAR for data access: {}", e))?;
 
         // Extract all records from the MST
-        let records = self
+        let (records, extraction_failures) = self
             .extract_records_from_mst(&mst, &data_importer, did)
             .await?;
         let extracted_count = records.len();
@@ -232,8 +232,8 @@ impl CarImportIngestor {
 
         // Writes are upserts, so a failed import can be retried as a whole.
         anyhow::ensure!(
-            failed_count == 0,
-            "{failed_count} of {total} records failed to import for {import_id}"
+            failed_count == 0 && extraction_failures == 0,
+            "{failed_count} of {total} records failed to import and {extraction_failures} could not be read from the repo, for {import_id}"
         );
 
         Ok(())
@@ -245,8 +245,11 @@ impl CarImportIngestor {
         mst: &Mst,
         car_importer: &CarImporter,
         _did: &str,
-    ) -> Result<Vec<ExtractedRecord>> {
+    ) -> Result<(Vec<ExtractedRecord>, usize)> {
         let mut records = Vec::new();
+        // Records the repo lists but whose data is missing or unreadable; the
+        // import must not count as complete while any are skipped.
+        let mut failures = 0_usize;
 
         // Use the MST iterator to traverse all entries
         let mut stream = mst.iter().into_stream();
@@ -271,9 +274,11 @@ impl CarImportIngestor {
                                     });
                                 }
                                 Ok(None) => {
+                                    failures += 1;
                                     warn!("   ❌ No data found for record CID: {}", record_cid);
                                 }
                                 Err(e) => {
+                                    failures += 1;
                                     warn!(
                                         "   ❌ Failed to get record data for {}: {}",
                                         record_cid, e
@@ -281,18 +286,20 @@ impl CarImportIngestor {
                                 }
                             }
                         } else {
+                            failures += 1;
                             warn!("   ❌ Failed to parse Teal key: {}", key);
                         }
                     }
                 }
                 Err(e) => {
+                    failures += 1;
                     warn!("Error iterating MST: {}", e);
                     // Continue with other entries
                 }
             }
         }
 
-        Ok(records)
+        Ok((records, failures))
     }
 
     /// Get record data from the CAR importer using a CID
@@ -491,7 +498,12 @@ impl CarImportIngestor {
     }
 
     /// Process a profile record using the existing ActorProfileIngestor
-    async fn process_profile_record(&self, data: &Value, did: &str, _rkey: &str) -> Result<()> {
+    async fn process_profile_record(&self, data: &Value, did: &str, rkey: &str) -> Result<()> {
+        // As in live ingestion, only the "self" record is the account's profile.
+        if rkey != "self" {
+            info!("Skipping profile record with rkey {rkey} for {did}");
+            return Ok(());
+        }
         let profile_record = super::super::teal::actor_profile::deserialize_profile(data)?;
 
         let profile_ingestor =
@@ -674,7 +686,7 @@ impl CarImportIngestor {
             ));
         };
 
-        Ok(reqwest::get(&url).await?.error_for_status()?.json().await?)
+        crate::net::get_public_json(&url).await
     }
 
     /// Resolve DID to PDS URL
@@ -701,17 +713,11 @@ impl CarImportIngestor {
         if base_url.scheme() != "https" {
             return Err(anyhow!("PDS endpoint must use HTTPS"));
         }
-        let host = base_url
-            .host_str()
-            .ok_or_else(|| anyhow!("PDS endpoint has no host"))?;
-        validate_public_host(host).await?;
-
         let mut url = base_url.join("/xrpc/com.atproto.sync.getRepo")?;
         url.query_pairs_mut().append_pair("did", did);
-        let client = reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .timeout(std::time::Duration::from_secs(60))
-            .build()?;
+        // Pinned to the public addresses checked now, so a second DNS answer
+        // can't point the download at a private address.
+        let client = crate::net::public_client(&url, std::time::Duration::from_secs(60)).await?;
         let response = client.get(url).send().await?;
 
         if !response.status().is_success() {
@@ -783,52 +789,6 @@ impl CarImportIngestor {
             Ipld::Link(cid) => Ok(Value::String(cid.to_string())),
         }
     }
-}
-
-async fn validate_public_host(host: &str) -> Result<()> {
-    if host.eq_ignore_ascii_case("localhost") || host.ends_with(".localhost") {
-        return Err(anyhow!("PDS host is not publicly routable"));
-    }
-
-    let addresses = tokio::net::lookup_host((host, 443)).await?;
-    let mut found = false;
-    for address in addresses {
-        found = true;
-        if is_private_ip(address.ip()) {
-            return Err(anyhow!("PDS host resolves to a private address"));
-        }
-    }
-    if !found {
-        return Err(anyhow!("PDS host did not resolve to an address"));
-    }
-    Ok(())
-}
-
-fn is_private_ip(ip: std::net::IpAddr) -> bool {
-    match ip {
-        std::net::IpAddr::V4(ip) => is_private_ipv4(ip),
-        std::net::IpAddr::V6(ip) => {
-            // ::ffff:a.b.c.d reaches the IPv4 address it embeds.
-            ip.to_ipv4_mapped().is_some_and(is_private_ipv4)
-                || ip.is_loopback()
-                || ip.is_unique_local()
-                || ip.is_unicast_link_local()
-                || ip.is_unspecified()
-                || ip.is_multicast()
-        }
-    }
-}
-
-fn is_private_ipv4(ip: std::net::Ipv4Addr) -> bool {
-    let [a, b, ..] = ip.octets();
-    ip.is_private()
-        || ip.is_loopback()
-        || ip.is_link_local()
-        || ip.is_unspecified()
-        || ip.is_multicast()
-        || ip.is_broadcast()
-        // Carrier-grade NAT (100.64.0.0/10) is not publicly routable either.
-        || (a == 100 && (64..128).contains(&b))
 }
 
 #[async_trait]

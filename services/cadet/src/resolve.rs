@@ -83,23 +83,10 @@ pub async fn resolve_handle(
 async fn get_did_doc(did: &str) -> Result<DidDocument> {
     let (method, _) = did_parts(did).ok_or_else(|| anyhow!("Invalid DID: {did}"))?;
     match method {
-        "plc" => {
-            let res: DidDocument = reqwest::get(format!("https://plc.directory/{}", did))
-                .await?
-                .error_for_status()?
-                .json()
-                .await?;
-            Ok(res)
-        }
-        "web" => {
-            let res = reqwest::get(did_web_document_url(did)?)
-                .await?
-                .error_for_status()?
-                .json()
-                .await?;
-
-            Ok(res)
-        }
+        // A did:web document can live on any host, so both go through the
+        // public-address, no-redirect client.
+        "plc" => crate::net::get_public_json(&format!("https://plc.directory/{did}")).await,
+        "web" => crate::net::get_public_json(&did_web_document_url(did)?).await,
         _ => Err(anyhow!("Unsupported DID method: {method}")),
     }
 }
