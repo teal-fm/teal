@@ -56,7 +56,7 @@ struct ExploreScreen: View {
         }
         .ambientScreen()
         .navigationTitle("Explore")
-        .searchable(text: $query, prompt: "Search people and music")
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search people and music")
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
         .task(id: term) { await search() }
@@ -160,13 +160,16 @@ struct ExploreScreen: View {
             async let bluesky: [MiniProfile]? = try? Aqua.searchBlueskyActors(term, limit: 12)
             let (found, people) = try await (teal, bluesky)
             if Task.isCancelled { return }
-            results = Results(
+            let next = Results(
                 people: Self.mergePeople(teal: found.users, bluesky: people ?? []),
                 songs: found.songs,
                 artists: found.artists,
                 albums: found.albums,
                 peoplePartial: people == nil
             )
+            // A handle finds people, not songs: open the first category that has results.
+            if next.count(kind) == 0, let found = Kind.allCases.first(where: { next.count($0) > 0 }) { kind = found }
+            results = next
             failed = false
         } catch {
             if !Task.isCancelled { failed = true }

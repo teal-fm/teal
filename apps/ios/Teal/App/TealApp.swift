@@ -31,7 +31,7 @@ struct RootView: View {
             Tab("Today", systemImage: "house", value: AppTab.today) {
                 stack(.today) { TodayScreen() }
             }
-            Tab("Explore", systemImage: "safari", value: AppTab.explore, role: .search) {
+            Tab("Explore", systemImage: "safari", value: AppTab.explore) {
                 stack(.explore) { ExploreScreen() }
             }
             Tab("Activity", systemImage: "bell", value: AppTab.activity) {
