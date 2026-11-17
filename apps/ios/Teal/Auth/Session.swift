@@ -99,7 +99,9 @@ final class PDSClient {
         do {
             try await task.value
         } catch let error as OAuth.Failure {
-            // A refresh the server refuses means the session is over.
+            // A refresh the server refuses means the session is over. An outage,
+            // rate limit, or dropped connection keeps it for the next attempt.
+            if case .serverUnavailable = error { throw error }
             onChange(nil)
             throw error
         }
@@ -217,6 +219,10 @@ final class Session {
 
     var viewer: String? { pds?.did }
 
+    /// Bumped whenever the signed-in client is replaced or dropped, so a refresh
+    /// that finishes after sign-out can't write its tokens back to the Keychain.
+    private var generation = 0
+
     func restore() {
         guard status == .restoring else { return }
         if let stored = Keychain.load(), let client = makeClient(stored) {
@@ -230,17 +236,21 @@ final class Session {
     }
 
     private func makeClient(_ stored: StoredSession) -> PDSClient? {
-        PDSClient(stored: stored) { [weak self] next in
+        generation += 1
+        let owner = generation
+        return PDSClient(stored: stored) { [weak self] next in
+            guard let self, self.generation == owner else { return }
             if let next {
                 Keychain.save(next)
             } else {
                 Keychain.clear()
-                self?.ended()
+                self.ended()
             }
         }
     }
 
     private func ended() {
+        generation += 1
         pds = nil
         profile = nil
         bluesky = nil

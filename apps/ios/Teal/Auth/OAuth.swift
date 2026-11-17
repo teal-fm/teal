@@ -21,6 +21,8 @@ enum OAuth {
         case handleNotFound
         case noServer
         case serverRejected(String)
+        /// The server failed or asked us to slow down; the grant itself may still be good.
+        case serverUnavailable(Int)
         case cancelled
         case mismatch(String)
 
@@ -29,6 +31,7 @@ enum OAuth {
             case .handleNotFound: "That handle didn't resolve to an account. Check the spelling."
             case .noServer: "Couldn't find the account's server."
             case let .serverRejected(message): "The server said no: \(message)"
+            case let .serverUnavailable(status): "The account server isn't responding (\(status)). Try again shortly."
             case .cancelled: "Sign-in was cancelled."
             case let .mismatch(what): "Sign-in didn't match the account you asked for (\(what))."
             }
@@ -136,6 +139,7 @@ enum OAuth {
                (try? JSONDecoder().decode([String: String].self, from: data))?["error"] == "use_dpop_nonce" {
                 continue
             }
+            if http.statusCode == 429 || http.statusCode >= 500 { throw Failure.serverUnavailable(http.statusCode) }
             guard (200..<300).contains(http.statusCode) else {
                 let body = (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
                 throw Failure.serverRejected(body["error_description"] ?? body["error"] ?? "HTTP \(http.statusCode)")

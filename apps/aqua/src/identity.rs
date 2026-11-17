@@ -407,10 +407,15 @@ impl ActorResolver {
             .get("favorites")
             .and_then(Value::as_array)
             .map(|items| Value::Array(items.iter().take(4).cloned().collect()));
+        // Take Cadet's per-account lock, and write nothing for a deactivated
+        // account, so a fetch that started before a purge can't recreate it.
+        let mut tx = self.db.begin().await?;
+        lock_account(&mut tx, did).await?;
         sqlx::query(
             r#"
                 INSERT INTO profiles (did, handle, display_name, description, description_facets, avatar, banner, stats_default_period, created_at, favorites)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+                WHERE COALESCE((SELECT active FROM account_states WHERE did = $1), TRUE)
                 ON CONFLICT (did) DO UPDATE SET
                     handle = COALESCE(EXCLUDED.handle, profiles.handle),
                     display_name = EXCLUDED.display_name,
@@ -436,25 +441,35 @@ impl ActorResolver {
         .bind(string_field(record, "statsDefaultPeriod"))
         .bind(created_at)
         .bind(favorites)
-        .execute(&self.db)
+        .execute(&mut *tx)
         .await?;
+        tx.commit().await?;
         Ok(())
     }
 
     /// Keeps a handle the way identity events do, without touching a teal profile's fields.
     async fn remember_handle(&self, did: &str, handle: &str) {
-        let result = sqlx::query(
-            "INSERT INTO profiles (did, handle) VALUES ($1, $2)
+        if let Err(error) = self.store_handle(did, handle).await {
+            warn!("Couldn't store the handle for {did}: {error:#}");
+        }
+    }
+
+    async fn store_handle(&self, did: &str, handle: &str) -> anyhow::Result<()> {
+        let mut tx = self.db.begin().await?;
+        lock_account(&mut tx, did).await?;
+        sqlx::query(
+            "INSERT INTO profiles (did, handle)
+             SELECT $1, $2
+             WHERE COALESCE((SELECT active FROM account_states WHERE did = $1), TRUE)
              ON CONFLICT (did) DO UPDATE SET handle = EXCLUDED.handle
              WHERE profiles.handle IS NULL",
         )
         .bind(did)
         .bind(handle)
-        .execute(&self.db)
-        .await;
-        if let Err(error) = result {
-            warn!("Couldn't store the handle for {did}: {error:#}");
-        }
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        Ok(())
     }
 
     /// Bluesky's profile, or `None` when Bluesky doesn't know the account.
@@ -616,6 +631,19 @@ fn pds_endpoint(doc: &Value) -> Option<String> {
     })
 }
 
+/// Cadet's per-account advisory lock (services/cadet/src/account.rs), so these
+/// writes are serialized with account lifecycle events for the same DID.
+async fn lock_account(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    did: &str,
+) -> anyhow::Result<()> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
+        .bind(did)
+        .execute(&mut **tx)
+        .await?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -685,3 +713,4 @@ mod tests {
         assert_eq!(string_field(&profile, "handle").as_deref(), Some("alice.test"));
     }
 }
+

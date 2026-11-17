@@ -64,15 +64,10 @@ async fn consume_connection(pool: &PgPool, endpoint: &str, cursor: Option<u64>) 
             _ => continue,
         };
 
-        if let Err(error) = process_event(pool, &event).await {
-            error!(
-                %error,
-                did = %event.did,
-                cursor = event.cursor,
-                "Failed to process Jetstream v2 event"
-            );
-            continue;
-        }
+        // A failed event must not be skipped: saving a later cursor would make
+        // the loss permanent. Retry briefly, then drop the connection so the
+        // next one resumes from the last saved cursor and replays this event.
+        process_with_retry(pool, &event).await?;
 
         if event.kind != "info"
             && let Err(error) = db::save_cursor(pool, event.cursor).await
@@ -86,6 +81,35 @@ async fn consume_connection(pool: &PgPool, endpoint: &str, cursor: Option<u64>) 
         }
     }
 
+    Ok(())
+}
+
+const PROCESS_ATTEMPTS: u32 = 3;
+
+async fn process_with_retry(pool: &PgPool, event: &JetstreamEvent) -> Result<()> {
+    let mut delay = Duration::from_millis(250);
+    for attempt in 1..=PROCESS_ATTEMPTS {
+        match process_event(pool, event).await {
+            Ok(()) => return Ok(()),
+            Err(error) if attempt < PROCESS_ATTEMPTS => {
+                warn!(
+                    %error,
+                    did = %event.did,
+                    cursor = event.cursor,
+                    attempt,
+                    "Retrying Jetstream v2 event"
+                );
+                tokio::time::sleep(delay).await;
+                delay *= 4;
+            }
+            Err(error) => {
+                return Err(error.context(format!(
+                    "processing event at cursor {} for {}",
+                    event.cursor, event.did
+                )));
+            }
+        }
+    }
     Ok(())
 }
 
