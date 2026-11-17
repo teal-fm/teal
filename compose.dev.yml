@@ -77,7 +77,7 @@ services:
   satellite:
     image: ghcr.io/espeon/satellite
     ports:
-      - "3132:3000"
+      - "3132:3001"
     env_file:
       - .env
     environment:

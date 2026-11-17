@@ -33,6 +33,9 @@ print_error() {
 
 # Get list of staged files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+# Files that already had unstaged edits before formatting. Re-staging them would
+# commit hunks the author left out, so they are never re-added below.
+PARTIALLY_STAGED=$(git diff --name-only)
 
 if [ -z "$STAGED_FILES" ]; then
     print_warning "No staged files found"
@@ -177,8 +180,12 @@ for file in $STAGED_FILES; do
     if [ -f "$file" ]; then
         # Check if file was modified by formatters
         if [ -n "$(git diff "$file")" ]; then
-            FORMATTED_FILES="$FORMATTED_FILES $file"
-            git add "$file"
+            if printf '%s\n' "$PARTIALLY_STAGED" | grep -qxF "$file"; then
+                print_warning "$file has unstaged changes, so formatting was not re-staged; stage it yourself"
+            else
+                FORMATTED_FILES="$FORMATTED_FILES $file"
+                git add "$file"
+            fi
         fi
     fi
 done

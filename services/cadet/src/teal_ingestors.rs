@@ -18,15 +18,18 @@ pub fn build_ingestors_with_retry(
 ) -> HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> {
     let mut ingestors: HashMap<String, Box<dyn LexiconIngestor + Send + Sync>> = HashMap::new();
 
-    let play_ingestor: Box<dyn LexiconIngestor + Send + Sync> = match retry_store {
-        Some(retry_store) => Box::new(DurableRetryPlayIngestor::new(pool.clone(), retry_store)),
-        None => Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
-    };
-    ingestors.insert("fm.teal.feed.play".to_string(), play_ingestor);
-    ingestors.insert(
-        "fm.teal.alpha.feed.play".to_string(),
-        Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
-    );
+    // Both play namespaces get durable retries, so a transient failure on a
+    // legacy alpha play is replayed rather than lost as the cursor advances.
+    for collection in ["fm.teal.feed.play", "fm.teal.alpha.feed.play"] {
+        let play_ingestor: Box<dyn LexiconIngestor + Send + Sync> = match &retry_store {
+            Some(retry_store) => Box::new(DurableRetryPlayIngestor::new(
+                pool.clone(),
+                retry_store.clone(),
+            )),
+            None => Box::new(ingestors::teal::feed_play::PlayIngestor::new(pool.clone())),
+        };
+        ingestors.insert(collection.to_string(), play_ingestor);
+    }
 
     ingestors.insert(
         "fm.teal.actor.profile".to_string(),

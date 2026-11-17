@@ -206,7 +206,9 @@ impl CarImportIngestor {
         );
 
         // Process each record through the appropriate ingestor
+        let total = records.len();
         let mut processed_count = 0_usize;
+        let mut failed_count = 0_usize;
         for record in records {
             match self.process_extracted_record(&record, import_id, did).await {
                 Ok(()) => {
@@ -216,6 +218,7 @@ impl CarImportIngestor {
                     }
                 }
                 Err(e) => {
+                    failed_count += 1;
                     warn!("Failed to process record {}: {}", record.rkey, e);
                     // Continue processing other records
                 }
@@ -225,6 +228,12 @@ impl CarImportIngestor {
         info!(
             "Completed CAR file processing: {} records processed for import {}",
             processed_count, import_id
+        );
+
+        // Writes are upserts, so a failed import can be retried as a whole.
+        anyhow::ensure!(
+            failed_count == 0,
+            "{failed_count} of {total} records failed to import for {import_id}"
         );
 
         Ok(())
@@ -390,6 +399,7 @@ impl CarImportIngestor {
             Some("fm.teal.feed.social.post")
             | Some("fm.teal.feed.social.like")
             | Some("fm.teal.feed.social.repost")
+            | Some("fm.teal.feed.social.reaction")
             | Some("fm.teal.graph.follow")
             | Some("fm.teal.feed.social.playlist")
             | Some("fm.teal.feed.social.playlistItem")
@@ -575,6 +585,9 @@ impl CarImportIngestor {
             }
             "fm.teal.feed.social.playlistItem" | "fm.teal.alpha.feed.social.playlistItem" => {
                 super::super::teal::social::SocialCollection::PlaylistItem
+            }
+            "fm.teal.feed.social.reaction" | "fm.teal.alpha.feed.social.reaction" => {
+                super::super::teal::social::SocialCollection::Reaction
             }
             "fm.teal.feed.social.badge" | "fm.teal.alpha.feed.social.badge" => {
                 super::super::teal::social::SocialCollection::Badge

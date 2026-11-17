@@ -1371,6 +1371,10 @@ impl PlayIngestor {
             .music_service_uri
             .as_ref()
             .map(|uri| uri.as_str().to_string());
+        let origin_url = play_record
+            .origin_uri
+            .as_ref()
+            .map(|uri| uri.as_str().to_string());
 
         // Keep the account lock through the final play write and relationship
         // updates. Account deactivation uses the same lock while it marks the
@@ -1409,15 +1413,16 @@ impl PlayIngestor {
                     uri, cid, did, rkey, isrc, duration, track_name, played_time,
                     processed_time, release_mbid, release_name, recording_mbid,
                     submission_client_agent, music_service_base_domain, artist_names_raw,
-                    track_discriminant, release_discriminant
+                    track_discriminant, release_discriminant, origin_url
                 )
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8,
-                    NOW(), $9, $10, $11, $12, $13, $14, $15, $16
+                    NOW(), $9, $10, $11, $12, $13, $14, $15, $16, $17
                 WHERE COALESCE(
                     (SELECT active FROM account_states WHERE did = $3),
                     TRUE
                 )
                 ON CONFLICT(uri) DO UPDATE SET
+                    cid = EXCLUDED.cid,
                     isrc = EXCLUDED.isrc,
                     duration = EXCLUDED.duration,
                     track_name = EXCLUDED.track_name,
@@ -1430,7 +1435,8 @@ impl PlayIngestor {
                     music_service_base_domain = EXCLUDED.music_service_base_domain,
                     artist_names_raw = EXCLUDED.artist_names_raw,
                     track_discriminant = EXCLUDED.track_discriminant,
-                    release_discriminant = EXCLUDED.release_discriminant
+                    release_discriminant = EXCLUDED.release_discriminant,
+                    origin_url = EXCLUDED.origin_url
             "#,
         )
         .bind(uri)
@@ -1449,6 +1455,7 @@ impl PlayIngestor {
         .bind(artist_names_json)
         .bind(track_discriminant)
         .bind(release_discriminant)
+        .bind(origin_url)
         .execute(&mut *tx)
         .await?
         .rows_affected();

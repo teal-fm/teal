@@ -17,7 +17,7 @@ fn censor_url(url: &str) -> String {
     }
 }
 
-pub async fn init_pool() -> anyhow::Result<PgPool, anyhow::Error> {
+pub async fn init_pool() -> anyhow::Result<PgPool> {
     info!(
             target: "db",
         "Connecting to the database at url {}",
@@ -30,11 +30,5 @@ pub async fn init_pool() -> anyhow::Result<PgPool, anyhow::Error> {
         .connect(&env::var("DATABASE_URL")?)
         .await?;
     info!(target: "db", "Connected to the database!");
-
-    // run migrations
-    info!(target: "db", "Running migrations...");
-    //sqlx::migrate!().run(&pool).await?;
-
-    info!(target: "db", "Migrations complete!");
     Ok(pool)
 }
