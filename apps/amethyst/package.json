@@ -5,9 +5,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios",
-    "build": "expo export --output-dir ./build --platform all",
-    "build:ios": "expo export --output-dir ./build --platform ios --clear",
+    "build": "expo export --output-dir ./build --platform android",
+    "build:android": "expo export --output-dir ./build --platform android --clear",
     "lexgen": "pnpm --filter=@teal/lexicons lex:gen",
     "prebuild:native": "CI=1 EXPO_NO_TELEMETRY=1 expo prebuild --no-install",
     "install": ":"

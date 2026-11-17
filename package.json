@@ -8,6 +8,8 @@
     "dev:proxy": "./scripts/dev-local.sh --proxy",
     "dev:apps": "turbo dev --env-mode=loose --filter=@teal/web --filter=@repo/aqua --filter=@repo/cadet --filter=@repo/satellite",
     "dev:native": "pnpm --filter=@teal/amethyst start",
+    "ios:project": "cd apps/ios && xcodegen generate",
+    "dev:ios": "cd apps/ios && xcodegen generate && open Teal.xcodeproj",
     "build": "pnpm turbo run build --filter='./packages/*' --filter='./apps/*'",
     "build:rust": "turbo run build:rust",
     "backfill": "./scripts/backfill-tap.sh",

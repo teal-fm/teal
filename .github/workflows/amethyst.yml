@@ -53,9 +53,9 @@ jobs:
       - name: Run shared client tests
         run: pnpm --filter=@teal/client test
 
-  build-ios:
-    name: Build iOS
-    runs-on: macos-latest
+  build-android:
+    name: Build Android bundle
+    runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
@@ -73,12 +73,12 @@ jobs:
       - name: Setup Expo CLI
         run: npm install -g @expo/cli
 
-      - name: Build iOS
-        run: pnpm turbo build:ios --filter=@teal/amethyst
+      - name: Build Android bundle
+        run: pnpm turbo build:android --filter=@teal/amethyst
 
-      - name: Upload iOS build artifacts
+      - name: Upload Android build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: amethyst-ios-build
+          name: amethyst-android-build
           path: apps/amethyst/build/
           retention-days: 7

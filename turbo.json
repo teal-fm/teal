@@ -72,7 +72,7 @@
       "persistent": true,
       "cache": false
     },
-    "@teal/amethyst#build:ios": {
+    "@teal/amethyst#build:android": {
       "dependsOn": ["@teal/lexicons#lex:gen"],
       "outputs": ["./build/**"]
     }

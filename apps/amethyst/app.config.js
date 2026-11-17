@@ -12,17 +12,13 @@ export default () => {
       orientation: "portrait",
       icon: "./assets/images/icon.png",
       scheme: "fm.teal.amethyst",
-      // The web app is apps/web; this one ships to iOS and Android only.
-      platforms: ["ios", "android"],
+      // Android only: the web app is apps/web and the iOS app is apps/ios (SwiftUI).
+      platforms: ["android"],
       userInterfaceStyle: "automatic",
       splash: {
         image: "./assets/images/splash-icon.png",
         resizeMode: "contain",
         backgroundColor: "#ffffff",
-      },
-      ios: {
-        supportsTablet: true,
-        bundleIdentifier: "fm.teal.amethyst",
       },
       android: {
         package: "fm.teal.amethyst",
@@ -45,15 +41,7 @@ export default () => {
             useSQLCipher: true,
           },
         ],
-        [
-          "expo-build-properties",
-          {
-            ios: {
-              deploymentTarget: "16.4",
-              buildReactNativeFromSource: true,
-            },
-          },
-        ],
+        "expo-build-properties",
         "expo-router",
         "expo-web-browser",
         "expo-splash-screen",
