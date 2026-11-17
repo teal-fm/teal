@@ -22,17 +22,23 @@ not checked in. Run `pnpm ios:project` after adding or removing files.
 
 ## Which server
 
-`TEAL_ORIGIN` (a build setting, default `https://sigilyph.teal.fm`) is the public
-origin that serves `/xrpc` and the OAuth client metadata. A `TEAL_ORIGIN`
-environment variable in the run scheme overrides it, for example
-`http://localhost:8081` to browse a local stack in the simulator.
+`TEAL_ORIGIN` is the origin that serves `/xrpc` and the OAuth client metadata.
+Debug builds use the local stack (`pnpm dev`, `http://localhost:8081`); Release
+builds use `https://sigilyph.teal.fm` (see [`Config/`](Config)). A gitignored
+`Config/Local.xcconfig` overrides it for Debug, and a `TEAL_ORIGIN` environment
+variable in the run scheme overrides both.
 
-OAuth needs a public HTTPS origin. The client ID is
-`<origin>/ios-client-metadata.json` (served by `apps/web`), and the redirect is
-the origin's host reversed as a custom scheme:
-`sigilyph.teal.fm` → `fm.teal.sigilyph:/oauth/callback`. To sign in against a
-dev stack, run `pnpm dev --proxy` (or a quick tunnel with `DEV_PUBLIC_ORIGIN`)
-and build with `TEAL_ORIGIN` set to that origin.
+OAuth needs a public HTTPS origin on the default port; PDSes reject client IDs
+with a custom port. The client ID is `<origin>/ios-client-metadata.json` (served
+by `apps/web`), and the redirect is the origin's host reversed as a custom
+scheme: `sigilyph.teal.fm` → `fm.teal.sigilyph:/oauth/callback`. To sign in
+against a dev stack, expose the edge publicly, for example with Tailscale Funnel:
+
+```bash
+tailscale funnel --bg --https=443 http://127.0.0.1:8081
+DEV_PUBLIC_ORIGIN=https://<machine>.<tailnet>.ts.net pnpm dev
+echo 'TEAL_ORIGIN = https:/$()/<machine>.<tailnet>.ts.net' > apps/ios/Config/Local.xcconfig
+```
 
 ## Layout
 

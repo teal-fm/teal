@@ -1,0 +1,7 @@
+// Debug builds read from the local stack (`pnpm dev`), which the simulator reaches
+// on localhost. `//` starts a comment in xcconfig files, hence `$()`.
+TEAL_ORIGIN = http:/$()/localhost:8081
+
+// Config/Local.xcconfig (gitignored) can point at a tunnel instead, which sign-in
+// needs: TEAL_ORIGIN = https:/$()/<tunnel-host>
+#include? "Local.xcconfig"

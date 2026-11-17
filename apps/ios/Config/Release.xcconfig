@@ -1,0 +1,2 @@
+// The public origin that serves /xrpc and the OAuth client metadata.
+TEAL_ORIGIN = https:/$()/sigilyph.teal.fm

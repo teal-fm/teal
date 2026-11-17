@@ -14,8 +14,10 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: ""
-    # The public origin that serves /xrpc and the OAuth client metadata.
-    TEAL_ORIGIN: https://sigilyph.teal.fm
+# TEAL_ORIGIN, the server the app talks to, is set per configuration in Config/.
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
 targets:
   Teal:
     type: application
