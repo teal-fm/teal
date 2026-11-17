@@ -1,4 +1,5 @@
 import type { OAuthClientMetadataInput } from "@atproto/oauth-client-browser";
+import { nativeRedirectUri } from "@teal/client/atp/nativeOAuth";
 
 export const OAUTH_SCOPE = "atproto transition:generic";
 
@@ -21,19 +22,13 @@ export function clientMetadataFor(origin: string): OAuthClientMetadataInput {
   };
 }
 
-/**
- * The native iOS app's client metadata, served at /ios-client-metadata.json. A
- * native client redirects to a custom scheme made from its client_id's host,
- * reversed (`sigilyph.teal.fm` → `fm.teal.sigilyph:/oauth/callback`).
- */
-export function iosClientMetadataFor(origin: string): OAuthClientMetadataInput {
-  const scheme = new URL(origin).hostname.split(".").reverse().join(".");
-
+/** Client metadata for a native app whose client_id is `${origin}${documentPath}`. */
+function nativeClientMetadataFor(origin: string, documentPath: string): OAuthClientMetadataInput {
   return {
-    client_id: `${origin}/ios-client-metadata.json`,
+    client_id: `${origin}${documentPath}`,
     client_name: "teal",
     client_uri: origin,
-    redirect_uris: [`${scheme}:/oauth/callback`],
+    redirect_uris: [nativeRedirectUri(origin)],
     response_types: ["code"],
     grant_types: ["authorization_code", "refresh_token"],
     scope: OAUTH_SCOPE,
@@ -41,4 +36,14 @@ export function iosClientMetadataFor(origin: string): OAuthClientMetadataInput {
     application_type: "native",
     dpop_bound_access_tokens: true,
   };
+}
+
+/** The native iOS app's client metadata, served at /ios-client-metadata.json. */
+export function iosClientMetadataFor(origin: string) {
+  return nativeClientMetadataFor(origin, "/ios-client-metadata.json");
+}
+
+/** The Android app's client metadata, served at /android-client-metadata.json. */
+export function androidClientMetadataFor(origin: string) {
+  return nativeClientMetadataFor(origin, "/android-client-metadata.json");
 }

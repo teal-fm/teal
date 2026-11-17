@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AndroidClientMetadataDotjsonRouteImport } from './routes/android-client-metadata[.]json'
 import { Route as ClientMetadataDotjsonRouteImport } from './routes/client-metadata[.]json'
 import { Route as ComposeRouteImport } from './routes/compose'
 import { Route as IosClientMetadataDotjsonRouteImport } from './routes/ios-client-metadata[.]json'
@@ -41,6 +42,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AndroidClientMetadataDotjsonRoute =
+  AndroidClientMetadataDotjsonRouteImport.update({
+    id: '/android-client-metadata.json',
+    path: '/android-client-metadata.json',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ClientMetadataDotjsonRoute = ClientMetadataDotjsonRouteImport.update({
   id: '/client-metadata.json',
   path: '/client-metadata.json',
@@ -170,6 +177,7 @@ const ProfileHandleStatsKindRoute = ProfileHandleStatsKindRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/android-client-metadata.json': typeof AndroidClientMetadataDotjsonRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
   '/compose': typeof ComposeRoute
   '/ios-client-metadata.json': typeof IosClientMetadataDotjsonRoute
@@ -198,6 +206,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/android-client-metadata.json': typeof AndroidClientMetadataDotjsonRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
   '/compose': typeof ComposeRoute
   '/ios-client-metadata.json': typeof IosClientMetadataDotjsonRoute
@@ -227,6 +236,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/android-client-metadata.json': typeof AndroidClientMetadataDotjsonRoute
   '/client-metadata.json': typeof ClientMetadataDotjsonRoute
   '/compose': typeof ComposeRoute
   '/ios-client-metadata.json': typeof IosClientMetadataDotjsonRoute
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/android-client-metadata.json'
     | '/client-metadata.json'
     | '/compose'
     | '/ios-client-metadata.json'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/android-client-metadata.json'
     | '/client-metadata.json'
     | '/compose'
     | '/ios-client-metadata.json'
@@ -313,6 +325,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/android-client-metadata.json'
     | '/client-metadata.json'
     | '/compose'
     | '/ios-client-metadata.json'
@@ -342,6 +355,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AndroidClientMetadataDotjsonRoute: typeof AndroidClientMetadataDotjsonRoute
   ClientMetadataDotjsonRoute: typeof ClientMetadataDotjsonRoute
   ComposeRoute: typeof ComposeRoute
   IosClientMetadataDotjsonRoute: typeof IosClientMetadataDotjsonRoute
@@ -376,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/android-client-metadata.json': {
+      id: '/android-client-metadata.json'
+      path: '/android-client-metadata.json'
+      fullPath: '/android-client-metadata.json'
+      preLoaderRoute: typeof AndroidClientMetadataDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/client-metadata.json': {
@@ -558,6 +579,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AndroidClientMetadataDotjsonRoute: AndroidClientMetadataDotjsonRoute,
   ClientMetadataDotjsonRoute: ClientMetadataDotjsonRoute,
   ComposeRoute: ComposeRoute,
   IosClientMetadataDotjsonRoute: IosClientMetadataDotjsonRoute,

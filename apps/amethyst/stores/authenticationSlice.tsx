@@ -5,7 +5,7 @@ import { OAuthSession } from "@atproto/oauth-client";
 import * as Lexicons from "@teal/lexicons/src/documents";
 import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 
-import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
+import createOAuthClient, { APP_BASE_URL, AquareumOAuthClient } from "../lib/atp/oauth";
 import { pdsHostFromOAuthIssuer } from "@teal/client/atp/oauthIssuer";
 import { getProfile, XrpcError } from "@teal/client/teal/api";
 import { StateCreator } from "./mainStore";
@@ -46,8 +46,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   get,
 ) => {
   // check if we have CF_PAGES_URL set. if not, use localhost
-  const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
-  console.log("Using base URL:", baseUrl);
+  const baseUrl = APP_BASE_URL;
   const initialAuth = createOAuthClient(baseUrl, "bsky.social");
 
   console.log("Auth client created!");

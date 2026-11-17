@@ -6,6 +6,7 @@ import { Check, ChevronRight, CircleAlert } from "lucide-react-native";
 import { resolveFromIdentity } from "@teal/client/atp/pid";
 import { normalizeAuthHandle } from "@teal/client/authHandle";
 import { Button, Dialog, Field, goBack, Icon, PageTitle, Text } from "@/components/ds";
+import { APP_BASE_URL, oauthRedirectUri } from "@/lib/atp/oauth";
 import { useStore } from "@/stores/mainStore";
 
 const RESOLVE_DELAY = 500;
@@ -82,7 +83,7 @@ export default function Login() {
       if (!url) throw new Error("no login url");
       setBusy("redirecting");
 
-      const result = await openAuthSessionAsync(url.toString(), "http://127.0.0.1:8081/login");
+      const result = await openAuthSessionAsync(url.toString(), oauthRedirectUri(APP_BASE_URL));
 
       if (result.type === "success") {
         await oauthCallback(new URLSearchParams(result.url.split("?")[1]));
