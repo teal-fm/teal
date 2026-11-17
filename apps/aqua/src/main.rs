@@ -1,7 +1,7 @@
 use axum::{
     Router,
     extract::Extension,
-    routing::{get, post},
+    routing::get,
 };
 use chrono::Utc;
 use clap::{Arg, Command};
@@ -58,12 +58,6 @@ async fn main() -> Result<(), String> {
     let app = Router::new()
         .route("/meta_info", get(api::get_meta_info))
         .route("/.well-known/did.json", get(api::get_did_document))
-        .route("/api/car/upload", post(api::upload_car_import))
-        .route("/api/car/fetch", post(api::fetch_car_from_user))
-        .route(
-            "/api/car/status/{import_id}",
-            get(api::get_car_import_status),
-        )
         .route(
             "/api/car/job-status/{job_id}",
             get(api::get_car_import_job_status),
@@ -146,7 +140,7 @@ async fn import_identity_car(_ctx: &ctx::Context, identity: &str) -> Result<(), 
             info!("Job ID: {}", job.request_id);
             info!("Identity: {}", identity);
             info!(
-                "Monitor status with: curl http://localhost:3000/api/car/status/{}",
+                "Monitor status with: curl http://localhost:3000/api/car/job-status/{}",
                 job.request_id
             );
             Ok(())
