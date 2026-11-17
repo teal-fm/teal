@@ -89,6 +89,7 @@ async function main() {
     ${limit ? `LIMIT ${limit}` : ""}
   `;
 
+  // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
   const pairs = db.prepare(query).all() as Array<{ track: string; artist: string }>;
   console.log(`Found ${pairs.length} unique (track, artist) pairs with 404 MBIDs to resolve`);
 
@@ -201,6 +202,7 @@ async function main() {
   console.log(`Time:           ${totalTime}s`);
 
   // Show how many scrobbles now have ground truth
+  // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
   const newGroundTruth = db.prepare(`
     SELECT COUNT(DISTINCT track || '|' || artist) as count
     FROM mbid_cache

@@ -13,7 +13,7 @@ import {
   RATE_LIMIT_DELAY,
   type APIMetrics,
   type MBIDResult,
-  type MBIDSource,
+  parseMbidSource,
 } from "./types.js";
 import {
   cleanTrackName,
@@ -300,10 +300,13 @@ export async function getRecordingWorkId(
       return null;
     }
 
-    const data = (await res.json()) as any;
+    // SAFETY: a MusicBrainz recording lookup with inc=work-rels; every field is read as optional.
+    const data = (await res.json()) as {
+      relations?: { type?: string; work?: { id?: string; title?: string } }[];
+    };
 
     const workRel = data.relations?.find(
-      (r: any) => r.type === "performance" && r.work,
+      (r) => r.type === "performance" && r.work,
     );
 
     const workId = workRel?.work?.id ?? null;
@@ -365,7 +368,7 @@ export async function getTrackMBID(
     const cached = cache.getMBIDWithSource(track, artist);
 
     if (cached !== undefined) {
-      return { mbid: cached.mbid, source: cached.source };
+      return { mbid: cached.mbid, source: parseMbidSource(cached.source) };
     }
   }
 
@@ -393,19 +396,19 @@ export async function getTrackMBID(
   // Method 1: Try track.getInfo (Last.fm authenticated)
   if (apiMetrics) apiMetrics.lastfmCalls++;
 
-  const params: Record<string, string> = {
+  const params = new URLSearchParams({
     method: "track.getInfo",
     track: searchTrack,
     artist: searchArtist,
     api_key: apiKey,
     sk: sessionKey,
     format: "json",
-  };
+  });
 
   const sig = await generateSignature(params, apiSecret);
-  params.api_sig = sig;
+  params.set("api_sig", sig);
 
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = params.toString();
   const url = `https://ws.audioscrobbler.com/2.0/?${queryString}`;
 
   try {
@@ -454,18 +457,18 @@ export async function getTrackMBID(
 
       // Try corrected name from response
       if (data.track?.name && data.track.name !== searchTrack) {
-        const correctedParams: Record<string, string> = {
+        const correctedParams = new URLSearchParams({
           method: "track.getInfo",
           track: data.track.name,
           artist: data.track.artist?.name || searchArtist,
           api_key: apiKey,
           sk: sessionKey,
           format: "json",
-        };
+        });
 
         const correctedSig = await generateSignature(correctedParams, apiSecret);
-        correctedParams.api_sig = correctedSig;
-        const correctedUrl = `https://ws.audioscrobbler.com/2.0/?${new URLSearchParams(correctedParams).toString()}`;
+        correctedParams.set("api_sig", correctedSig);
+        const correctedUrl = `https://ws.audioscrobbler.com/2.0/?${correctedParams.toString()}`;
         const correctedRes = await fetch(correctedUrl);
 
         if (correctedRes.ok) {

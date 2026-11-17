@@ -19,23 +19,23 @@ export async function getRecentTracks(
   sessionKey?: string,
   page: number = 1,
 ): Promise<LastFMTrack[]> {
-  const params: Record<string, string> = {
+  const params = new URLSearchParams({
     method: "user.getRecentTracks",
     api_key: apiKey,
     limit: Math.min(limit, 200).toString(),
     page: page.toString(),
     format: "json",
-  };
+  });
 
-  if (username) params.user = username;
+  if (username) params.set("user", username);
 
   if (sessionKey) {
-    params.sk = sessionKey;
+    params.set("sk", sessionKey);
     const sig = await generateSignature(params, apiSecret);
-    params.api_sig = sig;
+    params.set("api_sig", sig);
   }
 
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = params.toString();
   const url = `https://ws.audioscrobbler.com/2.0/?${queryString}`;
 
   let retries = 3;
@@ -112,19 +112,19 @@ export async function getTrackCorrection(
 
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const params: Record<string, string> = {
+  const params = new URLSearchParams({
     method: "track.getCorrection",
     track,
     artist,
     api_key: apiKey,
     sk: sessionKey,
     format: "json",
-  };
+  });
 
   const sig = await generateSignature(params, apiSecret);
-  params.api_sig = sig;
+  params.set("api_sig", sig);
 
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = params.toString();
   const url = `https://ws.audioscrobbler.com/2.0/?${queryString}`;
 
   let retries = 3;
@@ -200,21 +200,21 @@ export async function searchTracksOnLastFM(
 ): Promise<Array<{ track: string; artist: string; mbid: string | null }>> {
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const params: Record<string, string> = {
+  const params = new URLSearchParams({
     method: "track.search",
     track: `${track} ${artist}`,
     api_key: apiKey,
     limit: limit.toString(),
     format: "json",
-  };
+  });
 
   if (sessionKey) {
-    params.sk = sessionKey;
+    params.set("sk", sessionKey);
     const sig = await generateSignature(params, apiSecret);
-    params.api_sig = sig;
+    params.set("api_sig", sig);
   }
 
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = params.toString();
   const url = `https://ws.audioscrobbler.com/2.0/?${queryString}`;
 
   let retries = 3;
@@ -289,18 +289,18 @@ export async function getArtistInfo(
 
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const params: Record<string, string> = {
+  const params = new URLSearchParams({
     method: "artist.getInfo",
     artist,
     api_key: apiKey,
     sk: sessionKey,
     format: "json",
-  };
+  });
 
   const sig = await generateSignature(params, apiSecret);
-  params.api_sig = sig;
+  params.set("api_sig", sig);
 
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = params.toString();
   const url = `https://ws.audioscrobbler.com/2.0/?${queryString}`;
 
   let retries = 3;
@@ -320,9 +320,7 @@ export async function getArtistInfo(
             ? (Array.isArray(data.artist.alias)
                 ? data.artist.alias
                 : [data.artist.alias]
-              ).map((a: any) =>
-                typeof a === "string" ? a : a["#text"] || a,
-              )
+              ).map((a: any) => a?.["#text"] || a)
             : [];
 
           const result = { mbid, aliases };
@@ -384,19 +382,19 @@ export async function getAlbumInfo(
 
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const params: Record<string, string> = {
+  const params = new URLSearchParams({
     method: "album.getInfo",
     artist,
     album,
     api_key: apiKey,
     sk: sessionKey,
     format: "json",
-  };
+  });
 
   const sig = await generateSignature(params, apiSecret);
-  params.api_sig = sig;
+  params.set("api_sig", sig);
 
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = params.toString();
   const url = `https://ws.audioscrobbler.com/2.0/?${queryString}`;
 
   let retries = 3;

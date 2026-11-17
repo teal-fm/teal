@@ -41,7 +41,7 @@ program
   .argument('[commit]', 'Git commit to compare against (default: HEAD~1)')
   .action(diff);
 
-program.parseAsync().catch((error: unknown) => {
+program.parseAsync().catch((error: Error) => {
   console.error(pc.red('Error:'), error instanceof Error ? error.message : String(error));
   process.exit(1);
 });

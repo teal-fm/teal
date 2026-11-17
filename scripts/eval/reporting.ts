@@ -366,7 +366,6 @@ export function reportResults(output: EvaluationOutput): void {
   const workEquiv = cases.filter((c) => c.workEquivalentPos >= 0);
 
   if (workEquiv.length > 0) {
-    const disambiguatable = unmatchable.filter((c) => c.workEquivalentPos >= 0);
     const trulyUnmatchable = unmatchable.filter((c) => c.workEquivalentPos < 0);
     console.log("RECORDING DISAMBIGUATION (work-equivalence):");
     console.log(`  Cases with same work, different recording: ${workEquiv.length}`);
@@ -412,7 +411,7 @@ export function reportResults(output: EvaluationOutput): void {
   console.log(`    Position 11-25: ${iPosDist.pos11to25} (${(iPosDist.pos11to25 / cases.length * 100).toFixed(1)}%)\n`);
 
   // Hardness-stratified metrics
-  const hardnessStats: Record<string, { count: number; bP1: number; iP1: number; bP5: number; iP5: number; bF: number; iF: number }> = {
+  const hardnessStats: Record<"easy" | "medium" | "hard", { count: number; bP1: number; iP1: number; bP5: number; iP5: number; bF: number; iF: number }> = {
     easy: { count: 0, bP1: 0, iP1: 0, bP5: 0, iP5: 0, bF: 0, iF: 0 },
     medium: { count: 0, bP1: 0, iP1: 0, bP5: 0, iP5: 0, bF: 0, iF: 0 },
     hard: { count: 0, bP1: 0, iP1: 0, bP5: 0, iP5: 0, bF: 0, iF: 0 },

@@ -127,6 +127,19 @@ export type MBIDSource =
   | "listenbrainz_acr"      // From ListenBrainz ACR lookup (independent canonical mapping)
   | "track_data";           // From Last.fm scrobble's own .mbid field (independent)
 
+const MBID_SOURCES: readonly MBIDSource[] = [
+  "lastfm_track_info",
+  "lastfm_search",
+  "musicbrainz_search",
+  "listenbrainz_acr",
+  "track_data",
+];
+
+/** A stored MBID source, or null when it's missing or not one this harness writes. */
+export function parseMbidSource(value?: string | null): MBIDSource | null {
+  return MBID_SOURCES.find((source) => source === value) ?? null;
+}
+
 /** Ground-truth-safe MBID sources (independent of MB search). */
 export const GROUND_TRUTH_SOURCES: ReadonlySet<MBIDSource> = new Set([
   "lastfm_track_info",

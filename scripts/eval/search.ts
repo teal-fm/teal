@@ -175,6 +175,7 @@ async function cachedSearchStage(
   }
 
   const stageStart = Date.now();
+  // SAFETY: searchStage resolves to the pipeline's SearchResult rows.
   const raw = (await searchStage(track, artist, release, strategy)) as SearchResult[];
 
   if (apiMetrics && (track || artist || release)) {

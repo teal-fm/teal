@@ -84,10 +84,12 @@ export function bootstrapCI(
  * McNemar's test for paired binary classification.
  * Tests whether two classifiers have significantly different error rates.
  */
+export type McNemarResult = { statistic: number; pValue: number; significant: boolean };
+
 export function mcnemarTest(
   baselineCorrect: boolean[],
   improvedCorrect: boolean[],
-): { statistic: number; pValue: number; significant: boolean } {
+): McNemarResult {
   if (baselineCorrect.length !== improvedCorrect.length) {
     throw new Error("McNemar test requires arrays of equal length");
   }

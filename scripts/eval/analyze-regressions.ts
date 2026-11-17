@@ -21,13 +21,27 @@ const resultsPath = join(archiveDir, latestDate, "lastfm-evaluation-results.json
 
 console.log(`Using results from: ${latestDate}\n`);
 
+/** One case in reporting.ts's results file, as this script reads it. */
+type ResultCase = {
+  track: string;
+  artist?: string;
+  hardness?: string;
+  failure_mode?: string;
+  mbid?: string;
+  baseline_found: boolean;
+  improved_found: boolean;
+  baseline_pos: number;
+  improved_pos: number;
+  matchability?: string;
+};
+
 const data = JSON.parse(readFileSync(resultsPath, "utf-8"));
-const cases = data.cases;
+const cases: ResultCase[] = data.cases;
 
 console.log("=== REGRESSION ANALYSIS ===\n");
 
 // Easy cases where baseline P@1 but improved is not
-const easyRegressions = cases.filter((c: any) =>
+const easyRegressions = cases.filter((c) =>
   c.hardness === "easy" && c.baseline_pos === 0 && c.improved_pos !== 0
 );
 
@@ -40,7 +54,7 @@ for (const c of easyRegressions.slice(0, 15)) {
 }
 
 // Cases lost entirely (baseline found, improved not)
-const lostCases = cases.filter((c: any) => c.baseline_found && !c.improved_found);
+const lostCases = cases.filter((c) => c.baseline_found && !c.improved_found);
 
 console.log(`\nCases lost entirely (baseline found, improved not): ${lostCases.length}`);
 
@@ -50,7 +64,7 @@ for (const c of lostCases.slice(0, 5)) {
 }
 
 // All regressions (improved worse than baseline)
-const allRegressions = cases.filter((c: any) => {
+const allRegressions = cases.filter((c) => {
   if (!c.baseline_found) return false;
 
   if (!c.improved_found) return true;
@@ -60,15 +74,15 @@ const allRegressions = cases.filter((c: any) => {
 
 console.log(`\nAll regressions (any worsening): ${allRegressions.length}`);
 
-console.log(`  Lost entirely: ${allRegressions.filter((c: any) => !c.improved_found).length}`);
+console.log(`  Lost entirely: ${allRegressions.filter((c) => !c.improved_found).length}`);
 
-console.log(`  Position worsened: ${allRegressions.filter((c: any) => c.improved_found && c.improved_pos > c.baseline_pos).length}`);
+console.log(`  Position worsened: ${allRegressions.filter((c) => c.improved_found && c.improved_pos > c.baseline_pos).length}`);
 
 // Group regressions by failure mode
 const regByMode: Record<string, number> = {};
 
 for (const c of allRegressions) {
-  const mode = (c as any).failure_mode || "unknown";
+  const mode = c.failure_mode || "unknown";
   regByMode[mode] = (regByMode[mode] || 0) + 1;
 }
 
@@ -76,9 +90,8 @@ console.log("  By failure mode:", JSON.stringify(regByMode));
 
 // Show the worst regressions (biggest position drop)
 const positionRegressions = allRegressions
-  .filter((c: any) => c.improved_found)
-  .map((c: any) => ({ ...c, drop: c.improved_pos - c.baseline_pos }))
-  .sort((a: any, b: any) => b.drop - a.drop);
+  .flatMap((c) => (c.improved_found ? [{ ...c, drop: c.improved_pos - c.baseline_pos }] : []))
+  .sort((a, b) => b.drop - a.drop);
 
 console.log("\nWorst position drops:");
 
@@ -89,13 +102,13 @@ for (const c of positionRegressions.slice(0, 10)) {
 
 console.log("\n=== UNMATCHABLE ANALYSIS ===\n");
 
-const unmatchable = cases.filter((c: any) => c.matchability === "unmatchable");
+const unmatchable = cases.filter((c) => c.matchability === "unmatchable");
 
 console.log(`Total unmatchable: ${unmatchable.length} / ${cases.length} (${(unmatchable.length / cases.length * 100).toFixed(1)}%)`);
 
 // Break down by artist presence
-const withArtist = unmatchable.filter((c: any) => c.artist);
-const noArtist = unmatchable.filter((c: any) => !c.artist);
+const withArtist = unmatchable.filter((c) => c.artist);
+const noArtist = unmatchable.filter((c) => !c.artist);
 
 console.log(`  With artist: ${withArtist.length}`);
 
@@ -105,7 +118,7 @@ console.log(`  Track-only (no artist): ${noArtist.length}`);
 const unmatchByMode: Record<string, number> = {};
 
 for (const c of unmatchable) {
-  const mode = (c as any).failure_mode || "unknown";
+  const mode = c.failure_mode || "unknown";
   unmatchByMode[mode] = (unmatchByMode[mode] || 0) + 1;
 }
 

@@ -19,11 +19,11 @@ export async function generate(options: GenerateOptions = {}) {
 
   try {
     if (!options.rustOnly) {
-      await generateTypeScript(workspaceRoot, options.force);
+      await generateTypeScript(workspaceRoot);
     }
 
     if (!options.tsOnly) {
-      await generateRust(workspaceRoot, options.force);
+      await generateRust(workspaceRoot);
     }
 
     console.log(pc.green("✅ Lexicon generation complete!"));
@@ -36,7 +36,7 @@ export async function generate(options: GenerateOptions = {}) {
   }
 }
 
-async function generateTypeScript(workspaceRoot: string, force?: boolean) {
+async function generateTypeScript(workspaceRoot: string) {
   const lexiconsPath = join(workspaceRoot, "lexicons");
 
   if (!existsSync(lexiconsPath)) {
@@ -71,7 +71,7 @@ async function generateTypeScript(workspaceRoot: string, force?: boolean) {
   }
 }
 
-async function generateRust(workspaceRoot: string, force?: boolean) {
+async function generateRust(workspaceRoot: string) {
   const typesPath = join(workspaceRoot, "services/types");
   const lexiconsPath = join(workspaceRoot, "lexicons");
 

@@ -33,6 +33,7 @@ import {
   type SearchConfig,
   type EvaluationCase,
   type MBIDSource,
+  parseMbidSource,
   GROUND_TRUTH_SOURCES,
   MUSICBRAINZ_BASE_URL,
   USER_AGENT,
@@ -240,7 +241,7 @@ async function main() {
       artist: s.artist,
       album: s.album,
       mbid: s.mbid,
-      mbid_source: (s.mbid_source as MBIDSource) || null,
+      mbid_source: parseMbidSource(s.mbid_source),
     }));
     fromCache = scrobbles.length;
     console.log(`Using ${fromCache} scrobbles from cache (${stats.totalScrobbles} total available)\n`);
@@ -254,7 +255,7 @@ async function main() {
           artist: s.artist,
           album: s.album,
           mbid: s.mbid,
-          mbid_source: (s.mbid_source as MBIDSource) || null,
+          mbid_source: parseMbidSource(s.mbid_source),
         }));
         fromCache = scrobbles.length;
       } else {
@@ -357,7 +358,7 @@ async function main() {
               tracksNeedingMBID.push({
                 track,
                 mbid: cached.mbid,
-                mbid_source: (cached.source as MBIDSource) || null,
+                mbid_source: parseMbidSource(cached.source),
               });
             } else if (track.mbid) {
               // Track's own MBID (from Last.fm scrobble data) -- independent ground truth
@@ -469,7 +470,7 @@ async function main() {
             artist: track.artist["#text"],
             album: track.album?.["#text"],
             mbid: track.mbid || null,
-            mbid_source: (track.mbid ? "track_data" : null) as MBIDSource | null,
+            mbid_source: track.mbid ? "track_data" : null,
             timestamp: track.date?.["#text"] || new Date().toISOString(),
           }));
 
@@ -485,7 +486,7 @@ async function main() {
         artist: s.artist,
         album: s.album,
         mbid: s.mbid,
-        mbid_source: (s.mbid_source as MBIDSource) || null,
+        mbid_source: parseMbidSource(s.mbid_source),
       }));
       fromCache = finalScrobbles.length;
 
@@ -778,7 +779,7 @@ async function main() {
           validScrobbles.push({
             ...s,
             mbid: lbResult.mbid,
-            mbid_source: "listenbrainz_acr" as MBIDSource,
+            mbid_source: "listenbrainz_acr",
           });
           recovered++;
         }

@@ -16,22 +16,17 @@ export const SESSION_KEY_FILE = join(SCRIPT_DIR, ".lastfm_session_key");
  * api_sig and format are excluded from signature calculation (per Last.fm API docs).
  */
 export async function generateSignature(
-  params: Record<string, string>,
+  params: URLSearchParams,
   apiSecret: string,
 ): Promise<string> {
   const crypto = await import("crypto");
-  const paramsForSig: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(params)) {
-    if (key !== "api_sig" && key !== "format") {
-      paramsForSig[key] = value;
-    }
-  }
-
-  const sortedKeys = Object.keys(paramsForSig).sort();
 
   const sigString =
-    sortedKeys.map((key) => `${key}${paramsForSig[key]}`).join("") + apiSecret;
+    [...params]
+      .filter(([key]) => key !== "api_sig" && key !== "format")
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([key, value]) => `${key}${value}`)
+      .join("") + apiSecret;
 
   return crypto.createHash("md5").update(sigString).digest("hex");
 }
@@ -50,16 +45,16 @@ export async function getLastFMSession(
 
     if (sessionKey) {
       try {
-        const testParams: Record<string, string> = {
+        const testParams = new URLSearchParams({
           method: "user.getInfo",
           api_key: apiKey,
           sk: sessionKey,
           format: "json",
-        };
+        });
 
         const testSig = await generateSignature(testParams, apiSecret);
-        testParams.api_sig = testSig;
-        const testUrl = `https://ws.audioscrobbler.com/2.0/?${new URLSearchParams(testParams).toString()}`;
+        testParams.set("api_sig", testSig);
+        const testUrl = `https://ws.audioscrobbler.com/2.0/?${testParams.toString()}`;
         const testRes = await fetch(testUrl);
 
         if (testRes.ok) {
@@ -181,7 +176,7 @@ export async function getLastFMSession(
     await new Promise((resolve) => setTimeout(resolve, pollInterval));
 
     const sig = await generateSignature(
-      { method: "auth.getSession", token, api_key: apiKey },
+      new URLSearchParams({ method: "auth.getSession", token, api_key: apiKey }),
       apiSecret,
     );
 

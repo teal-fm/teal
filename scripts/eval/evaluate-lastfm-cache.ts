@@ -18,6 +18,15 @@ const EVALUATION_LOGIC_VERSION = "2026-03-09-v27";
 // Ensure cache directory exists
 mkdirSync(CACHE_DIR, { recursive: true });
 
+export type CacheStats = {
+  totalScrobbles: number;
+  scrobblesWithMBID: number;
+  cachedMBIDs: number;
+  cachedSearches: number;
+  cachedValidations: number;
+  cachedEvaluationResults: number;
+};
+
 export class LastFMCache {
   private db: Database.Database;
   // Prepared statements for performance (reuse instead of creating each time)
@@ -245,6 +254,7 @@ export class LastFMCache {
       LIMIT ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     return stmt.all(username, limit) as Array<{
       track: string;
       artist: string;
@@ -273,6 +283,7 @@ export class LastFMCache {
       LIMIT ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     return stmt.all(username, limit) as Array<{
       track: string;
       artist: string;
@@ -323,6 +334,7 @@ export class LastFMCache {
       WHERE username = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(username) as { count: number };
 
     return result.count;
@@ -371,6 +383,7 @@ export class LastFMCache {
       SELECT mbid FROM mbid_cache WHERE track = ? AND artist = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(track, artist) as { mbid: string | null } | undefined;
 
     return result?.mbid;
@@ -397,6 +410,7 @@ export class LastFMCache {
       SELECT mbid, mbid_source FROM mbid_cache WHERE track = ? AND artist = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(track, artist) as { mbid: string | null; mbid_source: string | null } | undefined;
 
     if (result === undefined) return undefined;
@@ -432,6 +446,7 @@ export class LastFMCache {
       WHERE track = ? AND artist = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const row = stmt.get(track, artist) as
       | { corrected_track: string | null; corrected_artist: string | null }
       | undefined;
@@ -470,6 +485,7 @@ export class LastFMCache {
       WHERE artist = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const row = stmt.get(artist) as { mbid: string | null; aliases_json: string | null } | undefined;
 
     if (!row) return undefined;
@@ -481,7 +497,10 @@ export class LastFMCache {
       try {
         const parsed = JSON.parse(row.aliases_json);
 
-        if (Array.isArray(parsed)) aliases = parsed.filter((x) => typeof x === "string");
+        if (Array.isArray(parsed)) {
+          // SAFETY: setArtistInfo writes aliases_json from a string[].
+          aliases = parsed as string[];
+        }
       } catch {
         // ignore parse errors; treat as no aliases
       }
@@ -518,6 +537,7 @@ export class LastFMCache {
       WHERE artist = ? AND album = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const row = stmt.get(artist, album) as { mbid: string | null } | undefined;
 
     if (!row) return undefined;
@@ -561,6 +581,7 @@ export class LastFMCache {
       SELECT results FROM mb_search_cache WHERE query_hash = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(queryHash) as { results: string } | undefined;
 
     if (result) {
@@ -624,6 +645,7 @@ export class LastFMCache {
       SELECT is_valid FROM mbid_validation_cache WHERE mbid = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(mbid) as { is_valid: number } | undefined;
 
     return result !== undefined ? result.is_valid === 1 : undefined;
@@ -637,6 +659,7 @@ export class LastFMCache {
       SELECT is_valid, http_status FROM mbid_validation_cache WHERE mbid = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(mbid) as { is_valid: number; http_status: number | null } | undefined;
 
     if (result === undefined) return undefined;
@@ -648,6 +671,7 @@ export class LastFMCache {
    * Get MBID validation stats by HTTP status (for diagnostics)
    */
   getMBIDValidationStats(): Array<{ http_status: number | null; count: number; is_valid: number }> {
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     return this.db.prepare(`
       SELECT http_status, is_valid, COUNT(*) as count
       FROM mbid_validation_cache
@@ -660,6 +684,7 @@ export class LastFMCache {
    * Count stale validation entries (503/error that need re-validation)
    */
   countStaleValidations(): number {
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = this.db.prepare(`
       SELECT COUNT(*) as count FROM mbid_validation_cache
       WHERE http_status IS NULL OR http_status NOT IN (200, 301, 404)
@@ -701,6 +726,7 @@ export class LastFMCache {
       SELECT canonical_mbid FROM mbid_validation_cache WHERE mbid = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(mbid) as { canonical_mbid: string | null } | undefined;
 
     return result?.canonical_mbid || mbid;
@@ -712,6 +738,7 @@ export class LastFMCache {
       SELECT canonical_mbid FROM mbid_validation_cache WHERE mbid = ?
     `);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = stmt.get(mbid) as { canonical_mbid: string | null } | undefined;
 
     return result?.canonical_mbid != null;
@@ -720,32 +747,30 @@ export class LastFMCache {
   /**
    * Get statistics
    */
-  getStats(username: string): {
-    totalScrobbles: number;
-    scrobblesWithMBID: number;
-    cachedMBIDs: number;
-    cachedSearches: number;
-    cachedValidations: number;
-    cachedEvaluationResults: number;
-  } {
+  getStats(username: string): CacheStats {
     const scrobbleCount = this.getScrobbleCount(username);
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const withMBID = this.db
       .prepare(`SELECT COUNT(*) as count FROM scrobbles WHERE username = ? AND mbid IS NOT NULL`)
       .get(username) as { count: number };
     
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const mbidCacheCount = this.db
       .prepare(`SELECT COUNT(*) as count FROM mbid_cache`)
       .get() as { count: number };
     
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const searchCacheCount = this.db
       .prepare(`SELECT COUNT(*) as count FROM mb_search_cache`)
       .get() as { count: number };
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const validationCacheCount = this.db
       .prepare(`SELECT COUNT(*) as count FROM mbid_validation_cache`)
       .get() as { count: number };
 
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const evaluationResultCacheCount = this.db
       .prepare(`SELECT COUNT(*) as count FROM evaluation_result_cache`)
       .get() as { count: number };
@@ -812,6 +837,7 @@ export class LastFMCache {
     try {
       const resultHash = this.hashEvaluationCase(track, artist, album, mbid, searchConfig, fieldCombination);
 
+      // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
       const result = this.stmtGetEvaluationResult.get(resultHash) as {
         baseline_pos: number;
         improved_pos: number;
@@ -914,6 +940,7 @@ export class LastFMCache {
    * Get cached work ID for a recording MBID
    */
   getRecordingWork(recordingMbid: string): { workId: string | null; workTitle: string | null } | undefined {
+    // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
     const result = this.db.prepare(`
       SELECT work_id, work_title FROM recording_work_cache WHERE recording_mbid = ?
     `).get(recordingMbid) as { work_id: string | null; work_title: string | null } | undefined;
