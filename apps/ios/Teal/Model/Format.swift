@@ -74,7 +74,7 @@ enum TodayText {
     }
 
     private static func names(_ m: MomentView) -> String? {
-        let shown = m.listeners.map { $0.displayName ?? $0.handle ?? "someone" }
+        let shown = m.listeners.map { $0.displayName ?? $0.handle ?? $0.did ?? "someone" }
         if shown.isEmpty { return nil }
         let others = m.listenerCount - shown.count
         if others > 0 { return "\(shown.prefix(2).joined(separator: ", ")) and \(others + max(0, shown.count - 2)) others" }
