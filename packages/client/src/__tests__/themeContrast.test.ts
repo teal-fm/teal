@@ -27,7 +27,10 @@ function token(block: string, name: string): Color {
   if (!value) throw new Error(`Missing color token ${name}`);
   const hex = value.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
 
-  if (hex) return [...hex.slice(1, 4).map((h) => parseInt(h, 16) / 255), 1] as Color;
+  if (hex) {
+    // SAFETY: three captured channels plus alpha make four numbers.
+    return [...hex.slice(1, 4).map((h) => parseInt(h, 16) / 255), 1] as Color;
+  }
   const rgba = value.match(/^rgba\(([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)$/);
 
   if (rgba) return [Number(rgba[1]) / 255, Number(rgba[2]) / 255, Number(rgba[3]) / 255, Number(rgba[4])];
@@ -55,6 +58,7 @@ function token(block: string, name: string): Color {
 function over(color: Color, background: Color): Color {
   const a = color[3];
 
+  // SAFETY: three blended channels plus alpha make four numbers.
   return [0, 1, 2].map((i) => a * color[i] + (1 - a) * background[i]).concat(1) as Color;
 }
 

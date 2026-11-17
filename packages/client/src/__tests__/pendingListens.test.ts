@@ -11,6 +11,7 @@ import {
   type ConfirmedListenWrite,
   type PendingListenStorage,
 } from "../teal/pendingListens";
+import { toDatetimeString } from "../schema";
 
 const NOW = Date.parse("2026-10-17T12:00:00.000Z");
 const ACTOR = "did:plc:first";
@@ -30,9 +31,7 @@ function confirmed(
       recordingMbId: "mbid:recording",
       releaseName: "I Love My Computer",
       artists: [{ artistName: "Ninajirachi" }],
-      playedTime: new Date(
-        NOW - 1000,
-      ).toISOString() as ConfirmedListenWrite["record"]["playedTime"],
+      playedTime: toDatetimeString(new Date(NOW - 1000)),
     },
   };
 }
@@ -166,6 +165,7 @@ it("preserves writes and retirements that happen before async hydration finishes
   store.addConfirmed(ACTOR, [confirmed(ACTOR, "3new")]);
   store.retireIndexed(ACTOR, [
     {
+      // SAFETY: confirmed() builds an at:// URI for ACTOR's play collection.
       uri: confirmed(ACTOR, "3retire").uri as PlayView["uri"],
       cid: confirmed(ACTOR, "3retire").cid,
     },
@@ -398,6 +398,7 @@ it("rejects malformed nonempty timestamps on confirmation and restoration", asyn
     ...confirmed(),
     record: {
       ...confirmed().record,
+      // SAFETY: deliberately invalid, to check that it is rejected.
       playedTime:
         "not-a-timestamp" as ConfirmedListenWrite["record"]["playedTime"],
     },

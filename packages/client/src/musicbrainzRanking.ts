@@ -298,7 +298,7 @@ export function scoreResult(
   const queryForVariants = (query.track || query.cleanedTrack || "").toLowerCase();
   const resultTitleLower = resultTitle.toLowerCase();
 
-  const disambLower = (result.disambiguation && typeof result.disambiguation === "string")
+  const disambLower = result.disambiguation
     ? result.disambiguation.toLowerCase().trim()
     : "";
 

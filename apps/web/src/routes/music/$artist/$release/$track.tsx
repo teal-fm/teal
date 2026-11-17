@@ -14,6 +14,7 @@ import { AddToPlaylist } from "~/components/playlist/AddToPlaylist";
 import { PostCard } from "~/components/today/PostCard";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { pickStrings } from "~/lib/search";
+import { FIRST_PAGE } from "@teal/client/query";
 
 /** Old links carry only slugs; find the indexed play they meant. */
 async function playFromSlugs(artist?: string, release?: string, track?: string) {
@@ -65,7 +66,7 @@ function TrackScreen() {
   const history = useInfiniteQuery({
     queryKey: ["album-history", p?.releaseMbId],
     queryFn: ({ pageParam }) => getAlbum(p!.releaseMbId!, 100, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!p?.releaseMbId,
   });

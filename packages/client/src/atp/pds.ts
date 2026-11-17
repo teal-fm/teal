@@ -1,54 +1,52 @@
-// blatantly stolen from https://github.com/mary-ext/atcute/blob/trunk/packages/oauth/browser-client/
+// Adapted from https://github.com/mary-ext/atcute/blob/trunk/packages/oauth/browser-client/
 // MIT License
 
-/**
- * @module
- * DID document-related functionalities.
- * This module is exported for convenience and is no way part of public API,
- * it can be removed at any time.
- */
+import { z } from "zod";
+
+import { lenientArray } from "../schema";
 
 /**
- * Retrieves AT Protocol PDS endpoint from the DID document, if available
- * @param doc DID document
- * @returns The PDS endpoint, if available
+ * The parts of a DID document Teal reads. Services whose endpoint is not a
+ * plain URL string (maps, sets) are dropped, since an AT Protocol PDS endpoint
+ * is always a string.
  */
-export const getPdsEndpoint = (doc: DidDocument): string | undefined => {
+export const didDocumentSchema = z.object({
+  id: z.string(),
+  alsoKnownAs: lenientArray(z.string()),
+  service: lenientArray(
+    z.object({
+      id: z.string(),
+      type: z.string(),
+      serviceEndpoint: z.string(),
+    }),
+  ),
+});
+
+export type DidDocument = z.output<typeof didDocumentSchema>;
+
+/** The account's AT Protocol PDS endpoint from its DID document, if it has one. */
+export function getPdsEndpoint(doc: DidDocument): string | undefined {
   return getServiceEndpoint(doc, "#atproto_pds", "AtprotoPersonalDataServer");
-};
+}
 
-/**
- * Retrieve a service endpoint from the DID document, if available
- * @param doc DID document
- * @param serviceId Service ID
- * @param serviceType Service type
- * @returns The requested service endpoint, if available
- */
-export const getServiceEndpoint = (
+/** A service endpoint from the DID document, if present and an http(s) URL. */
+export function getServiceEndpoint(
   doc: DidDocument,
   serviceId: string,
   serviceType: string,
-): string | undefined => {
-  const did = doc.id;
-
-  const didServiceId = did + serviceId;
+): string | undefined {
+  const didServiceId = doc.id + serviceId;
 
   const found = doc.service?.find(
     (service) => service.id === serviceId || service.id === didServiceId,
   );
 
-  if (
-    !found ||
-    found.type !== serviceType ||
-    typeof found.serviceEndpoint !== "string"
-  ) {
-    return undefined;
-  }
+  if (!found || found.type !== serviceType) return undefined;
 
   return validateUrl(found.serviceEndpoint);
-};
+}
 
-const validateUrl = (urlStr: string): string | undefined => {
+function validateUrl(urlStr: string): string | undefined {
   let url;
 
   try {
@@ -62,23 +60,6 @@ const validateUrl = (urlStr: string): string | undefined => {
   if (url.hostname && (proto === "http:" || proto === "https:")) {
     return urlStr;
   }
-};
 
-/**
- * DID document
- */
-export interface DidDocument {
-  id: string;
-  alsoKnownAs?: string[];
-  verificationMethod?: {
-    id: string;
-    type: string;
-    controller: string;
-    publicKeyMultibase?: string;
-  }[];
-  service?: {
-    id: string;
-    type: string;
-    serviceEndpoint: string | Record<string, unknown>;
-  }[];
+  return undefined;
 }

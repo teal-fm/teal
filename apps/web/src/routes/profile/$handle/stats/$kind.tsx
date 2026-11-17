@@ -5,6 +5,7 @@ import { loadTop, normalizeKind, normalizePeriod, STATS_PERIODS, withContext, ty
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen, Tabs } from "~/ds";
 import { TopRow } from "~/components/profile/TopStats";
 import { pickStrings } from "~/lib/search";
+import { FIRST_PAGE } from "@teal/client/query";
 
 const TITLES: Record<TopKind, string> = { artists: "Top artists", albums: "Top albums", tracks: "Top tracks" };
 
@@ -29,7 +30,7 @@ function TopStatsScreen() {
   const top = useInfiniteQuery({
     queryKey: ["top-all", actor, kind, period],
     queryFn: ({ pageParam }) => loadTop(actor, kind, period, 50, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
   });
 

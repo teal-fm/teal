@@ -14,7 +14,8 @@
     "@atproto/api": "^0.20.27",
     "@teal/lexicons": "workspace:*",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "zod": "4.6.7"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.105.3",

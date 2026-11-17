@@ -133,8 +133,8 @@ export function SongLog() {
     try {
       const record = createPlayRecordFromRecording(chosen);
       validatePlay(record);
-      const res = await agent.call("com.atproto.repo.createRecord", {}, { repo: agent.did, collection: "fm.teal.feed.play", record });
-      const { uri, cid } = res.data as { uri: string; cid: string };
+      const res = await agent.com.atproto.repo.createRecord({ repo: agent.did, collection: "fm.teal.feed.play", record });
+      const { uri, cid } = res.data;
       retainConfirmedListens(agent.did, [{ record, uri, cid }]);
       let result: Saved = { listenUri: uri };
 

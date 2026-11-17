@@ -15,6 +15,7 @@ it("finds recording identity even when edition or spelling changes", () => {
     matchesTrack(
       {
         ...selected,
+        // SAFETY: a stand-in id; matching compares strings only.
         recordingMbId: "recording" as PlayView["recordingMbId"],
         releaseName: "Other edition",
         trackName: "Other title",

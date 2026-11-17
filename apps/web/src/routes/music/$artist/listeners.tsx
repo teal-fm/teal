@@ -5,6 +5,7 @@ import { LISTENER_PERIODS, normalizeListenerPeriod } from "@teal/client/teal/mus
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen } from "~/ds";
 import { Leaderboard } from "~/components/music/Leaderboard";
 import { pickStrings } from "~/lib/search";
+import { FIRST_PAGE } from "@teal/client/query";
 
 export const Route = createFileRoute("/music/$artist/listeners")({
   validateSearch: (search: Record<string, unknown>) => pickStrings(search, "mbid", "name", "period"),
@@ -23,7 +24,7 @@ function ArtistListeners() {
   const listeners = useInfiniteQuery({
     queryKey: ["artist-listeners-all", search.mbid, name, period],
     queryFn: ({ pageParam }) => getArtistListeners(search.mbid, name, period, 50, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
   });
 

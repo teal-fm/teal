@@ -26,6 +26,7 @@ import {
 import { documentIdentity } from "../teal/actors";
 import { rkeyFromAtUri } from "../teal/routes";
 import { usePdsAgent, useViewerDid } from "../session";
+import { FIRST_PAGE } from "../query";
 
 export type DisplayProfile = Pick<
   ProfileView,
@@ -143,22 +144,19 @@ export function useToggleFollow(did?: string) {
         const rkey = rkeyFromAtUri(current);
 
         if (!rkey) throw new Error("unknown follow record");
-        await agent.call("com.atproto.repo.deleteRecord", {}, { repo: viewer, collection: "fm.teal.graph.follow", rkey });
+        await agent.com.atproto.repo.deleteRecord({ repo: viewer, collection: "fm.teal.graph.follow", rkey });
 
         return undefined;
       }
 
-      const res = await agent.call(
-        "com.atproto.repo.createRecord",
-        {},
-        {
+      const res = await agent.com.atproto.repo.createRecord({
           repo: viewer,
           collection: "fm.teal.graph.follow",
           record: { $type: "fm.teal.graph.follow", subject: did, createdAt: new Date().toISOString() },
         },
       );
 
-      return (res.data as { uri?: string }).uri;
+      return res.data.uri;
     },
     onSuccess: (uri, current) => {
       client.setQueryData<GraphSummaryView>(key, (summary) =>
@@ -176,7 +174,7 @@ export function usePeople(did: string, kind: "followers" | "following") {
   return useInfiniteQuery({
     queryKey: ["people", did, kind],
     queryFn: ({ pageParam }) => (kind === "followers" ? getGraphFollowers : getGraphFollows)(did, 20, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
   });
 }
@@ -185,7 +183,7 @@ export function useActorPlays(did?: string) {
   return useInfiniteQuery({
     queryKey: ["actor-plays", did],
     queryFn: ({ pageParam }) => getActorFeed(did!, 30, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!did,
   });
@@ -197,7 +195,7 @@ export function useActorPosts(did?: string) {
   return useInfiniteQuery({
     queryKey: ["actor-posts", did, viewer ?? null],
     queryFn: ({ pageParam }) => getSocialFeed(10, pageParam, viewer, did),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!did,
   });
@@ -207,7 +205,7 @@ export function useActorPlaylists(did?: string) {
   return useInfiniteQuery({
     queryKey: ["actor-playlists", did],
     queryFn: ({ pageParam }) => getActorPlaylists(did!, 12, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!did,
   });

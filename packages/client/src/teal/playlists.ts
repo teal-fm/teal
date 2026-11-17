@@ -28,16 +28,6 @@ export function toTrackRecord(track: TrackViewLike) {
   };
 }
 
-/** Same song, by recording MBID or, without one, by title and first artist. */
-export function trackKey(track: unknown) {
-  const value = (track || {}) as TrackViewLike;
-
-  if (value.recordingMbId) return value.recordingMbId;
-  const artist = value.artists?.[0]?.artistName || value.artistNames?.[0] || "";
-
-  return `${value.trackName || ""}\u0000${artist}`.toLocaleLowerCase();
-}
-
 /** Appends a track to a playlist the signed-in account can write to. */
 export async function addPlaylistItem(
   agent: Agent,
@@ -55,8 +45,8 @@ export async function addPlaylistItem(
     createdAt: new Date().toISOString(),
   };
 
-  const res = await agent.call("com.atproto.repo.createRecord", {}, { repo, collection: "fm.teal.feed.social.playlistItem", record });
-  const { uri = "", cid = "" } = res.data as { uri?: string; cid?: string };
+  const res = await agent.com.atproto.repo.createRecord({ repo, collection: "fm.teal.feed.social.playlistItem", record });
+  const { uri, cid } = res.data;
 
   return { uri, cid, authorDid: repo, track: record.track, order, createdAt: record.createdAt };
 }
@@ -84,6 +74,7 @@ export async function savePlaylistRecord(
   const [, , , collection = "fm.teal.feed.social.playlist", rkey = ""] = playlist.uri.split("/");
   const authors = await resolveAuthors(edits.collaboratorsText, playlist.authorDid);
 
+  // SAFETY: getRecord returns this playlist's own record; only its cover is read.
   const current = await agent
     .call("com.atproto.repo.getRecord", { repo: playlist.authorDid, collection, rkey })
     .then((res) => res.data.value as { cover?: unknown });

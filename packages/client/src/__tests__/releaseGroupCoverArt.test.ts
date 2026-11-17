@@ -28,6 +28,7 @@ it("shares Aqua metadata across card image sizes", async () => {
     `https://coverartarchive.org/release-group/${groupMbid}/front-500`,
   );
   expect(fetch).toHaveBeenCalledTimes(1);
+  // SAFETY: the client calls fetch with a URL string.
   const url = new URL(fetch.mock.calls[0][0] as string);
   expect(url.pathname).toBe("/xrpc/fm.teal.music.getReleaseGroup");
   expect(url.searchParams.get("mbid")).toBe(`mbid:${releaseMbid}`);

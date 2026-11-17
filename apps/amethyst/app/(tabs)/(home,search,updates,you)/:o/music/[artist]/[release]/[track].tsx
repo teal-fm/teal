@@ -12,6 +12,7 @@ import { MusicHero } from "@/components/music/MusicHero";
 import { useRecordingArt } from "@teal/client/hooks/useRecordingArt";
 import { AddToPlaylist } from "@/components/playlist/AddToPlaylist";
 import { PostCard } from "@/components/today/PostCard";
+import { FIRST_PAGE } from "@teal/client/query";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -51,7 +52,7 @@ export default function TrackScreen() {
   const history = useInfiniteQuery({
     queryKey: ["album-history", p?.releaseMbId],
     queryFn: ({ pageParam }) => getAlbum(p!.releaseMbId!, 100, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!p?.releaseMbId,
   });

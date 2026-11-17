@@ -41,6 +41,8 @@ function bestRelease(recording: MusicBrainzRecording) {
 export function musicBrainzToPlayView(recording: MusicBrainzRecording, release?: MusicBrainzRelease): PlayView {
   const chosen = release || recording.selectedRelease || bestRelease(recording);
 
+  // SAFETY: every MBID field is built as `mbid:<uuid>` or a musicbrainz.org URL,
+  // which satisfy the lexicon's URI string types.
   return {
     trackName: recording.title || "Unknown track",
     trackMbId: recording.id ? `mbid:${recording.id}` : undefined,
@@ -93,9 +95,11 @@ export async function publishPost(
     createdAt: new Date().toISOString(),
   };
 
-  const res = await agent.call("com.atproto.repo.createRecord", {}, { repo, collection: "fm.teal.feed.social.post", record });
-  const { uri = "", cid = "" } = res.data as { uri?: string; cid?: string };
+  const res = await agent.com.atproto.repo.createRecord({ repo, collection: "fm.teal.feed.social.post", record });
+  const { uri, cid } = res.data;
 
+  // SAFETY: this mirrors the record just written; the counts start at zero and the
+  // URIs are the ones the PDS returned for it.
   return {
     uri,
     cid,

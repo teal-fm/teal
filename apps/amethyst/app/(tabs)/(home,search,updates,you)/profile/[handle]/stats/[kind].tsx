@@ -5,6 +5,7 @@ import { loadTop, normalizeKind, normalizePeriod, STATS_PERIODS, withContext, ty
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen, Tabs } from "@/components/ds";
 import { TopRow } from "@/components/profile/TopStats";
 import { useActorDid, useActorPlays } from "@teal/client/hooks/useProfile";
+import { FIRST_PAGE } from "@teal/client/query";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -26,7 +27,7 @@ export default function TopStatsScreen() {
   const top = useInfiniteQuery({
     queryKey: ["top-all", actor, kind, period],
     queryFn: ({ pageParam }) => loadTop(actor, kind, period, 50, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!actor,
   });

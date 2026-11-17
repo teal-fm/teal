@@ -20,17 +20,22 @@ export const STATS_PERIODS: readonly { label: string; value: StatsPeriod }[] = [
   { label: "All time", value: "all" },
 ];
 
-const PERIODS = new Set(STATS_PERIODS.map((p) => p.value));
+const PERIODS: ReadonlySet<string | undefined> = new Set(STATS_PERIODS.map((p) => p.value));
 
-export function normalizePeriod(value: unknown): StatsPeriod {
-  return typeof value === "string" && PERIODS.has(value as StatsPeriod) ? (value as StatsPeriod) : "90days";
+function isStatsPeriod(value?: string): value is StatsPeriod {
+  return PERIODS.has(value);
+}
+
+/** A period from a URL or record, or the 90-day default when it's missing or unknown. */
+export function normalizePeriod(value?: string): StatsPeriod {
+  return isStatsPeriod(value) ? value : "90days";
 }
 
 export function periodLabel(period: StatsPeriod) {
   return STATS_PERIODS.find((p) => p.value === period)?.label ?? "90 days";
 }
 
-export function normalizeKind(value: unknown): TopKind {
+export function normalizeKind(value?: string): TopKind {
   return value === "albums" || value === "tracks" ? value : "artists";
 }
 

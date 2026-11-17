@@ -14,14 +14,14 @@ it("times out a stalled lookup and lets the next lookup use the queue", async ()
     }),
   );
 
-  let failure: unknown;
+  let failure: Error | undefined;
 
   const stalled = searchMusicBrainzReleases("Discovery", "Daft Punk")
-    .catch((error: unknown) => { failure = error; });
+    .catch((error: Error) => { failure = error; });
 
   await jest.advanceTimersByTimeAsync(20_000);
   expect(failure).toBeInstanceOf(Error);
-  expect((failure as Error).message).toMatch(/timed out/i);
+  expect(failure?.message).toMatch(/timed out/i);
   await stalled;
 
   fetch.mockResolvedValueOnce(new Response(JSON.stringify({ releases: [] })));

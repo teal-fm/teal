@@ -1,32 +1,37 @@
-import { RichText, type Agent } from "@atproto/api";
+import { RichText, type Agent, type BlobRef as SdkBlobRef } from "@atproto/api";
 import {
   $parse as parseProfileRecord,
   type Main as ProfileRecord,
 } from "@teal/lexicons/src/fm/teal/actor/profile";
 
 import { prepareProfileImage } from "../profileImage";
+import { isRecordNotFound } from "./firstLogin";
 import type { StatsPeriod } from "../teal/api";
 
-export type BlobRef = NonNullable<ProfileRecord["avatar"]>;
+/** A stored image: as read back from the repo, or as just uploaded through the SDK. */
+type ProfileImage = ProfileRecord["avatar"] | SdkBlobRef;
+
+/** The profile record as written. The SDK serialises its BlobRef instances on write. */
+type ProfileWrite = Omit<ProfileRecord, "avatar" | "banner"> & {
+  avatar?: ProfileImage;
+  banner?: ProfileImage;
+};
 
 export type FavouriteItem = { mbid: string; type: string };
 
 export const MAX_FAVOURITES = 4;
-
-/** The CID inside a blob ref, whichever shape the record came back in. */
-export function blobCid(blob?: BlobRef) {
-  if (!blob) return undefined;
-  const value = blob as unknown as { ref?: { $link?: string }; ["r#ref"]?: string; cid?: string };
-
-  return value.ref?.$link || value["r#ref"] || value.cid;
-}
 
 /**
  * Upload a newly picked image, or keep the current blob when it didn't change.
  * Images are checked against the lexicon (PNG or JPEG, under 1 MB); its messages
  * are written for people, so callers can show them.
  */
-async function uploadIfChanged(agent: Agent, uri: string, currentBlob?: BlobRef, currentUrl?: string) {
+async function uploadIfChanged(
+  agent: Agent,
+  uri: string,
+  currentBlob?: ProfileImage,
+  currentUrl?: string,
+): Promise<ProfileImage> {
   if (!uri) return undefined;
 
   if (currentBlob && uri === currentUrl) return currentBlob;
@@ -41,7 +46,7 @@ async function uploadIfChanged(agent: Agent, uri: string, currentBlob?: BlobRef,
     throw new ProfileImageError(error instanceof Error ? error.message : "Choose a PNG or JPEG image.");
   }
 
-  return (await agent.uploadBlob(image.blob, { encoding: image.encoding })).data.blob as unknown as BlobRef;
+  return (await agent.uploadBlob(image.blob, { encoding: image.encoding })).data.blob;
 }
 
 /** A picked image can't be used; the message says why. */
@@ -73,10 +78,13 @@ export async function saveProfileRecord(
 
   try {
     const res = await agent.call("com.atproto.repo.getRecord", { repo, collection: "fm.teal.actor.profile", rkey: "self" });
+    // SAFETY: this is the account's own fm.teal.actor.profile record. Fields this save
+    // changes are validated below; the rest are written back as they were read.
     existing = res.data.value as ProfileRecord;
     swapRecord = res.data.cid;
-  } catch {
-    existing = undefined;
+  } catch (error) {
+    // Only a missing record means "create one"; a failed read must not overwrite it.
+    if (!isRecordNotFound(error)) throw error;
   }
 
   const description = new RichText({ text: edits.description.trim() });
@@ -102,18 +110,17 @@ export async function saveProfileRecord(
     favorites: edits.favourites ? (edits.favourites.length ? edits.favourites : undefined) : existing?.favorites,
   });
 
-  const record: ProfileRecord = {
-    ...validated,
-    ...(bioUnchanged ? { description: description.text } : {}),
-    ...(avatar ? { avatar } : {}),
-    ...(banner ? { banner } : {}),
-  };
+  const record: ProfileWrite = { ...validated };
 
-  await agent.call(
-    swapRecord ? "com.atproto.repo.putRecord" : "com.atproto.repo.createRecord",
-    {},
-    { repo, collection: "fm.teal.actor.profile", rkey: "self", record, ...(swapRecord ? { swapRecord } : {}) },
-  );
+  if (bioUnchanged) record.description = description.text;
 
-  return { record, avatar: blobCid(avatar), banner: blobCid(banner) };
+  if (avatar) record.avatar = avatar;
+
+  if (banner) record.banner = banner;
+
+  if (swapRecord) {
+    await agent.com.atproto.repo.putRecord({ repo, collection: "fm.teal.actor.profile", rkey: "self", record, swapRecord });
+  } else {
+    await agent.com.atproto.repo.createRecord({ repo, collection: "fm.teal.actor.profile", rkey: "self", record });
+  }
 }

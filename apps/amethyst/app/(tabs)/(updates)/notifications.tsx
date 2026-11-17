@@ -27,6 +27,7 @@ import {
   Screen,
   Text,
 } from "@/components/ds";
+import { FIRST_PAGE } from "@teal/client/query";
 
 const REASONS: Record<string, { label: string; icon: LucideIcon; tone: string }> = {
   like: { label: "liked your", icon: Heart, tone: "text-rose-500" },
@@ -73,7 +74,7 @@ export default function Activity() {
   const feed = useInfiniteQuery({
     queryKey: ["notifications", viewer],
     queryFn: ({ pageParam }) => getNotifications(viewer!, 30, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!viewer,
   });

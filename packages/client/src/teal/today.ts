@@ -4,9 +4,9 @@ export function ordinal(n: number) {
   const tens = n % 100;
 
   if (tens >= 11 && tens <= 13) return `${n}th`;
-  const suffix = ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10];
+  const suffix = ["th", "st", "nd", "rd"][n % 10] ?? "th";
 
-  return `${n}${suffix ?? "th"}`;
+  return `${n}${suffix}`;
 }
 
 /** "now", "4m", "2h", "3d": compact times for chips and rows. */

@@ -263,6 +263,8 @@ export async function searchStage(
         throw new MusicBrainzUnavailableError(`MusicBrainz returned ${res.status} (${strategy})`);
       }
 
+      // SAFETY: MusicBrainz's ws/2 recording search (fmt=json) returns recordings
+      // with string ids and titles; every other field is read as optional.
       const data = (await res.json()) as {
         recordings?: MusicBrainzRecording[];
       };
@@ -339,6 +341,7 @@ export async function resolveArtistAlias(
 
     if (!res.ok) return null;
 
+    // SAFETY: MusicBrainz's ws/2 artist search (fmt=json); only optional names are read.
     const data = (await res.json()) as {
       artists?: Array<{ name?: string }>;
     };

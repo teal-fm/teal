@@ -11,12 +11,13 @@ import { MusicHero } from "~/components/music/MusicHero";
 import { useEndReached } from "~/hooks/useEndReached";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { pickStrings } from "~/lib/search";
+import { FIRST_PAGE } from "@teal/client/query";
 
 const albumQuery = (mbid: string) =>
   infiniteQueryOptions({
     queryKey: ["album", mbid],
     queryFn: ({ pageParam }) => getAlbum(mbid, 30, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
   });
 

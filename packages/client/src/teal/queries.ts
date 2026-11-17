@@ -22,6 +22,7 @@ import {
   withViewerReaction,
   type ReactionSubject,
 } from "./reactions";
+import { FIRST_PAGE } from "../query";
 
 export const keys = {
   today: (viewer?: string) => ["today", viewer ?? null] as const,
@@ -54,7 +55,7 @@ export function useFeedQuery() {
   return useInfiniteQuery({
     queryKey: keys.feed(viewer),
     queryFn: ({ pageParam }) => getSocialFeed(20, pageParam, viewer),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last: FeedPage) => last.cursor,
   });
 }

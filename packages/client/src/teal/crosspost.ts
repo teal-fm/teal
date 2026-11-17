@@ -1,36 +1,26 @@
-import { RichText, type Agent, type BlobRef } from "@atproto/api";
+import { RichText, type Agent, type AppBskyEmbedExternal, type $Typed } from "@atproto/api";
+import { z } from "zod";
 
-type CardyBResponse = {
-  error: string;
-  likely_type: string;
-  url: string;
-  title: string;
-  description: string;
-  image: string;
-};
+const cardyBResponseSchema = z.object({
+  url: z.string(),
+  title: z.string().catch(""),
+  description: z.string().catch(""),
+  image: z.string().catch(""),
+});
 
-// call CardyB API to get embed card
-const getUrlMetadata = async (url: string): Promise<CardyBResponse> => {
-  const response = await fetch(`https://cardyb.bsky.app/v1/extract?url=${url}`);
+/** Link-card metadata for a URL from Bluesky's CardyB service. */
+async function getUrlMetadata(url: string) {
+  const endpoint = new URL("https://cardyb.bsky.app/v1/extract");
+  endpoint.searchParams.set("url", url);
 
-  if (response.status === 200) {
-    return await response.json();
-  } else {
-    throw new Error("Failed to fetch metadata from CardyB");
-  }
-};
+  const response = await fetch(endpoint);
 
-interface EmbedCard {
-  $type: string;
-  external: {
-    uri: string;
-    title: string;
-    description: string;
-    thumb: BlobRef;
-    alt: string;
-    cardyThumbUrl: string;
-  };
+  if (!response.ok) throw new Error("Failed to fetch metadata from CardyB");
+
+  return cardyBResponseSchema.parse(await response.json());
 }
+
+type EmbedCard = $Typed<AppBskyEmbedExternal.Main>;
 
 export const getBlueskyEmbedCard = async (
   url: string | undefined,
@@ -53,12 +43,10 @@ export const getBlueskyEmbedCard = async (
         title: customTitle || metadata.title,
         description: customDescription || metadata.description,
         thumb: data.blob,
-        alt: metadata.title,
-        cardyThumbUrl: metadata.image,
       },
     };
-  } catch (error) {
-    return;
+  } catch {
+    return undefined;
   }
 };
 
@@ -142,7 +130,7 @@ export async function crossPostListen(
     ? await getBlueskyEmbedCard(links.urlEmbed, agent, links.customUrl, `${recording.title} by ${artistNames}`, description)
     : undefined;
 
-  const post = await agent.post({ text: rich.text, facets: rich.facets, embed: embed as never });
+  const post = await agent.post({ text: rich.text, facets: rich.facets, embed });
 
   return post.uri.replace("at://", "https://bsky.app/profile/").replace("app.bsky.feed.post", "post");
 }

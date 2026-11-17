@@ -1,4 +1,5 @@
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import { z } from "zod";
 import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
 
 export const PENDING_LISTEN_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -20,7 +21,7 @@ export type PendingListen = {
 
 export type PendingListenStorage = {
   getItem: (key: string) => Promise<string | null>;
-  setItem: (key: string, value: string) => Promise<unknown>;
+  setItem: (key: string, value: string) => Promise<void>;
 };
 
 function recordKey(actor: string, uri: string) {
@@ -33,11 +34,8 @@ function recordKey(actor: string, uri: string) {
     : undefined;
 }
 
-function isOptionalTimestamp(value: unknown) {
-  return (
-    value === undefined ||
-    (typeof value === "string" && Number.isFinite(Date.parse(value)))
-  );
+function isOptionalTimestamp(value?: string) {
+  return value === undefined || Number.isFinite(Date.parse(value));
 }
 
 function comparePlayedTime(a: PlayView, b: PlayView) {
@@ -78,9 +76,11 @@ function confirmedPlay(
     musicServiceUri: record.musicServiceUri,
     submissionClientAgent: record.submissionClientAgent,
     playedTime: record.playedTime,
+    // SAFETY: recordKey() accepted `uri` as at://<actor>/fm.teal.feed.play/<rkey>.
     uri: uri as PlayView["uri"],
     cid,
     rkey,
+    // SAFETY: recordKey() accepted `actor` as a did:<method>:<id>.
     authorDid: actor as PlayView["authorDid"],
     artists:
       record.artists ||
@@ -134,66 +134,75 @@ function pruneEntries(entries: readonly PendingListen[], now: number) {
     });
 }
 
+const optionalField = z.string().optional();
+
+/** The subset of a stored PlayView that confirmedPlay() rebuilds from. */
+const storedPlaySchema = z.object({
+  uri: z.string(),
+  cid: z.string().min(1),
+  authorDid: z.string(),
+  trackName: z.string().min(1).max(256),
+  trackMbId: optionalField,
+  recordingMbId: optionalField,
+  duration: z.number().optional(),
+  artists: z
+    .array(
+      z.object({
+        artistName: z.string().max(256),
+        artistMbId: optionalField,
+      }),
+    )
+    .max(50),
+  releaseName: optionalField,
+  releaseMbId: optionalField,
+  isrc: optionalField,
+  originUri: optionalField,
+  musicServiceUri: optionalField,
+  submissionClientAgent: optionalField,
+  playedTime: optionalField,
+});
+
+const storedListensSchema = z.object({
+  version: z.literal(1),
+  listens: z.array(z.unknown()),
+});
+
+const storedListenSchema = z.object({
+  play: storedPlaySchema,
+  savedAt: z.number(),
+});
+
 function restoreEntries(raw: string | null): PendingListen[] {
   if (!raw || raw.length > 2_000_000) return [];
 
+  let json: ReturnType<typeof JSON.parse>;
+
   try {
-    const value = JSON.parse(raw) as { version?: unknown; listens?: unknown };
-
-    if (value?.version !== 1 || !Array.isArray(value.listens)) return [];
-
-    return value.listens.flatMap((entry: unknown) => {
-      if (!entry || typeof entry !== "object") return [];
-      const { play, savedAt } = entry as Partial<PendingListen>;
-
-      if (
-        !play ||
-        typeof play !== "object" ||
-        !Number.isFinite(savedAt) ||
-        typeof play.uri !== "string" ||
-        typeof play.authorDid !== "string" ||
-        !recordKey(play.authorDid, play.uri) ||
-        typeof play.cid !== "string" ||
-        !play.cid ||
-        typeof play.trackName !== "string" ||
-        !play.trackName ||
-        play.trackName.length > 256 ||
-        !isOptionalTimestamp(play.playedTime) ||
-        !Array.isArray(play.artists) ||
-        play.artists.length > 50 ||
-        play.artists.some(
-          (artist) =>
-            !artist ||
-            typeof artist.artistName !== "string" ||
-            artist.artistName.length > 256 ||
-            (artist.artistMbId !== undefined &&
-              typeof artist.artistMbId !== "string"),
-        ) ||
-        [
-          play.releaseName,
-          play.releaseMbId,
-          play.recordingMbId,
-          play.trackMbId,
-          play.musicServiceUri,
-          play.originUri,
-          play.submissionClientAgent,
-          play.isrc,
-        ].some((field) => field !== undefined && typeof field !== "string") ||
-        (play.duration !== undefined && !Number.isFinite(play.duration))
-      )
-        return [];
-
-      const sanitized = confirmedPlay(play.authorDid, {
-        record: { ...play, $type: "fm.teal.feed.play" },
-        uri: play.uri,
-        cid: play.cid,
-      });
-
-      return sanitized ? [{ play: sanitized, savedAt: savedAt as number }] : [];
-    });
+    json = JSON.parse(raw);
   } catch {
     return [];
   }
+
+  const stored = storedListensSchema.safeParse(json);
+
+  if (!stored.success) return [];
+
+  return stored.data.listens.flatMap((entry) => {
+    const parsed = storedListenSchema.safeParse(entry);
+
+    if (!parsed.success) return [];
+    const { play, savedAt } = parsed.data;
+
+    const sanitized = confirmedPlay(play.authorDid, {
+      // SAFETY: the stored play was written by confirmedPlay() from a PlayRecord;
+      // confirmedPlay() re-checks the URI, DID, and timestamp before use.
+      record: { ...play, $type: "fm.teal.feed.play" } as PlayRecord,
+      uri: play.uri,
+      cid: play.cid,
+    });
+
+    return sanitized ? [{ play: sanitized, savedAt }] : [];
+  });
 }
 
 /** Keep confirmed writes visible while the AppView catches up. Never create a listen here. */
@@ -342,9 +351,9 @@ export function mergePendingListens(
   pending: readonly PendingListen[],
 ): PlayView[] {
   const local = new Map(
-    pending
-      .filter((entry) => entry.play.authorDid === actor)
-      .map((entry) => [entry.play.uri, entry.play]),
+    pending.flatMap((entry) =>
+      entry.play.authorDid === actor ? [[entry.play.uri, entry.play]] : [],
+    ),
   );
 
   const seen = new Set<string>();
@@ -377,19 +386,17 @@ export function searchPendingListens(
 
   if (!terms.length) return [];
 
-  return pending
-    .filter(({ play }) => {
-      const text = [
-        play.trackName,
-        play.releaseName,
-        ...play.artists.map((artist) => artist.artistName),
-      ]
-        .join(" ")
-        .toLocaleLowerCase();
+  return pending.flatMap(({ play }) => {
+    if (play.authorDid !== actor) return [];
 
-      return (
-        play.authorDid === actor && terms.every((term) => text.includes(term))
-      );
-    })
-    .map(({ play }) => play);
+    const text = [
+      play.trackName,
+      play.releaseName,
+      ...play.artists.map((artist) => artist.artistName),
+    ]
+      .join(" ")
+      .toLocaleLowerCase();
+
+    return terms.every((term) => text.includes(term)) ? [play] : [];
+  });
 }

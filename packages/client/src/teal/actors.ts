@@ -49,9 +49,7 @@ export function getProfileImageUrl(
  * so a document can't borrow someone else's name.
  */
 export async function documentIdentity(did: string): Promise<{ handle?: string } | undefined> {
-  const doc = (await getDidDocument(did).catch(() => undefined)) as
-    | { alsoKnownAs?: string[] }
-    | undefined;
+  const doc = await getDidDocument(did).catch(() => undefined);
 
   if (!doc) return undefined;
 

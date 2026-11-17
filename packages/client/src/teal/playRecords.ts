@@ -3,10 +3,14 @@ import type { Agent } from "@atproto/api";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 import type { Main as PlayRecord } from "@teal/lexicons/src/fm/teal/feed/play";
 
+import { toDatetimeString } from "../schema";
+
 export const PLAY_COLLECTION = "fm.teal.feed.play";
 
+/** A play record as loaded for editing. Fields not listed here are kept at runtime and written back as they were. */
 export type EditablePlayRecord = Pick<
   PlayRecord,
+  | "$type"
   | "trackName"
   | "artists"
   | "releaseName"
@@ -21,8 +25,7 @@ export type EditablePlayRecord = Pick<
   | "submissionClientAgent"
   | "trackDiscriminant"
   | "releaseDiscriminant"
-> &
-  Record<string, unknown>;
+>;
 
 export type LoadedPlayRecord = {
   record: EditablePlayRecord;
@@ -108,7 +111,7 @@ export function applyEditableFields(
       throw new Error("Played time must be a valid date and time.");
     }
 
-    playedTime = parsed.toISOString() as PlayRecord["playedTime"];
+    playedTime = toDatetimeString(parsed);
   }
 
   return {
@@ -135,6 +138,8 @@ export async function loadPlayRecord(
     });
 
     return {
+      // SAFETY: getRecord on fm.teal.feed.play returns a play record; fields this
+      // client doesn't edit are written back unchanged.
       record: response.data.value as EditablePlayRecord,
       swapRecord: response.data.cid,
     };

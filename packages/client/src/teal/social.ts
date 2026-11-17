@@ -51,8 +51,8 @@ export type TrackViewLike = {
   originUri?: string;
 };
 
-export function trackViewToPlayView(track: unknown): PlayView {
-  const value = (track || {}) as TrackViewLike;
+export function trackViewToPlayView(track?: TrackViewLike): PlayView {
+  const value = track ?? {};
 
   const artists =
     value.artists?.map((artist, index) => ({
@@ -70,6 +70,8 @@ export function trackViewToPlayView(track: unknown): PlayView {
     })) ||
     [];
 
+  // SAFETY: TrackView MBIDs and origin URIs come from records validated against
+  // the fm.teal lexicons, whose fields are already URI strings.
   return {
     trackName: value.trackName || "Unknown track",
     trackMbId: value.trackMbId,

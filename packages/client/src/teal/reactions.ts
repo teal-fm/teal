@@ -20,10 +20,7 @@ export async function addReaction(
 
   if (!subject.cid) throw new Error("This item can't be reacted to yet.");
 
-  const res = await agent.call(
-    "com.atproto.repo.createRecord",
-    {},
-    {
+  const res = await agent.com.atproto.repo.createRecord({
       repo: agent.did,
       collection: COLLECTION,
       record: {
@@ -35,7 +32,7 @@ export async function addReaction(
     },
   );
 
-  return (res.data as { uri: string }).uri;
+  return res.data.uri;
 }
 
 export async function removeReaction(agent: Agent, reactionUri: string) {
@@ -68,7 +65,9 @@ export function withViewerReaction(
   const has = !!viewerReaction;
   const count = existing.count + (has === had ? 0 : has ? 1 : -1);
 
-  return summaries
-    .map((s) => (s.emoji === emoji ? { ...s, count, viewerReaction } : s))
-    .filter((s) => s.count > 0);
+  return summaries.flatMap((s) => {
+    const updated = s.emoji === emoji ? { ...s, count, viewerReaction } : s;
+
+    return updated.count > 0 ? [updated] : [];
+  });
 }

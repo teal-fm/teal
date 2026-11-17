@@ -41,6 +41,7 @@ describe("today copy", () => {
       kind: "mutuals",
       release: { releaseName: "Romance" },
       listenerCount: 3,
+      // SAFETY: the formatter only reads displayName.
       listeners: [{ displayName: "rhea" }, { displayName: "jo" }, { displayName: "sam" }] as MomentView["listeners"],
     };
 

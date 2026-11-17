@@ -18,6 +18,7 @@ import type {
 } from "@teal/lexicons/src/fm/teal/stats/defs";
 
 import { clientConfig } from "../config";
+import type { TrackViewLike } from "./social";
 
 const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])$/;
 
@@ -83,7 +84,7 @@ export type SocialPostView = {
   authorDid: string;
   author?: MiniProfileView;
   text: string;
-  track: unknown;
+  track?: TrackViewLike;
   replyRootUri?: string;
   replyRootCid?: string;
   replyParentUri?: string;
@@ -184,7 +185,7 @@ export type SocialPlaylistItemView = {
   uri: string;
   cid: string;
   authorDid: string;
-  track: unknown;
+  track?: TrackViewLike;
   order?: number;
   createdAt: string;
 };
@@ -217,6 +218,7 @@ async function getXrpc<T>(
     throw new XrpcError(method, response.status);
   }
 
+  // SAFETY: Aqua serves fm.teal.* XRPC responses in the shapes declared for T here.
   return response.json() as Promise<T>;
 }
 
@@ -339,6 +341,7 @@ export async function getBlueskyProfile(actor: string) {
     throw new XrpcError("app.bsky.actor.getProfile", response.status);
   }
 
+  // SAFETY: the public Bluesky AppView answers app.bsky.actor.getProfile with a ProfileViewDetailed.
   return response.json() as Promise<AppBskyActorDefs.ProfileViewDetailed>;
 }
 
@@ -493,6 +496,7 @@ export async function searchBlueskyUsers(q: string, limit = 8) {
     throw new XrpcError("app.bsky.actor.searchActors", response.status);
   }
 
+  // SAFETY: the public Bluesky AppView answers app.bsky.actor.searchActors with ProfileViewBasic actors.
   return response.json() as Promise<{
     actors: AppBskyActorDefs.ProfileViewBasic[];
   }>;

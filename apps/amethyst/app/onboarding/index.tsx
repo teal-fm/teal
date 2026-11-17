@@ -6,7 +6,7 @@ import { Link, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Disc3, ImagePlus, UserRoundPen } from "lucide-react-native";
-import { isMissingProfileRecord } from "@teal/client/atp/firstLogin";
+import { isRecordNotFound } from "@teal/client/atp/firstLogin";
 import { ProfileImageError, saveProfileRecord } from "@teal/client/atp/profileRecord";
 import {
   Button,
@@ -51,7 +51,7 @@ export default function Onboarding() {
 
         return res.data.value as ProfileStatus;
       } catch (e) {
-        if (isMissingProfileRecord(e)) return null;
+        if (isRecordNotFound(e)) return null;
         throw e;
       }
     },

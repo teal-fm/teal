@@ -12,6 +12,7 @@ import { cn } from "@teal/client/utils";
 import { A, Avatar, Button, Cover, ErrorNotice, Glass, Icon, LinkButton, Loading, Notice, Screen } from "~/ds";
 import { useEndReached } from "~/hooks/useEndReached";
 import { useAuth } from "~/lib/auth";
+import { FIRST_PAGE } from "@teal/client/query";
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({ meta: [{ title: "Activity · Teal" }] }),
@@ -64,7 +65,7 @@ function Activity() {
   const feed = useInfiniteQuery({
     queryKey: ["notifications", viewer],
     queryFn: ({ pageParam }) => getNotifications(viewer!, 30, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!viewer,
   });

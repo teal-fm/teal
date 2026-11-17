@@ -8,6 +8,7 @@ import {
   normalizeMbid,
   submitManualListenRecords,
   type MusicBrainzAlbumRelease,
+  type ManualListenAgent,
   type MusicBrainzAlbumTrack,
 } from "../manualListens";
 
@@ -172,12 +173,8 @@ describe("atomic repository submission", () => {
   });
 
   it("does not submit an empty transaction", async () => {
-    const call = jest.fn();
-
-    const agent = {
-      did: "did:plc:test",
-      call: call as unknown as (method: string, params: Record<string, never>, body: unknown) => Promise<{ data: unknown }>,
-    };
+    const call = jest.fn<ReturnType<ManualListenAgent["call"]>, Parameters<ManualListenAgent["call"]>>();
+    const agent: ManualListenAgent = { did: "did:plc:test", call };
 
     await expect(submitManualListenRecords(agent, [])).rejects.toThrow(
       "Select at least one track",

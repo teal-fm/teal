@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Disc3, ImagePlus, UserRoundPen } from "lucide-react";
-import { isMissingProfileRecord } from "@teal/client/atp/firstLogin";
+import { isRecordNotFound } from "@teal/client/atp/firstLogin";
 import { ProfileImageError, saveProfileRecord } from "@teal/client/atp/profileRecord";
 import { AmbientScreen, Button, ButtonRow, ErrorNotice, Field, Glass, Heading, Icon, LinkButton, Loading, Notice, TextArea, useDocumentTitle, useGo } from "~/ds";
 import { ImagePick } from "~/components/profile/ImagePick";
@@ -49,7 +49,7 @@ function Onboarding() {
 
         return res.data.value as ProfileStatus;
       } catch (e) {
-        if (isMissingProfileRecord(e)) return null;
+        if (isRecordNotFound(e)) return null;
         throw e;
       }
     },

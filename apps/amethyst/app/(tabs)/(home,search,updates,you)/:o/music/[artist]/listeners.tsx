@@ -5,6 +5,7 @@ import { getArtistListeners } from "@teal/client/teal/api";
 import { LISTENER_PERIODS, normalizeListenerPeriod } from "@teal/client/teal/music";
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen } from "@/components/ds";
 import { Leaderboard } from "@/components/music/Leaderboard";
+import { FIRST_PAGE } from "@teal/client/query";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -20,7 +21,7 @@ export default function ArtistListeners() {
   const listeners = useInfiniteQuery({
     queryKey: ["artist-listeners-all", mbid, name, period],
     queryFn: ({ pageParam }) => getArtistListeners(mbid, name, period, 50, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
   });
 

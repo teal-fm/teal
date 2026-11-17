@@ -21,7 +21,7 @@ export async function updateSelectedPlayRecords(
     const receipt = await dependencies.put(rkey, record, loaded.swapRecord);
     dependencies.confirmed({
       ...receipt,
-      // The successful PDS write has validated the complete record we loaded.
+      // SAFETY: the successful PDS write has validated the complete record we loaded.
       record: record as ConfirmedListenWrite["record"],
     });
   }

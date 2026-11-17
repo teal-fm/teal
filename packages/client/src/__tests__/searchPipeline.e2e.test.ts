@@ -207,22 +207,21 @@ describeE2E("e2e: result structure matches PlayRecord contract", () => {
     expect(r.id).toMatch(/^[0-9a-f-]{36}$/);
 
     // trackName
-    expect(typeof r.title).toBe("string");
+    expect(r.title).toEqual(expect.any(String));
     expect(r.title.length).toBeGreaterThan(0);
 
     // artists[].artistMbId and artistName
-    const credits = r["artist-credit"] as any[];
-    expect(credits).toBeDefined();
-    expect(credits!.length).toBeGreaterThan(0);
-    expect(credits![0].artist.id).toMatch(/^[0-9a-f-]{36}$/);
-    expect(typeof credits![0].artist.name).toBe("string");
+    const credits = r["artist-credit"] ?? [];
+    expect(credits.length).toBeGreaterThan(0);
+    expect(credits[0].artist.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(credits[0].artist.name).toEqual(expect.any(String));
 
     // releases[].id and title (for releaseMbId)
     expect(r.releases).toBeDefined();
 
     if (r.releases && r.releases.length > 0) {
       expect(r.releases[0].id).toMatch(/^[0-9a-f-]{36}$/);
-      expect(typeof r.releases[0].title).toBe("string");
+      expect(r.releases[0].title).toEqual(expect.any(String));
     }
   });
 });

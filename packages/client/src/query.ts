@@ -19,3 +19,8 @@ export function createQueryClient() {
     },
   });
 }
+
+// SAFETY: widens the first page's `undefined` so TanStack Query types later
+// pages' cursors as strings.
+/** The page param of a cursor-paginated query's first page. */
+export const FIRST_PAGE = undefined as string | undefined;

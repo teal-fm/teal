@@ -13,5 +13,5 @@
     "allowImportingTsExtensions": true,
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.mts"]
+  "include": ["src/**/*.ts"]
 }

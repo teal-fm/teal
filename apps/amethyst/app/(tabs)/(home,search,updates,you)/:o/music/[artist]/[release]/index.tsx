@@ -8,6 +8,7 @@ import { musicArtistHref, musicTrackHref } from "@teal/client/teal/routes";
 import { ErrorNotice, Glass, Icon, Loading, Screen, Section, Text } from "@/components/ds";
 import { ListenCard } from "@/components/listen/ListenCard";
 import { MusicHero } from "@/components/music/MusicHero";
+import { FIRST_PAGE } from "@teal/client/query";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -20,7 +21,7 @@ export default function AlbumScreen() {
   const album = useInfiniteQuery({
     queryKey: ["album", mbid],
     queryFn: ({ pageParam }) => getAlbum(mbid!, 30, pageParam),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
     enabled: !!mbid,
   });

@@ -25,7 +25,7 @@ function mockRecording(
     title,
     "artist-credit": artist ? [{ name: artist, artist: { id: "artist-id", name: artist } }] : [],
     releases: release
-      ? [{ id: "release-id", title: release, ...(opts?.releaseStatus ? { status: opts.releaseStatus } : {}) }]
+      ? [{ id: "release-id", title: release, status: opts?.releaseStatus }]
       : [],
   };
 

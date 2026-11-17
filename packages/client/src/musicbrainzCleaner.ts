@@ -524,9 +524,7 @@ export function cleanReleaseName(name: string): string {
  * remain distinguishable.
  */
 export function normalizeForComparison(text: string): string {
-  if (typeof text !== "string") {
-    return "";
-  }
+  if (!text) return "";
 
   // Step 1: NFD decomposition to separate base characters from accents
   let normalized = text.normalize("NFD");
