@@ -241,6 +241,7 @@ impl FeedPlayRepo for PgDataSource {
                      p.submission_client_agent, p.music_service_base_domain, p.origin_url,
                      profile.did, profile.handle, profile.display_name, profile.avatar
             ORDER BY p.processed_time desc
+            LIMIT 100
             "#,
             identities
         )

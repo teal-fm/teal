@@ -10,6 +10,7 @@ import { RichText } from "~/components/post/RichText";
 
 import { ReactionBar } from "./ReactionBar";
 import { shareLink } from "./share";
+import { safeHttpUrl } from "@teal/client/links";
 
 function contextLine(post: SocialPostView) {
   const c = post.listenContext;
@@ -100,9 +101,9 @@ export function PostCard({ post }: { post: SocialPostView }) {
               </div>
             ) : null}
           </div>
-          {play.originUri ? (
+          {safeHttpUrl(play.originUri) ? (
             <a
-              href={play.originUri}
+              href={safeHttpUrl(play.originUri)}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Open in your music app"

@@ -1,3 +1,4 @@
+import { safeHttpUrl } from "./links";
 import type { RichTextFacet } from "./teal/api";
 
 /** A run of text, optionally a mention (by DID) or an http(s) link. */
@@ -50,8 +51,10 @@ export function richTextSegments(text: string, facets?: readonly RichTextFacet[]
     const feature = facet.features?.[0];
     const segment: RichTextSegment = { text: text.slice(start, end) };
 
+    const linkUri = safeHttpUrl(feature?.uri);
+
     if (feature?.did) segment.mentionDid = feature.did;
-    else if (feature?.uri && /^https?:\/\//i.test(feature.uri)) segment.linkUri = feature.uri;
+    else if (linkUri) segment.linkUri = linkUri;
 
     segments.push(segment);
     cursor = end;

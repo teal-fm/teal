@@ -449,6 +449,9 @@ export function buildManualListenRecords(
   );
 }
 
+/** The PDS accepts at most this many writes in one com.atproto.repo.applyWrites call. */
+const MAX_WRITES_PER_CALL = 200;
+
 export async function submitManualListenRecords(
   agent: ManualListenAgent,
   records: PlayRecord[],
@@ -458,44 +461,57 @@ export async function submitManualListenRecords(
 
   if (!agent.did) throw new Error("Your repository is not ready.");
 
-  const response = await agent.call(
-    "com.atproto.repo.applyWrites",
-    {},
-    {
-      repo: agent.did,
-      writes: records.map((record) => ({
-        $type: "com.atproto.repo.applyWrites#create",
-        collection: PLAY_COLLECTION,
-        value: record,
-      })),
-    },
-  );
+  let saved = 0;
 
-  if (response.success === false)
-    throw new Error("Could not save these listens. Try again.");
+  // Each batch is confirmed before the next is sent, so a failure part-way
+  // through still keeps the listens that were saved.
+  for (let start = 0; start < records.length; start += MAX_WRITES_PER_CALL) {
+    const batch = records.slice(start, start + MAX_WRITES_PER_CALL);
 
-  const { results } = applyWritesResponseSchema.parse(response.data);
+    const response = await agent.call(
+      "com.atproto.repo.applyWrites",
+      {},
+      {
+        repo: agent.did,
+        writes: batch.map((record) => ({
+          $type: "com.atproto.repo.applyWrites#create",
+          collection: PLAY_COLLECTION,
+          value: record,
+        })),
+      },
+    );
 
-  if (results && onSaved) {
-    const confirmed = results.flatMap((result, index) => {
-      const receipt = applyWritesReceiptSchema.safeParse(result);
-
-      return receipt.success && records[index]
-        ? [{ record: records[index], uri: receipt.data.uri, cid: receipt.data.cid }]
-        : [];
-    });
-
-    try {
-      onSaved(confirmed);
-    } catch {
-      // A local readback cache must never turn a completed write into a retry.
-      console.warn("Listens saved, but local pending-listen retention failed.");
+    if (response.success === false) {
+      throw new Error(
+        saved > 0
+          ? `Saved ${saved} listens, but the rest didn't save. Try those again.`
+          : "Could not save these listens. Try again.",
+      );
     }
+
+    const { results } = applyWritesResponseSchema.parse(response.data);
+
+    if (results && onSaved) {
+      const confirmed = results.flatMap((result, index) => {
+        const receipt = applyWritesReceiptSchema.safeParse(result);
+
+        return receipt.success && batch[index]
+          ? [{ record: batch[index], uri: receipt.data.uri, cid: receipt.data.cid }]
+          : [];
+      });
+
+      try {
+        onSaved(confirmed);
+      } catch {
+        // A local readback cache must never turn a completed write into a retry.
+        console.warn("Listens saved, but local pending-listen retention failed.");
+      }
+    }
+
+    saved += results && results.length > 0 ? results.length : batch.length;
   }
 
-  return results && results.length > 0
-    ? results.length
-    : records.length;
+  return saved;
 }
 
 /** A `datetime-local` style value for now, in local time. */

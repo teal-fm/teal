@@ -20,31 +20,32 @@ teal/
 ├── apps/amethyst/          # Android app (Expo / React Native)
 ├── apps/ios/               # iOS app (SwiftUI, XcodeGen project)
 ├── packages/client/        # @teal/client: shared, platform-neutral client logic
+├── apps/status/            # Status API (its own Jetstream v2 consumer)
 ├── services/
-│   ├── cadet/             # AT Protocol jetstream consumer
-│   ├── rocketman/         # Jetstream library
-│   ├── satellite/         # Processing service
-│   ├── types/             # Shared types
-│   └── migrations/        # SQLx migrations
+│   ├── cadet/             # AT Protocol jetstream consumer (uses the rocketman crate)
+│   ├── satellite/         # Small stats API over Cadet's materialized views
+│   └── types/             # Shared types (generated from lexicons)
+├── migrations/             # SQLx migrations (workspace root)
 ├── lexicons/fm.teal/ # AT Protocol schemas
 │   ├── feed/              # Music play types
 │   ├── actor/             # Profile types
 │   └── stats/             # Analytics
 ├── tools/lexicon-cli/      # Code generation
+├── tools/teal-cli/         # Key generation for service DIDs
 └── compose.yaml           # Docker setup
 ```
 
 ## Tech Stack
 - **Backend**: Rust (Axum, SQLx, Tokio, Serde, Tracing)
 - **Database**: PostgreSQL + Garnet/Redis
-- **Frontend**: TypeScript, Turbo, pnpm, Biome
+- **Frontend**: TypeScript, Turbo, pnpm, oxlint
 - **Protocol**: AT Protocol, IPLD/CAR, WebSocket streams
 - **Deploy**: Docker Compose, Caddy edge
 
 ## Services
 - **Aqua**: HTTP API, OAuth, play submission, profiles, CAR import
 - **Cadet**: Real-time jetstream consumer, background jobs, metrics
-- **Rocketman**: Reusable WebSocket consumer framework
+- **Rocketman** (crates.io dependency): Reusable WebSocket consumer framework
 - **Satellite**: Analytics, aggregation, external APIs
 
 ## Database Schema
@@ -166,7 +167,7 @@ pnpm lex:diff      # Show changes
 - **iOS** (`apps/ios`): SwiftUI, no third-party packages. It doesn't use `@teal/client`; it has its own Aqua client, OAuth (PAR, PKCE, DPoP), and PDS writes. Keep behaviour in step with the web and Android apps. OAuth client metadata for it is `apps/web`'s `/ios-client-metadata.json`. Regenerate the project with `pnpm ios:project` after adding files.
 
 ## Code Standards
-- **TypeScript**: Biome format (`pnpm fix`), explicit types
+- **TypeScript**: oxlint with the anti-slop rules (`pnpm lint`, `pnpm fix`), explicit types
 - **DB**: Snake_case, migrations, indexes, constraints
 - **AT Protocol**: URI format, lexicon validation, federation-ready
 

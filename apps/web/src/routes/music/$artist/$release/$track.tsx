@@ -16,6 +16,7 @@ import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { FIRST_PAGE } from "@teal/client/query";
 import { z } from "zod";
 import { searchString } from "~/lib/search";
+import { safeHttpUrl } from "@teal/client/links";
 
 /** Old links carry only slugs; find the indexed play they meant. */
 async function playFromSlugs(artist?: string, release?: string, track?: string) {
@@ -124,7 +125,7 @@ function TrackScreen() {
         ]}
         actions={
           <>
-            {p.originUri ? <LinkButton href={p.originUri} target="_blank" label="Listen" icon={ArrowUpRight} /> : null}
+            {safeHttpUrl(p.originUri) ? <LinkButton href={safeHttpUrl(p.originUri) ?? ""} target="_blank" label="Listen" icon={ArrowUpRight} /> : null}
             <AddToPlaylist play={p} />
           </>
         }

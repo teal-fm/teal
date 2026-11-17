@@ -140,6 +140,18 @@ describe("manual listen record mapping", () => {
 });
 
 describe("atomic repository submission", () => {
+  it("splits more than 200 records into applyWrites batches the PDS accepts", async () => {
+    const call = jest.fn<ReturnType<ManualListenAgent["call"]>, Parameters<ManualListenAgent["call"]>>(
+      async (_method, _params, body) => ({ data: { results: body.writes.map(() => ({})) } }),
+    );
+
+    const agent: ManualListenAgent = { did: "did:plc:test", call };
+    const [record] = buildManualListenRecords(release, [track("1", "33333333-3333-4333-8333-333333333333", "First", 120000)], "now");
+
+    await expect(submitManualListenRecords(agent, Array.from({ length: 201 }, () => record))).resolves.toBe(201);
+    expect(call.mock.calls.map(([, , body]) => body.writes.length)).toEqual([200, 1]);
+  });
+
   it("sends selected records as one applyWrites transaction", async () => {
     const call = jest.fn(
       async (..._args: [string, unknown, unknown]) => ({

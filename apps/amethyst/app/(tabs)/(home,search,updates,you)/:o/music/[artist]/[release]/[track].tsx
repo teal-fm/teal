@@ -16,6 +16,7 @@ import { FIRST_PAGE } from "@teal/client/query";
 import { appHref } from "@/lib/href";
 import { param } from "@/lib/params";
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
+import { safeHttpUrl } from "@teal/client/links";
 
 /** Old links carry only slugs; find the indexed play they meant. */
 async function playFromSlugs(artist?: string, release?: string, track?: string) {
@@ -116,7 +117,7 @@ export default function TrackScreen() {
         ]}
         actions={
           <>
-            {p.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(p.originUri ?? "")} /> : null}
+            {safeHttpUrl(p.originUri) ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(safeHttpUrl(p.originUri) ?? "")} /> : null}
             <AddToPlaylist play={p} />
           </>
         }

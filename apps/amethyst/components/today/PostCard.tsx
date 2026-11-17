@@ -13,6 +13,7 @@ import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 import { ReactionBar } from "./ReactionBar";
 import { appHref } from "@/lib/href";
+import { safeHttpUrl } from "@teal/client/links";
 
 function contextLine(post: SocialPostView) {
   const c = post.listenContext;
@@ -114,9 +115,9 @@ export function PostCard({ post }: { post: SocialPostView }) {
               </View>
             ) : null}
           </View>
-          {play.originUri ? (
+          {safeHttpUrl(play.originUri) ? (
             <Pressable
-              onPress={() => Linking.openURL(play.originUri ?? "")}
+              onPress={() => Linking.openURL(safeHttpUrl(play.originUri) ?? "")}
               accessibilityLabel="Open in your music app"
               className="h-9 w-9 items-center justify-center self-start rounded-full bg-fill"
             >

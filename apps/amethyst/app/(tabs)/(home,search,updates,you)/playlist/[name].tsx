@@ -65,6 +65,8 @@ function EditPlaylist({ playlist, onDone }: { playlist: SocialPlaylistView; onDo
         resolvePlaylistAuthors(input, owner, async (handle) => (await agent.resolveHandle({ handle })).data.did),
       );
       await client.invalidateQueries({ queryKey: ["playlist", playlist.uri] });
+      // The owner's profile lists playlists by name and cover too.
+      await client.invalidateQueries({ queryKey: ["actor-playlists", playlist.authorDid] });
       onDone();
     } catch (e) {
       // resolvePlaylistAuthors explains which collaborator it couldn't find; anything else is a save failure.

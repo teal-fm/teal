@@ -58,20 +58,24 @@ pub async fn get_actor(
     }
 }
 
-#[derive(Deserialize)]
-pub struct GetProfilesQuery {
-    pub actors: Vec<String>,
-}
+/// The most profiles one getProfiles call returns, as in app.bsky.actor.getProfiles.
+const MAX_PROFILES: usize = 25;
 
 pub async fn get_actors(
     Extension(ctx): Extension<Context>,
-    axum::extract::Query(query): axum::extract::Query<GetProfilesQuery>,
+    axum::extract::RawQuery(raw): axum::extract::RawQuery,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let repo = &ctx.db; // assuming ctx.db is Box<dyn ActorProfileRepo + Send + Sync>
-    let actor = &query.actors;
+    let repo = &ctx.db;
+    let actor = &super::repeated_param(raw.as_deref(), "actors");
 
     if actor.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, "actor is required".to_string()));
+        return Err((StatusCode::BAD_REQUEST, "actors is required".to_string()));
+    }
+    if actor.len() > MAX_PROFILES {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!("at most {MAX_PROFILES} actors per request"),
+        ));
     }
 
     match repo.get_multiple_actor_profiles(actor).await {

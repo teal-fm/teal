@@ -312,24 +312,16 @@ fn generate_did_document(host: &str, pubkey: &str) -> Value {
 /// Handler for /.well-known/did.json endpoint
 pub async fn get_did_document(
     Extension(_ctx): Extension<Context>,
-) -> impl axum::response::IntoResponse {
-    // Get the host from environment variable or use default
+) -> Result<Json<Value>, StatusCode> {
     let host = std::env::var("APP_HOST")
         .or_else(|_| std::env::var("HOST"))
         .unwrap_or_else(|_| "localhost:3000".to_string());
 
-    // get pubkey from environment variable or use default
-    let pubkey = std::env::var("TEST_PUBKEY").unwrap_or_else(|_| {
-        "z6Mkw5f8g3h4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i".to_string()
-    });
+    // Without a configured key there is no service identity to publish; a
+    // made-up key would advertise a signing key nobody holds.
+    let pubkey = std::env::var("TEST_PUBKEY").map_err(|_| StatusCode::NOT_FOUND)?;
 
-    let did_doc = generate_did_document(&host, &pubkey);
-
-    (
-        StatusCode::OK,
-        [("Content-Type", "application/json")],
-        Json(did_doc),
-    )
+    Ok(Json(generate_did_document(&host, &pubkey)))
 }
 
 #[cfg(test)]

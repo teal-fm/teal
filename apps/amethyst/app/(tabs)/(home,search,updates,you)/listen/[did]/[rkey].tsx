@@ -41,6 +41,7 @@ import { useStore } from "@/stores/mainStore";
 import { removePendingListens, retainConfirmedListens, retireIndexedListens, usePendingListens } from "@teal/client/pendingListenStore";
 import { appHref } from "@/lib/href";
 import { param } from "@/lib/params";
+import { safeHttpUrl } from "@teal/client/links";
 
 /** Fix the track, artists, album, or time of your own listen. Reads the record first so a stale view can't overwrite it. */
 function EditListen({
@@ -253,7 +254,7 @@ export default function ListenScreen() {
             <Link href={appHref(musicTrackHref(artists, play.releaseName, play.trackName, play.uri))} asChild>
               <Button label="Song page" variant="secondary" />
             </Link>
-            {play.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(play.originUri ?? "")} /> : null}
+            {safeHttpUrl(play.originUri) ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(safeHttpUrl(play.originUri) ?? "")} /> : null}
           </>
         }
       />

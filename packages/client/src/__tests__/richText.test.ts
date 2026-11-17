@@ -1,3 +1,4 @@
+import { safeHttpUrl } from "../links";
 import { richTextSegments } from "../richText";
 
 const facet = (byteStart: number, byteEnd: number, feature: { did?: string; uri?: string }) => ({
@@ -23,4 +24,12 @@ it("shows non-http links and overlapping facets as plain text", () => {
 it("returns the whole text without facets", () => {
   expect(richTextSegments("plain")).toEqual([{ text: "plain" }]);
   expect(richTextSegments("")).toEqual([]);
+});
+
+it("only accepts http(s) URLs as safe links", () => {
+  expect(safeHttpUrl("https://open.spotify.com/track/1")).toBe("https://open.spotify.com/track/1");
+  expect(safeHttpUrl("javascript:alert(1)")).toBeUndefined();
+  expect(safeHttpUrl("intent://scan#Intent;end")).toBeUndefined();
+  expect(safeHttpUrl("not a url")).toBeUndefined();
+  expect(safeHttpUrl()).toBeUndefined();
 });

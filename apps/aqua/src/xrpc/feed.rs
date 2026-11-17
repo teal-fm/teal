@@ -81,10 +81,8 @@ pub async fn get_actor_feed(
     }
 }
 
-#[derive(Deserialize)]
-pub struct GetFeedPlaysQuery {
-    pub identities: Vec<String>,
-}
+/// The most accounts one getPlays call reads.
+const MAX_IDENTITIES: usize = 25;
 
 #[derive(Serialize)]
 pub struct GetFeedPlaysResponse {
@@ -93,15 +91,21 @@ pub struct GetFeedPlaysResponse {
 
 pub async fn get_feed_plays(
     Extension(ctx): Extension<Context>,
-    axum::extract::Query(query): axum::extract::Query<GetFeedPlaysQuery>,
+    axum::extract::RawQuery(raw): axum::extract::RawQuery,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let repo = &ctx.db; // assuming ctx.db is Box<dyn FeedPlayRepo + Send + Sync>
-    let identities = &query.identities;
+    let repo = &ctx.db;
+    let identities = &super::repeated_param(raw.as_deref(), "identities");
 
     if identities.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
             "identities is required".to_string(),
+        ));
+    }
+    if identities.len() > MAX_IDENTITIES {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!("at most {MAX_IDENTITIES} identities per request"),
         ));
     }
 

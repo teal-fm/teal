@@ -13,16 +13,43 @@ export function isDid(value: string) {
 
 const resolveHandleSchema = z.object({ did: z.string().refine(isDid) });
 
+const LOOKUP_TIMEOUT_MS = 8_000;
+
+/**
+ * Fetches an identity document without following redirects and with a time
+ * limit. These lookups also run on the web server while rendering a page, for
+ * whatever DID is in the URL.
+ */
 async function fetchJson(url: string, notFound: string) {
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LOOKUP_TIMEOUT_MS);
 
-  if (response.status === 400 || response.status === 404) {
-    throw new Error(notFound);
+  try {
+    const response = await fetch(url, { redirect: "error", signal: controller.signal });
+
+    if (response.status === 400 || response.status === 404) {
+      throw new Error(notFound);
+    }
+
+    if (!response.ok) throw new Error("directory is unreachable");
+
+    return response;
+  } finally {
+    clearTimeout(timer);
   }
+}
 
-  if (!response.ok) throw new Error("directory is unreachable");
+/** did:web hosts must be public DNS names, not IP literals or local names. */
+function isPublicHostname(host: string) {
+  const lower = host.toLowerCase();
 
-  return response;
+  return (
+    /^([a-z0-9-]+\.)+[a-z]{2,}$/.test(lower) &&
+    lower !== "localhost" &&
+    !lower.endsWith(".localhost") &&
+    !lower.endsWith(".local") &&
+    !lower.endsWith(".internal")
+  );
 }
 
 /** The DID a handle points at, according to an AppView. */
@@ -54,9 +81,7 @@ export async function getDidDocument(did: string): Promise<DidDocument> {
 
     url = `https://plc.directory/${did}`;
   } else if (method === "web") {
-    if (!/^[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/.test(ident)) {
-      throw new Error("invalid domain handle");
-    }
+    if (!isPublicHostname(ident)) throw new Error("invalid domain handle");
 
     url = `https://${ident}/.well-known/did.json`;
   } else {

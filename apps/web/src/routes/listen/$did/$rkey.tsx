@@ -20,8 +20,14 @@ import { listenedAt } from "~/components/listen/ListenRow";
 import { MusicHero } from "~/components/music/MusicHero";
 import { ReactionBar } from "~/components/today/ReactionBar";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
+import { safeHttpUrl } from "@teal/client/links";
 
-const listenKey = (did: string, rkey: string, viewer?: string) => ["listen", did, rkey, viewer ?? null] as const;
+/**
+ * The viewer only changes the result on their own listen (it can show a saved
+ * edit the index hasn't caught up with), so other viewers share the key the
+ * server loader seeds.
+ */
+const listenKey = (did: string, rkey: string, viewer?: string) => ["listen", did, rkey, viewer === did ? viewer : null] as const;
 
 export const Route = createFileRoute("/listen/$did/$rkey")({
   loader: ({ params, context: { queryClient } }) =>
@@ -227,7 +233,7 @@ function ListenScreen() {
         actions={
           <>
             <LinkButton href={musicTrackHref(artists, play.releaseName, play.trackName, play.uri)} label="Song page" variant="secondary" />
-            {play.originUri ? <LinkButton href={play.originUri} target="_blank" label="Listen" icon={ArrowUpRight} /> : null}
+            {safeHttpUrl(play.originUri) ? <LinkButton href={safeHttpUrl(play.originUri) ?? ""} target="_blank" label="Listen" icon={ArrowUpRight} /> : null}
           </>
         }
       />

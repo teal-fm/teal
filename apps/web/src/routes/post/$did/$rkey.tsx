@@ -19,6 +19,7 @@ import { shareLink } from "~/components/today/share";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
 import { z } from "zod";
 import { searchString } from "~/lib/search";
+import { safeHttpUrl } from "@teal/client/links";
 
 const postQuery = (uri: string, viewer?: string) => ({
   queryKey: ["post", uri, viewer ?? null] as const,
@@ -175,7 +176,7 @@ function PostScreen() {
               {play.releaseName ? ` · ${play.releaseName}` : ""}
             </p>
           </div>
-          {play.originUri ? <LinkButton href={play.originUri} target="_blank" label="Listen" icon={ArrowUpRight} /> : null}
+          {safeHttpUrl(play.originUri) ? <LinkButton href={safeHttpUrl(play.originUri) ?? ""} target="_blank" label="Listen" icon={ArrowUpRight} /> : null}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-3.5">

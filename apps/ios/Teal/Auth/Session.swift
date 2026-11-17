@@ -31,16 +31,21 @@ enum Keychain {
         return try? JSONDecoder().decode(StoredSession.self, from: data)
     }
 
+    /// Updates the stored session in place, adding it the first time. Never deletes
+    /// first, so a failed write can't leave the account with no saved tokens.
     static func save(_ session: StoredSession) {
         guard let data = try? JSONEncoder().encode(session) else { return }
-        clear()
-        let item: [String: Any] = [
+        let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
-            kSecValueData as String: data,
         ]
+        let update: [String: Any] = [kSecValueData as String: data]
+        let status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
+        guard status == errSecItemNotFound else { return }
+        var item = query
+        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        item[kSecValueData as String] = data
         SecItemAdd(item as CFDictionary, nil)
     }
 
