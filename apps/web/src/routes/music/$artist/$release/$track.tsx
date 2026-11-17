@@ -13,8 +13,9 @@ import { MusicHero } from "~/components/music/MusicHero";
 import { AddToPlaylist } from "~/components/playlist/AddToPlaylist";
 import { PostCard } from "~/components/today/PostCard";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
-import { pickStrings } from "~/lib/search";
 import { FIRST_PAGE } from "@teal/client/query";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 /** Old links carry only slugs; find the indexed play they meant. */
 async function playFromSlugs(artist?: string, release?: string, track?: string) {
@@ -39,7 +40,7 @@ const playQuery = (uri: string | undefined, artist: string, release: string, tra
 });
 
 export const Route = createFileRoute("/music/$artist/$release/$track")({
-  validateSearch: (search: Record<string, unknown>) => pickStrings(search, "uri", "postUri"),
+  validateSearch: z.object({ uri: searchString, postUri: searchString }),
   loaderDeps: ({ search }) => ({ uri: search.uri }),
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {

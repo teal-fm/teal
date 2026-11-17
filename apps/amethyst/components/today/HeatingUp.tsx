@@ -3,6 +3,7 @@ import { Link } from "expo-router";
 import type { MomentView } from "@teal/client/teal/api";
 import { musicAlbumHref } from "@teal/client/teal/routes";
 import { AmbientSource, Avatar, Cover, Glass, Heading, Text, coverUri, useHalo } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 function albumHref(m: MomentView) {
   const r = m.release;
@@ -45,7 +46,7 @@ export function HeatingShelf({ moments, title = "Heating up" }: { moments: Momen
       </Heading>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3.5 px-2.5">
         {moments.map((m) => (
-          <Link key={m.release.releaseMbId ?? m.release.releaseName} href={(albumHref(m) ?? "/") as never} asChild>
+          <Link key={m.release.releaseMbId ?? m.release.releaseName} href={appHref((albumHref(m) ?? "/"))} asChild>
             <Pressable className="w-[150px]">
               <AmbientSource uri={coverUri(m.release.releaseMbId)}>
                 <Cover releaseMbId={m.release.releaseMbId} size={150} radius={14} className="shadow-xl" />
@@ -77,7 +78,7 @@ export function HeatingRail({ moments }: { moments: MomentView[] }) {
         Heating up
       </Heading>
       {moments.map((m) => (
-        <Link key={m.release.releaseMbId ?? m.release.releaseName} href={(albumHref(m) ?? "/") as never} asChild>
+        <Link key={m.release.releaseMbId ?? m.release.releaseName} href={appHref((albumHref(m) ?? "/"))} asChild>
           <Pressable className="flex-row items-center gap-3 py-1.5">
             <Cover releaseMbId={m.release.releaseMbId} size={52} radius={9} />
             <View className="min-w-0 flex-1">

@@ -4,9 +4,11 @@ import { Choices, LinkButton, Loading, Notice, Screen } from "~/ds";
 import { AlbumLog } from "~/components/log/AlbumLog";
 import { SongLog } from "~/components/log/SongLog";
 import { useAuth } from "~/lib/auth";
+import { z } from "zod";
+import { searchEnum } from "~/lib/search";
 
 export const Route = createFileRoute("/stamp")({
-  validateSearch: (search: Record<string, unknown>): { mode?: "album" } => ({ mode: search.mode === "album" ? "album" : undefined }),
+  validateSearch: z.object({ mode: searchEnum(["album"]) }),
   head: () => ({ meta: [{ title: "Add a listen · Teal" }] }),
   component: AddListen,
 });

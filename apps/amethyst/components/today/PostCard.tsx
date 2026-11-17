@@ -13,6 +13,7 @@ import { AmbientSource, Avatar, Cover, Glass, Icon, Text, coverUri } from "@/com
 import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 import { ReactionBar } from "./ReactionBar";
+import { appHref } from "@/lib/href";
 
 function contextLine(post: SocialPostView) {
   const c = post.listenContext;
@@ -58,7 +59,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
     <AmbientSource uri={coverUri(play.releaseMbId)}>
       <Glass className="mb-3.5 gap-3 px-4 pb-3 pt-4">
         <View className="flex-row items-center gap-2.5">
-          <Link href={author.href as never} asChild>
+          <Link href={appHref(author.href)} asChild>
             <Pressable accessibilityLabel={name ? `${name}'s profile` : "Profile"}>
               <Avatar did={author.did} avatar={author.avatar} name={name} size={40} />
             </Pressable>
@@ -75,7 +76,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
         </View>
 
         {post.text ? (
-          <Link href={href as never} asChild>
+          <Link href={appHref(href)} asChild>
             <Pressable>
               <RichText
                 text={post.text}
@@ -87,7 +88,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
         ) : null}
 
         <View className="flex-row items-center gap-3.5">
-          <Link href={href as never} asChild>
+          <Link href={appHref(href)} asChild>
             <Pressable accessibilityLabel={`${play.trackName}${artist ? ` by ${artist}` : ""}`}>
               <Cover releaseMbId={play.releaseMbId} size={112} radius={14} className="shadow-xl" />
             </Pressable>
@@ -97,7 +98,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
               {play.trackName}
             </Text>
             {artist ? (
-              <Link href={musicArtistHref(artist, play.artists?.[0]?.artistMbId) as never} asChild>
+              <Link href={appHref(musicArtistHref(artist, play.artists?.[0]?.artistMbId))} asChild>
                 <Pressable>
                   <Text className="text-[15px] text-ink-2" numberOfLines={1}>
                     {[artist, play.releaseName].filter(Boolean).join(" · ")}
@@ -137,7 +138,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
           <View className="flex-1">
             <ReactionBar subject={{ uri: post.uri, cid: post.cid }} reactions={post.reactions ?? []} />
           </View>
-          <Link href={`${href}#replies` as never} asChild>
+          <Link href={appHref(`${href}#replies`)} asChild>
             <Pressable
               accessibilityLabel={`${post.replyCount} ${post.replyCount === 1 ? "reply" : "replies"}`}
               className="h-9 flex-row items-center gap-1.5 px-2">

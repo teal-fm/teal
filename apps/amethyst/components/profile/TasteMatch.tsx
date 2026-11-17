@@ -5,6 +5,7 @@ import { getTasteMatch } from "@teal/client/teal/api";
 import { musicAlbumHref } from "@teal/client/teal/routes";
 import { ChevronRight } from "lucide-react-native";
 import { Avatar, Cover, Glass, Icon, Text } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 const LEVEL = { high: "Very in tune", some: "Some overlap", low: "Different tastes" } as const;
 
@@ -75,7 +76,7 @@ export function TasteMatch({
       ) : null}
       {s?.releaseMbId ? (
         <Link
-          href={(s.artistName ? musicAlbumHref(s.artistName, s.releaseName, s.releaseMbId) : "/") as never}
+          href={appHref((s.artistName ? musicAlbumHref(s.artistName, s.releaseName, s.releaseMbId) : "/"))}
           asChild
         >
           <Pressable className="flex-row items-center gap-3 rounded-[14px] border border-hair p-3">

@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { atUriFromRoutePath, hrefFromAtUri } from "@teal/client/teal/routes";
 import { Button, Notice, Screen } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 function atUriFromParams(param: string | string[] | undefined) {
   if (Platform.OS === "web") {
@@ -22,7 +23,7 @@ export default function AtUriLink() {
   const uri = useMemo(() => atUriFromParams(params.uri), [params.uri]);
   const href = hrefFromAtUri(uri);
 
-  if (href) return <Redirect href={href as never} />;
+  if (href) return <Redirect href={appHref(href)} />;
 
   return (
     <Screen back pageTitle="Unsupported link">

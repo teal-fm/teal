@@ -9,7 +9,8 @@ import { normalizePeriod, periodLabel, STATS_PERIODS } from "@teal/client/teal/t
 import { cn } from "@teal/client/utils";
 import { A, AmbientSource, Button, ButtonRow, Choices, Cover, coverUri, ErrorNotice, Glass, Heading, Loading, Screen } from "~/ds";
 import { shareLink } from "~/components/today/share";
-import { pickStrings } from "~/lib/search";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 type GridSize = 3 | 4 | 5;
 
@@ -24,7 +25,7 @@ function gridSize(value?: string): GridSize {
 }
 
 export const Route = createFileRoute("/profile/$handle/topster")({
-  validateSearch: (search: Record<string, unknown>) => pickStrings(search, "period", "size"),
+  validateSearch: z.object({ period: searchString, size: searchString }),
   head: () => ({ meta: [{ title: "Album chart · Teal" }] }),
   component: TopsterScreen,
 });

@@ -10,8 +10,9 @@ import { ListenCard } from "~/components/listen/ListenCard";
 import { MusicHero } from "~/components/music/MusicHero";
 import { useEndReached } from "~/hooks/useEndReached";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
-import { pickStrings } from "~/lib/search";
 import { FIRST_PAGE } from "@teal/client/query";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 const albumQuery = (mbid: string) =>
   infiniteQueryOptions({
@@ -22,7 +23,7 @@ const albumQuery = (mbid: string) =>
   });
 
 export const Route = createFileRoute("/music/$artist/$release/")({
-  validateSearch: (search: Record<string, unknown>) => pickStrings(search, "mbid"),
+  validateSearch: z.object({ mbid: searchString }),
   loaderDeps: ({ search }) => ({ mbid: search.mbid }),
   loader: ({ deps, context: { queryClient } }) =>
     serverAwait(async () => {

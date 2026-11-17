@@ -9,7 +9,8 @@ import { Leaderboard } from "~/components/music/Leaderboard";
 import { MusicHero } from "~/components/music/MusicHero";
 import { ReleaseGrid } from "~/components/music/ReleaseGrid";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
-import { pickStrings } from "~/lib/search";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 const artistQuery = (mbid?: string, name?: string) => ({
   queryKey: ["artist", mbid, name] as const,
@@ -17,7 +18,7 @@ const artistQuery = (mbid?: string, name?: string) => ({
 });
 
 export const Route = createFileRoute("/music/$artist/")({
-  validateSearch: (search: Record<string, unknown>) => pickStrings(search, "mbid", "name", "period"),
+  validateSearch: z.object({ mbid: searchString, name: searchString, period: searchString }),
   loaderDeps: ({ search }) => ({ mbid: search.mbid, name: search.name }),
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {

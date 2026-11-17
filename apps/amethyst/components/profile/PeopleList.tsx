@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { actorAvatarUrl, actorProfileHref, displayActorName, normalizeHandle } from "@teal/client/teal/actors";
 import { Avatar, Button, ErrorNotice, Glass, Heading, IconButton, Loading, Row, Text } from "@/components/ds";
 import { usePeople } from "@teal/client/hooks/useProfile";
+import { appHref } from "@/lib/href";
 
 /** Followers or following, opened from the counts in the profile header. */
 export function PeopleList({ did, kind, onClose }: { did: string; kind: "followers" | "following"; onClose: () => void }) {
@@ -26,7 +27,7 @@ export function PeopleList({ did, kind, onClose }: { did: string; kind: "followe
         actors.map((actor, i) => (
           <Row
             key={actor.did ?? i}
-            href={`/profile/${actorProfileHref(actor, actor.did)}` as never}
+            href={appHref(`/profile/${actorProfileHref(actor, actor.did)}`)}
             leading={<Avatar did={actor.did} avatar={actorAvatarUrl(actor, actor.did)} name={displayActorName(actor, actor.did)} size={40} />}
             title={displayActorName(actor, actor.did)}
             subtitle={actor.handle ? `@${normalizeHandle(actor.handle)}` : undefined}

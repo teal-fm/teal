@@ -16,7 +16,8 @@ import { TrackPicker } from "~/components/compose/TrackPicker";
 import { RichText } from "~/components/post/RichText";
 import { ImagePick } from "~/components/profile/ImagePick";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
-import { pickStrings } from "~/lib/search";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 const playlistQuery = (uri: string) => ({ queryKey: ["playlist", uri] as const, queryFn: () => getPlaylist(uri) });
 
@@ -25,7 +26,7 @@ function playlistCover(playlist: SocialPlaylistView) {
 }
 
 export const Route = createFileRoute("/playlist/$name")({
-  validateSearch: (search: Record<string, unknown>) => pickStrings(search, "uri"),
+  validateSearch: z.object({ uri: searchString }),
   loaderDeps: ({ search }) => ({ uri: search.uri }),
   loader: ({ deps, context: { queryClient } }) =>
     serverAwait(async () => {

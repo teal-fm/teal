@@ -23,6 +23,7 @@ import {
   type TopKind,
 } from "@teal/client/teal/topStats";
 import { Button, Choices, Cover, ErrorNotice, Glass, Heading, Icon, Text } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 const TITLES: Record<TopKind, string> = { artists: "Top artists", albums: "Top albums", tracks: "Top tracks" };
 const FALLBACK_ICON = { artists: Mic2, albums: Disc3, tracks: Music2 } as const;
@@ -74,7 +75,7 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
         history: getActorFeed,
       });
 
-      if (result.context?.href) router.push(result.context.href as never);
+      if (result.context?.href) router.push(appHref(result.context.href));
       else setNotFound(true);
     } catch {
       setNotFound(true);
@@ -103,7 +104,7 @@ export function TopRow({ item, rank, actor, last }: { item: TopItem; rank: numbe
 
   if (item.href) {
     return (
-      <Link href={item.href as never} asChild>
+      <Link href={appHref(item.href)} asChild>
         <Pressable accessibilityLabel={label} className="web:hover:opacity-80">
           {body}
         </Pressable>
@@ -146,7 +147,7 @@ function TopList({
         <Heading level={3} size="card">
           {TITLES[kind]}
         </Heading>
-        <Link href={topStatsHref(actor, kind, period) as never} asChild>
+        <Link href={appHref(topStatsHref(actor, kind, period))} asChild>
           <Pressable accessibilityRole="link" accessibilityLabel={`All ${TITLES[kind].toLowerCase()}`} className="min-h-9 justify-center">
             <Text className="text-[14px] font-semibold text-tint">See all</Text>
           </Pressable>
@@ -193,7 +194,7 @@ export function TopStats({
     <Glass className="gap-4 p-4">
       <View className="flex-row flex-wrap items-center justify-between gap-3">
         <Heading level={2}>Listening taste</Heading>
-        <Link href={`/profile/${encodeURIComponent(actor)}/topster?period=${period}` as never} asChild>
+        <Link href={appHref(`/profile/${encodeURIComponent(actor)}/topster?period=${period}`)} asChild>
           <Button label="Album chart" size="sm" variant="secondary" />
         </Link>
       </View>

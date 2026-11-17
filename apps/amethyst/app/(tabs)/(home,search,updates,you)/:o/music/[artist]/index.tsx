@@ -9,6 +9,7 @@ import { Button, Choices, ErrorNotice, Loading, Screen, Section, Text } from "@/
 import { Leaderboard } from "@/components/music/Leaderboard";
 import { MusicHero } from "@/components/music/MusicHero";
 import { ReleaseGrid } from "@/components/music/ReleaseGrid";
+import { appHref } from "@/lib/href";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -86,7 +87,7 @@ export default function ArtistScreen() {
         ) : (
           <>
             <Leaderboard listeners={listeners.data} />
-            <Link href={musicArtistListenersHref(a.name, a.mbid, period) as never} asChild>
+            <Link href={appHref(musicArtistListenersHref(a.name, a.mbid, period))} asChild>
               <Button label="See all listeners" icon={Trophy} size="sm" variant="secondary" className="mt-3" />
             </Link>
           </>

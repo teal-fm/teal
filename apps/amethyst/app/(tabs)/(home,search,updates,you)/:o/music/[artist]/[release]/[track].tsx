@@ -13,6 +13,7 @@ import { useRecordingArt } from "@teal/client/hooks/useRecordingArt";
 import { AddToPlaylist } from "@/components/playlist/AddToPlaylist";
 import { PostCard } from "@/components/today/PostCard";
 import { FIRST_PAGE } from "@teal/client/query";
+import { appHref } from "@/lib/href";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -93,7 +94,7 @@ export default function TrackScreen() {
         title={p.trackName}
         lines={[
           firstArtist?.artistMbId ? (
-            <Link href={musicArtistHref(artists, firstArtist.artistMbId) as never} asChild>
+            <Link href={appHref(musicArtistHref(artists, firstArtist.artistMbId))} asChild>
               <Pressable className="self-start">
                 <Text onBackdrop className="text-[18px] font-semibold">
                   {artists}
@@ -104,7 +105,7 @@ export default function TrackScreen() {
             artists
           ),
           p.releaseName && p.releaseMbId ? (
-            <Link href={musicAlbumHref(artists, p.releaseName, p.releaseMbId) as never} asChild>
+            <Link href={appHref(musicAlbumHref(artists, p.releaseName, p.releaseMbId))} asChild>
               <Pressable className="self-start">
                 <Text onBackdrop className="text-[16px] text-ink-2">
                   {p.releaseName}

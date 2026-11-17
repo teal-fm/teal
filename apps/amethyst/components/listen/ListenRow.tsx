@@ -6,6 +6,7 @@ import { displayArtists } from "@teal/client/teal/api";
 import { listenHref, musicTrackHref } from "@teal/client/teal/routes";
 import { cn } from "@teal/client/utils";
 import { Cover, Icon, Text } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 export function listenedAt(value?: string) {
   const time = new Date(value || "");
@@ -86,7 +87,7 @@ export function ListenRow({
   const href = (syncing && listenHref(play.authorDid, play.rkey)) || musicTrackHref(artists, play.releaseName, play.trackName, play.uri);
 
   return (
-    <Link href={href as never} asChild>
+    <Link href={appHref(href)} asChild>
       <Pressable accessibilityLabel={label} className="web:hover:opacity-80">
         {body}
       </Pressable>

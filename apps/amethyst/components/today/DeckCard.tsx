@@ -13,6 +13,7 @@ import { Avatar, Cover, Icon, Text, useHalo } from "@/components/ds";
 import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 
 import { ReactionPicker } from "./ReactionPicker";
+import { appHref } from "@/lib/href";
 
 export type DeckItem =
   | { kind: "listen"; key: string; listen: ListeningView }
@@ -73,7 +74,7 @@ function ListeningCard({ listen, width }: { listen: ListeningView; width: number
         accessibilityLabel={`${name} is playing ${listen.trackName}${listen.artistName ? ` by ${listen.artistName}` : ""}.${viewer ? " Double tap to react with fire." : ""}`}
       >
         <Cover releaseMbId={listen.releaseMbId} radius={18} style={{ width, height: width }} className="shadow-2xl" />
-        <Link href={actor.href as never} asChild>
+        <Link href={appHref(actor.href)} asChild>
           <Pressable className="absolute left-2.5 top-2.5 h-[34px] flex-row items-center gap-2 rounded-full bg-black/45 pl-[3px] pr-3">
             <Avatar did={actor.did} avatar={actor.avatar} name={name} size={28} />
             <Text className="text-[13.5px] font-semibold text-white" numberOfLines={1}>
@@ -189,7 +190,7 @@ function MomentCard({ moment, width }: { moment: MomentView; width: number }) {
         </Text>
       </View>
       {href ? (
-        <Link href={href as never} asChild>
+        <Link href={appHref(href)} asChild>
           <Pressable className="mt-3 h-9 self-start justify-center rounded-full bg-fill px-3.5">
             <Text className="text-[14.5px] font-semibold text-ink">Open the album</Text>
           </Pressable>

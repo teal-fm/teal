@@ -32,6 +32,7 @@ import {
 import { TrackPicker } from "@/components/compose/TrackPicker";
 import RichText from "@/components/post/RichText";
 import { useStore } from "@/stores/mainStore";
+import { appHref } from "@/lib/href";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -259,7 +260,7 @@ export default function PlaylistScreen() {
             <Row
               key={item.uri}
               // Playlist items aren't listens, so there's no listen to open; the album page always resolves.
-              href={play.releaseMbId ? (musicAlbumHref(displayArtists(play) || "music", play.releaseName || "Album", play.releaseMbId) as never) : undefined}
+              href={play.releaseMbId ? appHref(musicAlbumHref(displayArtists(play) || "music", play.releaseName || "Album", play.releaseMbId)) : undefined}
               leading={
                 <View className="flex-row items-center gap-3">
                   <Text className="w-6 text-center text-[13px] tabular-nums text-ink-2">{i + 1}</Text>

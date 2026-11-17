@@ -12,16 +12,15 @@ import { dedupeMoments } from "@teal/client/teal/today";
 import { Avatar, Cover, ErrorNotice, Glass, Icon, IconButton, Loading, Row, Screen, Tabs } from "~/ds";
 import { HeatingShelf } from "~/components/today/HeatingUp";
 import { useLayout } from "~/lib/media";
+import { z } from "zod";
+import { searchEnum, searchString } from "~/lib/search";
 
 const KINDS = ["people", "songs", "artists", "albums"] as const;
 
 type Kind = (typeof KINDS)[number];
 
 export const Route = createFileRoute("/search")({
-  validateSearch: (search: Record<string, unknown>): { q?: string; kind?: Kind } => ({
-    q: typeof search.q === "string" && search.q ? search.q : undefined,
-    kind: KINDS.includes(search.kind as Kind) ? (search.kind as Kind) : undefined,
-  }),
+  validateSearch: z.object({ q: searchString, kind: searchEnum(KINDS) }),
   head: () => ({ meta: [{ title: "Explore · Teal" }] }),
   component: Explore,
 });

@@ -17,6 +17,8 @@ import { RichText } from "~/components/post/RichText";
 import { ReactionBar } from "~/components/today/ReactionBar";
 import { shareLink } from "~/components/today/share";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 const postQuery = (uri: string, viewer?: string) => ({
   queryKey: ["post", uri, viewer ?? null] as const,
@@ -24,9 +26,7 @@ const postQuery = (uri: string, viewer?: string) => ({
 });
 
 export const Route = createFileRoute("/post/$did/$rkey")({
-  validateSearch: (search: Record<string, unknown>): { alpha?: string } => ({
-    alpha: search.alpha === "1" || search.alpha === 1 ? "1" : undefined,
-  }),
+  validateSearch: z.object({ alpha: searchString.pipe(z.literal("1").optional().catch(undefined)) }),
   loaderDeps: ({ search }) => ({ alpha: search.alpha }),
   loader: ({ params, deps, context: { queryClient } }) =>
     serverAwait(async () => {

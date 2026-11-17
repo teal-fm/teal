@@ -4,12 +4,13 @@ import type { ArtistListenerView } from "@teal/lexicons/src/fm/teal/music/defs";
 import { countLabel } from "@teal/client/teal/music";
 import { Avatar, Text } from "@/components/ds";
 import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
+import { appHref } from "@/lib/href";
 
 function ListenerRow({ listener, rank, last }: { listener: ArtistListenerView; rank: number; last: boolean }) {
   const actor = useDisplayActor(listener.actor, listener.actor.did);
 
   return (
-    <Link href={actor.href as never} asChild>
+    <Link href={appHref(actor.href)} asChild>
       <Pressable
         accessibilityLabel={`${rank}. ${actor.name}, ${countLabel(listener.playCount, "listen")}`}
         className={last ? "flex-row items-center gap-3 py-2.5" : "flex-row items-center gap-3 border-b border-hair py-2.5"}

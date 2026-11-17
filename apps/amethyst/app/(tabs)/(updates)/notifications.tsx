@@ -28,6 +28,7 @@ import {
   Text,
 } from "@/components/ds";
 import { FIRST_PAGE } from "@teal/client/query";
+import { appHref } from "@/lib/href";
 
 const REASONS: Record<string, { label: string; icon: LucideIcon; tone: string }> = {
   like: { label: "liked your", icon: Heart, tone: "text-rose-500" },
@@ -151,7 +152,7 @@ function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
               const name = displayActorName(item.actor, did);
 
               return (
-                <Link key={item.id} href={`/profile/${actorProfileHref(item.actor, did)}` as never} asChild>
+                <Link key={item.id} href={appHref(`/profile/${actorProfileHref(item.actor, did)}`)} asChild>
                   <Pressable accessibilityLabel={`${name}'s profile`} style={{ marginLeft: index ? -8 : 0, zIndex: 4 - index }}>
                     <Avatar did={did} avatar={actorAvatarUrl(item.actor, did)} name={name} size={36} className="border-2 border-ground" />
                   </Pressable>
@@ -166,7 +167,7 @@ function ActivityRow({ group: g, last }: { group: Group; last: boolean }) {
           </Text>
           {href && g.contextUri ? <PostPreview uri={g.contextUri} href={href} /> : null}
           {otherHref ? (
-            <Link href={otherHref as never} asChild>
+            <Link href={appHref(otherHref)} asChild>
               <Pressable accessibilityRole="link" className="self-start">
                 <Text className="text-[14px] font-semibold text-tint">Open your {target}</Text>
               </Pressable>
@@ -205,7 +206,7 @@ function PostPreview({ uri, href }: { uri: string; href: string }) {
   const play = trackViewToPlayView(post.data.track);
 
   return (
-    <Link href={href as never} asChild>
+    <Link href={appHref(href)} asChild>
       <Pressable accessibilityLabel="Open the post" className="flex-row items-center gap-3 rounded-[16px] bg-fill p-2.5 web:hover:opacity-85">
         <Cover releaseMbId={play.releaseMbId} size={44} radius={8} />
         <View className="min-w-0 flex-1">

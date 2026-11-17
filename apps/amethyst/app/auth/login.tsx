@@ -7,6 +7,7 @@ import { resolveFromIdentity } from "@teal/client/atp/pid";
 import { normalizeAuthHandle } from "@teal/client/authHandle";
 import { Button, Dialog, Field, goBack, Icon, PageTitle, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
+import { appHref } from "@/lib/href";
 
 const RESOLVE_DELAY = 500;
 
@@ -83,7 +84,7 @@ export default function Login() {
       setBusy("redirecting");
 
       if (Platform.OS === "web") {
-        router.navigate(url.toString() as never);
+        router.navigate(appHref(url.toString()));
 
         return;
       }

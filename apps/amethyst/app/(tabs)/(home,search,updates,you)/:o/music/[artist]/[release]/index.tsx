@@ -9,6 +9,7 @@ import { ErrorNotice, Glass, Icon, Loading, Screen, Section, Text } from "@/comp
 import { ListenCard } from "@/components/listen/ListenCard";
 import { MusicHero } from "@/components/music/MusicHero";
 import { FIRST_PAGE } from "@teal/client/query";
+import { appHref } from "@/lib/href";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -63,7 +64,7 @@ export default function AlbumScreen() {
         title={info.name}
         lines={[
           info.artistMbid ? (
-            <Link href={musicArtistHref(info.artistName, info.artistMbid) as never} asChild>
+            <Link href={appHref(musicArtistHref(info.artistName, info.artistMbid))} asChild>
               <Pressable className="self-start">
                 <Text onBackdrop className="text-[18px] font-semibold">
                   {info.artistName}
@@ -96,7 +97,7 @@ export default function AlbumScreen() {
           );
 
           return track.uri ? (
-            <Link key={track.uri} href={musicTrackHref(track.artistName, info.name, track.name, track.uri) as never} asChild>
+            <Link key={track.uri} href={appHref(musicTrackHref(track.artistName, info.name, track.name, track.uri))} asChild>
               <Pressable className="web:hover:opacity-80">{row}</Pressable>
             </Link>
           ) : (

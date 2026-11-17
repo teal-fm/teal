@@ -6,6 +6,7 @@ import { shortAgo } from "@teal/client/teal/today";
 
 import type { PlayView } from "@teal/lexicons/src/fm/teal/feed/defs";
 import { AmbientSource, Cover, Glass, Text, coverUri } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 /** What someone is listening to now, then their last few plays as covers. */
 export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView[] }) {
@@ -46,7 +47,7 @@ export function NowAndRecent({ now, recent }: { now?: PlayView; recent: PlayView
             );
 
             return href ? (
-              <Link key={play.uri} href={href as never} asChild>
+              <Link key={play.uri} href={appHref(href)} asChild>
                 <Pressable>{tile}</Pressable>
               </Link>
             ) : (

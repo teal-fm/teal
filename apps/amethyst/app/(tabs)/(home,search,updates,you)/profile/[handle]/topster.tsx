@@ -23,6 +23,7 @@ import {
   Text,
   useLayout,
 } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 type GridSize = 3 | 4 | 5;
 
@@ -130,7 +131,7 @@ export default function TopsterScreen() {
                 );
 
                 return release.mbid ? (
-                  <Link key={`${release.mbid}-${i}`} href={musicAlbumHref("music", release.name || "Unknown album", release.mbid) as never} asChild>
+                  <Link key={`${release.mbid}-${i}`} href={appHref(musicAlbumHref("music", release.name || "Unknown album", release.mbid))} asChild>
                     <Pressable accessibilityLabel={label} className="web:hover:opacity-85">
                       {art}
                     </Pressable>

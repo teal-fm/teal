@@ -11,6 +11,7 @@ import { cn } from "@teal/client/utils";
 import { Button, ButtonRow, Cover, ErrorNotice, Field, Glass, Heading, Icon, Loading, Notice, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
 import { retainConfirmedListens } from "@teal/client/pendingListenStore";
+import { appHref } from "@/lib/href";
 
 const artistNames = (recording: MusicBrainzRecording) =>
   recording["artist-credit"]?.map((credit) => credit.name || credit.artist.name).join(", ") || "Unknown artist";
@@ -189,7 +190,7 @@ export function SongLog() {
         action={
           <ButtonRow>
             {href ? (
-              <Link href={href as never} asChild>
+              <Link href={appHref(href)} asChild>
                 <Button label="See it" variant="secondary" />
               </Link>
             ) : null}

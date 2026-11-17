@@ -4,6 +4,7 @@ import { useQueries } from "@tanstack/react-query";
 import { getAlbum } from "@teal/client/teal/api";
 import { musicAlbumHref } from "@teal/client/teal/routes";
 import { AmbientSource, Cover, Glass, Text, coverUri } from "@/components/ds";
+import { appHref } from "@/lib/href";
 
 export type Favourite = { mbid: string; type: string };
 
@@ -67,7 +68,7 @@ export function Favourites({
             );
 
             return album?.artistName ? (
-              <Link key={id} href={musicAlbumHref(album.artistName, album.name, id) as never} asChild>
+              <Link key={id} href={appHref(musicAlbumHref(album.artistName, album.name, id))} asChild>
                 <Pressable className="flex-1">{body}</Pressable>
               </Link>
             ) : (

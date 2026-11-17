@@ -28,6 +28,7 @@ import {
 } from "@/components/ds";
 import { HeatingShelf } from "@/components/today/HeatingUp";
 import { useDebounced } from "@teal/client/hooks/useDebounced";
+import { appHref } from "@/lib/href";
 
 type Kind = "people" | "songs" | "artists" | "albums";
 
@@ -156,7 +157,7 @@ export default function Explore() {
               data.songs.map((song, i) => (
                 <Row
                   key={song.uri ?? `${song.trackName}-${i}`}
-                  href={musicTrackHref(song.artistName, song.releaseName, song.trackName, song.uri) as never}
+                  href={appHref(musicTrackHref(song.artistName, song.releaseName, song.trackName, song.uri))}
                   leading={<Cover releaseMbId={song.releaseMbId} size={52} radius={8} />}
                   title={song.trackName}
                   subtitle={[song.artistName, song.releaseName].filter(Boolean).join(" · ")}
@@ -168,7 +169,7 @@ export default function Explore() {
               data.artists.map((artist, i) => (
                 <Row
                   key={`${artist.mbid}-${artist.name}`}
-                  href={musicArtistHref(artist.name || "Unknown", artist.mbid) as never}
+                  href={appHref(musicArtistHref(artist.name || "Unknown", artist.mbid))}
                   leading={
                     <View className="h-[52px] w-[52px] items-center justify-center rounded-full bg-fill">
                       <Icon icon={Mic2} size={22} className="text-ink-2" />
@@ -183,7 +184,7 @@ export default function Explore() {
               data.albums.map((album, i) => (
                 <Row
                   key={`${album.mbid}-${album.name}`}
-                  href={musicAlbumHref("music", album.name || "Unknown", album.mbid ?? "") as never}
+                  href={appHref(musicAlbumHref("music", album.name || "Unknown", album.mbid ?? ""))}
                   leading={<Cover releaseMbId={album.mbid} size={52} radius={8} />}
                   title={album.name || "Unknown album"}
                   meta={plays(album.playCount)}

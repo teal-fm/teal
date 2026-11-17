@@ -1,17 +1,17 @@
+import { z } from "zod";
+
 /**
- * Picks search params as optional strings, for routes whose links come from the
- * shared href helpers. Call it inside an inline `validateSearch` arrow so the
- * router can infer the result type.
+ * An optional search param as a non-empty string. The router parses `?size=5`
+ * as a number, so numbers are read back as strings; anything else is dropped.
  */
-export function pickStrings<K extends string>(search: Record<string, unknown>, ...keys: K[]): { [P in K]?: string } {
-  const out: { [P in K]?: string } = {};
+export const searchString = z
+  .union([z.string(), z.number()])
+  .transform(String)
+  .pipe(z.string().min(1))
+  .optional()
+  .catch(undefined);
 
-  for (const key of keys) {
-    const value = search[key];
-
-    if (typeof value === "string" && value) out[key] = value;
-    else if (typeof value === "number") out[key] = String(value);
-  }
-
-  return out;
+/** An optional search param limited to `values`; anything else is dropped. */
+export function searchEnum<const T extends readonly [string, ...string[]]>(values: T) {
+  return z.enum(values).optional().catch(undefined);
 }

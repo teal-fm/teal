@@ -30,15 +30,13 @@ import { TopStats } from "~/components/profile/TopStats";
 import { PostCard } from "~/components/today/PostCard";
 import { useLayout } from "~/lib/media";
 import { once, pageMeta, serverAwait } from "~/lib/meta";
+import { z } from "zod";
+import { searchEnum } from "~/lib/search";
 
 const TABS = ["overview", "listening", "posts", "playlists"] as const;
 
-type Tab = (typeof TABS)[number];
-
 export const Route = createFileRoute("/profile/$handle/")({
-  validateSearch: (search: Record<string, unknown>): { tab?: Tab } => ({
-    tab: TABS.includes(search.tab as Tab) ? (search.tab as Tab) : undefined,
-  }),
+  validateSearch: z.object({ tab: searchEnum(TABS) }),
   loader: ({ params, context: { queryClient } }) =>
     serverAwait(async () => {
       const did = await queryClient.ensureQueryData(once(actorDidQuery(params.handle)));

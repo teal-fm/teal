@@ -37,6 +37,7 @@ import {
   useProfile,
   type DisplayProfile,
 } from "@teal/client/hooks/useProfile";
+import { appHref } from "@/lib/href";
 
 type Tab = "overview" | "listening" | "posts" | "playlists";
 
@@ -189,14 +190,14 @@ function Overview({
         <TopStats actor={did} defaultPeriod={normalizePeriod(profile?.statsDefaultPeriod)} plays={indexed} wide={layout.sidebar} />
       ) : null}
       {latest ? (
-        <Section title="Latest post" more={{ label: "See all", href: `/profile/${did}?tab=posts` as never }}>
+        <Section title="Latest post" more={{ label: "See all", href: appHref(`/profile/${did}?tab=posts`) }}>
           <PostCard post={latest} />
         </Section>
       ) : null}
       {firstPlaylist ? (
-        <Section title="Playlists" panel more={{ label: "See all", href: `/profile/${did}?tab=playlists` as never }}>
+        <Section title="Playlists" panel more={{ label: "See all", href: appHref(`/profile/${did}?tab=playlists`) }}>
           <Row
-            href={playlistHref(firstPlaylist.name, firstPlaylist.uri) as never}
+            href={appHref(playlistHref(firstPlaylist.name, firstPlaylist.uri))}
             title={firstPlaylist.name}
             subtitle={`${firstPlaylist.itemCount} ${firstPlaylist.itemCount === 1 ? "track" : "tracks"}`}
             divider={false}
@@ -268,7 +269,7 @@ function Playlists({ did, isSelf }: { did: string; isSelf: boolean }) {
           {items.map((playlist, i) => (
             <Row
               key={playlist.uri}
-              href={playlistHref(playlist.name, playlist.uri) as never}
+              href={appHref(playlistHref(playlist.name, playlist.uri))}
               title={playlist.name}
               subtitle={`${playlist.itemCount} ${playlist.itemCount === 1 ? "track" : "tracks"}`}
               divider={i < items.length - 1}

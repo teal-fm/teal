@@ -4,13 +4,14 @@ import { useActorDid, useActorPlays } from "@teal/client/hooks/useProfile";
 import { loadTop, normalizeKind, normalizePeriod, STATS_PERIODS, withContext, type TopKind } from "@teal/client/teal/topStats";
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen, Tabs } from "~/ds";
 import { TopRow } from "~/components/profile/TopStats";
-import { pickStrings } from "~/lib/search";
 import { FIRST_PAGE } from "@teal/client/query";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 const TITLES: Record<TopKind, string> = { artists: "Top artists", albums: "Top albums", tracks: "Top tracks" };
 
 export const Route = createFileRoute("/profile/$handle/stats/$kind")({
-  validateSearch: (search: Record<string, unknown>) => pickStrings(search, "period"),
+  validateSearch: z.object({ period: searchString }),
   head: ({ params }) => ({ meta: [{ title: `${TITLES[normalizeKind(params.kind)]} · Teal` }] }),
   component: TopStatsScreen,
 });

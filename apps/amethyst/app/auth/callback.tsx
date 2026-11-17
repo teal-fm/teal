@@ -4,6 +4,7 @@ import { Link, router, useLocalSearchParams, usePathname } from "expo-router";
 import { firstLoginHref } from "@teal/client/atp/firstLogin";
 import { Button, Glass, Heading, Loading, PageTitle, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
+import { appHref } from "@/lib/href";
 
 function toSearchParams(params: Record<string, string | string[] | undefined>) {
   const search = new URLSearchParams();
@@ -59,7 +60,7 @@ export default function AuthCallback() {
         const current = useStore.getState();
 
         if (stillHere() && current.status === "loggedIn" && current.pdsAgent?.did === did) {
-          router.replace(destination as never);
+          router.replace(appHref(destination));
         }
       })
       .catch(() => {

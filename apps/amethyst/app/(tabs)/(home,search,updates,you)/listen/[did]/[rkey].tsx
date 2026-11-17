@@ -39,6 +39,7 @@ import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 import { patchActorPlays } from "@teal/client/hooks/useProfile";
 import { useStore } from "@/stores/mainStore";
 import { removePendingListens, retainConfirmedListens, retireIndexedListens, usePendingListens } from "@teal/client/pendingListenStore";
+import { appHref } from "@/lib/href";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -153,7 +154,7 @@ export default function ListenScreen() {
   });
 
   const play: PlayView | undefined = listen.data?.play;
-  const author = useDisplayActor(play?.author as never, did);
+  const author = useDisplayActor(play?.author, did);
   const reactions = useReactionsQuery(play?.uri);
   const recordingArt = useRecordingArt(play);
   const isOwn = !!viewer && viewer === did;
@@ -227,7 +228,7 @@ export default function ListenScreen() {
         title={play.trackName}
         lines={[
           play.artists?.[0]?.artistMbId ? (
-            <Link href={musicArtistHref(artists, play.artists[0].artistMbId) as never} asChild>
+            <Link href={appHref(musicArtistHref(artists, play.artists[0].artistMbId))} asChild>
               <Pressable className="self-start">
                 <Text onBackdrop className="text-[18px] font-semibold">
                   {artists}
@@ -238,7 +239,7 @@ export default function ListenScreen() {
             artists
           ),
           play.releaseName && play.releaseMbId ? (
-            <Link href={musicAlbumHref(artists, play.releaseName, play.releaseMbId) as never} asChild>
+            <Link href={appHref(musicAlbumHref(artists, play.releaseName, play.releaseMbId))} asChild>
               <Pressable className="self-start">
                 <Text onBackdrop className="text-[16px] text-ink-2">
                   {play.releaseName}
@@ -251,7 +252,7 @@ export default function ListenScreen() {
         ]}
         actions={
           <>
-            <Link href={musicTrackHref(artists, play.releaseName, play.trackName, play.uri) as never} asChild>
+            <Link href={appHref(musicTrackHref(artists, play.releaseName, play.trackName, play.uri))} asChild>
               <Button label="Song page" variant="secondary" />
             </Link>
             {play.originUri ? <Button label="Listen" icon={ArrowUpRight} onPress={() => Linking.openURL(play.originUri as string)} /> : null}
@@ -260,7 +261,7 @@ export default function ListenScreen() {
       />
 
       <Glass className="gap-3 p-4">
-        <Link href={author.href as never} asChild>
+        <Link href={appHref(author.href)} asChild>
           <Pressable className="flex-row items-center gap-3 self-start">
             <Avatar did={did} avatar={author.avatar} name={author.name} size={44} />
             <View>

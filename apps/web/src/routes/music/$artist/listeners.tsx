@@ -4,11 +4,12 @@ import { getArtistListeners } from "@teal/client/teal/api";
 import { LISTENER_PERIODS, normalizeListenerPeriod } from "@teal/client/teal/music";
 import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen } from "~/ds";
 import { Leaderboard } from "~/components/music/Leaderboard";
-import { pickStrings } from "~/lib/search";
 import { FIRST_PAGE } from "@teal/client/query";
+import { z } from "zod";
+import { searchString } from "~/lib/search";
 
 export const Route = createFileRoute("/music/$artist/listeners")({
-  validateSearch: (search: Record<string, unknown>) => pickStrings(search, "mbid", "name", "period"),
+  validateSearch: z.object({ mbid: searchString, name: searchString, period: searchString }),
   head: () => ({ meta: [{ title: "Listeners · Teal" }] }),
   component: ArtistListeners,
 });

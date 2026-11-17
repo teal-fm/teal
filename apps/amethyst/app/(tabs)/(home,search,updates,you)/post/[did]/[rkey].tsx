@@ -33,6 +33,7 @@ import { ReactionBar } from "@/components/today/ReactionBar";
 import { useDisplayActor } from "@teal/client/hooks/useDisplayActor";
 import { displayActorName } from "@teal/client/teal/actors";
 import { useStore } from "@/stores/mainStore";
+import { appHref } from "@/lib/href";
 
 function param(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -44,7 +45,7 @@ function Reply({ reply, last }: { reply: SocialPostView; last: boolean }) {
 
   return (
     <View className={last ? "flex-row gap-3 py-3.5" : "flex-row gap-3 border-b border-hair py-3.5"}>
-      <Link href={author.href as never} asChild>
+      <Link href={appHref(author.href)} asChild>
         <Pressable accessibilityLabel={name ? `${name}'s profile` : "Profile"} className="self-start">
           <Avatar did={author.did} avatar={author.avatar} name={name} size={36} />
         </Pressable>
@@ -170,7 +171,7 @@ export default function PostScreen() {
         </Heading>
         <Text onBackdrop className="text-[17px] text-ink-2">
           {artist ? (
-            <Link href={musicArtistHref(artist.artistName, artist.artistMbId) as never} className="font-semibold text-ink">
+            <Link href={appHref(musicArtistHref(artist.artistName, artist.artistMbId))} className="font-semibold text-ink">
               {artist.artistName}
             </Link>
           ) : null}
