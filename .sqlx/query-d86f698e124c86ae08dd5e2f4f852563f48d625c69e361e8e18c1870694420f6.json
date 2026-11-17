@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH status_times AS (\n            SELECT\n                record->'item' AS item,\n                CASE\n                    WHEN record->>'expiry' ~ '^[0-9]+(\\.[0-9]+)?$'\n                        THEN to_timestamp((record->>'expiry')::double precision)\n                    WHEN pg_input_is_valid(NULLIF(record->>'expiry', ''), 'timestamptz')\n                        THEN NULLIF(record->>'expiry', '')::timestamptz\n                    ELSE NULL\n                END AS expiry,\n                CASE\n                    WHEN record->>'time' ~ '^[0-9]+(\\.[0-9]+)?$'\n                        THEN to_timestamp((record->>'time')::double precision)\n                    WHEN pg_input_is_valid(NULLIF(record->>'time', ''), 'timestamptz')\n                        THEN NULLIF(record->>'time', '')::timestamptz\n                    ELSE NULL\n                END AS status_time,\n                indexed_at\n            FROM statii\n            WHERE did = $1\n              AND rkey = 'self'\n        )\n        SELECT item AS \"item: serde_json::Value\"\n        FROM status_times\n        WHERE COALESCE(expiry, status_time + INTERVAL '10 minutes') > NOW()\n        ORDER BY status_time DESC NULLS LAST, indexed_at DESC\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "item: serde_json::Value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d86f698e124c86ae08dd5e2f4f852563f48d625c69e361e8e18c1870694420f6"
+}

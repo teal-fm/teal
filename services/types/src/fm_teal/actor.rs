@@ -8,6 +8,7 @@
 //! Generated bindings for the `fm.teal.actor` Lexicon namespace/module.
 pub mod get_profile;
 pub mod get_profiles;
+pub mod get_status;
 pub mod get_taste_match;
 pub mod profile;
 pub mod profile_status;

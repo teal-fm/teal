@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT sealed_tip, after_seq\n        FROM status_replay_progress\n        WHERE id = TRUE\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sealed_tip",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "after_seq",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "b535f51758c57cc6d60c85834c00aefc564f22d488b597bb0ce2c801ede2f1b1"
+}

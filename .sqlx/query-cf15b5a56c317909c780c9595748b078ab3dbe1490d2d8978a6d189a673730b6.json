@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM status_actors\n        WHERE handle = $1 AND did <> $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cf15b5a56c317909c780c9595748b078ab3dbe1490d2d8978a6d189a673730b6"
+}

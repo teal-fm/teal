@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO status_replay_progress (id, sealed_tip, after_seq)\n        VALUES (TRUE, $1, $2)\n        ON CONFLICT (id) DO UPDATE SET\n            sealed_tip = EXCLUDED.sealed_tip,\n            after_seq = EXCLUDED.after_seq\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8e24fa792a9f8d0bde4be502fdb5ec9efa6ce76274f8fe46f81a0b530d1a8516"
+}
