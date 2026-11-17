@@ -1,15 +1,13 @@
 import { useId, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
-import { usePathname } from "expo-router";
 import { X } from "lucide-react-native";
 
 import { IconButton } from "./Button";
 import { Heading, Text } from "./Text";
-import { useDialogFocus } from "./useDialogFocus";
 
 /**
  * A centred sheet for a modal route (sign-in, sign-out). The page underneath stays
- * visible through a dim scrim; on the web focus is trapped and Escape closes it.
+ * visible through a dim scrim; tapping it closes the dialog.
  */
 export function Dialog({
   title,
@@ -23,7 +21,6 @@ export function Dialog({
   children: ReactNode;
 }) {
   const titleId = useId();
-  const ref = useDialogFocus(onClose, titleId, usePathname());
 
   return (
     <View className="flex-1 items-center justify-center px-4">
@@ -34,7 +31,6 @@ export function Dialog({
         className="absolute inset-0 bg-black/40"
       />
       <View
-        ref={ref}
         className="w-full max-w-md gap-4 rounded-[26px] border border-glass-edge bg-ground p-6 md:p-7"
       >
         <View className="flex-row items-start justify-between gap-3">

@@ -107,7 +107,7 @@ function EditListen({
   const set = (key: keyof typeof fields) => (value: string) => setFields((f) => ({ ...f, [key]: value }));
 
   return (
-    <Glass strong className="gap-3 p-4">
+    <Glass className="gap-3 p-4">
       <Heading level={2}>Edit listen</Heading>
       <Field label="Track" value={fields.trackName} onChangeText={set("trackName")} />
       <Field label="Artists" hint="Separate several with commas." value={fields.artistsText} onChangeText={set("artistsText")} />

@@ -153,7 +153,7 @@ export default function Onboarding() {
           {existing.data ? "Update how you show up on teal." : "We've started it from your Bluesky profile. Change anything you like."}
         </Text>
       </View>
-      <Glass strong className="gap-4 p-5">
+      <Glass className="gap-4 p-5">
         <Pressable accessibilityRole="button" accessibilityLabel="Choose a banner" onPress={() => pick("banner")}>
           <View className="aspect-[3/1] w-full items-center justify-center overflow-hidden rounded-[16px] bg-fill">
             {banner ? (

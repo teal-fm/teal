@@ -8,9 +8,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { Platform, useWindowDimensions, View, type ViewProps } from "react-native";
+import { useWindowDimensions, View, type ViewProps } from "react-native";
 import { useIsFocused } from "expo-router";
-import { create } from "zustand";
 
 import { Backdrop, type AmbientBlob } from "./Backdrop";
 
@@ -27,32 +26,7 @@ type AmbientApi = {
 
 const AmbientContext = createContext<AmbientApi | null>(null);
 
-/**
- * On the web the backdrop spans the whole window, sidebar included, so the focused
- * screen publishes its blobs here and the shell draws them. Native screens draw
- * their own, so a pushed page slides in with its own art.
- */
-export const useWindowBackdrop = create<{ blobs: AmbientBlob[]; last: AmbientBlob[] }>(
-  () => ({ blobs: [], last: [] }),
-);
 
-const windowBackdrop = Platform.OS === "web";
-
-/** How strongly a screen with no covers of its own keeps the colour it arrived with. */
-const CARRIED = 0.5;
-
-export function WindowBackdrop() {
-  const blobs = useWindowBackdrop((state) => state.blobs);
-  const last = useWindowBackdrop((state) => state.last);
-
-  // A screen without covers, like Activity, dims the colour rather than draining it.
-  const shown = useMemo(
-    () => (blobs.length ? blobs : last.map((blob) => ({ ...blob, weight: blob.weight * CARRIED }))),
-    [blobs, last],
-  );
-
-  return <Backdrop blobs={shown} remember />;
-}
 
 /** How many covers blend at once; more turns the backdrop to mud. */
 const MAX_BLOBS = 6;
@@ -151,19 +125,13 @@ export function AmbientScreen({
   }, []);
 
   useEffect(() => {
-    if (windowBackdrop && focused) {
-      useWindowBackdrop.setState(blobs.length ? { blobs, last: blobs } : { blobs });
-    }
-  }, [blobs, focused]);
-
-  useEffect(() => {
     if (focused) refresh();
   }, [focused, refresh]);
 
   return (
     <AmbientContext.Provider value={api}>
       <View style={[{ flex: 1 }, style]} {...props}>
-        {!windowBackdrop && <Backdrop blobs={blobs} />}
+        <Backdrop blobs={blobs} />
         {children}
       </View>
     </AmbientContext.Provider>

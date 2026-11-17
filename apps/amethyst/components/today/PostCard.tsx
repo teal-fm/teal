@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import RichText from "@/components/post/RichText";
@@ -45,15 +44,7 @@ export function PostCard({ post }: { post: SocialPostView }) {
   const artist = play.artists?.[0]?.artistName;
   const context = contextLine(post);
   const faces = post.listenContext?.circleSample ?? [];
-  const [copied, setCopied] = useState(false);
-
-  const share = async () => {
-    const result = await shareLink(`${post.text ? `${post.text} ` : ""}${play.trackName}`, absoluteUrl(href));
-
-    if (result !== "copied") return;
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const share = () => void shareLink(`${post.text ? `${post.text} ` : ""}${play.trackName}`, absoluteUrl(href));
 
   return (
     <AmbientSource uri={coverUri(play.releaseMbId)}>
@@ -148,12 +139,11 @@ export function PostCard({ post }: { post: SocialPostView }) {
           </Link>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={copied ? "Link copied" : "Share"}
+            accessibilityLabel="Share"
             onPress={share}
             className="h-9 min-w-9 flex-row items-center justify-center gap-1 px-1"
           >
             <Icon icon={ShareIcon} size={20} className="text-ink-2" />
-            {copied ? <Text className="text-sm text-ink-2">Copied</Text> : null}
           </Pressable>
         </View>
       </Glass>

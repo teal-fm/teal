@@ -1,10 +1,5 @@
-import { Platform } from "react-native";
 import Constants from "expo-constants";
-import {
-  ClientMetadata,
-  ExpoOAuthClient,
-  clientMetadataSchema,
-} from "@atproto/oauth-client-expo";
+import { ExpoOAuthClient, clientMetadataSchema } from "@atproto/oauth-client-expo";
 
 export type AquareumOAuthClient = ExpoOAuthClient;
 
@@ -16,9 +11,6 @@ export default function createOAuthClient(
     throw new Error("baseUrl is required");
   }
 
-  let meta: ClientMetadata;
-
-  const isWeb = Platform.OS === "web";
   const u = new URL(baseUrl);
   let hostname = u.hostname;
 
@@ -32,28 +24,25 @@ export default function createOAuthClient(
     redirect = `${redirect}:${u.port}`;
   }
 
-  if (isWeb) {
-    redirect = `${redirect}/auth/callback`;
-  } else {
-    const scheme = Constants.expoConfig?.scheme;
+  const scheme = Constants.expoConfig?.scheme;
 
-    if (!scheme) {
-      throw new Error("unable to resolve scheme for oauth redirect");
-    }
-
-    redirect = `${redirect}/app-return/${scheme}`;
+  if (!scheme) {
+    throw new Error("unable to resolve scheme for oauth redirect");
   }
+
+  redirect = `${redirect}/app-return/${scheme}`;
 
   const queryParams = new URLSearchParams();
   queryParams.set("scope", "atproto transition:generic");
   queryParams.set("redirect_uri", redirect);
-  console.log("Our client base uri is ", hostname);
-  meta = {
+
+  // Parsing checks the metadata and types the redirect URI as a URI.
+  const meta = clientMetadataSchema.parse({
     client_id:
       hostname === "127.0.0.1"
         ? `http://localhost?${queryParams.toString()}`
         : `https://${hostname}/client-metadata.json`,
-    redirect_uris: [redirect as any],
+    redirect_uris: [redirect],
     scope: "atproto transition:generic",
     token_endpoint_auth_method: "none",
     client_name: "Amethyst",
@@ -65,8 +54,7 @@ export default function createOAuthClient(
     // > These clients use web URLs, but have application_type set to native in the generated client metadata.
     application_type: hostname === "localhost" ? "native" : "web",
     dpop_bound_access_tokens: true,
-  };
-  clientMetadataSchema.parse(meta);
+  });
 
   return new ExpoOAuthClient({
     handleResolver: "https://" + pdsBaseUrl, // backend instances should use a DNS based resolver

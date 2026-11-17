@@ -226,7 +226,7 @@ export function SongLog() {
       ) : null}
 
       {chosen ? (
-        <Glass strong className="gap-3 p-4">
+        <Glass className="gap-3 p-4">
           <Heading level={2} size="card">
             Save {chosen.title}
           </Heading>

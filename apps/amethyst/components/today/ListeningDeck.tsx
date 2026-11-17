@@ -1,7 +1,6 @@
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react";
 import {
   FlatList,
-  Platform,
   Pressable,
   View,
   type NativeScrollEvent,
@@ -76,7 +75,6 @@ export const ListeningDeck = forwardRef<
           renderItem={({ item, index }) => (
             <View
               className={cn(
-                Platform.OS === "web" && "transition-[transform,opacity] duration-300 motion-reduce:transition-none",
                 index !== focused && "scale-[0.94] opacity-80",
               )}
             >

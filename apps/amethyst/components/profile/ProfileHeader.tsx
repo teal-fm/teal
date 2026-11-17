@@ -75,7 +75,7 @@ export function ProfileHeader({
       </View>
       {/* The avatar overlaps the panel's top edge, so it sits outside the clipped Glass. */}
       <View className="-mt-9">
-        <Glass strong className="gap-2 p-4 pt-[64px]">
+        <Glass className="gap-2 p-4 pt-[64px]">
           <Heading level={1} size="hero" numberOfLines={2}>
             {name}
           </Heading>

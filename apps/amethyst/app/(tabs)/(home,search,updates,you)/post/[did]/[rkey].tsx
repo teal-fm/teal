@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Linking, Platform, Pressable, View } from "react-native";
+import { useState } from "react";
+import { Linking, Pressable, View } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, MessageCircle, Share as ShareIcon, Trash2 } from "lucide-react-native";
@@ -71,17 +71,6 @@ export default function PostScreen() {
   const layout = useLayout();
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const confirmRef = useRef<View>(null);
-  const trashRef = useRef<View>(null);
-  const armed = useRef(false);
-  // Keyboard focus follows the trash button into the confirmation, and back again on Cancel.
-  useEffect(() => {
-    if (Platform.OS !== "web") return;
-
-    if (confirmDelete) (confirmRef.current as unknown as HTMLElement | null)?.focus();
-    else if (armed.current) (trashRef.current as unknown as HTMLElement | null)?.focus();
-    armed.current = confirmDelete;
-  }, [confirmDelete]);
   const [note, setNote] = useState<string | null>(null);
 
   const post = useQuery({
@@ -96,13 +85,6 @@ export default function PostScreen() {
     enabled: !!uri,
   });
 
-  // A reply-count link lands on #replies; bring the replies into view once they've loaded.
-  // The replies panel only mounts once the post has loaded too, so wait for both.
-  const ready = !post.isLoading && !replies.isLoading;
-  useEffect(() => {
-    if (Platform.OS !== "web" || !ready || window.location.hash !== "#replies") return;
-    requestAnimationFrame(() => document.getElementById("replies")?.scrollIntoView({ block: "start" }));
-  }, [ready]);
 
   const data = post.data;
   const play = data ? trackViewToPlayView(data.track) : undefined;
@@ -141,7 +123,7 @@ export default function PostScreen() {
       absoluteUrl(postHrefFromUri(data.uri) ?? "/"),
     );
 
-    setNote(result === "copied" ? "Link copied." : result === "failed" ? "Couldn't share this post." : null);
+    setNote(result === "failed" ? "Couldn't share this post." : null);
   };
 
   if (post.isLoading) {
@@ -215,13 +197,13 @@ export default function PostScreen() {
                 <Text className="text-[14px] tabular-nums text-ink-2">{data.replyCount}</Text>
               </View>
               <IconButton icon={ShareIcon} label="Share" size={38} onPress={share} />
-              {isOwn && !confirmDelete ? <IconButton ref={trashRef} icon={Trash2} label="Delete post" size={38} onPress={remove} /> : null}
+              {isOwn && !confirmDelete ? <IconButton icon={Trash2} label="Delete post" size={38} onPress={remove} /> : null}
             </View>
             {isOwn && confirmDelete ? (
               <View role="alert" className="gap-2 rounded-[14px] bg-fill p-3">
                 <Text className="font-semibold">Delete this post? This can't be undone.</Text>
                 <ButtonRow>
-                  <Button ref={confirmRef} label={deleting ? "Deleting" : "Delete"} size="sm" variant="destructive" loading={deleting} onPress={remove} />
+                  <Button label={deleting ? "Deleting" : "Delete"} size="sm" variant="destructive" loading={deleting} onPress={remove} />
                   <Button label="Cancel" size="sm" variant="secondary" disabled={deleting} onPress={() => setConfirmDelete(false)} />
                 </ButtonRow>
               </View>

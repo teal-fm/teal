@@ -150,7 +150,7 @@ function BulkEditor({
 
   return (
     <View className="gap-3">
-      <Glass strong className="gap-3 p-4">
+      <Glass className="gap-3 p-4">
         <View className="flex-row flex-wrap items-center justify-between gap-2">
           <Text className="font-semibold" aria-live="polite">
             {selected.size} selected

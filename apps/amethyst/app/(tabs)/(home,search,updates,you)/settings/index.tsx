@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import { Link } from "expo-router";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
-import { canOverrideColorScheme, useColorScheme } from "@/lib/useColorScheme";
+import { useColorScheme } from "@/lib/useColorScheme";
 import { Button, Choices, Field, Section, Screen, Text } from "@/components/ds";
 import pkg from "@/package.json";
 import { useStore } from "@/stores/mainStore";
@@ -34,8 +34,7 @@ export default function Settings() {
   return (
     <Screen title="Settings" back>
       <Section title="Appearance" panel>
-        {canOverrideColorScheme ? (
-          <View className="gap-3">
+        <View className="gap-3">
             <Text className="text-[15px] text-ink-2">Choose a theme, or follow your device.</Text>
             <Choices
               label="Theme"
@@ -48,9 +47,6 @@ export default function Settings() {
               ]}
             />
           </View>
-        ) : (
-          <Text className="text-[15px] text-ink-2">Teal follows your device's light or dark setting.</Text>
-        )}
       </Section>
 
       <Section title="Account" panel>

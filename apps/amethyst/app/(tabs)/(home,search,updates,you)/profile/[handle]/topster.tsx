@@ -77,7 +77,7 @@ export default function TopsterScreen() {
 
   const share = async () => {
     const result = await shareLink(title, absoluteUrl(`/profile/${encodeURIComponent(actor)}/topster?period=${period}&size=${columns}`));
-    setNote(result === "copied" ? "Chart link copied." : result === "failed" ? "Couldn't share the chart." : null);
+    setNote(result === "failed" ? "Couldn't share the chart." : null);
   };
 
   return (

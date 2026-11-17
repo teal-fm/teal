@@ -78,7 +78,7 @@ function EditPlaylist({ playlist, onDone }: { playlist: SocialPlaylistView; onDo
   };
 
   return (
-    <Glass strong className="gap-3 p-4">
+    <Glass className="gap-3 p-4">
       <Pressable accessibilityRole="button" accessibilityLabel="Change cover" onPress={pick} className="self-start">
         <Cover uri={cover ?? playlistCover(playlist)} size={120} radius={14} />
         <Text className="mt-1 text-[13px] font-semibold text-tint">Change cover</Text>
@@ -162,7 +162,7 @@ function AddSongs({ playlist }: { playlist: SocialPlaylistView }) {
         </Text>
       ) : null}
       {open ? (
-        <Glass strong className="gap-3 p-4">
+        <Glass className="gap-3 p-4">
           <TrackPicker selected={selected} onSelect={setSelected} />
           <Button label="Add to playlist" disabled={!selected} loading={busy} onPress={() => selected && add(selected)} />
         </Glass>

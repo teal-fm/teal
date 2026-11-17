@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Linking, Platform, View } from "react-native";
+import { Linking, View } from "react-native";
 import { Link } from "expo-router";
 import { ArrowUpRight, AtSign } from "lucide-react-native";
 import { Button, ButtonRow, Glass, Heading, Icon, PageTitle, Text } from "@/components/ds";
@@ -11,8 +11,7 @@ export default function SignUp() {
   const [opened, setOpened] = useState(false);
 
   const open = () => {
-    if (Platform.OS === "web") window.open(SIGNUP_URL, "_blank", "noopener,noreferrer");
-    else void Linking.openURL(SIGNUP_URL);
+    void Linking.openURL(SIGNUP_URL);
     setOpened(true);
   };
 

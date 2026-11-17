@@ -1,35 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  Appearance,
-  Platform,
-  useColorScheme as useSystemColorScheme,
-} from "react-native";
+import { Appearance, useColorScheme as useSystemColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const COLOR_SCHEME_STORAGE_KEY = "teal-color-scheme";
 
 export type ThemePreference = "light" | "dark" | "system";
 
-function isPreference(value: unknown): value is ThemePreference {
+function isPreference(value: string | null): value is ThemePreference {
   return value === "light" || value === "dark" || value === "system";
 }
 
 /**
- * The app follows the system appearance. On iOS and Android a stored override is
+ * The app follows the system appearance unless a stored override is set. It is
  * applied through `Appearance`, which the style engine reads for `dark:` styles.
- * Browsers expose no override, so the web always follows the system.
  */
-export const canOverrideColorScheme = Platform.OS !== "web";
-
 function applyPreference(preference: ThemePreference) {
-  if (canOverrideColorScheme) {
-    Appearance.setColorScheme(preference === "system" ? "unspecified" : preference);
-  }
+  Appearance.setColorScheme(preference === "system" ? "unspecified" : preference);
 }
 
 export async function restoreColorSchemePreference() {
-  if (!canOverrideColorScheme) return;
-
   try {
     const stored = await AsyncStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
 
@@ -44,7 +33,6 @@ export function useColorScheme() {
   const [preference, setPreference] = useState<ThemePreference>("system");
 
   useEffect(() => {
-    if (!canOverrideColorScheme) return;
     AsyncStorage.getItem(COLOR_SCHEME_STORAGE_KEY)
       .then((stored) => {
         if (isPreference(stored)) setPreference(stored);
@@ -55,8 +43,6 @@ export function useColorScheme() {
   const setColorScheme = useCallback((next: ThemePreference) => {
     setPreference(next);
     applyPreference(next);
-
-    if (!canOverrideColorScheme) return;
 
     const write =
       next === "system"

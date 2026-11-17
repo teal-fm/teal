@@ -9,7 +9,7 @@ export default function Compose() {
 
   return (
     <Screen title="Post a song" back>
-      <Glass strong className="p-4">
+      <Glass className="p-4">
         <Composer
           chooseTrack
           onPublished={(post) => {

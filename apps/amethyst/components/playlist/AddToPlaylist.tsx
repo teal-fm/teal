@@ -65,7 +65,7 @@ export function AddToPlaylist({ play }: { play: PlayView }) {
     <View className="gap-2">
       <Button label="Add to playlist" icon={ListPlus} variant="secondary" aria-expanded={open} onPress={() => setOpen((o) => !o)} />
       {open ? (
-        <Glass strong className="w-80 max-w-full px-4 py-1">
+        <Glass className="w-80 max-w-full px-4 py-1">
           {playlists.isLoading ? (
             <Text className="py-3 text-ink-2">Loading your playlists…</Text>
           ) : !items.length ? (

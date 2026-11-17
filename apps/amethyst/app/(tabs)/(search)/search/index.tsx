@@ -99,7 +99,7 @@ export default function Explore() {
 
   return (
     <Screen title="Explore">
-      <Glass strong className="web:focus-within:border-tint">
+      <Glass className="web:focus-within:border-tint">
         <View className="flex-row items-center gap-3 px-4 py-2">
           <Icon icon={Search} size={22} className="text-ink-2" />
           <TextInput

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   Easing,
   ReduceMotion,
@@ -8,7 +8,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { getReleaseGroupCoverArtUrl } from "@teal/client/teal/api";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -49,27 +48,6 @@ const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 
 type Shown = { uri: string; weight: number; slot: number; since: number };
 
-/**
- * The window backdrop's last state. Browser Back can rebuild the whole tree, and
- * without this the colour would cut to the plain ground and fade back from nothing.
- */
-const memory = {
-  shown: [] as Shown[],
-  /**
-   * Each cover's animated values. The rebuilt tree renders before the old one's
-   * cleanups run, so it reads the old instance's values directly.
-   */
-  live: new Map<
-    string,
-    {
-      opacity: SharedValue<number>;
-      fill: SharedValue<number>;
-      /** The image that loaded, which may be a fallback. */
-      source: { current?: string };
-    }
-  >(),
-};
-
 /** The blur hides detail, so the small thumbnail does, and feed covers share its cache. */
 function thumbnail(uri: string) {
   return uri.replace(/front-(250|500|1200)$/, "front-250");
@@ -97,15 +75,11 @@ async function fallbackFor(failed: string, original: string, tried: Set<string>)
 /** After every fallback fails, start over after these waits, so a flaky archive heals. */
 const RETRY_MS = [1000, 4000, 15000, 60000];
 
-/** How long a cover's state outlives it, enough for a rebuild but not a later visit. */
-const RESUME_MS = 2000;
-
 function Blob({
   shown,
   size,
   solo,
   hold,
-  remember,
   dark,
   onLoaded,
   onGone,
@@ -116,32 +90,17 @@ function Blob({
   solo: boolean;
   /** Keep showing while it leaves, because nothing has loaded to replace it yet. */
   hold: boolean;
-  remember: boolean;
   dark: boolean;
   onLoaded: (uri: string) => void;
   onGone: (uri: string) => void;
 }) {
   const { width, height } = useWindowDimensions();
 
-  const [resumedFrom] = useState(() => {
-    const previous = remember ? memory.live.get(shown.uri) : undefined;
-
-    return (
-      previous && {
-        opacity: previous.opacity.value,
-        fill: previous.fill.value,
-        source: previous.source.current,
-      }
-    );
-  });
-
-  const resumed = resumedFrom?.opacity ?? 0;
-  const opacity = useSharedValue(resumed);
-  const fill = useSharedValue(resumedFrom?.fill ?? (solo ? 1 : 0));
-  const [source, setSource] = useState(() => resumedFrom?.source ?? thumbnail(shown.uri));
-  const loadedSource = useRef<string | undefined>(resumedFrom?.source);
-  // A resumed cover was showing a moment ago, so its image is already in memory.
-  const [loaded, setLoaded] = useState(resumed > 0);
+  const opacity = useSharedValue(0);
+  const fill = useSharedValue(solo ? 1 : 0);
+  const [source, setSource] = useState(() => thumbnail(shown.uri));
+  const loadedSource = useRef<string | undefined>(undefined);
+  const [loaded, setLoaded] = useState(false);
   // Hold at nothing until the image is in, so a slow cover fades up instead of popping.
   const live = loaded ? Math.pow(shown.weight, 0.7) : 0;
   const shownAt = useRef(live);
@@ -166,21 +125,6 @@ function Blob({
 
     return () => clearTimeout(timer);
   }, [target, leaving, hold, opacity, onGone, shown.uri]);
-
-  // A remount picks up from these values, mid-fade included, rather than from
-  // where the fade was heading. Soon after a cover goes, they're forgotten.
-  useEffect(() => {
-    if (!remember) return;
-    const uri = shown.uri;
-    const values = { opacity, fill, source: loadedSource };
-    memory.live.set(uri, values);
-
-    return () => {
-      setTimeout(() => {
-        if (memory.live.get(uri) === values) memory.live.delete(uri);
-      }, RESUME_MS);
-    };
-  }, [remember, shown.uri, opacity, fill]);
 
   // Spot and full-window layers crossfade rather than resize, so nothing moves.
   useEffect(() => {
@@ -292,41 +236,27 @@ function Blob({
   );
 }
 
-const blurFilter =
-  Platform.OS === "ios"
-    ? "saturate(1.8)"
-    : Platform.OS === "android"
-      ? "blur(60px) saturate(1.8)"
-      : "blur(56px) saturate(2)";
+const blurFilter = "blur(60px) saturate(1.8)";
 
 /**
  * A blend of the blurred covers currently on screen, behind everything else.
  * iOS blurs with a system material over the blobs; Android and the web blur the
  * blob layer itself. A fixed veil per theme keeps text readable on any cover.
  */
-export function Backdrop({
-  blobs,
-  remember = false,
-}: {
-  blobs: AmbientBlob[];
-  /** Resume from the last state after a remount. Only for the one window backdrop. */
-  remember?: boolean;
-}) {
+export function Backdrop({ blobs }: { blobs: AmbientBlob[] }) {
   const { width, height } = useWindowDimensions();
   const { isDarkColorScheme } = useColorScheme();
   const size = Math.max(width, height) * (width >= 1000 ? 0.75 : 0.95);
-  const [shown, setShown] = useState<Shown[]>(() => (remember ? memory.shown : []));
+  const [shown, setShown] = useState<Shown[]>([]);
   const current = useRef<Shown[]>(shown);
   const [recheck, setRecheck] = useState(0);
 
   const commit = useCallback(
     (next: Shown[]) => {
       current.current = next;
-
-      if (remember) memory.shown = next;
       setShown(next);
     },
-    [remember],
+    [],
   );
 
   // Covers that drop out fade to nothing in their spot; new ones take the emptiest spot.
@@ -426,20 +356,12 @@ export function Backdrop({
             size={size}
             solo={solo === item.uri}
             hold={hold}
-            remember={remember}
             dark={isDarkColorScheme}
             onLoaded={loaded}
             onGone={forget}
           />
         ))}
       </View>
-      {Platform.OS === "ios" && (
-        <BlurView
-          intensity={90}
-          tint={isDarkColorScheme ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
       <View
         style={[
           StyleSheet.absoluteFill,

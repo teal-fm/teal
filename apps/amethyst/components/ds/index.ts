@@ -3,7 +3,6 @@ export {
   AmbientSource,
   useAmbient,
   useAmbientScroll,
-  WindowBackdrop,
 } from "./ambient";
 
 export { Avatar } from "./Avatar";

@@ -191,7 +191,7 @@ export function AlbumLog() {
       {loadingRelease ? <Loading /> : null}
 
       {release ? (
-        <Glass strong className="gap-3 p-4">
+        <Glass className="gap-3 p-4">
           <View className="flex-row items-center gap-3">
             <Cover releaseMbId={release.id} size={64} radius={10} />
             <View className="min-w-0 flex-1">

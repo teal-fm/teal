@@ -1,7 +1,6 @@
 // Configures the shared client (Aqua, storage) before anything else loads.
 import { queryClient } from "@/lib/client";
 import { useMemo, type ReactNode } from "react";
-import { Platform } from "react-native";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -16,17 +15,12 @@ import "../global.entry.css";
 
 type Theme = typeof DefaultTheme;
 
-const SYSTEM_FONT = Platform.select({
-  web: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Roboto, "Segoe UI", sans-serif',
-  default: "System",
-});
-
-const fonts = Object.fromEntries(
-  (["regular", "medium", "bold", "heavy"] as const).map((key, i) => [
-    key,
-    { fontFamily: SYSTEM_FONT, fontWeight: String(400 + i * 100) },
-  ]),
-) as Theme["fonts"];
+const fonts: Theme["fonts"] = {
+  regular: { fontFamily: "System", fontWeight: "400" },
+  medium: { fontFamily: "System", fontWeight: "500" },
+  bold: { fontFamily: "System", fontWeight: "600" },
+  heavy: { fontFamily: "System", fontWeight: "700" },
+};
 
 // Scenes are transparent so the blurred-cover backdrop shows through every page.
 const themes: Record<"light" | "dark", Theme> = {

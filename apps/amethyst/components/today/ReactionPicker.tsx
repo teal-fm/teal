@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Modal, Platform, Pressable, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Modal, Pressable, TextInput, View } from "react-native";
 import { QUICK_REACTIONS } from "@teal/client/teal/reactions";
 import { Glass, Text, usePlaceholderColor } from "@/components/ds";
 
@@ -27,25 +27,6 @@ export function ReactionPicker({
 }) {
   const [custom, setCustom] = useState("");
   const placeholder = usePlaceholderColor();
-  const panel = useRef<View>(null);
-
-  // On the web, focus moves into the picker when it opens and returns when it closes.
-  // React Native Web's Modal already closes on Escape. This keys off `visible` alone,
-  // so a parent re-render (Today refetches every minute) can't pull focus out mid-typing.
-  useEffect(() => {
-    if (Platform.OS !== "web" || !visible) return;
-    const previous = document.activeElement as HTMLElement | null;
-
-    const frame = requestAnimationFrame(() =>
-      (panel.current as unknown as HTMLElement | null)?.querySelector<HTMLElement>('[role="menuitem"]')?.focus(),
-    );
-
-    return () => {
-      cancelAnimationFrame(frame);
-
-      if (previous?.isConnected) previous.focus();
-    };
-  }, [visible]);
 
   const pick = (emoji: string) => {
     setCustom("");
@@ -61,8 +42,8 @@ export function ReactionPicker({
         onPress={onClose}
       >
         <Pressable onPress={() => undefined}>
-          <View ref={panel} role="group" aria-label="Add a reaction">
-          <Glass strong className="items-center gap-3 rounded-[28px] p-3">
+          <View role="group" aria-label="Add a reaction">
+          <Glass className="items-center gap-3 rounded-[28px] p-3">
             <View role="menu" className="flex-row gap-1">
               {QUICK_REACTIONS.map((emoji) => (
                 <Pressable

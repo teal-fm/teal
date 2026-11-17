@@ -83,12 +83,6 @@ export default function Login() {
       if (!url) throw new Error("no login url");
       setBusy("redirecting");
 
-      if (Platform.OS === "web") {
-        router.navigate(appHref(url.toString()));
-
-        return;
-      }
-
       const result = await openAuthSessionAsync(url.toString(), "http://127.0.0.1:8081/login");
 
       if (result.type === "success") {
