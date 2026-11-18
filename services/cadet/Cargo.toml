@@ -4,12 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "tap-backfill"
-path = "src/bin/tap_backfill.rs"
-
-[[bin]]
-name = "lightrail-backfill"
-path = "src/bin/lightrail_backfill.rs"
+name = "tab-backfill"
+path = "src/bin/tab_backfill.rs"
 
 [dependencies]
 tokio.workspace = true

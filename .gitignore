@@ -40,8 +40,7 @@ yarn-error.log*
 # vercel
 .vercel
 .turbo
-.teal-tap/
-.teal-lightrail-backfill-*.txt
+.teal-tab/
 .codex-run/
 
 **/*.trace
