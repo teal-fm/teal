@@ -1542,7 +1542,8 @@ impl PlayIngestor {
             sqlx::query(
                 r#"
                     INSERT INTO play_to_artists_extended (play_uri, artist_id, artist_name) VALUES
-                    ($1, $2, $3);
+                    ($1, $2, $3)
+                    ON CONFLICT DO NOTHING;
                 "#,
             )
             .bind(uri)

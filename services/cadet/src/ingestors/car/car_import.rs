@@ -527,10 +527,7 @@ impl CarImportIngestor {
         rkey: &str,
         cid: &str,
     ) -> Result<()> {
-        let status_record: types::fm_teal::actor::status::Status =
-            value::from_json_value::<types::fm_teal::actor::status::Status>(
-                normalize_legacy_record_type(data),
-            )?;
+        let status_record = super::super::teal::actor_status::parse_status(data)?;
 
         let status_ingestor =
             super::super::teal::actor_status::ActorStatusIngestor::new(self.sql.clone());

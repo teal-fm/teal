@@ -87,6 +87,33 @@ pub(crate) fn status_times(
     (status_time, expires_at)
 }
 
+/// Parse a status record from either namespace. Early alpha statuses wrote
+/// `time` and `expiry` as Unix-second strings; those become datetimes.
+pub fn parse_status(record: &Value) -> anyhow::Result<types::fm_teal::actor::status::Status> {
+    let mut record = normalize_legacy_record_type(record);
+    if let Value::Object(fields) = &mut record {
+        for key in ["time", "expiry"] {
+            let Some(Value::String(text)) = fields.get(key) else {
+                continue;
+            };
+            let Some(datetime) = text
+                .parse::<i64>()
+                .ok()
+                .and_then(|seconds| chrono::DateTime::from_timestamp(seconds, 0))
+            else {
+                continue;
+            };
+            fields.insert(
+                key.to_string(),
+                Value::String(datetime.to_rfc3339_opts(chrono::SecondsFormat::Secs, true)),
+            );
+        }
+    }
+    Ok(value::from_json_value::<
+        types::fm_teal::actor::status::Status,
+    >(record)?)
+}
+
 fn datetime_to_time(datetime: &Datetime) -> time::OffsetDateTime {
     time::OffsetDateTime::from_unix_timestamp(datetime.as_ref().timestamp())
         .unwrap_or_else(|_| time::OffsetDateTime::now_utc())
@@ -97,10 +124,7 @@ impl LexiconIngestor for ActorStatusIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::actor::status::Status =
-                    value::from_json_value::<types::fm_teal::actor::status::Status>(
-                        normalize_legacy_record_type(record),
-                    )?;
+                let record = parse_status(record)?;
 
                 if let Some(ref cid) = commit.cid {
                     self.insert_status(&message.did, &commit.rkey, cid, &record)
@@ -121,7 +145,23 @@ impl LexiconIngestor for ActorStatusIngestor {
 mod tests {
     use jacquard_common::types::string::Datetime;
 
-    use super::status_times;
+    use super::{parse_status, status_times};
+
+    #[test]
+    fn parses_alpha_status_with_unix_second_times() -> anyhow::Result<()> {
+        let status = parse_status(&serde_json::json!({
+            "$type": "fm.teal.alpha.actor.status",
+            "time": "1770428871",
+            "expiry": "1770429471",
+            "item": { "trackName": "Holly Hox, Forget Me Nots", "artists": [] }
+        }))?;
+        assert_eq!(status.time.as_str(), "2026-02-07T01:47:51Z");
+        assert_eq!(
+            status.expiry.as_ref().map(|expiry| expiry.as_str()),
+            Some("2026-02-07T01:57:51Z")
+        );
+        Ok(())
+    }
 
     fn datetime(value: &str) -> Datetime {
         serde_json::from_value(serde_json::json!(value)).expect("valid datetime")
