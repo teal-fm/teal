@@ -1,0 +1,67 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.site.defs",
+  "description": "Shapes returned by the teal.fm website's HappyView queries.",
+  "defs": {
+    "period": {
+      "type": "string",
+      "knownValues": ["day", "week", "month", "year", "all"]
+    },
+    "play": {
+      "type": "object",
+      "required": ["uri", "did", "trackName", "artists"],
+      "properties": {
+        "uri": { "type": "string", "format": "at-uri" },
+        "did": { "type": "string", "format": "did" },
+        "trackName": { "type": "string" },
+        "artists": { "type": "array", "items": { "type": "string" } },
+        "releaseName": { "type": "string" },
+        "releaseMbId": { "type": "string" },
+        "recordingMbId": { "type": "string" },
+        "duration": { "type": "integer" },
+        "playedTime": { "type": "string" },
+        "originUrl": { "type": "string" },
+        "musicService": { "type": "string" },
+        "client": { "type": "string" }
+      }
+    },
+    "listener": {
+      "type": "object",
+      "required": ["did", "plays"],
+      "properties": {
+        "did": { "type": "string", "format": "did" },
+        "plays": { "type": "integer" }
+      }
+    },
+    "artist": {
+      "type": "object",
+      "required": ["name", "plays"],
+      "properties": {
+        "name": { "type": "string" },
+        "plays": { "type": "integer" },
+        "listeners": { "type": "integer" }
+      }
+    },
+    "track": {
+      "type": "object",
+      "required": ["trackName", "plays"],
+      "properties": {
+        "trackName": { "type": "string" },
+        "artist": { "type": "string" },
+        "releaseMbId": { "type": "string" },
+        "plays": { "type": "integer" },
+        "listeners": { "type": "integer" }
+      }
+    },
+    "release": {
+      "type": "object",
+      "required": ["releaseName", "plays"],
+      "properties": {
+        "releaseName": { "type": "string" },
+        "artist": { "type": "string" },
+        "releaseMbId": { "type": "string" },
+        "plays": { "type": "integer" }
+      }
+    }
+  }
+}

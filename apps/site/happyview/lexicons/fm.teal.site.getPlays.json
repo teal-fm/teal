@@ -1,0 +1,37 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.site.getPlays",
+  "description": "Recent plays, newest first: one account's when did is set, everyone's otherwise.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "did": { "type": "string", "format": "did" },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 30
+          },
+          "cursor": { "type": "string" }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["plays"],
+          "properties": {
+            "plays": {
+              "type": "array",
+              "items": { "type": "ref", "ref": "fm.teal.site.defs#play" }
+            },
+            "cursor": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

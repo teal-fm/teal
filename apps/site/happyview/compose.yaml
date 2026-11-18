@@ -1,0 +1,41 @@
+# Local HappyView for the site: `docker compose -f apps/site/happyview/compose.yaml up -d`.
+# Production follows HappyView's own docker-compose.prod.postgres.yml; see README.md.
+name: teal-site-happyview
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: happyview
+      POSTGRES_PASSWORD: happyview
+      POSTGRES_DB: happyview
+    # A network backfill holds well over the stock 100 connections.
+    command: ["-c", "max_connections=200"]
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U happyview -d happyview"]
+      interval: 5s
+      retries: 10
+
+  happyview:
+    image: ghcr.io/gamesgamesgamesgamesgames/happyview:${HAPPYVIEW_VERSION:-latest}
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3010:3000"
+    environment:
+      DATABASE_URL: postgres://happyview:happyview@postgres:5432/happyview
+      # HappyView wants 127.0.0.1 rather than localhost for OAuth callbacks.
+      PUBLIC_URL: http://127.0.0.1:3010
+      SESSION_SECRET: local-development-session-secret-that-is-at-least-sixty-four-characters
+      TOKEN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      APP_NAME: teal.fm
+      RUST_LOG: happyview=info,tower_http=warn,sqlx=warn
+
+volumes:
+  pgdata:

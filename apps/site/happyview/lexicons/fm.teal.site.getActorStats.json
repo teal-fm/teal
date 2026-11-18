@@ -1,0 +1,61 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.site.getActorStats",
+  "description": "One account's play counts and top artists, tracks and releases for a period.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": ["did"],
+        "properties": {
+          "did": { "type": "string", "format": "did" },
+          "period": {
+            "type": "string",
+            "knownValues": ["day", "week", "month", "year", "all"],
+            "default": "month"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "did",
+            "period",
+            "totalPlays",
+            "plays",
+            "artists",
+            "tracks",
+            "releases"
+          ],
+          "properties": {
+            "did": { "type": "string", "format": "did" },
+            "period": { "type": "string" },
+            "totalPlays": { "type": "integer" },
+            "plays": { "type": "integer" },
+            "artists": {
+              "type": "array",
+              "items": { "type": "ref", "ref": "fm.teal.site.defs#artist" }
+            },
+            "tracks": {
+              "type": "array",
+              "items": { "type": "ref", "ref": "fm.teal.site.defs#track" }
+            },
+            "releases": {
+              "type": "array",
+              "items": { "type": "ref", "ref": "fm.teal.site.defs#release" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
