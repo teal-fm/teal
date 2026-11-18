@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { ChevronDown } from "lucide-react";
 
 import { Card } from "~/components/Card";
 import { Landing } from "~/components/Landing";
+import { LivePlays } from "~/components/LivePlays";
 import { Logo } from "~/components/Logo";
 import { PeriodTabs } from "~/components/PeriodTabs";
-import { PlayList } from "~/components/PlayList";
 import {
   ArtistRanking,
   ListenerRanking,
@@ -28,6 +28,8 @@ export const Route = createFileRoute("/")({
   loader: ({ deps }) => getHome({ data: deps }),
   component: Home,
 });
+
+const NO_PLAYS = { plays: [], profiles: {} };
 
 type HomeData = NonNullable<Awaited<ReturnType<typeof getHome>>>;
 
@@ -54,13 +56,18 @@ function Home() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        {home ? (
-          <Boards {...home} period={period} />
-        ) : (
-          <p className="text-center text-neutral-600 dark:text-teal-100/60">
-            The leaderboard is taking a breather. Check back in a minute.
-          </p>
-        )}
+        {/* Jetstream keeps this going even when HappyView is down. */}
+        <LivePlays initial={home?.recent ?? NO_PLAYS} />
+
+        <section className="mt-14">
+          {home ? (
+            <Boards {...home} period={period} />
+          ) : (
+            <p className="text-center text-neutral-600 dark:text-teal-100/60">
+              The leaderboard is taking a breather. Check back in a minute.
+            </p>
+          )}
+        </section>
 
         <a
           href="#features"
@@ -82,7 +89,6 @@ function Home() {
 
 function Boards({
   leaderboard,
-  recent,
   profiles,
   period,
 }: HomeData & { period: Period }) {
@@ -112,22 +118,6 @@ function Boards({
         </Card>
         <Card title="Top tracks">
           <TrackRanking tracks={leaderboard.tracks} />
-        </Card>
-      </div>
-
-      <div className="mt-4">
-        <Card
-          title="Just played"
-          action={
-            <Link
-              to="/listens"
-              className="flex items-center gap-1 text-sm text-teal-700 hover:underline dark:text-teal-300"
-            >
-              Everyone's listens <ArrowRight aria-hidden className="size-4" />
-            </Link>
-          }
-        >
-          <PlayList initial={{ ...recent, cursor: undefined }} showPeople />
         </Card>
       </div>
     </>

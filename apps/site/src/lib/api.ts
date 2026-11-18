@@ -82,6 +82,15 @@ export const getPlays = createServerFn({ method: "GET" })
   .validator((data: { did?: string; cursor?: string }) => data)
   .handler(({ data }) => playsPage(data.did, data.cursor, 30));
 
+/** Names and avatars for accounts first seen in the live feed. */
+export const getProfilesFor = createServerFn({ method: "GET" })
+  .validator((data: { dids: string[] }) => ({
+    dids: (Array.isArray(data?.dids) ? data.dids : [])
+      .filter((did) => typeof did === "string" && did.startsWith("did:"))
+      .slice(0, 25),
+  }))
+  .handler(({ data }) => getProfiles(data.dids));
+
 export const getProfilePage = createServerFn({ method: "GET" })
   .validator((data: { actor: string; period: Period }) => data)
   .handler(async ({ data }) => {

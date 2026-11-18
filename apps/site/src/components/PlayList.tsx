@@ -8,14 +8,22 @@ import { Avatar } from "./Avatar";
 import { Empty } from "./Card";
 import { Cover } from "./Cover";
 
-function PlayRow({ play, profiles }: { play: Play; profiles?: Profiles }) {
+export function PlayRow({
+  play,
+  profiles,
+  className = "",
+}: {
+  play: Play;
+  profiles?: Profiles;
+  className?: string;
+}) {
   const profile = profiles?.[play.did];
   const byline = [play.artists.join(", "), play.releaseName]
     .filter(Boolean)
     .join(" · ");
 
   return (
-    <li className="flex items-center gap-3 py-2">
+    <li className={`flex items-center gap-3 py-2 ${className}`}>
       <Cover releaseMbId={play.releaseMbId} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">

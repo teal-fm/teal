@@ -25,11 +25,24 @@ body {
   animation: logo-swap 200ms ease-out;
 }
 
+/* A play that just arrived over the live feed. */
+@keyframes play-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+.play-in {
+  animation: play-in 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  .logo-swap {
+  .logo-swap,
+  .play-in {
     animation: none;
   }
 }
