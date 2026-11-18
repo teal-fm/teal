@@ -421,9 +421,19 @@ fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
     normalized_mbid_text(mbid.as_str()).map(|value| UriValue::Any(SmolStr::new(value)))
 }
 
-/// `2026-04-03T18:56:16:00Z`, as piper's backfill wrote it, has a stray
-/// field after the seconds; the time without it is still exact UTC.
+/// Repair played times older clients wrote in other shapes: Unix seconds or
+/// milliseconds as a string, and `2026-04-03T18:56:16:00Z` (piper's
+/// backfill), whose stray field after the seconds leaves exact UTC.
 fn repair_played_time(text: &str) -> Option<String> {
+    if !text.is_empty() && text.bytes().all(|byte| byte.is_ascii_digit()) {
+        let number = text.parse::<i64>().ok()?;
+        let datetime = match text.len() {
+            ..=10 => chrono::DateTime::from_timestamp(number, 0),
+            13 => chrono::DateTime::from_timestamp_millis(number),
+            _ => None,
+        }?;
+        return Some(datetime.to_rfc3339_opts(chrono::SecondsFormat::Secs, true));
+    }
     let (time, stray) = text.strip_suffix('Z')?.rsplit_once(':')?;
     let stray_is_field = stray.len() == 2 && stray.bytes().all(|byte| byte.is_ascii_digit());
     let time_is_whole = chrono::NaiveDateTime::parse_from_str(time, "%Y-%m-%dT%H:%M:%S").is_ok();
@@ -1784,7 +1794,7 @@ mod tests {
     }
 
     #[test]
-    fn repairs_played_times_with_a_stray_trailing_field() -> anyhow::Result<()> {
+    fn repairs_legacy_played_time_shapes() -> anyhow::Result<()> {
         let play = super::parse_play(&json!({
             "$type": "fm.teal.alpha.feed.play",
             "trackName": "Backfilled",
@@ -1793,6 +1803,14 @@ mod tests {
         assert_eq!(
             play.played_time.as_ref().map(|time| time.as_str()),
             Some("2026-04-03T18:56:16Z")
+        );
+        assert_eq!(
+            super::repair_played_time("1760022153").as_deref(),
+            Some("2025-10-09T15:02:33Z")
+        );
+        assert_eq!(
+            super::repair_played_time("1773944674004").as_deref(),
+            Some("2026-03-19T18:24:34Z")
         );
         assert!(super::repair_played_time("2026-04-03T18:56:16Z").is_none());
         assert!(super::repair_played_time("·:00Z").is_none());
