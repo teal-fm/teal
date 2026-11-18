@@ -278,7 +278,13 @@ async fn main() {
     let c_cursor = cursor.clone();
     tokio::spawn(async move {
         while let Ok(message) = msg_rx.recv_async().await {
-            if let Ok(text) = message.to_text() {
+            // Ping and pong frames carry a payload too; only text frames are events.
+            let text = if message.is_text() {
+                message.to_text().ok()
+            } else {
+                None
+            };
+            if let Some(text) = text {
                 if let Err(e) = identity::ingest_identity_event(&pool, text).await {
                     error!("Error processing identity event: {}", e);
                 }
