@@ -14,7 +14,10 @@ use sqlx::{types::Uuid, PgPool};
 use tracing::info;
 use unicode_normalization::UnicodeNormalization;
 
-use super::{assemble_at_uri, canonical_collection, normalize_legacy_record_type};
+use super::{
+    assemble_at_uri, canonical_collection, normalize_legacy_record_type, ALPHA_FEED_PLAY,
+    STABLE_FEED_PLAY,
+};
 use crate::account;
 
 struct MusicBrainzCleaner;
@@ -1221,6 +1224,8 @@ impl PlayIngestor {
     //         .unwrap_or_else(|| name.to_string())
     // }
 
+    /// Store a play record. `collection` is the record's own collection
+    /// (stable or alpha); `uri` is always the stable-collection URI.
     pub async fn insert_play(
         &self,
         play_record: &types::fm_teal::feed::play::Play,
@@ -1228,6 +1233,7 @@ impl PlayIngestor {
         cid: &str,
         did: &str,
         rkey: &str,
+        collection: &str,
     ) -> anyhow::Result<()> {
         let play_record = clean(play_record);
         let mut parsed_artists: Vec<(i32, String)> = vec![];
@@ -1410,16 +1416,74 @@ impl PlayIngestor {
             }
         }
 
+        // Many listens exist in both play collections: a client scrobbled them
+        // live to the alpha collection and a later import wrote them again as
+        // stable records, with timestamps up to a few minutes apart. The stable
+        // copy wins. Two clients rarely write the same track to different
+        // collections within the window for separate listens.
+        if collection == ALPHA_FEED_PLAY {
+            let stable_copy = sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS(
+                    SELECT 1 FROM plays
+                    WHERE did = $1 AND source_collection = $2
+                      AND (uri = $3 OR (
+                          lower(track_name) = lower($4)
+                          AND played_time BETWEEN $5 - interval '10 minutes'
+                                              AND $5 + interval '10 minutes'
+                      ))
+                )",
+            )
+            .bind(did)
+            .bind(STABLE_FEED_PLAY)
+            .bind(uri)
+            .bind(&track_name)
+            .bind(time_datetime)
+            .fetch_one(&mut *tx)
+            .await?;
+            if stable_copy {
+                // Also drop this record's own row if an earlier write stored
+                // it, so re-ingesting cleans up rows indexed before the rule.
+                let stale = sqlx::query_scalar::<_, String>(
+                    "SELECT uri FROM plays
+                     WHERE uri = $1 AND source_collection IS DISTINCT FROM $2",
+                )
+                .bind(uri)
+                .bind(STABLE_FEED_PLAY)
+                .fetch_all(&mut *tx)
+                .await?;
+                delete_plays(&mut tx, &stale).await?;
+                tx.commit().await?;
+                tracing::debug!(did, uri, "Skipping alpha play with a stable copy");
+                return Ok(());
+            }
+        } else {
+            let alpha_copies = sqlx::query_scalar::<_, String>(
+                "SELECT uri FROM plays
+                 WHERE did = $1 AND uri <> $2 AND source_collection = $3
+                   AND lower(track_name) = lower($4)
+                   AND played_time BETWEEN $5 - interval '10 minutes'
+                                       AND $5 + interval '10 minutes'",
+            )
+            .bind(did)
+            .bind(uri)
+            .bind(ALPHA_FEED_PLAY)
+            .bind(&track_name)
+            .bind(time_datetime)
+            .fetch_all(&mut *tx)
+            .await?;
+            delete_plays(&mut tx, &alpha_copies).await?;
+        }
+
         let inserted = sqlx::query(
             r#"
                 INSERT INTO plays (
                     uri, cid, did, rkey, isrc, duration, track_name, played_time,
                     processed_time, release_mbid, release_name, recording_mbid,
                     submission_client_agent, music_service_base_domain, artist_names_raw,
-                    track_discriminant, release_discriminant, origin_url
+                    track_discriminant, release_discriminant, origin_url, source_collection
                 )
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8,
-                    NOW(), $9, $10, $11, $12, $13, $14, $15, $16, $17
+                    NOW(), $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
                 WHERE COALESCE(
                     (SELECT active FROM account_states WHERE did = $3),
                     TRUE
@@ -1439,7 +1503,8 @@ impl PlayIngestor {
                     artist_names_raw = EXCLUDED.artist_names_raw,
                     track_discriminant = EXCLUDED.track_discriminant,
                     release_discriminant = EXCLUDED.release_discriminant,
-                    origin_url = EXCLUDED.origin_url
+                    origin_url = EXCLUDED.origin_url,
+                    source_collection = EXCLUDED.source_collection
             "#,
         )
         .bind(uri)
@@ -1459,6 +1524,7 @@ impl PlayIngestor {
         .bind(track_discriminant)
         .bind(release_discriminant)
         .bind(origin_url)
+        .bind(collection)
         .execute(&mut *tx)
         .await?
         .rows_affected();
@@ -1469,13 +1535,7 @@ impl PlayIngestor {
             return Ok(());
         }
 
-        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
-            .bind(uri)
-            .execute(&mut *tx)
-            .await?;
-        sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
-            .execute(&mut *tx)
-            .await?;
+        delete_play_links(&mut tx, &[uri.to_string()]).await?;
 
         // Insert plays into the extended join table (supports all artists)
         for (artist_id, artist_name) in &parsed_artists {
@@ -1537,19 +1597,52 @@ impl PlayIngestor {
         Ok(())
     }
 
-    async fn remove_play(&self, uri: &str) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = $1")
-            .bind(uri)
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("DELETE FROM play_to_artists WHERE play_uri = $1", uri)
-            .execute(&self.sql)
-            .await?;
-        sqlx::query!("DELETE FROM plays WHERE uri = $1", uri)
-            .execute(&self.sql)
-            .await?;
-        Ok(())
+    /// Delete the play at `uri` when it was written from `collection`, so
+    /// deleting an alpha record leaves the stable record that shares its URI.
+    async fn remove_play(&self, uri: &str, collection: &str) -> Result<(), sqlx::Error> {
+        let mut tx = self.sql.begin().await?;
+        let removed = sqlx::query_scalar::<_, String>(
+            "SELECT uri FROM plays
+             WHERE uri = $1 AND (source_collection IS NULL OR source_collection = $2)",
+        )
+        .bind(uri)
+        .bind(collection)
+        .fetch_all(&mut *tx)
+        .await?;
+        delete_plays(&mut tx, &removed).await?;
+        tx.commit().await
     }
+}
+
+async fn delete_play_links(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    uris: &[String],
+) -> Result<(), sqlx::Error> {
+    sqlx::query("DELETE FROM play_to_artists_extended WHERE play_uri = ANY($1)")
+        .bind(uris)
+        .execute(&mut **tx)
+        .await?;
+    sqlx::query("DELETE FROM play_to_artists WHERE play_uri = ANY($1)")
+        .bind(uris)
+        .execute(&mut **tx)
+        .await?;
+    Ok(())
+}
+
+/// Delete plays and their artist links (the links reference the play).
+async fn delete_plays(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    uris: &[String],
+) -> Result<(), sqlx::Error> {
+    if uris.is_empty() {
+        return Ok(());
+    }
+    delete_play_links(tx, uris).await?;
+    sqlx::query("DELETE FROM plays WHERE uri = ANY($1)")
+        .bind(uris)
+        .execute(&mut **tx)
+        .await?;
+    Ok(())
 }
 
 #[async_trait]
@@ -1574,6 +1667,7 @@ impl LexiconIngestor for PlayIngestor {
                             cid,
                             &message.did,
                             &commit.rkey,
+                            &commit.collection,
                         )
                         .await?;
                     }
@@ -1585,7 +1679,7 @@ impl LexiconIngestor for PlayIngestor {
                     &commit.rkey,
                 );
                 tracing::info!("{}: Play {} deleted", message.did, uri);
-                self.remove_play(&uri).await?;
+                self.remove_play(&uri, &commit.collection).await?;
             }
         } else {
             return Err(anyhow!("Message has no commit"));
@@ -1605,7 +1699,7 @@ mod tests {
     use sqlx::PgPool;
     use uuid::Uuid;
 
-    use super::{clean, PlayIngestor};
+    use super::{clean, PlayIngestor, ALPHA_FEED_PLAY, STABLE_FEED_PLAY};
 
     async fn test_pool() -> anyhow::Result<PgPool> {
         let database_url = std::env::var("DATABASE_URL")?;
@@ -1775,6 +1869,7 @@ mod tests {
                 "bafyreicadetcreate",
                 &did,
                 rkey,
+                ALPHA_FEED_PLAY,
             )
             .await?;
 
@@ -1802,6 +1897,7 @@ mod tests {
                 "bafyreicadetupdate",
                 &did,
                 rkey,
+                ALPHA_FEED_PLAY,
             )
             .await?;
 
@@ -1898,6 +1994,7 @@ mod tests {
                 "bafyreicadetinactive",
                 &did,
                 rkey,
+                STABLE_FEED_PLAY,
             )
             .await?;
 
@@ -1912,6 +2009,148 @@ mod tests {
             .execute(&pool)
             .await?;
 
+        Ok(())
+    }
+
+    fn play_at(
+        track_name: &str,
+        played_time: &str,
+    ) -> anyhow::Result<types::fm_teal::feed::play::Play> {
+        Ok(value::from_json_value::<types::fm_teal::feed::play::Play>(
+            json!({
+                "$type": "fm.teal.feed.play",
+                "trackName": track_name,
+                "artists": [{ "artistName": "Cadet Duplicate Artist" }],
+                "playedTime": played_time
+            }),
+        )?)
+    }
+
+    #[tokio::test]
+    #[ignore = "requires DATABASE_URL pointing at a migrated Postgres database"]
+    async fn stable_play_wins_over_its_alpha_copy() -> anyhow::Result<()> {
+        let pool = test_pool().await?;
+        let ingestor = PlayIngestor::new(pool.clone());
+        let did = format!("did:plc:cadet-duplicate-test-{}", Uuid::new_v4());
+        let uri = |rkey: &str| format!("at://{did}/fm.teal.feed.play/{rkey}");
+        let stored = || async {
+            sqlx::query_scalar::<_, String>(
+                "SELECT rkey || ':' || source_collection FROM plays WHERE did = $1 ORDER BY rkey",
+            )
+            .bind(&did)
+            .fetch_all(&pool)
+            .await
+        };
+
+        // A live alpha scrobble, then the same listen imported as a stable
+        // record 90 seconds off: only the stable copy remains.
+        let alpha = play_at("Same Song", "2026-01-12T22:24:03Z")?;
+        ingestor
+            .insert_play(
+                &alpha,
+                &uri("alpha1"),
+                "bafy-alpha1",
+                &did,
+                "alpha1",
+                ALPHA_FEED_PLAY,
+            )
+            .await?;
+        let stable = play_at("same song", "2026-01-12T22:25:33Z")?;
+        ingestor
+            .insert_play(
+                &stable,
+                &uri("stable1"),
+                "bafy-stable1",
+                &did,
+                "stable1",
+                STABLE_FEED_PLAY,
+            )
+            .await?;
+        assert_eq!(stored().await?, vec![format!("stable1:{STABLE_FEED_PLAY}")]);
+
+        // Replaying the alpha record afterwards does not bring it back.
+        ingestor
+            .insert_play(
+                &alpha,
+                &uri("alpha1"),
+                "bafy-alpha1",
+                &did,
+                "alpha1",
+                ALPHA_FEED_PLAY,
+            )
+            .await?;
+        assert_eq!(stored().await?, vec![format!("stable1:{STABLE_FEED_PLAY}")]);
+
+        // A copy indexed before plays recorded their source is removed when
+        // its alpha record is ingested again.
+        sqlx::query(
+            "INSERT INTO plays (uri, cid, did, rkey, track_name, played_time)
+             VALUES ($1, 'bafy-legacy', $2, 'legacy', 'Same Song', '2026-01-12T22:24:00Z')",
+        )
+        .bind(uri("legacy"))
+        .bind(&did)
+        .execute(&pool)
+        .await?;
+        ingestor
+            .insert_play(
+                &alpha,
+                &uri("legacy"),
+                "bafy-legacy",
+                &did,
+                "legacy",
+                ALPHA_FEED_PLAY,
+            )
+            .await?;
+        assert_eq!(stored().await?, vec![format!("stable1:{STABLE_FEED_PLAY}")]);
+
+        // An alpha record with the same rkey neither overwrites nor deletes it.
+        let other = play_at("Other Song", "2026-03-01T00:00:00Z")?;
+        ingestor
+            .insert_play(
+                &other,
+                &uri("stable1"),
+                "bafy-alpha2",
+                &did,
+                "stable1",
+                ALPHA_FEED_PLAY,
+            )
+            .await?;
+        ingestor
+            .remove_play(&uri("stable1"), ALPHA_FEED_PLAY)
+            .await?;
+        let kept = sqlx::query_scalar::<_, String>("SELECT track_name FROM plays WHERE uri = $1")
+            .bind(uri("stable1"))
+            .fetch_one(&pool)
+            .await?;
+        assert_eq!(kept, "same song");
+
+        // A different listen outside the window is kept alongside it.
+        let later = play_at("Same Song", "2026-01-12T23:00:00Z")?;
+        ingestor
+            .insert_play(
+                &later,
+                &uri("alpha3"),
+                "bafy-alpha3",
+                &did,
+                "alpha3",
+                ALPHA_FEED_PLAY,
+            )
+            .await?;
+        assert_eq!(
+            stored().await?,
+            vec![
+                format!("alpha3:{ALPHA_FEED_PLAY}"),
+                format!("stable1:{STABLE_FEED_PLAY}"),
+            ]
+        );
+
+        ingestor
+            .remove_play(&uri("stable1"), STABLE_FEED_PLAY)
+            .await?;
+        ingestor
+            .remove_play(&uri("alpha3"), ALPHA_FEED_PLAY)
+            .await?;
+        assert!(stored().await?.is_empty());
         Ok(())
     }
 }

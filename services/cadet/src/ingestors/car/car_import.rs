@@ -354,9 +354,7 @@ impl CarImportIngestor {
         match stable_collection_for(&record.collection) {
             Some("fm.teal.feed.play") => {
                 info!("   📀 Processing play record...");
-                let result = self
-                    .process_play_record(&record.data, did, &record.rkey, &record.cid)
-                    .await;
+                let result = self.process_play_record(record, did).await;
                 if result.is_ok() {
                     info!("   ✅ Successfully processed play record");
                 } else {
@@ -456,22 +454,23 @@ impl CarImportIngestor {
     }
 
     /// Process a play record using the existing PlayIngestor
-    async fn process_play_record(
-        &self,
-        data: &Value,
-        did: &str,
-        rkey: &str,
-        cid: &str,
-    ) -> Result<()> {
-        let data = Self::normalize_play_record_json(normalize_legacy_record_type(data));
+    async fn process_play_record(&self, record: &ExtractedRecord, did: &str) -> Result<()> {
+        let data = Self::normalize_play_record_json(normalize_legacy_record_type(&record.data));
         let play_record: types::fm_teal::feed::play::Play =
             value::from_json_value::<types::fm_teal::feed::play::Play>(data)?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
-        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.feed.play", rkey);
+        let uri = super::super::teal::assemble_at_uri(did, "fm.teal.feed.play", &record.rkey);
 
         play_ingestor
-            .insert_play(&play_record, &uri, cid, did, rkey)
+            .insert_play(
+                &play_record,
+                &uri,
+                &record.cid,
+                did,
+                &record.rkey,
+                &record.collection,
+            )
             .await?;
 
         info!(
