@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                ae.mbid,\n                ptae.artist_name as name,\n                COUNT(*) as play_count\n            FROM plays p\n            INNER JOIN play_to_artists_extended ptae ON p.uri = ptae.play_uri\n            INNER JOIN artists_extended ae ON ptae.artist_id = ae.id\n            WHERE ptae.artist_name IS NOT NULL\n            GROUP BY ae.mbid, ptae.artist_name\n            ORDER BY play_count DESC\n            LIMIT $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "play_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "348a15835fbf1e1f62a09e5f94287193483ca5ba76659baf8b18b35cab952e0d"
+}

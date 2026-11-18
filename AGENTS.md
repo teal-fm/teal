@@ -1,7 +1,9 @@
 # Teal Development Guidelines
 
 ## Build Commands
-- Dev server: `turbo dev --filter=@teal/aqua`
+- Dev stack: `pnpm dev` at `http://localhost:8081` (add `--proxy` for `https://sigilyph.teal.fm`)
+- Android app: `pnpm dev:native` (Expo)
+- iOS app: `pnpm dev:ios` (generates the Xcode project with XcodeGen and opens it)
 - Build all: `pnpm build`
 - Build Rust: `pnpm build:rust`
 - Test: `pnpm test`
@@ -14,31 +16,36 @@
 ```
 teal/
 ├── apps/aqua/              # Main Rust/Axum web app
+├── apps/web/               # Web app (TanStack Start, React DOM, SSR)
+├── apps/amethyst/          # Android app (Expo / React Native)
+├── apps/ios/               # iOS app (SwiftUI, XcodeGen project)
+├── packages/client/        # @teal/client: shared, platform-neutral client logic
+├── apps/status/            # Status API (its own Jetstream v2 consumer)
 ├── services/
-│   ├── cadet/             # AT Protocol jetstream consumer
-│   ├── rocketman/         # Jetstream library
-│   ├── satellite/         # Processing service
-│   ├── types/             # Shared types
-│   └── migrations/        # SQLx migrations
+│   ├── cadet/             # AT Protocol jetstream consumer (uses the rocketman crate)
+│   ├── satellite/         # Small stats API over Cadet's materialized views
+│   └── types/             # Shared types (generated from lexicons)
+├── migrations/             # SQLx migrations (workspace root)
 ├── lexicons/fm.teal/ # AT Protocol schemas
 │   ├── feed/              # Music play types
 │   ├── actor/             # Profile types
 │   └── stats/             # Analytics
 ├── tools/lexicon-cli/      # Code generation
+├── tools/teal-cli/         # Key generation for service DIDs
 └── compose.yaml           # Docker setup
 ```
 
 ## Tech Stack
 - **Backend**: Rust (Axum, SQLx, Tokio, Serde, Tracing)
 - **Database**: PostgreSQL + Garnet/Redis
-- **Frontend**: TypeScript, Turbo, pnpm, Biome
+- **Frontend**: TypeScript, Turbo, pnpm, oxlint
 - **Protocol**: AT Protocol, IPLD/CAR, WebSocket streams
-- **Deploy**: Docker Compose, Traefik
+- **Deploy**: Docker Compose, Caddy edge
 
 ## Services
 - **Aqua**: HTTP API, OAuth, play submission, profiles, CAR import
 - **Cadet**: Real-time jetstream consumer, background jobs, metrics
-- **Rocketman**: Reusable WebSocket consumer framework
+- **Rocketman** (crates.io dependency): Reusable WebSocket consumer framework
 - **Satellite**: Analytics, aggregation, external APIs
 
 ## Database Schema
@@ -91,9 +98,13 @@ cp apps/aqua/.env.example apps/aqua/.env
 # Start dependencies
 docker compose -f compose.dev.yml up -d garnet postgres
 
-# Run dev server
-turbo dev --filter=@teal/aqua
-# Access: http://localhost:3000
+# Run the host watch processes locally
+pnpm dev
+# Access: http://localhost:8081
+
+# Or serve the public preview through the named Cloudflare tunnel
+pnpm dev --proxy
+# Access: https://sigilyph.teal.fm
 ```
 
 ## Database Operations
@@ -135,9 +146,28 @@ pnpm lex:diff      # Show changes
 - **Commit size**: Small, focused commits - one logical change per commit
 - **Message body**: Include WHY for non-obvious changes, reference issues with `#123`
 - **Breaking changes**: Mark with `BREAKING:` in commit body, update migration docs
+- **Checkpointing**: Create focused checkpoint commits after each meaningful, verified unit of work
+- **Push after commit**: After each checkpoint commit, push the current feature branch to its remote unless explicitly told not to
+- **Status hygiene**: Before committing, inspect `git status --short` and leave unrelated user files unstaged
+- **Handoff**: Report the commit hash after each checkpoint commit
+
+## Working Handoff
+- Read `todo.md` before starting implementation work.
+- Keep `todo.md` short: unfinished tasks and blockers only, one concise bullet per item.
+- Remove completed items immediately. Put implementation history, verification results, and commit/PR summaries in commits and PRs.
+- Do not add a Current State section or repeat setup commands and development guidelines.
+- Name the service, route, test, or deployment action that remains. Update or remove bullets as work changes.
+- Include a preview URL only when needed for an unfinished task; remove it when the task is done or the URL expires.
+- Do not commit secrets, tunnel tokens, OAuth codes, or private credentials.
+
+## Frontend Layout
+- **Shared logic** lives in `packages/client` (`@teal/client/<path>`): Aqua XRPC, ATProto records, MusicBrainz search, TanStack Query hooks. No React Native, DOM, or bundler imports there. Hooks read the account from `SessionProvider`; each app calls `configureClient()` at startup.
+- **Web** (`apps/web`): TanStack Start with SSR. UI is DOM-native (`src/ds`), styled with Tailwind v4 on the same tokens as the native app. Public pages load their main query in a route loader with the component's own query key, so the first HTML carries the content and link-preview tags. Public URLs match the native app's (`/:o/music/…`, `/at://…`) via a router rewrite onto internal `/music` and `/at` routes.
+- **Android** (`apps/amethyst`): Expo, Android only.
+- **iOS** (`apps/ios`): SwiftUI, no third-party packages. It doesn't use `@teal/client`; it has its own Aqua client, OAuth (PAR, PKCE, DPoP), and PDS writes. Keep behaviour in step with the web and Android apps. OAuth client metadata for it is `apps/web`'s `/ios-client-metadata.json`. Regenerate the project with `pnpm ios:project` after adding files.
 
 ## Code Standards
-- **TypeScript**: Biome format (`pnpm fix`), explicit types
+- **TypeScript**: oxlint with the anti-slop rules (`pnpm lint`, `pnpm fix`), explicit types
 - **DB**: Snake_case, migrations, indexes, constraints
 - **AT Protocol**: URI format, lexicon validation, federation-ready
 
@@ -147,6 +177,27 @@ pnpm test           # All tests
 pnpm test:rust      # Rust only
 cargo test          # Service tests
 cargo tarpaulin     # Coverage
+```
+
+## Minimum Verification
+Run the relevant subset before checkpoint commits:
+
+```bash
+pnpm lex:gen-server
+SQLX_OFFLINE=true cargo check -p aqua -p cadet
+SQLX_OFFLINE=true cargo test -p cadet stores_and_loads_cursor_from_file_when_redis_is_unavailable
+pnpm --filter=@teal/client test
+pnpm typecheck
+pnpm --filter=@teal/web build
+docker compose -f compose.dev.yml config
+docker compose -f compose.yaml config
+```
+
+For public-preview changes, also verify:
+
+```bash
+curl --fail https://<tunnel-host>/client-metadata.json
+curl --fail "https://<tunnel-host>/xrpc/fm.teal.stats.getLatest?limit=5"
 ```
 
 ## Deployment
@@ -171,6 +222,61 @@ docker compose exec aqua-api pnpm db:migrate
 - **Content-addressable**: CAR files for federated data
 - **Type-safe**: SQLx compile-time query verification
 - **Async-first**: Tokio runtime throughout
+
+## Public Preview Workflow
+- Use `pnpm dev` for daily development at `http://localhost:8081`. `pnpm dev` stays local and never starts the Cloudflare tunnel. `compose.watch.yml` runs Caddy as `edge:80` (aliased `amethyst:80` for the named tunnel) so `/xrpc/*` and OAuth metadata share the local origin. Keep the host watch processes running.
+- Use `pnpm dev --proxy` only when a public origin is needed, such as ATProto OAuth. It starts the named Cloudflare tunnel and serves the stack at `https://sigilyph.teal.fm`.
+- Do not export production web bundles or rebuild application images for routine edits. Use Fast Refresh and scoped Rust watchers, plus checks relevant to the changed files. Production image builds are for explicit release/image verification.
+- Use OrbStack for local Docker services when available.
+- Start Postgres and Garnet before Aqua and Cadet:
+
+```bash
+open -a OrbStack
+docker compose -f compose.dev.yml up -d postgres garnet
+DATABASE_URL=postgres://teal:teal@127.0.0.1:5432/teal pnpm db:migrate
+```
+
+- Aqua should run against local Postgres and Garnet.
+- Cadet should run continuously with Jetstream ingestion enabled:
+
+```bash
+DATABASE_URL=postgres://teal:teal@127.0.0.1:5432/teal \
+REDIS_URL=redis://127.0.0.1:6379 \
+CADET_STREAM_MODE=jetstream \
+JETSTREAM_URL=wss://jetstream1.us-east.bsky.network/subscribe \
+SQLX_OFFLINE=true cargo run -p cadet --bin cadet
+```
+
+- Serve the web app and proxy `/xrpc/*` to Aqua through the same hostname. Local mode uses `http://localhost:8081`; `--proxy` mode uses `https://sigilyph.teal.fm`.
+- Verify public changes on the live development preview at `https://sigilyph.teal.fm` with `pnpm dev --proxy` through the Cloudflare tunnel.
+- For temporary demos, a Cloudflare quick tunnel is acceptable. Record the active URL in `todo.md`.
+- Treat quick-tunnel URLs as ephemeral. A tunnel restart changes the hostname.
+
+## OAuth Tunnel Rule
+- Before testing ATProto OAuth, start the web app with the active public origin. Restart `pnpm dev --proxy` if the origin changes:
+
+```bash
+DEV_PUBLIC_ORIGIN=https://<tunnel-host> pnpm dev --proxy
+```
+
+- Serve `/client-metadata.json` from the same public hostname.
+- Ensure the metadata uses:
+
+```text
+client_id=https://<tunnel-host>/client-metadata.json
+redirect_uris=["https://<tunnel-host>/auth/callback"]
+```
+
+- The web app builds `/client-metadata.json` from `PUBLIC_ORIGIN` at request time (`pnpm dev` sets it from `DEV_PUBLIC_ORIGIN`).
+- Verify `/client-metadata.json` publicly before initiating login.
+- Never test public OAuth against metadata that falls back to `localhost` or `127.0.0.1`.
+
+## Live Feed Rule
+- The production data path is Cadet Jetstream ingestion into Postgres, surfaced by Aqua XRPC.
+- Keep `/xrpc/*` same-origin through the edge reverse proxy.
+- Never add backup, seeded, mocked, or demo play data to the web or native app.
+- If Aqua is unavailable, show an error state.
+- If Aqua has not indexed plays yet, show an empty state.
 
 ## Rust Anti-Patterns to Avoid
 - **DON'T**: Use `unwrap()` or `expect()` in production code - use proper error handling

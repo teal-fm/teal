@@ -1,0 +1,6 @@
+Teal.xcodeproj/
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+Config/Local.xcconfig

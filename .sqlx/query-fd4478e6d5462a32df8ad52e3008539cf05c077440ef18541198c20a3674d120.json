@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO recordings (mbid, name) VALUES ($1, 'Refresh recording')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fd4478e6d5462a32df8ad52e3008539cf05c077440ef18541198c20a3674d120"
+}

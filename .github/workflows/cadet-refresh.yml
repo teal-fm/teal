@@ -1,0 +1,57 @@
+name: Cadet aggregate refresh tests
+
+on:
+  pull_request:
+    paths:
+      - "services/cadet/**"
+      - "services/types/**"
+      - "migrations/**"
+      - ".sqlx/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/cadet-refresh.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/cadet/**"
+      - "services/types/**"
+      - "migrations/**"
+      - ".sqlx/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/cadet-refresh.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: teal
+          POSTGRES_PASSWORD: teal
+          POSTGRES_DB: teal_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U teal -d teal_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://teal:teal@localhost:5432/teal_test
+      SQLX_OFFLINE: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/setup
+        with:
+          setup-rust: "true"
+          lexicons-only-rust: "true"
+          cache-key-suffix: cadet-refresh
+      - name: Verify refresh configuration and PostgreSQL behavior
+        run: |
+          cargo test -p cadet --lib refresh::tests
+          cargo test -p cadet --test materialized_view_refresh -- --ignored

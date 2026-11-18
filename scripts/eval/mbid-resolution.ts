@@ -13,13 +13,13 @@ import {
   RATE_LIMIT_DELAY,
   type APIMetrics,
   type MBIDResult,
-  type MBIDSource,
+  parseMbidSource,
 } from "./types.js";
 import {
   cleanTrackName,
   cleanArtistName,
-} from "../../apps/amethyst/lib/musicbrainzCleaner.js";
-import { escapeLucene } from "../../apps/amethyst/lib/musicbrainzSearchUtils.js";
+} from "../../packages/client/src/musicbrainzCleaner.js";
+import { escapeLucene } from "../../packages/client/src/musicbrainzSearchUtils.js";
 import type { LastFMCache } from "./evaluate-lastfm-cache.js";
 import { generateSignature } from "./auth.js";
 import {
@@ -47,12 +47,14 @@ async function searchMusicBrainzForMBID(
   if (cleanedTrack && cleanedArtist) {
     const q = `recording:"${escapeLucene(cleanedTrack)}" AND artist:"${escapeLucene(cleanedArtist)}"`;
     const mbid = await tryMusicBrainzSearch(q, cleanedTrack, cleanedArtist);
+
     if (mbid) return mbid;
   }
 
   // Strategy 2: Exact match with original names
   const q2 = `recording:"${escapeLucene(track)}" AND artist:"${escapeLucene(artist)}"`;
   let mbid = await tryMusicBrainzSearch(q2, track, artist);
+
   if (mbid) return mbid;
 
   // Strategy 3: Fuzzy match
@@ -63,10 +65,12 @@ async function searchMusicBrainzForMBID(
 
   if (trackWords.length > 1) {
     const fuzzyTrackQuery = `recording:"${escapeLucene(searchTrack)}"~3`;
+
     const fuzzyArtistQuery =
       artistWords.length > 1
         ? `artist:"${escapeLucene(searchArtist)}"~3`
         : `artist:${escapeLucene(searchArtist)}~`;
+
     mbid = await tryMusicBrainzSearch(
       `${fuzzyTrackQuery} AND ${fuzzyArtistQuery}`,
       searchTrack,
@@ -79,6 +83,7 @@ async function searchMusicBrainzForMBID(
       searchArtist,
     );
   }
+
   if (mbid) return mbid;
 
   // Strategy 4: Partial match (word-by-word)
@@ -87,6 +92,7 @@ async function searchMusicBrainzForMBID(
     searchTrack,
     searchArtist,
   );
+
   if (mbid) return mbid;
 
   // Strategy 5: Artist-only search
@@ -96,6 +102,7 @@ async function searchMusicBrainzForMBID(
     searchArtist,
     true,
   );
+
   return mbid;
 }
 
@@ -113,6 +120,7 @@ async function tryMusicBrainzSearch(
 
     if (res.ok) {
       const data = await res.json();
+
       if (data.recordings?.length > 0) {
         for (const recording of data.recordings) {
           if (checkISRC) {
@@ -120,22 +128,28 @@ async function tryMusicBrainzSearch(
             await new Promise((resolve) =>
               setTimeout(resolve, RATE_LIMIT_DELAY),
             );
+
             const recRes = await fetch(recUrl, {
               headers: { "User-Agent": USER_AGENT },
             });
+
             if (recRes.ok) {
               const recData = await recRes.json();
+
               if (recData.isrcs?.length > 0) return recording.id;
             }
           }
+
           if (!checkISRC) return recording.id;
         }
+
         return data.recordings[0].id;
       }
     }
   } catch {
     // Ignore errors, try next strategy
   }
+
   return null;
 }
 
@@ -152,6 +166,7 @@ export async function validateMBID(
 ): Promise<boolean> {
   if (cache) {
     const cached = cache.getMBIDValidationDetailed(mbid);
+
     if (cached !== undefined) {
       if (cached.httpStatus === 200 || cached.httpStatus === 301 || cached.httpStatus === 404) {
         return cached.isValid;
@@ -160,19 +175,23 @@ export async function validateMBID(
   }
 
   const MAX_RETRIES = 3;
+
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       const delay =
         RATE_LIMIT_DELAY * (attempt === 0 ? 1 : Math.pow(2, attempt));
+
       await new Promise((resolve) => setTimeout(resolve, delay));
 
       const lookupUrl = `${MUSICBRAINZ_BASE_URL}/recording/${mbid}?fmt=json`;
       const apiCallStart = Date.now();
+
       // Use redirect: "manual" to detect 301 (merged recordings)
       const res = await fetch(lookupUrl, {
         headers: { "User-Agent": USER_AGENT },
         redirect: "manual",
       });
+
       const apiCallTime = Date.now() - apiCallStart;
 
       if (apiMetrics) {
@@ -182,6 +201,7 @@ export async function validateMBID(
 
       if (res.status === 404) {
         if (cache) cache.setMBIDValidation(mbid, false, 404, "404 Not Found");
+
         return false;
       }
 
@@ -190,46 +210,63 @@ export async function validateMBID(
         // MB redirects: /ws/2/recording/<old>?fmt=json -> /ws/2/recording/<new>?fmt=json
         const location = res.headers.get("location");
         let canonicalMbid: string | undefined;
+
         if (location) {
           const match = location.match(/\/recording\/([0-9a-f-]{36})/);
+
           if (match) canonicalMbid = match[1];
         }
+
         if (!canonicalMbid) {
           // Fallback: follow the redirect to read the response body
           await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
+
           const followRes = await fetch(lookupUrl, {
             headers: { "User-Agent": USER_AGENT },
             redirect: "follow",
           });
+
           if (apiMetrics) apiMetrics.musicbrainzCalls++;
+
           if (followRes.ok) {
             const data = await followRes.json();
             canonicalMbid = data.id;
           }
         }
+
         if (cache) cache.setMBIDValidation(mbid, true, 301, `merged -> ${canonicalMbid || "unknown"}`, canonicalMbid);
+
         return true;
       }
 
       if (res.ok) {
         if (cache) cache.setMBIDValidation(mbid, true, 200);
+
         return true;
       }
+
       if (res.status === 503) {
         if (apiMetrics) apiMetrics.musicbrainzRateLimits++;
+
         if (attempt < MAX_RETRIES - 1) continue;
+
         return true; // conservative fallback, uncached
       }
 
       if (apiMetrics) apiMetrics.musicbrainzErrors++;
+
       if (attempt < MAX_RETRIES - 1) continue;
+
       return true;
     } catch {
       if (apiMetrics) apiMetrics.musicbrainzErrors++;
+
       if (attempt < MAX_RETRIES - 1) continue;
+
       return true;
     }
   }
+
   return true;
 }
 
@@ -245,6 +282,7 @@ export async function getRecordingWorkId(
 ): Promise<string | null> {
   if (cache) {
     const cached = cache.getRecordingWork(recordingMbid);
+
     if (cached !== undefined) return cached.workId;
   }
 
@@ -252,22 +290,30 @@ export async function getRecordingWorkId(
     await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
     const url = `${MUSICBRAINZ_BASE_URL}/recording/${recordingMbid}?inc=work-rels&fmt=json`;
     const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+
     if (apiMetrics) apiMetrics.musicbrainzCalls++;
 
     if (!res.ok) {
       if (res.status === 503 && apiMetrics)
         apiMetrics.musicbrainzRateLimits++;
+
       return null;
     }
 
-    const data = (await res.json()) as any;
+    // SAFETY: a MusicBrainz recording lookup with inc=work-rels; every field is read as optional.
+    const data = (await res.json()) as {
+      relations?: { type?: string; work?: { id?: string; title?: string } }[];
+    };
+
     const workRel = data.relations?.find(
-      (r: any) => r.type === "performance" && r.work,
+      (r) => r.type === "performance" && r.work,
     );
+
     const workId = workRel?.work?.id ?? null;
     const workTitle = workRel?.work?.title ?? null;
 
     if (cache) cache.setRecordingWork(recordingMbid, workId, workTitle);
+
     return workId;
   } catch {
     return null;
@@ -284,9 +330,12 @@ export async function areRecordingsWorkEquivalent(
   apiMetrics?: APIMetrics,
 ): Promise<boolean> {
   const workA = await getRecordingWorkId(mbidA, cache, apiMetrics);
+
   if (!workA) return false;
   const workB = await getRecordingWorkId(mbidB, cache, apiMetrics);
+
   if (!workB) return false;
+
   return workA === workB;
 }
 
@@ -317,8 +366,9 @@ export async function getTrackMBID(
   // Check cache first
   if (cache) {
     const cached = cache.getMBIDWithSource(track, artist);
+
     if (cached !== undefined) {
-      return { mbid: cached.mbid, source: cached.source };
+      return { mbid: cached.mbid, source: parseMbidSource(cached.source) };
     }
   }
 
@@ -332,42 +382,51 @@ export async function getTrackMBID(
     cache,
     apiMetrics,
   );
+
   let searchTrack = track;
   let searchArtist = artist;
+
   if (correction) {
     searchTrack = correction.track;
     searchArtist = correction.artist;
+
     if (apiMetrics) apiMetrics.lastfmCalls++;
   }
 
   // Method 1: Try track.getInfo (Last.fm authenticated)
   if (apiMetrics) apiMetrics.lastfmCalls++;
-  const params: Record<string, string> = {
+
+  const params = new URLSearchParams({
     method: "track.getInfo",
     track: searchTrack,
     artist: searchArtist,
     api_key: apiKey,
     sk: sessionKey,
     format: "json",
-  };
+  });
 
   const sig = await generateSignature(params, apiSecret);
-  params.api_sig = sig;
+  params.set("api_sig", sig);
 
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = params.toString();
   const url = `https://ws.audioscrobbler.com/2.0/?${queryString}`;
 
   try {
     const res = await fetch(url);
+
     if (res.ok) {
       const data = await res.json();
+
       if (data.track?.mbid) {
         const mbid = data.track.mbid;
+
         if (useAdditionalAPIs) {
           const isValid = await validateMBID(mbid, cache, apiMetrics);
+
           if (isValid) {
             if (cache) {
               cache.setMBIDWithSource(track, artist, mbid, "lastfm_track_info");
+
               if (correction)
                 cache.setMBIDWithSource(
                   searchTrack,
@@ -376,11 +435,13 @@ export async function getTrackMBID(
                   "lastfm_track_info",
                 );
             }
+
             return { mbid, source: "lastfm_track_info" };
           }
         } else {
           if (cache) {
             cache.setMBIDWithSource(track, artist, mbid, "lastfm_track_info");
+
             if (correction)
               cache.setMBIDWithSource(
                 searchTrack,
@@ -389,30 +450,36 @@ export async function getTrackMBID(
                 "lastfm_track_info",
               );
           }
+
           return { mbid, source: "lastfm_track_info" };
         }
       }
 
       // Try corrected name from response
       if (data.track?.name && data.track.name !== searchTrack) {
-        const correctedParams: Record<string, string> = {
+        const correctedParams = new URLSearchParams({
           method: "track.getInfo",
           track: data.track.name,
           artist: data.track.artist?.name || searchArtist,
           api_key: apiKey,
           sk: sessionKey,
           format: "json",
-        };
+        });
+
         const correctedSig = await generateSignature(correctedParams, apiSecret);
-        correctedParams.api_sig = correctedSig;
-        const correctedUrl = `https://ws.audioscrobbler.com/2.0/?${new URLSearchParams(correctedParams).toString()}`;
+        correctedParams.set("api_sig", correctedSig);
+        const correctedUrl = `https://ws.audioscrobbler.com/2.0/?${correctedParams.toString()}`;
         const correctedRes = await fetch(correctedUrl);
+
         if (correctedRes.ok) {
           const correctedData = await correctedRes.json();
+
           if (correctedData.track?.mbid) {
             const mbid = correctedData.track.mbid;
+
             if (useAdditionalAPIs) {
               const isValid = await validateMBID(mbid, cache, apiMetrics);
+
               if (isValid) {
                 if (cache)
                   cache.setMBIDWithSource(
@@ -421,6 +488,7 @@ export async function getTrackMBID(
                     mbid,
                     "lastfm_track_info",
                   );
+
                 return { mbid, source: "lastfm_track_info" };
               }
             } else {
@@ -431,6 +499,7 @@ export async function getTrackMBID(
                   mbid,
                   "lastfm_track_info",
                 );
+
               return { mbid, source: "lastfm_track_info" };
             }
           }
@@ -443,6 +512,7 @@ export async function getTrackMBID(
 
   // Method 2: Try track.search (Last.fm search)
   if (apiMetrics) apiMetrics.lastfmCalls++;
+
   const searchResults = await searchTracksOnLastFM(
     searchTrack,
     searchArtist,
@@ -453,11 +523,13 @@ export async function getTrackMBID(
     cache,
     apiMetrics,
   );
+
   for (const result of searchResults) {
     const trackMatch =
       result.track.toLowerCase() === searchTrack.toLowerCase() ||
       result.track.toLowerCase().includes(searchTrack.toLowerCase()) ||
       searchTrack.toLowerCase().includes(result.track.toLowerCase());
+
     const artistMatch =
       result.artist.toLowerCase() === searchArtist.toLowerCase() ||
       result.artist.toLowerCase().includes(searchArtist.toLowerCase()) ||
@@ -466,6 +538,7 @@ export async function getTrackMBID(
     if (trackMatch && artistMatch && result.mbid) {
       if (useAdditionalAPIs && apiMetrics) {
         const isValid = await validateMBID(result.mbid, cache, apiMetrics);
+
         if (isValid) {
           if (cache)
             cache.setMBIDWithSource(
@@ -474,6 +547,7 @@ export async function getTrackMBID(
               result.mbid,
               "lastfm_search",
             );
+
           return { mbid: result.mbid, source: "lastfm_search" };
         }
       } else {
@@ -484,6 +558,7 @@ export async function getTrackMBID(
             result.mbid,
             "lastfm_search",
           );
+
         return { mbid: result.mbid, source: "lastfm_search" };
       }
     }
@@ -492,8 +567,10 @@ export async function getTrackMBID(
   // Method 3: MusicBrainz search (CIRCULAR -- marked as such)
   if (useAdditionalAPIs) {
     const mbidViaMB = await searchMusicBrainzForMBID(track, artist);
+
     if (mbidViaMB) {
       const isValid = await validateMBID(mbidViaMB, cache, apiMetrics);
+
       if (isValid) {
         if (cache)
           cache.setMBIDWithSource(
@@ -502,6 +579,7 @@ export async function getTrackMBID(
             mbidViaMB,
             "musicbrainz_search",
           );
+
         return { mbid: mbidViaMB, source: "musicbrainz_search" };
       }
     }
@@ -509,5 +587,6 @@ export async function getTrackMBID(
 
   // No MBID found
   if (cache) cache.setMBIDWithSource(track, artist, null, null);
+
   return { mbid: null, source: null };
 }

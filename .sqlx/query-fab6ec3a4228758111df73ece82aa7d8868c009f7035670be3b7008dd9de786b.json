@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM mv_artist_play_counts",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "artist_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "artist_mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "artist_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "mbid_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "play_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "fab6ec3a4228758111df73ece82aa7d8868c009f7035670be3b7008dd9de786b"
+}

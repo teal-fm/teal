@@ -1,41 +1,27 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
-import { Link, Stack } from "expo-router";
+import { View } from "react-native";
+import { Link } from "expo-router";
+import { CircleAlert } from "lucide-react-native";
+import { Button, ButtonRow, Glass, Heading, Icon, PageTitle, Text } from "@/components/ds";
 
-import { Text } from "../components/ui/text";
-
-export default function NotFoundScreen() {
+export default function NotFound() {
   return (
-    <>
-      <Stack.Screen options={{ title: "Oops!" }} />
-      <View style={styles.container}>
-        <Text>This screen doesn't exist.</Text>
-
-        <Link href="/" style={styles.link}>
-          <Text>Go to home screen!</Text>
-        </Link>
-      </View>
-    </>
+    <View className="flex-1 items-center justify-center bg-ground px-4">
+      <PageTitle title="Page not found" />
+      <Glass className="w-full max-w-md items-center gap-3 p-7">
+        <Icon icon={CircleAlert} size={40} className="text-ink-2" />
+        <Heading level={1} size="title" className="text-center">
+          Page not found
+        </Heading>
+        <Text className="text-center text-[15px] text-ink-2">This link may be incomplete, or the page may have moved.</Text>
+        <ButtonRow>
+          <Link href="/" asChild>
+            <Button label="Go to Today" />
+          </Link>
+          <Link href="/search" asChild>
+            <Button label="Explore music" variant="secondary" />
+          </Link>
+        </ButtonRow>
+      </Glass>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: 14,
-    color: "#2e78b7",
-  },
-});

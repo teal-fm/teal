@@ -22,18 +22,18 @@ import {
   cleanArtistName,
   cleanReleaseName,
   normalizeForComparison,
-} from "../../apps/amethyst/lib/musicbrainzCleaner.js";
+} from "../../packages/client/src/musicbrainzCleaner.js";
 import {
   escapeLucene,
   searchStage,
   hasCJK,
   resolveArtistAlias,
   PARTIAL_THRESHOLD,
-} from "../../apps/amethyst/lib/musicbrainzSearchUtils.js";
+} from "../../packages/client/src/musicbrainzSearchUtils.js";
 import {
   rankMultiStageResults,
   type RankingQuery,
-} from "../../apps/amethyst/lib/musicbrainzRanking.js";
+} from "../../packages/client/src/musicbrainzRanking.js";
 
 /**
  * Baseline search (original "funny search string").
@@ -50,12 +50,16 @@ export async function baselineSearch(
 ): Promise<SearchResult[]> {
   if (cache) {
     const cached = cache.getSearchResults(track, artist, release, false, false, false);
+
     if (cached !== null) return cached;
   }
 
   const queryParts: string[] = [];
+
   if (track) queryParts.push(`title:"${escapeLucene(track)}"`);
+
   if (artist) queryParts.push(`artist:"${escapeLucene(artist)}"`);
+
   if (release) queryParts.push(`release:"${escapeLucene(release)}"`);
 
   if (queryParts.length === 0) return [];
@@ -71,9 +75,11 @@ export async function baselineSearch(
   while (retries > 0) {
     try {
       const apiCallStart = Date.now();
+
       const res = await fetch(url, {
         headers: { "User-Agent": USER_AGENT },
       });
+
       const apiCallTime = Date.now() - apiCallStart;
 
       if (apiMetrics) {
@@ -84,46 +90,61 @@ export async function baselineSearch(
       if (res.status === 503) {
         if (apiMetrics) apiMetrics.musicbrainzRateLimits++;
         retries--;
+
         if (retries > 0) {
           await new Promise((resolve) => setTimeout(resolve, delay));
           delay *= 2;
           continue;
         }
+
         const results: SearchResult[] = [];
+
         if (cache) cache.setSearchResults(track, artist, release, results, false, false, false);
+
         return results;
       }
 
       if (!res.ok) {
         if (apiMetrics) apiMetrics.musicbrainzErrors++;
         const results: SearchResult[] = [];
+
         if (cache) cache.setSearchResults(track, artist, release, results, false, false, false);
+
         return results;
       }
 
       const data = await res.json();
       const rawResults = data.recordings || [];
+
       const results = rawResults.filter(
         (r: SearchResult): r is SearchResult & { id: string } => !!r.id,
       );
+
       if (cache) cache.setSearchResults(track, artist, release, results, false, false, false);
+
       return results;
     } catch (error) {
       if (apiMetrics) apiMetrics.musicbrainzErrors++;
       retries--;
+
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
         continue;
       }
+
       const results: SearchResult[] = [];
+
       if (cache) cache.setSearchResults(track, artist, release, results, false, false, false);
+
       return results;
     }
   }
 
   const results: SearchResult[] = [];
+
   if (cache) cache.setSearchResults(track, artist, release, results, false, false, false);
+
   return results;
 }
 
@@ -147,17 +168,21 @@ async function cachedSearchStage(
     const cached = cache.getSearchResults(
       track ?? "", artist ?? "", release, false, false, false, strategy,
     );
+
     if (cached !== null) return cached.filter(
       (r: SearchResult): r is SearchResult & { id: string } => !!r.id,
     );
   }
 
   const stageStart = Date.now();
+  // SAFETY: searchStage resolves to the pipeline's SearchResult rows.
   const raw = (await searchStage(track, artist, release, strategy)) as SearchResult[];
+
   if (apiMetrics && (track || artist || release)) {
     apiMetrics.musicbrainzCalls++;
     apiMetrics.totalAPICallTime += Date.now() - stageStart;
   }
+
   const results = raw.filter(
     (r): r is SearchResult & { id: string } => !!r.id,
   );
@@ -191,11 +216,14 @@ function exactResultsSufficient(
 
   if (results.length >= 2) return true;
   const first = results[0];
+
   if (first?.title && cleanedTrack) {
     const norm = normalizeForComparison(first.title);
     const trackNorm = normalizeForComparison(cleanedTrack);
+
     return norm === trackNorm || norm.startsWith(trackNorm + " ");
   }
+
   return false;
 }
 
@@ -233,6 +261,7 @@ export async function improvedSearchWithConfig(
   // Stage 1a: Exact match WITH release (if available).
   // Narrows to specific recording on that album -- critical for popular tracks.
   let exactWithRelease: SearchResult[] = [];
+
   if (cleanedRelease) {
     exactWithRelease = await cachedSearchStage(
       cleanedTrack, cleanedArtist, cleanedRelease, "exact", cache, apiMetrics,
@@ -243,6 +272,7 @@ export async function improvedSearchWithConfig(
   // Skip if 1a already got sufficient results (saves 1 API call in the common case).
   // Still run if 1a got 0 results (release name might differ between scrobbler and MB).
   let exactWithoutRelease: SearchResult[] = [];
+
   if (!exactResultsSufficient(exactWithRelease, cleanedTrack, !!cleanedArtist)) {
     exactWithoutRelease = await cachedSearchStage(
       cleanedTrack, cleanedArtist, undefined, "exact", cache, apiMetrics,
@@ -251,6 +281,7 @@ export async function improvedSearchWithConfig(
 
   // Stage 1c: If cleaning changed names and both stages got 0, retry with originals
   let originalExactResults: SearchResult[] = [];
+
   if (exactWithRelease.length === 0 && exactWithoutRelease.length === 0 &&
       (cleaningChangedTrack || cleaningChangedArtist)) {
     originalExactResults = await cachedSearchStage(
@@ -262,6 +293,7 @@ export async function improvedSearchWithConfig(
   // Stage 1d: CJK artist alias resolution (mirrors searchOrchestrator.ts)
   let cjkAliasResults: SearchResult[] = [];
   const artistForSearch = cleanedArtist || artist;
+
   if (
     exactWithRelease.length === 0 &&
     exactWithoutRelease.length === 0 &&
@@ -270,6 +302,7 @@ export async function improvedSearchWithConfig(
     hasCJK(artistForSearch)
   ) {
     const romanized = await resolveArtistAlias(artistForSearch);
+
     if (romanized && romanized !== artistForSearch) {
       cjkAliasResults = await cachedSearchStage(
         cleanedTrack, romanized, cleanedRelease || undefined,
@@ -282,6 +315,7 @@ export async function improvedSearchWithConfig(
     ...exactWithRelease, ...exactWithoutRelease,
     ...originalExactResults, ...cjkAliasResults,
   ];
+
   const hasArtist = !!cleanedArtist;
 
   // Early exit: good exact results -> rank (matches production behavior)
@@ -290,6 +324,7 @@ export async function improvedSearchWithConfig(
     cleanedTrack,
     hasArtist,
   );
+
   if (sufficient) {
     // Rank even on early exit (matches production searchOrchestrator behavior).
     // Ranking applies variant matching, release quality, and text-match boosts
@@ -302,6 +337,7 @@ export async function improvedSearchWithConfig(
       cleanedArtist: config.enableCleaning ? cleanedArtist : undefined,
       cleanedRelease: config.enableCleaning ? cleanedRelease : undefined,
     };
+
     return rankMultiStageResults(
       [{ results: combinedExact, strategy: "exact" as const }],
       rankingQuery,
@@ -314,6 +350,7 @@ export async function improvedSearchWithConfig(
 
   // Stage 2: Fuzzy match (no release constraint)
   let fuzzyResults: SearchResult[] = [];
+
   if (needsMoreStages && config.enableMultiStage && config.enableFuzzy && (cleanedTrack || cleanedArtist)) {
     fuzzyResults = await cachedSearchStage(
       cleanedTrack, cleanedArtist, undefined, "fuzzy", cache, apiMetrics,
@@ -323,6 +360,7 @@ export async function improvedSearchWithConfig(
   // Stage 3: Track-only fallback (drops artist constraint)
   let trackOnlyResults: SearchResult[] = [];
   const totalSoFar = combinedExact.length + fuzzyResults.length;
+
   if (needsMoreStages && config.enableMultiStage && totalSoFar < PARTIAL_THRESHOLD && track && artist) {
     trackOnlyResults = await cachedSearchStage(
       cleanedTrack ?? (track || undefined), undefined,
@@ -341,6 +379,7 @@ export async function improvedSearchWithConfig(
   ].filter((stage) => stage.results.length > 0);
 
   let finalResults: SearchResult[];
+
   if (stageResultsForRanking.length > 0) {
     const rankingQuery: RankingQuery = {
       track,
@@ -350,6 +389,7 @@ export async function improvedSearchWithConfig(
       cleanedArtist: config.enableCleaning ? cleanedArtist : undefined,
       cleanedRelease: config.enableCleaning ? cleanedRelease : undefined,
     };
+
     finalResults = rankMultiStageResults(stageResultsForRanking, rankingQuery);
   } else {
     finalResults = [];

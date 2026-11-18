@@ -4,6 +4,8 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use sqlx::types::Json as SqlxJson;
 use sqlx::FromRow;
 use uuid::Uuid;
 
@@ -18,7 +20,7 @@ pub async fn get_global_play_count(
     State(state): State<AppState>,
 ) -> Result<Json<GlobalPlayCount>, (axum::http::StatusCode, String)> {
     let result = sqlx::query_as::<_, GlobalPlayCount>(
-        "SELECT play_count FROM mv_global_play_count WHERE id = 1",
+        "SELECT total_plays AS play_count FROM mv_global_play_count",
     )
     .fetch_one(&state.db_pool)
     .await;
@@ -51,8 +53,7 @@ pub struct Play {
     pub release_mbid: Option<Uuid>,
     pub duration: Option<i32>,
     pub uri: Option<String>,
-    // MASSIVE HUGE HACK
-    pub artists: Option<String>,
+    pub artists: SqlxJson<Value>,
 }
 
 #[derive(FromRow, Debug, Deserialize, Serialize)]
@@ -80,14 +81,21 @@ pub async fn get_latest_plays(
     if params.limit < 1 || params.limit > 50 {
         return Err((StatusCode::BAD_REQUEST, "Invalid limit".to_string()));
     }
-    let result = sqlx::query_as!(
-        Play,
+    let result = sqlx::query_as::<_, Play>(
         r#"
             SELECT
                 p.did,
                 p.track_name,
-                -- TODO: replace with actual
-                STRING_AGG(pa.artist_name || '|' || TEXT(pa.artist_mbid), ',') AS artists,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'artist_name', ptae.artist_name,
+                            'artist_mbid', ae.mbid
+                        )
+                        ORDER BY ptae.artist_name
+                    ) FILTER (WHERE ptae.artist_name IS NOT NULL),
+                    '[]'::json
+                ) AS artists,
                 p.release_name,
                 p.duration,
                 p.uri,
@@ -95,39 +103,29 @@ pub async fn get_latest_plays(
                 p.release_mbid
 
             FROM plays AS p
-            LEFT JOIN play_to_artists AS pa ON pa.play_uri = p.uri
+            LEFT JOIN play_to_artists_extended AS ptae ON ptae.play_uri = p.uri
+            LEFT JOIN artists_extended AS ae ON ae.id = ptae.artist_id
             GROUP BY p.did, p.track_name, p.release_name, p.played_time, p.duration, p.uri, p.recording_mbid, p.release_mbid
-            ORDER BY p.played_time DESC
+            ORDER BY COALESCE(p.played_time, p.processed_time) DESC, p.uri DESC
             LIMIT $1
         "#,
-        params.limit
     )
+    .bind(params.limit)
     .fetch_all(&state.db_pool)
     .await;
 
     match result {
         Ok(counts) => {
-            let fin: Vec<PlayReturn> = counts
+            let fin = counts
                 .into_iter()
-                .map(|play| -> PlayReturn {
-                    let artists = play
-                        .artists
-                        .expect("Artists found")
-                        .split(',')
-                        .map(|artist| {
-                            let mut parts = artist.split('|');
-                            Artist {
-                                artist_name: parts
-                                    .next()
-                                    .expect("Artist name is required")
-                                    .to_string(),
-                                artist_mbid: parts
-                                    .next()
-                                    .and_then(|mbid| Uuid::parse_str(mbid).ok()),
-                            }
-                        })
-                        .collect();
-                    PlayReturn {
+                .map(|play| {
+                    let artists = serde_json::from_value(play.artists.0).map_err(|error| {
+                        (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            format!("Invalid artist data returned by database: {error}"),
+                        )
+                    })?;
+                    Ok(PlayReturn {
                         did: play.did.to_string(),
                         track_name: play.track_name,
                         recording_mbid: play.recording_mbid,
@@ -136,9 +134,9 @@ pub async fn get_latest_plays(
                         duration: play.duration,
                         uri: play.uri,
                         artists,
-                    }
+                    })
                 })
-                .collect();
+                .collect::<Result<Vec<_>, _>>()?;
 
             Ok(Json(fin))
         }
@@ -146,5 +144,24 @@ pub async fn get_latest_plays(
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             format!("Database error: {}", e),
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Artist;
+    use uuid::Uuid;
+
+    #[test]
+    fn deserializes_artist_names_with_legacy_delimiters() {
+        let mbid = Uuid::nil();
+        let artists: Vec<Artist> = serde_json::from_value(serde_json::json!([
+            {"artist_name": "AC/DC, Live | Remastered", "artist_mbid": mbid}
+        ]))
+        .unwrap();
+
+        assert_eq!(artists.len(), 1);
+        assert_eq!(artists[0].artist_name, "AC/DC, Live | Remastered");
+        assert_eq!(artists[0].artist_mbid, Some(mbid));
     }
 }

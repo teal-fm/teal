@@ -14,6 +14,10 @@
             "maximum": 100,
             "default": 50,
             "description": "Number of latest plays to return"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next page of plays"
           }
         }
       },
@@ -29,6 +33,10 @@
                 "type": "ref",
                 "ref": "fm.teal.feed.defs#playView"
               }
+            },
+            "cursor": {
+              "type": "string",
+              "description": "Opaque cursor for the next page of plays"
             }
           }
         }

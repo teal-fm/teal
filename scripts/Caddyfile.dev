@@ -1,0 +1,12 @@
+:80 {
+	header Cache-Control "no-store"
+
+	handle /xrpc/* {
+		reverse_proxy host.docker.internal:3000
+	}
+
+	# The web app (Vite dev server) also serves /client-metadata.json for DEV_PUBLIC_ORIGIN.
+	handle {
+		reverse_proxy host.docker.internal:8082
+	}
+}

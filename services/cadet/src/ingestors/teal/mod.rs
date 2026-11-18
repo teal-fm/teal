@@ -1,16 +1,20 @@
 pub mod actor_profile;
+pub mod actor_profile_status;
 pub mod actor_status;
 pub mod feed_play;
+pub mod social;
 
 use serde_json::Value;
 
 pub const STABLE_FEED_PLAY: &str = "fm.teal.feed.play";
 pub const STABLE_ACTOR_PROFILE: &str = "fm.teal.actor.profile";
 pub const STABLE_ACTOR_STATUS: &str = "fm.teal.actor.status";
+pub const STABLE_ACTOR_PROFILE_STATUS: &str = "fm.teal.actor.profileStatus";
 
 pub const ALPHA_FEED_PLAY: &str = "fm.teal.alpha.feed.play";
 pub const ALPHA_ACTOR_PROFILE: &str = "fm.teal.alpha.actor.profile";
 pub const ALPHA_ACTOR_STATUS: &str = "fm.teal.alpha.actor.status";
+pub const ALPHA_ACTOR_PROFILE_STATUS: &str = "fm.teal.alpha.actor.profileStatus";
 
 /// Normalize the root record namespace used by historical Teal records.
 pub fn normalize_legacy_record_type(data: &Value) -> Value {
@@ -28,10 +32,11 @@ pub fn normalize_legacy_record_type(data: &Value) -> Value {
     Value::Object(normalized)
 }
 
-const COLLECTION_ALIASES: [(&str, &str); 3] = [
+const COLLECTION_ALIASES: [(&str, &str); 4] = [
     (ALPHA_FEED_PLAY, STABLE_FEED_PLAY),
     (ALPHA_ACTOR_PROFILE, STABLE_ACTOR_PROFILE),
     (ALPHA_ACTOR_STATUS, STABLE_ACTOR_STATUS),
+    (ALPHA_ACTOR_PROFILE_STATUS, STABLE_ACTOR_PROFILE_STATUS),
 ];
 
 pub fn canonical_collection(collection: &str) -> &str {
@@ -46,9 +51,11 @@ pub fn wanted_collections() -> Vec<String> {
         STABLE_FEED_PLAY,
         STABLE_ACTOR_PROFILE,
         STABLE_ACTOR_STATUS,
+        STABLE_ACTOR_PROFILE_STATUS,
         ALPHA_FEED_PLAY,
         ALPHA_ACTOR_PROFILE,
         ALPHA_ACTOR_STATUS,
+        ALPHA_ACTOR_PROFILE_STATUS,
         "com.atproto.repo.importRepo",
     ]
     .into_iter()

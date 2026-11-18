@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Build Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "lexicons/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/web.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "lexicons/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/web.yml"
+
+jobs:
+  build:
+    name: Build Web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-node: "true"
+
+      - name: Generate lexicons
+        run: pnpm --filter=@teal/lexicons lex:gen
+
+      - name: Type check
+        run: pnpm --filter=@teal/client --filter=@teal/web exec tsc --noEmit
+
+      - name: Run shared client tests
+        run: pnpm --filter=@teal/client test
+
+      - name: Build
+        run: pnpm --filter=@teal/web build
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: apps/web/.output/
+          retention-days: 7

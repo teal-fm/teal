@@ -1,45 +1,24 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Navigate to the lexicons directory and find all .json files
-cd ../../lexicons
-json_files=$(find . -name "*.json" -type f | sort)
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+lexicons_root="$repo_root/lexicons"
+source_dir="$(mktemp -d "${TMPDIR:-/tmp}/teal-lexicons.XXXXXX")"
+trap 'rm -rf "$source_dir"' EXIT
 
-# Go back to the lexicons package directory
-cd ../packages/lexicons
+mkdir -p "$source_dir/fm/teal" "$source_dir/com/atproto/repo" "$source_dir/app/bsky/richtext"
+cp -R "$lexicons_root/fm.teal" "$source_dir/fm/teal"
+cp "$repo_root/vendor/atproto/lexicons/com/atproto/repo/strongRef.json" \
+  "$source_dir/com/atproto/repo/strongRef.json"
+cp "$repo_root/vendor/atproto/lexicons/app/bsky/richtext/facet.json" \
+  "$source_dir/app/bsky/richtext/facet.json"
 
-# Check if we found any lexicon files
-if [ -z "$json_files" ]; then
-    echo "No lexicon files found in ../../lexicons/"
-    exit 1
-fi
+pnpm --dir "$repo_root/packages/lexicons" exec ts-lex build \
+  --lexicons "$source_dir" \
+  --out "$repo_root/packages/lexicons/src" \
+  --clear \
+  --import-ext "" \
+  --index-file \
+  --default-export=false
 
-# Convert the file list to absolute paths
-lexicon_paths=""
-for file in $json_files; do
-    lexicon_paths="$lexicon_paths ../../lexicons/$file"
-done
-
-# Generate lexicons
-echo "Generating lexicons from: $lexicon_paths"
-node ../../node_modules/@atproto/lex-cli/dist/index.js gen-server ./src $lexicon_paths --yes
-
-mkdir -p ./src/types/app/bsky/richtext
-cat > ./src/types/app/bsky/richtext/facet.ts <<'EOF'
-import type { AppBskyRichtextFacet } from "@atproto/api";
-import type { ValidationResult } from "@atproto/lexicon";
-
-export type Main = AppBskyRichtextFacet.Main;
-export type Mention = AppBskyRichtextFacet.Mention;
-export type Link = AppBskyRichtextFacet.Link;
-export type Tag = AppBskyRichtextFacet.Tag;
-export type ByteSlice = AppBskyRichtextFacet.ByteSlice;
-
-export function isMain(v: unknown): v is Main {
-  return typeof v === "object" && v !== null;
-}
-
-export function validateMain(v: unknown): ValidationResult<Main> {
-  return { success: true, value: v as Main };
-}
-EOF
+node "$repo_root/packages/lexicons/generate-documents.mjs" "$source_dir"

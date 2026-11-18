@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM play_to_artists_extended",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "77e082bf369a1a104d22f2bf82b3bb7aada3c4b9ecd4402957b9729fa08abce2"
+}

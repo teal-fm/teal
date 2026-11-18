@@ -1,0 +1,176 @@
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useWindowDimensions, View, type ViewProps } from "react-native";
+import { useIsFocused } from "expo-router";
+
+import { Backdrop, type AmbientBlob } from "./Backdrop";
+
+type Measurable = Pick<View, "measureInWindow">;
+
+type Source = { uri: string; node: Measurable };
+
+type AmbientApi = {
+  register: (key: string, source: Source) => void;
+  unregister: (key: string) => void;
+  /** Re-measure sources, e.g. after a scroll. Throttled. */
+  refresh: () => void;
+};
+
+const AmbientContext = createContext<AmbientApi | null>(null);
+
+
+
+/** How many covers blend at once; more turns the backdrop to mud. */
+const MAX_BLOBS = 6;
+
+/** The nearest cover counts as at least this close, so a lone far one stays faint. */
+const MIN_LEAD = 0.6;
+
+function weightFor(top: number, bottom: number, height: number) {
+  const mid = height * 0.45;
+
+  return Math.max(0, 1 - Math.abs((top + bottom) / 2 - mid) / (height * 1.1));
+}
+
+/**
+ * Hosts the blurred-cover backdrop for one screen. Children mark covers with
+ * `AmbientSource`; scrolling should call `refresh` (see `useAmbientScroll`).
+ */
+export function AmbientScreen({
+  children,
+  style,
+  ...props
+}: ViewProps & { children: ReactNode }) {
+  const sources = useRef(new Map<string, Source>());
+  const [blobs, setBlobs] = useState<AmbientBlob[]>([]);
+  const focused = useIsFocused();
+  const { height } = useWindowDimensions();
+  const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const measure = useCallback(async () => {
+    const seen = new Map<string, AmbientBlob>();
+    await Promise.all(
+      [...sources.current.values()].map(
+        (source) =>
+          new Promise<void>((resolve) => {
+            source.node.measureInWindow((_x, y, _w, h) => {
+              if (h > 0) {
+                const weight = weightFor(y, y + h, height);
+                const prev = seen.get(source.uri);
+
+                if (weight > 0 && (!prev || prev.weight < weight)) {
+                  seen.set(source.uri, { uri: source.uri, weight });
+                }
+              }
+
+              resolve();
+            });
+          }),
+      ),
+    );
+    // A page with one cover in it, like an album or a listen, keeps that cover
+    // at full strength however far it scrolls, so it can fill the backdrop.
+    const uris = new Set([...sources.current.values()].map((source) => source.uri));
+
+    if (uris.size === 1) {
+      const [uri] = uris;
+      setBlobs([{ uri, weight: 1 }]);
+
+      return;
+    }
+
+    const top = [...seen.values()]
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, MAX_BLOBS);
+
+    // Scale to the nearest cover, so a fast scroll between covers shifts the colour
+    // instead of draining it.
+    const scale = 1 / Math.max(top[0]?.weight ?? 1, MIN_LEAD);
+    setBlobs(top.map((blob) => ({ ...blob, weight: Math.min(1, blob.weight * scale) })));
+  }, [height]);
+
+  const refresh = useCallback(() => {
+    if (pending.current) return;
+    pending.current = setTimeout(() => {
+      pending.current = null;
+      void measure();
+    }, 80);
+  }, [measure]);
+
+  const api = useMemo<AmbientApi>(
+    () => ({
+      register: (key, source) => {
+        sources.current.set(key, source);
+        refresh();
+      },
+      unregister: (key) => {
+        sources.current.delete(key);
+        refresh();
+      },
+      refresh,
+    }),
+    [refresh],
+  );
+
+  useEffect(() => () => {
+    if (pending.current) clearTimeout(pending.current);
+  }, []);
+
+  useEffect(() => {
+    if (focused) refresh();
+  }, [focused, refresh]);
+
+  return (
+    <AmbientContext.Provider value={api}>
+      <View style={[{ flex: 1 }, style]} {...props}>
+        <Backdrop blobs={blobs} />
+        {children}
+      </View>
+    </AmbientContext.Provider>
+  );
+}
+
+export function useAmbient() {
+  return useContext(AmbientContext);
+}
+
+/** Pass to a ScrollView/FlatList `onScroll` so the backdrop follows the content. */
+export function useAmbientScroll() {
+  const ambient = useAmbient();
+
+  return useCallback(() => ambient?.refresh(), [ambient]);
+}
+
+let nextKey = 0;
+
+/** Marks a region whose cover feeds the backdrop while it is near the middle of the screen. */
+export function AmbientSource({
+  uri,
+  children,
+  ...props
+}: ViewProps & { uri?: string; children?: ReactNode }) {
+  const ambient = useAmbient();
+  const ref = useRef<View>(null);
+  const key = useRef(`ambient-${nextKey++}`).current;
+
+  useEffect(() => {
+    if (!ambient || !uri || !ref.current) return;
+    ambient.register(key, { uri, node: ref.current });
+
+    return () => ambient.unregister(key);
+  }, [ambient, key, uri]);
+
+  return (
+    <View ref={ref} onLayout={() => ambient?.refresh()} {...props}>
+      {children}
+    </View>
+  );
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO play_to_artists_extended (play_uri, artist_id, artist_name)\n         VALUES ('at://did:plc:refresh/fm.teal.feed.play/1', $1, 'Refresh artist')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e41db691b86072487db59d09a8acfecda99d6e9bd333f50130eb549440d2348a"
+}

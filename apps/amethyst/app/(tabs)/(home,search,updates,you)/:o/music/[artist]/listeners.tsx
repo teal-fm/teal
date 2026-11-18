@@ -1,0 +1,60 @@
+import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { getArtistListeners } from "@teal/client/teal/api";
+import { LISTENER_PERIODS, normalizeListenerPeriod } from "@teal/client/teal/music";
+import { Button, Choices, ErrorNotice, Glass, Loading, Notice, Screen } from "@/components/ds";
+import { Leaderboard } from "@/components/music/Leaderboard";
+import { FIRST_PAGE } from "@teal/client/query";
+import { param } from "@/lib/params";
+
+/** Everyone who listens to an artist, ranked, for a period. */
+export default function ArtistListeners() {
+  const params = useLocalSearchParams();
+  const mbid = param(params.mbid);
+  const name = param(params.name) || param(params.artist);
+  const [period, setPeriod] = useState(normalizeListenerPeriod(param(params.period)));
+
+  const listeners = useInfiniteQuery({
+    queryKey: ["artist-listeners-all", mbid, name, period],
+    queryFn: ({ pageParam }) => getArtistListeners(mbid, name, period, 50, pageParam),
+    initialPageParam: FIRST_PAGE,
+    getNextPageParam: (last) => last.cursor,
+  });
+
+  const all = listeners.data?.pages.flatMap((p) => p.listeners) ?? [];
+
+  return (
+    <Screen back title={name ? `${name} listeners` : "Listeners"}>
+      <Choices
+        label="Period"
+        value={period}
+        onChange={(next) => {
+          setPeriod(next);
+          router.setParams({ period: next });
+        }}
+        options={LISTENER_PERIODS}
+      />
+      {listeners.isLoading ? (
+        <Loading />
+      ) : listeners.isError ? (
+        <ErrorNotice title="The leaderboard didn't load" onRetry={() => listeners.refetch()} />
+      ) : !all.length ? (
+        <Notice title="No listeners yet" body="Nobody on teal has played this artist in this period." />
+      ) : (
+        <Glass className="px-4 py-1">
+          <Leaderboard listeners={all} />
+        </Glass>
+      )}
+      {listeners.hasNextPage ? (
+        <Button
+          label={listeners.isFetchingNextPage ? "Loading" : "Load more"}
+          variant="secondary"
+          className="self-center"
+          loading={listeners.isFetchingNextPage}
+          onPress={() => listeners.fetchNextPage()}
+        />
+      ) : null}
+    </Screen>
+  );
+}

@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                -- A listen can't rename a shared MusicBrainz recording; the first\n                -- indexed name stays and only a missing discriminant is filled in.\n                INSERT INTO recordings (mbid, name, discriminant) VALUES ($1, $2, $3)\n                ON CONFLICT (mbid) DO UPDATE SET\n                    discriminant = COALESCE(recordings.discriminant, EXCLUDED.discriminant)\n                RETURNING mbid;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "da31ac143655a3176aefbf75d8a6149eb3407165665a149b8ae751c0537ad630"
+}

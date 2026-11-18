@@ -6,11 +6,10 @@
 - **Node.js** (>= v21.0.0) - JavaScript runtime
 - **Rust** (latest stable) - For Rust services compilation
 - **pnpm** (package manager) - Workspace management
-- **PostgreSQL** - Database server
+- **Docker** & **Docker Compose** - Local PostgreSQL and Garnet
+- **cargo-watch** - Auto-rebuilding Rust services during development
 
 #### Optional Development Tools
-- **Docker** & **Docker Compose** - Container orchestration (compose files included)
-- **cargo-watch** - Auto-rebuilding Rust services during development
 - **cargo-tarpaulin** - For checking code coverage in Rust
 
 ### Installation
@@ -51,7 +50,7 @@
 4. **Optional: Install development tools**:
    ```bash
    # For Rust file watching during development
-   cargo install cargo-watch
+   cargo install cargo-watch --locked
 
    # optionally, set up docker + docker-compose
    # on Linux
@@ -61,12 +60,6 @@
    # on macOS, you should use colima or orbstack
    brew install colima # or brew install orbstack
    colima start # or use the GUI for orbstack
-   ```
-
-5. **Bring up dependencies** (Docker):
-   ```bash
-   # bring up all dependencies with the compose.dev.yml compose file
-   docker compose up -d -f compose.dev.yml garnet postgres
    ```
 
 ### Database Management
@@ -95,15 +88,62 @@ pnpm db:prepare         # Prepare queries for compile-time verification
 
 ## Development
 
-To start the development server run:
+Start the full development stack locally:
 
 ```bash
-turbo dev --filter=@teal/aqua
+pnpm dev
 ```
 
-Open http://localhost:3000/ with your browser to see the home page. Note: if the redirect back to the app after you login isn't working correctly, you may need to replace the `127.0.0.1` with `localhost`, or you may need to set up a publicly accessible endpoint for the app to post to (see below).
+Open http://localhost:8081. Keep `pnpm dev` running in your terminal.
+Docker runs PostgreSQL, Garnet, and Caddy. The web app (`apps/web`, TanStack
+Start) runs locally on port 8082 with hot reload; Aqua, Cadet, and Satellite run
+under `cargo watch`. Caddy forwards `/xrpc/*` to Aqua on port 3000 and all other
+app requests, including WebSockets, to the web app.
 
-### Running the full stack in docker for development
+The native app (`apps/amethyst`, Expo) is separate. Run `pnpm dev:native` and
+open it on an iOS or Android device or simulator. Nothing is exposed to the internet by default, and no application
+images are built.
+
+To serve the same stack through the stable public Cloudflare tunnel for OAuth
+and external testing:
+
+```bash
+pnpm dev --proxy
+# or, equivalently:
+pnpm dev:proxy
+```
+
+This starts the `cloudflared-named` tunnel and serves the app at
+`https://sigilyph.teal.fm`. Set `CLOUDFLARED_TUNNEL_TOKEN` in the ignored root
+`.env` before using it. The tunnel must route the public hostname to
+`http://amethyst:80`, which the `edge` Caddy service answers as an alias.
+
+`DEV_PUBLIC_ORIGIN` overrides the origin in either mode. It must be an origin
+with no path or trailing slash, and `--proxy` requires HTTPS:
+
+```bash
+DEV_PUBLIC_ORIGIN=http://localhost:9000 pnpm dev
+DEV_PUBLIC_ORIGIN=https://your-public-dev.example.com pnpm dev --proxy
+```
+
+The origin is applied to the web app's OAuth metadata and share links. ATProto OAuth requires publicly reachable metadata, so
+use `pnpm dev --proxy` for sign-in. `http://localhost:8081` is the default for
+local checks that should not be reachable from the open web.
+
+`DEV_DATABASE_URL` and `DEV_REDIS_URL` override the default host connections.
+Cadet stores its fallback cursor under ignored `.codex-run/` and defers aggregate
+refreshes to its periodic worker. Rust watches only relevant service/shared files;
+UI edits do not restart ingestion. Debug symbols are disabled to reduce disk use;
+set `CARGO_PROFILE_DEV_DEBUG=2` when debugging Rust with a debugger.
+
+Use `pnpm lex:gen` after schema changes, or `pnpm lex:watch` in another terminal.
+The CLI's TypeScript compiler watcher is not a schema generator.
+
+Ctrl+C stops the host processes. Docker infrastructure, and in `--proxy` mode the
+tunnel, remain available for the next run. `pnpm tunnel:verify` checks public
+metadata and XRPC. The watch overlay needs Docker Compose 2.24.4 or newer.
+
+### Production image preview
 
 _Still a work in progress and may have some hiccups_
 
@@ -114,7 +154,7 @@ It is recommended if you are running aqua to make a publicly accessible endpoint
 - Set up the traditional port forward on your router
 - Use a tool like [ngrok](https://ngrok.com/) with the command `ngrok http 8080` or [Cloudflare tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/) (follow the 2a. portion of the guide when you get to that point).
 
-If you do the cloudflare tunnels for amethyst as well,
+If you do the cloudflare tunnels for the web app as well,
 you will also need
 to follow [this](https://caddy.community/t/caddy-with-cloudflare-tunnel/18569) for routing to work properly.
 Although you can just run it locally and it will work.
@@ -160,4 +200,4 @@ git add vendor/atproto
 git commit -m "Update atproto lexicons to latest"
 ```
 
-See [`tools/lexicon-cli/README.md`](tools/lexicon-cli/README.md) for detailed documentation.
+The TypeScript lexicon package runs `@atproto/lex` validation before generating the compatibility server bindings consumed by the current XRPC layer.

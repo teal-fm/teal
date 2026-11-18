@@ -1,31 +1,122 @@
 services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    environment:
+      AQUA_URL: http://aqua-api:3000
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost}
+    networks:
+      - app_network
+    depends_on:
+      - aqua-api
+
+  # Caddy terminates TLS for CLIENT_ADDRESS and splits /xrpc (Aqua) from the web app.
+  edge:
+    image: caddy:2.8-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      CLIENT_ADDRESS: ${CLIENT_ADDRESS:-:80}
+    volumes:
+      - ./apps/web/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app_network
+    depends_on:
+      - web
+      - aqua-api
+
   aqua-api:
     build:
       context: .
       dockerfile: apps/aqua/Dockerfile
     container_name: aqua-app
+    # Reached through the edge; published on loopback only, for the host's own tools.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+      REDIS_URL: ${REDIS_URL:-redis://garnet:6379}
     networks:
       - app_network
     depends_on:
       - postgres
       - garnet
-    env_file:
-      - .env
-  status-api:
+
+  cadet:
     build:
       context: .
-      dockerfile: apps/status/Dockerfile
-    container_name: status-api
-    ports:
-      - "3002:3002"
+      dockerfile: services/cadet/Dockerfile
+    container_name: cadet-app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+      REDIS_URL: ${REDIS_URL:-redis://garnet:6379}
+      CADET_STREAM_MODE: ${CADET_STREAM_MODE:-jetstream}
+      JETSTREAM_URL: ${JETSTREAM_URL:-wss://jetstream1.us-east.bsky.network/subscribe}
+      CADET_CURSOR_REDIS_KEY: ${CADET_CURSOR_REDIS_KEY:-cadet:jetstream:cursor}
+      CURSOR_FILE: ${CURSOR_FILE:-/var/lib/cadet/cursor.txt}
+      CADET_DEFER_MATERIALIZED_VIEW_REFRESH: ${CADET_DEFER_MATERIALIZED_VIEW_REFRESH:-1}
+      CADET_MATERIALIZED_VIEW_REFRESH_INTERVAL_SECS: ${CADET_MATERIALIZED_VIEW_REFRESH_INTERVAL_SECS:-60}
+    volumes:
+      - cadet_state:/var/lib/cadet
     networks:
       - app_network
     depends_on:
       - postgres
+      - garnet
+
+  satellite:
+    image: ghcr.io/espeon/satellite
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgres://teal:awesomeness@postgres/teal
-      STATUS_API_PORT: 3002
+      DATABASE_URL: ${DOCKER_DB_URL:-postgres://teal:teal@postgres:5432/teal}
+    ports:
+      - "127.0.0.1:3132:3001"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+
+  garnet:
+    image: ghcr.io/microsoft/garnet:latest
+    container_name: garnet
+    # No published port: Garnet has no auth, so only services on app_network reach it.
+    volumes:
+      - garnet_data:/data
+    networks:
+      - app_network
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-teal}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-teal}
+      POSTGRES_DB: ${DB_NAME:-teal}
+    # No published port: only services on app_network reach the database.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  garnet_data:
+  postgres_data:
+  cadet_state:

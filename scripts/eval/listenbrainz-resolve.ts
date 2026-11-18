@@ -26,6 +26,7 @@ const DB_PATH = join(CACHE_DIR, "lastfm_eval.db");
 
 const ACR_ENDPOINT = "https://labs.api.listenbrainz.org/acr-lookup/json";
 const BATCH_SIZE = 100;
+
 // Pause between batches to be a good citizen
 const BATCH_DELAY_MS = 500;
 
@@ -88,22 +89,27 @@ async function main() {
     ${limit ? `LIMIT ${limit}` : ""}
   `;
 
+  // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
   const pairs = db.prepare(query).all() as Array<{ track: string; artist: string }>;
   console.log(`Found ${pairs.length} unique (track, artist) pairs with 404 MBIDs to resolve`);
 
   if (pairs.length === 0) {
     console.log("Nothing to resolve.");
     db.close();
+
     return;
   }
 
   if (dryRun) {
     console.log("Dry run -- would resolve these pairs:");
+
     for (const p of pairs.slice(0, 20)) {
       console.log(`  ${p.artist} - ${p.track}`);
     }
+
     if (pairs.length > 20) console.log(`  ... and ${pairs.length - 20} more`);
     db.close();
+
     return;
   }
 
@@ -136,6 +142,7 @@ async function main() {
 
       // Build a map from (artist, track) -> recording_mbid
       const resolvedMap = new Map<string, string>();
+
       for (const r of results) {
         if (r.recording_mbid) {
           const key = `${r.artist_credit_arg}\0${r.recording_arg}`;
@@ -159,6 +166,7 @@ async function main() {
           }
         }
       });
+
       applyBatch();
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -181,6 +189,7 @@ async function main() {
   }
 
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
   const resolveRate = pairs.length > 0
     ? ((totalResolved / pairs.length) * 100).toFixed(1)
     : "0";
@@ -193,11 +202,13 @@ async function main() {
   console.log(`Time:           ${totalTime}s`);
 
   // Show how many scrobbles now have ground truth
+  // SAFETY: better-sqlite3 returns rows with the columns this SELECT names.
   const newGroundTruth = db.prepare(`
     SELECT COUNT(DISTINCT track || '|' || artist) as count
     FROM mbid_cache
     WHERE mbid_source = 'listenbrainz_acr' AND mbid IS NOT NULL
   `).get() as { count: number };
+
   console.log(`\nNew ground-truth pairs (listenbrainz_acr): ${newGroundTruth.count}`);
 
   db.close();

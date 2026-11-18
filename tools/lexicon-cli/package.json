@@ -12,15 +12,15 @@
     "test": "echo 'No tests yet'"
   },
   "dependencies": {
-    "@atproto/lex-cli": "^0.5.4",
-    "chokidar": "^4.0.1",
-    "commander": "^12.1.0",
-    "execa": "^9.5.1",
-    "glob": "^11.0.0",
+    "@atproto/lex": "^0.2.3",
+    "chokidar": "^5.0.0",
+    "commander": "^15.0.0",
+    "execa": "^9.6.1",
+    "glob": "^13.0.6",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
-    "@types/node": "^20.17.10",
-    "typescript": "^5.7.2"
+    "@types/node": "^26.1.1",
+    "typescript": "~6.0.3"
   }
 }

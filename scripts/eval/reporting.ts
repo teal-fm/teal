@@ -26,21 +26,27 @@ export function categorizeFailureMode(track: string, artist: string): string {
   ) {
     return "featuring";
   }
+
   if (/\bremix\b|\brmx\b|\bre-?mix/i.test(track) || /\(remix\)|\[remix\]/i.test(track)) {
     return "remix";
   }
+
   if (/\blive\b/i.test(track) || /\(live\)|\[live\]/i.test(track)) {
     return "live";
   }
+
   if (/\([^)]+\)|\[[^\]]+\]/.test(track)) {
     return "parenthetical";
   }
+
   if (/[^\w\s\-'&]/.test(track) || /[^\w\s\-'&]/.test(artist)) {
     return "special_chars";
   }
+
   if (track.length < 5 || artist.length < 5) {
     return "short_name";
   }
+
   return "standard";
 }
 
@@ -65,23 +71,31 @@ export function classifyHardness(
   const trackWords = trackLower.split(/\s+/).filter((w) => w.length > 0);
 
   if (baselineFound && baselinePos >= 0 && baselinePos < 5) return "easy";
+
   if (baselineFound && baselinePos >= 5 && baselinePos < 25) return "medium";
 
   if (!baselineFound) {
     if (artist.length < 3 || track.length < 3) return "hard";
+
     if (track.length < 4) return "hard";
+
     if (/^\d+$/.test(track.trim())) return "hard";
+
     if (trackWords.length === 1 && AMBIGUOUS_WORDS.has(trackWords[0])) return "hard";
 
     if (artist && artist.length >= 3 && track.length >= 4) {
       if (trackWords.length > 1) return "medium";
+
       if (trackWords.length === 1 && !AMBIGUOUS_WORDS.has(trackWords[0])) return "medium";
     }
 
     if (!artist || artist.trim().length === 0) {
       if (track.length < 6 || (trackWords.length === 1 && AMBIGUOUS_WORDS.has(trackWords[0]))) return "hard";
+
       if (trackWords.length > 1 && track.length >= 6) return "medium";
+
       if (trackWords.length === 1 && !AMBIGUOUS_WORDS.has(trackWords[0]) && track.length >= 6) return "medium";
+
       return "hard";
     }
 
@@ -146,20 +160,29 @@ export function reportResults(output: EvaluationOutput): void {
 
   for (const c of cases) {
     const combo = c.fieldCombination || "track+artist";
+
     if (!positionByFieldCombo[combo]) positionByFieldCombo[combo] = { baseline: [], improved: [] };
     positionByFieldCombo[combo].baseline.push(c.baselinePos);
     positionByFieldCombo[combo].improved.push(c.improvedPos);
 
     if (c.baselinePos === 0) baselineP1++;
+
     if (c.baselinePos >= 0 && c.baselinePos < 5) baselineP5++;
+
     if (c.baselinePos >= 0 && c.baselinePos < 10) baselineP10++;
+
     if (c.baselinePos >= 0 && c.baselinePos < 25) baselineP25++;
+
     if (c.baselineFound) baselineFound++;
 
     if (c.improvedPos === 0) improvedP1++;
+
     if (c.improvedPos >= 0 && c.improvedPos < 5) improvedP5++;
+
     if (c.improvedPos >= 0 && c.improvedPos < 10) improvedP10++;
+
     if (c.improvedPos >= 0 && c.improvedPos < 25) improvedP25++;
+
     if (c.improvedFound) improvedFound++;
 
     baselineMRR += c.baselineFound ? 1 / (c.baselinePos + 1) : 0;
@@ -230,19 +253,25 @@ export function reportResults(output: EvaluationOutput): void {
   if (apiMetrics.musicbrainzCalls > 0 || apiMetrics.lastfmCalls > 0) {
     console.log("\nAPI CALL METRICS:");
     console.log(`  MusicBrainz: ${apiMetrics.musicbrainzCalls} calls`);
+
     if (apiMetrics.musicbrainzRateLimits > 0)
       console.log(`    Rate limits: ${apiMetrics.musicbrainzRateLimits} (${((apiMetrics.musicbrainzRateLimits / apiMetrics.musicbrainzCalls) * 100).toFixed(1)}%)`);
+
     if (apiMetrics.musicbrainzErrors > 0)
       console.log(`    Errors: ${apiMetrics.musicbrainzErrors} (${((apiMetrics.musicbrainzErrors / apiMetrics.musicbrainzCalls) * 100).toFixed(1)}%)`);
+
     if (apiMetrics.lastfmCalls > 0) {
       console.log(`  Last.fm: ${apiMetrics.lastfmCalls} calls`);
+
       if (apiMetrics.lastfmErrors > 0)
         console.log(`    Errors: ${apiMetrics.lastfmErrors} (${((apiMetrics.lastfmErrors / apiMetrics.lastfmCalls) * 100).toFixed(1)}%)`);
     }
+
     if (apiMetrics.totalAPICallTime > 0) {
       const avg = apiMetrics.totalAPICallTime / (apiMetrics.musicbrainzCalls + apiMetrics.lastfmCalls);
       console.log(`  Total API time: ${formatTime(apiMetrics.totalAPICallTime)} (avg: ${formatTime(avg)}/call)`);
     }
+
     console.log();
   }
 
@@ -252,23 +281,30 @@ export function reportResults(output: EvaluationOutput): void {
   console.log(`\nTest set: ${cases.length} unique scrobbles (from ${validScrobblesCount} total with MBIDs)`);
   console.log(`Total scrobbles: ${scrobblesTotal}`);
   console.log(`Deduplication: ${duplicateStats.duplicates} duplicates removed (${(duplicateStats.duplicates / duplicateStats.total * 100).toFixed(1)}%)`);
+
   if (totalSearches > 0) {
     console.log(`Cache performance: Baseline ${((baselineCacheHits / cases.length) * 100).toFixed(1)}% hits, Improved ${((improvedCacheHits / cases.length) * 100).toFixed(1)}% hits`);
+
     if (evaluationResultCacheHits > 0)
       console.log(`  Evaluation results: ${evaluationResultCacheHits}/${cases.length} (${((evaluationResultCacheHits / cases.length) * 100).toFixed(1)}% fully cached)`);
   }
+
   // Per-case API call distribution
   const uncached = cases.filter((c) => !c.improvedCacheHit);
+
   if (uncached.length > 0) {
     const calls = uncached.map((c) => c.apiCallsImproved).sort((a, b) => a - b);
     const sum = calls.reduce((a, b) => a + b, 0);
     const pct = (p: number) => calls[Math.min(Math.floor(calls.length * p), calls.length - 1)];
     console.log(`API calls/case (n=${calls.length} uncached): mean=${(sum / calls.length).toFixed(2)}, p50=${pct(0.5)}, p90=${pct(0.9)}, p99=${pct(0.99)}, min=${calls[0]}, max=${calls[calls.length - 1]}`);
   }
+
   console.log(`Total time: ${formatTime(totalElapsed)}`);
+
   if (cases.length > 0) {
     console.log(`Performance: ${formatTime(totalElapsed / cases.length)}/case, ${(cases.length / (totalElapsed / 1000)).toFixed(2)} cases/sec`);
   }
+
   console.log();
 
   const p1Imp = iP1Pt - bP1Pt;
@@ -328,8 +364,8 @@ export function reportResults(output: EvaluationOutput): void {
 
   // Work-equivalence
   const workEquiv = cases.filter((c) => c.workEquivalentPos >= 0);
+
   if (workEquiv.length > 0) {
-    const disambiguatable = unmatchable.filter((c) => c.workEquivalentPos >= 0);
     const trulyUnmatchable = unmatchable.filter((c) => c.workEquivalentPos < 0);
     console.log("RECORDING DISAMBIGUATION (work-equivalence):");
     console.log(`  Cases with same work, different recording: ${workEquiv.length}`);
@@ -338,6 +374,7 @@ export function reportResults(output: EvaluationOutput): void {
 
   console.log("COMPARATIVE PERFORMANCE:");
   console.log(`  Baseline better: ${baselineBetter}, Improved better: ${improvedBetter}, Same: ${bothSame}`);
+
   if (cases.length > 0) {
     console.log(`  Improved win rate: ${(improvedBetter / cases.length * 100).toFixed(1)}%\n`);
   }
@@ -350,6 +387,7 @@ export function reportResults(output: EvaluationOutput): void {
     pos6to10: baselinePositions.filter((p) => p >= 5 && p < 10).length,
     pos11to25: baselinePositions.filter((p) => p >= 10 && p < 25).length,
   };
+
   const iPosDist = {
     notFound: improvedPositions.filter((p) => p === -1).length,
     pos1: improvedPositions.filter((p) => p === 0).length,
@@ -373,24 +411,32 @@ export function reportResults(output: EvaluationOutput): void {
   console.log(`    Position 11-25: ${iPosDist.pos11to25} (${(iPosDist.pos11to25 / cases.length * 100).toFixed(1)}%)\n`);
 
   // Hardness-stratified metrics
-  const hardnessStats: Record<string, { count: number; bP1: number; iP1: number; bP5: number; iP5: number; bF: number; iF: number }> = {
+  const hardnessStats: Record<"easy" | "medium" | "hard", { count: number; bP1: number; iP1: number; bP5: number; iP5: number; bF: number; iF: number }> = {
     easy: { count: 0, bP1: 0, iP1: 0, bP5: 0, iP5: 0, bF: 0, iF: 0 },
     medium: { count: 0, bP1: 0, iP1: 0, bP5: 0, iP5: 0, bF: 0, iF: 0 },
     hard: { count: 0, bP1: 0, iP1: 0, bP5: 0, iP5: 0, bF: 0, iF: 0 },
   };
+
   for (const c of cases) {
     const h = c.hardness || "medium";
     const s = hardnessStats[h];
     s.count++;
+
     if (c.baselinePos === 0) s.bP1++;
+
     if (c.improvedPos === 0) s.iP1++;
+
     if (c.baselinePos >= 0 && c.baselinePos < 5) s.bP5++;
+
     if (c.improvedPos >= 0 && c.improvedPos < 5) s.iP5++;
+
     if (c.baselineFound) s.bF++;
+
     if (c.improvedFound) s.iF++;
   }
 
   console.log("QUERY HARDNESS-STRATIFIED METRICS:\n");
+
   for (const [level, s] of Object.entries(hardnessStats)) {
     if (s.count === 0) continue;
     const bP1 = (s.bP1 / s.count * 100).toFixed(1);
@@ -407,8 +453,10 @@ export function reportResults(output: EvaluationOutput): void {
   // Failure mode analysis
   const failureModes = ["featuring", "remix", "live", "parenthetical", "special_chars", "short_name", "standard"];
   console.log("STRATIFIED FAILURE MODE ANALYSIS:\n");
+
   for (const mode of failureModes) {
     const modeCases = cases.filter((c) => c.failureMode === mode);
+
     if (modeCases.length === 0) continue;
     const bP1 = (modeCases.filter((c) => c.baselinePos === 0).length / modeCases.length * 100).toFixed(1);
     const iP1 = (modeCases.filter((c) => c.improvedPos === 0).length / modeCases.length * 100).toFixed(1);
@@ -423,8 +471,10 @@ export function reportResults(output: EvaluationOutput): void {
   const improvements = cases.filter(
     (c) => (!c.baselineFound && c.improvedFound) || (c.baselineFound && c.improvedFound && c.improvedPos < c.baselinePos),
   );
+
   if (improvements.length > 0) {
     console.log(`IMPROVEMENT EXAMPLES (${Math.min(5, improvements.length)} of ${improvements.length}):`);
+
     for (let i = 0; i < Math.min(5, improvements.length); i++) {
       const ex = improvements[i];
       console.log(`  "${ex.track}" by ${ex.artist || "[no artist]"}`);
@@ -437,8 +487,10 @@ export function reportResults(output: EvaluationOutput): void {
   const regressions = cases.filter(
     (c) => (c.baselineFound && !c.improvedFound) || (c.baselineFound && c.improvedFound && c.baselinePos < c.improvedPos),
   );
+
   if (regressions.length > 0) {
     console.log(`\nREGRESSION EXAMPLES (${Math.min(3, regressions.length)} of ${regressions.length}):`);
+
     for (let i = 0; i < Math.min(3, regressions.length); i++) {
       const ex = regressions[i];
       console.log(`  "${ex.track}" by ${ex.artist}`);
@@ -471,8 +523,10 @@ export function reportResults(output: EvaluationOutput): void {
           baseline_better: baselineBetter, improved_better: improvedBetter, same_result: bothSame,
           avg_api_calls_improved: (() => {
             const uncached = cases.filter((c) => !c.improvedCacheHit);
+
             if (uncached.length === 0) return null;
             const sum = uncached.reduce((a, c) => a + c.apiCallsImproved, 0);
+
             return Math.round((sum / uncached.length) * 100) / 100;
           })(),
         },

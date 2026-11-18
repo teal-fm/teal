@@ -57,7 +57,7 @@ jobs:
           name: node-builds
           path: |
             packages/*/dist/
-            apps/amethyst/build/
+            apps/web/.output/
           retention-days: 1
 
       - name: Upload Rust build artifacts
@@ -154,34 +154,22 @@ jobs:
   #       run: |
   #         cargo test --all-features
 
-  # node-quality:
-  #   name: Node.js Quality Checks
-  #   runs-on: ubuntu-latest
-  #   needs: setup-and-build
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+  node-lint:
+    name: Lint TypeScript (oxlint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  #     - name: Setup environment
-  #       uses: ./.github/actions/setup
-  #       with:
-  #         setup-node: "true"
-  #         cache-key-suffix: "ci-build"
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          setup-node: "true"
 
-  #     - name: Download Node build artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: node-builds
-  #         path: .
-
-  #     # - name: Type check
-  #     #   run: pnpm typecheck
-
-  #     - name: Lint and format check
-  #       run: pnpm fix --check
-
-  #     - name: Run tests
-  #       run: pnpm test
+      # Typecheck and tests run in web.yml and amethyst.yml; this covers every
+      # TypeScript file, including scripts and tools.
+      - name: Lint
+        run: pnpm lint
 
   lexicon-validation:
     name: Lexicon Validation

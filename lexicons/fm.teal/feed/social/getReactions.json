@@ -1,0 +1,99 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.feed.social.getReactions",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | Emoji reactions on a play or post.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": [
+          "subject"
+        ],
+        "properties": {
+          "subject": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "viewer": {
+            "type": "string",
+            "format": "did"
+          },
+          "emoji": {
+            "type": "string",
+            "maxGraphemes": 1,
+            "maxLength": 64
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "summary",
+            "reactions"
+          ],
+          "properties": {
+            "summary": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.feed.social.defs#reactionSummary"
+              }
+            },
+            "reactions": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#reactionView"
+              }
+            },
+            "cursor": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "reactionView": {
+      "type": "object",
+      "required": [
+        "uri",
+        "emoji",
+        "actorDid",
+        "createdAt"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "emoji": {
+          "type": "string"
+        },
+        "actorDid": {
+          "type": "string",
+          "format": "did"
+        },
+        "actor": {
+          "type": "ref",
+          "ref": "fm.teal.actor.defs#miniProfileView"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "datetime"
+        }
+      }
+    }
+  }
+}

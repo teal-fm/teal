@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    -- A listen can't rename a shared MusicBrainz artist: the first\n                    -- indexed name stays, so one user's edit doesn't relabel it for all.\n                    INSERT INTO artists_extended (mbid, name, mbid_type) VALUES ($1, $2, 'musicbrainz')\n                    ON CONFLICT (mbid) DO UPDATE SET\n                        updated_at = artists_extended.updated_at\n                    RETURNING id;\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5d278f9a95eaae0f9254928a569fc23c6de06a256729eb8d493f911ff46bf4d3"
+}

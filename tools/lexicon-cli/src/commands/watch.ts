@@ -18,7 +18,7 @@ export async function watch(options: WatchOptions = {}) {
   console.log(pc.yellow('  Press Ctrl+C to stop watching'));
   
   const watcher = chokidar.watch(lexiconsPath, {
-    ignored: /(^|[\/\\])\../, // ignore dotfiles
+    ignored: /(^|[/\\])\../, // ignore dotfiles
     persistent: true,
     ignoreInitial: true
   });
@@ -28,12 +28,14 @@ export async function watch(options: WatchOptions = {}) {
   const handleChange = async (path: string, event: string) => {
     if (isGenerating) {
       console.log(pc.yellow(`  ⏳ Skipping ${event} for ${path} (generation in progress)`));
+
       return;
     }
     
     console.log(pc.cyan(`  📝 ${event}: ${path}`));
     
     isGenerating = true;
+
     try {
       await generate(options);
     } catch (error) {

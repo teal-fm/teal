@@ -26,7 +26,7 @@ pub async fn init_pool() -> anyhow::Result<PgPool, anyhow::Error> {
     let pool = PgPoolOptions::new()
         .max_connections(50)
         .min_connections(1)
-        .max_lifetime(std::time::Duration::from_secs(10))
+        .max_lifetime(std::time::Duration::from_secs(30 * 60))
         .connect(&env::var("DATABASE_URL")?)
         .await?;
     info!(target: "db", "Connected to the database!");

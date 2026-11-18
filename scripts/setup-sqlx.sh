@@ -29,8 +29,8 @@ fi
 
 echo "🗄️  Database URL: $DATABASE_URL"
 
-# Navigate to services directory for sqlx commands
-cd services
+# Migrations live at the repository root (./migrations), next to the workspace Cargo.toml.
+cd "$(dirname "$0")/.."
 
 # Check if database exists, create if it doesn't
 echo "🏗️  Creating database if it doesn't exist..."
@@ -42,12 +42,10 @@ sqlx migrate run
 
 # Prepare queries for compile-time verification
 echo "🔍 Preparing queries for compile-time verification..."
-sqlx prepare --check 2>/dev/null || {
+cargo sqlx prepare --workspace --check 2>/dev/null || {
     echo "📝 Generating query metadata..."
-    sqlx prepare
+    cargo sqlx prepare --workspace
 }
-
-cd ..
 
 echo "✅ SQLx setup complete!"
 echo ""

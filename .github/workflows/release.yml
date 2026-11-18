@@ -26,18 +26,31 @@ jobs:
       release_id: ${{ steps.create_release.outputs.id }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag: ${{ steps.tag.outputs.tag }}
+      sha: ${{ steps.tag.outputs.sha }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Get tag name
+      # A manual dispatch can run from any branch, so every job builds the
+      # commit the requested tag points at rather than the dispatching ref.
+      - name: Resolve tag
         id: tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+            tag="$INPUT_TAG"
           else
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            tag="${GITHUB_REF#refs/tags/}"
           fi
+          sha=$(git rev-parse --verify "refs/tags/${tag}^{commit}")
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the tagged commit
+        run: git checkout --detach "${{ steps.tag.outputs.sha }}"
 
       - name: Generate changelog
         id: changelog
@@ -71,6 +84,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-release.outputs.sha }}
 
       - name: Setup environment
         uses: ./.github/actions/setup
@@ -87,32 +102,18 @@ jobs:
       - name: Build Node.js artifacts
         run: |
           pnpm build
-          cd apps/amethyst && pnpm build
 
-      - name: Build Rust services (x86_64)
-        run: |
-          cd services
-          cargo build --release --all-features
+      # The Cargo workspace (Aqua, Cadet, Satellite, status, teal-cli) is at the root.
+      - name: Build Rust workspace (x86_64)
+        run: cargo build --release --workspace --all-features
 
-      - name: Build Rust services (aarch64)
-        run: |
-          cd services
-          cross build --release --all-features --target aarch64-unknown-linux-gnu
+      - name: Build Rust workspace (aarch64)
+        run: cross build --release --workspace --all-features --target aarch64-unknown-linux-gnu
 
-      - name: Build Rust apps (x86_64)
+      - name: Create web build archive
         run: |
-          cd apps/aqua
-          cargo build --release --all-features
-
-      - name: Build Rust apps (aarch64)
-        run: |
-          cd apps/aqua
-          cross build --release --all-features --target aarch64-unknown-linux-gnu
-
-      - name: Create Amethyst build archive
-        run: |
-          cd apps/amethyst
-          tar -czf amethyst-${{ needs.create-release.outputs.tag }}.tar.gz build/
+          cd apps/web
+          tar -czf web-${{ needs.create-release.outputs.tag }}.tar.gz .output/
 
       - name: Upload Rust build artifacts
         id: upload-rust
@@ -122,8 +123,6 @@ jobs:
           path: |
             target/release/
             target/aarch64-unknown-linux-gnu/release/
-            apps/aqua/target/release/
-            apps/aqua/target/aarch64-unknown-linux-gnu/release/
           retention-days: 7
 
       - name: Upload Node build artifacts
@@ -133,18 +132,18 @@ jobs:
           name: node-release-builds
           path: |
             packages/*/dist/
-            apps/amethyst/build/
-            apps/amethyst/amethyst-${{ needs.create-release.outputs.tag }}.tar.gz
+            apps/web/.output/
+            apps/web/web-${{ needs.create-release.outputs.tag }}.tar.gz
           retention-days: 7
 
-      - name: Upload Amethyst build to release
+      - name: Upload web build to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./apps/amethyst/amethyst-${{ needs.create-release.outputs.tag }}.tar.gz
-          asset_name: amethyst-${{ needs.create-release.outputs.tag }}.tar.gz
+          asset_path: ./apps/web/web-${{ needs.create-release.outputs.tag }}.tar.gz
+          asset_name: web-${{ needs.create-release.outputs.tag }}.tar.gz
           asset_content_type: application/gzip
 
   release-services:
@@ -163,15 +162,14 @@ jobs:
           - name: cadet
             dockerfile: services/cadet/Dockerfile
             context: .
-          - name: rocketman
-            dockerfile: services/rocketman/Dockerfile
-            context: .
-          - name: satellite
-            dockerfile: services/satellite/Dockerfile
+          - name: status
+            dockerfile: apps/status/Dockerfile
             context: .
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-release.outputs.sha }}
 
       - name: Check if service has Dockerfile
         id: check

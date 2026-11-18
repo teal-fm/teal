@@ -1,353 +1,166 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"; // Added useCallback, useRef
-import { Platform, TextInput, View } from "react-native";
-import Animated, {
-  interpolate,
-  useAnimatedKeyboard,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, router, Stack } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, View } from "react-native";
+import { Link, router } from "expo-router";
 import { openAuthSessionAsync } from "expo-web-browser";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
-import { resolveFromIdentity } from "@/lib/atp/pid";
-import { Icon } from "@/lib/icons/iconWithClassName";
-import { capFirstLetter, cn } from "@/lib/utils";
+import { Check, ChevronRight, CircleAlert } from "lucide-react-native";
+import { resolveFromIdentity } from "@teal/client/atp/pid";
+import { normalizeAuthHandle } from "@teal/client/authHandle";
+import { Button, Dialog, Field, goBack, Icon, PageTitle, Text } from "@/components/ds";
+import { APP_BASE_URL, oauthRedirectUri } from "@/lib/atp/oauth";
 import { useStore } from "@/stores/mainStore";
-import { FontAwesome6 } from "@expo/vector-icons";
-import { AlertCircle, AtSign, Check, ChevronRight } from "lucide-react-native";
 
-type Url = URL;
+const RESOLVE_DELAY = 500;
 
-interface ResolvedIdentity {
-  pds: Url;
-  [key: string]: any;
+/** "morel.us-east.host.bsky.network" reads as "Bluesky (Morel)". */
+function providerName(pds: URL) {
+  if (!pds.hostname.endsWith("bsky.network")) return pds.hostname;
+  const shroom = pds.hostname.split(".")[0] ?? "";
+
+  return `Bluesky (${shroom.charAt(0).toUpperCase()}${shroom.slice(1)})`;
 }
 
-const DEBOUNCE_DELAY = 500; // 500ms debounce delay
+type Lookup =
+  | { state: "idle" }
+  | { state: "resolving" }
+  | { state: "found"; pds: URL }
+  | { state: "missing" };
 
-const LoginScreen = () => {
+/** Sign in with an Atmosphere handle: find the account's provider, then hand off to OAuth. */
+export default function Login() {
+  const getLoginUrl = useStore((state) => state.getLoginUrl);
+  const oauthCallback = useStore((state) => state.oauthCallback);
   const [handle, setHandle] = useState("");
-  const [err, setErr] = useState<string | undefined>();
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
+  const [lookup, setLookup] = useState<Lookup>({ state: "idle" });
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"signing-in" | "redirecting" | null>(null);
+  const version = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [pdsUrl, setPdsUrl] = useState<Url | null>(null);
-  const [isResolvingPds, setIsResolvingPds] = useState(false);
-  const [pdsResolutionError, setPdsResolutionError] = useState<
-    string | undefined
-  >();
-
-  const kb = useAnimatedKeyboard();
-
-  const handleInputRef = useRef<TextInput>(null);
-
-  const { getLoginUrl, oauthCallback } = useStore((state) => state);
-
-  const messageAnimation = useSharedValue(0);
-
-  // focus on load
-  useEffect(() => {
-    if (handleInputRef.current) {
-      handleInputRef.current.focus();
-    }
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
   }, []);
 
-  useEffect(() => {
-    if (isResolvingPds || pdsResolutionError || pdsUrl) {
-      messageAnimation.value = withTiming(1, { duration: 500 });
-    } else {
-      messageAnimation.value = withTiming(0, { duration: 400 });
-    }
-  }, [isResolvingPds, pdsResolutionError, messageAnimation, pdsUrl]);
-
-  const messageContainerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: messageAnimation.value,
-      maxHeight: interpolate(messageAnimation.value, [0, 1], [0, 100]),
-      marginTop: -8,
-      paddingTop: 8,
-      overflow: "hidden",
-      zIndex: -1,
-    };
-  });
-
-  const containerAnimatedStyle = useAnimatedStyle(() => {
-    const isKeyboardOpen = kb.height.value > 0;
-    return {
-      bottom: withTiming(isKeyboardOpen ? kb.height.value / 3 : 0, {
-        duration: 250,
-      }),
-    };
-  });
-
-  const getPdsUrl = useCallback(
-    async (
-      currentHandle: string,
-      callbacks?: {
-        onSuccess?: (resolvedPdsUrl: Url) => void;
-        onError?: (errorMessage: string) => void;
-      },
-    ): Promise<void> => {
-      // Ensure we're not calling with an empty or whitespace-only handle due to debounce race.
-      if (!currentHandle || currentHandle.trim() === "") {
-        // Clear any potential resolving/error states if triggered by empty text
-        setPdsResolutionError(undefined);
-        setIsResolvingPds(false);
-        setPdsUrl(null);
-        callbacks?.onError?.("Handle cannot be empty for PDS resolution."); // Optional: notify caller
-        return;
-      }
-
-      setIsResolvingPds(true);
-      setPdsResolutionError(undefined);
-      setPdsUrl(null);
-      try {
-        console.log(`Attempting to resolve PDS for handle: ${currentHandle}`);
-        const identity: ResolvedIdentity | null =
-          await resolveFromIdentity(currentHandle);
-
-        if (!identity || !identity.pds) {
-          throw new Error("Could not resolve PDS from the provided handle.");
-        }
-
-        setPdsUrl(identity.pds);
-        callbacks?.onSuccess?.(identity.pds);
-        setIsResolvingPds(false);
-      } catch (e: any) {
-        const errorMessage =
-          e.message || "An unknown error occurred while resolving PDS.";
-        setPdsResolutionError(errorMessage);
-        callbacks?.onError?.(errorMessage);
-      } finally {
-        if (pdsResolutionError && isResolvingPds) {
-          setIsResolvingPds(false);
-        }
-      }
-    },
-    [isResolvingPds, pdsResolutionError],
-  );
-  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleTextChange = useCallback(
-    (text: string) => {
-      setHandle(text);
-
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-
-      if (text.trim().length > 3) {
-        debounceTimeoutRef.current = setTimeout(() => {
-          getPdsUrl(text.trim(), {
-            onSuccess: (u) => {
-              setPdsUrl(u);
-            },
-            onError: (e) => {
-              console.error(e);
-              setPdsResolutionError("Couldn't resolve handle");
-            },
-          });
-        }, DEBOUNCE_DELAY);
-      } else {
-        setPdsResolutionError(undefined);
-        setIsResolvingPds(false);
-        setPdsUrl(null);
-      }
-    },
-    [getPdsUrl],
-  );
-
-  const handleLogin = async () => {
-    // reset state
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    setIsResolvingPds(false);
-    setPdsResolutionError(undefined);
-
-    if (!handle) {
-      setErr("Please enter a handle");
-      return;
-    }
-
-    setIsLoading(true);
-    setErr(undefined);
+  const resolve = useCallback(async (value: string) => {
+    const current = ++version.current;
+    setLookup({ state: "resolving" });
 
     try {
-      let redirUrl = await getLoginUrl(handle.replace("@", ""));
-      if (!redirUrl) {
-        throw new Error("Could not get login url.");
-      }
-      setIsRedirecting(true);
-      if (Platform.OS === "web") {
-        router.navigate(redirUrl.toString());
+      const identity = await resolveFromIdentity(value);
+
+      if (current !== version.current) return;
+      setLookup(identity?.pds ? { state: "found", pds: identity.pds } : { state: "missing" });
+    } catch {
+      if (current === version.current) setLookup({ state: "missing" });
+    }
+  }, []);
+
+  const onChange = (text: string) => {
+    setHandle(text);
+    setError(null);
+    version.current += 1;
+
+    if (timer.current) clearTimeout(timer.current);
+    const value = normalizeAuthHandle(text);
+
+    if (value.length > 3) {
+      setLookup({ state: "resolving" });
+      timer.current = setTimeout(() => void resolve(value), RESOLVE_DELAY);
+    } else {
+      setLookup({ state: "idle" });
+    }
+  };
+
+  const signIn = async () => {
+    const value = normalizeAuthHandle(handle);
+
+    if (busy || lookup.state !== "found" || !value) return;
+    setBusy("signing-in");
+    setError(null);
+
+    try {
+      const url = await getLoginUrl(value);
+
+      if (!url) throw new Error("no login url");
+      setBusy("redirecting");
+
+      const result = await openAuthSessionAsync(url.toString(), oauthRedirectUri(APP_BASE_URL));
+
+      if (result.type === "success") {
+        await oauthCallback(new URLSearchParams(result.url.split("?")[1]));
+        router.replace("/");
       } else {
-        const res = await openAuthSessionAsync(
-          redirUrl.toString(),
-          "http://127.0.0.1:8081/login",
-        );
-        if (res.type === "success") {
-          const params = new URLSearchParams(res.url.split("?")[1]);
-          await oauthCallback(params);
-        } else if (res.type === "cancel" || res.type === "dismiss") {
-          setErr("Login cancelled by user.");
-          setIsRedirecting(false);
-          setIsLoading(false);
-          return;
-        } else {
-          throw new Error("Authentication failed or was cancelled.");
-        }
+        setError(result.type === "cancel" || result.type === "dismiss" ? "Sign-in was cancelled." : "Sign-in didn't finish. Try again.");
+        setBusy(null);
       }
-    } catch (e: any) {
-      setErr(e.message || "An unknown error occurred during login.");
-      setIsLoading(false);
-      setIsRedirecting(false);
-      return;
+    } catch {
+      setError("Sign-in didn't start. Check your handle and try again.");
+      setBusy(null);
     }
   };
 
   return (
-    <SafeAreaView className="flex w-full flex-1 items-center justify-center">
-      <Stack.Screen
-        options={{
-          title: "Sign in",
-          headerBackButtonDisplayMode: "minimal",
-          headerShown: false,
-        }}
-      />
-      <Animated.View
-        className="align-center w-screen max-w-lg justify-center gap-4 p-8 pb-32"
-        style={containerAnimatedStyle}
+    <>
+      <PageTitle title="Sign in" />
+      <Dialog
+        title="Sign in to Teal"
+        description="Use your Bluesky or other Atmosphere account. We'll send you to your account provider to approve sign-in."
+        onClose={goBack}
       >
-        <View className="flex items-center">
-          <Icon icon={AtSign} className="color-bsky" name="at" size={64} />
-        </View>
-        <Text className="text-center text-3xl text-foreground">
-          Sign in with your PDS
-        </Text>
-        <View>
-          <Text className="text-sm text-muted-foreground">Handle</Text>
-          <Input
-            ref={handleInputRef}
-            className={cn(
-              "ring-0, rounded-xl",
-              (err || pdsResolutionError) && `border-red-500`,
-            )}
-            placeholder="alice.bsky.social or did:plc:..."
-            value={handle}
-            onChangeText={handleTextChange}
-            onFocus={(e) => setIsSelected(true)}
-            onBlur={(e) => setIsSelected(false)}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onKeyPress={(e) => {
-              if (e.nativeEvent.key === "Enter") {
-                handleLogin();
-              }
-            }}
-          />
-
-          <Animated.View style={messageContainerAnimatedStyle}>
-            <View
-              className={cn(
-                "-mt-7 rounded-xl border border-border p-2 transition-all duration-300",
-                isSelected ? "pt-9" : "pt-8",
-                pdsUrl !== null
-                  ? pdsUrl.hostname.includes("bsky.network")
-                    ? "bg-sky-400 dark:bg-sky-800"
-                    : "bg-teal-400 dark:bg-teal-800"
-                  : pdsResolutionError && "bg-red-300 dark:bg-red-800",
-              )}
-            >
-              {pdsUrl !== null ? (
-                <View className="flex flex-row items-center gap-1">
-                  <Text>PDS:</Text>
-                  {pdsUrl.hostname.includes("bsky.network") && (
-                    <View className="flex flex-row justify-center gap-0.5 pr-0.5">
-                      <Icon
-                        icon={FontAwesome6}
-                        className="color-bsky"
-                        name="bluesky"
-                        size={16}
-                      />
-                    </View>
-                  )}
-                  <Text>
-                    {pdsUrl.hostname.includes("bsky.network")
-                      ? "Bluesky (" +
-                        capFirstLetter(
-                          pdsUrl.hostname.split(".").shift() || "",
-                        ) +
-                        ")"
-                      : pdsUrl.hostname}
-                  </Text>
-                </View>
-              ) : pdsResolutionError ? (
-                <View className="flex flex-row">
-                  <Icon
-                    icon={AlertCircle}
-                    className="mr-1 inline text-foreground"
-                    size={18}
-                  />
-                  <Text className="justify-baseline flex">
-                    {pdsResolutionError}
-                  </Text>
-                </View>
-              ) : (
-                <Text className="px-1 text-muted-foreground">
-                  Resolving PDS...
-                </Text>
-              )}
-            </View>
-          </Animated.View>
-        </View>
-        <View className="flex flex-row items-center justify-between">
-          <Link href="https://bsky.app/signup" asChild>
-            <Button variant="link" className="p-0">
-              <Text className="text-md text-secondary">
-                Sign up for Bluesky
+        <Field
+          label="Handle"
+          value={handle}
+          onChangeText={onChange}
+          onSubmitEditing={signIn}
+          placeholder="alice.bsky.social or did:plc:…"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="username"
+          inputMode="email"
+          returnKeyType="go"
+          autoFocus
+        />
+        <View aria-live="polite" className="min-h-6 flex-row items-center gap-2">
+          {lookup.state === "resolving" ? (
+            <>
+              <ActivityIndicator size="small" />
+              <Text className="text-[14px] text-ink-2">Finding your account…</Text>
+            </>
+          ) : lookup.state === "found" ? (
+            <>
+              <Icon icon={Check} size={16} className="text-tint" />
+              <Text className="min-w-0 flex-1 text-[14px] text-ink-2" numberOfLines={1}>
+                Account provider: {providerName(lookup.pds)}
               </Text>
-            </Button>
+            </>
+          ) : lookup.state === "missing" ? (
+            <>
+              <Icon icon={CircleAlert} size={16} className="text-destructive" />
+              <Text role="alert" className="flex-1 text-[14px] text-destructive">
+                Couldn't find this account. Check your handle and try again.
+              </Text>
+            </>
+          ) : null}
+        </View>
+        {error ? (
+          <Text role="alert" className="text-[14px] text-destructive">
+            {error}
+          </Text>
+        ) : null}
+        <View className="flex-row items-center justify-between gap-3">
+          <Link href="/auth/signup" asChild>
+            <Pressable accessibilityRole="link" className="min-h-11 justify-center">
+              <Text className="text-[15px] font-semibold text-tint">Create an account</Text>
+            </Pressable>
           </Link>
           <Button
-            className={cn(
-              "duration-500, flex flex-row justify-end rounded-xl",
-              isRedirecting ? "bg-green-500" : "bg-bsky",
-            )}
-            onPress={handleLogin}
-            disabled={!pdsUrl}
-          >
-            {isRedirecting ? (
-              <>
-                <Text className="text-lg">Redirecting</Text>
-                <Icon icon={Check} />
-              </>
-            ) : isLoading ? (
-              <Text className="text-lg">Signing in...</Text>
-            ) : (
-              <>
-                <Text className="text-lg">Sign in</Text>
-                <Icon icon={ChevronRight} />
-              </>
-            )}
-          </Button>
+            label={busy === "redirecting" ? "Redirecting" : busy ? "Signing in" : "Sign in"}
+            icon={busy ? undefined : ChevronRight}
+            loading={!!busy}
+            disabled={lookup.state !== "found"}
+            onPress={signIn}
+          />
         </View>
-      </Animated.View>
-    </SafeAreaView>
+      </Dialog>
+    </>
   );
-};
-
-export default LoginScreen;
+}

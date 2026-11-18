@@ -1,15 +1,17 @@
 use crate::ctx::Context;
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Extension};
+use axum::{Extension, http::StatusCode, response::IntoResponse, routing::get};
 use jacquard_common::IntoStatic;
 use serde::{Deserialize, Serialize};
 use types::fm_teal::feed::PlayView;
+use types::fm_teal::feed::get_actor_feed::GetActorFeedOutput;
+use types::fm_teal::feed::get_play::GetPlayOutput;
 
 // mount feed routes
 pub fn feed_routes() -> axum::Router {
     axum::Router::new()
         .route("/fm.teal.feed.getPlay", get(get_feed_play))
-        .route("/fm.teal.feed.getPlays", get(get_feed_plays))
         .route("/fm.teal.feed.getActorFeed", get(get_actor_feed))
+        .route("/fm.teal.feed.getPlays", get(get_feed_plays))
 }
 
 #[derive(Deserialize)]
@@ -17,11 +19,7 @@ pub struct GetFeedPlayQuery {
     #[serde(rename = "authorDID")]
     pub author_did: Option<String>,
     pub rkey: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct GetFeedPlayResponse {
-    play: PlayView,
+    pub uri: Option<String>,
 }
 
 pub async fn get_feed_play(
@@ -29,21 +27,22 @@ pub async fn get_feed_play(
     axum::extract::Query(query): axum::extract::Query<GetFeedPlayQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let repo = &ctx.db;
-    let (author_did, rkey) = match (query.author_did.as_deref(), query.rkey.as_deref()) {
-        (Some(author_did), Some(rkey)) if !author_did.is_empty() && !rkey.is_empty() => {
-            (author_did, rkey)
+    let uri = match (query.uri, query.author_did, query.rkey) {
+        (Some(uri), _, _) => uri,
+        (None, Some(author_did), Some(rkey)) => {
+            format!("at://{author_did}/fm.teal.feed.play/{rkey}")
         }
         _ => {
             return Err((
                 StatusCode::BAD_REQUEST,
-                "authorDID and rkey are required".to_string(),
+                "uri or authorDID and rkey are required".to_string(),
             ));
         }
     };
-    let identity = format!("at://{author_did}/fm.teal.feed.play/{rkey}");
 
-    match repo.get_feed_play(&identity).await {
-        Ok(Some(play)) => Ok(axum::Json(GetFeedPlayResponse {
+    match repo.get_feed_play(&uri).await {
+        Ok(Some(play)) => Ok(axum::Json(GetPlayOutput {
+            extra_data: Default::default(),
             play: play.into_static(),
         })),
         Ok(None) => Err((StatusCode::NOT_FOUND, "Feed play not found".to_string())),
@@ -52,9 +51,38 @@ pub async fn get_feed_play(
 }
 
 #[derive(Deserialize)]
-pub struct GetFeedPlaysQuery {
-    pub identities: Vec<String>,
+pub struct GetActorFeedQuery {
+    #[serde(rename = "authorDID")]
+    pub author_did: String,
+    pub limit: Option<i32>,
+    pub cursor: Option<String>,
 }
+
+pub async fn get_actor_feed(
+    Extension(ctx): Extension<Context>,
+    axum::extract::Query(query): axum::extract::Query<GetActorFeedQuery>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let repo = &ctx.db;
+
+    if query.author_did.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "authorDID is required".to_string()));
+    }
+
+    match repo
+        .get_actor_feed(&query.author_did, query.limit, query.cursor.as_deref())
+        .await
+    {
+        Ok(page) => Ok(axum::Json(GetActorFeedOutput {
+            extra_data: Default::default(),
+            cursor: page.cursor.map(Into::into),
+            plays: page.plays.into_static(),
+        })),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+/// The most accounts one getPlays call reads.
+const MAX_IDENTITIES: usize = 25;
 
 #[derive(Serialize)]
 pub struct GetFeedPlaysResponse {
@@ -63,10 +91,10 @@ pub struct GetFeedPlaysResponse {
 
 pub async fn get_feed_plays(
     Extension(ctx): Extension<Context>,
-    axum::extract::Query(query): axum::extract::Query<GetFeedPlaysQuery>,
+    axum::extract::RawQuery(raw): axum::extract::RawQuery,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let repo = &ctx.db; // assuming ctx.db is Box<dyn FeedPlayRepo + Send + Sync>
-    let identities = &query.identities;
+    let repo = &ctx.db;
+    let identities = &super::repeated_param(raw.as_deref(), "identities");
 
     if identities.is_empty() {
         return Err((
@@ -74,61 +102,16 @@ pub async fn get_feed_plays(
             "identities is required".to_string(),
         ));
     }
+    if identities.len() > MAX_IDENTITIES {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!("at most {MAX_IDENTITIES} identities per request"),
+        ));
+    }
 
     match repo.get_feed_plays_for_profile(identities).await {
         Ok(plays) => Ok(axum::Json(GetFeedPlaysResponse {
             plays: plays.into_static(),
-        })),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
-#[derive(Deserialize)]
-pub struct GetActorFeedQuery {
-    #[serde(rename = "authorDID")]
-    pub author_did: String,
-    pub cursor: Option<String>,
-    pub limit: Option<i64>,
-}
-
-#[derive(Serialize)]
-pub struct GetActorFeedResponse {
-    plays: Vec<PlayView>,
-}
-
-pub async fn get_actor_feed(
-    Extension(ctx): Extension<Context>,
-    axum::extract::Query(query): axum::extract::Query<GetActorFeedQuery>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    if !query.author_did.starts_with("did:") {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            "authorDID must be a DID".to_string(),
-        ));
-    }
-
-    let limit = query.limit.unwrap_or(20);
-    if !(1..=50).contains(&limit) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            "limit must be between 1 and 50".to_string(),
-        ));
-    }
-    let limit = limit as usize;
-    let offset = query
-        .cursor
-        .as_deref()
-        .unwrap_or("0")
-        .parse::<usize>()
-        .map_err(|_| (StatusCode::BAD_REQUEST, "cursor is invalid".to_string()))?;
-
-    match ctx
-        .db
-        .get_feed_plays_for_profile(std::slice::from_ref(&query.author_did))
-        .await
-    {
-        Ok(plays) => Ok(axum::Json(GetActorFeedResponse {
-            plays: plays.into_iter().skip(offset).take(limit).collect(),
         })),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

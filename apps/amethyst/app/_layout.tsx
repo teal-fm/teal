@@ -1,133 +1,84 @@
-import { useEffect } from "react";
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import {
-  DarkTheme,
-  DefaultTheme,
-  Theme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { PortalHost } from "@rn-primitives/portal";
-
-import "react-native-reanimated";
-
+// Configures the shared client (Aqua, storage) before anything else loads.
+import { queryClient } from "@/lib/client";
+import { useMemo, type ReactNode } from "react";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, verifyInstallation } from "nativewind";
+import "react-native-reanimated";
+import { restoreColorSchemePreference, useColorScheme } from "@/lib/useColorScheme";
+// Importing the store restores a saved session on launch (see stores/mainStore).
+import { useStore } from "@/stores/mainStore";
+import { SessionProvider } from "@teal/client/session";
 
-import { GlobalTextClassContext } from "../components/ui/text";
+// global.entry.css imports global.css; metro.config.js explains why it exists.
+import "../global.entry.css";
 
-import "../global.css";
+type Theme = typeof DefaultTheme;
 
-import { View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-
-let defaultFamily = (weight: string) => {
-  return {
-    fontFamily: "DM Sans",
-    fontWeight: weight,
-  } as Theme["fonts"]["regular"];
-};
-const THEME_FONTS: Theme["fonts"] = {
-  heavy: defaultFamily("700"),
-  bold: defaultFamily("600"),
-  medium: defaultFamily("500"),
-  regular: defaultFamily("400"),
+const fonts: Theme["fonts"] = {
+  regular: { fontFamily: "System", fontWeight: "400" },
+  medium: { fontFamily: "System", fontWeight: "500" },
+  bold: { fontFamily: "System", fontWeight: "600" },
+  heavy: { fontFamily: "System", fontWeight: "700" },
 };
 
-const DARK_THEME: Theme = {
-  ...DarkTheme,
-  fonts: THEME_FONTS,
+// Scenes are transparent so the blurred-cover backdrop shows through every page.
+const themes: Record<"light" | "dark", Theme> = {
+  light: {
+    ...DefaultTheme,
+    colors: { ...DefaultTheme.colors, background: "transparent", primary: "#0b7a73" },
+    fonts,
+  },
+  dark: {
+    ...DarkTheme,
+    colors: { ...DarkTheme.colors, background: "transparent", primary: "#3fc9bd" },
+    fonts,
+  },
 };
 
-const LIGHT_THEME: Theme = {
-  ...DefaultTheme,
-  fonts: THEME_FONTS,
-};
+void restoreColorSchemePreference();
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: "(tabs)",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+const modal = {
+  presentation: "transparentModal",
+  animation: "fade",
+  headerShown: false,
+} as const;
+
+/** Hands the signed-in account to the shared hooks in @teal/client. */
+function StoreSession({ children }: { children: ReactNode }) {
+  const status = useStore((state) => state.status);
+  const agent = useStore((state) => state.pdsAgent);
+
+  const value = useMemo(
+    () => ({ agent, viewer: status === "loggedIn" ? agent?.did : undefined }),
+    [agent, status],
+  );
+
+  return <SessionProvider value={value}>{children}</SessionProvider>;
+}
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    CrimsonPro: require("../assets/fonts/CrimsonPro-VariableFont_wght.ttf"),
-    "CrimsonPro Italic": require("../assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf"),
-    "DM Sans": require("../assets/fonts/DMSans-VariableFont_opsz,wght.ttf"),
-    Fraunces: require("../assets/fonts/Fraunces-VariableFont_SOFT,WONK,opsz,wght.ttf"),
-    PlexMono: require("../assets/fonts/IBMPlexMono-Regular.ttf"),
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+  const { colorScheme } = useColorScheme();
 
   return (
-    <SafeAreaView className="flex min-h-screen flex-1 flex-row justify-center bg-background">
-      <View className="flex max-w-2xl flex-1 border-x border-muted-foreground/20 bg-background">
-        <RootLayoutNav />
-      </View>
-    </SafeAreaView>
-  );
-}
-
-function useTheme() {
-  const { colorScheme, setColorScheme } = useColorScheme();
-
-  // what??? how does this not break something
-  setColorScheme(colorScheme || "system");
-
-  console.log("Current scheme is", colorScheme);
-
-  return colorScheme === "dark" ? DARK_THEME : LIGHT_THEME;
-}
-
-function RootLayoutNav() {
-  verifyInstallation();
-
-  return (
-    <GestureHandlerRootView>
-      <ThemeProvider value={useTheme()}>
-        <GlobalTextClassContext.Provider value="font-sans">
-          <BottomSheetModalProvider>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="auth/logoutModal"
-                options={{
-                  presentation: "transparentModal",
-                  animation: "fade",
-                  headerShown: false,
-                }}
-              />
-            </Stack>
-            <PortalHost />
-          </BottomSheetModalProvider>
-        </GlobalTextClassContext.Provider>
-      </ThemeProvider>
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <StoreSession>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider value={themes[colorScheme === "dark" ? "dark" : "light"]}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth/login" options={modal} />
+            <Stack.Screen name="auth/logout" options={modal} />
+          </Stack>
+        </ThemeProvider>
+      </GestureHandlerRootView>
+      </StoreSession>
+    </QueryClientProvider>
   );
 }

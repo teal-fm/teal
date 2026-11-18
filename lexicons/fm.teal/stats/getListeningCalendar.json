@@ -1,0 +1,106 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.stats.getListeningCalendar",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | An actor's listening by day and hour, with the release played most in each.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": [
+          "actor",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "format": "at-identifier"
+          },
+          "from": {
+            "type": "string",
+            "description": "First day, YYYY-MM-DD, inclusive."
+          },
+          "to": {
+            "type": "string",
+            "description": "Last day, YYYY-MM-DD, inclusive. At most 62 days after from."
+          },
+          "tz": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "IANA time zone used to decide where 'today' starts. Defaults to UTC."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "days"
+          ],
+          "properties": {
+            "days": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#dayView"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dayView": {
+      "type": "object",
+      "required": [
+        "date",
+        "playCount",
+        "hours"
+      ],
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "playCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "topRelease": {
+          "type": "ref",
+          "ref": "fm.teal.stats.defs#releaseSummary"
+        },
+        "hours": {
+          "type": "array",
+          "maxLength": 24,
+          "items": {
+            "type": "ref",
+            "ref": "#hourView"
+          }
+        }
+      }
+    },
+    "hourView": {
+      "type": "object",
+      "required": [
+        "hour",
+        "playCount"
+      ],
+      "properties": {
+        "hour": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 23
+        },
+        "playCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "releaseMbId": {
+          "type": "string",
+          "description": "The release played most in this hour."
+        }
+      }
+    }
+  }
+}

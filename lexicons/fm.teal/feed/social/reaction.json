@@ -1,0 +1,36 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.feed.social.reaction",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | An emoji reaction to a teal.fm play or post.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Record containing one emoji reaction. An actor may react to the same subject with several different emoji, one record each.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "emoji", "createdAt"],
+        "properties": {
+          "subject": {
+            "type": "ref",
+            "ref": "com.atproto.repo.strongRef",
+            "description": "The play (fm.teal.feed.play) or post (fm.teal.feed.social.post) being reacted to."
+          },
+          "emoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "minGraphemes": 1,
+            "maxGraphemes": 1,
+            "description": "A single emoji grapheme."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Client-declared timestamp when this reaction was created."
+          }
+        }
+      }
+    }
+  }
+}

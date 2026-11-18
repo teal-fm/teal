@@ -1,0 +1,59 @@
+# Generate the Xcode project with `xcodegen generate` (or `pnpm ios:project`).
+# The generated Teal.xcodeproj is not checked in.
+name: Teal
+options:
+  bundleIdPrefix: fm.teal
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+# TEAL_ORIGIN, the server the app talks to, is set per configuration in Config/.
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
+targets:
+  Teal:
+    type: application
+    platform: iOS
+    sources:
+      - path: Teal
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fm.teal.amethyst
+        PRODUCT_NAME: Teal
+        INFOPLIST_FILE: Teal/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_PREVIEWS: YES
+        CODE_SIGN_STYLE: Automatic
+  TealTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: TealTests
+    dependencies:
+      - target: Teal
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        BUNDLE_LOADER: $(TEST_HOST)
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Teal.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Teal
+schemes:
+  Teal:
+    build:
+      targets:
+        Teal: all
+        TealTests: [test]
+    test:
+      targets:
+        - TealTests
+    run:
+      environmentVariables: []

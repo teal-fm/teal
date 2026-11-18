@@ -1,0 +1,111 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.actor.getTasteMatch",
+  "description": "This lexicon is in a not officially released state. It is subject to change. | How much an actor's listening overlaps with the viewer's.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "required": [
+          "actor",
+          "viewer"
+        ],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "format": "at-identifier"
+          },
+          "viewer": {
+            "type": "string",
+            "format": "did"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "level",
+            "sharedArtistCount",
+            "topArtistCount",
+            "sharedArtists"
+          ],
+          "properties": {
+            "level": {
+              "type": "string",
+              "knownValues": [
+                "high",
+                "some",
+                "low"
+              ]
+            },
+            "sharedArtistCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "topArtistCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How many top artists were compared for each account."
+            },
+            "sharedArtists": {
+              "type": "array",
+              "maxLength": 8,
+              "items": {
+                "type": "ref",
+                "ref": "#sharedArtist"
+              }
+            },
+            "suggestion": {
+              "type": "ref",
+              "ref": "#suggestion"
+            }
+          }
+        }
+      }
+    },
+    "sharedArtist": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "releaseMbId": {
+          "type": "string",
+          "description": "A release by this artist the actor plays, for cover art."
+        },
+        "releaseName": {
+          "type": "string"
+        }
+      }
+    },
+    "suggestion": {
+      "type": "object",
+      "required": [
+        "releaseName",
+        "rank"
+      ],
+      "properties": {
+        "releaseMbId": {
+          "type": "string"
+        },
+        "releaseName": {
+          "type": "string"
+        },
+        "artistName": {
+          "type": "string"
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The release's rank in the actor's last 30 days. The viewer has never played it."
+        }
+      }
+    }
+  }
+}

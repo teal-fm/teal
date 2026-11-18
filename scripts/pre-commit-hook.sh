@@ -33,6 +33,9 @@ print_error() {
 
 # Get list of staged files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+# Files that already had unstaged edits before formatting. Re-staging them would
+# commit hunks the author left out, so they are never re-added below.
+PARTIALLY_STAGED=$(git diff --name-only)
 
 if [ -z "$STAGED_FILES" ]; then
     print_warning "No staged files found"
@@ -55,9 +58,9 @@ if [ -n "$TS_JS_FILES" ]; then
 
     # Check if biome is available and run it
     if command -v pnpm >/dev/null 2>&1; then
-        print_status "Running Biome formatting and linting..."
-        if ! pnpm biome check . --apply --no-errors-on-unmatched 2>/dev/null; then
-            print_error "Biome check failed. Please fix the issues and try again."
+        print_status "Running oxlint..."
+        if ! pnpm exec oxlint $TS_JS_FILES; then
+            print_error "oxlint found problems. Please fix them and try again."
             exit 1
         fi
 
@@ -177,8 +180,12 @@ for file in $STAGED_FILES; do
     if [ -f "$file" ]; then
         # Check if file was modified by formatters
         if [ -n "$(git diff "$file")" ]; then
-            FORMATTED_FILES="$FORMATTED_FILES $file"
-            git add "$file"
+            if printf '%s\n' "$PARTIALLY_STAGED" | grep -qxF "$file"; then
+                print_warning "$file has unstaged changes, so formatting was not re-staged; stage it yourself"
+            else
+                FORMATTED_FILES="$FORMATTED_FILES $file"
+                git add "$file"
+            fi
         fi
     fi
 done

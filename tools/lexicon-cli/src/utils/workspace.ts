@@ -26,6 +26,7 @@ export function getRelativePath(from: string, to: string): string {
   const toParts = to.split('/');
   
   let commonLength = 0;
+
   while (
     commonLength < fromParts.length &&
     commonLength < toParts.length &&

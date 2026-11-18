@@ -58,15 +58,16 @@ pub async fn save_private_key(key: &SigningKey, path: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-/// Convert a public key to AT Protocol compatible multibase format
+/// The multicodec varint for a secp256k1 public key (0xe7).
+const SECP256K1_PUB_MULTICODEC: [u8; 2] = [0xe7, 0x01];
+
+/// Convert a public key to the AT Protocol `publicKeyMultibase` (Multikey) format:
+/// base58btc of the secp256k1 multicodec prefix followed by the compressed key.
 pub fn public_key_to_multibase(public_key: &VerifyingKey) -> Result<String> {
-    // Get the compressed public key bytes (33 bytes)
-    let public_key_bytes = public_key.to_encoded_point(true).as_bytes().to_vec();
+    let mut bytes = SECP256K1_PUB_MULTICODEC.to_vec();
+    bytes.extend_from_slice(public_key.to_encoded_point(true).as_bytes());
 
-    // Encode as multibase with base58btc (z prefix)
-    let multibase_string = multibase::encode(Base::Base58Btc, &public_key_bytes);
-
-    Ok(multibase_string)
+    Ok(multibase::encode(Base::Base58Btc, &bytes))
 }
 
 /// Generate a new key pair and save to files
@@ -346,4 +347,22 @@ pub async fn rotate_key(
     println!("  \"publicKeyMultibase\": \"{}\"", multibase);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn multibase_keys_carry_the_secp256k1_multicodec() {
+        let key = generate_private_key();
+        let encoded = public_key_to_multibase(key.verifying_key()).unwrap();
+
+        // Every secp256k1 Multikey starts with "zQ3s" in base58btc.
+        assert!(encoded.starts_with("zQ3s"), "{encoded}");
+
+        let (_, decoded) = multibase::decode(&encoded).unwrap();
+        assert_eq!(&decoded[..2], &SECP256K1_PUB_MULTICODEC);
+        assert_eq!(decoded.len(), 35);
+    }
 }

@@ -17,7 +17,7 @@ inputs:
   node-version:
     description: "Node.js version to use"
     required: false
-    default: "20"
+    default: "22"
   lexicons-only-rust:
     description: "Generate only Rust lexicons"
     required: false

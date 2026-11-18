@@ -1,5 +1,0 @@
-{env.CLIENT_ADDRESS} {
-    try_files {path} /index.html
-    file_server
-}
-

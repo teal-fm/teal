@@ -6,13 +6,16 @@
 
 export const MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2";
 export const USER_AGENT = "tealtracker/0.0.1 (https://github.com/teal-fm/teal)";
+
 // 1 second between MusicBrainz API calls (default).
 // Honors MB_RATE_LIMIT_MS env var -- set to 0 when using a rotating proxy.
 export const RATE_LIMIT_DELAY = (() => {
   if (typeof process !== "undefined" && process.env?.MB_RATE_LIMIT_MS != null) {
     const v = parseInt(process.env.MB_RATE_LIMIT_MS, 10);
+
     return Number.isFinite(v) && v >= 0 ? v : 1000;
   }
+
   return 1000;
 })();
 
@@ -124,6 +127,19 @@ export type MBIDSource =
   | "listenbrainz_acr"      // From ListenBrainz ACR lookup (independent canonical mapping)
   | "track_data";           // From Last.fm scrobble's own .mbid field (independent)
 
+const MBID_SOURCES: readonly MBIDSource[] = [
+  "lastfm_track_info",
+  "lastfm_search",
+  "musicbrainz_search",
+  "listenbrainz_acr",
+  "track_data",
+];
+
+/** A stored MBID source, or null when it's missing or not one this harness writes. */
+export function parseMbidSource(value?: string | null): MBIDSource | null {
+  return MBID_SOURCES.find((source) => source === value) ?? null;
+}
+
 /** Ground-truth-safe MBID sources (independent of MB search). */
 export const GROUND_TRUTH_SOURCES: ReadonlySet<MBIDSource> = new Set([
   "lastfm_track_info",
@@ -145,8 +161,11 @@ export function formatTime(ms: number): string {
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
+
   if (hours > 0) return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+
   if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+
   return `${seconds}s`;
 }
 
@@ -159,6 +178,7 @@ export function calculateETA(
   if (completed === 0 || completed >= total) return "0s";
   const avgTimePerItem = elapsed / completed;
   const remaining = total - completed;
+
   return formatTime(avgTimePerItem * remaining);
 }
 

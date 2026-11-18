@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT ae.id, ae.mbid, ae.name, COUNT(DISTINCT ptae.play_uri) AS play_count\n            FROM artists_extended ae\n            LEFT JOIN play_to_artists_extended ptae ON ae.id = ptae.artist_id\n            WHERE ($1::uuid IS NOT NULL AND ae.mbid = $1)\n               OR (\n                   $1::uuid IS NULL\n                   AND (\n                       LOWER(ae.name) = LOWER($2)\n                       OR TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER(ae.name), '[^a-z0-9]+', '-', 'g')) = LOWER($2)\n                   )\n               )\n            GROUP BY ae.id, ae.mbid, ae.name\n            ORDER BY play_count DESC\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "play_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "72c85b603c19cf793ce9dc22834038629954e56aa6fde2260ae459014269bd08"
+}

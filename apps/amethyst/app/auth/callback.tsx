@@ -1,77 +1,92 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
-import { Link, router, Stack } from "expo-router";
-import { useLocalSearchParams } from "expo-router/build/hooks";
-import { Text } from "@/components/ui/text";
-import { Icon } from "@/lib/icons/iconWithClassName";
+import { Link, router, useLocalSearchParams, usePathname } from "expo-router";
+import { firstLoginHref } from "@teal/client/atp/firstLogin";
+import { Button, Glass, Heading, Loading, PageTitle, Text } from "@/components/ds";
 import { useStore } from "@/stores/mainStore";
-import { PencilLine } from "lucide-react-native";
+import { appHref } from "@/lib/href";
 
-const toSearchParams = (
-  params: Record<string, string | string[] | undefined>,
-): URLSearchParams => {
-  const searchParams = new URLSearchParams();
+function toSearchParams(params: Record<string, string | string[] | undefined>) {
+  const search = new URLSearchParams();
+
   for (const [key, value] of Object.entries(params)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        searchParams.append(key, item);
-      }
-    } else if (value !== undefined) {
-      searchParams.set(key, value);
+    for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) {
+      search.append(key, item);
     }
   }
-  return searchParams;
-};
 
-export default function AuthOptions() {
-  const status = useStore((state) => state.status);
-  const params = useLocalSearchParams<"iss" | "state" | "code">();
-  const { state } = params;
-  const calledRef = useRef(false);
+  return search;
+}
+
+/** Where the account provider sends people back after approving sign-in. */
+export default function AuthCallback() {
+  const params = useLocalSearchParams();
+  const pathname = usePathname();
+  const activePath = useRef(pathname);
+  activePath.current = pathname;
+  // The provider's state is deleted on first read, so the callback must run once.
+  const called = useRef(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    // The OAuth state in IndexedDB is deleted on first read (replay prevention).
-    // Must only call oauthCallback once -- a second call will fail with
-    // "Unknown authorization session".
-    if (calledRef.current || !params) return;
-    calledRef.current = true;
-    const searchParams = toSearchParams(params);
-    useStore.getState().oauthCallback(searchParams);
+    if (called.current) return;
+    called.current = true;
+    const stillHere = () => activePath.current === "/auth/callback";
+    useStore
+      .getState()
+      .oauthCallback(toSearchParams(params))
+      .then(async () => {
+        // The store reports failures in state rather than rejecting.
+        const { status, pdsAgent } = useStore.getState();
+
+        if (!stillHere()) return;
+
+        if (status !== "loggedIn" || !pdsAgent?.did) {
+          setFailed(true);
+
+          return;
+        }
+
+        const did = pdsAgent.did;
+
+        const destination = await firstLoginHref(did, () =>
+          pdsAgent.call("com.atproto.repo.getRecord", {
+            repo: did,
+            collection: "fm.teal.actor.profile",
+            rkey: "self",
+          }),
+        );
+
+        const current = useStore.getState();
+
+        if (stillHere() && current.status === "loggedIn" && current.pdsAgent?.did === did) {
+          router.replace(appHref(destination));
+        }
+      })
+      .catch(() => {
+        if (stillHere()) setFailed(true);
+      });
   }, [params]);
 
-  useEffect(() => {
-    if (status === "loggedIn") {
-      requestAnimationFrame(() => {
-        router.replace("/");
-      });
-    }
-  }, [status]);
-
-  if (!params) {
-    return (
-      <View>
-        <Link href="/error" />
-      </View>
-    );
-  }
   return (
-    <View className="flex-1 items-center justify-center gap-5 bg-background p-6">
-      <Stack.Screen
-        options={{
-          title: "Processing",
-          headerBackButtonDisplayMode: "minimal",
-        }}
-      />
-      <Icon icon={PencilLine} size={64} />
-      <Text className="text-center text-3xl font-semibold text-foreground">
-        {status === "loggedIn" ? "Success!" : "Fetching your data..."}
-      </Text>
-      <Text className="text-sm text-muted-foreground">
-        This may take a few seconds {status}
-      </Text>
-      <Text className="rounded-full bg-muted-foreground/30 px-2 py-1 font-mono text-sm text-muted-foreground">
-        {state}
-      </Text>
+    <View className="flex-1 items-center justify-center bg-ground px-4">
+      <PageTitle title={failed ? "Sign-in failed" : "Finishing sign-in"} />
+      <Glass className="w-full max-w-md items-center gap-3 p-7">
+        {failed ? null : <Loading className="py-2" label="Finishing sign-in" />}
+        <Heading level={1} size="title" className="text-center" role={failed ? "alert" : "heading"}>
+          {failed ? "Couldn't finish signing in" : "Finishing sign-in"}
+        </Heading>
+        <Text className="text-center text-[15px] text-ink-2">
+          {failed
+            ? "Your sign-in session may have expired. Start again to connect your account."
+            : "Connecting your account to Teal. This takes a few seconds."}
+        </Text>
+        {failed ? (
+          <Link href="/auth/login" asChild>
+            <Button label="Sign in again" className="mt-2 self-center" />
+          </Link>
+        ) : null}
+      </Glass>
     </View>
   );
 }

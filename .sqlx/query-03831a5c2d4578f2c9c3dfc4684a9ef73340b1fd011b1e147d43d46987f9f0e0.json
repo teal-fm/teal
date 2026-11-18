@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT r.mbid, r.name, COUNT(DISTINCT p.uri) AS play_count\n            FROM releases r\n            LEFT JOIN plays p ON r.mbid = p.release_mbid\n            WHERE r.name ILIKE $1 ESCAPE E'\\\\'\n              AND ($5::text IS NULL OR p.did = $5)\n            GROUP BY r.mbid, r.name\n            ORDER BY\n                CASE\n                    WHEN LOWER(r.name) = LOWER($2) THEN 0\n                    WHEN r.name ILIKE $3 ESCAPE E'\\\\' THEN 1\n                    ELSE 2\n                END,\n                play_count DESC,\n                r.name\n            LIMIT $4\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mbid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "play_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "03831a5c2d4578f2c9c3dfc4684a9ef73340b1fd011b1e147d43d46987f9f0e0"
+}

@@ -1,55 +1,81 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";
 
-@layer base {
+/*
+ * Design tokens. The palette follows the platform's system materials: plain
+ * grounds, one teal tint, frosted panels over album-art backdrops. Type is the
+ * system face (Tailwind's font-sans; nativewind/theme maps it to System natively).
+ */
+@theme {
+  --color-ground: var(--ground);
+  --color-ground-2: var(--ground-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-hair: var(--hair);
+  --color-tint: var(--tint);
+  --color-on-tint: var(--on-tint);
+  --color-tint-soft: var(--tint-soft);
+  /* Presence ("listening now"): deeper in light mode so the ring clears 3:1 on white. */
+  --color-now: var(--now);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+  --color-glass-edge: var(--glass-edge);
+  --color-fill: var(--fill);
+
+  --color-destructive: hsl(var(--destructive));
+}
+
+@layer theme {
   :root {
-    --base-font-family: "EBGaramond";
-    --background: 313 35% 98%;
-    --foreground: 313 79% 4%;
-    --muted: 283 24% 92%;
-    --muted-foreground: 283 11% 39%;
-    --popover: 313 35% 97%;
-    --popover-foreground: 313 79% 3%;
-    --card: 313 35% 97%;
-    --card-foreground: 313 79% 3%;
-    --border: 313 8% 92%;
-    --input: 313 8% 92%;
-    --primary: 313 99% 74%;
-    --primary-foreground: 313 99% 14%;
-    --secondary: 283 99% 74%;
-    --secondary-foreground: 283 99% 14%;
-    --accent: 343 99% 74%;
-    --accent-foreground: 343 99% 14%;
-    --destructive: 5 91% 37%;
-    --destructive-foreground: 5 91% 97%;
-    --bsky: 211.08 99.11% 60.08%;
-    --ring: 313 99% 74%;
-    --radius: 1rem;
-  }
+    --ground: #ffffff;
+    --ground-2: #f2f2f7;
+    --ink: #000000;
+    --ink-2: rgba(0, 0, 0, 0.66);
+    --ink-3: rgba(60, 60, 67, 0.4);
+    --hair: rgba(60, 60, 67, 0.18);
+    --tint: #0b7a73;
+    --on-tint: #ffffff;
+    --tint-soft: rgba(11, 122, 115, 0.12);
+    --glass: rgba(255, 255, 255, 0.58);
+    --glass-strong: rgba(255, 255, 255, 0.72);
+    --glass-edge: rgba(255, 255, 255, 0.7);
+    --fill: rgba(120, 120, 128, 0.12);
+    --now: #0f8f84;
 
-  .dark:root {
-    --background: 313 60% 1%;
-    --foreground: 313 14% 97%;
-    --muted: 283 24% 8%;
-    --muted-foreground: 283 11% 61%;
-    --popover: 313 60% 2%;
-    --popover-foreground: 313 14% 98%;
-    --card: 313 60% 2%;
-    --card-foreground: 313 14% 98%;
-    --border: 313 8% 14%;
-    --input: 313 8% 14%;
-    --primary: 313 99% 74%;
-    --primary-foreground: 313 99% 14%;
-    --secondary: 283 99% 74%;
-    --secondary-foreground: 283 99% 14%;
-    --accent: 343 99% 74%;
-    --accent-foreground: 343 99% 14%;
-    --destructive: 5 91% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --bsky: 211.08 99.11% 60.08%;
-    --ring: 313 99% 74%;
+    --destructive: 5 91% 37%;
+
+    @variant dark {
+      --ground: #000000;
+      --ground-2: #1c1c1e;
+      --ink: #ffffff;
+      --ink-2: rgba(235, 235, 245, 0.8);
+      --ink-3: rgba(235, 235, 245, 0.36);
+      --hair: rgba(84, 84, 88, 0.6);
+      --tint: #3fc9bd;
+      --on-tint: #002b28;
+      --tint-soft: rgba(63, 201, 189, 0.16);
+      --glass: rgba(30, 30, 32, 0.46);
+      --glass-strong: rgba(0, 0, 0, 0.64);
+      --glass-edge: rgba(255, 255, 255, 0.08);
+      --fill: rgba(120, 120, 128, 0.24);
+      --now: #3fc9bd;
+
+      --destructive: 5 85% 72%;
+    }
   }
+}
+
+html,
+body {
+  background-color: var(--ground);
+}
+
+/* Browser scrollbars and form controls follow the theme. */
+html {
+  color-scheme: light dark;
 }
 
 * {
@@ -58,6 +84,43 @@
   text-rendering: optimizeLegibility;
 }
 
-.var-font-soft {
-  font-variation-settings: "SOFT" 100;
+::selection {
+  background: var(--tint);
+  color: var(--on-tint);
+}
+
+input,
+textarea {
+  caret-color: var(--tint);
+}
+
+/*
+ * One keyboard focus ring for every control. React Native Web renders pressables
+ * as focusable divs and clears their outline inline, hence !important.
+ */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--tint) !important;
+  outline-offset: 2px;
+}
+
+/* Tabs sit in rows that clip overflow, so their ring is drawn inside. */
+[role="tab"]:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Text fields mark focus with a tint border. Fields set inside a panel (Explore's search) opt out and light the panel instead. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none !important;
+  border-color: var(--tint) !important;
+  box-shadow: 0 0 0 1px var(--tint);
+}
+
+input.field-in-panel:focus-visible {
+  box-shadow: none;
 }

@@ -1,7 +1,25 @@
 import pkg from "./package.json";
 
+/**
+ * Sign-in redirects to the public origin's host reversed, as the AT Protocol
+ * OAuth profile requires for native clients (`teal.fm` → `fm.teal`). It must
+ * match nativeCallbackScheme() in @teal/client/atp/nativeOAuth.
+ */
+function oauthScheme() {
+  const origin = process.env.EXPO_PUBLIC_BASE_URL;
+
+  if (!origin) return undefined;
+
+  const { hostname } = new URL(origin);
+
+  if (hostname === "localhost" || hostname === "127.0.0.1") return undefined;
+
+  return hostname.split(".").reverse().join(".");
+}
+
 export default () => {
   const VERSION = pkg.version;
+  const callbackScheme = oauthScheme();
 
   return {
     /** @type {import('@expo/config-types').ExpoConfig} */
@@ -11,16 +29,14 @@ export default () => {
       version: VERSION,
       orientation: "portrait",
       icon: "./assets/images/icon.png",
-      scheme: "fm.teal.amethyst",
+      scheme: callbackScheme ? ["fm.teal.amethyst", callbackScheme] : "fm.teal.amethyst",
+      // Android only: the web app is apps/web and the iOS app is apps/ios (SwiftUI).
+      platforms: ["android"],
       userInterfaceStyle: "automatic",
       splash: {
         image: "./assets/images/splash-icon.png",
         resizeMode: "contain",
         backgroundColor: "#ffffff",
-      },
-      ios: {
-        supportsTablet: true,
-        bundleIdentifier: "fm.teal.amethyst",
       },
       android: {
         package: "fm.teal.amethyst",
@@ -28,11 +44,6 @@ export default () => {
           foregroundImage: "./assets/images/adaptive-icon.png",
           backgroundColor: "#ffffff",
         },
-      },
-      web: {
-        bundler: "metro",
-        output: "single",
-        favicon: "./assets/images/favicon.png",
       },
       plugins: [
         [
@@ -48,15 +59,7 @@ export default () => {
             useSQLCipher: true,
           },
         ],
-        [
-          "expo-build-properties",
-          {
-            ios: {
-              deploymentTarget: "16.4",
-              buildReactNativeFromSource: true,
-            },
-          },
-        ],
+        "expo-build-properties",
         "expo-router",
         "expo-web-browser",
         "expo-splash-screen",

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use axum::{Extension, Json, extract::Multipart, extract::Path, http::StatusCode};
+use axum::{Extension, Json, extract::Path, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tracing::{error, info};
@@ -127,265 +127,11 @@ pub async fn get_car_import_job_status(
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CarImportRequest {
-    pub import_id: Option<String>,
-    pub description: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CarImportResponse {
-    pub import_id: String,
-    pub status: String,
-    pub message: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct ErrorResponse {
     pub error: String,
     pub details: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FetchCarRequest {
-    pub user_identifier: String, // DID or handle
-    pub since: Option<String>,   // Optional revision for diff
-    pub debug: Option<bool>,     // Enable debug mode for more verbose errors
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FetchCarResponse {
-    pub import_id: String,
-    pub user_did: String,
-    pub pds_host: String,
-    pub status: String,
-    pub message: String,
-}
-
-pub async fn upload_car_import(
-    Extension(ctx): Extension<Context>,
-    mut multipart: Multipart,
-) -> Result<Json<CarImportResponse>, StatusCode> {
-    info!("Received CAR file upload request");
-
-    let mut car_data: Option<Vec<u8>> = None;
-    let mut import_id: Option<String> = None;
-    let mut description: Option<String> = None;
-
-    // Process multipart form data
-    while let Some(field) = multipart
-        .next_field()
-        .await
-        .map_err(|_| StatusCode::BAD_REQUEST)?
-    {
-        let name = field.name().unwrap_or("").to_string();
-
-        match name.as_str() {
-            "car_file" => {
-                let data = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
-                car_data = Some(data.to_vec());
-            }
-            "import_id" => {
-                let text = field.text().await.map_err(|_| StatusCode::BAD_REQUEST)?;
-                import_id = Some(text);
-            }
-            "description" => {
-                let text = field.text().await.map_err(|_| StatusCode::BAD_REQUEST)?;
-                description = Some(text);
-            }
-            _ => {
-                // Ignore unknown fields
-            }
-        }
-    }
-
-    let car_bytes = car_data.ok_or(StatusCode::BAD_REQUEST)?;
-    let final_import_id = import_id.unwrap_or_else(|| {
-        // Generate a unique import ID
-        format!("car-import-{}", chrono::Utc::now().timestamp())
-    });
-
-    // Validate CAR file format
-    match validate_car_file(&car_bytes).await {
-        Ok(_) => {
-            info!(
-                "CAR file validation successful for import {}",
-                final_import_id
-            );
-        }
-        Err(e) => {
-            error!("CAR file validation failed: {}", e);
-            return Err(StatusCode::BAD_REQUEST);
-        }
-    }
-
-    // Store CAR import request in database for processing
-    match store_car_import_request(&ctx, &final_import_id, &car_bytes, description.as_deref()).await
-    {
-        Ok(_) => {
-            info!(
-                "CAR import request stored successfully: {}",
-                final_import_id
-            );
-            Ok(Json(CarImportResponse {
-                import_id: final_import_id,
-                status: "queued".to_string(),
-                message: "CAR file uploaded successfully and queued for processing".to_string(),
-            }))
-        }
-        Err(e) => {
-            error!("Failed to store CAR import request: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
-}
-
-pub async fn get_car_import_status(
-    Extension(ctx): Extension<Context>,
-    axum::extract::Path(import_id): axum::extract::Path<String>,
-) -> Result<Json<CarImportResponse>, StatusCode> {
-    match get_import_status(&ctx, &import_id).await {
-        Ok(Some(status)) => Ok(Json(CarImportResponse {
-            import_id,
-            status: status.status,
-            message: status.message,
-        })),
-        Ok(None) => Err(StatusCode::NOT_FOUND),
-        Err(e) => {
-            error!("Failed to get import status: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
-}
-
-async fn validate_car_file(car_data: &[u8]) -> Result<()> {
-    use iroh_car::CarReader;
-    use std::io::Cursor;
-
-    let cursor = Cursor::new(car_data);
-    let reader = CarReader::new(cursor).await?;
-    let header = reader.header();
-
-    // Basic validation - ensure we have at least one root CID
-    if header.roots().is_empty() {
-        return Err(anyhow::anyhow!("CAR file has no root CIDs"));
-    }
-
-    info!("CAR file validated: {} root CIDs", header.roots().len());
-    Ok(())
-}
-
-#[derive(Debug)]
-struct ImportStatus {
-    status: String,
-    message: String,
-}
-
-pub async fn store_car_import_request(
-    _ctx: &Context,
-    _import_id: &str,
-    _car_data: &[u8],
-    _description: Option<&str>,
-) -> Result<()> {
-    // TODO: Implement database storage once tables are created
-    info!("CAR import storage temporarily disabled - tables not yet created");
-    Ok(())
-}
-
-async fn get_import_status(_ctx: &Context, _import_id: &str) -> Result<Option<ImportStatus>> {
-    // TODO: Implement once database tables are created
-    Ok(Some(ImportStatus {
-        status: "pending".to_string(),
-        message: "Database tables not yet created".to_string(),
-    }))
-}
-
-pub async fn fetch_car_from_user(
-    Extension(ctx): Extension<Context>,
-    Json(request): Json<FetchCarRequest>,
-) -> Result<Json<FetchCarResponse>, (StatusCode, Json<ErrorResponse>)> {
-    info!(
-        "Received CAR fetch request for user: {}",
-        request.user_identifier
-    );
-
-    // Resolve user identifier to DID and PDS
-    let (user_did, pds_host) = match resolve_user_to_pds(&request.user_identifier).await {
-        Ok(result) => result,
-        Err(e) => {
-            error!("Failed to resolve user {}: {}", request.user_identifier, e);
-            let error_response = ErrorResponse {
-                error: "Failed to resolve user".to_string(),
-                details: if request.debug.unwrap_or(false) {
-                    Some(e.to_string())
-                } else {
-                    None
-                },
-            };
-            return Err((StatusCode::BAD_REQUEST, Json(error_response)));
-        }
-    };
-
-    info!(
-        "Resolved {} to DID {} on PDS {}",
-        request.user_identifier, user_did, pds_host
-    );
-
-    // Generate import ID
-    let import_id = format!(
-        "pds-fetch-{}-{}",
-        user_did.replace(":", "-"),
-        chrono::Utc::now().timestamp()
-    );
-
-    // Fetch CAR file from PDS
-    match fetch_car_from_pds(&pds_host, &user_did, request.since.as_deref()).await {
-        Ok(car_data) => {
-            info!(
-                "Successfully fetched CAR file for {} ({} bytes)",
-                user_did,
-                car_data.len()
-            );
-
-            // Store the fetched CAR file for processing
-            let description = Some(format!(
-                "Fetched from PDS {} for user {}",
-                pds_host, request.user_identifier
-            ));
-            match store_car_import_request(&ctx, &import_id, &car_data, description.as_deref())
-                .await
-            {
-                Ok(_) => {
-                    info!("CAR import request stored successfully: {}", import_id);
-                    Ok(Json(FetchCarResponse {
-                        import_id,
-                        user_did,
-                        pds_host,
-                        status: "queued".to_string(),
-                        message: "CAR file fetched from PDS and queued for processing".to_string(),
-                    }))
-                }
-                Err(e) => {
-                    error!("Failed to store fetched CAR import request: {}", e);
-                    let error_response = ErrorResponse {
-                        error: "Failed to store CAR import request".to_string(),
-                        details: Some(e.to_string()),
-                    };
-                    Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
-                }
-            }
-        }
-        Err(e) => {
-            error!("Failed to fetch CAR file from PDS {}: {}", pds_host, e);
-            let error_response = ErrorResponse {
-                error: "Failed to fetch CAR file from PDS".to_string(),
-                details: Some(format!("PDS: {}, Error: {}", pds_host, e)),
-            };
-            Err((StatusCode::BAD_GATEWAY, Json(error_response)))
-        }
-    }
-}
-
-/// Resolve a user identifier (DID or handle) to their DID and PDS host
 pub async fn resolve_user_to_pds(user_identifier: &str) -> Result<(String, String)> {
     if user_identifier.starts_with("did:") {
         // User provided a DID directly, resolve to PDS
@@ -467,18 +213,25 @@ async fn resolve_did_to_pds(did: &str) -> Result<String> {
 
 /// Fetch CAR file from PDS using com.atproto.sync.getRepo
 pub async fn fetch_car_from_pds(pds_host: &str, did: &str, since: Option<&str>) -> Result<Vec<u8>> {
-    let mut url = format!(
-        "https://{}/xrpc/com.atproto.sync.getRepo?did={}",
-        pds_host, did
-    );
+
+    const MAX_CAR_BYTES: u64 = 256 * 1024 * 1024;
+    let mut url = url::Url::parse(&format!(
+        "https://{pds_host}/xrpc/com.atproto.sync.getRepo"
+    ))?;
+    url.query_pairs_mut().append_pair("did", did);
 
     if let Some(since_rev) = since {
-        url.push_str(&format!("&since={}", since_rev));
+        url.query_pairs_mut().append_pair("since", since_rev);
     }
 
     info!("Fetching CAR file from: {}", url);
 
-    let response = reqwest::get(&url).await?;
+    // Pinned to the addresses checked now, so a second DNS answer can't point
+    // the download at a private address.
+    let client =
+        crate::identity::public_client_with_timeout(pds_host, std::time::Duration::from_secs(60))
+            .await?;
+    let mut response = client.get(url).send().await?;
     if !response.status().is_success() {
         return Err(anyhow::anyhow!(
             "Failed to fetch CAR from PDS {}: {}",
@@ -498,8 +251,27 @@ pub async fn fetch_car_from_pds(pds_host: &str, did: &str, since: Option<&str>) 
         return Err(anyhow::anyhow!("Unexpected content type: {}", content_type));
     }
 
-    let car_data = response.bytes().await?;
-    Ok(car_data.to_vec())
+    if response
+        .content_length()
+        .is_some_and(|length| length > MAX_CAR_BYTES)
+    {
+        return Err(anyhow::anyhow!(
+            "CAR file exceeds the {} byte limit",
+            MAX_CAR_BYTES
+        ));
+    }
+
+    let mut car_data = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        if car_data.len() as u64 + chunk.len() as u64 > MAX_CAR_BYTES {
+            return Err(anyhow::anyhow!(
+                "CAR file exceeds the {} byte limit",
+                MAX_CAR_BYTES
+            ));
+        }
+        car_data.extend_from_slice(&chunk);
+    }
+    Ok(car_data)
 }
 
 /// Generate a DID document for did:web
@@ -540,24 +312,16 @@ fn generate_did_document(host: &str, pubkey: &str) -> Value {
 /// Handler for /.well-known/did.json endpoint
 pub async fn get_did_document(
     Extension(_ctx): Extension<Context>,
-) -> impl axum::response::IntoResponse {
-    // Get the host from environment variable or use default
+) -> Result<Json<Value>, StatusCode> {
     let host = std::env::var("APP_HOST")
         .or_else(|_| std::env::var("HOST"))
         .unwrap_or_else(|_| "localhost:3000".to_string());
 
-    // get pubkey from environment variable or use default
-    let pubkey = std::env::var("TEST_PUBKEY").unwrap_or_else(|_| {
-        "z6Mkw5f8g3h4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i".to_string()
-    });
+    // Without a configured key there is no service identity to publish; a
+    // made-up key would advertise a signing key nobody holds.
+    let pubkey = std::env::var("TEST_PUBKEY").map_err(|_| StatusCode::NOT_FOUND)?;
 
-    let did_doc = generate_did_document(&host, &pubkey);
-
-    (
-        StatusCode::OK,
-        [("Content-Type", "application/json")],
-        Json(did_doc),
-    )
+    Ok(Json(generate_did_document(&host, &pubkey)))
 }
 
 #[cfg(test)]

@@ -19,6 +19,7 @@ default = ["app_bsky", "com_atproto", "fm_teal"]
 app_bsky = []
 chat_bsky = []
 com_atproto = []
+com_germnetwork = []
 fm_teal = []
 tools_ozone = []
 streaming = ["jacquard-common/websocket"]
@@ -28,6 +29,8 @@ unused_imports = "allow"
 non_snake_case = "allow"
 
 [lints.clippy]
+# Jacquard emits numeric length bounds, including comparisons against one.
+len_zero = "allow"
 absurd_extreme_comparisons = "allow"
 manual_strip = "allow"
 needless_update = "allow"

@@ -1,7 +1,8 @@
+use anyhow::Context as _;
 use axum::{
     Router,
     extract::Extension,
-    routing::{get, post},
+    routing::get,
 };
 use chrono::Utc;
 use clap::{Arg, Command};
@@ -17,13 +18,14 @@ use repos::pg::PgDataSource;
 mod api;
 mod ctx;
 mod db;
+mod identity;
 mod redis_client;
 mod repos;
 mod types;
 mod xrpc;
 
 #[tokio::main]
-async fn main() -> Result<(), String> {
+async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
 
     tracing_subscriber::fmt()
@@ -41,9 +43,10 @@ async fn main() -> Result<(), String> {
         )
         .get_matches();
 
-    let db = db::init_pool().await.expect("failed to init db");
+    let db = db::init_pool().await.context("connecting to the database")?;
     let pgds = PgDataSource::new(db.clone()).boxed();
-    let ctx = RawContext::new(pgds).build(); // Arc<RawContext>
+    let actors = identity::ActorResolver::new(db.clone())?;
+    let ctx = RawContext::new(pgds, actors.clone()).build(); // Arc<RawContext>
 
     // Check if we should import a CAR file instead of starting the server
     if let Some(identity) = matches.get_one::<String>("import-identity-car") {
@@ -56,31 +59,36 @@ async fn main() -> Result<(), String> {
     let app = Router::new()
         .route("/meta_info", get(api::get_meta_info))
         .route("/.well-known/did.json", get(api::get_did_document))
-        .route("/api/car/upload", post(api::upload_car_import))
-        .route("/api/car/fetch", post(api::fetch_car_from_user))
-        .route(
-            "/api/car/status/{import_id}",
-            get(api::get_car_import_status),
-        )
         .route(
             "/api/car/job-status/{job_id}",
             get(api::get_car_import_job_status),
         )
         .nest("/xrpc/", xrpc::actor::actor_routes())
         .nest("/xrpc/", xrpc::feed::feed_routes())
+        .nest("/xrpc/", xrpc::graph::graph_routes())
+        .nest("/xrpc/", xrpc::listening::listening_routes())
+        .nest("/xrpc/", xrpc::music::music_routes())
+        .nest("/xrpc/", xrpc::search::search_routes())
+        .nest("/xrpc/", xrpc::social::social_routes())
         .nest("/xrpc/", xrpc::stats::stats_routes())
+        .layer(axum::middleware::from_fn_with_state(
+            actors,
+            xrpc::hydrate::hydrate_actors,
+        ))
         .layer(Extension(ctx))
         .layer(cors);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     tracing::info!("Listening on {}", addr);
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .with_context(|| format!("binding {addr}"))?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
 
-async fn import_identity_car(_ctx: &ctx::Context, identity: &str) -> Result<(), String> {
+async fn import_identity_car(_ctx: &ctx::Context, identity: &str) -> anyhow::Result<()> {
     use crate::types::{CarImportJob, CarImportJobStatus, JobStatus, queue_keys};
     use tracing::{error, info};
 
@@ -90,7 +98,7 @@ async fn import_identity_car(_ctx: &ctx::Context, identity: &str) -> Result<(), 
     let redis_url =
         std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
     let redis_client =
-        RedisClient::new(&redis_url).map_err(|e| format!("Failed to connect to Redis: {}", e))?;
+        RedisClient::new(&redis_url).context("connecting to Redis")?;
 
     // Create job
     let job = CarImportJob {
@@ -103,7 +111,7 @@ async fn import_identity_car(_ctx: &ctx::Context, identity: &str) -> Result<(), 
 
     // Serialize job for queue
     let job_data =
-        serde_json::to_string(&job).map_err(|e| format!("Failed to serialize job: {}", e))?;
+        serde_json::to_string(&job).context("serializing the import job")?;
 
     // Initialize job status
     let status = CarImportJobStatus {
@@ -115,7 +123,7 @@ async fn import_identity_car(_ctx: &ctx::Context, identity: &str) -> Result<(), 
         progress: None,
     };
     let status_data =
-        serde_json::to_string(&status).map_err(|e| format!("Failed to serialize status: {}", e))?;
+        serde_json::to_string(&status).context("serializing the job status")?;
 
     // Submit to queue and set initial status
     match redis_client
@@ -135,14 +143,14 @@ async fn import_identity_car(_ctx: &ctx::Context, identity: &str) -> Result<(), 
             info!("Job ID: {}", job.request_id);
             info!("Identity: {}", identity);
             info!(
-                "Monitor status with: curl http://localhost:3000/api/car/status/{}",
+                "Monitor status with: curl http://localhost:3000/api/car/job-status/{}",
                 job.request_id
             );
             Ok(())
         }
         Err(e) => {
             error!("Failed to queue job: {}", e);
-            Err(format!("Failed to queue CAR import job: {}", e))
+            Err(e.context("queueing the CAR import job"))
         }
     }
 }

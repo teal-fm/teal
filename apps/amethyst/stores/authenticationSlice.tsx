@@ -1,22 +1,24 @@
-import { resolveFromIdentity } from "@/lib/atp/pid";
+import { resolveFromIdentity } from "@teal/client/atp/pid";
 import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
 
-import * as Lexicons from "@teal/lexicons/src/lexicons";
-import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/actor/getProfile";
+import * as Lexicons from "@teal/lexicons/src/documents";
+import type { ProfileView } from "@teal/lexicons/src/fm/teal/actor/defs";
 
-import createOAuthClient, { AquareumOAuthClient } from "../lib/atp/oauth";
+import createOAuthClient, { APP_BASE_URL, AquareumOAuthClient } from "../lib/atp/oauth";
+import { pdsHostFromOAuthIssuer } from "@teal/client/atp/oauthIssuer";
+import { getProfile, XrpcError } from "@teal/client/teal/api";
 import { StateCreator } from "./mainStore";
 
 export interface AllProfileViews {
   bsky: null | AppBskyActorDefs.ProfileViewDetailed;
-  teal: null | GetProfileOutputSchema["actor"];
-  // todo: teal profile view
+  teal: null | ProfileView;
 }
 
 export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
   status: "start" | "loggedIn" | "loggedOut";
+  oauthIssuer: null | string;
   oauthState: null | string;
   oauthSession: null | OAuthSession;
   pdsAgent: null | Agent;
@@ -44,8 +46,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   get,
 ) => {
   // check if we have CF_PAGES_URL set. if not, use localhost
-  const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
-  console.log("Using base URL:", baseUrl);
+  const baseUrl = APP_BASE_URL;
   const initialAuth = createOAuthClient(baseUrl, "bsky.social");
 
   console.log("Auth client created!");
@@ -53,6 +54,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   return {
     auth: initialAuth,
     status: "start",
+    oauthIssuer: null,
     oauthState: null,
     oauthSession: null,
     pdsAgent: null,
@@ -68,20 +70,23 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     getLoginUrl: async (handle: string) => {
       try {
         // resolve the handle to a PDS URL
-        const r = resolveFromIdentity(handle);
-        let auth = createOAuthClient(baseUrl, (await r).pds.hostname);
+        const resolvedIdentity = await resolveFromIdentity(handle);
+        const auth = createOAuthClient(baseUrl, resolvedIdentity.pds.hostname);
         const url = await auth.authorize(handle);
         set({
           auth,
+          oauthIssuer: `https://${resolvedIdentity.pds.hostname}`,
           pds: {
             url: url.toString(),
             loading: false,
             error: null,
           },
         });
+
         return url;
       } catch (error) {
         console.error("Failed to get login URL:", error);
+
         return null;
       }
     },
@@ -91,30 +96,44 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         if (!(state.has("code") && state.has("state") && state.has("iss"))) {
           throw new Error("Missing params, got: " + state);
         }
+
         // are we already logged in?
         if (get().status === "loggedIn") {
           return;
         }
+
+        const oauthIssuer = state.get("iss");
+
+        const callbackAuth = createOAuthClient(
+          baseUrl,
+          pdsHostFromOAuthIssuer(
+            oauthIssuer,
+            pdsHostFromOAuthIssuer(get().oauthIssuer),
+          ),
+        );
+
         const { session, state: oauthState } =
-          await initialAuth.callback(state);
+          await callbackAuth.callback(state);
+
         const agent = new Agent(session);
         set({
-          // TODO: fork or update auth lib
-          oauthSession: session as any,
+          auth: callbackAuth,
+          oauthSession: session,
+          oauthIssuer: oauthIssuer ?? get().oauthIssuer,
           oauthState,
           status: "loggedIn",
           pdsAgent: addDocs(agent),
           isAgentReady: true,
         });
         get().populateLoggedInProfile();
-      } catch (error: any) {
+      } catch (error) {
         console.error("OAuth callback failed:", error);
         set({
           status: "loggedOut",
           login: {
             loading: false,
             error:
-              (error?.message as string) ||
+              (error instanceof Error && error.message) ||
               "Unknown error during OAuth callback",
           },
         });
@@ -122,14 +141,21 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     },
     restorePdsAgent: async () => {
       let did = get().oauthSession?.sub;
+
       if (!did) {
-        //
-        // throw new Error("No session");
+        set({ status: "loggedOut" });
+
         return;
       }
+
       try {
         // restore session
-        let sess = await initialAuth.restore(did);
+        const restoreAuth = createOAuthClient(
+          baseUrl,
+          pdsHostFromOAuthIssuer(get().oauthIssuer),
+        );
+
+        let sess = await restoreAuth.restore(did);
 
         if (!sess) {
           throw new Error("Failed to restore session");
@@ -138,6 +164,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         const agent = new Agent(sess);
 
         set({
+          auth: restoreAuth,
           pdsAgent: addDocs(agent),
           isAgentReady: true,
           status: "loggedIn",
@@ -157,6 +184,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       set({
         status: "loggedOut",
         oauthSession: null,
+        oauthIssuer: null,
         oauthState: null,
         profiles,
         pdsAgent: null,
@@ -167,33 +195,32 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     populateLoggedInProfile: async () => {
       console.log("Populating logged in profile");
       const agent = get().pdsAgent;
+
       if (!agent) {
         throw new Error("No agent");
       }
+
       if (!agent.did) {
         throw new Error("No agent did! This is bad!");
       }
+
       try {
         let bskyProfile = await agent
           .getProfile({ actor: agent.did })
           .then((profile) => {
             console.log(profile);
+
             return profile.data || null;
           });
+
         // get teal did
         try {
-          let tealDid = get().tealDid;
-          let tealProfile = await agent
-            .call(
-              "fm.teal.actor.getProfile",
-              { actor: agent?.did },
-              {},
-              { headers: { "atproto-proxy": tealDid + "#teal_fm_appview" } },
-            )
-            .then((profile) => {
-              console.log(profile);
-              return profile.data.actor || null;
-            });
+          // Aqua is the source of truth for Teal identity data. Fetching it
+          // directly avoids depending on the user's PDS proxy configuration,
+          // which can otherwise leave the shell showing stale Bluesky data.
+          const tealProfile = await getProfile(agent.did).then(
+            ({ profile }) => profile,
+          );
 
           set({
             profiles: {
@@ -201,7 +228,10 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
             },
           });
         } catch (error) {
-          console.error("Failed to get teal profile:", error);
+          if (!(error instanceof XrpcError && error.status === 404)) {
+            console.error("Failed to get teal profile:", error);
+          }
+
           // insert bsky profile
           set({
             profiles: {
@@ -218,7 +248,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
 
 function addDocs(agent: Agent) {
   Lexicons.schemas
-    .filter((schema) => !schema.id.startsWith("app.bsky."))
+    .filter((schema) => schema.id.startsWith("fm.teal."))
     .map((schema) => {
       try {
         agent.lex.add(schema);
@@ -226,5 +256,6 @@ function addDocs(agent: Agent) {
         console.error("Failed to add schema:", e);
       }
     });
+
   return agent;
 }
