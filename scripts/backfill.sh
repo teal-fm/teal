@@ -73,4 +73,4 @@ else
 fi
 
 echo "Starting Cadet's tab-backfill consumer against $TAB_CHANNEL_URL"
-SQLX_OFFLINE=true cargo run -p cadet --bin tab-backfill
+SQLX_OFFLINE=true cargo run --release -p cadet --bin tab-backfill

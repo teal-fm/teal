@@ -21,9 +21,10 @@ The command:
   same ingestors as Cadet's Jetstream consumer
 
 The consumer acknowledges each event after storing it, so stopping and rerunning
-`pnpm backfill` resumes. It spreads records over workers by DID
-(`TAB_BACKFILL_WORKERS`, default 8), keeping each repo's records in order. Play
-counts update on Cadet's materialized-view refresh, so keep Cadet running
+`pnpm backfill` resumes. Records are stored by a pool of workers
+(`TAB_BACKFILL_WORKERS`, default 16); tab holds each repo's live events until
+its earlier events are acknowledged, so a repo's changes still apply in order.
+Play counts update on Cadet's materialized-view refresh, so keep Cadet running
 (`pnpm dev` does).
 
 Keep Postgres running and migrated before starting.
@@ -58,6 +59,6 @@ TAB_PORT=2480
 TAB_LIGHT_RAIL_SIGNAL_COLLECTIONS=fm.teal.feed.play,fm.teal.alpha.feed.play
 TAB_COLLECTION_FILTERS=fm.teal.*
 TAB_JETSTREAM_URL=wss://jetstream1.us-east.bsky.network
-TAB_BACKFILL_WORKERS=8
+TAB_BACKFILL_WORKERS=16
 TEAL_TAB_DIR=.teal-tab
 ```

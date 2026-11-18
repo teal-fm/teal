@@ -1,11 +1,12 @@
 //! Consume a tab (or Tap) channel and store every Teal record through Cadet's
 //! ingestors. Each event is acknowledged once it is handled, so a restart
-//! resumes where the last run stopped. Records are spread over workers by
-//! DID, which keeps each repo's records in order.
+//! resumes where the last run stopped. Workers share one queue: tab holds a
+//! repo's live events until every earlier event for that repo is
+//! acknowledged, so per-repo order holds without routing by DID, and Cadet's
+//! per-account lock serializes each account's play writes.
 
 use std::{
-    collections::{hash_map::DefaultHasher, HashMap},
-    hash::{Hash, Hasher},
+    collections::HashMap,
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc,
@@ -20,7 +21,7 @@ use rocketman::{
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use tracing::{error, info, warn};
 
@@ -91,12 +92,6 @@ fn tab_record_to_event(record: TabRecord) -> anyhow::Result<Event<Value>> {
     })
 }
 
-fn worker_for(did: &str, workers: usize) -> usize {
-    let mut hasher = DefaultHasher::new();
-    did.hash(&mut hasher);
-    usize::try_from(hasher.finish() % workers as u64).unwrap_or(0)
-}
-
 async fn ingest_record(ingestors: &Ingestors, record: TabRecord, counters: &Counters) {
     let collection = record.collection.clone();
     let Some(ingestor) = ingestors.get(&collection) else {
@@ -157,7 +152,7 @@ async fn main() -> anyhow::Result<()> {
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
         .filter(|&value| value > 0)
-        .unwrap_or(8);
+        .unwrap_or(16);
 
     let pool = db::init_pool().await?;
     let ingestors: Arc<Ingestors> = Arc::new(teal_ingestors::build_ingestors(pool));
@@ -183,15 +178,18 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    let mut senders = Vec::with_capacity(workers);
+    let (queue_tx, queue_rx) = mpsc::channel::<(u64, TabRecord)>(workers * 64);
+    let queue_rx = Arc::new(Mutex::new(queue_rx));
     let mut handles = Vec::with_capacity(workers);
     for _ in 0..workers {
-        let (tx, mut rx) = mpsc::channel::<(u64, TabRecord)>(256);
+        let queue_rx = queue_rx.clone();
         let ingestors = ingestors.clone();
         let counters = counters.clone();
         let out_tx = out_tx.clone();
         handles.push(tokio::spawn(async move {
-            while let Some((id, record)) = rx.recv().await {
+            loop {
+                let next = queue_rx.lock().await.recv().await;
+                let Some((id, record)) = next else { break };
                 ingest_record(&ingestors, record, &counters).await;
                 let ack = json!({ "type": "ack", "id": id }).to_string();
                 if out_tx.send(Message::Text(ack.into())).is_err() {
@@ -199,7 +197,6 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
         }));
-        senders.push(tx);
     }
 
     while let Some(message) = ws_read.next().await {
@@ -227,9 +224,8 @@ async fn main() -> anyhow::Result<()> {
 
         match envelope.record {
             Some(record) if envelope.event_type == "record" => {
-                let worker = worker_for(&record.did, workers);
-                if senders[worker].send((envelope.id, record)).await.is_err() {
-                    anyhow::bail!("backfill worker {worker} stopped");
+                if queue_tx.send((envelope.id, record)).await.is_err() {
+                    anyhow::bail!("backfill workers stopped");
                 }
             }
             // Identity events and anything else: Cadet's live consumer owns
@@ -242,7 +238,7 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    drop(senders);
+    drop(queue_tx);
     for handle in handles {
         let _ = handle.await;
     }
@@ -314,12 +310,5 @@ mod tests {
         assert!(commit.record.is_none());
         assert!(commit.cid.is_none());
         Ok(())
-    }
-
-    #[test]
-    fn keeps_a_did_on_one_worker() {
-        let did = "did:plc:listener";
-        assert_eq!(worker_for(did, 8), worker_for(did, 8));
-        assert!(worker_for(did, 8) < 8);
     }
 }
