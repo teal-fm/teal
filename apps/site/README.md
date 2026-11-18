@@ -12,8 +12,25 @@ browser ──▶ Worker (TanStack Start, SSR + server functions)
               └─▶ Bluesky    app.bsky.actor.*       names and avatars
 ```
 
-The browser only talks to the Worker, apart from Bluesky's public typeahead in
-the search box and cover art from the Cover Art Archive.
+The browser talks to the Worker, plus a few public services: Bluesky's
+typeahead in the search box, cover art from the Cover Art Archive, and
+Jetstream for the live "Just played" list. Signing in is the exception that
+talks to HappyView directly (see below).
+
+## Signing in
+
+People sign in with their atproto account to edit or delete their own
+listens. The browser runs the OAuth flow with `@happyview/oauth-client-browser`
+against a *public* HappyView API client, so the session (a DPoP key and
+tokens) stays in that browser. It asks for `atproto` plus write access to the
+two play collections only. Edits and deletes call two HappyView procedures,
+`fm.teal.site.updatePlay` and `fm.teal.site.deletePlay`. Their scripts check
+that the play is the caller's, write to the caller's PDS (both twins, when a
+play is in both collections), and update `teal_plays` straight away.
+
+Locally the site is an atproto loopback client, which needs no published
+metadata but has to run on `127.0.0.1`: signing in from `localhost` moves
+you there first. Elsewhere the PDS reads `/oauth-client-metadata.json`.
 
 ## HappyView
 
@@ -28,6 +45,8 @@ the search box and cover art from the Cover Art Archive.
 - `scripts/fm.teal.site.*.lua`: the query handlers, plain SQL over `teal_plays`.
   Leaderboards are cached in `teal_site_cache` for 2 to 60 minutes, depending
   on the period.
+- `scripts/fm.teal.site.updatePlay.lua`, `scripts/fm.teal.site.deletePlay.lua`:
+  the procedures behind editing and deleting your own listens.
 - `scripts/prelude.lua`: helpers shared by all of the above. `sync.ts`
   prepends it to each script, since the sandbox has no `require`.
 
@@ -46,9 +65,11 @@ pnpm hv:sync --no-backfill
 # …then a few accounts' history.
 pnpm hv:sync backfill alice.bsky.social did:plc:...
 
-# The site's API client; paste the output into .dev.vars (see .dev.vars.example).
+# The site's API client and its sign-in client; paste the output into .dev.vars
+# (see .dev.vars.example).
 pnpm hv:sync client http://localhost:3005
-pnpm dev
+pnpm hv:sync login-client http://localhost:3005
+pnpm dev   # http://127.0.0.1:3005
 ```
 
 ### Production
@@ -62,7 +83,10 @@ pnpm dev
    the play lexicons for the first time starts the network backfill.
 4. `pnpm hv:sync client https://teal.fm`, then store the printed key and secret
    with `wrangler secret put HAPPYVIEW_CLIENT_KEY` and `… HAPPYVIEW_CLIENT_SECRET`.
-5. Set `HAPPYVIEW_URL` in `wrangler.jsonc` and run `pnpm deploy`.
+5. `pnpm hv:sync login-client https://teal.fm`, and set the printed
+   `HAPPYVIEW_LOGIN_CLIENT_KEY` as a var (it isn't secret). Set
+   `HAPPYVIEW_PUBLIC_URL` too if browsers reach HappyView at another URL.
+6. Set `HAPPYVIEW_URL` in `wrangler.jsonc` and run `pnpm deploy`.
 
 Re-run `pnpm hv:sync` whenever a lexicon or script changes. If `play.lua`
 changes how it fills `teal_plays`, backfill again to rebuild existing rows.
@@ -74,5 +98,9 @@ changes how it fills `teal_plays`, backfill again to rebuild existing rows.
 - `/profile/$handle`: someone's listen counts, top artists, tracks and albums
   for a period, and their listens, paged.
 - `/listens`: everyone's listens, newest first, paged.
+- `/oauth/callback`, `/oauth-client-metadata.json`: sign-in.
+
+Signed in, your own listens get an edit button on every list. The live list
+pauses (and drops its Jetstream socket) when you press its Live badge.
 
 If HappyView is down, the home page still renders without the leaderboard.

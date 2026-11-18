@@ -21,7 +21,27 @@ const COLLECTIONS = [STABLE, "fm.teal.alpha.feed.play"];
 const MAX_AGE_MS = 60 * 60 * 1000;
 const MAX_AHEAD_MS = 5 * 60 * 1000;
 
-export type LiveStatus = "connecting" | "live" | "offline";
+export type LiveStatus = "connecting" | "live" | "offline" | "paused";
+
+/** Remembered per browser, so a paused feed stays paused across visits. */
+const PAUSED_KEY = "teal:live-paused";
+
+function readPaused() {
+  try {
+    return localStorage.getItem(PAUSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writePaused(paused: boolean) {
+  try {
+    if (paused) localStorage.setItem(PAUSED_KEY, "1");
+    else localStorage.removeItem(PAUSED_KEY);
+  } catch {
+    // Storage can be off; pausing still works for this visit.
+  }
+}
 
 /** A play, marked when it arrived over the socket rather than with the page. */
 export type LivePlay = Play & { live?: boolean };
@@ -156,8 +176,8 @@ function parse(data: unknown): JetstreamEvent | undefined {
 
 /**
  * The newest `limit` plays: the server's first page, then every play that
- * arrives over Jetstream. The socket closes while the tab is hidden and
- * resumes from where it left off.
+ * arrives over Jetstream. The socket closes while the tab is hidden or the
+ * feed is paused, and resumes from where it left off.
  */
 export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
   const [plays, setPlays] = useState<LivePlay[]>(() =>
@@ -165,17 +185,41 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
   );
   const [profiles, setProfiles] = useState<Profiles>(initial.profiles);
   const [status, setStatus] = useState<LiveStatus>("connecting");
+  // Read from storage after mount, so the server render matches the first client one.
+  const [paused, setPausedState] = useState<boolean | undefined>(undefined);
+  const cursor = useRef<number | undefined>(undefined);
   // Re-renders "just now" into "2 min ago" as time passes.
   const [, tick] = useReducer((n: number) => n + 1, 0);
   const known = useRef(new Set(Object.keys(initial.profiles)));
 
+  useEffect(() => setPausedState(readPaused()), []);
+
+  const setPaused = (next: boolean) => {
+    writePaused(next);
+    setPausedState(next);
+  };
+
+  /** Applies the viewer's own edit (or deletion, with null) without waiting for the echo. */
+  const replace = (uri: string, play: Play | null) =>
+    setPlays((current) =>
+      play
+        ? current.map((other) =>
+            other.uri === uri ? { ...play, live: other.live } : other,
+          )
+        : current.filter((other) => other.uri !== uri),
+    );
+
   useEffect(() => {
+    if (paused === undefined) return;
+    if (paused) {
+      setStatus("paused");
+      return;
+    }
     const clock = setInterval(tick, 30_000);
     let socket: WebSocket | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let lookup: ReturnType<typeof setTimeout> | undefined;
     let attempt = 0;
-    let cursor: number | undefined;
     let stopped = false;
     const wanted = new Set<string>();
 
@@ -224,7 +268,9 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
       for (const collection of COLLECTIONS) {
         url.searchParams.append("wantedCollections", collection);
       }
-      if (cursor) url.searchParams.set("cursor", String(cursor));
+      if (cursor.current) {
+        url.searchParams.set("cursor", String(cursor.current));
+      }
 
       const ws = new WebSocket(url);
       socket = ws;
@@ -235,7 +281,7 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
       ws.onmessage = (message) => {
         const event = parse(message.data);
         if (!event) return;
-        cursor = event.time_us;
+        cursor.current = event.time_us;
         receive(event);
       };
       ws.onclose = () => {
@@ -273,7 +319,7 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
       disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [limit]);
+  }, [limit, paused]);
 
-  return { plays, profiles, status };
+  return { plays, profiles, status, paused: !!paused, setPaused, replace };
 }

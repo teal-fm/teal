@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3005",
+    "dev": "vite dev --host 127.0.0.1 --port 3005",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
@@ -13,6 +13,7 @@
     "hv:sync": "node happyview/sync.ts"
   },
   "dependencies": {
+    "@happyview/oauth-client-browser": "^1.4.4",
     "@tanstack/react-router": "^1.170.46",
     "@tanstack/react-start": "^1.169.5",
     "lucide-react": "^1.72.0",

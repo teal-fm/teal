@@ -6,30 +6,47 @@ import { playKey, useLivePlays, type LiveStatus } from "~/lib/live";
 import { Card, Empty } from "./Card";
 import { PlayRow } from "./PlayList";
 
-function LiveBadge({ status }: { status: LiveStatus }) {
-  // Nothing until the socket first opens, so the server render stays quiet.
-  if (status === "connecting") return null;
+const LABELS: Record<LiveStatus, string> = {
+  connecting: "Connecting",
+  live: "Live",
+  offline: "Reconnecting",
+  paused: "Paused",
+};
+
+/** Shows the feed's state; pressing it pauses or resumes the feed. */
+function LiveBadge({
+  status,
+  paused,
+  onToggle,
+}: {
+  status: LiveStatus;
+  paused: boolean;
+  onToggle: () => void;
+}) {
   const live = status === "live";
 
   return (
-    <span
-      role="status"
-      className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-teal-700 dark:text-teal-300"
+    <button
+      type="button"
+      aria-pressed={!paused}
+      title={paused ? "Resume live updates" : "Pause live updates"}
+      onClick={onToggle}
+      className="-my-1 flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium uppercase tracking-wider text-teal-700 transition hover:bg-teal-500/10 dark:text-teal-300"
     >
       <span aria-hidden className="relative flex size-2">
         {live && (
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal-500 opacity-60 motion-reduce:animate-none" />
         )}
         <span
-          className={`relative inline-flex size-2 rounded-full ${live ? "bg-teal-500" : "bg-neutral-400"}`}
+          className={`relative inline-flex size-2 rounded-full ${live ? "bg-teal-500" : paused ? "border border-current" : "bg-neutral-400"}`}
         />
       </span>
-      {live ? "Live" : "Reconnecting"}
-    </span>
+      <span role="status">{LABELS[status]}</span>
+    </button>
   );
 }
 
-/** The newest listens, kept current over Jetstream. */
+/** The newest listens, kept current over Jetstream until paused. */
 export function LivePlays({
   initial,
   limit = 8,
@@ -37,12 +54,19 @@ export function LivePlays({
   initial: PlaysWithProfiles;
   limit?: number;
 }) {
-  const { plays, profiles, status } = useLivePlays(initial, limit);
+  const { plays, profiles, status, paused, setPaused, replace } =
+    useLivePlays(initial, limit);
 
   return (
     <Card
       title="Just played"
-      badge={<LiveBadge status={status} />}
+      badge={
+        <LiveBadge
+          status={status}
+          paused={paused}
+          onToggle={() => setPaused(!paused)}
+        />
+      }
       action={
         <Link
           to="/listens"
@@ -66,6 +90,7 @@ export function LivePlays({
               play={play}
               profiles={profiles}
               className={play.live ? "play-in" : ""}
+              onChange={(next) => replace(play.uri, next)}
             />
           ))}
         </ul>

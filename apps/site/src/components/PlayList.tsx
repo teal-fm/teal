@@ -1,21 +1,64 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { Pencil } from "lucide-react";
 
 import { getPlays, type PlaysWithProfiles } from "~/lib/api";
+import { useOwns } from "~/lib/auth";
 import { displayName, profilePath, timeAgo } from "~/lib/format";
 import type { Play, Profiles } from "~/lib/types";
 import { Avatar } from "./Avatar";
 import { Empty } from "./Card";
 import { Cover } from "./Cover";
+import { PlayEditor } from "./PlayEditor";
+
+/** Your own plays get an edit button; the rest of the row stays as it was. */
+function EditButton({
+  play,
+  onChange,
+}: {
+  play: Play;
+  onChange: (play: Play | null) => void;
+}) {
+  const owns = useOwns(play.did);
+  const [editing, setEditing] = useState(false);
+  if (!owns) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={`Edit ${play.trackName}`}
+        title="Edit or delete"
+        onClick={() => setEditing(true)}
+        className="rounded-full p-1 text-neutral-500 transition hover:bg-teal-500/10 hover:text-teal-700 dark:text-teal-100/50 dark:hover:text-teal-200"
+      >
+        <Pencil aria-hidden className="size-3.5" />
+      </button>
+      {editing && (
+        <PlayEditor
+          play={play}
+          onClose={() => setEditing(false)}
+          onDone={(next) => {
+            setEditing(false);
+            onChange(next);
+          }}
+        />
+      )}
+    </>
+  );
+}
 
 export function PlayRow({
   play,
   profiles,
   className = "",
+  onChange,
 }: {
   play: Play;
   profiles?: Profiles;
   className?: string;
+  /** Called with the edited play, or null once it's deleted. */
+  onChange?: (play: Play | null) => void;
 }) {
   const profile = profiles?.[play.did];
   const byline = [play.artists.join(", "), play.releaseName]
@@ -55,13 +98,16 @@ export function PlayRow({
             <span className="truncate">{displayName(profile, play.did)}</span>
           </Link>
         )}
-        <time
-          dateTime={play.playedTime}
-          suppressHydrationWarning
-          className="text-xs text-neutral-500 dark:text-teal-100/50"
-        >
-          {timeAgo(play.playedTime)}
-        </time>
+        <div className="flex items-center gap-1">
+          {onChange && <EditButton play={play} onChange={onChange} />}
+          <time
+            dateTime={play.playedTime}
+            suppressHydrationWarning
+            className="text-xs text-neutral-500 dark:text-teal-100/50"
+          >
+            {timeAgo(play.playedTime)}
+          </time>
+        </div>
       </div>
     </li>
   );
@@ -78,10 +124,14 @@ export function PlayList({
   showPeople?: boolean;
 }) {
   const [pages, setPages] = useState([initial]);
+  const [source, setSource] = useState(initial);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   // The loader hands over a new first page when the route's data changes.
-  if (pages[0] !== initial) setPages([initial]);
+  if (source !== initial) {
+    setSource(initial);
+    setPages([initial]);
+  }
 
   const last = pages[pages.length - 1];
   const plays = pages.flatMap((page) => page.plays);
@@ -103,13 +153,28 @@ export function PlayList({
     }
   }
 
+  const change = (uri: string, next: Play | null) =>
+    setPages((current) =>
+      current.map((page) => ({
+        ...page,
+        plays: next
+          ? page.plays.map((play) => (play.uri === uri ? next : play))
+          : page.plays.filter((play) => play.uri !== uri),
+      })),
+    );
+
   if (plays.length === 0) return <Empty>No listens yet.</Empty>;
 
   return (
     <>
       <ul className="divide-y divide-neutral-400/15">
         {plays.map((play) => (
-          <PlayRow key={play.uri} play={play} profiles={profiles} />
+          <PlayRow
+            key={play.uri}
+            play={play}
+            profiles={profiles}
+            onChange={(next) => change(play.uri, next)}
+          />
         ))}
       </ul>
       {last.cursor && (

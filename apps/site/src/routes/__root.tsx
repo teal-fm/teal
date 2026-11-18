@@ -7,6 +7,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
+import { AuthProvider } from "~/lib/auth";
 import appCss from "~/styles.css?url";
 
 export const Route = createRootRoute({
@@ -51,7 +52,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         <Scripts />
         <script
           defer

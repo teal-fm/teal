@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 
+import { Account } from "~/components/Account";
 import { Card } from "~/components/Card";
 import { Landing } from "~/components/Landing";
 import { LivePlays } from "~/components/LivePlays";
@@ -39,7 +40,10 @@ function Home() {
 
   return (
     <>
-      <header className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 pb-14 pt-20 text-center sm:pt-28">
+      <div className="mx-auto flex max-w-5xl justify-end px-4 pt-5 sm:px-6 lg:px-8">
+        <Account />
+      </div>
+      <header className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 pb-14 pt-10 text-center sm:pt-18">
         <h1>
           <Logo />
         </h1>

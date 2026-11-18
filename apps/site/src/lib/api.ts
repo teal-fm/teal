@@ -82,6 +82,18 @@ export const getPlays = createServerFn({ method: "GET" })
   .validator((data: { did?: string; cursor?: string }) => data)
   .handler(({ data }) => playsPage(data.did, data.cursor, 30));
 
+/**
+ * Where the browser signs in: HappyView's public URL and the key of its public
+ * API client. Undefined when sign-in isn't set up, which hides it.
+ */
+export const getAuthConfig = createServerFn({ method: "GET" }).handler(() => {
+  const instanceUrl =
+    process.env.HAPPYVIEW_PUBLIC_URL ?? process.env.HAPPYVIEW_URL;
+  const clientKey = process.env.HAPPYVIEW_LOGIN_CLIENT_KEY;
+
+  return instanceUrl && clientKey ? { instanceUrl, clientKey } : undefined;
+});
+
 /** Names and avatars for accounts first seen in the live feed. */
 export const getProfilesFor = createServerFn({ method: "GET" })
   .validator((data: { dids: string[] }) => ({

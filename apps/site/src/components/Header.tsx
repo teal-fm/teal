@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import { Account } from "./Account";
 import { Logo } from "./Logo";
 import { SearchBox } from "./SearchBox";
 
@@ -13,6 +14,7 @@ export function Header() {
       <div className="ml-auto w-full max-w-xs">
         <SearchBox size="sm" />
       </div>
+      <Account />
     </header>
   );
 }
