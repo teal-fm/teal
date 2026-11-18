@@ -26,11 +26,14 @@ export const Route = createFileRoute("/")({
     return period === "week" ? {} : { period };
   },
   loaderDeps: ({ search }) => ({ period: search.period ?? "week" }),
-  loader: ({ deps }) => getHome({ data: deps }),
+  // Never throws: without listens the page is the plain landing page, not an error.
+  loader: ({ deps }) =>
+    getHome({ data: deps }).catch((error: unknown) => {
+      console.error("home: listens unavailable", error);
+      return undefined;
+    }),
   component: Home,
 });
-
-const NO_PLAYS = { plays: [], profiles: {} };
 
 type HomeData = NonNullable<Awaited<ReturnType<typeof getHome>>>;
 
@@ -43,7 +46,9 @@ function Home() {
       <div className="mx-auto flex max-w-5xl justify-end px-4 pt-5 sm:px-6 lg:px-8">
         <Account />
       </div>
-      <header className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 pb-14 pt-10 text-center sm:pt-18">
+      <header
+        className={`mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 pt-10 text-center sm:pt-18 ${home ? "pb-14" : ""}`}
+      >
         <h1>
           <Logo />
         </h1>
@@ -54,37 +59,35 @@ function Home() {
           </span>{" "}
           tracked.
         </p>
-        <div className="mt-4 w-full">
-          <SearchBox />
-        </div>
+        {home && (
+          <div className="mt-4 w-full">
+            <SearchBox />
+          </div>
+        )}
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        {/* Jetstream keeps this going even when HappyView is down. */}
-        <LivePlays initial={home?.recent ?? NO_PLAYS} />
+      {/* Without listens (HappyView down), the page is just the landing page. */}
+      {home && (
+        <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <LivePlays initial={home.recent} />
 
-        <section className="mt-14">
-          {home ? (
+          <section className="mt-14">
             <Boards {...home} period={period} />
-          ) : (
-            <p className="text-center text-neutral-600 dark:text-teal-100/60">
-              The leaderboard is taking a breather. Check back in a minute.
-            </p>
-          )}
-        </section>
+          </section>
 
-        <a
-          href="#features"
-          aria-label="More about teal.fm"
-          className="mx-auto mt-16 flex w-fit flex-col items-center text-sm text-teal-700 dark:text-teal-300"
-        >
-          What's teal.fm?
-          <ChevronDown
-            aria-hidden
-            className="size-6 animate-bounce motion-reduce:animate-none"
-          />
-        </a>
-      </main>
+          <a
+            href="#features"
+            aria-label="More about teal.fm"
+            className="mx-auto mt-16 flex w-fit flex-col items-center text-sm text-teal-700 dark:text-teal-300"
+          >
+            What's teal.fm?
+            <ChevronDown
+              aria-hidden
+              className="size-6 animate-bounce motion-reduce:animate-none"
+            />
+          </a>
+        </main>
+      )}
 
       <Landing />
     </>
