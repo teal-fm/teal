@@ -128,19 +128,21 @@ async function main() {
     if (!origin) throw new Error("Usage: sync.ts login-client <site origin>");
     const site = new URL(origin);
     // Public: sign-in and writes run in the browser, which can't keep a secret.
-    // Locally the site is an atproto loopback client, served from 127.0.0.1.
+    // Locally the site is an atproto loopback client served from 127.0.0.1,
+    // whose ID HappyView derives itself (see loopbackClientId in src/lib/oauth.ts).
     const loopback = ["localhost", "127.0.0.1"].includes(site.hostname);
     const browserOrigin = loopback
       ? `http://127.0.0.1${site.port ? `:${site.port}` : ""}`
       : origin;
-    const redirectUri = `${browserOrigin}/oauth/callback`;
     const client = await admin("POST", "/api-clients", {
       name: "teal.fm sign-in",
       client_id_url: loopback
-        ? `http://localhost?${new URLSearchParams({ redirect_uri: redirectUri, scope: SCOPES })}`
+        ? `http://localhost?${new URLSearchParams({ scope: SCOPES })}`
         : `${origin}/oauth-client-metadata.json`,
       client_uri: browserOrigin,
-      redirect_uris: [redirectUri],
+      redirect_uris: [
+        loopback ? `${browserOrigin}/` : `${browserOrigin}/oauth/callback`,
+      ],
       client_type: "public",
       allowed_origins: [browserOrigin],
       scopes: SCOPES,

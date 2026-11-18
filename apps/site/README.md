@@ -29,8 +29,9 @@ that the play is the caller's, write to the caller's PDS (both twins, when a
 play is in both collections), and update `teal_plays` straight away.
 
 Locally the site is an atproto loopback client, which needs no published
-metadata but has to run on `127.0.0.1`: signing in from `localhost` moves
-you there first. Elsewhere the PDS reads `/oauth-client-metadata.json`.
+metadata but has to run on `127.0.0.1` (signing in from `localhost` moves you
+there first) and comes back to `/` rather than `/oauth/callback`. Elsewhere
+the PDS reads `/oauth-client-metadata.json`.
 
 ## HappyView
 

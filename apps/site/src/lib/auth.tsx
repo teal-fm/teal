@@ -13,7 +13,7 @@ import type {
 } from "@happyview/oauth-client-browser";
 
 import { getAuthConfig, getProfilesFor } from "./api";
-import { CALLBACK_PATH, isLoopback, oauthClient, SCOPES } from "./oauth";
+import { isLoopback, oauthClient, SCOPES } from "./oauth";
 import type { Profile } from "./types";
 
 /**
@@ -41,6 +41,21 @@ const Context = createContext<AuthContext | undefined>(undefined);
 
 /** Locally, loopback OAuth redirects to 127.0.0.1, whose storage localhost can't see. */
 const HANDOFF = "#signin=";
+
+/**
+ * The query the page loaded with, read before the router hydrates. It holds
+ * the OAuth response after a sign-in: at /oauth/callback, or at / locally.
+ */
+const LANDING_SEARCH =
+  typeof window === "undefined" ? "" : window.location.search;
+
+function callbackSearch() {
+  const params = new URLSearchParams(LANDING_SEARCH);
+  const isCallback =
+    params.has("state") && (params.has("code") || params.has("error"));
+
+  return isCallback ? LANDING_SEARCH : undefined;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -133,22 +148,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         scopes: SCOPES,
       });
 
-      const onCallback = location.pathname === CALLBACK_PATH;
+      const callback = callbackSearch();
       try {
-        const result = await client.current.init();
+        const result = callback
+          ? await client.current.initCallback(callback)
+          : await client.current.initRestore();
         if (cancelled) return;
         if (result?.session) signedIn(result.session);
         else setAuth({ status: "signed-out" });
-        if (onCallback) {
-          const state = result && "state" in result ? result.state : null;
-          router.history.replace(state?.startsWith("/") ? state : "/");
+        if (callback) {
+          const state =
+            result && "state" in result ? String(result.state ?? "") : "";
+          router.history.replace(state.startsWith("/") ? state : "/");
         }
       } catch (cause) {
         console.error("sign-in callback", cause);
         if (cancelled) return;
         setAuth({ status: "signed-out" });
         setError("Sign-in didn't finish. Try again.");
-        if (onCallback) router.history.replace("/");
+        if (callback) router.history.replace("/");
       }
 
       if (location.hash.startsWith(HANDOFF) && isLoopback(location)) {

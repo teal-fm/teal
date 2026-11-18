@@ -11,6 +11,10 @@ export const SCOPES = [
 export const CALLBACK_PATH = "/oauth/callback";
 export const METADATA_PATH = "/oauth-client-metadata.json";
 
+/** URLSearchParams encodes like serde_html_form: spaces as "+", ":" as "%3A". */
+export const loopbackClientId = () =>
+  `http://localhost?${new URLSearchParams({ scope: SCOPES })}`;
+
 const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 export const isLoopback = (location: { hostname: string }) =>
@@ -18,7 +22,11 @@ export const isLoopback = (location: { hostname: string }) =>
 
 /**
  * The client ID and redirect for an origin. Locally that's an atproto loopback
- * client, which needs no published metadata but must redirect to 127.0.0.1.
+ * client, which needs no published metadata. Its ID has to be exactly the one
+ * HappyView derives for a loopback API client (atrium's: the scope and no
+ * redirect_uri), because HappyView refreshes the session under that ID to
+ * confirm its scopes. Without a redirect_uri in the ID, the PDS allows only the
+ * loopback default, the root of 127.0.0.1 on any port.
  */
 export function oauthClient(location: {
   origin: string;
@@ -32,13 +40,11 @@ export function oauthClient(location: {
     };
   }
   const port = location.port ? `:${location.port}` : "";
-  const redirectUri = `http://127.0.0.1${port}${CALLBACK_PATH}`;
-  const query = new URLSearchParams({
-    redirect_uri: redirectUri,
-    scope: SCOPES,
-  });
 
-  return { clientId: `http://localhost?${query}`, redirectUri };
+  return {
+    clientId: loopbackClientId(),
+    redirectUri: `http://127.0.0.1${port}/`,
+  };
 }
 
 /** The metadata document a PDS fetches from `clientId` outside loopback. */
