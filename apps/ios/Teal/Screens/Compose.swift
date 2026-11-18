@@ -433,6 +433,12 @@ struct AlbumLog: View {
         } catch {
             if saved > 0 {
                 selected.subtract(chosen.prefix(saved).map(\.id))
+                // Keep the rest where they were: a retry starts at the first unsaved
+                // track's time rather than rebuilding the timeline from the original start.
+                if saved < times.count {
+                    endingNow = false
+                    start = times[saved]
+                }
                 session.didWrite()
                 message = "\(saved) of \(writes.count) listens saved. The rest didn't; try again to save them."
             } else {

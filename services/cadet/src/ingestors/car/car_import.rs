@@ -794,6 +794,9 @@ impl CarImportIngestor {
 /// How long an account waits between repo imports it requests itself.
 const IMPORT_REQUEST_WINDOW_SECS: u64 = 6 * 60 * 60;
 
+/// How long a claim lasts before its job is confirmed queued.
+const IMPORT_CLAIM_SECS: u64 = 60;
+
 #[async_trait]
 impl LexiconIngestor for CarImportIngestor {
     async fn ingest(&self, message: Event<Value>) -> Result<()> {
@@ -836,12 +839,16 @@ impl LexiconIngestor for CarImportIngestor {
 
         // Each request downloads the whole repo, so one account gets at most one
         // queued import per window however many importRepo records it writes.
-        let claimed: bool = redis::cmd("SET")
-            .arg(format!("car_import_requested:{identity}"))
+        // The claim starts short and is extended only once the job is queued, so a
+        // dropped connection can't leave a long cooldown with nothing queued.
+        // (Garnet runs no Lua unless started with --lua, so this avoids a script.)
+        let claim_key = format!("car_import_requested:{identity}");
+        let claimed = redis::cmd("SET")
+            .arg(&claim_key)
             .arg(job.request_id.to_string())
             .arg("NX")
             .arg("EX")
-            .arg(IMPORT_REQUEST_WINDOW_SECS)
+            .arg(IMPORT_CLAIM_SECS)
             .query_async::<Option<String>>(&mut conn)
             .await?
             .is_some();
@@ -852,6 +859,9 @@ impl LexiconIngestor for CarImportIngestor {
 
         // Specify the expected return type to avoid FromRedisValue fallback issues in edition 2024
         let _: () = conn.lpush(queue_keys::CAR_IMPORT_JOBS, job_payload).await?;
+        let _: () = conn
+            .expire(&claim_key, IMPORT_REQUEST_WINDOW_SECS as i64)
+            .await?;
         tracing::info!("Enqueued CAR import job: {}", job.request_id);
 
         Ok(())

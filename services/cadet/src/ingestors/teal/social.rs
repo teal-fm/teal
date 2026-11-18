@@ -95,6 +95,9 @@ impl SocialRecordIngestor {
     pub async fn remove_record(&self, did: &str, rkey: &str) -> anyhow::Result<()> {
         let uri = assemble_at_uri(did, self.collection.nsid(), rkey);
         let mut tx = self.sql.begin().await?;
+        // Serialized with this account's inserts, so a delete can't interleave with
+        // a concurrent write of another record backing the same follow.
+        crate::account::lock_account(&mut tx, did).await?;
         self.remove_record_in_tx(&mut tx, &uri).await?;
         tx.commit().await?;
         info!("Deleted {} record {}", self.collection.nsid(), uri);

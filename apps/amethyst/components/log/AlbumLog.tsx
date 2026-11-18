@@ -99,8 +99,10 @@ export function AlbumLog() {
     setSaving(true);
     setError(null);
 
+    let records: ReturnType<typeof buildManualListenRecords> = [];
+
     try {
-      const records = buildManualListenRecords(release, chosen, mode, startDate, new Date());
+      records = buildManualListenRecords(release, chosen, mode, startDate, new Date());
       setSavedCount(await submitManualListenRecords(agent, records, (writes) => agent.did && retainConfirmedListens(agent.did, writes)));
     } catch (error) {
       if (error instanceof PartialSaveError) {
@@ -108,6 +110,15 @@ export function AlbumLog() {
         // selected, so trying again doesn't log those twice.
         const savedKeys = new Set(chosen.slice(0, error.saved).map((track) => track.key));
         setSelected((current) => new Set([...current].filter((key) => !savedKeys.has(key))));
+        // Keep the rest where they were: a retry starts at the first unsaved
+        // track's time rather than rebuilding the timeline from the original start.
+        const firstUnsaved = records[error.saved]?.playedTime;
+
+        if (firstUnsaved) {
+          setMode("custom");
+          setStart(localDateTimeValue(new Date(firstUnsaved)));
+        }
+
         setError(`${error.saved} of ${error.total} listens saved. The rest didn't; try again to save them.`);
       } else {
         setError("Your listens didn't save. Try again.");
