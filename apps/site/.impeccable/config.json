@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "ai-color-palette",
+        "value": "*",
+        "files": [
+          "src/components/Landing.tsx"
+        ],
+        "createdAt": "2026-11-18T22:41:00.345Z",
+        "reason": "agent: purple/pink feature glow is copied verbatim from the live teal.fm landing page, which the user asked to keep below the leaderboards"
+      }
+    ]
+  }
+}
