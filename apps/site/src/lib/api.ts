@@ -1,7 +1,7 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
-import { happyview } from "./server/happyview";
+import { happyview, happyviewInBackground } from "./server/happyview";
 import { getProfiles, resolveActor } from "./server/identity";
 import { getNowPlaying } from "./server/status";
 import type {
@@ -57,6 +57,14 @@ export const getHome = createServerFn({ method: "GET" })
         ),
         playsPage(undefined, undefined, 8),
       ]);
+      // A stale board still renders; HappyView rebuilds it after this response.
+      if (board.stale) {
+        happyviewInBackground("fm.teal.site.getLeaderboard", {
+          period: data.period,
+          limit: 10,
+          refresh: "true",
+        });
+      }
       const leaderboard: Leaderboard = {
         ...board,
         listeners: list(board.listeners),

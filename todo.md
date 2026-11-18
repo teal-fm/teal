@@ -1,3 +1,1 @@
 - Site: HappyView (`view.teal.fm`) is backfilling the play network; check `GET /admin/backfill/status` until both jobs finish.
-- Site: precompute leaderboards on a schedule before the all-time board hits ~8M plays; a cold rebuild takes 15 s+ per request.
-- Site: production runs `feature/listen-site`; open a PR and merge it to `main`.

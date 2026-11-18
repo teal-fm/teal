@@ -59,6 +59,8 @@ export interface Leaderboard {
   artists: ArtistStat[];
   tracks: TrackStat[];
   computedAt?: string;
+  /** Older than its period's refresh interval; a rebuild follows in the background. */
+  stale?: boolean;
 }
 
 export interface ActorStats {

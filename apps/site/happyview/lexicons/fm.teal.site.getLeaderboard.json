@@ -10,7 +10,13 @@
         "properties": {
           "period": {
             "type": "string",
-            "knownValues": ["day", "week", "month", "year", "all"],
+            "knownValues": [
+              "day",
+              "week",
+              "month",
+              "year",
+              "all"
+            ],
             "default": "week"
           },
           "limit": {
@@ -18,6 +24,10 @@
             "minimum": 1,
             "maximum": 50,
             "default": 10
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Rebuild the board now if it's stale. The site sends this in the background after a stale answer."
           }
         }
       },
@@ -34,22 +44,44 @@
             "tracks"
           ],
           "properties": {
-            "period": { "type": "string" },
-            "plays": { "type": "integer" },
-            "listenerCount": { "type": "integer" },
+            "period": {
+              "type": "string"
+            },
+            "plays": {
+              "type": "integer"
+            },
+            "listenerCount": {
+              "type": "integer"
+            },
             "listeners": {
               "type": "array",
-              "items": { "type": "ref", "ref": "fm.teal.site.defs#listener" }
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.site.defs#listener"
+              }
             },
             "artists": {
               "type": "array",
-              "items": { "type": "ref", "ref": "fm.teal.site.defs#artist" }
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.site.defs#artist"
+              }
             },
             "tracks": {
               "type": "array",
-              "items": { "type": "ref", "ref": "fm.teal.site.defs#track" }
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.site.defs#track"
+              }
             },
-            "computedAt": { "type": "string", "format": "datetime" }
+            "computedAt": {
+              "type": "string",
+              "format": "datetime"
+            },
+            "stale": {
+              "type": "boolean",
+              "description": "True when the board is older than its period's refresh interval."
+            }
           }
         }
       }

@@ -41,3 +41,21 @@ async function request<T>(path: string): Promise<T> {
 
   return body;
 }
+
+/**
+ * Calls a HappyView query after the response has gone out, for work no visitor
+ * should wait on, such as rebuilding a stale leaderboard. Failures are logged.
+ */
+export function happyviewInBackground(nsid: string, params: Params) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") search.set(key, String(value));
+  }
+  const work = request(`/xrpc/${nsid}?${search}`).catch((error: unknown) =>
+    console.error(`background ${nsid}`, error),
+  );
+  // Imported here so the module never reaches the client bundle.
+  import("cloudflare:workers")
+    .then(({ waitUntil }) => waitUntil(work))
+    .catch(() => undefined);
+}
