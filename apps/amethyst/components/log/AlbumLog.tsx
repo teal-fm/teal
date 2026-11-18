@@ -26,13 +26,17 @@ export function AlbumLog() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mode, setMode] = useState<ListenTimestampMode>("now");
   const [start, setStart] = useState(localDateTimeValue());
+  // After a partial save: the exact time the unsaved tracks start at, while the
+  // form still shows it. The form field holds minutes in local time, so it can't
+  // carry this without losing seconds (or an hour across a DST change).
+  const [retryFrom, setRetryFrom] = useState<{ at: Date; shown: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState<number | null>(null);
 
   const tracks = useMemo(() => (release ? flattenTracks(release) : []), [release]);
   const chosen = tracks.filter((track) => selected.has(track.key));
-  const startDate = parseLocalDateTime(start);
+  const startDate = retryFrom && mode === "custom" && start === retryFrom.shown ? retryFrom.at : parseLocalDateTime(start);
 
   const timeline = useMemo(() => {
     try {
@@ -115,8 +119,11 @@ export function AlbumLog() {
         const firstUnsaved = records[error.saved]?.playedTime;
 
         if (firstUnsaved) {
+          const at = new Date(firstUnsaved);
+          const shown = localDateTimeValue(at);
           setMode("custom");
-          setStart(localDateTimeValue(new Date(firstUnsaved)));
+          setStart(shown);
+          setRetryFrom({ at, shown });
         }
 
         setError(`${error.saved} of ${error.total} listens saved. The rest didn't; try again to save them.`);
