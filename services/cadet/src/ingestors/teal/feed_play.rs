@@ -407,15 +407,14 @@ fn uri_mbid_value(mbid: &UriValue) -> &str {
     mbid_value(mbid.as_str())
 }
 
+/// An MBID as `mbid:<uuid>`, or None when it is empty or not a bare UUID
+/// (some clients wrote other entity IDs, like `mbid:release-group:<uuid>`,
+/// into these fields). The play is still stored without it.
 fn normalized_mbid_text(mbid: &str) -> Option<String> {
     let value = mbid_value(mbid).trim();
-    if value.is_empty() {
-        None
-    } else if Uuid::parse_str(value).is_ok() {
-        Some(format!("mbid:{value}"))
-    } else {
-        Some(mbid.to_string())
-    }
+    Uuid::parse_str(value)
+        .ok()
+        .map(|uuid| format!("mbid:{}", uuid.hyphenated()))
 }
 
 fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
@@ -1766,6 +1765,18 @@ mod tests {
         let artists = play.artists.ok_or_else(|| anyhow::anyhow!("no artists"))?;
         assert_eq!(artists[0].artist_name.as_str(), "Yein");
         assert_eq!(play.duration, Some(156));
+        Ok(())
+    }
+
+    #[test]
+    fn clean_drops_mbids_that_are_not_bare_uuids() -> anyhow::Result<()> {
+        let record = super::parse_play(&json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Wrong Entity",
+            "recordingMbId": "mbid:release-group:182a8072-0513-3aa2-b812-9f7a9692731a",
+            "artists": [{ "artistName": "Someone" }]
+        }))?;
+        assert!(clean(&record).recording_mb_id.is_none());
         Ok(())
     }
 
