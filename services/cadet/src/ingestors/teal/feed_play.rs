@@ -421,11 +421,26 @@ fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
     normalized_mbid_text(mbid.as_str()).map(|value| UriValue::Any(SmolStr::new(value)))
 }
 
+/// `2026-04-03T18:56:16:00Z`, as piper's backfill wrote it, has a stray
+/// field after the seconds; the time without it is still exact UTC.
+fn repair_played_time(text: &str) -> Option<String> {
+    let (time, stray) = text.strip_suffix('Z')?.rsplit_once(':')?;
+    let stray_is_field = stray.len() == 2 && stray.bytes().all(|byte| byte.is_ascii_digit());
+    let time_is_whole = chrono::NaiveDateTime::parse_from_str(time, "%Y-%m-%dT%H:%M:%S").is_ok();
+    (stray_is_field && time_is_whole).then(|| format!("{time}Z"))
+}
+
 /// Parse a play record from either namespace, repairing shapes older clients
-/// wrote: fractional durations, and artists given as bare name strings.
+/// wrote: fractional durations, artists given as bare name strings, and
+/// played times with a stray trailing field.
 pub fn parse_play(record: &Value) -> anyhow::Result<types::fm_teal::feed::play::Play> {
     let mut record = normalize_legacy_record_type(record);
     if let Value::Object(fields) = &mut record {
+        if let Some(Value::String(played_time)) = fields.get_mut("playedTime") {
+            if let Some(repaired) = repair_played_time(played_time) {
+                *played_time = repaired;
+            }
+        }
         if let Some(duration) = fields.get_mut("duration") {
             if let (None, Some(seconds)) = (duration.as_i64(), duration.as_f64()) {
                 if seconds.is_finite() {
@@ -1765,6 +1780,22 @@ mod tests {
         let artists = play.artists.ok_or_else(|| anyhow::anyhow!("no artists"))?;
         assert_eq!(artists[0].artist_name.as_str(), "Yein");
         assert_eq!(play.duration, Some(156));
+        Ok(())
+    }
+
+    #[test]
+    fn repairs_played_times_with_a_stray_trailing_field() -> anyhow::Result<()> {
+        let play = super::parse_play(&json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Backfilled",
+            "playedTime": "2026-04-03T18:56:16:00Z"
+        }))?;
+        assert_eq!(
+            play.played_time.as_ref().map(|time| time.as_str()),
+            Some("2026-04-03T18:56:16Z")
+        );
+        assert!(super::repair_played_time("2026-04-03T18:56:16Z").is_none());
+        assert!(super::repair_played_time("·:00Z").is_none());
         Ok(())
     }
 
