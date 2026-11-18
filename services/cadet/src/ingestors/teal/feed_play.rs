@@ -422,7 +422,7 @@ fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
 }
 
 /// Repair played times older clients wrote in other shapes: Unix seconds or
-/// milliseconds as a string, and `2026-04-03T18:56:16:00Z` (piper's
+/// milliseconds (as a number or a string), and `2026-04-03T18:56:16:00Z` (piper's
 /// backfill), whose stray field after the seconds leaves exact UTC.
 fn repair_played_time(text: &str) -> Option<String> {
     if !text.is_empty() && text.bytes().all(|byte| byte.is_ascii_digit()) {
@@ -446,9 +446,16 @@ fn repair_played_time(text: &str) -> Option<String> {
 pub fn parse_play(record: &Value) -> anyhow::Result<types::fm_teal::feed::play::Play> {
     let mut record = normalize_legacy_record_type(record);
     if let Value::Object(fields) = &mut record {
-        if let Some(Value::String(played_time)) = fields.get_mut("playedTime") {
-            if let Some(repaired) = repair_played_time(played_time) {
-                *played_time = repaired;
+        if let Some(played_time) = fields.get_mut("playedTime") {
+            let repaired = match played_time {
+                Value::String(text) => repair_played_time(text),
+                Value::Number(number) => number
+                    .as_u64()
+                    .and_then(|number| repair_played_time(&number.to_string())),
+                _ => None,
+            };
+            if let Some(repaired) = repaired {
+                *played_time = Value::String(repaired);
             }
         }
         if let Some(duration) = fields.get_mut("duration") {
@@ -1811,6 +1818,15 @@ mod tests {
         assert_eq!(
             super::repair_played_time("1773944674004").as_deref(),
             Some("2026-03-19T18:24:34Z")
+        );
+        let numeric = super::parse_play(&json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Numeric",
+            "playedTime": 1760396159
+        }))?;
+        assert_eq!(
+            numeric.played_time.as_ref().map(|time| time.as_str()),
+            Some("2025-10-13T22:55:59Z")
         );
         assert!(super::repair_played_time("2026-04-03T18:56:16Z").is_none());
         assert!(super::repair_played_time("·:00Z").is_none());
