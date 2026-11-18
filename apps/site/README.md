@@ -75,19 +75,24 @@ pnpm dev   # http://127.0.0.1:3005
 
 ### Production
 
-1. Deploy HappyView with Postgres, following its
-   `docker-compose.prod.postgres.yml`. The full network backfill holds about
-   8M play records.
-2. Sign in to its dashboard (the first account becomes super user) and create
-   an API key with lexicon, script, backfill and API client permissions.
-3. `HAPPYVIEW_URL=https://… HAPPYVIEW_ADMIN_KEY=hv_… pnpm hv:sync`. Uploading
-   the play lexicons for the first time starts the network backfill.
-4. `pnpm hv:sync client https://teal.fm`, then store the printed key and secret
-   with `wrangler secret put HAPPYVIEW_CLIENT_KEY` and `… HAPPYVIEW_CLIENT_SECRET`.
-5. `pnpm hv:sync login-client https://teal.fm`, and set the printed
-   `HAPPYVIEW_LOGIN_CLIENT_KEY` as a var (it isn't secret). Set
-   `HAPPYVIEW_PUBLIC_URL` too if browsers reach HappyView at another URL.
-6. Set `HAPPYVIEW_URL` in `wrangler.jsonc` and run `pnpm deploy`.
+- **Site:** the `teal-site` Worker on Cloudflare, serving `teal.fm` (a custom
+  domain in `wrangler.jsonc`) with Smart Placement. `pnpm deploy` builds and
+  deploys it. Delete `dist/server/.dev.vars` first: the Vite plugin copies it
+  there for `vite preview`.
+- **HappyView:** the `teal-happyview` Railway project, at `https://view.teal.fm`.
+  It runs the pinned `ghcr.io/gamesgamesgamesgamesgames/happyview:2.17.6`
+  image (the loopback sign-in fix relies on how this version builds client
+  IDs) against Railway Postgres, which has daily and weekly backups. Railway
+  Postgres allows 100 connections, so HappyView's pools are sized to fit:
+  `DATABASE_MAX_CONNECTIONS=24` and `BACKFILL_CONCURRENT_RESOLUTION=30`, for a
+  64-connection backfill pool.
+- **Keys:** the super user is the site owner's DID, and the sync API key is in
+  `.prod.vars` (gitignored). Sync against production with
+  `set -a; . ./.prod.vars; set +a; pnpm hv:sync`. The Worker's
+  `HAPPYVIEW_CLIENT_KEY` and `HAPPYVIEW_CLIENT_SECRET` are Worker secrets; the
+  public `HAPPYVIEW_LOGIN_CLIENT_KEY` is a var in `wrangler.jsonc`.
+- **Rollback:** the old landing page is still the `teal-landing` Pages project.
+  Detach `teal.fm` from the Worker and point it back there.
 
 Re-run `pnpm hv:sync` whenever a lexicon or script changes. If `play.lua`
 changes how it fills `teal_plays`, backfill again to rebuild existing rows.
