@@ -422,6 +422,31 @@ fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
     normalized_mbid_text(mbid.as_str()).map(|value| UriValue::Any(SmolStr::new(value)))
 }
 
+/// Parse a play record from either namespace, repairing shapes older clients
+/// wrote: fractional durations, and artists given as bare name strings.
+pub fn parse_play(record: &Value) -> anyhow::Result<types::fm_teal::feed::play::Play> {
+    let mut record = normalize_legacy_record_type(record);
+    if let Value::Object(fields) = &mut record {
+        if let Some(duration) = fields.get_mut("duration") {
+            if let (None, Some(seconds)) = (duration.as_i64(), duration.as_f64()) {
+                if seconds.is_finite() {
+                    *duration = Value::from(seconds.round() as i64);
+                }
+            }
+        }
+        if let Some(Value::Array(artists)) = fields.get_mut("artists") {
+            for artist in artists.iter_mut() {
+                if let Value::String(name) = artist {
+                    *artist = serde_json::json!({ "artistName": name });
+                }
+            }
+        }
+    }
+    Ok(value::from_json_value::<types::fm_teal::feed::play::Play>(
+        record,
+    )?)
+}
+
 fn clean(record: &types::fm_teal::feed::play::Play) -> types::fm_teal::feed::play::Play {
     let mut cleaned = record.clone();
 
@@ -1651,10 +1676,7 @@ impl LexiconIngestor for PlayIngestor {
     async fn ingest(&self, message: Event<Value>) -> anyhow::Result<()> {
         if let Some(commit) = &message.commit {
             if let Some(ref record) = &commit.record {
-                let record: types::fm_teal::feed::play::Play =
-                    value::from_json_value::<types::fm_teal::feed::play::Play>(
-                        normalize_legacy_record_type(record),
-                    )?;
+                let record = parse_play(record)?;
                 if let Some(ref commit) = message.commit {
                     if let Some(ref cid) = commit.cid {
                         // TODO: verify cid
@@ -1730,6 +1752,21 @@ mod tests {
                 "playedTime": "2026-06-01T00:00:00Z"
             }),
         )?)
+    }
+
+    #[test]
+    fn parses_legacy_string_artists_and_fractional_durations() -> anyhow::Result<()> {
+        let play = super::parse_play(&json!({
+            "$type": "fm.teal.alpha.feed.play",
+            "trackName": "Plus n Minus",
+            "artists": ["Yein"],
+            "duration": 155.6,
+            "playedTime": "2026-08-23T09:59:50Z"
+        }))?;
+        let artists = play.artists.ok_or_else(|| anyhow::anyhow!("no artists"))?;
+        assert_eq!(artists[0].artist_name.as_str(), "Yein");
+        assert_eq!(play.duration, Some(156));
+        Ok(())
     }
 
     #[test]

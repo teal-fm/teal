@@ -455,9 +455,7 @@ impl CarImportIngestor {
 
     /// Process a play record using the existing PlayIngestor
     async fn process_play_record(&self, record: &ExtractedRecord, did: &str) -> Result<()> {
-        let data = Self::normalize_play_record_json(normalize_legacy_record_type(&record.data));
-        let play_record: types::fm_teal::feed::play::Play =
-            value::from_json_value::<types::fm_teal::feed::play::Play>(data)?;
+        let play_record = super::super::teal::feed_play::parse_play(&record.data)?;
 
         let play_ingestor = super::super::teal::feed_play::PlayIngestor::new(self.sql.clone());
         let uri = super::super::teal::assemble_at_uri(did, "fm.teal.feed.play", &record.rkey);
@@ -478,22 +476,6 @@ impl CarImportIngestor {
             play_record.track_name, play_record.artist_names
         );
         Ok(())
-    }
-
-    fn normalize_play_record_json(mut data: Value) -> Value {
-        let Some(duration) = data.get_mut("duration") else {
-            return data;
-        };
-
-        let Some(float_duration) = duration.as_f64() else {
-            return data;
-        };
-
-        if duration.as_i64().is_none() && float_duration.is_finite() {
-            *duration = Value::Number((float_duration.round() as i64).into());
-        }
-
-        data
     }
 
     /// Process a profile record using the existing ActorProfileIngestor
