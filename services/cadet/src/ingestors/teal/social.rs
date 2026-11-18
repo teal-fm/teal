@@ -597,6 +597,19 @@ async fn remove_follow(tx: &mut Transaction<'_, Postgres>, uri: &str) -> anyhow:
             .bind(&other)
             .execute(&mut **tx)
             .await?;
+            // The "followed you" notification belongs to the follow, not to one
+            // record, so it moves too rather than being cleaned up below.
+            sqlx::query(
+                r#"
+                    UPDATE social_notifications SET record_uri = $2
+                    WHERE record_uri = $1
+                      AND NOT EXISTS (SELECT 1 FROM social_notifications WHERE record_uri = $2)
+                "#,
+            )
+            .bind(uri)
+            .bind(&other)
+            .execute(&mut **tx)
+            .await?;
         }
         None => {
             sqlx::query("DELETE FROM social_follows WHERE uri = $1")
@@ -1017,6 +1030,13 @@ mod tests {
                 .is_some_and(|uri| uri.ends_with("/3second")),
             "the second record still backs the follow"
         );
+        let notifications = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM social_notifications WHERE recipient_did = $1 AND reason = 'follow'",
+        )
+        .bind(&subject)
+        .fetch_one(&pool)
+        .await?;
+        assert_eq!(notifications, 1, "the follow keeps its notification");
 
         follows.remove_record(&did, "3second").await?;
         assert_eq!(follow_uri().await?, None);
