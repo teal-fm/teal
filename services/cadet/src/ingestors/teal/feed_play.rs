@@ -422,7 +422,7 @@ fn normalize_mbid_uri(mbid: &UriValue) -> Option<UriValue> {
 }
 
 /// Repair played times older clients wrote in other shapes: Unix seconds or
-/// milliseconds (as a number or a string), and `2026-04-03T18:56:16:00Z` (piper's
+/// milliseconds (as a number or a string), times with no zone, and `2026-04-03T18:56:16:00Z` (piper's
 /// backfill), whose stray field after the seconds leaves exact UTC.
 fn repair_played_time(text: &str) -> Option<String> {
     if !text.is_empty() && text.bytes().all(|byte| byte.is_ascii_digit()) {
@@ -433,6 +433,18 @@ fn repair_played_time(text: &str) -> Option<String> {
             _ => None,
         }?;
         return Some(datetime.to_rfc3339_opts(chrono::SecondsFormat::Secs, true));
+    }
+    // Manual-entry clients wrote local times with no zone (sometimes without
+    // seconds). The zone is unknown, so read them as UTC rather than drop
+    // the listen.
+    for format in ["%Y-%m-%dT%H:%M:%S%.f", "%Y-%m-%dT%H:%M"] {
+        if let Ok(naive) = chrono::NaiveDateTime::parse_from_str(text, format) {
+            return Some(
+                naive
+                    .and_utc()
+                    .to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
+            );
+        }
     }
     let (time, stray) = text.strip_suffix('Z')?.rsplit_once(':')?;
     let stray_is_field = stray.len() == 2 && stray.bytes().all(|byte| byte.is_ascii_digit());
@@ -1827,6 +1839,14 @@ mod tests {
         assert_eq!(
             numeric.played_time.as_ref().map(|time| time.as_str()),
             Some("2025-10-13T22:55:59Z")
+        );
+        assert_eq!(
+            super::repair_played_time("2026-08-02T08:40").as_deref(),
+            Some("2026-08-02T08:40:00Z")
+        );
+        assert_eq!(
+            super::repair_played_time("2026-08-02T08:40:12").as_deref(),
+            Some("2026-08-02T08:40:12Z")
         );
         assert!(super::repair_played_time("2026-04-03T18:56:16Z").is_none());
         assert!(super::repair_played_time("·:00Z").is_none());
