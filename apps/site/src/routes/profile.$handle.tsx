@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Avatar } from "~/components/Avatar";
 import { Card } from "~/components/Card";
 import { Header } from "~/components/Header";
+import { NowPlaying } from "~/components/NowPlaying";
 import { PeriodTabs } from "~/components/PeriodTabs";
 import { PlayList } from "~/components/PlayList";
 import { ArtistRanking, TrackRanking } from "~/components/Rankings";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/profile/$handle")({
 });
 
 function ProfilePage() {
-  const { profile, stats, plays } = Route.useLoaderData();
+  const { profile, stats, plays, nowPlaying } = Route.useLoaderData();
   const { period } = Route.useLoaderDeps();
   const name = displayName(profile, profile.did);
 
@@ -57,6 +58,11 @@ function ProfilePage() {
             <p className="mt-1 text-sm text-neutral-600 dark:text-teal-100/60">
               {plural(stats.totalPlays, "listen")} all time
             </p>
+            <NowPlaying
+              key={profile.did}
+              did={profile.did}
+              initial={nowPlaying}
+            />
           </div>
         </div>
 

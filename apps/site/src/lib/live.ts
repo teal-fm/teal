@@ -1,19 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 
 import { getProfilesFor, type PlaysWithProfiles } from "./api";
+import { subscribe, type JetstreamEvent } from "./jetstream";
+import { artistsOf, isObject, str } from "./records";
 import type { Play, Profiles } from "./types";
 
-/**
- * HappyView only answers queries, so live plays come straight from Bluesky's
- * public Jetstream, filtered to the two play collections. On failure the
- * socket moves to the next instance.
- */
-const JETSTREAMS = [
-  "wss://jetstream2.us-east.bsky.network",
-  "wss://jetstream1.us-east.bsky.network",
-  "wss://jetstream2.us-west.bsky.network",
-  "wss://jetstream1.us-west.bsky.network",
-];
 const STABLE = "fm.teal.feed.play";
 const COLLECTIONS = [STABLE, "fm.teal.alpha.feed.play"];
 
@@ -45,42 +36,6 @@ function writePaused(paused: boolean) {
 
 /** A play, marked when it arrived over the socket rather than with the page. */
 export type LivePlay = Play & { live?: boolean };
-
-interface JetstreamEvent {
-  did: string;
-  time_us: number;
-  kind: string;
-  commit?: {
-    operation: "create" | "update" | "delete";
-    collection: string;
-    rkey: string;
-    record?: Record<string, unknown>;
-  };
-}
-
-const str = (value: unknown) =>
-  typeof value === "string" && value.trim() !== "" ? value : undefined;
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
-/** Mirrors artists_of in happyview/scripts/prelude.lua. */
-function artistsOf(record: Record<string, unknown>): string[] {
-  const names = Array.isArray(record.artists)
-    ? record.artists
-        .map((artist) =>
-          isObject(artist)
-            ? (str(artist.artistName) ?? str(artist.name))
-            : undefined,
-        )
-        .filter((name): name is string => name !== undefined)
-    : [];
-  if (names.length > 0) return names;
-
-  return Array.isArray(record.artistNames)
-    ? record.artistNames.filter((name): name is string => !!str(name))
-    : [];
-}
 
 /**
  * Unix milliseconds for playedTime, read like play.lua does: ISO 8601 with or
@@ -162,18 +117,6 @@ function merge(current: LivePlay[], play: LivePlay, limit: number) {
     .slice(0, limit);
 }
 
-function parse(data: unknown): JetstreamEvent | undefined {
-  if (typeof data !== "string") return undefined;
-  try {
-    const event = JSON.parse(data) as JetstreamEvent;
-    return typeof event.did === "string" && typeof event.time_us === "number"
-      ? event
-      : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 /**
  * The newest `limit` plays: the server's first page, then every play that
  * arrives over Jetstream. The socket closes while the tab is hidden or the
@@ -216,11 +159,7 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
       return;
     }
     const clock = setInterval(tick, 30_000);
-    let socket: WebSocket | undefined;
-    let retry: ReturnType<typeof setTimeout> | undefined;
     let lookup: ReturnType<typeof setTimeout> | undefined;
-    let attempt = 0;
-    let stopped = false;
     const wanted = new Set<string>();
 
     const lookUpProfiles = () => {
@@ -236,8 +175,7 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
 
     const receive = (event: JetstreamEvent) => {
       const commit = event.commit;
-      if (event.kind !== "commit" || !commit) return;
-      if (!COLLECTIONS.includes(commit.collection)) return;
+      if (!commit || !COLLECTIONS.includes(commit.collection)) return;
 
       if (commit.operation === "delete") {
         const uri = `at://${event.did}/${commit.collection}/${commit.rkey}`;
@@ -258,66 +196,20 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
       }
     };
 
-    const connect = () => {
-      if (stopped || document.hidden || socket) return;
-      setStatus("connecting");
-      const url = new URL(
-        "/subscribe",
-        JETSTREAMS[attempt % JETSTREAMS.length],
-      );
-      for (const collection of COLLECTIONS) {
-        url.searchParams.append("wantedCollections", collection);
-      }
-      if (cursor.current) {
-        url.searchParams.set("cursor", String(cursor.current));
-      }
-
-      const ws = new WebSocket(url);
-      socket = ws;
-      ws.onopen = () => {
-        attempt = 0;
-        setStatus("live");
-      };
-      ws.onmessage = (message) => {
-        const event = parse(message.data);
-        if (!event) return;
-        cursor.current = event.time_us;
-        receive(event);
-      };
-      ws.onclose = () => {
-        if (socket !== ws) return;
-        socket = undefined;
-        if (stopped || document.hidden) return;
-        setStatus("offline");
-        attempt += 1;
-        retry = setTimeout(connect, Math.min(30_000, 1000 * 2 ** attempt));
-      };
-    };
-
-    const disconnect = () => {
-      clearTimeout(retry);
-      const ws = socket;
-      socket = undefined;
-      ws?.close();
-    };
-
-    const onVisibility = () => {
-      if (document.hidden) {
-        disconnect();
-      } else {
-        connect();
-      }
-    };
-
-    connect();
-    document.addEventListener("visibilitychange", onVisibility);
+    const unsubscribe = subscribe({
+      collections: COLLECTIONS,
+      cursor,
+      onCommit: receive,
+      onState: (state) =>
+        setStatus(
+          state === "open" ? "live" : state === "retrying" ? "offline" : state,
+        ),
+    });
 
     return () => {
-      stopped = true;
       clearInterval(clock);
       clearTimeout(lookup);
-      disconnect();
-      document.removeEventListener("visibilitychange", onVisibility);
+      unsubscribe();
     };
   }, [limit, paused]);
 

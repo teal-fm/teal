@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { happyview } from "./server/happyview";
 import { getProfiles, resolveActor } from "./server/identity";
+import { getNowPlaying } from "./server/status";
 import type {
   ActorStats,
   Leaderboard,
@@ -109,7 +110,7 @@ export const getProfilePage = createServerFn({ method: "GET" })
     const doc = await resolveActor(data.actor);
     if (!doc) throw notFound();
 
-    const [profiles, rawStats, plays] = await Promise.all([
+    const [profiles, rawStats, plays, nowPlaying] = await Promise.all([
       getProfiles([doc.did]),
       happyview<ActorStats>(
         "fm.teal.site.getActorStats",
@@ -117,6 +118,7 @@ export const getProfilePage = createServerFn({ method: "GET" })
         60,
       ),
       playsPage(doc.did, undefined, 30),
+      getNowPlaying(doc.did),
     ]);
     const profile: Profile = {
       ...profiles[doc.did],
@@ -130,5 +132,5 @@ export const getProfilePage = createServerFn({ method: "GET" })
       releases: list(rawStats.releases),
     };
 
-    return { profile, stats, plays };
+    return { profile, stats, plays, nowPlaying: nowPlaying ?? null };
   });
