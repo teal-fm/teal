@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "teal-site",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": { "enabled": true },
+  "routes": [{ "pattern": "teal.fm", "custom_domain": true }],
+  // Runs the Worker near HappyView (Railway), which every page calls 1-3 times.
+  "placement": { "mode": "smart" },
+  // HAPPYVIEW_CLIENT_KEY and HAPPYVIEW_CLIENT_SECRET are secrets:
+  // `wrangler secret put HAPPYVIEW_CLIENT_KEY`. Locally they come from .dev.vars.
+  // The sign-in client key is public: the browser sends it to HappyView.
+  "vars": {
+    "HAPPYVIEW_URL": "https://view.teal.fm",
+    "HAPPYVIEW_LOGIN_CLIENT_KEY": "hvc_7326f863208da9e3096a6c6defd208cd"
+  }
+}

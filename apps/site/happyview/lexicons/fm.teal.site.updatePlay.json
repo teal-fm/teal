@@ -1,0 +1,38 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.site.updatePlay",
+  "description": "Edits the track, artists or release of one of the caller's plays, and of its alpha twin if it has one.",
+  "defs": {
+    "main": {
+      "type": "procedure",
+      "input": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["uri", "trackName"],
+          "properties": {
+            "uri": { "type": "string", "format": "at-uri" },
+            "trackName": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "artists": {
+              "type": "array",
+              "maxLength": 32,
+              "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+            },
+            "releaseName": { "type": "string", "maxLength": 256 }
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["uri"],
+          "properties": {
+            "uri": { "type": "string", "format": "at-uri" },
+            "cid": { "type": "string", "format": "cid" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "lexicon": 1,
+  "id": "fm.teal.site.getLeaderboard",
+  "description": "Who listened most, and to what, across everyone HappyView has indexed. Cached for a few minutes.",
+  "defs": {
+    "main": {
+      "type": "query",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "period": {
+            "type": "string",
+            "knownValues": [
+              "day",
+              "week",
+              "month",
+              "year",
+              "all"
+            ],
+            "default": "week"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Rebuild the board now if it's stale. The site sends this in the background after a stale answer."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "period",
+            "plays",
+            "listenerCount",
+            "listeners",
+            "artists",
+            "tracks"
+          ],
+          "properties": {
+            "period": {
+              "type": "string"
+            },
+            "plays": {
+              "type": "integer"
+            },
+            "listenerCount": {
+              "type": "integer"
+            },
+            "listeners": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.site.defs#listener"
+              }
+            },
+            "artists": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.site.defs#artist"
+              }
+            },
+            "tracks": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "fm.teal.site.defs#track"
+              }
+            },
+            "computedAt": {
+              "type": "string",
+              "format": "datetime"
+            },
+            "stale": {
+              "type": "boolean",
+              "description": "True when the board is older than its period's refresh interval."
+            }
+          }
+        }
+      }
+    }
+  }
+}
