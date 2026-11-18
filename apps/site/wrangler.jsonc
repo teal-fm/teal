@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "teal-site",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": { "enabled": true },
+  // HAPPYVIEW_CLIENT_KEY and HAPPYVIEW_CLIENT_SECRET are secrets:
+  // `wrangler secret put HAPPYVIEW_CLIENT_KEY`. Locally they come from .dev.vars.
+  "vars": {
+    "HAPPYVIEW_URL": "https://happyview.teal.fm"
+  }
+}

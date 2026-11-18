@@ -1,0 +1,135 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, ChevronDown } from "lucide-react";
+
+import { Card } from "~/components/Card";
+import { Landing } from "~/components/Landing";
+import { Logo } from "~/components/Logo";
+import { PeriodTabs } from "~/components/PeriodTabs";
+import { PlayList } from "~/components/PlayList";
+import {
+  ArtistRanking,
+  ListenerRanking,
+  TrackRanking,
+} from "~/components/Rankings";
+import { SearchBox } from "~/components/SearchBox";
+import { getHome } from "~/lib/api";
+import { plural } from "~/lib/format";
+import { PERIOD_LABELS, periodOf, type Period } from "~/lib/types";
+
+const HOME_PERIODS: Period[] = ["day", "week", "month", "all"];
+
+export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): { period?: Period } => {
+    const period = periodOf(search.period, "week");
+
+    return period === "week" ? {} : { period };
+  },
+  loaderDeps: ({ search }) => ({ period: search.period ?? "week" }),
+  loader: ({ deps }) => getHome({ data: deps }),
+  component: Home,
+});
+
+type HomeData = NonNullable<Awaited<ReturnType<typeof getHome>>>;
+
+function Home() {
+  const home = Route.useLoaderData();
+  const { period } = Route.useLoaderDeps();
+
+  return (
+    <>
+      <header className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 pb-14 pt-20 text-center sm:pt-28">
+        <h1>
+          <Logo />
+        </h1>
+        <p className="text-2xl font-light text-teal-700 dark:text-teal-100 sm:text-3xl">
+          Your music,{" "}
+          <span className="font-display font-medium text-teal-500">
+            beautifully
+          </span>{" "}
+          tracked.
+        </p>
+        <div className="mt-4 w-full">
+          <SearchBox />
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        {home ? (
+          <Boards {...home} period={period} />
+        ) : (
+          <p className="text-center text-neutral-600 dark:text-teal-100/60">
+            The leaderboard is taking a breather. Check back in a minute.
+          </p>
+        )}
+
+        <a
+          href="#features"
+          aria-label="More about teal.fm"
+          className="mx-auto mt-16 flex w-fit flex-col items-center text-sm text-teal-700 dark:text-teal-300"
+        >
+          What's teal.fm?
+          <ChevronDown
+            aria-hidden
+            className="size-6 animate-bounce motion-reduce:animate-none"
+          />
+        </a>
+      </main>
+
+      <Landing />
+    </>
+  );
+}
+
+function Boards({
+  leaderboard,
+  recent,
+  profiles,
+  period,
+}: HomeData & { period: Period }) {
+  return (
+    <>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-3xl font-medium">Leaderboard</h2>
+          <p className="text-neutral-600 dark:text-teal-100/60">
+            {plural(leaderboard.plays, "listen")} from{" "}
+            {plural(leaderboard.listenerCount, "person", "people")}{" "}
+            {period === "all" ? "so far" : PERIOD_LABELS[period].toLowerCase()}
+          </p>
+        </div>
+        <PeriodTabs value={period} periods={HOME_PERIODS} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card title="Top listeners">
+          <ListenerRanking
+            listeners={leaderboard.listeners}
+            profiles={profiles}
+          />
+        </Card>
+        <Card title="Top artists">
+          <ArtistRanking artists={leaderboard.artists} />
+        </Card>
+        <Card title="Top tracks">
+          <TrackRanking tracks={leaderboard.tracks} />
+        </Card>
+      </div>
+
+      <div className="mt-4">
+        <Card
+          title="Just played"
+          action={
+            <Link
+              to="/listens"
+              className="flex items-center gap-1 text-sm text-teal-700 hover:underline dark:text-teal-300"
+            >
+              Everyone's listens <ArrowRight aria-hidden className="size-4" />
+            </Link>
+          }
+        >
+          <PlayList initial={{ ...recent, cursor: undefined }} showPeople />
+        </Card>
+      </div>
+    </>
+  );
+}

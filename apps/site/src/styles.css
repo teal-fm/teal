@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Crimson Pro", ui-serif, Georgia, serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-linear-to-br min-h-dvh from-slate-200 via-purple-200/70 to-teal-200 bg-fixed font-sans text-neutral-800 antialiased dark:from-gray-900 dark:via-gray-950 dark:to-teal-950 dark:text-white;
+}
+
+@keyframes logo-swap {
+  from {
+    opacity: 0;
+    transform: scale(0.8) rotate(-8deg);
+  }
+}
+
+.logo-swap {
+  animation: logo-swap 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .logo-swap {
+    animation: none;
+  }
+}
