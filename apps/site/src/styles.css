@@ -25,6 +25,11 @@ body {
   animation: logo-swap 200ms ease-out;
 }
 
+/* Inline code on the start-tracking page. */
+.start-page :not(pre) > code {
+  @apply rounded bg-teal-500/10 px-1 py-0.5 text-[0.9em];
+}
+
 /* A play that just arrived over the live feed. */
 @keyframes play-in {
   from {
