@@ -1,8 +1,11 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
+import { playOf, tidTime } from "./records";
+import { cached } from "./server/cache";
 import { happyview, happyviewInBackground } from "./server/happyview";
 import { getProfiles, resolveActor } from "./server/identity";
+import { getRecord } from "./server/records";
 import { getNowPlaying } from "./server/status";
 import type {
   ActorStats,
@@ -141,4 +144,46 @@ export const getProfilePage = createServerFn({ method: "GET" })
     };
 
     return { profile, stats, plays, nowPlaying: nowPlaying ?? null };
+  });
+
+/** Both play collections; an account that moved off alpha often has the same rkey in each. */
+const PLAY_COLLECTIONS = ["fm.teal.feed.play", "fm.teal.alpha.feed.play"];
+
+/** Record keys, per the atproto spec. */
+const RKEY = /^[A-Za-z0-9._:~-]{1,512}$/;
+
+/**
+ * One listen, read from the listener's repo rather than HappyView, so a link
+ * works the moment the play is written. The stable record wins over its alpha
+ * twin.
+ */
+export const getListen = createServerFn({ method: "GET" })
+  .validator((data: { actor: string; rkey: string }) => data)
+  .handler(async ({ data }) => {
+    if (!RKEY.test(data.rkey) || data.rkey === "." || data.rkey === "..")
+      throw notFound();
+    const doc = await resolveActor(data.actor);
+    if (!doc) throw notFound();
+
+    const records = await Promise.all(
+      PLAY_COLLECTIONS.map((collection) =>
+        cached(`rec:${doc.did}/${collection}/${data.rkey}`, 15, () =>
+          getRecord(doc.did, collection, data.rkey),
+        ),
+      ),
+    );
+    const index = records.findIndex((record) => record !== undefined);
+    const record = records[index];
+    if (!record) throw notFound();
+
+    const uri = `at://${doc.did}/${PLAY_COLLECTIONS[index]}/${data.rkey}`;
+    const play = playOf(uri, doc.did, record, tidTime(data.rkey));
+    const profiles = await getProfiles([doc.did]);
+    const profile: Profile = {
+      ...profiles[doc.did],
+      did: doc.did,
+      handle: doc.handle,
+    };
+
+    return { play, profile };
   });

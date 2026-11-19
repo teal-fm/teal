@@ -8,12 +8,28 @@ export function plural(n: number, one: string, many = `${one}s`) {
   return `${count(n)} ${n === 1 ? one : many}`;
 }
 
-/** Cover Art Archive thumbnail for a release MBID, which plays write bare or as `mbid:<uuid>`. */
-export function coverUrl(releaseMbId?: string, size: 250 | 500 = 250) {
-  const id = releaseMbId?.replace(/^mbid:/, "");
-  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return undefined;
+/** A MusicBrainz ID, which plays write bare or as `mbid:<uuid>`; undefined when it isn't one. */
+export function mbid(value?: string) {
+  const id = value?.replace(/^mbid:/, "");
 
-  return `https://coverartarchive.org/release/${id}/front-${size}`;
+  return id && /^[0-9a-f-]{36}$/i.test(id) ? id.toLowerCase() : undefined;
+}
+
+/** Cover Art Archive thumbnail for a release MBID. */
+export function coverUrl(releaseMbId?: string, size: 250 | 500 = 250) {
+  const id = mbid(releaseMbId);
+
+  return id && `https://coverartarchive.org/release/${id}/front-${size}`;
+}
+
+/** A track length in seconds as "3:07" or "1:02:45". */
+export function duration(seconds: number) {
+  const s = Math.max(0, Math.round(seconds));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+
+  return h > 0 ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
 }
 
 export function profilePath(

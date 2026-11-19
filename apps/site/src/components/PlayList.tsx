@@ -5,11 +5,18 @@ import { Pencil } from "lucide-react";
 import { getPlays, type PlaysWithProfiles } from "~/lib/api";
 import { useOwns } from "~/lib/auth";
 import { displayName, profilePath, timeAgo } from "~/lib/format";
+import { parseAtUri } from "~/lib/records";
 import type { Play, Profiles } from "~/lib/types";
 import { Avatar } from "./Avatar";
 import { Empty } from "./Card";
 import { Cover } from "./Cover";
 import { PlayEditor } from "./PlayEditor";
+
+/** Where a play's own page lives: /listen/{did}/{rkey}. */
+const listenParams = (play: Play) => ({
+  actor: play.did,
+  rkey: parseAtUri(play.uri).rkey,
+});
 
 /** Your own plays get an edit button; the rest of the row stays as it was. */
 function EditButton({
@@ -100,13 +107,15 @@ export function PlayRow({
         )}
         <div className="flex items-center gap-1">
           {onChange && <EditButton play={play} onChange={onChange} />}
-          <time
-            dateTime={play.playedTime}
-            suppressHydrationWarning
-            className="text-xs text-neutral-500 dark:text-teal-100/50"
+          <Link
+            to="/listen/$actor/$rkey"
+            params={listenParams(play)}
+            className="text-xs text-neutral-500 hover:underline dark:text-teal-100/50"
           >
-            {timeAgo(play.playedTime)}
-          </time>
+            <time dateTime={play.playedTime} suppressHydrationWarning>
+              {timeAgo(play.playedTime)}
+            </time>
+          </Link>
         </div>
       </div>
     </li>

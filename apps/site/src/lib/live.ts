@@ -2,7 +2,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 
 import { getProfilesFor, type PlaysWithProfiles } from "./api";
 import { subscribe, type JetstreamEvent } from "./jetstream";
-import { artistsOf, isObject, str } from "./records";
+import { isObject, playOf } from "./records";
 import type { Play, Profiles } from "./types";
 
 const STABLE = "fm.teal.feed.play";
@@ -37,51 +37,15 @@ function writePaused(paused: boolean) {
 /** A play, marked when it arrived over the socket rather than with the page. */
 export type LivePlay = Play & { live?: boolean };
 
-/**
- * Unix milliseconds for playedTime, read like play.lua does: ISO 8601 with or
- * without a zone (none means UTC) or a Unix number. Falls back to when the
- * event was seen.
- */
-function playedAt(value: unknown, timeUs: number): number {
-  if (typeof value === "number" || /^\d+(\.\d+)?$/.test(str(value) ?? "")) {
-    const n = Number(value);
-    return n > 1e11 ? n : n * 1000;
-  }
-  const text = str(value);
-  if (text) {
-    const zoned = /([zZ]|[+-]\d\d:?\d\d)\s*$/.test(text) ? text : `${text}Z`;
-    const time = Date.parse(zoned);
-    if (!Number.isNaN(time)) return time;
-  }
-
-  return timeUs / 1000;
-}
-
-/** Mirrors play_of in happyview/scripts/prelude.lua. */
-function playOf(event: JetstreamEvent): LivePlay | undefined {
+function playOfEvent(event: JetstreamEvent): LivePlay | undefined {
   const commit = event.commit;
   const record = commit?.record;
   if (!commit || !isObject(record)) return undefined;
+  const uri = `at://${event.did}/${commit.collection}/${commit.rkey}`;
 
+  // A playedTime that can't be read falls back to when the event was seen.
   return {
-    uri: `at://${event.did}/${commit.collection}/${commit.rkey}`,
-    did: event.did,
-    trackName: str(record.trackName) ?? "Untitled",
-    artists: artistsOf(record),
-    releaseName: str(record.releaseName),
-    releaseMbId: str(record.releaseMbId),
-    recordingMbId: str(record.recordingMbId),
-    duration:
-      typeof record.duration === "number"
-        ? Math.floor(record.duration)
-        : undefined,
-    playedTime: new Date(
-      playedAt(record.playedTime, event.time_us),
-    ).toISOString(),
-    originUrl: str(record.originUri) ?? str(record.originUrl),
-    musicService:
-      str(record.musicServiceUri) ?? str(record.musicServiceBaseDomain),
-    client: str(record.submissionClientAgent),
+    ...playOf(uri, event.did, record, event.time_us / 1000),
     live: true,
   };
 }
@@ -183,7 +147,7 @@ export function useLivePlays(initial: PlaysWithProfiles, limit: number) {
         return;
       }
 
-      const play = playOf(event);
+      const play = playOfEvent(event);
       if (!play) return;
       const age = Date.now() - timeOf(play);
       if (age > MAX_AGE_MS || age < -MAX_AHEAD_MS) return;
