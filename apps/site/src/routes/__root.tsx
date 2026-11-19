@@ -1,10 +1,11 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   createRootRoute,
   HeadContent,
   Link,
   Outlet,
   Scripts,
+  useRouterState,
 } from "@tanstack/react-router";
 
 import { AuthProvider } from "~/lib/auth";
@@ -45,17 +46,76 @@ export const Route = createRootRoute({
   errorComponent: Failed,
 });
 
-/**
- * Umami analytics, added only once the page has loaded. A script tag in the
- * page holds the load event until it arrives, so a slow or hung analytics
- * server kept the browser's loading bar running.
- */
-const ANALYTICS = `addEventListener("load", function () {
-  var s = document.createElement("script");
-  s.src = "https://watson.nat.vg/script.js";
-  s.setAttribute("data-website-id", "178e2b45-4d3a-4222-be83-c73ad1ef8b23");
-  document.head.appendChild(s);
-});`;
+type PlausibleEvent = { u: string; r: string | null };
+type PlausibleOptions = {
+  outboundLinks: boolean;
+  fileDownloads: boolean;
+  formSubmissions: boolean;
+  transformRequest: (event: PlausibleEvent) => PlausibleEvent | null;
+};
+
+function isOAuthCallback(href: string) {
+  const url = new URL(href);
+  if (url.hostname !== "teal.fm") return false;
+  const params = url.searchParams;
+  if (params.has("state") && (params.has("code") || params.has("error"))) {
+    return true;
+  }
+  try {
+    const pathname = decodeURI(url.pathname).replace(/\/+$/, "").toLowerCase();
+    return pathname === "/oauth/callback";
+  } catch {
+    return false;
+  }
+}
+
+function loadAnalytics() {
+  if (isOAuthCallback(location.href) || document.getElementById("plausible")) {
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.id = "plausible";
+  script.src = "https://plausible.mmatt.net/js/pa-h-gzPjXqnmcu321_1879C.js";
+  script.addEventListener(
+    "load",
+    () => {
+      const { plausible } = window as Window & {
+        plausible?: { init: (options: PlausibleOptions) => void };
+      };
+      plausible?.init({
+        outboundLinks: false,
+        fileDownloads: false,
+        formSubmissions: false,
+        transformRequest: (event) => {
+          if (isOAuthCallback(event.u)) return null;
+          return event.r && isOAuthCallback(event.r)
+            ? { ...event, r: null }
+            : event;
+        },
+      });
+    },
+    { once: true },
+  );
+  document.head.appendChild(script);
+}
+
+function Analytics() {
+  const href = useRouterState({ select: (state) => state.location.href });
+
+  useEffect(() => {
+    if (location.hostname !== "teal.fm") return;
+    // Keep the tracker off the critical path and retry after OAuth replaces the URL.
+    if (document.readyState === "complete") {
+      loadAnalytics();
+      return;
+    }
+    window.addEventListener("load", loadAnalytics, { once: true });
+    return () => window.removeEventListener("load", loadAnalytics);
+  }, [href]);
+
+  return null;
+}
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
@@ -65,8 +125,8 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         <AuthProvider>{children}</AuthProvider>
+        <Analytics />
         <Scripts />
-        <script dangerouslySetInnerHTML={{ __html: ANALYTICS }} />
       </body>
     </html>
   );
