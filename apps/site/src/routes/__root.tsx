@@ -45,6 +45,18 @@ export const Route = createRootRoute({
   errorComponent: Failed,
 });
 
+/**
+ * Umami analytics, added only once the page has loaded. A script tag in the
+ * page holds the load event until it arrives, so a slow or hung analytics
+ * server kept the browser's loading bar running.
+ */
+const ANALYTICS = `addEventListener("load", function () {
+  var s = document.createElement("script");
+  s.src = "https://watson.nat.vg/script.js";
+  s.setAttribute("data-website-id", "178e2b45-4d3a-4222-be83-c73ad1ef8b23");
+  document.head.appendChild(s);
+});`;
+
 function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
@@ -54,11 +66,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body>
         <AuthProvider>{children}</AuthProvider>
         <Scripts />
-        <script
-          defer
-          src="https://watson.nat.vg/script.js"
-          data-website-id="178e2b45-4d3a-4222-be83-c73ad1ef8b23"
-        />
+        <script dangerouslySetInnerHTML={{ __html: ANALYTICS }} />
       </body>
     </html>
   );
