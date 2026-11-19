@@ -15,9 +15,15 @@
         "did": { "type": "string", "format": "did" },
         "trackName": { "type": "string" },
         "artists": { "type": "array", "items": { "type": "string" } },
+        "artistMbIds": {
+          "type": "array",
+          "description": "Each artist's MusicBrainz ID, in the same order as artists; empty for an unlinked artist. Absent when no artist is linked.",
+          "items": { "type": "string" }
+        },
         "releaseName": { "type": "string" },
         "releaseMbId": { "type": "string" },
         "recordingMbId": { "type": "string" },
+        "isrc": { "type": "string" },
         "duration": { "type": "integer" },
         "playedTime": { "type": "string" },
         "originUrl": { "type": "string" },

@@ -102,6 +102,32 @@ local function artists_of(record)
   return toarray(names)
 end
 
+-- Each artist's MusicBrainz ID, aligned with artists_of ("" where there's
+-- none); nil when no artist has one.
+local function artist_ids_of(record)
+  local ids, any = {}, false
+  local function add(id)
+    id = str(id) or ""
+    if id ~= "" then any = true end
+    table.insert(ids, id)
+  end
+  if type(record.artists) == "table" then
+    for _, artist in ipairs(record.artists) do
+      if type(artist) == "table" and str(artist.artistName or artist.name) then
+        add(artist.artistMbId or artist.mbid)
+      end
+    end
+  end
+  if #ids == 0 and type(record.artistNames) == "table" then
+    local legacy = type(record.artistMbIds) == "table" and record.artistMbIds or {}
+    for i, name in ipairs(record.artistNames) do
+      if str(name) then add(legacy[i]) end
+    end
+  end
+  if not any then return nil end
+  return toarray(ids)
+end
+
 local function play_of(uri, did, record)
   if type(record) == "string" then record = json.decode(record) end
   if type(record) ~= "table" then record = {} end
@@ -110,9 +136,11 @@ local function play_of(uri, did, record)
     did = did,
     trackName = str(record.trackName) or "Untitled",
     artists = artists_of(record),
+    artistMbIds = artist_ids_of(record),
     releaseName = str(record.releaseName),
     releaseMbId = str(record.releaseMbId),
     recordingMbId = str(record.recordingMbId),
+    isrc = str(record.isrc),
     duration = type(record.duration) == "number" and math.floor(record.duration) or nil,
     playedTime = str(record.playedTime),
     originUrl = str(record.originUri) or str(record.originUrl),

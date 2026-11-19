@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
   "id": "fm.teal.site.updatePlay",
-  "description": "Edits the track, artists or release of one of the caller's plays, and of its alpha twin if it has one.",
+  "description": "Edits the track, artists or release of one of the caller's plays, and the MusicBrainz recording, release and artists it's linked to; and the same on its alpha twin if it has one.",
   "defs": {
     "main": {
       "type": "procedure",
@@ -16,9 +16,19 @@
             "artists": {
               "type": "array",
               "maxLength": 32,
-              "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+              "items": { "type": "ref", "ref": "#artist" }
             },
-            "releaseName": { "type": "string", "maxLength": 256 }
+            "releaseName": { "type": "string", "maxLength": 256 },
+            "recordingMbId": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "The MusicBrainz recording ID, bare or as mbid:<uuid>. Empty unlinks the play; absent leaves it as it is."
+            },
+            "releaseMbId": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "The MusicBrainz release ID, bare or as mbid:<uuid>. Empty unlinks the play; absent leaves it as it is."
+            }
           }
         }
       },
@@ -31,6 +41,18 @@
             "uri": { "type": "string", "format": "at-uri" },
             "cid": { "type": "string", "format": "cid" }
           }
+        }
+      }
+    },
+    "artist": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "mbid": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "The artist's MusicBrainz ID, bare or as mbid:<uuid>. Empty unlinks the artist; absent keeps the ID the play already has for an artist of that name."
         }
       }
     }
