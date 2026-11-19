@@ -1,5 +1,13 @@
 import type { ComponentType } from "react";
-import { ChartColumn, Share2, Sparkles, Users } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  ChartColumn,
+  Play,
+  Share2,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 const BLUESKY = "https://bsky.app/profile/did:plc:iwhuynr6mm6xxuh25o4do2tx";
 const DISCORD = "https://discord.gg/DMSZ3xFUpk";
@@ -81,6 +89,28 @@ export function Landing() {
             </div>
           </div>
         ))}
+        <Link
+          to="/start"
+          className="group relative h-full md:col-span-2"
+        >
+          <div className="bg-linear-to-r absolute -inset-0.5 rounded-lg from-teal-400/40 to-sky-500/40 opacity-40 blur transition duration-500 group-hover:opacity-100" />
+          <div className="relative flex h-full items-center gap-4 rounded-xl border border-teal-500/30 bg-gray-100/60 p-6 backdrop-blur-sm transition-all duration-300 group-hover:border-teal-500/50 dark:bg-gray-900/60">
+            <div className="rounded-lg bg-teal-500/15 p-2">
+              <Play className="size-6 text-teal-500" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-semibold">How to start tracking</h3>
+              <p className="text-gray-700 dark:text-teal-100">
+                Connect what you listen on with multi-scrobbler or piper, and
+                bring your Last.fm history along.
+              </p>
+            </div>
+            <ArrowRight
+              aria-hidden
+              className="size-6 shrink-0 text-teal-500 transition group-hover:translate-x-1 motion-reduce:transition-none"
+            />
+          </div>
+        </Link>
       </div>
 
       <div className="mx-auto mt-20 max-w-md">
