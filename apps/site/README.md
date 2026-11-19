@@ -76,9 +76,16 @@ pnpm dev   # http://127.0.0.1:3005
 ### Production
 
 - **Site:** the `teal-site` Worker on Cloudflare, serving `teal.fm` (a custom
-  domain in `wrangler.jsonc`) with Smart Placement. `pnpm deploy` builds and
-  deploys it. Delete `dist/server/.dev.vars` first: the Vite plugin copies it
-  there for `vite preview`.
+  domain in `wrangler.jsonc`) with Smart Placement.
+- **Deploys:** Workers Builds deploys every push to `main` that touches
+  `apps/site/` or `pnpm-lock.yaml`. It installs only this app
+  (`SKIP_DEPENDENCY_INSTALL=1`, then `pnpm install --filter "@teal/site..."
+  --ignore-scripts`), builds it, runs `node happyview/sync.ts --no-backfill`
+  against `view.teal.fm`, then `wrangler deploy`. Its `HAPPYVIEW_ADMIN_KEY`
+  build secret is a key that can only change lexicons and scripts. Build logs
+  are under the Worker's Deployments tab in the Cloudflare dashboard. To deploy
+  by hand, run `pnpm deploy`, deleting `dist/server/.dev.vars` first (the Vite
+  plugin copies it there for `vite preview`).
 - **HappyView:** the `teal-happyview` Railway project, at `https://view.teal.fm`.
   It runs the pinned `ghcr.io/gamesgamesgamesgamesgames/happyview:2.17.6`
   image (the loopback sign-in fix relies on how this version builds client
