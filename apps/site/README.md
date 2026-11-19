@@ -111,6 +111,11 @@ changes how it fills `teal_plays`, backfill again to rebuild existing rows.
 - `/profile/$handle`: someone's listen counts, top artists, tracks and albums
   for a period, and their listens, paged.
 - `/listens`: everyone's listens, newest first, paged.
+- `/listen/$actor/$rkey`: one listen, by the listener's handle or DID and the
+  play's record key, so anything can link to a listen. It reads the record from
+  the listener's repo through Slingshot (stable collection first, then alpha),
+  so it works before HappyView has indexed the play. Every list's timestamps
+  link here.
 - `/oauth/callback`, `/oauth-client-metadata.json`: sign-in.
 
 Signed in, your own listens get an edit button on every list. The live list
