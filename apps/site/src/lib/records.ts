@@ -27,6 +27,35 @@ export function artistsOf(record: Record<string, unknown>): string[] {
 }
 
 /**
+ * Each artist's MusicBrainz ID, aligned with artistsOf ("" where there's
+ * none); undefined when no artist has one. Mirrors artist_ids_of in
+ * happyview/scripts/prelude.lua.
+ */
+export function artistIdsOf(
+  record: Record<string, unknown>,
+): string[] | undefined {
+  let ids: string[] = [];
+  const objects = Array.isArray(record.artists)
+    ? record.artists.filter(
+        (artist): artist is Record<string, unknown> =>
+          isObject(artist) && !!(str(artist.artistName) ?? str(artist.name)),
+      )
+    : [];
+  if (objects.length > 0) {
+    ids = objects.map(
+      (artist) => str(artist.artistMbId) ?? str(artist.mbid) ?? "",
+    );
+  } else if (Array.isArray(record.artistNames)) {
+    const legacy = Array.isArray(record.artistMbIds) ? record.artistMbIds : [];
+    ids = record.artistNames.flatMap((name, i) =>
+      str(name) ? [str(legacy[i]) ?? ""] : [],
+    );
+  }
+
+  return ids.some(Boolean) ? ids : undefined;
+}
+
+/**
  * Unix milliseconds for playedTime, read like play.lua does: ISO 8601 with or
  * without a zone (none means UTC) or a Unix number. Undefined when it's
  * neither.
@@ -62,9 +91,11 @@ export function playOf(
     did,
     trackName: str(record.trackName) ?? "Untitled",
     artists: artistsOf(record),
+    artistMbIds: artistIdsOf(record),
     releaseName: str(record.releaseName),
     releaseMbId: str(record.releaseMbId),
     recordingMbId: str(record.recordingMbId),
+    isrc: str(record.isrc),
     duration:
       typeof record.duration === "number"
         ? Math.floor(record.duration)

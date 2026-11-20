@@ -13,8 +13,9 @@ browser ──▶ Worker (TanStack Start, SSR + server functions)
 ```
 
 The browser talks to the Worker, plus a few public services: Bluesky's
-typeahead in the search box, cover art from the Cover Art Archive, and
-Jetstream for the live "Just played" list. Signing in is the exception that
+typeahead in the search box, cover art from the Cover Art Archive, Jetstream
+for the live "Just played" list, and MusicBrainz's web service in the listen
+editor. Signing in is the exception that
 talks to HappyView directly (see below).
 
 ## Signing in
@@ -118,7 +119,14 @@ changes how it fills `teal_plays`, backfill again to rebuild existing rows.
   link here.
 - `/oauth/callback`, `/oauth-client-metadata.json`: sign-in.
 
-Signed in, your own listens get an edit button on every list. The live list
+Signed in, your own listens get an edit button on every list and on their
+own page. Besides the names, the editor links a listen to a MusicBrainz
+recording, release and artists: search by name, or paste an MBID or a
+musicbrainz.org link (a release group's link lists its releases). A play's
+ISRC suggests its recording, and a linked recording suggests its releases.
+Picking a recording also takes its title and credited artists. The browser
+calls MusicBrainz directly, a little over a second between requests, which
+is its rate limit per IP. The live list
 pauses (and drops its Jetstream socket) when you press its Live badge.
 
 If HappyView is down, the home page still renders without the leaderboard.

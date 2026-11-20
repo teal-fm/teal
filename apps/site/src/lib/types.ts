@@ -20,9 +20,12 @@ export interface Play {
   did: string;
   trackName: string;
   artists: string[];
+  /** Each artist's MusicBrainz ID, in the same order; "" for an unlinked one. Absent when none are linked. */
+  artistMbIds?: string[];
   releaseName?: string;
   releaseMbId?: string;
   recordingMbId?: string;
+  isrc?: string;
   duration?: number;
   playedTime?: string;
   originUrl?: string;

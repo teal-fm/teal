@@ -74,7 +74,7 @@ export function PlayRow({
 
   return (
     <li className={`flex items-center gap-3 py-2 ${className}`}>
-      <Cover releaseMbId={play.releaseMbId} />
+      <Cover key={play.releaseMbId} releaseMbId={play.releaseMbId} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">
           {play.originUrl ? (

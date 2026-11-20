@@ -1,12 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowUpRight, Pencil } from "lucide-react";
 
 import { Avatar } from "~/components/Avatar";
 import { Card } from "~/components/Card";
 import { Cover } from "~/components/Cover";
 import { Header } from "~/components/Header";
+import { PlayEditor } from "~/components/PlayEditor";
 import { getListen } from "~/lib/api";
+import { useOwns } from "~/lib/auth";
 import {
   coverUrl,
   displayName,
@@ -106,6 +108,10 @@ function hostOf(url: string) {
 function Details({ play }: { play: Play }) {
   const recording = mbid(play.recordingMbId);
   const release = mbid(play.releaseMbId);
+  const artists = play.artists.flatMap((name, i) => {
+    const id = mbid(play.artistMbIds?.[i]);
+    return id ? [{ name, id }] : [];
+  });
 
   return (
     <dl className="divide-y divide-neutral-400/15">
@@ -137,6 +143,18 @@ function Details({ play }: { play: Play }) {
           </External>
         </Detail>
       )}
+      {artists.length > 0 && (
+        <Detail label={artists.length === 1 ? "Artist" : "Artists"}>
+          {artists.map((artist, i) => (
+            <span key={`${artist.id}-${i}`}>
+              {i > 0 && ", "}
+              <External href={`https://musicbrainz.org/artist/${artist.id}`}>
+                {artist.name}
+              </External>
+            </span>
+          ))}
+        </Detail>
+      )}
       <Detail label="Record">
         <a
           href={`https://pdsls.dev/${play.uri}`}
@@ -151,8 +169,62 @@ function Details({ play }: { play: Play }) {
   );
 }
 
+/** Your own listen gets an edit button; deleting it goes back to your profile. */
+function EditListen({
+  play,
+  handle,
+  onChange,
+}: {
+  play: Play;
+  /** Where the listener's profile is, for after a delete. */
+  handle: string;
+  onChange: (play: Play) => void;
+}) {
+  const owns = useOwns(play.did);
+  const navigate = useNavigate();
+  const [editing, setEditing] = useState(false);
+  if (!owns) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="inline-flex items-center gap-1.5 rounded-full border border-neutral-400/30 px-4 py-1.5 text-sm font-medium transition hover:bg-neutral-500/10"
+      >
+        <Pencil aria-hidden className="size-3.5" />
+        Edit
+      </button>
+      {editing && (
+        <PlayEditor
+          play={play}
+          onClose={() => setEditing(false)}
+          onDone={(next) => {
+            setEditing(false);
+            if (next) onChange(next);
+            else
+              void navigate({
+                to: "/profile/$handle",
+                params: { handle },
+              });
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 function ListenPage() {
-  const { play, profile } = Route.useLoaderData();
+  const loaded = Route.useLoaderData();
+  const { profile } = loaded;
+  // An edit shows straight away, before the record cache catches up.
+  const [edited, setEdited] = useState<Play>();
+  const [source, setSource] = useState(loaded);
+  if (source !== loaded) {
+    setSource(loaded);
+    setEdited(undefined);
+  }
+  const play = edited ?? loaded.play;
   const name = displayName(profile, profile.did);
   const host = play.originUrl && hostOf(play.originUrl);
 
@@ -161,7 +233,11 @@ function ListenPage() {
       <Header />
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <article className="flex flex-col gap-6 sm:flex-row sm:items-end">
-          <Cover releaseMbId={play.releaseMbId} size={192} />
+          <Cover
+            key={play.releaseMbId}
+            releaseMbId={play.releaseMbId}
+            size={192}
+          />
           <div className="min-w-0">
             <h1 className="font-display break-words text-3xl font-medium sm:text-4xl">
               {play.trackName}
@@ -174,17 +250,24 @@ function ListenPage() {
                 {play.releaseName}
               </p>
             )}
-            {play.originUrl && (
-              <a
-                href={play.originUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 px-4 py-1.5 text-sm font-medium text-teal-700 transition hover:bg-teal-500/10 dark:text-teal-300"
-              >
-                {host ? `Open on ${host}` : "Open"}
-                <ArrowUpRight aria-hidden className="size-4" />
-              </a>
-            )}
+            <div className="mt-4 flex flex-wrap gap-2 empty:hidden">
+              {play.originUrl && (
+                <a
+                  href={play.originUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 px-4 py-1.5 text-sm font-medium text-teal-700 transition hover:bg-teal-500/10 dark:text-teal-300"
+                >
+                  {host ? `Open on ${host}` : "Open"}
+                  <ArrowUpRight aria-hidden className="size-4" />
+                </a>
+              )}
+              <EditListen
+                play={play}
+                handle={profilePath(profile, profile.did)}
+                onChange={setEdited}
+              />
+            </div>
           </div>
         </article>
 
