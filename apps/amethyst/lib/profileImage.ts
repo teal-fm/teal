@@ -2,8 +2,14 @@ import type { ImagePickerAsset } from "expo-image-picker";
 
 export type SelectedProfileImage = Pick<
   ImagePickerAsset,
-  "uri" | "mimeType" | "file"
+  "uri" | "mimeType" | "file" | "fileSize"
 >;
+
+export function validateProfileImageSize(size: number) {
+  if (!size) throw new Error("The selected image is empty.");
+  if (size > 1_000_000)
+    throw new Error("Choose a profile image of 1 MB or less.");
+}
 
 async function readImage(uri: string) {
   const response = await fetch(uri);
@@ -21,9 +27,7 @@ export async function uploadProfileImage<T>(
   image: SelectedProfileImage,
 ) {
   const blob = image.file ?? (await readImage(image.uri));
-  if (!blob.size) throw new Error("The selected image is empty.");
-  if (blob.size > 1_000_000)
-    throw new Error("Choose a profile image of 1 MB or less.");
+  validateProfileImageSize(blob.size);
 
   let encoding = blob.type.toLowerCase().split(";")[0].trim();
   if (!encoding || encoding === "application/octet-stream") {

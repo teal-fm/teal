@@ -16,7 +16,7 @@ import { Text } from "@/components/ui/text";
 import { useOnEscape } from "@/hooks/useOnEscape";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import type { SelectedProfileImage } from "@/lib/profileImage";
+import { type SelectedProfileImage, validateProfileImageSize } from "@/lib/profileImage";
 import { cn } from "@/lib/utils";
 import { Pen } from "lucide-react-native";
 
@@ -65,7 +65,12 @@ export default function EditProfileModal({
         aspect: setType === setAvatar ? [1, 1] : [3, 1],
         quality: 1,
       });
-      if (!result.canceled) setType(result.assets[0]);
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        const size = asset.file?.size ?? asset.fileSize;
+        if (size !== undefined) validateProfileImageSize(size);
+        setType(asset);
+      }
     } catch (error) {
       setError(
         error instanceof Error

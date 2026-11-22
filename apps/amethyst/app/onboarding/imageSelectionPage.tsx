@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import type { SelectedProfileImage } from "@/lib/profileImage";
+import { type SelectedProfileImage, validateProfileImageSize } from "@/lib/profileImage";
 import { Pen } from "lucide-react-native";
 
 interface ImageSelectionPageProps {
@@ -37,8 +37,11 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         quality: 1,
       });
       if (!result.canceled) {
+        const asset = result.assets[0];
+        const size = asset.file?.size ?? asset.fileSize;
+        if (size !== undefined) validateProfileImageSize(size);
         const onPick = target === "avatar" ? onPickAvatar : onPickBanner;
-        onPick(result.assets[0]);
+        onPick(asset);
       }
     } catch (error) {
       setError(
