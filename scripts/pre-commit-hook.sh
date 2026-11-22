@@ -36,16 +36,18 @@ STAGED_FILES=()
 FORMAT_FILES=()
 TS_JS_FILES=()
 RUST_FILES=()
+CHECK_SERVICES=false
 LEXICON_FILES=()
 while IFS= read -r -d '' file; do
     STAGED_FILES+=("$file")
     case "$file" in
         *.ts|*.tsx|*.js|*.jsx) TS_JS_FILES+=("$file") ;;
+        services/*.rs) CHECK_SERVICES=true; RUST_FILES+=("$file") ;;
         *.rs) RUST_FILES+=("$file") ;;
         *lexicons/*.json) LEXICON_FILES+=("$file") ;;
     esac
     case "$file" in
-        *.ts|*.tsx|*.js|*.jsx|*.rs)
+        *.ts|*.tsx|*.js|*.jsx)
             if ! git --literal-pathspecs diff --quiet -- "$file"; then
                 print_error "$file has unstaged changes. Stash the unstaged edits before running this hook."
                 exit 1
@@ -114,12 +116,12 @@ if [ "${#RUST_FILES[@]}" -gt 0 ]; then
     if command -v cargo >/dev/null 2>&1; then
         RUST_ERRORS=0
 
-        # Check services workspace
-        if [ -f "services/Cargo.toml" ]; then
+        # Check services only when a staged Rust file is in that workspace.
+        if [ "$CHECK_SERVICES" = true ] && [ -f "services/Cargo.toml" ]; then
             print_status "Running cargo fmt on services workspace..."
-            if ! (cd services && cargo fmt --check) 2>/dev/null; then
-                print_status "Auto-formatting Rust code in services..."
-                (cd services && cargo fmt) 2>/dev/null || true
+            if ! (cd services && cargo fmt --check); then
+                print_error "Run 'pnpm rust:fmt:services' and stage the changes you want."
+                RUST_ERRORS=1
             fi
 
             print_status "Running cargo clippy on services workspace..."
@@ -138,6 +140,7 @@ if [ "${#RUST_FILES[@]}" -gt 0 ]; then
         # Check individual Rust projects outside services
         CHECKED_DIRS=""
         for rust_file in "${RUST_FILES[@]}"; do
+            [[ "$rust_file" == services/* ]] && continue
             rust_dir=$(dirname "$rust_file")
             # Find the nearest Cargo.toml going up the directory tree
             check_dir="$rust_dir"
@@ -151,9 +154,9 @@ if [ "${#RUST_FILES[@]}" -gt 0 ]; then
 
                     # Found a Cargo.toml outside services workspace
                     print_status "Running cargo fmt on $check_dir..."
-                    if ! (cd "$check_dir" && cargo fmt --check) 2>/dev/null; then
-                        print_status "Auto-formatting Rust code in $check_dir..."
-                        (cd "$check_dir" && cargo fmt) 2>/dev/null || true
+                    if ! (cd "$check_dir" && cargo fmt --check); then
+                        print_error "Run 'cargo fmt' in $check_dir and stage the changes you want."
+                        RUST_ERRORS=1
                     fi
 
                     print_status "Running cargo clippy on $check_dir..."
