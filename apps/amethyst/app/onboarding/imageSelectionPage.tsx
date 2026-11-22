@@ -5,41 +5,50 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import type { SelectedProfileImage } from "@/lib/profileImage";
 import { Pen } from "lucide-react-native";
 
 interface ImageSelectionPageProps {
-  onComplete: (avatarUri: string | undefined, bannerUri: string | undefined) => void;
-  initialAvatar?: string;
-  initialBanner?: string;
+  onComplete: () => void;
+  avatarUri?: string;
+  bannerUri?: string;
+  onPickAvatar: (image: SelectedProfileImage) => void;
+  onPickBanner: (image: SelectedProfileImage) => void;
 }
 
 const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
   onComplete,
-  initialAvatar,
-  initialBanner,
+  avatarUri,
+  bannerUri,
+  onPickAvatar,
+  onPickBanner,
 }) => {
-  const [avatarUri, setAvatarUri] = useState(initialAvatar || "");
-  const [bannerUri, setBannerUri] = useState(initialBanner || "");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const pickImage = async (
-    setType: typeof setAvatarUri | typeof setBannerUri,
-  ) => {
+  const pickImage = async (target: "avatar" | "banner") => {
+    setError("");
     setLoading(true);
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: setType === setAvatarUri ? [1, 1] : [3, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setType(result.assets[0].uri);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: target === "avatar" ? [1, 1] : [3, 1],
+        quality: 1,
+      });
+      if (!result.canceled) {
+        const onPick = target === "avatar" ? onPickAvatar : onPickBanner;
+        onPick(result.assets[0]);
+      }
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Couldn't open the image picker.",
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-  const handleNext = () => {
-    onComplete(avatarUri || undefined, bannerUri || undefined);
   };
 
   return (
@@ -48,7 +57,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         What do you look like?
       </Text>
       <Pressable
-        onPress={() => pickImage(setBannerUri)}
+        onPress={() => pickImage("banner")}
         className="mb-5 aspect-[3/1] w-full"
       >
         <View className="relative flex-1 items-center justify-center rounded-lg bg-gray-200">
@@ -68,7 +77,7 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
           )}
         </View>
       </Pressable>
-      <Pressable onPress={() => pickImage(setAvatarUri)} className="mb-10">
+      <Pressable onPress={() => pickImage("avatar")} className="mb-10">
         <View className="relative">
           {loading && !avatarUri && <ActivityIndicator />}
           <Avatar className="h-24 w-24" alt="User Avatar">
@@ -88,7 +97,8 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         </View>
       </Pressable>
 
-      <Button onPress={handleNext} className="w-full">
+      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+      <Button onPress={onComplete} disabled={loading} className="w-full">
         <Text>Next</Text>
       </Button>
     </View>

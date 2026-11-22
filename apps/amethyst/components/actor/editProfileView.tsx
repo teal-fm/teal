@@ -16,6 +16,7 @@ import { Text } from "@/components/ui/text";
 import { useOnEscape } from "@/hooks/useOnEscape";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import type { SelectedProfileImage } from "@/lib/profileImage";
 import { cn } from "@/lib/utils";
 import { Pen } from "lucide-react-native";
 
@@ -27,45 +28,67 @@ const GITHUB_AVATAR_URI =
   "https://i.pinimg.com/originals/ef/a2/8d/efa28d18a04e7fa40ed49eeb0ab660db.jpg";
 
 export interface EditProfileModalProps {
-  isVisible: boolean;
   onClose: () => void;
   profile: any; // Pass the profile data as a prop
-  onSave: (profile: any, avatarUri: string, bannerUri: string) => void; // Pass the onSave callback function
+  onSave: (
+    profile: any,
+    avatar?: SelectedProfileImage,
+    banner?: SelectedProfileImage,
+  ) => Promise<void>;
 }
 
 export default function EditProfileModal({
-  isVisible,
   onClose,
   profile, // Pass the profile data as a prop
   onSave, // Pass the onSave callback function
 }: EditProfileModalProps) {
   const [editedProfile, setEditedProfile] = useState({ ...profile });
-  const [avatarUri, setAvatarUri] = useState(profile?.avatar);
-  const [bannerUri, setBannerUri] = useState(profile?.banner);
+  const [avatar, setAvatar] = useState<SelectedProfileImage>();
+  const [banner, setBanner] = useState<SelectedProfileImage>();
+  const avatarUri =
+    avatar?.uri ??
+    getImageCdnLink({ did: profile?.did, hash: profile?.avatar });
+  const bannerUri =
+    banner?.uri ??
+    getImageCdnLink({ did: profile?.did, hash: profile?.banner });
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const pickImage = async (
-    setType: typeof setAvatarUri | typeof setBannerUri,
-  ) => {
-    setLoading(true); // Start loading
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: setType === setAvatarUri ? [1, 1] : [3, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setType(result.assets[0].uri);
+  const pickImage = async (setType: typeof setAvatar) => {
+    setError("");
+    setLoading(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: setType === setAvatar ? [1, 1] : [3, 1],
+        quality: 1,
+      });
+      if (!result.canceled) setType(result.assets[0]);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Couldn't open the image picker.",
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false); // Stop loading
   };
 
-  const handleSave = () => {
-    onSave(editedProfile, avatarUri, bannerUri); // Call the onSave callback with updated data
-    //onClose();
+  const handleSave = async () => {
+    setError("");
+    setSaving(true);
+    try {
+      await onSave(editedProfile, avatar, banner);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Couldn't save the profile.",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   useOnEscape(onClose);
@@ -79,25 +102,18 @@ export default function EditProfileModal({
   }
 
   return (
-    <Modal animationType="fade" transparent={true} visible={isVisible}>
+    <Modal animationType="fade" transparent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={() => onClose()}>
         <View className="flex-1 items-center justify-center bg-black/50 backdrop-blur">
           <TouchableWithoutFeedback>
             <Card className="w-11/12 max-w-md rounded-lg bg-card p-4">
               <Text className="mb-4 text-xl font-bold">Edit Profile</Text>
-              <Pressable onPress={() => pickImage(setBannerUri)}>
+              <Pressable onPress={() => pickImage(setBanner)}>
                 {loading && !bannerUri && <ActivityIndicator />}
                 {bannerUri ? (
                   <View className="group relative">
                     <Image
-                      source={{
-                        uri: bannerUri?.includes(";")
-                          ? bannerUri
-                          : getImageCdnLink({
-                              did: editedProfile.did,
-                              hash: bannerUri,
-                            }),
-                      }}
+                      source={{ uri: bannerUri }}
                       className="h-24 w-full rounded-lg"
                     />
                     <View className="absolute -bottom-2 -right-2 rounded-full border border-border bg-muted/70 p-1 text-foreground transition-colors duration-300 group-hover:bg-muted/90">
@@ -110,7 +126,7 @@ export default function EditProfileModal({
               </Pressable>
 
               <Pressable
-                onPress={() => pickImage(setAvatarUri)}
+                onPress={() => pickImage(setAvatar)}
                 className={cn("group relative mb-4", bannerUri && "-mt-8 pl-4")}
               >
                 {loading && !avatarUri && <ActivityIndicator />}
@@ -119,16 +135,7 @@ export default function EditProfileModal({
                     className="h-20 w-20"
                     alt={`Avatar for ${editedProfile?.displayName ?? "User"}`}
                   >
-                    <AvatarImage
-                      source={{
-                        uri: avatarUri?.includes(";")
-                          ? avatarUri
-                          : getImageCdnLink({
-                              did: editedProfile.did,
-                              hash: avatarUri,
-                            }),
-                      }}
-                    />
+                    <AvatarImage source={{ uri: avatarUri }} />
                     <AvatarFallback>
                       <Text>
                         {editedProfile?.displayName?.substring(0, 1) ?? "R"}
@@ -164,11 +171,12 @@ export default function EditProfileModal({
                   setEditedProfile({ ...editedProfile, description: text })
                 }
               />
+              {error ? <Text accessibilityRole="alert">{error}</Text> : null}
               <View className="flex-row justify-between">
                 <Button variant="outline" onPress={onClose}>
                   <Text>Cancel</Text>
                 </Button>
-                <Button onPress={handleSave}>
+                <Button onPress={handleSave} disabled={saving || loading}>
                   <Text>Save</Text>
                 </Button>
               </View>

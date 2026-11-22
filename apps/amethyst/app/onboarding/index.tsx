@@ -13,6 +13,10 @@ import {
   STABLE_PROFILE_COLLECTION,
   STABLE_PROFILE_STATUS_COLLECTION,
 } from "@/lib/atp/onboardingRecords";
+import {
+  type SelectedProfileImage,
+  uploadProfileImage,
+} from "@/lib/profileImage";
 import { useStore } from "@/stores/mainStore";
 
 import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
@@ -38,6 +42,9 @@ export default function OnboardingPage() {
   const [avatarUri, setAvatarUri] = useState("");
   const [bannerUri, setBannerUri] = useState("");
 
+  const [selectedAvatar, setSelectedAvatar] = useState<SelectedProfileImage>();
+  const [selectedBanner, setSelectedBanner] = useState<SelectedProfileImage>();
+  const [submissionError, setSubmissionError] = useState("");
   const [submissionStep, setSubmissionStep] = useState(0);
 
   // Profile status hooks - must be at top level
@@ -113,15 +120,6 @@ export default function OnboardingPage() {
     loadProfile();
   }, [agent]);
 
-  const handleImageSelectionComplete = (
-    avatar: string | undefined,
-    banner: string | undefined,
-  ) => {
-    setAvatarUri(avatar ?? "");
-    setBannerUri(banner ?? "");
-    onComplete({ displayName, description }, avatar, banner);
-  };
-
   const handleDisplayNameComplete = (name: string) => {
     setDisplayName(name);
     setStep(2);
@@ -132,57 +130,38 @@ export default function OnboardingPage() {
     setStep(3);
   };
 
-  const onComplete = async (
-    updatedProfile: { displayName: any; description: any },
-    newAvatarUri: string | undefined,
-    newBannerUri: string | undefined,
-  ) => {
+  const onComplete = async () => {
     if (!agent) return;
 
+    setSubmissionError("");
     setSubmissionStep(1);
 
     // get the current user's profile (getRecord)
-    let currentUser: ProfileRecord | undefined;
-    let cid: string | undefined;
-    try {
-      const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
-        agent,
-        STABLE_PROFILE_COLLECTION,
-        LEGACY_PROFILE_COLLECTION,
-      );
-      currentUser = result?.record;
-      // A legacy record must be copied into the stable collection, not
-      // updated in place. Its blob refs are retained below.
-      cid =
-        result?.collection === STABLE_PROFILE_COLLECTION
-          ? result.cid
-          : undefined;
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-    }
+    const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
+      agent,
+      STABLE_PROFILE_COLLECTION,
+      LEGACY_PROFILE_COLLECTION,
+    );
+    const currentUser = result?.record;
+    const cid =
+      result?.collection === STABLE_PROFILE_COLLECTION ? result.cid : undefined;
 
     // upload blobs if necessary
     let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
     let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
-    if (newAvatarUri) {
-      if (!newAvatarUri.startsWith("http")) {
-        setSubmissionStep(2);
-        const data = await fetch(newAvatarUri).then((r) => r.blob());
-        const fileType = newAvatarUri.split(";")[0].split(":")[1];
-        const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
-          .data.blob as unknown as ProfileRecord["avatar"];
-      }
+    if (selectedAvatar) {
+      setSubmissionStep(2);
+      newAvatarBlob = (await uploadProfileImage(
+        agent,
+        selectedAvatar,
+      )) as unknown as ProfileRecord["avatar"];
     }
-    if (newBannerUri) {
-      if (!newBannerUri.startsWith("http")) {
-        setSubmissionStep(3);
-        const data = await fetch(newBannerUri).then((r) => r.blob());
-        const fileType = newBannerUri.split(";")[0].split(":")[1];
-        const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (await agent.uploadBlob(blob, { encoding: fileType }))
-          .data.blob as unknown as ProfileRecord["banner"];
-      }
+    if (selectedBanner) {
+      setSubmissionStep(3);
+      newBannerBlob = (await uploadProfileImage(
+        agent,
+        selectedBanner,
+      )) as unknown as ProfileRecord["banner"];
     }
 
     setSubmissionStep(4);
@@ -190,8 +169,8 @@ export default function OnboardingPage() {
     const record: ProfileRecord = {
       ...currentUser,
       $type: STABLE_PROFILE_COLLECTION,
-      displayName: updatedProfile.displayName,
-      description: updatedProfile.description,
+      displayName,
+      description,
       avatar: newAvatarBlob,
       banner: newBannerBlob,
     };
@@ -320,9 +299,20 @@ export default function OnboardingPage() {
       case 3:
         return (
           <ImageSelectionPage
-            onComplete={handleImageSelectionComplete}
-            initialAvatar={avatarUri}
-            initialBanner={bannerUri}
+            onComplete={() =>
+              onComplete().catch((error: unknown) => {
+                setSubmissionError(
+                  error instanceof Error
+                    ? error.message
+                    : "Couldn't save the profile.",
+                );
+                setSubmissionStep(0);
+              })
+            }
+            avatarUri={selectedAvatar?.uri ?? avatarUri}
+            bannerUri={selectedBanner?.uri ?? bannerUri}
+            onPickAvatar={setSelectedAvatar}
+            onPickBanner={setSelectedBanner}
           />
         );
       default:
@@ -333,6 +323,9 @@ export default function OnboardingPage() {
   return (
     <SafeAreaView className="flex-1 p-5 pt-5">
       <View className="flex h-full min-h-max flex-1">{renderPage()}</View>
+      {submissionError ? (
+        <Text accessibilityRole="alert">{submissionError}</Text>
+      ) : null}
       <ProgressDots totalSteps={3} currentStep={step} />
     </SafeAreaView>
   );

@@ -6,11 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import {
+  getBlobHash,
   LEGACY_PROFILE_COLLECTION,
   readRepoRecordWithLegacyFallback,
   STABLE_PROFILE_COLLECTION,
 } from "@/lib/atp/onboardingRecords";
 import { Icon } from "@/lib/icons/iconWithClassName";
+import {
+  type SelectedProfileImage,
+  uploadProfileImage,
+} from "@/lib/profileImage";
 import { useStore } from "@/stores/mainStore";
 import { Agent } from "@atproto/api";
 import { MoreHorizontal, Pen, Plus } from "lucide-react-native";
@@ -70,64 +75,35 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
 
   const handleSave = async (
     updatedProfile: { displayName: any; description: any },
-    newAvatarUri: string,
-    newBannerUri: string,
+    selectedAvatar?: SelectedProfileImage,
+    selectedBanner?: SelectedProfileImage,
   ) => {
     if (!pdsAgent) {
       return;
     }
-    // Update the local profile data
-    setProfile((prevProfile) => ({
-      ...prevProfile,
-      displayName: updatedProfile.displayName,
-      description: updatedProfile.description,
-      avatar: newAvatarUri,
-      banner: newBannerUri,
-    }));
-
-    // get the current user's profile (getRecord)
-    let currentUser: ProfileRecord | undefined;
-    let cid: string | undefined;
-    try {
-      const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
-        pdsAgent,
-        STABLE_PROFILE_COLLECTION,
-        LEGACY_PROFILE_COLLECTION,
-      );
-      currentUser = result?.record;
-      // Legacy records are copied to the stable collection on the next edit;
-      // keep their blob refs and never try to update the old collection.
-      cid =
-        result?.collection === STABLE_PROFILE_COLLECTION
-          ? result.cid
-          : undefined;
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-    }
+    const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
+      pdsAgent,
+      STABLE_PROFILE_COLLECTION,
+      LEGACY_PROFILE_COLLECTION,
+    );
+    const currentUser = result?.record;
+    const cid =
+      result?.collection === STABLE_PROFILE_COLLECTION ? result.cid : undefined;
 
     // upload blobs if necessary
     let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
     let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
-    if (newAvatarUri) {
-      // if it is http/s url then do nothing
-      if (!newAvatarUri.startsWith("http")) {
-        const data = await fetch(newAvatarUri).then((r) => r.blob());
-        const fileType = newAvatarUri.split(";")[0].split(":")[1];
-        const blob = new Blob([data], { type: fileType });
-        newAvatarBlob = (
-          await pdsAgent.uploadBlob(blob, { encoding: fileType })
-        ).data.blob as unknown as ProfileRecord["avatar"];
-      }
+    if (selectedAvatar) {
+      newAvatarBlob = (await uploadProfileImage(
+        pdsAgent,
+        selectedAvatar,
+      )) as unknown as ProfileRecord["avatar"];
     }
-    if (newBannerUri) {
-      if (!newBannerUri.startsWith("http")) {
-        const data = await fetch(newBannerUri).then((r) => r.blob());
-        const fileType = newBannerUri.split(";")[0].split(":")[1];
-        const blob = new Blob([data], { type: fileType });
-        newBannerBlob = (
-          await pdsAgent.uploadBlob(blob, { encoding: fileType })
-        ).data.blob as unknown as ProfileRecord["banner"];
-      }
+    if (selectedBanner) {
+      newBannerBlob = (await uploadProfileImage(
+        pdsAgent,
+        selectedBanner,
+      )) as unknown as ProfileRecord["banner"];
     }
 
     const record: ProfileRecord = {
@@ -166,7 +142,17 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
       );
     }
 
-    setIsEditing(false); // Close the modal after saving
+    setProfile(
+      (previous) =>
+        previous && {
+          ...previous,
+          displayName: updatedProfile.displayName,
+          description: updatedProfile.description,
+          avatar: getBlobHash(newAvatarBlob),
+          banner: getBlobHash(newBannerBlob),
+        },
+    );
+    setIsEditing(false);
   };
 
   if (!profile) {
@@ -259,9 +245,8 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
         </Text>
         <ActorPlaysView repo={actorDid} pdsAgent={pdsAgent} />
       </View>
-      {isSelf && (
+      {isSelf && isEditing && (
         <EditProfileModal
-          isVisible={isEditing}
           onClose={() => setIsEditing(false)}
           profile={profile} // Pass the profile data
           onSave={handleSave} // Pass the save handler
