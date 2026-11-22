@@ -48,11 +48,19 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
   console.log("Using base URL:", baseUrl);
   const initialAuth = createOAuthClient(baseUrl, "bsky.social");
+  const failCallback = (error: unknown) => {
+    if (get().status === "loggedIn") return;
+    console.error("OAuth callback failed:", error);
+    set({
+      status: "loggedOut",
+      login: {
+        loading: false,
+        error: error instanceof Error ? error.message : "Unknown error during OAuth callback",
+      },
+    });
+  };
   const callback = latestOAuthCallback(
     async (params) => {
-      if (!(params.has("code") && params.has("state") && params.has("iss"))) {
-        throw new Error("Missing callback parameters");
-      }
       set({ login: { loading: true, error: null } });
       return initialAuth.callback(params);
     },
@@ -70,17 +78,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       });
       get().populateLoggedInProfile();
     },
-    (error) => {
-      if (get().status === "loggedIn") return;
-      console.error("OAuth callback failed:", error);
-      set({
-        status: "loggedOut",
-        login: {
-          loading: false,
-          error: error instanceof Error ? error.message : "Unknown error during OAuth callback",
-        },
-      });
-    },
+    failCallback,
   );
 
   console.log("Auth client created!");
@@ -124,7 +122,13 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     },
 
     oauthCallback: async (params) => {
-      if (get().status !== "loggedIn") await callback.complete(params);
+      if (get().status === "loggedIn") return;
+      const state = params.get("state");
+      if (!state || !params.get("code") || !params.get("iss") || params.has("error")) {
+        if (!get().login.loading) failCallback(new Error("Missing callback parameters"));
+        return;
+      }
+      await callback.complete(state, params);
     },
     restorePdsAgent: async () => {
       const sessionToRestore = get().oauthSession;
