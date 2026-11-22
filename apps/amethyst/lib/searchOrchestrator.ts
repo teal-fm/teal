@@ -162,12 +162,12 @@ export async function searchRecordings(
   // then re-search recordings with the romanized name.
   let cjkAliasResults: MusicBrainzRecording[] = [];
   const artistForSearch = cleanedArtist || artist;
+  const exactBeforeAlias = [...exactWithRelease, ...exactWithoutRelease, ...originalExactResults];
   if (
-    exactWithRelease.length === 0 &&
-    exactWithoutRelease.length === 0 &&
-    originalExactResults.length === 0 &&
     artistForSearch &&
-    hasCJK(artistForSearch)
+    hasCJK(artistForSearch) &&
+    (exactBeforeAlias.length === 0 ||
+      (config.enableMultiStage && !exactResultsSufficient(exactBeforeAlias, cleanedTrack, !!cleanedArtist)))
   ) {
     assertActive();
     const romanized = await resolveAlias(artistForSearch, { signal });
@@ -182,12 +182,7 @@ export async function searchRecordings(
     }
   }
 
-  const combinedExact = [
-    ...exactWithRelease,
-    ...exactWithoutRelease,
-    ...originalExactResults,
-    ...cjkAliasResults,
-  ];
+  const combinedExact = [...exactBeforeAlias, ...cjkAliasResults];
 
   // Early exit: good exact results -> skip later stages but still rank.
   // Ranking applies variant matching, release quality, and text-match boosts

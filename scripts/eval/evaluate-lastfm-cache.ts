@@ -498,23 +498,11 @@ export class LastFMCache {
     stmt.run(artist, album, info?.mbid ?? null);
   }
 
-  /**
-   * Get cached MusicBrainz search results
-   * Cache key includes search configuration to ensure idempotency across config changes
-   */
-  /**
-   * Get cached MusicBrainz search results.
-   * Cache key is (track, artist, album, strategy) -- the actual API query params.
-   * Config flags are NOT part of the key; the caller passes already-cleaned values.
-   * Legacy overload accepts extra boolean flags (ignored in hash).
-   */
+  /** Get a response cached by the query fields and search strategy. */
   getSearchResults(
     track: string,
     artist: string,
     album?: string,
-    _enableCleaning?: boolean,
-    _enableFuzzy?: boolean,
-    _enableMultiStage?: boolean,
     strategy?: string
   ): any[] | null {
     const queryHash = this.hashSearchQuery(track, artist, album, strategy);
@@ -537,9 +525,6 @@ export class LastFMCache {
     artist: string,
     album: string | undefined,
     results: any[],
-    _enableCleaning?: boolean,
-    _enableFuzzy?: boolean,
-    _enableMultiStage?: boolean,
     strategy?: string
   ) {
     const queryHash = this.hashSearchQuery(track, artist, album, strategy);

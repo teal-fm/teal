@@ -10,6 +10,7 @@ import {
 import { searchRecordings } from "../../apps/amethyst/lib/searchOrchestrator";
 
 type StageCache = Pick<LastFMCache, "getSearchResults" | "setSearchResults">;
+const requestSignal: typeof AbortSignal & { timeout?: (ms: number) => AbortSignal } = AbortSignal;
 
 // Count the actual fetches for both recording and artist requests, including retries.
 function measuredFetch(metrics?: APIMetrics, onRequest?: () => void): typeof fetch {
@@ -18,11 +19,7 @@ function measuredFetch(metrics?: APIMetrics, onRequest?: () => void): typeof fet
     onRequest?.();
     if (metrics) metrics.musicbrainzCalls++;
     try {
-      const signal = init?.signal ?? (
-        "timeout" in AbortSignal && typeof AbortSignal.timeout === "function"
-          ? AbortSignal.timeout(15_000)
-          : undefined
-      );
+      const signal = init?.signal ?? requestSignal.timeout?.(15_000);
       const res = await fetch(input, { ...init, signal });
       if (metrics && !res.ok) {
         if (res.status === 429 || res.status === 503) metrics.musicbrainzRateLimits++;
@@ -44,15 +41,15 @@ export async function baselineSearch(
   release: string | undefined,
   cache?: StageCache,
   apiMetrics?: APIMetrics,
-): Promise<SearchResult[]> {
+): Promise<{ results: SearchResult[]; cacheHit: boolean }> {
   const cached = cache?.getSearchResults(track, artist, release);
-  if (cached != null) return cached;
+  if (cached != null) return { results: cached, cacheHit: true };
 
   const queryParts: string[] = [];
   if (track) queryParts.push(`title:"${escapeLucene(track)}"`);
   if (artist) queryParts.push(`artist:"${escapeLucene(artist)}"`);
   if (release) queryParts.push(`release:"${escapeLucene(release)}"`);
-  if (queryParts.length === 0) return [];
+  if (queryParts.length === 0) return { results: [], cacheHit: false };
 
   const results = await fetchMusicBrainzRecordings(queryParts.join(" AND "), {
     fetcher: measuredFetch(apiMetrics),
@@ -60,7 +57,7 @@ export async function baselineSearch(
   });
   if (results === null) throw new MusicBrainzUnavailableError("MusicBrainz recording search was canceled");
   cache?.setSearchResults(track, artist, release, results);
-  return results;
+  return { results, cacheHit: false };
 }
 
 async function cachedSearchStage(
@@ -71,15 +68,11 @@ async function cachedSearchStage(
   cache: StageCache | undefined,
   fetcher: typeof fetch,
 ): Promise<SearchResult[]> {
-  const cached = cache?.getSearchResults(
-    track ?? "", artist ?? "", release, false, false, false, strategy,
-  );
+  const cached = cache?.getSearchResults(track ?? "", artist ?? "", release, strategy);
   if (cached != null) return cached;
 
   const results = await searchStage(track, artist, release, strategy, { fetcher, failOnError: true });
-  cache?.setSearchResults(
-    track ?? "", artist ?? "", release, results, false, false, false, strategy,
-  );
+  cache?.setSearchResults(track ?? "", artist ?? "", release, results, strategy);
   return results;
 }
 
@@ -110,10 +103,9 @@ export async function compareSearches(
   cache?: StageCache,
   apiMetrics?: APIMetrics,
 ) {
-  const baselineCacheHit = cache?.getSearchResults(track, artist, release) != null;
   let apiCallsImproved = 0;
   try {
-    const baselineRes = await baselineSearch(track, artist, release, cache, apiMetrics);
+    const { results: baselineRes, cacheHit: baselineCacheHit } = await baselineSearch(track, artist, release, cache, apiMetrics);
     const improvedRes = await improvedSearchWithConfig(track, artist, release, config, cache, apiMetrics, () => {
       apiCallsImproved++;
     });

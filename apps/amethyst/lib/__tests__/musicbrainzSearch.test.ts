@@ -1,6 +1,6 @@
 import { baselineSearch, compareSearches, improvedSearchWithConfig } from "../../../../scripts/eval/search";
 import { createAPIMetrics } from "../../../../scripts/eval/types";
-import { searchMusicbrainz } from "../searchOrchestrator";
+import { searchMusicbrainz, searchRecordings } from "../searchOrchestrator";
 import * as musicbrainz from "../musicbrainzSearchUtils";
 
 const query = { track: "Moonrise", artist: "Evening Ensemble" };
@@ -107,6 +107,26 @@ it("reuses cached stage responses for the evaluation", async () => {
   expect(cache.setSearchResults).not.toHaveBeenCalled();
 });
 
+it("checks an artist alias when exact results have several weak matches", async () => {
+  const artist = "坂本龍一";
+  const alias = "Ryuichi Sakamoto";
+  const lookup = jest.fn().mockImplementation(async (_track, name) =>
+    name === alias ? [correct] : Array.from({ length: 5 }, (_, i) => ({
+      id: `weak-${i}`,
+      title: "Unrelated title",
+      score: 30,
+    })),
+  );
+  const results = await searchRecordings(
+    { track: query.track, artist },
+    config,
+    lookup,
+    { resolveAlias: async () => alias },
+  );
+  expect(results[0]?.id).toBe(correct.id);
+  expect(lookup.mock.calls.map((call) => call[1])).toEqual([artist, alias]);
+});
+
 it("honors the evaluation switches for cleaning, fuzzy search, and all fallbacks", async () => {
   const lookup = jest.spyOn(musicbrainz, "searchStage").mockResolvedValue([]);
   const track = "Moonrise (Remastered)";
@@ -176,7 +196,7 @@ it.each(["baseline", "candidate"])("keeps a %s outage out of the cache", async (
     const cache = { getSearchResults: jest.fn().mockReturnValue(null), setSearchResults: jest.fn() };
     const track = `Recovery ${arm}`;
     const run = () => arm === "baseline"
-      ? baselineSearch(track, query.artist, undefined, cache)
+      ? baselineSearch(track, query.artist, undefined, cache).then(({ results }) => results)
       : improvedSearchWithConfig(track, query.artist, undefined, config, cache);
     const fetch = jest.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status: 502 }));
 
