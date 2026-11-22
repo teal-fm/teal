@@ -220,12 +220,12 @@ export function reportResults(output: EvaluationOutput): void {
   const {
     baseline: [bP10Pt, bP10Lo, bP10Hi],
     improved: [iP10Pt, iP10Lo, iP10Hi],
-    difference: [p10Imp],
+    difference: [p10Imp, dP10Lo, dP10Hi],
   } = pairedRateIntervals(recordingIds, baselineP10Arr, improvedP10Arr);
   const {
     baseline: [bP25Pt, bP25Lo, bP25Hi],
     improved: [iP25Pt, iP25Lo, iP25Hi],
-    difference: [p25Imp],
+    difference: [p25Imp, dP25Lo, dP25Hi],
   } = pairedRateIntervals(recordingIds, baselineP25Arr, improvedP25Arr);
   const {
     baseline: [bFPt, bFLo, bFHi],
@@ -312,8 +312,8 @@ export function reportResults(output: EvaluationOutput): void {
   console.log("IMPROVEMENT (percentage points, 95% intervals resampled by recording):");
   console.log(`  Precision@1: ${p1Imp > 0 ? "+" : ""}${p1Imp.toFixed(1)} pp${interval(dP1Lo, dP1Hi, "")}`);
   console.log(`  Precision@5: ${p5Imp > 0 ? "+" : ""}${p5Imp.toFixed(1)} pp${interval(dP5Lo, dP5Hi, "")}`);
-  console.log(`  Precision@10: ${p10Imp > 0 ? "+" : ""}${p10Imp.toFixed(1)} pp`);
-  console.log(`  Precision@25: ${p25Imp > 0 ? "+" : ""}${p25Imp.toFixed(1)} pp`);
+  console.log(`  Precision@10: ${p10Imp > 0 ? "+" : ""}${p10Imp.toFixed(1)} pp${interval(dP10Lo, dP10Hi, "")}`);
+  console.log(`  Precision@25: ${p25Imp > 0 ? "+" : ""}${p25Imp.toFixed(1)} pp${interval(dP25Lo, dP25Hi, "")}`);
   console.log(`  Findability: ${fImp > 0 ? "+" : ""}${fImp.toFixed(1)} pp${interval(dFLo, dFHi, "")}`);
   console.log(`  MRR: ${mrrImp > 0 ? "+" : ""}${mrrImp.toFixed(3)}, NDCG@25: ${ndcgImp > 0 ? "+" : ""}${ndcgImp.toFixed(3)}`);
 
@@ -479,6 +479,15 @@ export function reportResults(output: EvaluationOutput): void {
             const sum = uncached.reduce((a, c) => a + c.apiCallsImproved, 0);
             return Math.round((sum / uncached.length) * 100) / 100;
           })(),
+        },
+        evaluated_queries: cases.length,
+        recording_count: recordingCount,
+        improvement_intervals_95_pp: recordingCount < 2 ? null : {
+          p1: [dP1Lo, dP1Hi],
+          p5: [dP5Lo, dP5Hi],
+          p10: [dP10Lo, dP10Hi],
+          p25: [dP25Lo, dP25Hi],
+          findability: [dFLo, dFHi],
         },
         api_metrics: {
           musicbrainz_calls: apiMetrics.musicbrainzCalls,
