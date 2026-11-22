@@ -1,0 +1,2007 @@
+{
+  "source": "MusicBrainz public web service",
+  "captureDate": "2026-11-22",
+  "license": "CC0 (projected core recording, artist and release data)",
+  "searchLimit": 25,
+  "cases": [
+    {
+      "name": "Daft Punk / Discovery",
+      "input": {
+        "track": "One More Time",
+        "artist": "Daft Punk",
+        "release": "Discovery"
+      },
+      "label": 0
+    },
+    {
+      "name": "Ado / original-script album track",
+      "input": {
+        "track": "花火",
+        "artist": "Ado",
+        "release": "狂言"
+      },
+      "label": 1
+    },
+    {
+      "name": "Ado / English title for the same album track",
+      "input": {
+        "track": "Fireworks",
+        "artist": "Ado",
+        "release": "狂言"
+      },
+      "label": 1,
+      "knownMiss": true
+    },
+    {
+      "name": "Björk / Homogenic studio edition",
+      "input": {
+        "track": "Bachelorette",
+        "artist": "Björk",
+        "release": "Homogenic"
+      },
+      "label": 2
+    }
+  ],
+  "responses": [
+    {
+      "query": "title:\"One More Time\" AND artist:\"Daft Punk\" AND release:\"Discovery\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22One%20More%20Time%22%20AND%20artist%3A%22Daft%20Punk%22%20AND%20release%3A%22Discovery%22&fmt=json&limit=25",
+      "created": "2026-11-22T16:39:19.949Z",
+      "count": 7,
+      "recordings": [
+        {
+          "id": "60fa767a-d85d-4991-82bc-4294e0b11ae7",
+          "title": "One More Time",
+          "score": 100,
+          "length": 320746,
+          "artist-credit": [
+            {
+              "name": "Daft Punk",
+              "artist": {
+                "id": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+                "name": "Daft Punk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "ea225cf1-0254-481d-86cc-b4e2274a3af1",
+              "title": "Discovery / Human After All",
+              "status": "Official",
+              "date": "2011",
+              "country": "GB"
+            },
+            {
+              "id": "8d28a4da-8077-4cae-a0a1-2d16c4923775",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2024-10-08",
+              "country": "XW"
+            },
+            {
+              "id": "6cd30d99-4923-4d5e-8e51-9d87506976f1",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2005-01-24",
+              "country": "XW"
+            },
+            {
+              "id": "7c3157ba-4f6f-4162-a6ec-93842c143877",
+              "title": "Discovery (Beta Version)",
+              "status": "Bootleg",
+              "date": "2001",
+              "country": "XW"
+            },
+            {
+              "id": "5ca5058b-8ac5-4d11-a541-c341c82df5bc",
+              "title": "Dance Now 2002, Volume 1",
+              "status": "Official",
+              "date": "2002",
+              "country": "AU"
+            },
+            {
+              "id": "0bf152ba-ac90-45d6-9e08-59d712eb2cb5",
+              "title": "Homework / Discovery",
+              "status": "Official",
+              "date": "2001-10-15",
+              "country": "FR"
+            },
+            {
+              "id": "bd324e9a-85d4-4dea-b401-209b80405b47",
+              "title": "One More Time (Vol 7)",
+              "status": "Bootleg",
+              "date": "2022",
+              "country": "FR"
+            },
+            {
+              "id": "a7dc5abd-3347-4d06-b158-9114d50e1f6f",
+              "title": "One More Time (Vol 7)",
+              "status": "Bootleg",
+              "date": "2023",
+              "country": "FR"
+            },
+            {
+              "id": "e482bad7-cf58-41ac-9a4d-7fa67ff9c61d",
+              "title": "One More Time (Vol 7)",
+              "status": "Bootleg",
+              "date": "2010",
+              "country": "FR"
+            },
+            {
+              "id": "69b198ff-fbaa-492a-bd2e-55f7aef7c29e",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2002",
+              "country": "XE"
+            },
+            {
+              "id": "21c7fa71-fc6a-4528-b8cc-5f9f6588fd23",
+              "title": "The Very Best of 94.7: Highveld Stereo’s Top 8 @ 8",
+              "status": "Official",
+              "date": "2002-09",
+              "country": "ZA"
+            },
+            {
+              "id": "67728d4c-37ab-47d5-be8a-62b248946b58",
+              "title": "Virgin Records Dance Hits",
+              "status": "Official",
+              "date": "2004-10-05",
+              "country": "US"
+            },
+            {
+              "id": "fcbe492b-c203-48c6-b15e-ae60122404bd",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2022",
+              "country": "XE"
+            },
+            {
+              "id": "afe39ef3-1cfa-4572-9ecd-096a8367ad3c",
+              "title": "Until One (mixed by Swedish House Mafia)",
+              "status": "Official"
+            },
+            {
+              "id": "5125fa48-f5dc-4fe4-9e4e-8c0cb719ce03",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2023",
+              "country": "XE"
+            },
+            {
+              "id": "0bdc5760-762d-4004-8c0e-2547b925341b",
+              "title": "100 Greatest Running Tracks",
+              "status": "Withdrawn"
+            },
+            {
+              "id": "4727f4e3-cf11-41ae-8ffc-26e22b842387",
+              "title": "Interstella 5555: The 5tory of the 5ecret 5tar 5ystem",
+              "status": "Official",
+              "date": "2003-12-01",
+              "country": "XE"
+            },
+            {
+              "id": "74ccb54a-1b24-41a6-a25f-a877e0774fc9",
+              "title": "ディスカバリ / Discovery",
+              "status": "Official",
+              "date": "2014-01-29",
+              "country": "JP"
+            },
+            {
+              "id": "098060d4-ba3c-469d-88b0-08642261c7ab",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-03-12",
+              "country": "XE"
+            },
+            {
+              "id": "a1be7f50-6fbb-4251-8de3-3bb54d168d7f",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2021",
+              "country": "DE"
+            },
+            {
+              "id": "844eb852-8044-4506-9ca2-b86de172ae46",
+              "title": "100 Greatest 00s: The Best Songs From the Decade",
+              "status": "Withdrawn",
+              "date": "2019-12-27",
+              "country": "XW"
+            },
+            {
+              "id": "5654ace8-fd02-4471-a14c-bd6781cf2277",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001",
+              "country": "MX"
+            },
+            {
+              "id": "488477d8-10b4-47fe-a482-549f011406a5",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2021",
+              "country": "XE"
+            },
+            {
+              "id": "14661d77-91c4-4f03-a606-04f99be60cb2",
+              "title": "Party All Night",
+              "status": "Withdrawn"
+            },
+            {
+              "id": "ab5ca495-8983-41b9-86b4-46a981d173be",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-03-10",
+              "country": "JP"
+            },
+            {
+              "id": "a4ec6652-4999-4a86-9eb5-ae1e88ec1ee3",
+              "title": "Homework / Discovery",
+              "status": "Official",
+              "date": "2002",
+              "country": "FR"
+            },
+            {
+              "id": "c388e976-d998-46fa-9121-580aa0502861",
+              "title": "Triple J: Hottest 100 of the Past 20 Years",
+              "status": "Bootleg",
+              "date": "2013",
+              "country": "AU"
+            },
+            {
+              "id": "4375a6b0-cd50-4f59-be32-13161c0fc448",
+              "title": "Discovery",
+              "date": "2001-03-12",
+              "country": "XE"
+            },
+            {
+              "id": "4a9e65ec-c732-40a2-b824-4ccb49751717",
+              "title": "One More Time",
+              "status": "Promotion",
+              "date": "2000",
+              "country": "GB"
+            },
+            {
+              "id": "b4927a5a-1411-4bd3-86d5-2b2b0c80ce06",
+              "title": "Now 4",
+              "status": "Official",
+              "date": "2001-06-21",
+              "country": "PT"
+            },
+            {
+              "id": "89643cd8-4664-4ea0-9cde-2564d26231a9",
+              "title": "ディスカバリー",
+              "status": "Official",
+              "date": "2024-12-13",
+              "country": "XW"
+            },
+            {
+              "id": "a7261832-c1ab-48a6-91dc-1493635ed4de",
+              "title": "Dance Classics: The Ultimate Throwback Club Classics",
+              "status": "Official"
+            },
+            {
+              "id": "9798415c-8f5f-47dd-9be2-3a06f3fc98cc",
+              "title": "Homework / Discovery",
+              "status": "Official",
+              "date": "2013",
+              "country": "XE"
+            },
+            {
+              "id": "e9dfe7ea-d340-4798-ab58-7a500fffc297",
+              "title": "100 Greatest Dance Tracks",
+              "status": "Official",
+              "date": "2019-04-12",
+              "country": "GB"
+            },
+            {
+              "id": "07e64996-7097-4f62-98fb-4b015f8cb43c",
+              "title": "100% Hits: Best of + Summer Hits 2001",
+              "status": "Official",
+              "date": "2001",
+              "country": "AU"
+            },
+            {
+              "id": "7e514966-e15b-4170-9959-0bdf2e05ca2b",
+              "title": "Pepsi Chart Hits, Volume 5",
+              "status": "Official",
+              "date": "2002",
+              "country": "AU"
+            },
+            {
+              "id": "4e79d688-7400-4c15-9b29-d3a17350d722",
+              "title": "Class of 02: Songs for Schoolies",
+              "status": "Official",
+              "date": "2002",
+              "country": "AU"
+            },
+            {
+              "id": "96ea03e0-31c2-408b-a6c4-ecbcb9fb08fd",
+              "title": "100 Greatest Summer Party Songs 2020",
+              "status": "Withdrawn",
+              "date": "2020-06-12",
+              "country": "XW"
+            },
+            {
+              "id": "e99343ac-6470-4f41-8cac-b8d75c9fb8cc",
+              "title": "Now That’s What I Call Music! 7",
+              "status": "Official",
+              "date": "2001",
+              "country": "CN"
+            },
+            {
+              "id": "d4fc3caf-da46-4caa-9b2a-30166cfbb1b1",
+              "title": "Birthday 21, Vol.2",
+              "status": "Official",
+              "date": "2002",
+              "country": "BE"
+            },
+            {
+              "id": "b078d70c-d2eb-489a-a8f8-e322af35dedf",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2021-12-17",
+              "country": "XE"
+            },
+            {
+              "id": "32f0835c-a970-41a6-95fd-04916b603767",
+              "title": "Interstella 5555",
+              "status": "Bootleg"
+            },
+            {
+              "id": "61fb7ca1-1ce7-4a72-91cb-ba7d1c3d9b9e",
+              "title": "Clubfete 2014 - 44 Club Dance & Party Hits",
+              "status": "Official"
+            },
+            {
+              "id": "955ca060-ea76-47b2-9e53-c9117b1d6495",
+              "title": "S’bescht Dance Album wo’s git",
+              "status": "Official",
+              "date": "2005",
+              "country": "CH"
+            },
+            {
+              "id": "8a8e9ea9-cdba-45cb-91b9-9c094fda629f",
+              "title": "Süddeutsche Zeitung | Diskothek: 2001: Ein Jahr und seine 20 Songs",
+              "status": "Official",
+              "date": "2005",
+              "country": "DE"
+            },
+            {
+              "id": "0700f4d2-b1b1-4d6d-a14b-12ae9d90e43c",
+              "title": "I Love Dance Class-X",
+              "status": "Official",
+              "date": "2003",
+              "country": "BE"
+            },
+            {
+              "id": "7e080f4c-e751-4495-b153-659e3998e0f3",
+              "title": "Le Top : 20 ans de tubes, Volume 2",
+              "status": "Official",
+              "date": "2004",
+              "country": "FR"
+            },
+            {
+              "id": "ceddc8f8-3b4f-4667-949c-40c8ea0103ae",
+              "title": "25 Years of MTV Music Television",
+              "status": "Official",
+              "date": "2006",
+              "country": "PL"
+            },
+            {
+              "id": "3c1f4733-2a6e-4ed1-b4fc-368ea204c8b8",
+              "title": "Eden: Original Motion Picture Soundtrack",
+              "status": "Official",
+              "date": "2014-11-10",
+              "country": "CA"
+            },
+            {
+              "id": "8cb3797f-a8fb-40fe-a821-bdf1b404a188",
+              "title": "Eden: Original Motion Picture Soundtrack",
+              "status": "Official"
+            },
+            {
+              "id": "0ad42b1e-0c4f-440b-a946-cf46bc3cd20a",
+              "title": "Global Hits 2002",
+              "status": "Official",
+              "date": "2002-02-26",
+              "country": "US"
+            },
+            {
+              "id": "08a24a57-291d-475c-b8ea-0a29d820a2c6",
+              "title": "100 Greatest: Feel Good",
+              "status": "Official",
+              "date": "2020-01-24",
+              "country": "GB"
+            },
+            {
+              "id": "6b6628a6-59a2-4284-86fc-8f2d24cb7b7e",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001",
+              "country": "CA"
+            },
+            {
+              "id": "064bc52b-e2df-4ce4-bd45-f8ee9cd90dee",
+              "title": "Summer Dance Anthems",
+              "status": "Official"
+            },
+            {
+              "id": "a70f43d6-7a9e-444a-834d-105095822974",
+              "title": "Playlist: Party",
+              "status": "Official"
+            },
+            {
+              "id": "47f1ab2a-b8c3-4f10-83c5-ce47a8c8cf28",
+              "title": "100 Greatest Party Starters",
+              "status": "Withdrawn"
+            },
+            {
+              "id": "bd3bb36e-16c8-438f-850e-dfbf4d1478f0",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-02-26",
+              "country": "AU"
+            },
+            {
+              "id": "ae16a9ee-e051-4260-8e3a-ec2b198adc37",
+              "title": "Greatest Hits",
+              "status": "Bootleg",
+              "date": "2008",
+              "country": "RU"
+            },
+            {
+              "id": "4f5be873-aba8-47e3-b09a-d2872f3c5b9e",
+              "title": "Greatest Hits",
+              "status": "Bootleg",
+              "date": "2006",
+              "country": "RU"
+            },
+            {
+              "id": "783f973a-3c7a-4cb4-b586-1a784f82803b",
+              "title": "C9 Moves You",
+              "status": "Official"
+            },
+            {
+              "id": "9bfd6abf-5c81-4816-8f5f-fbfb99df4d50",
+              "title": "The Ultimate Workout Mix",
+              "status": "Official",
+              "date": "2008-01-14",
+              "country": "GB"
+            },
+            {
+              "id": "6dff84e2-4d8c-4b7a-82b2-6628f1eb0b2d",
+              "title": "Vive o 2004!: The Feelgood Soundtrack to Euro 2004",
+              "status": "Official",
+              "date": "2004",
+              "country": "XE"
+            },
+            {
+              "id": "a8b30292-5b91-4db1-bb4c-b35729cf0e44",
+              "title": "Ultimate 90",
+              "status": "Official",
+              "date": "2004",
+              "country": "FR"
+            },
+            {
+              "id": "1f2bd552-2313-493b-9086-da334ed7fc7f",
+              "title": "Vive o 2004!: The Feelgood Soundtrack to Euro 2004",
+              "status": "Official",
+              "date": "2004",
+              "country": "NO"
+            },
+            {
+              "id": "e1fba0f8-d109-4588-bee2-8a281002a3e7",
+              "title": "De Maxx Long Player 10: House Edition",
+              "status": "Official",
+              "date": "2006-11-17",
+              "country": "BE"
+            },
+            {
+              "id": "57c6c10b-4c09-4016-8dbf-e6c03bd95e3c",
+              "title": "Dance Train: Final Edition",
+              "status": "Official",
+              "date": "2004",
+              "country": "BE"
+            },
+            {
+              "id": "d45a32c5-4623-4f94-9496-31ead3faf2d7",
+              "title": "The World's Best Deejays",
+              "status": "Official",
+              "date": "2002",
+              "country": "ES"
+            },
+            {
+              "id": "d073287b-d1bd-4f11-a933-a4386f8cf701",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-02-26",
+              "country": "FR"
+            },
+            {
+              "id": "51467269-3122-3d7e-92b2-0f0a694d30c1",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-03-10",
+              "country": "JP"
+            },
+            {
+              "id": "44e85a85-77d7-3e2e-8416-65a27d2aef68",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-03-12",
+              "country": "GB"
+            },
+            {
+              "id": "5ad66522-edce-3a77-b5fa-7956ee879239",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-03-13",
+              "country": "US"
+            },
+            {
+              "id": "0c5ae3b0-1034-4a61-a4c9-6a1ad218190c",
+              "title": "Les 100 Plus Grands Tubes de l'été",
+              "status": "Official",
+              "date": "2006",
+              "country": "FR"
+            },
+            {
+              "id": "ac7518c6-b630-4761-99c7-6a94cc35a594",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001-10-03",
+              "country": "FR"
+            },
+            {
+              "id": "8343b377-ea18-4d64-b5f6-ffaf55d8f55b",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2005",
+              "country": "AU"
+            },
+            {
+              "id": "30e45d86-707d-4042-9df5-93724557aadb",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2001",
+              "country": "XE"
+            },
+            {
+              "id": "b1cc7c7f-aec4-45cb-b587-5403cbd14ba8",
+              "title": "Triple J: Hottest 100, Volume 9",
+              "status": "Official",
+              "date": "2002",
+              "country": "AU"
+            },
+            {
+              "id": "34010573-6b6c-436e-9464-033d22f6be51",
+              "title": "Triple J: Hottest 100, Volume 9",
+              "status": "Official",
+              "date": "2002-03-25",
+              "country": "AU"
+            },
+            {
+              "id": "babac583-ddd8-4d58-9d58-ceba593e0029",
+              "title": "NRJ Music Awards 2004",
+              "status": "Official",
+              "date": "2004-04-07",
+              "country": "FR"
+            },
+            {
+              "id": "c80cdcf0-0b8d-4c40-bbbb-54b286fd9a21",
+              "title": "Discovery",
+              "status": "Official",
+              "date": "2014",
+              "country": "US"
+            }
+          ]
+        },
+        {
+          "id": "37510e11-6d3a-45e3-ac80-86d2ee4b70fa",
+          "title": "One More Time (Sample Bandit Bootleg)",
+          "score": 95,
+          "length": 220000,
+          "artist-credit": [
+            {
+              "name": "Daft Punk",
+              "artist": {
+                "id": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+                "name": "Daft Punk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "b6713edb-5b34-4f7e-98b4-f668ed228f6e",
+              "title": "Discovery (Sample Bandit Bootlegs)",
+              "status": "Bootleg",
+              "date": "2022-06-10",
+              "country": "XW"
+            }
+          ]
+        },
+        {
+          "id": "63845dcd-526a-424d-bd1f-347b4b9bfa16",
+          "title": "One More Time (Uwe Heinrich Adler remix)",
+          "score": 95,
+          "length": 338000,
+          "artist-credit": [
+            {
+              "name": "Daft Punk",
+              "artist": {
+                "id": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+                "name": "Daft Punk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "ebace3d6-1193-4840-b395-ddfa1232c62a",
+              "title": "Re-Discovery",
+              "status": "Bootleg",
+              "date": "2011-08-05",
+              "country": "XW"
+            }
+          ]
+        },
+        {
+          "id": "3c850af7-9174-47de-97b9-d2d378e7c46a",
+          "title": "One More Time (unplugged a cappella)",
+          "score": 94,
+          "length": 219000,
+          "artist-credit": [
+            {
+              "name": "Daft Punk",
+              "artist": {
+                "id": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+                "name": "Daft Punk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "76f2dad0-8235-4400-996e-f90132e6607c",
+              "title": "Discovery: Bonus Tracks From daftclub.com",
+              "status": "Promotion",
+              "date": "2001",
+              "country": "XW"
+            }
+          ]
+        },
+        {
+          "id": "be7bf22f-778e-4e11-a32d-21a80fa50362",
+          "title": "One More Time (+ Aerodynamic) (James Richardson remix)",
+          "score": 92,
+          "length": 343792,
+          "artist-credit": [
+            {
+              "name": "Daft Punk",
+              "artist": {
+                "id": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+                "name": "Daft Punk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "f3b06083-57ef-4909-aee8-da2e4f3cfcdf",
+              "title": "Discovery Remixed",
+              "status": "Bootleg",
+              "date": "2012-03-10",
+              "country": "XW"
+            }
+          ]
+        },
+        {
+          "id": "dc34eb9c-5c5a-4340-80fe-a493fb5f06ca",
+          "title": "Aerodynamic Special (One More Time / Aerodynamic)",
+          "score": 90,
+          "length": 371000,
+          "artist-credit": [
+            {
+              "name": "Daft Punk",
+              "artist": {
+                "id": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+                "name": "Daft Punk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "76f2dad0-8235-4400-996e-f90132e6607c",
+              "title": "Discovery: Bonus Tracks From daftclub.com",
+              "status": "Promotion",
+              "date": "2001",
+              "country": "XW"
+            }
+          ]
+        },
+        {
+          "id": "18be2614-90dc-408e-9e9d-50ae10e2a95c",
+          "title": "One More Time (Sample Bandit Bootleg) (136 Version)",
+          "score": 88,
+          "length": 310000,
+          "artist-credit": [
+            {
+              "name": "Daft Punk",
+              "artist": {
+                "id": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+                "name": "Daft Punk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "b6713edb-5b34-4f7e-98b4-f668ed228f6e",
+              "title": "Discovery (Sample Bandit Bootlegs)",
+              "status": "Bootleg",
+              "date": "2022-06-10",
+              "country": "XW"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "title:\"Fireworks\" AND artist:\"Ado\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Fireworks%22%20AND%20artist%3A%22Ado%22&fmt=json&limit=25",
+      "created": "2026-11-22T16:39:22.910Z",
+      "count": 1,
+      "recordings": [
+        {
+          "id": "41d7b28d-ac62-410c-aa24-827106638799",
+          "title": "花火",
+          "score": 100,
+          "disambiguation": "live, 2023-08-30: 日本武道館, Chiyoda, Tokyo, Japan",
+          "artist-credit": [
+            {
+              "name": "Ado",
+              "artist": {
+                "id": "e134b52f-2e9e-4734-9bc3-bea9648d1fa1",
+                "name": "Ado"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "e443b0df-a258-4ab0-ad99-4af2dbae253e",
+              "title": "マーズ",
+              "status": "Official",
+              "date": "2024-04-10",
+              "country": "JP"
+            },
+            {
+              "id": "c69a4027-0060-4802-b2a3-f35fdadfd2ef",
+              "title": "マーズ",
+              "status": "Official",
+              "date": "2024-04-10",
+              "country": "JP"
+            },
+            {
+              "id": "ed7a1034-625a-4e4f-8040-529fc65ed749",
+              "title": "マーズ",
+              "status": "Official",
+              "date": "2024-04-10",
+              "country": "JP"
+            },
+            {
+              "id": "8713cd67-fca5-4992-8e91-f15458ca6b57",
+              "title": "マーズ",
+              "status": "Official",
+              "date": "2024-04-10",
+              "country": "JP"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "title:\"花火\" AND artist:\"Ado\" AND release:\"狂言\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22%E8%8A%B1%E7%81%AB%22%20AND%20artist%3A%22Ado%22%20AND%20release%3A%22%E7%8B%82%E8%A8%80%22&fmt=json&limit=25",
+      "created": "2026-11-22T16:39:25.234Z",
+      "count": 1,
+      "recordings": [
+        {
+          "id": "9eacbbd7-65ca-4154-ae76-9a1866ff6bcd",
+          "title": "花火",
+          "score": 100,
+          "length": 212373,
+          "artist-credit": [
+            {
+              "name": "Ado",
+              "artist": {
+                "id": "e134b52f-2e9e-4734-9bc3-bea9648d1fa1",
+                "name": "Ado"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "9877a738-84bd-4830-9a16-2971c0ccc6be",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01",
+              "country": "TW"
+            },
+            {
+              "id": "3106ffb9-4872-40ba-acde-2a07f41d7403",
+              "title": "Kyougen",
+              "status": "Pseudo-Release"
+            },
+            {
+              "id": "c7974d11-385c-4770-be81-ee4253b99478",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "XW"
+            },
+            {
+              "id": "ac2df55e-60d3-4944-ad70-6fc957906b42",
+              "title": "Kyougen",
+              "status": "Official",
+              "date": "2023-02-10",
+              "country": "US"
+            },
+            {
+              "id": "d9fbf729-3bcf-46b1-94a4-7b4bf7babced",
+              "title": "Kyougen",
+              "status": "Official"
+            },
+            {
+              "id": "652831c6-04d2-4571-bdbe-4a6af088547a",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "JP"
+            },
+            {
+              "id": "f3de41cd-9a15-4928-b50c-ef364812cb87",
+              "title": "Kyougen",
+              "status": "Official"
+            },
+            {
+              "id": "ed4e12b4-4106-4069-8e60-7e0abf6a2d77",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "JP"
+            },
+            {
+              "id": "f5e81e1e-759c-45a8-b03e-48768c211005",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "JP"
+            },
+            {
+              "id": "923ae2c4-5eba-4770-9e03-a394a16d1e28",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "XW"
+            },
+            {
+              "id": "a1639974-9569-4f8d-a726-ac4867065463",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "JP"
+            },
+            {
+              "id": "f55654fa-fa15-4eb5-8709-56b5047b3629",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "JP"
+            },
+            {
+              "id": "0dd04718-0910-4307-87b2-89d0377fbc5b",
+              "title": "狂言",
+              "status": "Official",
+              "date": "2022-01-26",
+              "country": "JP"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "title:\"Fireworks\" AND artist:\"Ado\" AND release:\"狂言\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Fireworks%22%20AND%20artist%3A%22Ado%22%20AND%20release%3A%22%E7%8B%82%E8%A8%80%22&fmt=json&limit=25",
+      "created": "2026-11-22T16:40:06.656Z",
+      "count": 0,
+      "recordings": []
+    },
+    {
+      "query": "title:\"Bachelorette\" AND artist:\"Björk\" AND release:\"Homogenic\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Bachelorette%22%20AND%20artist%3A%22Bj%C3%B6rk%22%20AND%20release%3A%22Homogenic%22&fmt=json&limit=25",
+      "created": "2026-11-22T16:40:16.198Z",
+      "count": 5,
+      "recordings": [
+        {
+          "id": "1e34a0ab-f8e7-4762-a957-f17c6998d467",
+          "title": "Bachelorette",
+          "score": 100,
+          "disambiguation": "live, 1997‐11‐29: Later… With Jools Holland, BBC Television Centre, London, England, UK",
+          "length": 317213,
+          "artist-credit": [
+            {
+              "name": "Björk",
+              "artist": {
+                "id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+                "name": "Björk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "3ae0df16-bfb4-3100-8185-7fa4a13778af",
+              "title": "Homogenic Live",
+              "status": "Official",
+              "date": "2003-08-18",
+              "country": "GB"
+            },
+            {
+              "id": "870257e6-9131-47dd-be7a-35a527f14e29",
+              "title": "Livebox",
+              "status": "Official",
+              "date": "2003",
+              "country": "US"
+            },
+            {
+              "id": "e7b6e758-156d-4918-899b-d4bc8a91214c",
+              "title": "Homogenic Live",
+              "status": "Official",
+              "date": "2021-10-26",
+              "country": "XW"
+            },
+            {
+              "id": "e90c77d2-4ed4-41a0-ae1f-a1b65dceeb4d",
+              "title": "Livebox Sampler",
+              "status": "Promotion",
+              "date": "2003",
+              "country": "GB"
+            },
+            {
+              "id": "82c45c3d-78a5-44a5-811b-7375fe7928ed",
+              "title": "Livebox",
+              "status": "Official",
+              "date": "2003",
+              "country": "TW"
+            },
+            {
+              "id": "37ca428d-c614-4f6d-b863-9bcfbbdbf3b3",
+              "title": "Livebox",
+              "status": "Official",
+              "date": "2003-08-26",
+              "country": "XE"
+            },
+            {
+              "id": "872a5ae6-cced-3a86-b700-603a899b8add",
+              "title": "Homogenic Live",
+              "status": "Official",
+              "date": "2004-05-10",
+              "country": "GB"
+            },
+            {
+              "id": "1708a7a6-13bb-4f31-99df-3c9c2909d34b",
+              "title": "Homogenic Live",
+              "status": "Official",
+              "date": "2004-05-10",
+              "country": "XE"
+            },
+            {
+              "id": "5b4f8857-58e9-434b-9636-410dc512e627",
+              "title": "Homogenic Live",
+              "status": "Official",
+              "date": "2004-06-01",
+              "country": "US"
+            }
+          ]
+        },
+        {
+          "id": "7773e9c8-8254-4a69-a0ab-ff9fe910bd11",
+          "title": "Bachelorette (5.1 mix)",
+          "score": 91,
+          "length": 313000,
+          "artist-credit": [
+            {
+              "name": "Björk",
+              "artist": {
+                "id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+                "name": "Björk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "9d97d2b5-1dea-4b37-86fa-0f8d3c398669",
+              "title": "(____surrounded):",
+              "status": "Official",
+              "date": "2006-07-10",
+              "country": "GB"
+            },
+            {
+              "id": "c7a289d8-79bb-38b1-88ce-4e4318c177a3",
+              "title": "(____surrounded):",
+              "status": "Official",
+              "date": "2006-08-23",
+              "country": "JP"
+            },
+            {
+              "id": "e23ff5b0-d31b-4699-ae04-4eebf4702910",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2006",
+              "country": "US"
+            }
+          ]
+        },
+        {
+          "id": "c1f33001-bb2b-4754-b81a-6e17757d5b9a",
+          "title": "Bachelorette (Family Tree version)",
+          "score": 90,
+          "length": 316600,
+          "artist-credit": [
+            {
+              "name": "Björk",
+              "artist": {
+                "id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+                "name": "Björk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "8a17db91-c15e-40d3-ba9b-eae1c4623b25",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2018-06-08",
+              "country": "CA"
+            }
+          ]
+        },
+        {
+          "id": "8ddbc4f1-f3db-47f1-b727-b4ceaf98cef8",
+          "title": "Bachelorette",
+          "score": 85,
+          "length": 315000,
+          "artist-credit": [
+            {
+              "name": "Björk",
+              "artist": {
+                "id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+                "name": "Björk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "a6099ff8-4ca1-4dfc-9e56-edbc514df7b5",
+              "title": "Homogenic",
+              "status": "Official"
+            },
+            {
+              "id": "e5ce6a98-3c34-4344-8799-ef5b7a5d229f",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002",
+              "country": "IS"
+            },
+            {
+              "id": "9eb06b8b-73af-4e4f-815c-1a0e459af1c4",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "",
+              "country": "XW"
+            },
+            {
+              "id": "7ffd0406-9dcc-4504-b8d6-2789d4504564",
+              "title": "Homogenic"
+            },
+            {
+              "id": "2422bc00-3cb8-4dfa-9ddd-f1c24b7a3ba1",
+              "title": "Homogenic",
+              "status": "Official"
+            },
+            {
+              "id": "a6745793-dece-445a-a9be-e042cae558b8",
+              "title": "Greatest Hits",
+              "status": "Official"
+            },
+            {
+              "id": "775c90cf-12d1-4a93-a534-3b29d9471c5e",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2022",
+              "country": "GB"
+            },
+            {
+              "id": "312c29cd-2f2a-46cc-8003-2d222c9742b1",
+              "title": "Family Tree",
+              "status": "Official"
+            },
+            {
+              "id": "b0b0473a-e3ea-49b5-a332-5e2106317d74",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "US"
+            },
+            {
+              "id": "ec6026ff-855f-4ce9-9394-d249ffe85f8a",
+              "title": "90’s Indie Essentials",
+              "status": "Official"
+            },
+            {
+              "id": "fa376f40-5442-4061-84a8-42c03409b837",
+              "title": "Greatest Hits",
+              "status": "Official"
+            },
+            {
+              "id": "4d331c5f-3b14-4491-9aaf-7e08b64fdc28",
+              "title": "Greatest Hits",
+              "status": "Official"
+            },
+            {
+              "id": "a38d11cf-d32b-4483-94e7-26c96da5dc70",
+              "title": "Selmasongs + Bonus",
+              "status": "Bootleg",
+              "date": "2000",
+              "country": "RU"
+            },
+            {
+              "id": "a9754c72-dcb5-41ea-a022-ef378b58586c",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "",
+              "country": "CA"
+            },
+            {
+              "id": "822e675d-cc56-415c-ae55-f528908ede92",
+              "title": "Collection 2000",
+              "status": "Bootleg",
+              "date": "2000",
+              "country": "RU"
+            },
+            {
+              "id": "b7fc7291-e8f3-4b38-bb50-2a2b69e464b4",
+              "title": "Diamond Collection",
+              "status": "Bootleg",
+              "date": "1996",
+              "country": "RU"
+            },
+            {
+              "id": "e9dbca33-704d-4fb8-ae95-7136c45e89c7",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2018-03-22",
+              "country": "IS"
+            },
+            {
+              "id": "eb54cf4a-2fcc-46c6-b311-7e7267ace1d2",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002-11-01",
+              "country": "XE"
+            },
+            {
+              "id": "ff121d21-e3e4-4698-99bc-3895656b4ddc",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2021-10-26",
+              "country": "XW"
+            },
+            {
+              "id": "afac1bb6-6f84-43d8-94a4-f6ed18291117",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1999",
+              "country": "XE"
+            },
+            {
+              "id": "9d97d2b5-1dea-4b37-86fa-0f8d3c398669",
+              "title": "(____surrounded):",
+              "status": "Official",
+              "date": "2006-07-10",
+              "country": "GB"
+            },
+            {
+              "id": "8f29e742-c34c-42cf-b6f2-6f2d355055c1",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2020-06-18",
+              "country": "XW"
+            },
+            {
+              "id": "07d30530-c087-4d24-bbe9-3e0a2026c164",
+              "title": "Gold Collection 2001",
+              "status": "Bootleg",
+              "date": "2001",
+              "country": "RU"
+            },
+            {
+              "id": "588b9131-2e7e-4f01-81a0-f9c5a8cb5d86",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2012-05-20",
+              "country": "JP"
+            },
+            {
+              "id": "22ab9644-6038-4925-952c-51e13628f826",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2007",
+              "country": "XE"
+            },
+            {
+              "id": "d44f69e5-17e9-402a-8f3b-462f97c721c6",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "GB"
+            },
+            {
+              "id": "f38662c7-600c-417c-8e3b-63d34c51d3a6",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2019-04-26",
+              "country": "GB"
+            },
+            {
+              "id": "c7a289d8-79bb-38b1-88ce-4e4318c177a3",
+              "title": "(____surrounded):",
+              "status": "Official",
+              "date": "2006-08-23",
+              "country": "JP"
+            },
+            {
+              "id": "32e6cdfc-05c4-40b1-ae2d-929e1df1009e",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "XE"
+            },
+            {
+              "id": "99a3becc-087b-4c23-a7bd-0b5721cf098c",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "GB"
+            },
+            {
+              "id": "b7d4582a-599d-32c0-af8f-1adae1a5feb5",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002",
+              "country": "US"
+            },
+            {
+              "id": "9013cf15-ce0b-4afd-af3e-7b5f79f7e91d",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002",
+              "country": "XE"
+            },
+            {
+              "id": "3d556386-e931-44a5-85d2-331c66ac2a25",
+              "title": "Kiss Me: Greatest Hits ’98",
+              "status": "Bootleg",
+              "date": "1998",
+              "country": "RU"
+            },
+            {
+              "id": "2b8a7ffc-f4ca-4e17-aa84-d036a81c92e5",
+              "title": "Singles Collection ’99",
+              "status": "Bootleg",
+              "date": "1999",
+              "country": "DE"
+            },
+            {
+              "id": "65966234-fae6-42af-b6c1-d1e7a51ba5a9",
+              "title": "Bachelorette",
+              "status": "Official",
+              "date": "1997-12",
+              "country": "GB"
+            },
+            {
+              "id": "e689c9a1-0ff2-41f9-b23a-dcd9317397aa",
+              "title": "Bachelorette",
+              "status": "Promotion",
+              "date": "1997",
+              "country": "US"
+            },
+            {
+              "id": "f22cdadd-7f9e-4fe4-9bdb-9cba0bc84097",
+              "title": "Bachelorette",
+              "status": "Official",
+              "date": "1997",
+              "country": "GB"
+            },
+            {
+              "id": "2291979d-8117-4117-9057-2d49b708af00",
+              "title": "Bachelorette",
+              "status": "Official",
+              "date": "1997-12",
+              "country": "GB"
+            },
+            {
+              "id": "82a88dbb-7ced-496e-9c80-e600a069a072",
+              "title": "MTV History 2000: Björk",
+              "status": "Bootleg",
+              "date": "1999",
+              "country": "RU"
+            },
+            {
+              "id": "887c988a-30ea-4119-820f-7236b7dc011f",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "BR"
+            },
+            {
+              "id": "cfbb2f15-835b-4bee-abc1-df30d7e3a381",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-20",
+              "country": "JP"
+            },
+            {
+              "id": "72820419-fb45-4528-8767-2d1cacb2f0e0",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2011-09-07",
+              "country": "JP"
+            },
+            {
+              "id": "4c2ad110-06aa-41f9-97c5-28ad0a207c09",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2004",
+              "country": "XE"
+            },
+            {
+              "id": "afa8c799-4c41-477f-b0b8-c95b7f38cc8c",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "CA"
+            },
+            {
+              "id": "e23ff5b0-d31b-4699-ae04-4eebf4702910",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2006",
+              "country": "US"
+            },
+            {
+              "id": "146c9b25-878d-4237-ac38-4eb201ede87c",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2008-05-28",
+              "country": "JP"
+            },
+            {
+              "id": "8ddae5c7-4bd2-41b5-acae-23cc48db17a2",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "ZA"
+            },
+            {
+              "id": "2a7ff1ca-aab3-4e09-93be-6c3eadbf90e2",
+              "title": "Homogenic",
+              "status": "Bootleg",
+              "date": "1997",
+              "country": "RU"
+            },
+            {
+              "id": "38912012-9b91-3a09-8d82-0eaae7c8617c",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-22",
+              "country": "GB"
+            },
+            {
+              "id": "59bc0c7c-ce63-49f6-bb0e-a75436e02d9d",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2008-06-20",
+              "country": "XE"
+            },
+            {
+              "id": "f4510be1-3952-3e8e-87d3-8f54da032c9c",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-22",
+              "country": "GB"
+            },
+            {
+              "id": "de8b34f6-90a5-3910-accf-83d88deb46e9",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-29",
+              "country": "AU"
+            },
+            {
+              "id": "eefe0976-3250-36d7-bbda-7d1d48f8620a",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09",
+              "country": "XE"
+            },
+            {
+              "id": "03662e39-5e71-377a-98b8-7b731e8a8e40",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09",
+              "country": "ES"
+            },
+            {
+              "id": "807e517d-e7a9-4c3d-8e9e-ae98c721dc69",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "CA"
+            },
+            {
+              "id": "8925c61b-3066-4bd6-a2a9-56f88c16d44f",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "XE"
+            },
+            {
+              "id": "7a2ad97a-55e9-48a4-953b-45ddc10f7f0f",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-27",
+              "country": "US"
+            },
+            {
+              "id": "b46529f1-eebb-4421-bfe0-e7982c1596bd",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2000-01",
+              "country": "GB"
+            },
+            {
+              "id": "67777d01-6aad-4d00-888a-98337bd222e2",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "GB"
+            },
+            {
+              "id": "b347dd62-61c5-4f05-b78e-9c132d3342e2",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "XE"
+            },
+            {
+              "id": "d370a134-665e-4a3f-870a-c670ba5d98fe",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002-11-05",
+              "country": "US"
+            }
+          ]
+        },
+        {
+          "id": "83534ada-9f60-4093-bbf3-ca182a03cf8b",
+          "title": "Jóga",
+          "score": 27,
+          "length": 305360,
+          "artist-credit": [
+            {
+              "name": "Björk",
+              "artist": {
+                "id": "87c5dedd-371d-4a53-9f7f-80522fb7f3cb",
+                "name": "Björk"
+              }
+            }
+          ],
+          "releases": [
+            {
+              "id": "84cd7ec6-0d21-4ff2-a6af-ebc7d0790b40",
+              "title": "Björk: The Times Newspaper Special",
+              "status": "Official",
+              "date": "2001",
+              "country": "GB"
+            },
+            {
+              "id": "a6099ff8-4ca1-4dfc-9e56-edbc514df7b5",
+              "title": "Homogenic",
+              "status": "Official"
+            },
+            {
+              "id": "e5ce6a98-3c34-4344-8799-ef5b7a5d229f",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002",
+              "country": "IS"
+            },
+            {
+              "id": "3a0be4cc-f3d1-46b2-92b2-f57a7b89a2a5",
+              "title": "Jóga",
+              "status": "Official",
+              "date": "",
+              "country": "XW"
+            },
+            {
+              "id": "9eb06b8b-73af-4e4f-815c-1a0e459af1c4",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "",
+              "country": "XW"
+            },
+            {
+              "id": "7ffd0406-9dcc-4504-b8d6-2789d4504564",
+              "title": "Homogenic"
+            },
+            {
+              "id": "2422bc00-3cb8-4dfa-9ddd-f1c24b7a3ba1",
+              "title": "Homogenic",
+              "status": "Official"
+            },
+            {
+              "id": "a6745793-dece-445a-a9be-e042cae558b8",
+              "title": "Greatest Hits",
+              "status": "Official"
+            },
+            {
+              "id": "775c90cf-12d1-4a93-a534-3b29d9471c5e",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2022",
+              "country": "GB"
+            },
+            {
+              "id": "312c29cd-2f2a-46cc-8003-2d222c9742b1",
+              "title": "Family Tree",
+              "status": "Official"
+            },
+            {
+              "id": "b0b0473a-e3ea-49b5-a332-5e2106317d74",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "US"
+            },
+            {
+              "id": "fa376f40-5442-4061-84a8-42c03409b837",
+              "title": "Greatest Hits",
+              "status": "Official"
+            },
+            {
+              "id": "4d331c5f-3b14-4491-9aaf-7e08b64fdc28",
+              "title": "Greatest Hits",
+              "status": "Official"
+            },
+            {
+              "id": "807e517d-e7a9-4c3d-8e9e-ae98c721dc69",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "CA"
+            },
+            {
+              "id": "a38d11cf-d32b-4483-94e7-26c96da5dc70",
+              "title": "Selmasongs + Bonus",
+              "status": "Bootleg",
+              "date": "2000",
+              "country": "RU"
+            },
+            {
+              "id": "3c35e9a2-f6e7-44fe-8a84-8f2061e62538",
+              "title": "Jóga",
+              "status": "Official",
+              "date": "1997-05",
+              "country": "GB"
+            },
+            {
+              "id": "a9754c72-dcb5-41ea-a022-ef378b58586c",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "",
+              "country": "CA"
+            },
+            {
+              "id": "822e675d-cc56-415c-ae55-f528908ede92",
+              "title": "Collection 2000",
+              "status": "Bootleg",
+              "date": "2000",
+              "country": "RU"
+            },
+            {
+              "id": "e9dbca33-704d-4fb8-ae95-7136c45e89c7",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2018-03-22",
+              "country": "IS"
+            },
+            {
+              "id": "8a17db91-c15e-40d3-ba9b-eae1c4623b25",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2018-06-08",
+              "country": "CA"
+            },
+            {
+              "id": "eb54cf4a-2fcc-46c6-b311-7e7267ace1d2",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002-11-01",
+              "country": "XE"
+            },
+            {
+              "id": "7f31fda1-ceef-4c00-bffe-8f79f2ba7e92",
+              "title": "Jóga",
+              "status": "Official",
+              "date": "2021-10-26",
+              "country": "XW"
+            },
+            {
+              "id": "ff121d21-e3e4-4698-99bc-3895656b4ddc",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2021-10-26",
+              "country": "XW"
+            },
+            {
+              "id": "afac1bb6-6f84-43d8-94a4-f6ed18291117",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1999",
+              "country": "XE"
+            },
+            {
+              "id": "9d97d2b5-1dea-4b37-86fa-0f8d3c398669",
+              "title": "(____surrounded):",
+              "status": "Official",
+              "date": "2006-07-10",
+              "country": "GB"
+            },
+            {
+              "id": "8f29e742-c34c-42cf-b6f2-6f2d355055c1",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2020-06-18",
+              "country": "XW"
+            },
+            {
+              "id": "07d30530-c087-4d24-bbe9-3e0a2026c164",
+              "title": "Gold Collection 2001",
+              "status": "Bootleg",
+              "date": "2001",
+              "country": "RU"
+            },
+            {
+              "id": "b7fc7291-e8f3-4b38-bb50-2a2b69e464b4",
+              "title": "Diamond Collection",
+              "status": "Bootleg",
+              "date": "1996",
+              "country": "RU"
+            },
+            {
+              "id": "588b9131-2e7e-4f01-81a0-f9c5a8cb5d86",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2012-05-20",
+              "country": "JP"
+            },
+            {
+              "id": "16a0ddf7-8525-4d61-aaa4-8f852e863741",
+              "title": "Songs That Melt Your Heart",
+              "status": "Official",
+              "date": "2020-01-10",
+              "country": "CA"
+            },
+            {
+              "id": "22ab9644-6038-4925-952c-51e13628f826",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2007",
+              "country": "XE"
+            },
+            {
+              "id": "d44f69e5-17e9-402a-8f3b-462f97c721c6",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "GB"
+            },
+            {
+              "id": "f38662c7-600c-417c-8e3b-63d34c51d3a6",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2019-04-26",
+              "country": "GB"
+            },
+            {
+              "id": "c7a289d8-79bb-38b1-88ce-4e4318c177a3",
+              "title": "(____surrounded):",
+              "status": "Official",
+              "date": "2006-08-23",
+              "country": "JP"
+            },
+            {
+              "id": "20831980-19be-429b-ab2a-2b607e4174ae",
+              "title": "Jóga / Bachelorette",
+              "status": "Official",
+              "date": "1998-07-08",
+              "country": "JP"
+            },
+            {
+              "id": "32e6cdfc-05c4-40b1-ae2d-929e1df1009e",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "XE"
+            },
+            {
+              "id": "99a3becc-087b-4c23-a7bd-0b5721cf098c",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "GB"
+            },
+            {
+              "id": "b7d4582a-599d-32c0-af8f-1adae1a5feb5",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002",
+              "country": "US"
+            },
+            {
+              "id": "9013cf15-ce0b-4afd-af3e-7b5f79f7e91d",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2002",
+              "country": "XE"
+            },
+            {
+              "id": "3d556386-e931-44a5-85d2-331c66ac2a25",
+              "title": "Kiss Me: Greatest Hits ’98",
+              "status": "Bootleg",
+              "date": "1998",
+              "country": "RU"
+            },
+            {
+              "id": "82a88dbb-7ced-496e-9c80-e600a069a072",
+              "title": "MTV History 2000: Björk",
+              "status": "Bootleg",
+              "date": "1999",
+              "country": "RU"
+            },
+            {
+              "id": "edaa0605-7e16-47bf-a61a-9e2c596fafed",
+              "title": "World Ballads Collection",
+              "status": "Bootleg"
+            },
+            {
+              "id": "d54303aa-20a7-4807-a27e-5167f7de0422",
+              "title": "Romantic Collection",
+              "status": "Bootleg",
+              "date": "",
+              "country": "RU"
+            },
+            {
+              "id": "2b8a7ffc-f4ca-4e17-aa84-d036a81c92e5",
+              "title": "Singles Collection ’99",
+              "status": "Bootleg",
+              "date": "1999",
+              "country": "DE"
+            },
+            {
+              "id": "bd9732db-27bf-4bc6-9df6-d0460ed62dab",
+              "title": "Jóga",
+              "status": "Official",
+              "date": "1997",
+              "country": "GB"
+            },
+            {
+              "id": "602249e8-cf61-4eee-9d7f-eae248b853b2",
+              "title": "Jóga",
+              "status": "Promotion",
+              "date": "1997",
+              "country": "US"
+            },
+            {
+              "id": "485a700d-8d66-470e-87f8-b212bd6ebb1b",
+              "title": "Woman",
+              "status": "Official",
+              "date": "2001-05-23",
+              "country": "JP"
+            },
+            {
+              "id": "4c2ad110-06aa-41f9-97c5-28ad0a207c09",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2004",
+              "country": "XE"
+            },
+            {
+              "id": "887c988a-30ea-4119-820f-7236b7dc011f",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "BR"
+            },
+            {
+              "id": "cfbb2f15-835b-4bee-abc1-df30d7e3a381",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-20",
+              "country": "JP"
+            },
+            {
+              "id": "72820419-fb45-4528-8767-2d1cacb2f0e0",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2011-09-07",
+              "country": "JP"
+            },
+            {
+              "id": "d370a134-665e-4a3f-870a-c670ba5d98fe",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002-11-05",
+              "country": "US"
+            },
+            {
+              "id": "b347dd62-61c5-4f05-b78e-9c132d3342e2",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "XE"
+            },
+            {
+              "id": "67777d01-6aad-4d00-888a-98337bd222e2",
+              "title": "Family Tree",
+              "status": "Official",
+              "date": "2002-11-04",
+              "country": "GB"
+            },
+            {
+              "id": "7a2ad97a-55e9-48a4-953b-45ddc10f7f0f",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-27",
+              "country": "US"
+            },
+            {
+              "id": "38912012-9b91-3a09-8d82-0eaae7c8617c",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-22",
+              "country": "GB"
+            },
+            {
+              "id": "b46529f1-eebb-4421-bfe0-e7982c1596bd",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2000-01",
+              "country": "GB"
+            },
+            {
+              "id": "8925c61b-3066-4bd6-a2a9-56f88c16d44f",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "XE"
+            },
+            {
+              "id": "03662e39-5e71-377a-98b8-7b731e8a8e40",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09",
+              "country": "ES"
+            },
+            {
+              "id": "eefe0976-3250-36d7-bbda-7d1d48f8620a",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09",
+              "country": "XE"
+            },
+            {
+              "id": "de8b34f6-90a5-3910-accf-83d88deb46e9",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-29",
+              "country": "AU"
+            },
+            {
+              "id": "f4510be1-3952-3e8e-87d3-8f54da032c9c",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997-09-22",
+              "country": "GB"
+            },
+            {
+              "id": "59bc0c7c-ce63-49f6-bb0e-a75436e02d9d",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2008-06-20",
+              "country": "XE"
+            },
+            {
+              "id": "2a7ff1ca-aab3-4e09-93be-6c3eadbf90e2",
+              "title": "Homogenic",
+              "status": "Bootleg",
+              "date": "1997",
+              "country": "RU"
+            },
+            {
+              "id": "8ddae5c7-4bd2-41b5-acae-23cc48db17a2",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "ZA"
+            },
+            {
+              "id": "146c9b25-878d-4237-ac38-4eb201ede87c",
+              "title": "Greatest Hits",
+              "status": "Official",
+              "date": "2008-05-28",
+              "country": "JP"
+            },
+            {
+              "id": "e23ff5b0-d31b-4699-ae04-4eebf4702910",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "2006",
+              "country": "US"
+            },
+            {
+              "id": "afa8c799-4c41-477f-b0b8-c95b7f38cc8c",
+              "title": "Homogenic",
+              "status": "Official",
+              "date": "1997",
+              "country": "CA"
+            },
+            {
+              "id": "57dcc6ed-003b-4d4e-bf79-0642711b9305",
+              "title": "Björk",
+              "status": "Promotion",
+              "date": "2001-08-18",
+              "country": "GB"
+            },
+            {
+              "id": "71b88548-d1ce-4b00-9ec2-420b1491f1ac",
+              "title": "Jóga",
+              "status": "Official",
+              "date": "1997-09",
+              "country": "GB"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "source": "https://musicbrainz.org/ws/2/release/8d28a4da-8077-4cae-a0a1-2d16c4923775?inc=recordings&fmt=json",
+      "releaseId": "8d28a4da-8077-4cae-a0a1-2d16c4923775",
+      "release": "Discovery",
+      "trackNumber": "1",
+      "recordingId": "60fa767a-d85d-4991-82bc-4294e0b11ae7"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/c7974d11-385c-4770-be81-ee4253b99478?inc=recordings&fmt=json",
+      "releaseId": "c7974d11-385c-4770-be81-ee4253b99478",
+      "release": "狂言",
+      "trackNumber": "5",
+      "recordingId": "9eacbbd7-65ca-4154-ae76-9a1866ff6bcd"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/9eb06b8b-73af-4e4f-815c-1a0e459af1c4?inc=recordings&fmt=json",
+      "releaseId": "9eb06b8b-73af-4e4f-815c-1a0e459af1c4",
+      "release": "Homogenic",
+      "trackNumber": "4",
+      "recordingId": "8ddbc4f1-f3db-47f1-b727-b4ceaf98cef8"
+    }
+  ]
+}
