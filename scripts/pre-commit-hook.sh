@@ -54,6 +54,25 @@ if [ "${#STAGED_FILES[@]}" -eq 0 ]; then
     exit 0
 fi
 
+report_unstaged_fixes() {
+    local status=$? file
+    if [ "$status" -ne 0 ]; then
+        local changed=()
+        for file in "${STAGED_FILES[@]}"; do
+            if ! git --literal-pathspecs diff --quiet -- "$file"; then
+                changed+=("$file")
+            fi
+        done
+        if [ "${#changed[@]}" -gt 0 ]; then
+            print_warning "The hook changed these files before a check failed:"
+            printf '  - %s\n' "${changed[@]}"
+            print_status "Review the changes with git diff and stage the fixes you want before retrying."
+        fi
+    fi
+    return "$status"
+}
+trap report_unstaged_fixes EXIT
+
 print_status "Staged files to check:"
 printf '  - %s\n' "${STAGED_FILES[@]}"
 
