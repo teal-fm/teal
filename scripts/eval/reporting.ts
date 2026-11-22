@@ -12,7 +12,6 @@ import {
 } from "./types.js";
 import {
   pairedRateIntervals,
-  mcnemarTest,
   cohensH,
 } from "./statistics.js";
 
@@ -234,10 +233,6 @@ export function reportResults(output: EvaluationOutput): void {
     difference: [fImp, dFLo, dFHi],
   } = pairedRateIntervals(recordingIds, baselineFoundArr, improvedFoundArr);
 
-  const mcnP1 = mcnemarTest(baselineP1Arr, improvedP1Arr);
-  const mcnP5 = mcnemarTest(baselineP5Arr, improvedP5Arr);
-  const mcnF = mcnemarTest(baselineFoundArr, improvedFoundArr);
-
   const effP1 = cohensH(bP1Pt, iP1Pt);
   const effP5 = cohensH(bP5Pt, iP5Pt);
   const effF = cohensH(bFPt, iFPt);
@@ -322,10 +317,6 @@ export function reportResults(output: EvaluationOutput): void {
   console.log(`  Findability: ${fImp > 0 ? "+" : ""}${fImp.toFixed(1)} pp${interval(dFLo, dFHi, "")}`);
   console.log(`  MRR: ${mrrImp > 0 ? "+" : ""}${mrrImp.toFixed(3)}, NDCG@25: ${ndcgImp > 0 ? "+" : ""}${ndcgImp.toFixed(3)}`);
 
-  console.log("\nSTATISTICAL SIGNIFICANCE:");
-  console.log(`  P@1: ${mcnP1.significant ? "SIGNIFICANT" : "not significant"} (p=${mcnP1.pValue.toFixed(4)})`);
-  console.log(`  P@5: ${mcnP5.significant ? "SIGNIFICANT" : "not significant"} (p=${mcnP5.pValue.toFixed(4)})`);
-  console.log(`  Findability: ${mcnF.significant ? "SIGNIFICANT" : "not significant"} (p=${mcnF.pValue.toFixed(4)})`);
   console.log(`  Effect size (Cohen's h): P@1=${effP1.toFixed(3)}, P@5=${effP5.toFixed(3)}, Found=${effF.toFixed(3)}\n`);
 
   // Effective metrics
