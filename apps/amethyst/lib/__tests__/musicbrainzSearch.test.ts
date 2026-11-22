@@ -148,3 +148,23 @@ it("stops before the next lookup when an interactive search is canceled", async 
   expect(lookup).toHaveBeenCalledTimes(1);
   expect(onFallback).not.toHaveBeenCalled();
 });
+
+it("does not retry an interactive MusicBrainz request after cancellation", async () => {
+  jest.useFakeTimers();
+  try {
+    const controller = new AbortController();
+    const fetch = jest.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 503 }));
+    const pending = searchMusicbrainz(query, { signal: controller.signal });
+
+    await jest.advanceTimersByTimeAsync(0);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch.mock.calls[0][1]?.signal).toBe(controller.signal);
+    controller.abort();
+    await jest.runAllTimersAsync();
+
+    expect(await pending).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  } finally {
+    jest.useRealTimers();
+  }
+});

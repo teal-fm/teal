@@ -93,9 +93,11 @@ export async function searchRecordings(
   const assertActive = () => {
     if (signal?.aborted) throw new Error("Search canceled");
   };
-  const lookup: typeof searchStage = async (...args) => {
+  const lookup: typeof searchStage = async (track, artist, release, strategy) => {
     assertActive();
-    const results = await request(...args);
+    const results = signal
+      ? await request(track, artist, release, strategy, { signal })
+      : await request(track, artist, release, strategy);
     assertActive();
     return results;
   };
@@ -167,7 +169,7 @@ export async function searchRecordings(
     hasCJK(artistForSearch)
   ) {
     assertActive();
-    const romanized = await resolveArtistAlias(artistForSearch);
+    const romanized = await resolveArtistAlias(artistForSearch, { signal });
     assertActive();
     if (romanized && romanized !== artistForSearch) {
       cjkAliasResults = await lookup(

@@ -170,11 +170,15 @@ export async function searchStage(
     limit?: number;
     userAgent?: string;
     baseUrl?: string;
+    signal?: AbortSignal;
   },
 ): Promise<MusicBrainzRecording[]> {
   const limit = options?.limit ?? 25;
   const userAgent = options?.userAgent ?? "tealtracker/0.0.1 (https://github.com/teal-fm/teal)";
   const baseUrl = options?.baseUrl ?? "https://musicbrainz.org/ws/2";
+  const signal = options?.signal;
+
+  if (signal?.aborted) return [];
 
   const queryParts: string[] = [];
 
@@ -208,6 +212,7 @@ export async function searchStage(
   if (elapsed < MB_RATE_LIMIT_MS && lastAPICallTime > 0) {
     await new Promise((resolve) => setTimeout(resolve, MB_RATE_LIMIT_MS - elapsed));
   }
+  if (signal?.aborted) return [];
   lastAPICallTime = Date.now();
 
   // Retry with exponential backoff for rate limiting
@@ -215,15 +220,18 @@ export async function searchStage(
   let delay = INITIAL_RETRY_DELAY;
 
   while (retries > 0) {
+    if (signal?.aborted) return [];
     try {
       const res = await fetch(
         `${baseUrl}/recording?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`,
         {
+          signal,
           headers: {
             "User-Agent": userAgent,
           },
         },
       );
+      if (signal?.aborted) return [];
 
       // Handle rate limiting (503)
       if (res.status === 503) {
@@ -247,6 +255,7 @@ export async function searchStage(
       setCache(cacheKey, results);
       return results;
     } catch (error) {
+      if (signal?.aborted) return [];
       retries--;
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -279,10 +288,14 @@ export async function resolveArtistAlias(
   options?: {
     userAgent?: string;
     baseUrl?: string;
+    signal?: AbortSignal;
   },
 ): Promise<string | null> {
   const userAgent = options?.userAgent ?? "tealtracker/0.0.1 (https://github.com/teal-fm/teal)";
   const baseUrl = options?.baseUrl ?? "https://musicbrainz.org/ws/2";
+  const signal = options?.signal;
+
+  if (signal?.aborted) return null;
 
   // Search artist by alias
   const escaped = artistName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -300,12 +313,13 @@ export async function resolveArtistAlias(
   if (elapsed < MB_RATE_LIMIT_MS && lastAPICallTime > 0) {
     await new Promise((resolve) => setTimeout(resolve, MB_RATE_LIMIT_MS - elapsed));
   }
+  if (signal?.aborted) return null;
   lastAPICallTime = Date.now();
 
   try {
     const res = await fetch(
       `${baseUrl}/artist?query=${encodeURIComponent(query)}&fmt=json&limit=3`,
-      { headers: { "User-Agent": userAgent } },
+      { signal, headers: { "User-Agent": userAgent } },
     );
 
     if (!res.ok) return null;
