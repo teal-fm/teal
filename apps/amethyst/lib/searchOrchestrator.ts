@@ -4,11 +4,6 @@
  * Pipeline: clean input -> exact search -> (fallback if needed) -> rank
  * Separated from UI code (oldStamp.tsx) for testability and clarity.
  *
- * Expected API calls per lookup:
- *   Best case (track+artist, exact hit): 1-2 calls (with/without release)
- *   Cleaning diverged, exact hit:        2-3 calls
- *   Hard case (fuzzy fallback):           3-4 calls
- *
  * Rate limit: MusicBrainz requires max 1 request/second. We enforce this
  * at the fetch layer (musicbrainzSearchUtils.ts) so cache hits are instant.
  */
@@ -31,6 +26,18 @@ import {
   type RankingQuery,
 } from "./musicbrainzRanking";
 
+export interface SearchConfig {
+  enableCleaning: boolean;
+  enableFuzzy: boolean;
+  enableMultiStage: boolean;
+}
+
+const appConfig: SearchConfig = {
+  enableCleaning: true,
+  enableFuzzy: true,
+  enableMultiStage: true,
+};
+
 /**
  * Check if exact search results are "good enough" to skip later stages.
  *
@@ -46,14 +53,14 @@ function exactResultsSufficient(
 ): boolean {
   if (results.length === 0) return false;
 
-  const topScore = results[0]?.score ?? 100;
-
+  // Release-specific and unrestricted queries can return the same recording.
+  const distinctCount = new Set(results.map((r) => r.id)).size;
   if (hasArtist) {
-    return topScore >= 70 || results.length >= 3;
+    return distinctCount >= 3 || results.some((r) => (r.score ?? 0) >= 70);
   }
 
   // Track-only: need >= 2 results OR first result must match well
-  if (results.length >= 2) return true;
+  if (distinctCount >= 2) return true;
   const first = results[0];
   if (first?.title && cleanedTrack) {
     const norm = normalizeForComparison(first.title);
@@ -75,171 +82,149 @@ function exactResultsSufficient(
  * Stage 2: Fuzzy match (typos, Unicode, word reordering) -- only if exact insufficient
  * Stage 3: Track-only fallback (drops artist) -- only if still sparse
  */
-export async function searchMusicbrainz(
+export async function searchRecordings(
   searchParams: SearchParams,
+  config: SearchConfig,
+  lookup: typeof searchStage = searchStage,
 ): Promise<MusicBrainzRecording[]> {
-  if (!searchParams.track && !searchParams.artist && !searchParams.release) {
-    return [];
-  }
+  const { track, artist, release } = searchParams;
+  if (!track && !artist && !release) return [];
 
-  try {
-    const cleanedTrack = searchParams.track
-      ? cleanTrackName(searchParams.track) || undefined
-      : undefined;
-    const cleanedArtist = searchParams.artist
-      ? cleanArtistName(searchParams.artist) || undefined
-      : undefined;
-    const cleanedRelease = searchParams.release
-      ? cleanReleaseName(searchParams.release) || undefined
-      : undefined;
+  const cleanedTrack =
+    track && config.enableCleaning ? cleanTrackName(track) || undefined : track;
+  const cleanedArtist =
+    artist && config.enableCleaning ? cleanArtistName(artist) || undefined : artist;
+  const cleanedRelease =
+    release && config.enableCleaning ? cleanReleaseName(release) || undefined : release;
+  const rankingQuery: RankingQuery = config.enableCleaning
+    ? { ...searchParams, cleanedTrack, cleanedArtist, cleanedRelease }
+    : searchParams;
 
-    const cleaningChangedTrack =
-      cleanedTrack !== undefined && cleanedTrack !== searchParams.track;
-    const cleaningChangedArtist =
-      cleanedArtist !== undefined && cleanedArtist !== searchParams.artist;
+  const cleaningChangedTrack = cleanedTrack !== undefined && cleanedTrack !== track;
+  const cleaningChangedArtist = cleanedArtist !== undefined && cleanedArtist !== artist;
 
-    // Stage 1a: Exact match WITH release (if available).
-    // When release matches, this narrows to the specific recording on that album,
-    // which is critical for popular tracks with many recordings in MB.
-    let exactWithRelease: MusicBrainzRecording[] = [];
-    if (cleanedRelease) {
-      exactWithRelease = await searchStage(
-        cleanedTrack,
-        cleanedArtist,
-        cleanedRelease,
-        "exact",
-      );
-    }
-
-    // Stage 1b: Exact match WITHOUT release.
-    // Skip if 1a already got sufficient results (saves 1 API call in the common case).
-    // Still run if 1a got 0 results (release name might differ between scrobbler and MB).
-    let exactWithoutRelease: MusicBrainzRecording[] = [];
-    if (!exactResultsSufficient(exactWithRelease, cleanedTrack, !!cleanedArtist)) {
-      exactWithoutRelease = await searchStage(
-        cleanedTrack,
-        cleanedArtist,
-        undefined,
-        "exact",
-      );
-    }
-
-    // Stage 1c: If cleaning changed names and both stages got 0, retry with originals.
-    let originalExactResults: MusicBrainzRecording[] = [];
-    if (exactWithRelease.length === 0 && exactWithoutRelease.length === 0 &&
-        (cleaningChangedTrack || cleaningChangedArtist)) {
-      originalExactResults = await searchStage(
-        searchParams.track,
-        searchParams.artist,
-        undefined,
-        "exact",
-      );
-    }
-
-    // Stage 1d: CJK artist alias resolution.
-    // MB indexes artists by romanized name (e.g., "Joe Hisaishi"), but scrobblers
-    // often submit CJK (e.g., "久石譲"). Resolve via MB artist alias search,
-    // then re-search recordings with the romanized name.
-    let cjkAliasResults: MusicBrainzRecording[] = [];
-    const artistForSearch = cleanedArtist || searchParams.artist;
-    if (
-      exactWithRelease.length === 0 &&
-      exactWithoutRelease.length === 0 &&
-      originalExactResults.length === 0 &&
-      artistForSearch &&
-      hasCJK(artistForSearch)
-    ) {
-      const romanized = await resolveArtistAlias(artistForSearch);
-      if (romanized && romanized !== artistForSearch) {
-        cjkAliasResults = await searchStage(
-          cleanedTrack,
-          romanized,
-          cleanedRelease || undefined,
-          "exact",
-        );
-      }
-    }
-
-    const combinedExact = [
-      ...exactWithRelease,
-      ...exactWithoutRelease,
-      ...originalExactResults,
-      ...cjkAliasResults,
-    ];
-    const hasArtist = !!cleanedArtist;
-
-    // Early exit: good exact results -> skip later stages but still rank.
-    // Ranking applies variant matching, release quality, and text-match boosts
-    // that can improve on MB's default Lucene ordering.
-    if (exactResultsSufficient(combinedExact, cleanedTrack, hasArtist)) {
-      const rankingQuery: RankingQuery = {
-        track: searchParams.track,
-        artist: searchParams.artist,
-        release: searchParams.release,
-        cleanedTrack,
-        cleanedArtist,
-        cleanedRelease,
-      };
-      return rankMultiStageResults(
-        [{ results: combinedExact, strategy: "exact" as const }],
-        rankingQuery,
-      ).slice(0, 25);
-    }
-
-    const needsMoreStages =
-      combinedExact.length === 0 ||
-      (!hasArtist && combinedExact.length === 1);
-
-    // Stage 2: Fuzzy match (typos, Unicode, word reordering)
-    let fuzzyResults: MusicBrainzRecording[] = [];
-    if (needsMoreStages && (cleanedTrack || cleanedArtist)) {
-      fuzzyResults = await searchStage(
-        cleanedTrack,
-        cleanedArtist,
-        undefined,
-        "fuzzy",
-      );
-    }
-
-    // Stage 3: Track-only fallback (when artist name doesn't match MB's data)
-    let trackOnlyResults: MusicBrainzRecording[] = [];
-    const totalSoFar = combinedExact.length + fuzzyResults.length;
-    if (needsMoreStages && totalSoFar < PARTIAL_THRESHOLD &&
-        searchParams.track && searchParams.artist) {
-      trackOnlyResults = await searchStage(
-        cleanedTrack ?? searchParams.track,
-        undefined,
-        undefined,
-        "exact",
-      );
-    }
-
-    // Rank and combine all stages
-    const stageResults = [
-      { results: exactWithRelease, strategy: "exact" as const },
-      { results: exactWithoutRelease, strategy: "exact" as const },
-      { results: originalExactResults, strategy: "exact" as const },
-      { results: cjkAliasResults, strategy: "exact" as const },
-      { results: fuzzyResults, strategy: "fuzzy" as const },
-      { results: trackOnlyResults, strategy: "exact" as const },
-    ].filter((stage) => stage.results.length > 0);
-
-    const rankingQuery: RankingQuery = {
-      track: searchParams.track,
-      artist: searchParams.artist,
-      release: searchParams.release,
+  // Stage 1a: Exact match WITH release (if available).
+  // When release matches, this narrows to the specific recording on that album,
+  // which is critical for popular tracks with many recordings in MB.
+  let exactWithRelease: MusicBrainzRecording[] = [];
+  if (cleanedRelease) {
+    exactWithRelease = await lookup(
       cleanedTrack,
       cleanedArtist,
       cleanedRelease,
-    };
+      "exact",
+    );
+  }
 
-    return rankMultiStageResults(stageResults, rankingQuery).slice(0, 25);
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("Failed to fetch MusicBrainz data:", error.message);
-    } else {
-      console.error("Failed to fetch MusicBrainz data:", error);
+  // Stage 1b: Exact match WITHOUT release.
+  // Skip if 1a already got sufficient results (saves 1 API call in the common case).
+  // Still run if 1a got 0 results (release name might differ between scrobbler and MB).
+  let exactWithoutRelease: MusicBrainzRecording[] = [];
+  if (!exactResultsSufficient(exactWithRelease, cleanedTrack, !!cleanedArtist)) {
+    exactWithoutRelease = await lookup(
+      cleanedTrack,
+      cleanedArtist,
+      undefined,
+      "exact",
+    );
+  }
+
+  // Stage 1c: If cleaning changed names and both stages got 0, retry with originals.
+  let originalExactResults: MusicBrainzRecording[] = [];
+  if (exactWithRelease.length === 0 && exactWithoutRelease.length === 0 &&
+      (cleaningChangedTrack || cleaningChangedArtist)) {
+    originalExactResults = await lookup(
+      track,
+      artist,
+      undefined,
+      "exact",
+    );
+  }
+
+  // Stage 1d: CJK artist alias resolution.
+  // MB indexes artists by romanized name (e.g., "Joe Hisaishi"), but scrobblers
+  // often submit CJK (e.g., "久石譲"). Resolve via MB artist alias search,
+  // then re-search recordings with the romanized name.
+  let cjkAliasResults: MusicBrainzRecording[] = [];
+  const artistForSearch = cleanedArtist || artist;
+  if (
+    exactWithRelease.length === 0 &&
+    exactWithoutRelease.length === 0 &&
+    originalExactResults.length === 0 &&
+    artistForSearch &&
+    hasCJK(artistForSearch)
+  ) {
+    const romanized = await resolveArtistAlias(artistForSearch);
+    if (romanized && romanized !== artistForSearch) {
+      cjkAliasResults = await lookup(
+        cleanedTrack,
+        romanized,
+        cleanedRelease || undefined,
+        "exact",
+      );
     }
+  }
+
+  const combinedExact = [
+    ...exactWithRelease,
+    ...exactWithoutRelease,
+    ...originalExactResults,
+    ...cjkAliasResults,
+  ];
+
+  // Early exit: good exact results -> skip later stages but still rank.
+  // Ranking applies variant matching, release quality, and text-match boosts
+  // that can improve on MB's default Lucene ordering.
+  if (exactResultsSufficient(combinedExact, cleanedTrack, !!cleanedArtist)) {
+    return rankMultiStageResults(
+      [{ results: combinedExact, strategy: "exact" as const }],
+      rankingQuery,
+    ).slice(0, 25);
+  }
+
+  // Stage 2: Fuzzy match (typos, Unicode, word reordering)
+  let fuzzyResults: MusicBrainzRecording[] = [];
+  if (config.enableMultiStage && config.enableFuzzy && (cleanedTrack || cleanedArtist)) {
+    fuzzyResults = await lookup(
+      cleanedTrack,
+      cleanedArtist,
+      undefined,
+      "fuzzy",
+    );
+  }
+
+  // Stage 3: Track-only fallback (when artist name doesn't match MB's data)
+  let trackOnlyResults: MusicBrainzRecording[] = [];
+  const totalSoFar = new Set([...combinedExact, ...fuzzyResults].map((r) => r.id)).size;
+  if (config.enableMultiStage && totalSoFar < PARTIAL_THRESHOLD && track && artist) {
+    trackOnlyResults = await lookup(
+      cleanedTrack ?? track,
+      undefined,
+      undefined,
+      "exact",
+    );
+  }
+
+  // Rank and combine all stages
+  const stageResults = [
+    { results: exactWithRelease, strategy: "exact" as const },
+    { results: exactWithoutRelease, strategy: "exact" as const },
+    { results: originalExactResults, strategy: "exact" as const },
+    { results: cjkAliasResults, strategy: "exact" as const },
+    { results: fuzzyResults, strategy: "fuzzy" as const },
+    { results: trackOnlyResults, strategy: "exact" as const },
+  ].filter((stage) => stage.results.length > 0);
+
+  return rankMultiStageResults(stageResults, rankingQuery).slice(0, 25);
+}
+
+export async function searchMusicbrainz(
+  searchParams: SearchParams,
+): Promise<MusicBrainzRecording[]> {
+  try {
+    return await searchRecordings(searchParams, appConfig);
+  } catch (error) {
+    console.error("Failed to fetch MusicBrainz data:", error instanceof Error ? error.message : error);
     return [];
   }
 }

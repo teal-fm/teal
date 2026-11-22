@@ -2,7 +2,7 @@
  * Search functions for the evaluation harness.
  *
  * Baseline: raw Lucene query (matches the old searchMusicbrainz in oldStamp.tsx).
- * Improved: mirrors the production searchOrchestrator pipeline but wraps each
+ * Improved: runs the production pipeline and wraps each
  * search stage with a SQLite cache layer (cachedSearchStage) so that MB API
  * responses persist across eval runs. The production code only has an in-memory
  * 5-min cache, which is fine for interactive use but not for repeatable evaluation.
@@ -15,25 +15,12 @@ import {
   type SearchResult,
   type SearchConfig,
   type APIMetrics,
-} from "./types.js";
+} from "./types";
 import type { LastFMCache } from "./evaluate-lastfm-cache.js";
-import {
-  cleanTrackName,
-  cleanArtistName,
-  cleanReleaseName,
-  normalizeForComparison,
-} from "../../apps/amethyst/lib/musicbrainzCleaner.js";
-import {
-  escapeLucene,
-  searchStage,
-  hasCJK,
-  resolveArtistAlias,
-  PARTIAL_THRESHOLD,
-} from "../../apps/amethyst/lib/musicbrainzSearchUtils.js";
-import {
-  rankMultiStageResults,
-  type RankingQuery,
-} from "../../apps/amethyst/lib/musicbrainzRanking.js";
+import { escapeLucene, searchStage } from "../../apps/amethyst/lib/musicbrainzSearchUtils";
+import { searchRecordings } from "../../apps/amethyst/lib/searchOrchestrator";
+
+type StageCache = Pick<LastFMCache, "getSearchResults" | "setSearchResults">;
 
 /**
  * Baseline search (original "funny search string").
@@ -101,7 +88,7 @@ export async function baselineSearch(
         return results;
       }
 
-      const data = await res.json();
+      const data = (await res.json()) as { recordings?: SearchResult[] };
       const rawResults = data.recordings || [];
       const results = rawResults.filter(
         (r: SearchResult): r is SearchResult & { id: string } => !!r.id,
@@ -139,7 +126,7 @@ async function cachedSearchStage(
   artist: string | undefined,
   release: string | undefined,
   strategy: "exact" | "fuzzy" | "partial",
-  cache?: LastFMCache,
+  cache?: StageCache,
   apiMetrics?: APIMetrics,
 ): Promise<SearchResult[]> {
   // Check SQLite cache first
@@ -172,188 +159,18 @@ async function cachedSearchStage(
   return results;
 }
 
-/**
- * Check if exact search results are "good enough" to skip later stages.
- * Mirrors production exactResultsSufficient in searchOrchestrator.ts.
- */
-function exactResultsSufficient(
-  results: SearchResult[],
-  cleanedTrack: string | undefined,
-  hasArtist: boolean,
-): boolean {
-  if (results.length === 0) return false;
-
-  const topScore = results[0]?.score ?? 100;
-
-  if (hasArtist) {
-    return topScore >= 70 || results.length >= 3;
-  }
-
-  if (results.length >= 2) return true;
-  const first = results[0];
-  if (first?.title && cleanedTrack) {
-    const norm = normalizeForComparison(first.title);
-    const trackNorm = normalizeForComparison(cleanedTrack);
-    return norm === trackNorm || norm.startsWith(trackNorm + " ");
-  }
-  return false;
-}
-
-/**
- * Improved search matching production orchestrator (searchOrchestrator.ts).
- *
- * Pipeline: clean -> exact (fallback to original if 0) -> fuzzy -> track-only
- * Expected API calls: 1 (best), 2 (typical miss), 3 (worst)
- */
-export async function improvedSearchWithConfig(
+export function improvedSearchWithConfig(
   track: string,
   artist: string,
   release: string | undefined,
   config: SearchConfig,
-  cache?: LastFMCache,
+  cache?: StageCache,
   apiMetrics?: APIMetrics,
 ): Promise<SearchResult[]> {
-  let cleanedTrack: string | undefined;
-  let cleanedArtist: string | undefined;
-  let cleanedRelease: string | undefined;
-
-  if (config.enableCleaning) {
-    cleanedTrack = track ? cleanTrackName(track) || undefined : undefined;
-    cleanedArtist = artist ? cleanArtistName(artist) || undefined : undefined;
-    cleanedRelease = release ? cleanReleaseName(release) || undefined : undefined;
-  } else {
-    cleanedTrack = track || undefined;
-    cleanedArtist = artist || undefined;
-    cleanedRelease = release || undefined;
-  }
-
-  const cleaningChangedTrack = cleanedTrack !== undefined && cleanedTrack !== track;
-  const cleaningChangedArtist = cleanedArtist !== undefined && cleanedArtist !== artist;
-
-  // Stage 1a: Exact match WITH release (if available).
-  // Narrows to specific recording on that album -- critical for popular tracks.
-  let exactWithRelease: SearchResult[] = [];
-  if (cleanedRelease) {
-    exactWithRelease = await cachedSearchStage(
-      cleanedTrack, cleanedArtist, cleanedRelease, "exact", cache, apiMetrics,
-    );
-  }
-
-  // Stage 1b: Exact match WITHOUT release.
-  // Skip if 1a already got sufficient results (saves 1 API call in the common case).
-  // Still run if 1a got 0 results (release name might differ between scrobbler and MB).
-  let exactWithoutRelease: SearchResult[] = [];
-  if (!exactResultsSufficient(exactWithRelease, cleanedTrack, !!cleanedArtist)) {
-    exactWithoutRelease = await cachedSearchStage(
-      cleanedTrack, cleanedArtist, undefined, "exact", cache, apiMetrics,
-    );
-  }
-
-  // Stage 1c: If cleaning changed names and both stages got 0, retry with originals
-  let originalExactResults: SearchResult[] = [];
-  if (exactWithRelease.length === 0 && exactWithoutRelease.length === 0 &&
-      (cleaningChangedTrack || cleaningChangedArtist)) {
-    originalExactResults = await cachedSearchStage(
-      track || undefined, artist || undefined, undefined,
-      "exact", cache, apiMetrics,
-    );
-  }
-
-  // Stage 1d: CJK artist alias resolution (mirrors searchOrchestrator.ts)
-  let cjkAliasResults: SearchResult[] = [];
-  const artistForSearch = cleanedArtist || artist;
-  if (
-    exactWithRelease.length === 0 &&
-    exactWithoutRelease.length === 0 &&
-    originalExactResults.length === 0 &&
-    artistForSearch &&
-    hasCJK(artistForSearch)
-  ) {
-    const romanized = await resolveArtistAlias(artistForSearch);
-    if (romanized && romanized !== artistForSearch) {
-      cjkAliasResults = await cachedSearchStage(
-        cleanedTrack, romanized, cleanedRelease || undefined,
-        "exact", cache, apiMetrics,
-      );
-    }
-  }
-
-  const combinedExact = [
-    ...exactWithRelease, ...exactWithoutRelease,
-    ...originalExactResults, ...cjkAliasResults,
-  ];
-  const hasArtist = !!cleanedArtist;
-
-  // Early exit: good exact results -> rank (matches production behavior)
-  const sufficient = exactResultsSufficient(
-    combinedExact,
-    cleanedTrack,
-    hasArtist,
+  return searchRecordings(
+    { track: track || undefined, artist: artist || undefined, release: release || undefined },
+    config,
+    (track, artist, release, strategy) =>
+      cachedSearchStage(track, artist, release, strategy, cache, apiMetrics),
   );
-  if (sufficient) {
-    // Rank even on early exit (matches production searchOrchestrator behavior).
-    // Ranking applies variant matching, release quality, and text-match boosts
-    // that can improve on MB's default Lucene ordering.
-    const rankingQuery: RankingQuery = {
-      track,
-      artist,
-      release,
-      cleanedTrack: config.enableCleaning ? cleanedTrack : undefined,
-      cleanedArtist: config.enableCleaning ? cleanedArtist : undefined,
-      cleanedRelease: config.enableCleaning ? cleanedRelease : undefined,
-    };
-    return rankMultiStageResults(
-      [{ results: combinedExact, strategy: "exact" as const }],
-      rankingQuery,
-    ).slice(0, 25);
-  }
-
-  const needsMoreStages =
-    combinedExact.length === 0 ||
-    (!hasArtist && combinedExact.length === 1);
-
-  // Stage 2: Fuzzy match (no release constraint)
-  let fuzzyResults: SearchResult[] = [];
-  if (needsMoreStages && config.enableMultiStage && config.enableFuzzy && (cleanedTrack || cleanedArtist)) {
-    fuzzyResults = await cachedSearchStage(
-      cleanedTrack, cleanedArtist, undefined, "fuzzy", cache, apiMetrics,
-    );
-  }
-
-  // Stage 3: Track-only fallback (drops artist constraint)
-  let trackOnlyResults: SearchResult[] = [];
-  const totalSoFar = combinedExact.length + fuzzyResults.length;
-  if (needsMoreStages && config.enableMultiStage && totalSoFar < PARTIAL_THRESHOLD && track && artist) {
-    trackOnlyResults = await cachedSearchStage(
-      cleanedTrack ?? (track || undefined), undefined,
-      undefined, "exact", cache, apiMetrics,
-    );
-  }
-
-  // Rank and combine all stages
-  const stageResultsForRanking = [
-    { results: exactWithRelease, strategy: "exact" as const },
-    { results: exactWithoutRelease, strategy: "exact" as const },
-    { results: originalExactResults, strategy: "exact" as const },
-    { results: cjkAliasResults, strategy: "exact" as const },
-    { results: fuzzyResults, strategy: "fuzzy" as const },
-    { results: trackOnlyResults, strategy: "exact" as const },
-  ].filter((stage) => stage.results.length > 0);
-
-  let finalResults: SearchResult[];
-  if (stageResultsForRanking.length > 0) {
-    const rankingQuery: RankingQuery = {
-      track,
-      artist,
-      release,
-      cleanedTrack: config.enableCleaning ? cleanedTrack : undefined,
-      cleanedArtist: config.enableCleaning ? cleanedArtist : undefined,
-      cleanedRelease: config.enableCleaning ? cleanedRelease : undefined,
-    };
-    finalResults = rankMultiStageResults(stageResultsForRanking, rankingQuery);
-  } else {
-    finalResults = [];
-  }
-
-  return finalResults.slice(0, 25);
 }

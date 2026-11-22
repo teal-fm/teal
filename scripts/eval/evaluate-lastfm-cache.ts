@@ -13,7 +13,7 @@ const CACHE_DIR = join(homedir(), ".teal_eval_cache");
 const DB_PATH = join(CACHE_DIR, "lastfm_eval.db");
 
 // Bump this when evaluation logic changes in a way that should invalidate cached evaluation results.
-const EVALUATION_LOGIC_VERSION = "2026-03-09-v27";
+const EVALUATION_LOGIC_VERSION = "v28-weak-exact-fallback";
 
 // Ensure cache directory exists
 mkdirSync(CACHE_DIR, { recursive: true });
