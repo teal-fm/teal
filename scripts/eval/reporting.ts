@@ -12,6 +12,7 @@ import {
 } from "./types.js";
 import {
   pairedRateIntervals,
+  type RateEstimate,
   cohensH,
 } from "./statistics.js";
 
@@ -189,53 +190,43 @@ export function reportResults(output: EvaluationOutput): void {
   const baselineNDCG = baselineNDCGSum / cases.length;
   const improvedNDCG = improvedNDCGSum / cases.length;
 
-  // Boolean arrays for statistical tests
-  const recordingIds = cases.map((c) => c.mbid);
-  const recordingCount = new Set(recordingIds).size;
-  function interval(low: number, high: number, unit = "%"): string {
+  const recordingCount = new Set(cases.map((c) => c.canonicalMbid)).size;
+
+  function interval({ low, high }: RateEstimate, unit = "%"): string {
     if (recordingCount < 2) return "";
     return ` [${low.toFixed(1)}${unit}, ${high.toFixed(1)}${unit}]`;
   }
-  const baselineP1Arr = cases.map((c) => c.baselinePos === 0);
-  const baselineP5Arr = cases.map((c) => c.baselinePos >= 0 && c.baselinePos < 5);
-  const baselineP10Arr = cases.map((c) => c.baselinePos >= 0 && c.baselinePos < 10);
-  const baselineP25Arr = cases.map((c) => c.baselinePos >= 0 && c.baselinePos < 25);
-  const baselineFoundArr = cases.map((c) => c.baselineFound);
-  const improvedP1Arr = cases.map((c) => c.improvedPos === 0);
-  const improvedP5Arr = cases.map((c) => c.improvedPos >= 0 && c.improvedPos < 5);
-  const improvedP10Arr = cases.map((c) => c.improvedPos >= 0 && c.improvedPos < 10);
-  const improvedP25Arr = cases.map((c) => c.improvedPos >= 0 && c.improvedPos < 25);
-  const improvedFoundArr = cases.map((c) => c.improvedFound);
 
-  const {
-    baseline: [bP1Pt, bP1Lo, bP1Hi],
-    improved: [iP1Pt, iP1Lo, iP1Hi],
-    difference: [p1Imp, dP1Lo, dP1Hi],
-  } = pairedRateIntervals(recordingIds, baselineP1Arr, improvedP1Arr);
-  const {
-    baseline: [bP5Pt, bP5Lo, bP5Hi],
-    improved: [iP5Pt, iP5Lo, iP5Hi],
-    difference: [p5Imp, dP5Lo, dP5Hi],
-  } = pairedRateIntervals(recordingIds, baselineP5Arr, improvedP5Arr);
-  const {
-    baseline: [bP10Pt, bP10Lo, bP10Hi],
-    improved: [iP10Pt, iP10Lo, iP10Hi],
-    difference: [p10Imp, dP10Lo, dP10Hi],
-  } = pairedRateIntervals(recordingIds, baselineP10Arr, improvedP10Arr);
-  const {
-    baseline: [bP25Pt, bP25Lo, bP25Hi],
-    improved: [iP25Pt, iP25Lo, iP25Hi],
-    difference: [p25Imp, dP25Lo, dP25Hi],
-  } = pairedRateIntervals(recordingIds, baselineP25Arr, improvedP25Arr);
-  const {
-    baseline: [bFPt, bFLo, bFHi],
-    improved: [iFPt, iFLo, iFHi],
-    difference: [fImp, dFLo, dFHi],
-  } = pairedRateIntervals(recordingIds, baselineFoundArr, improvedFoundArr);
+  function percentage(estimate: RateEstimate) {
+    return `${estimate.point.toFixed(1)}%${interval(estimate)}`;
+  }
 
-  const effP1 = cohensH(bP1Pt, iP1Pt);
-  const effP5 = cohensH(bP5Pt, iP5Pt);
-  const effF = cohensH(bFPt, iFPt);
+  function change(estimate: RateEstimate) {
+    const sign = estimate.point > 0 ? "+" : "";
+    return `${sign}${estimate.point.toFixed(1)} pp${interval(estimate, "")}`;
+  }
+
+  function hitRate(cutoff: number) {
+    return pairedRateIntervals(cases.map((c) => ({
+      recordingId: c.canonicalMbid,
+      baseline: c.baselinePos >= 0 && c.baselinePos < cutoff,
+      improved: c.improvedPos >= 0 && c.improvedPos < cutoff,
+    })));
+  }
+
+  const p1 = hitRate(1);
+  const p5 = hitRate(5);
+  const p10 = hitRate(10);
+  const p25 = hitRate(25);
+  const findability = pairedRateIntervals(cases.map((c) => ({
+    recordingId: c.canonicalMbid,
+    baseline: c.baselineFound,
+    improved: c.improvedFound,
+  })));
+
+  const effP1 = cohensH(p1.baseline.point, p1.improved.point);
+  const effP5 = cohensH(p5.baseline.point, p5.improved.point);
+  const effF = cohensH(findability.baseline.point, findability.improved.point);
 
   const totalElapsed = Date.now() - startTime;
 
@@ -288,11 +279,11 @@ export function reportResults(output: EvaluationOutput): void {
   const ndcgImp = improvedNDCG - baselineNDCG;
 
   console.log("BASELINE (Simple Query):");
-  console.log(`  Precision@1: ${bP1Pt.toFixed(1)}%${interval(bP1Lo, bP1Hi)} (${baselineP1}/${cases.length})`);
-  console.log(`  Precision@5: ${bP5Pt.toFixed(1)}%${interval(bP5Lo, bP5Hi)} (${baselineP5}/${cases.length})`);
-  console.log(`  Precision@10: ${bP10Pt.toFixed(1)}%${interval(bP10Lo, bP10Hi)} (${baselineP10}/${cases.length})`);
-  console.log(`  Precision@25: ${bP25Pt.toFixed(1)}%${interval(bP25Lo, bP25Hi)} (${baselineP25}/${cases.length})`);
-  console.log(`  Findability: ${bFPt.toFixed(1)}%${interval(bFLo, bFHi)} (${baselineFound}/${cases.length})`);
+  console.log(`  Precision@1: ${percentage(p1.baseline)} (${baselineP1}/${cases.length})`);
+  console.log(`  Precision@5: ${percentage(p5.baseline)} (${baselineP5}/${cases.length})`);
+  console.log(`  Precision@10: ${percentage(p10.baseline)} (${baselineP10}/${cases.length})`);
+  console.log(`  Precision@25: ${percentage(p25.baseline)} (${baselineP25}/${cases.length})`);
+  console.log(`  Findability: ${percentage(findability.baseline)} (${baselineFound}/${cases.length})`);
   console.log(`  MRR: ${baselineMRR.toFixed(3)}, NDCG@25: ${baselineNDCG.toFixed(3)}\n`);
 
   const configDesc = [
@@ -302,19 +293,19 @@ export function reportResults(output: EvaluationOutput): void {
   ].join(" + ");
 
   console.log(`IMPROVED (${configDesc}):`);
-  console.log(`  Precision@1: ${iP1Pt.toFixed(1)}%${interval(iP1Lo, iP1Hi)} (${improvedP1}/${cases.length})`);
-  console.log(`  Precision@5: ${iP5Pt.toFixed(1)}%${interval(iP5Lo, iP5Hi)} (${improvedP5}/${cases.length})`);
-  console.log(`  Precision@10: ${iP10Pt.toFixed(1)}%${interval(iP10Lo, iP10Hi)} (${improvedP10}/${cases.length})`);
-  console.log(`  Precision@25: ${iP25Pt.toFixed(1)}%${interval(iP25Lo, iP25Hi)} (${improvedP25}/${cases.length})`);
-  console.log(`  Findability: ${iFPt.toFixed(1)}%${interval(iFLo, iFHi)} (${improvedFound}/${cases.length})`);
+  console.log(`  Precision@1: ${percentage(p1.improved)} (${improvedP1}/${cases.length})`);
+  console.log(`  Precision@5: ${percentage(p5.improved)} (${improvedP5}/${cases.length})`);
+  console.log(`  Precision@10: ${percentage(p10.improved)} (${improvedP10}/${cases.length})`);
+  console.log(`  Precision@25: ${percentage(p25.improved)} (${improvedP25}/${cases.length})`);
+  console.log(`  Findability: ${percentage(findability.improved)} (${improvedFound}/${cases.length})`);
   console.log(`  MRR: ${improvedMRR.toFixed(3)}, NDCG@25: ${improvedNDCG.toFixed(3)}\n`);
 
   console.log("IMPROVEMENT (percentage points, 95% intervals resampled by recording):");
-  console.log(`  Precision@1: ${p1Imp > 0 ? "+" : ""}${p1Imp.toFixed(1)} pp${interval(dP1Lo, dP1Hi, "")}`);
-  console.log(`  Precision@5: ${p5Imp > 0 ? "+" : ""}${p5Imp.toFixed(1)} pp${interval(dP5Lo, dP5Hi, "")}`);
-  console.log(`  Precision@10: ${p10Imp > 0 ? "+" : ""}${p10Imp.toFixed(1)} pp${interval(dP10Lo, dP10Hi, "")}`);
-  console.log(`  Precision@25: ${p25Imp > 0 ? "+" : ""}${p25Imp.toFixed(1)} pp${interval(dP25Lo, dP25Hi, "")}`);
-  console.log(`  Findability: ${fImp > 0 ? "+" : ""}${fImp.toFixed(1)} pp${interval(dFLo, dFHi, "")}`);
+  console.log(`  Precision@1: ${change(p1.difference)}`);
+  console.log(`  Precision@5: ${change(p5.difference)}`);
+  console.log(`  Precision@10: ${change(p10.difference)}`);
+  console.log(`  Precision@25: ${change(p25.difference)}`);
+  console.log(`  Findability: ${change(findability.difference)}`);
   console.log(`  MRR: ${mrrImp > 0 ? "+" : ""}${mrrImp.toFixed(3)}, NDCG@25: ${ndcgImp > 0 ? "+" : ""}${ndcgImp.toFixed(3)}`);
 
   console.log(`  Effect size (Cohen's h): P@1=${effP1.toFixed(3)}, P@5=${effP5.toFixed(3)}, Found=${effF.toFixed(3)}\n`);
@@ -464,12 +455,12 @@ export function reportResults(output: EvaluationOutput): void {
         scrobbles_with_mbid: validScrobblesCount,
         deduplication: { ...duplicateStats, distribution: duplicateDistribution },
         metrics: {
-          baseline_p1: bP1Pt, baseline_p5: bP5Pt, baseline_p10: bP10Pt, baseline_p25: bP25Pt,
-          baseline_findability: bFPt,
-          improved_p1: iP1Pt, improved_p5: iP5Pt, improved_p10: iP10Pt, improved_p25: iP25Pt,
-          improved_findability: iFPt,
-          p1_improvement: p1Imp, p5_improvement: p5Imp, p10_improvement: p10Imp,
-          p25_improvement: p25Imp, findability_improvement: fImp,
+          baseline_p1: p1.baseline.point, baseline_p5: p5.baseline.point, baseline_p10: p10.baseline.point, baseline_p25: p25.baseline.point,
+          baseline_findability: findability.baseline.point,
+          improved_p1: p1.improved.point, improved_p5: p5.improved.point, improved_p10: p10.improved.point, improved_p25: p25.improved.point,
+          improved_findability: findability.improved.point,
+          p1_improvement: p1.difference.point, p5_improvement: p5.difference.point, p10_improvement: p10.difference.point,
+          p25_improvement: p25.difference.point, findability_improvement: findability.difference.point,
           baseline_mrr: baselineMRR, improved_mrr: improvedMRR, mrr_improvement: mrrImp,
           baseline_ndcg: baselineNDCG, improved_ndcg: improvedNDCG, ndcg_improvement: ndcgImp,
           baseline_better: baselineBetter, improved_better: improvedBetter, same_result: bothSame,
@@ -483,11 +474,11 @@ export function reportResults(output: EvaluationOutput): void {
         evaluated_queries: cases.length,
         recording_count: recordingCount,
         improvement_intervals_95_pp: recordingCount < 2 ? null : {
-          p1: [dP1Lo, dP1Hi],
-          p5: [dP5Lo, dP5Hi],
-          p10: [dP10Lo, dP10Hi],
-          p25: [dP25Lo, dP25Hi],
-          findability: [dFLo, dFHi],
+          p1: [p1.difference.low, p1.difference.high],
+          p5: [p5.difference.low, p5.difference.high],
+          p10: [p10.difference.low, p10.difference.high],
+          p25: [p25.difference.low, p25.difference.high],
+          findability: [findability.difference.low, findability.difference.high],
         },
         api_metrics: {
           musicbrainz_calls: apiMetrics.musicbrainzCalls,

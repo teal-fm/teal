@@ -26,7 +26,9 @@ export function erfc(x: number): number {
   return 1.0 - sign * y;
 }
 
-type RateEstimate = [point: number, low: number, high: number];
+export type RateEstimate = { point: number; low: number; high: number };
+
+type PairedQuery = { recordingId: string; baseline: boolean; improved: boolean };
 
 /**
  * Percentile bootstrap of two hit rates and their paired difference, in
@@ -34,34 +36,27 @@ type RateEstimate = [point: number, low: number, high: number];
  * Within a draw, each query still has the same weight as in the point estimate.
  */
 export function pairedRateIntervals(
-  recordingIds: string[],
-  baseline: boolean[],
-  improved: boolean[],
+  queries: readonly PairedQuery[],
 ): { baseline: RateEstimate; improved: RateEstimate; difference: RateEstimate } {
   const iterations = 10_000;
-  if (
-    !recordingIds.length ||
-    baseline.length !== recordingIds.length ||
-    improved.length !== baseline.length
-  ) {
+  if (queries.length === 0) {
     throw new Error("Expected a nonempty pair of results for every query");
   }
 
   const recordings = new Map<string, { count: number; before: number; after: number }>();
   let beforeTotal = 0;
   let afterTotal = 0;
-  for (let i = 0; i < recordingIds.length; i++) {
-    const id = recordingIds[i];
-    let group = recordings.get(id);
+  for (const { recordingId, baseline, improved } of queries) {
+    let group = recordings.get(recordingId);
     if (!group) {
       group = { count: 0, before: 0, after: 0 };
-      recordings.set(id, group);
+      recordings.set(recordingId, group);
     }
     group.count++;
-    group.before += Number(baseline[i]);
-    group.after += Number(improved[i]);
-    beforeTotal += Number(baseline[i]);
-    afterTotal += Number(improved[i]);
+    group.before += Number(baseline);
+    group.after += Number(improved);
+    beforeTotal += Number(baseline);
+    afterTotal += Number(improved);
   }
 
   const groups = Array.from(recordings.values());
@@ -83,11 +78,11 @@ export function pairedRateIntervals(
 
   function estimate(total: number, samples: number[]): RateEstimate {
     samples.sort((a, b) => a - b);
-    return [
-      100 * total / recordingIds.length,
-      samples[Math.floor(0.025 * iterations)],
-      samples[Math.ceil(0.975 * iterations) - 1],
-    ];
+    return {
+      point: 100 * total / queries.length,
+      low: samples[Math.floor(0.025 * iterations)],
+      high: samples[Math.ceil(0.975 * iterations) - 1],
+    };
   }
   return {
     baseline: estimate(beforeTotal, beforeSamples),

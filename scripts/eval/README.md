@@ -45,24 +45,14 @@ MB_RATE_LIMIT_MS=200 pnpm eval:run -- --all --concurrency 5
 
 ## What It Measures
 
-The eval deduplicates labeled scrobbles by track, artist and recording MBID,
-then also tries eligible tracks without the artist field. It searches
+Each scrobble with a valid MBID becomes a test case. The eval searches
 MusicBrainz using both a **baseline** (single Lucene query, 1 API call)
 and the **improved** pipeline (multi-stage search with cleaning and
 ranking, ~4.5 API calls/case on average). It checks whether the correct
 recording MBID appears in the results and at what position.
 
 Metrics reported: P@1, P@5, P@10, MRR, NDCG, win/loss ratio, and
-per-category breakdowns (remixes, featuring artists, CJK, etc.). Rates count
-each evaluated query once. The 95% bootstrap intervals resample whole recording
-MBIDs, keeping a recording’s query variants and both systems’ answers together.
-Rate changes are in percentage points. These intervals describe the sampled library.
-
-Run the interval regression tests without API access with Node 24.
-
-```sh
-node --test scripts/eval/statistics.test.ts
-```
+per-category breakdowns (remixes, featuring artists, CJK, etc.).
 
 ## Ground Truth Sources
 
@@ -146,3 +136,18 @@ MB_RATE_LIMIT_MS=200 pnpm eval:run -- --all --concurrency 5
 - Results: `scripts/eval/results/archive/YYYY-MM-DD/` (gitignored).
 - Default MB rate limit: 1 req/s. Set `MB_RATE_LIMIT_MS=N` to override.
 - Proxy support: set `PROXY_URL` in `.env` for a residential/rotating proxy.
+
+## Interpreting the uncertainty intervals
+
+The evaluator deduplicates labeled scrobbles by track, artist and submitted
+recording MBID, then also tries eligible tracks without the artist field.
+Rates count each evaluated query once. The bootstrap draws whole recordings
+by canonical MusicBrainz ID, so merged IDs and query variants stay grouped.
+Changes are in percentage points. The intervals describe the sampled library
+and need at least two distinct recordings.
+
+Run the interval regression tests without API access with Node 24.
+
+```sh
+node --test scripts/eval/statistics.test.ts
+```

@@ -92,6 +92,7 @@ export interface EvaluationCase {
   artist: string;
   album?: string;
   mbid: string;
+  canonicalMbid: string;
   baselinePos: number; // -1 if not found
   improvedPos: number; // -1 if not found
   baselineFound: boolean;
