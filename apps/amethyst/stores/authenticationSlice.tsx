@@ -73,6 +73,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         const url = await auth.authorize(handle);
         set({
           auth,
+          login: { loading: false, error: null },
           pds: {
             url: url.toString(),
             loading: false,
@@ -95,6 +96,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         if (get().status === "loggedIn") {
           return;
         }
+        set({ login: { loading: true, error: null } });
         const { session, state: oauthState } =
           await initialAuth.callback(state);
         const agent = new Agent(session);
@@ -103,6 +105,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
           oauthSession: session as any,
           oauthState,
           status: "loggedIn",
+          login: { loading: false, error: null },
           pdsAgent: addDocs(agent),
           isAgentReady: true,
         });

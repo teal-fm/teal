@@ -1,56 +1,32 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { View } from "react-native";
-import { Link, router, Stack } from "expo-router";
-import { useLocalSearchParams } from "expo-router/build/hooks";
+import { Link, router, Stack, useLocalSearchParams } from "expo-router";
+import { useOAuthCallback } from "@/lib/atp/useOAuthCallback";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
 import { useStore } from "@/stores/mainStore";
 import { PencilLine } from "lucide-react-native";
 
-const toSearchParams = (
-  params: Record<string, string | string[] | undefined>,
-): URLSearchParams => {
-  const searchParams = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        searchParams.append(key, item);
-      }
-    } else if (value !== undefined) {
-      searchParams.set(key, value);
-    }
-  }
-  return searchParams;
-};
-
-export default function AuthOptions() {
+export default function AuthCallback() {
   const status = useStore((state) => state.status);
-  const params = useLocalSearchParams<"iss" | "state" | "code">();
-  const { state } = params;
-  const calledRef = useRef(false);
+  const complete = useStore((state) => state.oauthCallback);
+  const loginError = useStore((state) => state.login.error);
+  const params = useLocalSearchParams();
+  useOAuthCallback(params, complete);
+  const providerError = params.error !== undefined;
 
   useEffect(() => {
-    // The OAuth state in IndexedDB is deleted on first read (replay prevention).
-    // Must only call oauthCallback once -- a second call will fail with
-    // "Unknown authorization session".
-    if (calledRef.current || !params) return;
-    calledRef.current = true;
-    const searchParams = toSearchParams(params);
-    useStore.getState().oauthCallback(searchParams);
-  }, [params]);
-
-  useEffect(() => {
-    if (status === "loggedIn") {
-      requestAnimationFrame(() => {
-        router.replace("/");
-      });
+    if (status === "loggedIn" && !providerError) {
+      const frame = requestAnimationFrame(() => router.replace("/"));
+      return () => cancelAnimationFrame(frame);
     }
-  }, [status]);
+  }, [status, providerError]);
 
-  if (!params) {
+  if (providerError || (status === "loggedOut" && loginError)) {
     return (
       <View>
-        <Link href="/error" />
+        <Text accessibilityRole="alert">Sign-in did not complete.</Text>
+        <Link href="/auth/login">Try signing in again</Link>
       </View>
     );
   }
@@ -68,9 +44,6 @@ export default function AuthOptions() {
       </Text>
       <Text className="text-sm text-muted-foreground">
         This may take a few seconds {status}
-      </Text>
-      <Text className="rounded-full bg-muted-foreground/30 px-2 py-1 font-mono text-sm text-muted-foreground">
-        {state}
       </Text>
     </View>
   );
