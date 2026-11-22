@@ -41,40 +41,69 @@ export default function StepOne() {
   const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>(
     [],
   );
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchPhase, setSearchPhase] = useState<
+    "idle" | "searching" | "fallback"
+  >("idle");
+  const isLoading = searchPhase !== "idle";
+  const activeSearch = useRef<AbortController>(null);
   const [releaseSelections, setReleaseSelections] = useState<ReleaseSelections>(
     {},
   );
 
   const [hasSearched, setHasSearched] = useState<boolean>(false);
 
+  const clearSearchResults = () => {
+    activeSearch.current?.abort();
+    activeSearch.current = null;
+    setSearchPhase("idle");
+    setSearchResults([]);
+    setSelectedTrack(null);
+    setReleaseSelections({});
+    setHasSearched(false);
+  };
+
+  useEffect(() => () => activeSearch.current?.abort(), []);
+
   // reset search state if requested
   useEffect(() => {
     if (state.step === StampStep.IDLE && state.resetSearchState) {
       setSearchFields({ track: "", artist: "", release: "" });
-      setSearchResults([]);
-      setSelectedTrack(null);
-      setReleaseSelections({});
+      clearSearchResults();
     }
   }, [state]);
 
   const handleSearch = async (): Promise<void> => {
-    if (!searchFields.track && !searchFields.artist && !searchFields.release) {
+    if (
+      activeSearch.current ||
+      (!searchFields.track && !searchFields.artist && !searchFields.release)
+    ) {
       return;
     }
 
-    setIsLoading(true);
-    setSelectedTrack(null);
-    const results = await searchMusicbrainz(searchFields);
+    clearSearchResults();
+    const controller = new AbortController();
+    activeSearch.current = controller;
+    setSearchPhase("searching");
+    const results = await searchMusicbrainz(searchFields, {
+      signal: controller.signal,
+      onFallback: () => setSearchPhase("fallback"),
+    });
+    if (controller.signal.aborted) return;
+
+    activeSearch.current = null;
     setSearchResults(results);
-    setIsLoading(false);
+    setSearchPhase("idle");
     setHasSearched(true);
   };
 
   const clearSearch = () => {
     setSearchFields({ track: "", artist: "", release: "" });
-    setSearchResults([]);
-    setSelectedTrack(null);
+    clearSearchResults();
+  };
+
+  const updateSearchField = (field: keyof SearchParams, text: string) => {
+    clearSearchResults();
+    setSearchFields((prev) => ({ ...prev, [field]: text }));
   };
 
   return (
@@ -91,9 +120,7 @@ export default function StepOne() {
         <Input
           placeholder="Track name..."
           value={searchFields.track}
-          onChangeText={(text) =>
-            setSearchFields((prev) => ({ ...prev, track: text }))
-          }
+          onChangeText={(text) => updateSearchField("track", text)}
           onKeyPress={(e) => {
             if (e.nativeEvent.key === "Enter") {
               handleSearch();
@@ -103,9 +130,7 @@ export default function StepOne() {
         <Input
           placeholder="Artist name..."
           value={searchFields.artist}
-          onChangeText={(text) =>
-            setSearchFields((prev) => ({ ...prev, artist: text }))
-          }
+          onChangeText={(text) => updateSearchField("artist", text)}
           onKeyPress={(e) => {
             if (e.nativeEvent.key === "Enter") {
               handleSearch();
@@ -115,9 +140,7 @@ export default function StepOne() {
         <Input
           placeholder="Album name..."
           value={searchFields.release}
-          onChangeText={(text) =>
-            setSearchFields((prev) => ({ ...prev, release: text }))
-          }
+          onChangeText={(text) => updateSearchField("release", text)}
           onKeyPress={(e) => {
             if (e.nativeEvent.key === "Enter") {
               handleSearch();
@@ -135,7 +158,13 @@ export default function StepOne() {
                 !searchFields.release)
             }
           >
-            <Text>{isLoading ? "Searching..." : "Search"}</Text>
+            <Text>
+              {searchPhase === "fallback"
+                ? "Checking more matches..."
+                : isLoading
+                  ? "Searching..."
+                  : "Search"}
+            </Text>
           </Button>
           <Button className="flex-1" onPress={clearSearch} variant="outline">
             <Text>Clear</Text>

@@ -121,3 +121,30 @@ it("honors the evaluation switches for cleaning, fuzzy search, and all fallbacks
   await improvedSearchWithConfig(track, query.artist, undefined, { ...config, enableMultiStage: false });
   expect(lookup.mock.calls).toEqual([[query.track, query.artist, undefined, "exact"]]);
 });
+
+it("keeps looking for the requested edition after a fuzzy title and artist match", async () => {
+  const release = "Original Album";
+  const studio = { ...correct, releases: [{ id: "original", title: release }] };
+  const live = { ...correct, id: "live", releases: [{ id: "live-album", title: "Live Album" }] };
+  const lookup = jest.spyOn(musicbrainz, "searchStage")
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce([live])
+    .mockResolvedValueOnce([studio]);
+
+  expect((await searchMusicbrainz({ ...query, release }))[0]?.id).toBe(studio.id);
+  expect(lookup).toHaveBeenCalledTimes(4);
+});
+
+it("stops before the next lookup when an interactive search is canceled", async () => {
+  const controller = new AbortController();
+  const onFallback = jest.fn();
+  const lookup = jest.spyOn(musicbrainz, "searchStage").mockImplementationOnce(async () => {
+    controller.abort();
+    return [weak];
+  });
+
+  expect(await searchMusicbrainz(query, { signal: controller.signal, onFallback })).toEqual([]);
+  expect(lookup).toHaveBeenCalledTimes(1);
+  expect(onFallback).not.toHaveBeenCalled();
+});

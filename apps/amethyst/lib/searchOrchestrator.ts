@@ -32,6 +32,11 @@ export interface SearchConfig {
   enableMultiStage: boolean;
 }
 
+interface SearchProgress {
+  signal?: AbortSignal;
+  onFallback?: () => void;
+}
+
 const appConfig: SearchConfig = {
   enableCleaning: true,
   enableFuzzy: true,
@@ -82,8 +87,18 @@ function exactResultsSufficient(
 export async function searchRecordings(
   searchParams: SearchParams,
   config: SearchConfig,
-  lookup: typeof searchStage = searchStage,
+  request: typeof searchStage = searchStage,
+  { signal, onFallback }: SearchProgress = {},
 ): Promise<MusicBrainzRecording[]> {
+  const assertActive = () => {
+    if (signal?.aborted) throw new Error("Search canceled");
+  };
+  const lookup: typeof searchStage = async (...args) => {
+    assertActive();
+    const results = await request(...args);
+    assertActive();
+    return results;
+  };
   const { track, artist, release } = searchParams;
   if (!track && !artist && !release) return [];
 
@@ -151,7 +166,9 @@ export async function searchRecordings(
     artistForSearch &&
     hasCJK(artistForSearch)
   ) {
+    assertActive();
     const romanized = await resolveArtistAlias(artistForSearch);
+    assertActive();
     if (romanized && romanized !== artistForSearch) {
       cjkAliasResults = await lookup(
         cleanedTrack,
@@ -180,8 +197,10 @@ export async function searchRecordings(
   }
 
   // Stage 2: Fuzzy match (typos, Unicode, word reordering)
+  const useFuzzy = config.enableMultiStage && config.enableFuzzy && (cleanedTrack || cleanedArtist);
   let fuzzyResults: MusicBrainzRecording[] = [];
-  if (config.enableMultiStage && config.enableFuzzy && (cleanedTrack || cleanedArtist)) {
+  if (useFuzzy) {
+    onFallback?.();
     fuzzyResults = await lookup(
       cleanedTrack,
       cleanedArtist,
@@ -194,6 +213,7 @@ export async function searchRecordings(
   let trackOnlyResults: MusicBrainzRecording[] = [];
   const totalSoFar = new Set([...combinedExact, ...fuzzyResults].map((r) => r.id)).size;
   if (config.enableMultiStage && totalSoFar < PARTIAL_THRESHOLD && track && artist) {
+    if (!useFuzzy) onFallback?.();
     trackOnlyResults = await lookup(
       cleanedTrack ?? track,
       undefined,
@@ -217,10 +237,12 @@ export async function searchRecordings(
 
 export async function searchMusicbrainz(
   searchParams: SearchParams,
+  progress?: SearchProgress,
 ): Promise<MusicBrainzRecording[]> {
   try {
-    return await searchRecordings(searchParams, appConfig);
+    return await searchRecordings(searchParams, appConfig, searchStage, progress);
   } catch (error) {
+    if (progress?.signal?.aborted) return [];
     console.error("Failed to fetch MusicBrainz data:", error instanceof Error ? error.message : error);
     return [];
   }
