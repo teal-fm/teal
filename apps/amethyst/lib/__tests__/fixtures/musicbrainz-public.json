@@ -40,6 +40,71 @@
         "release": "Homogenic"
       },
       "label": 2
+    },
+    {
+      "name": "RADWIMPS / Sparkle - movie ver.",
+      "input": {
+        "track": "Sparkle - movie ver.",
+        "artist": "RADWIMPS",
+        "release": "Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)"
+      },
+      "label": 3,
+      "maxRank": 2,
+      "requests": 2
+    },
+    {
+      "name": "RADWIMPS / Sparkle - English ver.",
+      "input": {
+        "track": "Sparkle - English ver.",
+        "artist": "RADWIMPS",
+        "release": "Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)"
+      },
+      "label": 4,
+      "maxRank": 1,
+      "requests": 2
+    },
+    {
+      "name": "RADWIMPS / Zenzenzense - movie ver.",
+      "input": {
+        "track": "Zenzenzense - movie ver.",
+        "artist": "RADWIMPS",
+        "release": "Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)"
+      },
+      "label": 5,
+      "knownMiss": true
+    },
+    {
+      "name": "RADWIMPS / Zenzenzense - English ver.",
+      "input": {
+        "track": "Zenzenzense - English ver.",
+        "artist": "RADWIMPS",
+        "release": "Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)"
+      },
+      "label": 6,
+      "maxRank": 1,
+      "requests": 2
+    },
+    {
+      "name": "RADWIMPS / Nandemonaiya - movie ver.",
+      "input": {
+        "track": "Nandemonaiya - movie ver.",
+        "artist": "RADWIMPS",
+        "release": "Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)"
+      },
+      "label": 7,
+      "maxRank": 2,
+      "requests": 2
+    },
+    {
+      "name": "RADWIMPS / Nandemonaiya - English ver.",
+      "input": {
+        "track": "Nandemonaiya - English ver.",
+        "artist": "RADWIMPS",
+        "release": "Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)"
+      },
+      "label": 8,
+      "maxRank": 1,
+      "requests": 2
     }
   ],
   "responses": [
@@ -1979,6 +2044,584 @@
           ]
         }
       ]
+    },
+    {
+      "query": "title:\"Sparkle\" AND artist:\"RADWIMPS\" AND release:\"Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Sparkle%22%20AND%20artist%3A%22RADWIMPS%22%20AND%20release%3A%22Your%20Name.%20(Deluxe%20Edition%20%2F%20Original%20Motion%20Picture%20Soundtrack)%22&fmt=json&limit=25",
+      "created": "2026-11-22T17:48:26.732Z",
+      "count": 0,
+      "recordings": []
+    },
+    {
+      "query": "title:\"Sparkle\" AND artist:\"RADWIMPS\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Sparkle%22%20AND%20artist%3A%22RADWIMPS%22&fmt=json&limit=25",
+      "created": "2026-11-22T17:48:30.165Z",
+      "count": 2,
+      "recordings": [
+        {
+          "id": "2ce4bb17-2c5f-49ce-be58-558dec7322ee",
+          "title": "Sparkle (English ver.)",
+          "score": 100,
+          "length": 409333,
+          "artist-credit": [
+            {
+              "name": "RADWIMPS"
+            }
+          ],
+          "releases": [
+            {
+              "id": "f3f44449-99a0-49b7-a4b2-a1961503c001",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "7bce4103-41d5-45c5-b05e-8743ceef8026",
+              "title": "你的名字｡ English edition",
+              "status": "Official"
+            },
+            {
+              "id": "01ad1016-0722-4304-bace-c10c9bd20c76",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "91c31778-8603-4e55-b585-657d0863c8ae",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            },
+            {
+              "id": "1944f1a8-655b-4610-97d3-ff5b067774ca",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            },
+            {
+              "id": "874006c2-7771-4fde-bdba-11b83a311bb8",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "eaea83cf-a68e-44d3-88d6-14c23c699cab",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            }
+          ]
+        },
+        {
+          "id": "1d8040f5-95d7-423c-a232-5959915c4af3",
+          "title": "スパークル (movie ver.)",
+          "score": 83,
+          "length": 535200,
+          "artist-credit": [
+            {
+              "name": "RADWIMPS"
+            }
+          ],
+          "releases": [
+            {
+              "id": "9cf90e74-956b-4e00-9f50-259de2106fcf",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "bb52e140-b484-4703-b86a-a9f23f6c664d",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "f725806a-1102-4491-8f10-6ec3fc2c5b90",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "a7cd44c9-4e33-4f3e-a45b-22431c9d4ac8",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "f3f44449-99a0-49b7-a4b2-a1961503c001",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "2679ddf1-c377-4445-8993-65d0298a543b",
+              "title": "你的名字｡",
+              "status": "Official"
+            },
+            {
+              "id": "37759de9-9376-40d1-a4bf-6c5fcb11cb54",
+              "title": "你的名字｡电影原声带",
+              "status": "Official"
+            },
+            {
+              "id": "0630f5c6-ce17-408e-909d-4776939cd016",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "8cda0681-88b3-4a7d-a4ac-97fbd7983b3a",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "1f0569d4-2186-4317-8374-11e5a96afe13",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "db4ef117-ba81-435a-b1a6-e395998c10b8",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "9356b15a-4887-41e2-8550-0b3f6db89510",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "45cd5dfd-eff7-45eb-8f46-9997c04d02aa",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "01ad1016-0722-4304-bace-c10c9bd20c76",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "8751d6b3-8468-44ea-93b9-211836cbbbdc",
+              "title": "Your Name (Original Motion Picture Soundtrack)",
+              "status": "Official"
+            },
+            {
+              "id": "874006c2-7771-4fde-bdba-11b83a311bb8",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "ab7484d1-3d9f-441c-b76f-0d83209769ea",
+              "title": "君の名は。(너의 이름은./your name.)",
+              "status": "Official"
+            },
+            {
+              "id": "2b2f2c00-e8e7-4999-a6a2-2832b604ed9b",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "182699c1-77d2-4203-97a3-41cdd7eb9f40",
+              "title": "你的名字｡電影原聲帶",
+              "status": "Official"
+            },
+            {
+              "id": "0aca9314-8f48-43d1-ae38-40e22a133e97",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "a1a5b8a6-5ec6-4a31-9171-37f1d11189eb",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "9fcc0ceb-29d4-4367-ae87-554209b8a450",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "8b8879b2-1a89-4d7a-af5e-16a7808829e0",
+              "title": "君の名は。",
+              "status": "Official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "title:\"Zenzenzense\" AND artist:\"RADWIMPS\" AND release:\"Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Zenzenzense%22%20AND%20artist%3A%22RADWIMPS%22%20AND%20release%3A%22Your%20Name.%20(Deluxe%20Edition%20%2F%20Original%20Motion%20Picture%20Soundtrack)%22&fmt=json&limit=25",
+      "created": "2026-11-22T17:55:33.153Z",
+      "count": 0,
+      "recordings": []
+    },
+    {
+      "query": "title:\"Zenzenzense\" AND artist:\"RADWIMPS\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Zenzenzense%22%20AND%20artist%3A%22RADWIMPS%22&fmt=json&limit=25",
+      "created": "2026-11-22T17:55:36.560Z",
+      "count": 1,
+      "recordings": [
+        {
+          "id": "4f0a7ae1-0a1d-45f6-98b8-8b7affdd44fd",
+          "title": "Zenzenzense (English ver.)",
+          "score": 100,
+          "length": 277853,
+          "artist-credit": [
+            {
+              "name": "RADWIMPS"
+            }
+          ],
+          "releases": [
+            {
+              "id": "f3f44449-99a0-49b7-a4b2-a1961503c001",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "7bce4103-41d5-45c5-b05e-8743ceef8026",
+              "title": "你的名字｡ English edition",
+              "status": "Official"
+            },
+            {
+              "id": "01ad1016-0722-4304-bace-c10c9bd20c76",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "91c31778-8603-4e55-b585-657d0863c8ae",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            },
+            {
+              "id": "1944f1a8-655b-4610-97d3-ff5b067774ca",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            },
+            {
+              "id": "874006c2-7771-4fde-bdba-11b83a311bb8",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "eaea83cf-a68e-44d3-88d6-14c23c699cab",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "title:\"Nandemonaiya\" AND artist:\"RADWIMPS\" AND release:\"Your Name. (Deluxe Edition / Original Motion Picture Soundtrack)\"",
+      "url": "https://musicbrainz.org/ws/2/recording?query=title%3A%22Nandemonaiya%22%20AND%20artist%3A%22RADWIMPS%22%20AND%20release%3A%22Your%20Name.%20(Deluxe%20Edition%20%2F%20Original%20Motion%20Picture%20Soundtrack)%22&fmt=json&limit=25",
+      "created": "2026-11-22T17:55:40.681Z",
+      "count": 0,
+      "recordings": []
+    },
+    {
+      "query": "title:\"Nandemonaiya\" AND artist:\"RADWIMPS\"",
+      "url": "https://musicbrainz.org/ws/2/recording?fmt=json&limit=25&query=title%3A%22Nandemonaiya%22%20AND%20artist%3A%22RADWIMPS%22",
+      "created": "2026-11-22T17:55:46.745Z",
+      "count": 3,
+      "recordings": [
+        {
+          "id": "ff05f7da-e976-4660-9472-fbe72b10d12f",
+          "title": "Nandemonaiya (English ver.)",
+          "score": 100,
+          "length": 342000,
+          "artist-credit": [
+            {
+              "name": "RADWIMPS"
+            }
+          ],
+          "releases": [
+            {
+              "id": "f3f44449-99a0-49b7-a4b2-a1961503c001",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "7bce4103-41d5-45c5-b05e-8743ceef8026",
+              "title": "你的名字｡ English edition",
+              "status": "Official"
+            },
+            {
+              "id": "01ad1016-0722-4304-bace-c10c9bd20c76",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "91c31778-8603-4e55-b585-657d0863c8ae",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            },
+            {
+              "id": "1944f1a8-655b-4610-97d3-ff5b067774ca",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            },
+            {
+              "id": "874006c2-7771-4fde-bdba-11b83a311bb8",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "eaea83cf-a68e-44d3-88d6-14c23c699cab",
+              "title": "君の名は。English edition",
+              "status": "Official"
+            }
+          ]
+        },
+        {
+          "id": "7310fd56-6c6c-4a88-ab8d-fbedaaab7741",
+          "title": "なんでもないや (movie ver.)",
+          "score": 68,
+          "length": 344000,
+          "artist-credit": [
+            {
+              "name": "RADWIMPS"
+            }
+          ],
+          "releases": [
+            {
+              "id": "9cf90e74-956b-4e00-9f50-259de2106fcf",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "bb52e140-b484-4703-b86a-a9f23f6c664d",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "f725806a-1102-4491-8f10-6ec3fc2c5b90",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "a7cd44c9-4e33-4f3e-a45b-22431c9d4ac8",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "f3f44449-99a0-49b7-a4b2-a1961503c001",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "2679ddf1-c377-4445-8993-65d0298a543b",
+              "title": "你的名字｡",
+              "status": "Official"
+            },
+            {
+              "id": "37759de9-9376-40d1-a4bf-6c5fcb11cb54",
+              "title": "你的名字｡电影原声带",
+              "status": "Official"
+            },
+            {
+              "id": "0630f5c6-ce17-408e-909d-4776939cd016",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "8cda0681-88b3-4a7d-a4ac-97fbd7983b3a",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "1f0569d4-2186-4317-8374-11e5a96afe13",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "db4ef117-ba81-435a-b1a6-e395998c10b8",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "9356b15a-4887-41e2-8550-0b3f6db89510",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "45cd5dfd-eff7-45eb-8f46-9997c04d02aa",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "01ad1016-0722-4304-bace-c10c9bd20c76",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "8751d6b3-8468-44ea-93b9-211836cbbbdc",
+              "title": "Your Name (Original Motion Picture Soundtrack)",
+              "status": "Official"
+            },
+            {
+              "id": "874006c2-7771-4fde-bdba-11b83a311bb8",
+              "title": "Your Name (Original Motion Picture Soundtrack) (Deluxe Edition)",
+              "status": "Official"
+            },
+            {
+              "id": "ab7484d1-3d9f-441c-b76f-0d83209769ea",
+              "title": "君の名は。(너의 이름은./your name.)",
+              "status": "Official"
+            },
+            {
+              "id": "2b2f2c00-e8e7-4999-a6a2-2832b604ed9b",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "182699c1-77d2-4203-97a3-41cdd7eb9f40",
+              "title": "你的名字｡電影原聲帶",
+              "status": "Official"
+            },
+            {
+              "id": "0aca9314-8f48-43d1-ae38-40e22a133e97",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "a1a5b8a6-5ec6-4a31-9171-37f1d11189eb",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "9fcc0ceb-29d4-4367-ae87-554209b8a450",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "8b8879b2-1a89-4d7a-af5e-16a7808829e0",
+              "title": "君の名は。",
+              "status": "Official"
+            }
+          ]
+        },
+        {
+          "id": "7d2265e3-3953-4fff-8fa2-514f78ae13a1",
+          "title": "なんでもないや (movie edit.)",
+          "score": 68,
+          "length": 196906,
+          "artist-credit": [
+            {
+              "name": "RADWIMPS"
+            }
+          ],
+          "releases": [
+            {
+              "id": "9cf90e74-956b-4e00-9f50-259de2106fcf",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "bb52e140-b484-4703-b86a-a9f23f6c664d",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "f725806a-1102-4491-8f10-6ec3fc2c5b90",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "a7cd44c9-4e33-4f3e-a45b-22431c9d4ac8",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "2679ddf1-c377-4445-8993-65d0298a543b",
+              "title": "你的名字｡",
+              "status": "Official"
+            },
+            {
+              "id": "37759de9-9376-40d1-a4bf-6c5fcb11cb54",
+              "title": "你的名字｡电影原声带",
+              "status": "Official"
+            },
+            {
+              "id": "0630f5c6-ce17-408e-909d-4776939cd016",
+              "title": "Your Name",
+              "status": "Official"
+            },
+            {
+              "id": "8cda0681-88b3-4a7d-a4ac-97fbd7983b3a",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "1f0569d4-2186-4317-8374-11e5a96afe13",
+              "title": "Your Name.",
+              "status": "Official"
+            },
+            {
+              "id": "db4ef117-ba81-435a-b1a6-e395998c10b8",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "9356b15a-4887-41e2-8550-0b3f6db89510",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "8751d6b3-8468-44ea-93b9-211836cbbbdc",
+              "title": "Your Name (Original Motion Picture Soundtrack)",
+              "status": "Official"
+            },
+            {
+              "id": "ab7484d1-3d9f-441c-b76f-0d83209769ea",
+              "title": "君の名は。(너의 이름은./your name.)",
+              "status": "Official"
+            },
+            {
+              "id": "2b2f2c00-e8e7-4999-a6a2-2832b604ed9b",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "182699c1-77d2-4203-97a3-41cdd7eb9f40",
+              "title": "你的名字｡電影原聲帶",
+              "status": "Official"
+            },
+            {
+              "id": "0aca9314-8f48-43d1-ae38-40e22a133e97",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "a1a5b8a6-5ec6-4a31-9171-37f1d11189eb",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "9fcc0ceb-29d4-4367-ae87-554209b8a450",
+              "title": "君の名は。",
+              "status": "Official"
+            },
+            {
+              "id": "8b8879b2-1a89-4d7a-af5e-16a7808829e0",
+              "title": "君の名は。",
+              "status": "Official"
+            }
+          ]
+        }
+      ]
     }
   ],
   "labels": [
@@ -2002,6 +2645,54 @@
       "release": "Homogenic",
       "trackNumber": "4",
       "recordingId": "8ddbc4f1-f3db-47f1-b727-b4ceaf98cef8"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/a7fc3d41-d645-418e-a5d2-960a835b04e0?inc=recordings+artist-credits&fmt=json",
+      "releaseId": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+      "release": "Your Name",
+      "medium": 2,
+      "trackNumber": "3",
+      "recordingId": "1d8040f5-95d7-423c-a232-5959915c4af3"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/a7fc3d41-d645-418e-a5d2-960a835b04e0?inc=recordings+artist-credits&fmt=json",
+      "releaseId": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+      "release": "Your Name",
+      "medium": 1,
+      "trackNumber": "24",
+      "recordingId": "2ce4bb17-2c5f-49ce-be58-558dec7322ee"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/a7fc3d41-d645-418e-a5d2-960a835b04e0?inc=recordings+artist-credits&fmt=json",
+      "releaseId": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+      "release": "Your Name",
+      "medium": 2,
+      "trackNumber": "2",
+      "recordingId": "f7f524cc-e991-49cd-873e-cc3278190aa1"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/a7fc3d41-d645-418e-a5d2-960a835b04e0?inc=recordings+artist-credits&fmt=json",
+      "releaseId": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+      "release": "Your Name",
+      "medium": 1,
+      "trackNumber": "8",
+      "recordingId": "4f0a7ae1-0a1d-45f6-98b8-8b7affdd44fd"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/a7fc3d41-d645-418e-a5d2-960a835b04e0?inc=recordings+artist-credits&fmt=json",
+      "releaseId": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+      "release": "Your Name",
+      "medium": 2,
+      "trackNumber": "4",
+      "recordingId": "7310fd56-6c6c-4a88-ab8d-fbedaaab7741"
+    },
+    {
+      "source": "https://musicbrainz.org/ws/2/release/a7fc3d41-d645-418e-a5d2-960a835b04e0?inc=recordings+artist-credits&fmt=json",
+      "releaseId": "a7fc3d41-d645-418e-a5d2-960a835b04e0",
+      "release": "Your Name",
+      "medium": 1,
+      "trackNumber": "26",
+      "recordingId": "ff05f7da-e976-4660-9472-fbe72b10d12f"
     }
   ]
 }

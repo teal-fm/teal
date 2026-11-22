@@ -9,6 +9,8 @@ interface Fixture {
     input: SearchParams;
     label: number;
     knownMiss?: boolean;
+    maxRank?: number;
+    requests?: number;
   }>;
   labels: Array<{ recordingId: string }>;
   responses: Array<{ query: string; recordings: MusicBrainzRecording[] }>;
@@ -23,7 +25,8 @@ const responses = new Map(
 );
 
 let searchMusicbrainz: typeof import("../searchOrchestrator").searchMusicbrainz;
-beforeAll(async () => {
+beforeEach(async () => {
+  jest.resetModules();
   const previousRate = process.env.MB_RATE_LIMIT_MS;
   process.env.MB_RATE_LIMIT_MS = "0";
   try {
@@ -39,8 +42,8 @@ afterEach(() => jest.restoreAllMocks());
 describe("MusicBrainz public recording search replay", () => {
   // The expected recording IDs come from independent MusicBrainz album tracklists.
   it.each(fixture.cases.filter((example) => !example.knownMiss))(
-    "$name ranks the requested recording first using one request",
-    async ({ input, label }) => {
+    "$name finds the recording within the expected rank and request count",
+    async ({ input, label, maxRank = 1, requests = 1 }) => {
       const missing: string[] = [];
       const fetch = jest.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
         const url = new URL(String(input));
@@ -60,8 +63,8 @@ describe("MusicBrainz public recording search replay", () => {
 
       const results = await searchMusicbrainz(input);
       expect(missing).toEqual([]);
-      expect(results[0]?.id).toBe(fixture.labels[label].recordingId);
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(results.slice(0, maxRank).map(({ id }) => id)).toContain(fixture.labels[label].recordingId);
+      expect(fetch).toHaveBeenCalledTimes(requests);
     },
   );
 
