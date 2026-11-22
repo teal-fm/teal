@@ -33,19 +33,25 @@ print_error() {
 
 # The hook runs formatters on the working tree and stages their edits below.
 STAGED_FILES=()
+FORMAT_FILES=()
 TS_JS_FILES=()
 RUST_FILES=()
 LEXICON_FILES=()
 while IFS= read -r -d '' file; do
-    if ! git --literal-pathspecs diff --quiet -- "$file"; then
-        print_error "$file has unstaged changes. Stash the unstaged edits before running this hook."
-        exit 1
-    fi
     STAGED_FILES+=("$file")
     case "$file" in
         *.ts|*.tsx|*.js|*.jsx) TS_JS_FILES+=("$file") ;;
         *.rs) RUST_FILES+=("$file") ;;
         *lexicons/*.json) LEXICON_FILES+=("$file") ;;
+    esac
+    case "$file" in
+        *.ts|*.tsx|*.js|*.jsx|*.rs)
+            if ! git --literal-pathspecs diff --quiet -- "$file"; then
+                print_error "$file has unstaged changes. Stash the unstaged edits before running this hook."
+                exit 1
+            fi
+            FORMAT_FILES+=("$file")
+            ;;
     esac
 done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 
@@ -58,7 +64,7 @@ report_unstaged_fixes() {
     local status=$? file
     if [ "$status" -ne 0 ]; then
         local changed=()
-        for file in "${STAGED_FILES[@]}"; do
+        for file in "${FORMAT_FILES[@]}"; do
             if ! git --literal-pathspecs diff --quiet -- "$file"; then
                 changed+=("$file")
             fi
@@ -200,7 +206,7 @@ fi
 
 # 4. Re-add files that might have been formatted
 FORMATTED_FILES=()
-for file in "${STAGED_FILES[@]}"; do
+for file in "${FORMAT_FILES[@]}"; do
     if [ -f "$file" ]; then
         # Check if file was modified by formatters
         if ! git --literal-pathspecs diff --quiet -- "$file"; then
