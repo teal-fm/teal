@@ -101,6 +101,8 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     pds: null,
 
     getLoginUrl: async (handle: string) => {
+      callback.cancel();
+      set({ login: { loading: false, error: null } });
       try {
         // resolve the handle to a PDS URL
         const r = resolveFromIdentity(handle);
@@ -108,7 +110,6 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         const url = await auth.authorize(handle);
         set({
           auth,
-          login: { loading: false, error: null },
           pds: {
             url: url.toString(),
             loading: false,
