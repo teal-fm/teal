@@ -43,7 +43,7 @@ export default function AuthCallback() {
         {status === "loggedIn" ? "Success!" : "Fetching your data..."}
       </Text>
       <Text className="text-sm text-muted-foreground">
-        This may take a few seconds {status}
+        This may take a few seconds.
       </Text>
     </View>
   );

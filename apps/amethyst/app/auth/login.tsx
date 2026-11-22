@@ -171,6 +171,8 @@ const LoginScreen = () => {
   );
 
   const handleLogin = async () => {
+    if (isLoading || isRedirecting) return;
+
     // reset state
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -200,8 +202,15 @@ const LoginScreen = () => {
           "http://127.0.0.1:8081/login",
         );
         if (res.type === "success") {
-          const params = new URLSearchParams(res.url.split("?")[1]);
+          const params = new URL(res.url).searchParams;
+          if (params.has("error")) {
+            throw new Error("Sign-in did not complete. Try signing in again.");
+          }
           await oauthCallback(params);
+          if (useStore.getState().status !== "loggedIn") {
+            throw new Error("Sign-in did not complete. Try signing in again.");
+          }
+          router.replace("/");
         } else if (res.type === "cancel" || res.type === "dismiss") {
           setErr("Login cancelled by user.");
           setIsRedirecting(false);
@@ -314,6 +323,7 @@ const LoginScreen = () => {
             </View>
           </Animated.View>
         </View>
+        {err ? <Text accessibilityRole="alert">{err}</Text> : null}
         <View className="flex flex-row items-center justify-between">
           <Link href="https://bsky.app/signup" asChild>
             <Button variant="link" className="p-0">
@@ -328,7 +338,7 @@ const LoginScreen = () => {
               isRedirecting ? "bg-green-500" : "bg-bsky",
             )}
             onPress={handleLogin}
-            disabled={!pdsUrl}
+            disabled={!pdsUrl || isLoading || isRedirecting}
           >
             {isRedirecting ? (
               <>
