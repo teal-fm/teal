@@ -58,6 +58,12 @@ each evaluated query once. The 95% bootstrap intervals resample whole recording
 MBIDs, keeping a recording’s query variants and both systems’ answers together.
 Rate changes are in percentage points. These intervals describe the sampled library.
 
+Run the interval regression tests without API access with Node 24.
+
+```sh
+node --test scripts/eval/statistics.test.ts
+```
+
 ## Ground Truth Sources
 
 MBIDs come from four independent sources (not from our own search):
