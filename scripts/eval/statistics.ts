@@ -26,50 +26,74 @@ export function erfc(x: number): number {
   return 1.0 - sign * y;
 }
 
+type RateEstimate = [point: number, low: number, high: number];
+
 /**
- * Bootstrap confidence intervals.
- * Returns [point estimate, lower bound, upper bound].
+ * Percentile bootstrap of two hit rates and their paired difference, in
+ * percentage points. Draw whole recordings so query variants stay together.
+ * Within a draw, each query still has the same weight as in the point estimate.
  */
-export function bootstrapCI(
-  values: boolean[],
-  metric: (vals: boolean[]) => number,
-  iterations: number = 10000,
-  confidence: number = 0.95,
-): [number, number, number] {
-  const n = values.length;
-
-  if (n < 30) {
-    const point = metric(values);
-    const successes = values.filter((v) => v).length;
-    const p = successes / n;
-    const se = Math.sqrt((p * (1 - p)) / n);
-    const tCrit = 2.045;
-    const margin = tCrit * se;
-    return [point, Math.max(0, point - margin), Math.min(100, point + margin)];
+export function pairedRateIntervals(
+  recordingIds: string[],
+  baseline: boolean[],
+  improved: boolean[],
+): { baseline: RateEstimate; improved: RateEstimate; difference: RateEstimate } {
+  const iterations = 10_000;
+  if (
+    !recordingIds.length ||
+    baseline.length !== recordingIds.length ||
+    improved.length !== baseline.length
+  ) {
+    throw new Error("Expected a nonempty pair of results for every query");
   }
 
-  const allSame = values.every((v) => v === values[0]);
-  if (allSame) {
-    const point = metric(values);
-    return [point, point, point];
-  }
-
-  const samples: number[] = [];
-  for (let i = 0; i < iterations; i++) {
-    const resample: boolean[] = [];
-    for (let j = 0; j < n; j++) {
-      resample.push(values[Math.floor(Math.random() * n)]);
+  const recordings = new Map<string, { count: number; before: number; after: number }>();
+  let beforeTotal = 0;
+  let afterTotal = 0;
+  for (let i = 0; i < recordingIds.length; i++) {
+    const id = recordingIds[i];
+    let group = recordings.get(id);
+    if (!group) {
+      group = { count: 0, before: 0, after: 0 };
+      recordings.set(id, group);
     }
-    samples.push(metric(resample));
+    group.count++;
+    group.before += Number(baseline[i]);
+    group.after += Number(improved[i]);
+    beforeTotal += Number(baseline[i]);
+    afterTotal += Number(improved[i]);
   }
 
-  samples.sort((a, b) => a - b);
-  const alpha = 1 - confidence;
-  const lowerIdx = Math.floor(iterations * (alpha / 2));
-  const upperIdx = Math.floor(iterations * (1 - alpha / 2));
-  const point = metric(values);
+  const groups = Array.from(recordings.values());
+  const beforeSamples: number[] = [];
+  const afterSamples: number[] = [];
+  const differences: number[] = [];
+  for (let i = 0; i < iterations; i++) {
+    let count = 0, before = 0, after = 0;
+    for (let j = 0; j < groups.length; j++) {
+      const group = groups[Math.floor(Math.random() * groups.length)];
+      count += group.count;
+      before += group.before;
+      after += group.after;
+    }
+    beforeSamples.push(100 * before / count);
+    afterSamples.push(100 * after / count);
+    differences.push(100 * (after - before) / count);
+  }
 
-  return [point, samples[lowerIdx], samples[upperIdx]];
+  function estimate(total: number, samples: number[]): RateEstimate {
+    samples.sort((a, b) => a - b);
+    return [
+      100 * total / recordingIds.length,
+      samples[Math.floor(0.025 * iterations)],
+      samples[Math.ceil(0.975 * iterations) - 1],
+    ];
+  }
+  return {
+    baseline: estimate(beforeTotal, beforeSamples),
+    improved: estimate(afterTotal, afterSamples),
+    difference: estimate(afterTotal - beforeTotal, differences),
+  };
 }
 
 /**

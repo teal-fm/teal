@@ -45,14 +45,18 @@ MB_RATE_LIMIT_MS=200 pnpm eval:run -- --all --concurrency 5
 
 ## What It Measures
 
-Each scrobble with a valid MBID becomes a test case. The eval searches
+The eval deduplicates labeled scrobbles by track, artist and recording MBID,
+then also tries eligible tracks without the artist field. It searches
 MusicBrainz using both a **baseline** (single Lucene query, 1 API call)
 and the **improved** pipeline (multi-stage search with cleaning and
 ranking, ~4.5 API calls/case on average). It checks whether the correct
 recording MBID appears in the results and at what position.
 
 Metrics reported: P@1, P@5, P@10, MRR, NDCG, win/loss ratio, and
-per-category breakdowns (remixes, featuring artists, CJK, etc.).
+per-category breakdowns (remixes, featuring artists, CJK, etc.). Rates count
+each evaluated query once. The 95% bootstrap intervals resample whole recording
+MBIDs, keeping a recording’s query variants and both systems’ answers together.
+Rate changes are in percentage points. These intervals describe the sampled library.
 
 ## Ground Truth Sources
 

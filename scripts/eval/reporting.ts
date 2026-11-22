@@ -11,7 +11,7 @@ import {
   formatTime,
 } from "./types.js";
 import {
-  bootstrapCI,
+  pairedRateIntervals,
   mcnemarTest,
   cohensH,
 } from "./statistics.js";
@@ -132,6 +132,11 @@ export function reportResults(output: EvaluationOutput): void {
     totalSearches,
   } = output;
 
+  if (cases.length === 0) {
+    console.log("No evaluated queries to report.");
+    return;
+  }
+
   // Calculate all metrics from cases
   let baselineP1 = 0, baselineP5 = 0, baselineP10 = 0, baselineP25 = 0, baselineFound = 0;
   let improvedP1 = 0, improvedP5 = 0, improvedP10 = 0, improvedP25 = 0, improvedFound = 0;
@@ -186,7 +191,12 @@ export function reportResults(output: EvaluationOutput): void {
   const improvedNDCG = improvedNDCGSum / cases.length;
 
   // Boolean arrays for statistical tests
-  const pctMetric = (vals: boolean[]) => (vals.filter((v) => v).length / vals.length) * 100;
+  const recordingIds = cases.map((c) => c.mbid);
+  const recordingCount = new Set(recordingIds).size;
+  function interval(low: number, high: number, unit = "%"): string {
+    if (recordingCount < 2) return "";
+    return ` [${low.toFixed(1)}${unit}, ${high.toFixed(1)}${unit}]`;
+  }
   const baselineP1Arr = cases.map((c) => c.baselinePos === 0);
   const baselineP5Arr = cases.map((c) => c.baselinePos >= 0 && c.baselinePos < 5);
   const baselineP10Arr = cases.map((c) => c.baselinePos >= 0 && c.baselinePos < 10);
@@ -198,16 +208,31 @@ export function reportResults(output: EvaluationOutput): void {
   const improvedP25Arr = cases.map((c) => c.improvedPos >= 0 && c.improvedPos < 25);
   const improvedFoundArr = cases.map((c) => c.improvedFound);
 
-  const [bP1Pt, bP1Lo, bP1Hi] = bootstrapCI(baselineP1Arr, pctMetric);
-  const [bP5Pt, bP5Lo, bP5Hi] = bootstrapCI(baselineP5Arr, pctMetric);
-  const [bP10Pt, bP10Lo, bP10Hi] = bootstrapCI(baselineP10Arr, pctMetric);
-  const [bP25Pt, bP25Lo, bP25Hi] = bootstrapCI(baselineP25Arr, pctMetric);
-  const [bFPt, bFLo, bFHi] = bootstrapCI(baselineFoundArr, pctMetric);
-  const [iP1Pt, iP1Lo, iP1Hi] = bootstrapCI(improvedP1Arr, pctMetric);
-  const [iP5Pt, iP5Lo, iP5Hi] = bootstrapCI(improvedP5Arr, pctMetric);
-  const [iP10Pt, iP10Lo, iP10Hi] = bootstrapCI(improvedP10Arr, pctMetric);
-  const [iP25Pt, iP25Lo, iP25Hi] = bootstrapCI(improvedP25Arr, pctMetric);
-  const [iFPt, iFLo, iFHi] = bootstrapCI(improvedFoundArr, pctMetric);
+  const {
+    baseline: [bP1Pt, bP1Lo, bP1Hi],
+    improved: [iP1Pt, iP1Lo, iP1Hi],
+    difference: [p1Imp, dP1Lo, dP1Hi],
+  } = pairedRateIntervals(recordingIds, baselineP1Arr, improvedP1Arr);
+  const {
+    baseline: [bP5Pt, bP5Lo, bP5Hi],
+    improved: [iP5Pt, iP5Lo, iP5Hi],
+    difference: [p5Imp, dP5Lo, dP5Hi],
+  } = pairedRateIntervals(recordingIds, baselineP5Arr, improvedP5Arr);
+  const {
+    baseline: [bP10Pt, bP10Lo, bP10Hi],
+    improved: [iP10Pt, iP10Lo, iP10Hi],
+    difference: [p10Imp],
+  } = pairedRateIntervals(recordingIds, baselineP10Arr, improvedP10Arr);
+  const {
+    baseline: [bP25Pt, bP25Lo, bP25Hi],
+    improved: [iP25Pt, iP25Lo, iP25Hi],
+    difference: [p25Imp],
+  } = pairedRateIntervals(recordingIds, baselineP25Arr, improvedP25Arr);
+  const {
+    baseline: [bFPt, bFLo, bFHi],
+    improved: [iFPt, iFLo, iFHi],
+    difference: [fImp, dFLo, dFHi],
+  } = pairedRateIntervals(recordingIds, baselineFoundArr, improvedFoundArr);
 
   const mcnP1 = mcnemarTest(baselineP1Arr, improvedP1Arr);
   const mcnP5 = mcnemarTest(baselineP5Arr, improvedP5Arr);
@@ -216,13 +241,6 @@ export function reportResults(output: EvaluationOutput): void {
   const effP1 = cohensH(bP1Pt, iP1Pt);
   const effP5 = cohensH(bP5Pt, iP5Pt);
   const effF = cohensH(bFPt, iFPt);
-
-  const diffP1Arr = improvedP1Arr.map((imp, i) => imp && !baselineP1Arr[i]);
-  const diffP5Arr = improvedP5Arr.map((imp, i) => imp && !baselineP5Arr[i]);
-  const diffFArr = improvedFoundArr.map((imp, i) => imp && !baselineFoundArr[i]);
-  const [, dP1Lo, dP1Hi] = bootstrapCI(diffP1Arr, pctMetric);
-  const [, dP5Lo, dP5Hi] = bootstrapCI(diffP5Arr, pctMetric);
-  const [, dFLo, dFHi] = bootstrapCI(diffFArr, pctMetric);
 
   const totalElapsed = Date.now() - startTime;
 
@@ -249,7 +267,7 @@ export function reportResults(output: EvaluationOutput): void {
   console.log("\n" + "=".repeat(60));
   console.log("EVALUATION RESULTS (DEDUPLICATED)");
   console.log("=".repeat(60));
-  console.log(`\nTest set: ${cases.length} unique scrobbles (from ${validScrobblesCount} total with MBIDs)`);
+  console.log(`\nTest set: ${cases.length} queries covering ${recordingCount} recordings (from ${validScrobblesCount} scrobbles with MBIDs)`);
   console.log(`Total scrobbles: ${scrobblesTotal}`);
   console.log(`Deduplication: ${duplicateStats.duplicates} duplicates removed (${(duplicateStats.duplicates / duplicateStats.total * 100).toFixed(1)}%)`);
   if (totalSearches > 0) {
@@ -271,20 +289,15 @@ export function reportResults(output: EvaluationOutput): void {
   }
   console.log();
 
-  const p1Imp = iP1Pt - bP1Pt;
-  const p5Imp = iP5Pt - bP5Pt;
-  const p10Imp = iP10Pt - bP10Pt;
-  const p25Imp = iP25Pt - bP25Pt;
-  const fImp = iFPt - bFPt;
   const mrrImp = improvedMRR - baselineMRR;
   const ndcgImp = improvedNDCG - baselineNDCG;
 
   console.log("BASELINE (Simple Query):");
-  console.log(`  Precision@1: ${bP1Pt.toFixed(1)}% [${bP1Lo.toFixed(1)}%, ${bP1Hi.toFixed(1)}%] (${baselineP1}/${cases.length})`);
-  console.log(`  Precision@5: ${bP5Pt.toFixed(1)}% [${bP5Lo.toFixed(1)}%, ${bP5Hi.toFixed(1)}%] (${baselineP5}/${cases.length})`);
-  console.log(`  Precision@10: ${bP10Pt.toFixed(1)}% [${bP10Lo.toFixed(1)}%, ${bP10Hi.toFixed(1)}%] (${baselineP10}/${cases.length})`);
-  console.log(`  Precision@25: ${bP25Pt.toFixed(1)}% [${bP25Lo.toFixed(1)}%, ${bP25Hi.toFixed(1)}%] (${baselineP25}/${cases.length})`);
-  console.log(`  Findability: ${bFPt.toFixed(1)}% [${bFLo.toFixed(1)}%, ${bFHi.toFixed(1)}%] (${baselineFound}/${cases.length})`);
+  console.log(`  Precision@1: ${bP1Pt.toFixed(1)}%${interval(bP1Lo, bP1Hi)} (${baselineP1}/${cases.length})`);
+  console.log(`  Precision@5: ${bP5Pt.toFixed(1)}%${interval(bP5Lo, bP5Hi)} (${baselineP5}/${cases.length})`);
+  console.log(`  Precision@10: ${bP10Pt.toFixed(1)}%${interval(bP10Lo, bP10Hi)} (${baselineP10}/${cases.length})`);
+  console.log(`  Precision@25: ${bP25Pt.toFixed(1)}%${interval(bP25Lo, bP25Hi)} (${baselineP25}/${cases.length})`);
+  console.log(`  Findability: ${bFPt.toFixed(1)}%${interval(bFLo, bFHi)} (${baselineFound}/${cases.length})`);
   console.log(`  MRR: ${baselineMRR.toFixed(3)}, NDCG@25: ${baselineNDCG.toFixed(3)}\n`);
 
   const configDesc = [
@@ -294,19 +307,19 @@ export function reportResults(output: EvaluationOutput): void {
   ].join(" + ");
 
   console.log(`IMPROVED (${configDesc}):`);
-  console.log(`  Precision@1: ${iP1Pt.toFixed(1)}% [${iP1Lo.toFixed(1)}%, ${iP1Hi.toFixed(1)}%] (${improvedP1}/${cases.length})`);
-  console.log(`  Precision@5: ${iP5Pt.toFixed(1)}% [${iP5Lo.toFixed(1)}%, ${iP5Hi.toFixed(1)}%] (${improvedP5}/${cases.length})`);
-  console.log(`  Precision@10: ${iP10Pt.toFixed(1)}% [${iP10Lo.toFixed(1)}%, ${iP10Hi.toFixed(1)}%] (${improvedP10}/${cases.length})`);
-  console.log(`  Precision@25: ${iP25Pt.toFixed(1)}% [${iP25Lo.toFixed(1)}%, ${iP25Hi.toFixed(1)}%] (${improvedP25}/${cases.length})`);
-  console.log(`  Findability: ${iFPt.toFixed(1)}% [${iFLo.toFixed(1)}%, ${iFHi.toFixed(1)}%] (${improvedFound}/${cases.length})`);
+  console.log(`  Precision@1: ${iP1Pt.toFixed(1)}%${interval(iP1Lo, iP1Hi)} (${improvedP1}/${cases.length})`);
+  console.log(`  Precision@5: ${iP5Pt.toFixed(1)}%${interval(iP5Lo, iP5Hi)} (${improvedP5}/${cases.length})`);
+  console.log(`  Precision@10: ${iP10Pt.toFixed(1)}%${interval(iP10Lo, iP10Hi)} (${improvedP10}/${cases.length})`);
+  console.log(`  Precision@25: ${iP25Pt.toFixed(1)}%${interval(iP25Lo, iP25Hi)} (${improvedP25}/${cases.length})`);
+  console.log(`  Findability: ${iFPt.toFixed(1)}%${interval(iFLo, iFHi)} (${improvedFound}/${cases.length})`);
   console.log(`  MRR: ${improvedMRR.toFixed(3)}, NDCG@25: ${improvedNDCG.toFixed(3)}\n`);
 
-  console.log("IMPROVEMENT (Primary Metrics):");
-  console.log(`  Precision@1: ${p1Imp > 0 ? "+" : ""}${p1Imp.toFixed(1)}% [${dP1Lo.toFixed(1)}%, ${dP1Hi.toFixed(1)}%]`);
-  console.log(`  Precision@5: ${p5Imp > 0 ? "+" : ""}${p5Imp.toFixed(1)}% [${dP5Lo.toFixed(1)}%, ${dP5Hi.toFixed(1)}%]`);
-  console.log(`  Precision@10: ${p10Imp > 0 ? "+" : ""}${p10Imp.toFixed(1)}%`);
-  console.log(`  Precision@25: ${p25Imp > 0 ? "+" : ""}${p25Imp.toFixed(1)}%`);
-  console.log(`  Findability: ${fImp > 0 ? "+" : ""}${fImp.toFixed(1)}% [${dFLo.toFixed(1)}%, ${dFHi.toFixed(1)}%]`);
+  console.log("IMPROVEMENT (percentage points, 95% intervals resampled by recording):");
+  console.log(`  Precision@1: ${p1Imp > 0 ? "+" : ""}${p1Imp.toFixed(1)} pp${interval(dP1Lo, dP1Hi, "")}`);
+  console.log(`  Precision@5: ${p5Imp > 0 ? "+" : ""}${p5Imp.toFixed(1)} pp${interval(dP5Lo, dP5Hi, "")}`);
+  console.log(`  Precision@10: ${p10Imp > 0 ? "+" : ""}${p10Imp.toFixed(1)} pp`);
+  console.log(`  Precision@25: ${p25Imp > 0 ? "+" : ""}${p25Imp.toFixed(1)} pp`);
+  console.log(`  Findability: ${fImp > 0 ? "+" : ""}${fImp.toFixed(1)} pp${interval(dFLo, dFHi, "")}`);
   console.log(`  MRR: ${mrrImp > 0 ? "+" : ""}${mrrImp.toFixed(3)}, NDCG@25: ${ndcgImp > 0 ? "+" : ""}${ndcgImp.toFixed(3)}`);
 
   console.log("\nSTATISTICAL SIGNIFICANCE:");
