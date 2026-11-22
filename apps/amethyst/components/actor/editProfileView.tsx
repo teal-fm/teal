@@ -153,6 +153,30 @@ export default function EditProfileModal({
                 </View>
               </Pressable>
 
+              {avatar && (
+                <Button
+                  variant="link"
+                  disabled={loading || saving}
+                  onPress={() => {
+                    setAvatar(undefined);
+                    setError("");
+                  }}
+                >
+                  <Text>Undo avatar change</Text>
+                </Button>
+              )}
+              {banner && (
+                <Button
+                  variant="link"
+                  disabled={loading || saving}
+                  onPress={() => {
+                    setBanner(undefined);
+                    setError("");
+                  }}
+                >
+                  <Text>Undo banner change</Text>
+                </Button>
+              )}
               <Text className="pl-1 text-sm font-semibold text-muted-foreground">
                 Display Name
               </Text>

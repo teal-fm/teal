@@ -313,6 +313,22 @@ export default function OnboardingPage() {
             bannerUri={selectedBanner?.uri ?? bannerUri}
             onPickAvatar={setSelectedAvatar}
             onPickBanner={setSelectedBanner}
+            onUndoAvatar={
+              selectedAvatar
+                ? () => {
+                    setSelectedAvatar(undefined);
+                    setSubmissionError("");
+                  }
+                : undefined
+            }
+            onUndoBanner={
+              selectedBanner
+                ? () => {
+                    setSelectedBanner(undefined);
+                    setSubmissionError("");
+                  }
+                : undefined
+            }
           />
         );
       default:

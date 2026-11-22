@@ -14,6 +14,8 @@ interface ImageSelectionPageProps {
   bannerUri?: string;
   onPickAvatar: (image: SelectedProfileImage) => void;
   onPickBanner: (image: SelectedProfileImage) => void;
+  onUndoAvatar?: () => void;
+  onUndoBanner?: () => void;
 }
 
 const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
@@ -22,6 +24,8 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
   bannerUri,
   onPickAvatar,
   onPickBanner,
+  onUndoAvatar,
+  onUndoBanner,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -100,6 +104,30 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
         </View>
       </Pressable>
 
+      {onUndoAvatar && (
+        <Button
+          variant="link"
+          disabled={loading}
+          onPress={() => {
+            setError("");
+            onUndoAvatar();
+          }}
+        >
+          <Text>Undo avatar change</Text>
+        </Button>
+      )}
+      {onUndoBanner && (
+        <Button
+          variant="link"
+          disabled={loading}
+          onPress={() => {
+            setError("");
+            onUndoBanner();
+          }}
+        >
+          <Text>Undo banner change</Text>
+        </Button>
+      )}
       {error ? <Text accessibilityRole="alert">{error}</Text> : null}
       <Button onPress={onComplete} disabled={loading} className="w-full">
         <Text>Next</Text>
