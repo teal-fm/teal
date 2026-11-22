@@ -13,10 +13,9 @@ const CACHE_DIR = join(homedir(), ".teal_eval_cache");
 const DB_PATH = join(CACHE_DIR, "lastfm_eval.db");
 
 // Bump this when evaluation logic changes in a way that should invalidate cached evaluation results.
-const EVALUATION_LOGIC_VERSION = "v28-weak-exact-fallback";
-
-// Ensure cache directory exists
-mkdirSync(CACHE_DIR, { recursive: true });
+const EVALUATION_LOGIC_VERSION = "v29-successful-search-pairs";
+// Earlier caches could not distinguish an outage from a successful empty response.
+const SEARCH_CACHE_VERSION = "successful-search-v1";
 
 export class LastFMCache {
   private db: Database.Database;
@@ -24,8 +23,9 @@ export class LastFMCache {
   private stmtGetEvaluationResult: Database.Statement;
   private stmtSetEvaluationResult: Database.Statement;
 
-  constructor() {
-    this.db = new Database(DB_PATH);
+  constructor(path = DB_PATH) {
+    if (path === DB_PATH) mkdirSync(CACHE_DIR, { recursive: true });
+    this.db = new Database(path);
     this.initSchema();
     // Prepare statements once for reuse
     this.stmtGetEvaluationResult = this.db.prepare(`
@@ -563,11 +563,7 @@ export class LastFMCache {
     strategy?: string
   ): string {
 
-    const normalizedTrack = (track || "").toLowerCase().trim();
-    const normalizedArtist = (artist || "").toLowerCase().trim();
-    const normalizedAlbum = (album || "").toLowerCase().trim();
-    const stratStr = strategy || "default";
-    const str = `${normalizedTrack}|${normalizedArtist}|${normalizedAlbum}|${stratStr}`;
+    const str = JSON.stringify([SEARCH_CACHE_VERSION, track || "", artist || "", album || "", strategy || "default"]);
     return createHash("md5").update(str).digest("hex");
   }
 

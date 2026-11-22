@@ -123,7 +123,7 @@ const MB_RATE_LIMIT_MS = (() => {
   }
   return 1100;
 })();
-let lastAPICallTime = 0;
+let lastAPICallTime = -Infinity;
 
 // In-memory cache for MusicBrainz search results.
 // Avoids redundant API calls within a session (rate-limited to 1 req/sec).
@@ -157,6 +157,45 @@ function setCache(key: string, results: MusicBrainzRecording[]): void {
   searchCache.set(key, { results, timestamp: Date.now() });
 }
 
+type MusicBrainzRequestOptions = {
+  baseUrl?: string;
+  userAgent?: string;
+  signal?: AbortSignal;
+  fetcher?: typeof fetch;
+  failOnError?: boolean;
+};
+
+export class MusicBrainzUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MusicBrainzUnavailableError";
+  }
+}
+
+function unavailable(error: unknown): MusicBrainzUnavailableError {
+  return error instanceof MusicBrainzUnavailableError
+    ? error
+    : new MusicBrainzUnavailableError(error instanceof Error ? error.message : "MusicBrainz request failed");
+}
+
+async function waitForRequestSlot(signal?: AbortSignal) {
+  // Recheck after waking so parallel searches cannot take the same slot.
+  while (!signal?.aborted) {
+    const wait = MB_RATE_LIMIT_MS - (Date.now() - lastAPICallTime);
+    if (wait <= 0) {
+      lastAPICallTime = Date.now();
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, wait));
+  }
+  return false;
+}
+
+const DEFAULT_BASE_URL = "https://musicbrainz.org/ws/2";
+const DEFAULT_USER_AGENT = "tealtracker/0.0.1 (https://github.com/teal-fm/teal)";
+
+type RecordingRequestOptions = MusicBrainzRequestOptions & { limit?: number };
+
 /**
  * Single search stage with specified matching strategy.
  * Caches results in-memory to avoid redundant API calls (MB rate limit: 1 req/sec).
@@ -166,19 +205,9 @@ export async function searchStage(
   artist: string | undefined,
   release: string | undefined,
   strategy: SearchStrategy,
-  options?: {
-    limit?: number;
-    userAgent?: string;
-    baseUrl?: string;
-    signal?: AbortSignal;
-  },
+  options?: RecordingRequestOptions,
 ): Promise<MusicBrainzRecording[]> {
-  const limit = options?.limit ?? 25;
-  const userAgent = options?.userAgent ?? "tealtracker/0.0.1 (https://github.com/teal-fm/teal)";
-  const baseUrl = options?.baseUrl ?? "https://musicbrainz.org/ws/2";
-  const signal = options?.signal;
-
-  if (signal?.aborted) return [];
+  if (options?.signal?.aborted) return [];
 
   const queryParts: string[] = [];
 
@@ -201,75 +230,51 @@ export async function searchStage(
   const query = queryParts.join(" AND ");
 
   // Check cache first
-  const cacheKey = `${query}|${limit}`;
+  const cacheKey = JSON.stringify([options?.baseUrl ?? DEFAULT_BASE_URL, query, options?.limit ?? 25]);
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  // Enforce MusicBrainz rate limit (1 request/second) between API calls.
-  // Placed after cache check so cache hits are instant.
-  const now = Date.now();
-  const elapsed = now - lastAPICallTime;
-  if (elapsed < MB_RATE_LIMIT_MS && lastAPICallTime > 0) {
-    await new Promise((resolve) => setTimeout(resolve, MB_RATE_LIMIT_MS - elapsed));
-  }
-  if (signal?.aborted) return [];
-  lastAPICallTime = Date.now();
+  const results = await fetchMusicBrainzRecordings(query, options);
+  if (results === null) return [];
+  setCache(cacheKey, results);
+  return results;
+}
 
-  // Retry with exponential backoff for rate limiting
-  let retries = MAX_RETRIES;
+export async function fetchMusicBrainzRecordings(
+  query: string,
+  {
+    limit = 25, userAgent = DEFAULT_USER_AGENT, baseUrl = DEFAULT_BASE_URL,
+    signal, fetcher = fetch, failOnError = false,
+  }: RecordingRequestOptions = {},
+): Promise<MusicBrainzRecording[] | null> {
+  const url = `${baseUrl}/recording?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`;
   let delay = INITIAL_RETRY_DELAY;
 
-  while (retries > 0) {
-    if (signal?.aborted) return [];
+  for (let attempt = 1; ; attempt++) {
+    if (!(await waitForRequestSlot(signal)) || signal?.aborted) return null;
     try {
-      const res = await fetch(
-        `${baseUrl}/recording?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`,
-        {
-          signal,
-          headers: {
-            "User-Agent": userAgent,
-          },
-        },
-      );
-      if (signal?.aborted) return [];
-
-      // Handle rate limiting (503)
-      if (res.status === 503) {
-        retries--;
-        if (retries > 0) {
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          delay *= 2; // Exponential backoff
-          continue;
+      const res = await fetcher(url, { signal, headers: { "User-Agent": userAgent } });
+      if (signal?.aborted) return null;
+      if (res.ok) {
+        const data = (await res.json()) as { recordings?: MusicBrainzRecording[] };
+        if (Array.isArray(data?.recordings) && data.recordings.every((r) => r && typeof r.id === "string" && r.id && typeof r.title === "string")) {
+          return data.recordings;
         }
-        return [];
+        throw new MusicBrainzUnavailableError("Invalid MusicBrainz recordings response");
       }
-
-      if (!res.ok) {
-        return [];
+      if ((res.status !== 429 && res.status !== 503) || attempt === MAX_RETRIES) {
+        throw new MusicBrainzUnavailableError(`MusicBrainz recording search returned HTTP ${res.status}`);
       }
-
-      const data = (await res.json()) as {
-        recordings?: MusicBrainzRecording[];
-      };
-      const results: MusicBrainzRecording[] = data.recordings || [];
-      setCache(cacheKey, results);
-      return results;
     } catch (error) {
-      if (signal?.aborted) return [];
-      retries--;
-      if (retries > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        delay *= 2;
-      } else {
-        if (error instanceof Error) {
-          console.error(`Search stage ${strategy} failed:`, error.message);
-        }
-        return [];
+      if (signal?.aborted) return null;
+      if (error instanceof MusicBrainzUnavailableError || attempt === MAX_RETRIES) {
+        if (failOnError) throw unavailable(error);
+        return null;
       }
     }
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    delay *= 2;
   }
-
-  return [];
 }
 
 /**
@@ -285,49 +290,40 @@ export async function searchStage(
  */
 export async function resolveArtistAlias(
   artistName: string,
-  options?: {
-    userAgent?: string;
-    baseUrl?: string;
-    signal?: AbortSignal;
-  },
+  {
+    userAgent = DEFAULT_USER_AGENT, baseUrl = DEFAULT_BASE_URL,
+    signal, fetcher = fetch, failOnError = false,
+  }: MusicBrainzRequestOptions = {},
 ): Promise<string | null> {
-  const userAgent = options?.userAgent ?? "tealtracker/0.0.1 (https://github.com/teal-fm/teal)";
-  const baseUrl = options?.baseUrl ?? "https://musicbrainz.org/ws/2";
-  const signal = options?.signal;
-
   if (signal?.aborted) return null;
 
   // Search artist by alias
   const escaped = artistName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const query = `alias:"${escaped}"`;
 
-  const cacheKey = `artist-alias|${query}`;
+  const cacheKey = JSON.stringify([baseUrl, query]);
   const cachedAlias = aliasCache.get(cacheKey);
   if (cachedAlias && Date.now() - cachedAlias.timestamp <= CACHE_TTL_MS) {
     return cachedAlias.value;
   }
 
-  // Rate limit
-  const now = Date.now();
-  const elapsed = now - lastAPICallTime;
-  if (elapsed < MB_RATE_LIMIT_MS && lastAPICallTime > 0) {
-    await new Promise((resolve) => setTimeout(resolve, MB_RATE_LIMIT_MS - elapsed));
-  }
-  if (signal?.aborted) return null;
-  lastAPICallTime = Date.now();
-
   try {
-    const res = await fetch(
+    if (!(await waitForRequestSlot(signal)) || signal?.aborted) return null;
+    const res = await fetcher(
       `${baseUrl}/artist?query=${encodeURIComponent(query)}&fmt=json&limit=3`,
       { signal, headers: { "User-Agent": userAgent } },
     );
 
-    if (!res.ok) return null;
+    if (signal?.aborted) return null;
+    if (!res.ok) throw new MusicBrainzUnavailableError(`MusicBrainz artist search returned HTTP ${res.status}`);
 
     const data = (await res.json()) as {
       artists?: Array<{ name?: string }>;
     };
-    const artists = data.artists || [];
+    const artists = data?.artists;
+    if (!Array.isArray(artists) || artists.some((artist) => !artist || typeof artist.name !== "string" || !artist.name)) {
+      throw new MusicBrainzUnavailableError("Invalid MusicBrainz artist response");
+    }
 
     if (artists.length === 0) {
       aliasCache.set(cacheKey, { value: null, timestamp: Date.now() });
@@ -335,10 +331,11 @@ export async function resolveArtistAlias(
     }
 
     // Return the canonical name of the highest-scoring artist
-    const name: string | null = artists[0].name || null;
+    const name = artists[0].name ?? null;
     aliasCache.set(cacheKey, { value: name, timestamp: Date.now() });
     return name;
-  } catch {
+  } catch (error) {
+    if (failOnError && !signal?.aborted) throw unavailable(error);
     return null;
   }
 }

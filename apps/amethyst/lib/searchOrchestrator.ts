@@ -35,6 +35,7 @@ export interface SearchConfig {
 interface SearchProgress {
   signal?: AbortSignal;
   onFallback?: () => void;
+  resolveAlias?: typeof resolveArtistAlias;
 }
 
 const appConfig: SearchConfig = {
@@ -88,7 +89,7 @@ export async function searchRecordings(
   searchParams: SearchParams,
   config: SearchConfig,
   request: typeof searchStage = searchStage,
-  { signal, onFallback }: SearchProgress = {},
+  { signal, onFallback, resolveAlias = resolveArtistAlias }: SearchProgress = {},
 ): Promise<MusicBrainzRecording[]> {
   const assertActive = () => {
     if (signal?.aborted) throw new Error("Search canceled");
@@ -169,7 +170,7 @@ export async function searchRecordings(
     hasCJK(artistForSearch)
   ) {
     assertActive();
-    const romanized = await resolveArtistAlias(artistForSearch, { signal });
+    const romanized = await resolveAlias(artistForSearch, { signal });
     assertActive();
     if (romanized && romanized !== artistForSearch) {
       cjkAliasResults = await lookup(

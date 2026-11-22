@@ -1,4 +1,5 @@
-import { improvedSearchWithConfig } from "../../../../scripts/eval/search";
+import { baselineSearch, compareSearches, improvedSearchWithConfig } from "../../../../scripts/eval/search";
+import { createAPIMetrics } from "../../../../scripts/eval/types";
 import { searchMusicbrainz } from "../searchOrchestrator";
 import * as musicbrainz from "../musicbrainzSearchUtils";
 
@@ -112,14 +113,14 @@ it("honors the evaluation switches for cleaning, fuzzy search, and all fallbacks
   await improvedSearchWithConfig(track, query.artist, undefined, {
     ...config, enableCleaning: false, enableFuzzy: false,
   });
-  expect(lookup.mock.calls).toEqual([
+  expect(lookup.mock.calls.map((call) => call.slice(0, 4))).toEqual([
     [track, query.artist, undefined, "exact"],
     [track, undefined, undefined, "exact"],
   ]);
 
   lookup.mockClear().mockResolvedValue([weak]);
   await improvedSearchWithConfig(track, query.artist, undefined, { ...config, enableMultiStage: false });
-  expect(lookup.mock.calls).toEqual([[query.track, query.artist, undefined, "exact"]]);
+  expect(lookup.mock.calls.map((call) => call.slice(0, 4))).toEqual([[query.track, query.artist, undefined, "exact"]]);
 });
 
 it("keeps looking for the requested edition after a fuzzy title and artist match", async () => {
@@ -164,6 +165,84 @@ it("does not retry an interactive MusicBrainz request after cancellation", async
 
     expect(await pending).toEqual([]);
     expect(fetch).toHaveBeenCalledTimes(1);
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+it.each(["baseline", "candidate"])("keeps a %s outage out of the cache", async (arm) => {
+  jest.useFakeTimers();
+  try {
+    const cache = { getSearchResults: jest.fn().mockReturnValue(null), setSearchResults: jest.fn() };
+    const track = `Recovery ${arm}`;
+    const run = () => arm === "baseline"
+      ? baselineSearch(track, query.artist, undefined, cache)
+      : improvedSearchWithConfig(track, query.artist, undefined, config, cache);
+    const fetch = jest.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status: 502 }));
+
+    const outage = expect(run()).rejects.toThrow("HTTP 502");
+    await jest.runAllTimersAsync();
+    await outage;
+    expect(cache.setSearchResults).not.toHaveBeenCalled();
+
+    fetch.mockResolvedValueOnce(Response.json({ recordings: [correct] }));
+    const healthy = run();
+    await jest.runAllTimersAsync();
+    expect(await healthy).toEqual([correct]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(cache.setSearchResults).toHaveBeenCalledTimes(1);
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+it("counts alias requests per pair even when comparisons overlap", async () => {
+  jest.useFakeTimers();
+  try {
+    const metrics = createAPIMetrics();
+    const fetch = jest.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith("/artist")) return Response.json({ artists: [{ name: "Ryuichi Sakamoto" }] });
+      const search = url.searchParams.get("query") ?? "";
+      return Response.json({ recordings: search.includes("坂本龍一") ? [] : [correct] });
+    });
+    const results = Promise.all([
+      compareSearches("Alias experiment", "坂本龍一", undefined, config, undefined, metrics),
+      compareSearches("Plain experiment", query.artist, undefined, config, undefined, metrics),
+    ]);
+    await jest.runAllTimersAsync();
+    expect(await results).toMatchObject([
+      { status: "scored", apiCallsImproved: 3 },
+      { status: "scored", apiCallsImproved: 1 },
+    ]);
+    expect(fetch).toHaveBeenCalledTimes(6);
+    expect(metrics.musicbrainzCalls).toBe(6);
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+it("excludes an unavailable alias lookup and accepts a healthy empty response", async () => {
+  jest.useFakeTimers();
+  try {
+    let artistUnavailable = true;
+    const cache = { getSearchResults: jest.fn().mockReturnValue(null), setSearchResults: jest.fn() };
+    jest.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (new URL(String(input)).pathname.endsWith("/artist")) {
+        if (artistUnavailable) return new Response(null, { status: 502 });
+        return Response.json({ artists: [] });
+      }
+      return Response.json({ recordings: [] });
+    });
+    const run = () => compareSearches("Alias outage", "久石譲", undefined, config, cache);
+    const outage = run();
+    await jest.runAllTimersAsync();
+    expect(await outage).toMatchObject({ status: "unavailable" });
+
+    artistUnavailable = false;
+    const healthy = run();
+    await jest.runAllTimersAsync();
+    expect(await healthy).toMatchObject({ status: "scored", baselineRes: [], improvedRes: [] });
   } finally {
     jest.useRealTimers();
   }

@@ -44,7 +44,7 @@ import {
 import { getLastFMSession } from "./auth.js";
 import { getRecentTracks } from "./lastfm-api.js";
 import { getTrackMBID, validateMBID, areRecordingsWorkEquivalent } from "./mbid-resolution.js";
-import { baselineSearch, improvedSearchWithConfig } from "./search.js";
+import { compareSearches } from "./search.js";
 import { ndcg } from "./statistics.js";
 import { categorizeFailureMode, classifyHardness, reportResults } from "./reporting.js";
 import { LastFMCache } from "./evaluate-lastfm-cache.js";
@@ -734,6 +734,14 @@ async function main() {
 
   // ── No ground truth mode ──────────────────────────────────────────
 
+  let unavailableSearchPairs = 0;
+  async function searchPair(track: string, artist: string, album?: string) {
+    const result = await compareSearches(track, artist, album, searchConfig, cache, apiMetrics);
+    if (result.status === "scored") return result;
+    if (unavailableSearchPairs++ === 0) console.warn(`Skipping unavailable MusicBrainz pair. ${result.reason}`);
+    return null;
+  }
+
   if (validScrobbles.length === 0) {
     console.log("No scrobbles with MBIDs found. Evaluating without ground truth...\n");
     console.log("(This mode compares result counts, not accuracy)\n");
@@ -742,27 +750,35 @@ async function main() {
     let improvedCount = 0;
     let baselineTotalResults = 0;
     let improvedTotalResults = 0;
+    let completed = 0;
 
     for (let i = 0; i < scrobbles.length; i++) {
       const s = scrobbles[i];
       if (i % 10 === 0 || i === scrobbles.length - 1) {
         console.log(`  Evaluating ${i + 1}/${scrobbles.length}: "${s.track}" by ${s.artist}...`);
       }
-      const baselineRes = await baselineSearch(s.track, s.artist, s.album, cache, apiMetrics);
-      const improvedRes = await improvedSearchWithConfig(s.track, s.artist, s.album, searchConfig, cache, apiMetrics);
+      const pair = await searchPair(s.track, s.artist, s.album);
+      if (!pair) continue;
+      completed++;
+      const { baselineRes, improvedRes } = pair;
       if (baselineRes.length > 0) baselineCount++;
       if (improvedRes.length > 0) improvedCount++;
       baselineTotalResults += baselineRes.length;
       improvedTotalResults += improvedRes.length;
     }
 
-    console.log("\nBASELINE (Simple Query):");
-    console.log(`  Found results: ${baselineCount}/${scrobbles.length} (${(baselineCount / scrobbles.length * 100).toFixed(1)}%)`);
-    console.log(`  Avg results per query: ${(baselineTotalResults / scrobbles.length).toFixed(1)}`);
-    console.log("\nIMPROVED (Cleaning + Multi-Stage):");
-    console.log(`  Found results: ${improvedCount}/${scrobbles.length} (${(improvedCount / scrobbles.length * 100).toFixed(1)}%)`);
-    console.log(`  Avg results per query: ${(improvedTotalResults / scrobbles.length).toFixed(1)}`);
-    console.log(`\nIMPROVEMENT: +${improvedCount - baselineCount} scrobbles (${((improvedCount - baselineCount) / scrobbles.length * 100).toFixed(1)}%)`);
+    console.log(`\nCompleted ${completed} search pairs. Unavailable pairs excluded: ${unavailableSearchPairs}.`);
+    if (completed > 0) {
+      console.log("\nBASELINE (Simple Query):");
+      console.log(`  Found results: ${baselineCount}/${completed} (${(baselineCount / completed * 100).toFixed(1)}%)`);
+      console.log(`  Avg results per query: ${(baselineTotalResults / completed).toFixed(1)}`);
+      console.log("\nIMPROVED (Cleaning + Multi-Stage):");
+      console.log(`  Found results: ${improvedCount}/${completed} (${(improvedCount / completed * 100).toFixed(1)}%)`);
+      console.log(`  Avg results per query: ${(improvedTotalResults / completed).toFixed(1)}`);
+      console.log(`\nChange in queries with results: ${improvedCount - baselineCount}`);
+    } else if (unavailableSearchPairs > 0) {
+      process.exitCode = 1;
+    }
     cache.close();
     return;
   }
@@ -827,7 +843,7 @@ async function main() {
     s: typeof expandedCases[0],
     index: number,
     total: number,
-  ): Promise<EvaluationCase> {
+  ): Promise<EvaluationCase | null> {
     const caseStartTime = Date.now();
     const logInterval = total > 200 ? 50 : total > 50 ? 25 : 10;
 
@@ -885,12 +901,9 @@ async function main() {
     }
 
     // Not cached -- run search
-    const baselineCached = cache.getSearchResults(s.track, s.artist || undefined, s.album, false, false, false) !== null;
-    const baselineRes = await baselineSearch(s.track, s.artist || "", s.album, cache, apiMetrics);
-
-    const mbCallsBefore = apiMetrics.musicbrainzCalls;
-    const improvedRes = await improvedSearchWithConfig(s.track, s.artist || "", s.album, searchConfig, cache, apiMetrics);
-    const apiCallsImproved = apiMetrics.musicbrainzCalls - mbCallsBefore;
+    const pair = await searchPair(s.track, s.artist || "", s.album);
+    if (!pair) return null;
+    const { baselineRes, improvedRes, baselineCacheHit: baselineCached, apiCallsImproved } = pair;
 
     const now = Date.now();
     const caseElapsed = now - caseStartTime;
@@ -992,6 +1005,7 @@ async function main() {
       );
 
       for (const caseResult of chunkCases) {
+        if (!caseResult) continue;
         if (caseResult.baselineCacheHit) baselineCacheHits++;
         if (caseResult.improvedCacheHit) improvedCacheHits++;
         if (caseResult.baselineCacheHit && caseResult.improvedCacheHit) {
@@ -1012,6 +1026,7 @@ async function main() {
   } else {
     for (let i = 0; i < expandedCases.length; i++) {
       const caseResult = await evaluateCase(expandedCases[i], i, expandedCases.length);
+      if (!caseResult) continue;
       if (caseResult.baselineCacheHit) baselineCacheHits++;
       if (caseResult.improvedCacheHit) improvedCacheHits++;
       if (caseResult.baselineCacheHit && caseResult.improvedCacheHit) {
@@ -1033,6 +1048,12 @@ async function main() {
   const evaluationElapsed = Date.now() - evaluationStartTime;
   const avgTimePerCase = cases.length > 0 ? evaluationElapsed / cases.length : 0;
   console.log(`\nEvaluation complete: ${cases.length} cases in ${formatTime(evaluationElapsed)} (avg: ${formatTime(avgTimePerCase)}/case)\n`);
+  console.log(`Unavailable search pairs excluded: ${unavailableSearchPairs}`);
+  if (cases.length === 0) {
+    if (unavailableSearchPairs > 0) process.exitCode = 1;
+    cache.close();
+    return;
+  }
 
   // ── Work-equivalence post-processing ──────────────────────────────
 
@@ -1106,6 +1127,7 @@ async function main() {
     improvedCacheHits,
     evaluationResultCacheHits,
     totalSearches,
+    unavailableSearchPairs,
   });
 
   // Show final cache stats
