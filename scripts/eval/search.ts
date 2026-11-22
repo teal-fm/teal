@@ -18,7 +18,12 @@ function measuredFetch(metrics?: APIMetrics, onRequest?: () => void): typeof fet
     onRequest?.();
     if (metrics) metrics.musicbrainzCalls++;
     try {
-      const res = await fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(15_000) });
+      const signal = init?.signal ?? (
+        "timeout" in AbortSignal && typeof AbortSignal.timeout === "function"
+          ? AbortSignal.timeout(15_000)
+          : undefined
+      );
+      const res = await fetch(input, { ...init, signal });
       if (metrics && !res.ok) {
         if (res.status === 429 || res.status === 503) metrics.musicbrainzRateLimits++;
         else metrics.musicbrainzErrors++;
