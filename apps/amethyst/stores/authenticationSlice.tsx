@@ -19,6 +19,7 @@ export interface AuthenticationSlice {
   auth: AquareumOAuthClient;
   status: "start" | "loggedIn" | "loggedOut";
   oauthState: null | string;
+  loginAttempt: number;
   oauthSession: null | OAuthSession;
   pdsAgent: null | Agent;
   isAgentReady: boolean;
@@ -60,10 +61,8 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     });
   };
   const callback = latestOAuthCallback(
-    async (params) => {
-      set({ login: { loading: true, error: null } });
-      return initialAuth.callback(params);
-    },
+    () => get().loginAttempt,
+    (params) => initialAuth.callback(params),
     ({ session, state }) => {
       if (get().status === "loggedIn") return;
       const agent = new Agent(session);
@@ -87,6 +86,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     auth: initialAuth,
     status: "start",
     oauthState: null,
+    loginAttempt: 0,
     oauthSession: null,
     pdsAgent: null,
     isAgentReady: false,
@@ -99,13 +99,14 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
     pds: null,
 
     getLoginUrl: async (handle: string) => {
-      callback.cancel();
-      set({ login: { loading: false, error: null } });
+      const attempt = get().loginAttempt + 1;
+      set({ loginAttempt: attempt, login: { loading: false, error: null } });
       try {
         // resolve the handle to a PDS URL
         const r = resolveFromIdentity(handle);
         let auth = createOAuthClient(baseUrl, (await r).pds.hostname);
-        const url = await auth.authorize(handle);
+        const url = await auth.authorize(handle, { state: String(attempt) });
+        if (get().loginAttempt !== attempt) return null;
         set({
           auth,
           pds: {
@@ -123,12 +124,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
 
     oauthCallback: async (params) => {
       if (get().status === "loggedIn") return;
-      const state = params.get("state");
-      if (!state || !params.get("code") || !params.get("iss") || params.has("error")) {
-        if (!get().login.loading) failCallback(new Error("Missing callback parameters"));
-        return;
-      }
-      await callback.complete(state, params);
+      await callback.complete(params);
     },
     restorePdsAgent: async () => {
       const sessionToRestore = get().oauthSession;
@@ -159,7 +155,6 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       }
     },
     logOut: () => {
-      callback.cancel();
       console.log("Logging out");
       let profiles = { ...get().profiles };
       // TODO: something better than 'delete'
@@ -168,6 +163,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         status: "loggedOut",
         oauthSession: null,
         oauthState: null,
+        loginAttempt: get().loginAttempt + 1,
         login: { loading: false, error: null },
         profiles,
         pdsAgent: null,

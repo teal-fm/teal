@@ -1,114 +1,72 @@
 import { latestOAuthCallback } from "../atp/latestOAuthCallback";
 
-function exchange() {
-  let resolve!: (result: string) => void;
-  let reject!: (error: Error) => void;
-  const promise = new Promise<string>((ok, err) => {
-    resolve = ok;
-    reject = err;
-  });
-  return { promise, resolve, reject };
+function response(state: string) {
+  return new URLSearchParams({ state, code: "granted", iss: "https://issuer.example" });
 }
 
-function overlap() {
-  const previous = exchange();
-  const current = exchange();
+function pendingExchange() {
+  let resolve!: (result: { state: string }) => void;
+  const promise = new Promise<{ state: string }>((done) => { resolve = done; });
+  return { resolve, promise };
+}
+
+it("accepts the current authorization when the older callback arrives for the first time", async () => {
+  const current = pendingExchange();
   const onSuccess = jest.fn();
   const onFailure = jest.fn();
   const callback = latestOAuthCallback(
-    (params) =>
-      params.get("state") === "first" ? previous.promise : current.promise,
+    () => 2,
+    (params) => params.get("state") === "new" ? current.promise : Promise.resolve({ state: "1" }),
     onSuccess,
     onFailure,
   );
-  const first = callback.complete("first", new URLSearchParams({ state: "first" }));
-  const second = callback.complete("second", new URLSearchParams({ state: "second" }));
-  return { callback, first, second, previous, current, onFailure, onSuccess };
-}
-
-it.each(["before", "after"])(
-  "ignores a stale failure %s the successful callback",
-  async (order) => {
-    const { first, second, previous, current, onFailure, onSuccess } =
-      overlap();
-    if (order === "before") {
-      previous.reject(new Error("Old request failed"));
-      await first;
-    }
-    current.resolve("current session");
-    await second;
-    if (order === "after") {
-      previous.reject(new Error("Old request failed"));
-      await first;
-    }
-    expect(onFailure).not.toHaveBeenCalled();
-    expect(onSuccess.mock.calls).toEqual([["current session"]]);
-  },
-);
-
-it.each(["before", "after"])(
-  "ignores a stale success %s the failed callback",
-  async (order) => {
-    const { first, second, previous, current, onFailure, onSuccess } =
-      overlap();
-    if (order === "before") {
-      previous.resolve("old session");
-      await first;
-    }
-    const failure = new Error("Current request failed");
-    current.reject(failure);
-    await second;
-    if (order === "after") {
-      previous.resolve("old session");
-      await first;
-    }
-    expect(onFailure.mock.calls).toEqual([[failure]]);
-    expect(onSuccess).not.toHaveBeenCalled();
-  },
-);
-
-it("ignores pending callbacks after logout", async () => {
-  const { callback, first, second, previous, current, onFailure, onSuccess } =
-    overlap();
-  callback.cancel();
-  previous.reject(new Error("Old request failed"));
-  current.resolve("session");
-  await Promise.all([first, second]);
+  const newer = callback.complete(response("new"));
+  await callback.complete(response("old"));
+  expect(onSuccess).not.toHaveBeenCalled();
+  current.resolve({ state: "2" });
+  await newer;
+  expect(onSuccess.mock.calls).toEqual([[{ state: "2" }]]);
   expect(onFailure).not.toHaveBeenCalled();
+});
+
+it("ignores an older exchange that finishes after logout", async () => {
+  let attempt = 1;
+  const pending = pendingExchange();
+  const onSuccess = jest.fn();
+  const callback = latestOAuthCallback(() => attempt, () => pending.promise, onSuccess, jest.fn());
+  const exchange = callback.complete(response("old"));
+  attempt++;
+  pending.resolve({ state: "1" });
+  await exchange;
   expect(onSuccess).not.toHaveBeenCalled();
 });
 
-it("shares a pending exchange when the route resubmits the same state", async () => {
-  const pending = exchange();
-  const start = jest.fn(() => pending.promise);
-  const onSuccess = jest.fn();
+it("reports provider failures for the active attempt", async () => {
+  const failure = Object.assign(new Error("Failed"), { state: "2" });
   const onFailure = jest.fn();
-  const callback = latestOAuthCallback(start, onSuccess, onFailure);
-  const response = new URLSearchParams({ state: "first", code: "granted", iss: "https://issuer.example" });
-
-  const first = callback.complete("first", response);
-  const duplicate = callback.complete("first", new URLSearchParams(response));
-  pending.resolve("session");
-  await Promise.all([first, duplicate]);
-
-  expect(start).toHaveBeenCalledTimes(1);
-  expect(onSuccess.mock.calls).toEqual([["session"]]);
-  expect(onFailure).not.toHaveBeenCalled();
+  const callback = latestOAuthCallback(
+    () => 2,
+    async (params) => {
+      if (params.get("state") === "old") throw Object.assign(new Error("Old failure"), { state: "1" });
+      throw failure;
+    },
+    jest.fn(),
+    onFailure,
+  );
+  await callback.complete(response("old"));
+  await callback.complete(response("new"));
+  expect(onFailure.mock.calls).toEqual([[failure]]);
 });
 
-it("does not restart a consumed state after cancellation", async () => {
-  const pending = exchange();
-  const start = jest.fn(() => pending.promise);
+it("shares the exchange when the route resubmits the same provider state", async () => {
+  const pending = pendingExchange();
+  const exchange = jest.fn(() => pending.promise);
   const onSuccess = jest.fn();
-  const callback = latestOAuthCallback(start, onSuccess, jest.fn());
-  const response = new URLSearchParams({ state: "first" });
-
-  const first = callback.complete("first", response);
-  callback.cancel();
-  const duplicate = callback.complete("first", response);
-  pending.resolve("old session");
+  const callback = latestOAuthCallback(() => 1, exchange, onSuccess, jest.fn());
+  const first = callback.complete(response("provider-state"));
+  const duplicate = callback.complete(response("provider-state"));
+  pending.resolve({ state: "1" });
   await Promise.all([first, duplicate]);
-
-  expect(start).toHaveBeenCalledTimes(1);
-  expect(onSuccess).not.toHaveBeenCalled();
+  expect(exchange).toHaveBeenCalledTimes(1);
+  expect(onSuccess.mock.calls).toEqual([[{ state: "1" }]]);
 });

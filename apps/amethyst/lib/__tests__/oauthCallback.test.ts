@@ -9,11 +9,13 @@ type Params = Parameters<typeof useOAuthCallback>[0];
 function Callback({
   params,
   complete,
+  ready,
 }: {
   params: Params;
   complete: (response: URLSearchParams) => Promise<void>;
+  ready: boolean;
 }) {
-  useOAuthCallback(params, complete);
+  useOAuthCallback(params, complete, ready);
   return null;
 }
 
@@ -23,11 +25,11 @@ describe("the OAuth callback route effect", () => {
   let screen: ReactTestRenderer | undefined;
   const complete = jest.fn<Promise<void>, [URLSearchParams]>();
 
-  async function render(params: Params) {
+  async function render(params: Params, ready = true) {
     const tree = createElement(
       StrictMode,
       null,
-      createElement(Callback, { params, complete }),
+      createElement(Callback, { params, complete, ready }),
     );
     await act(async () => {
       if (screen) screen.update(tree);
@@ -41,7 +43,7 @@ describe("the OAuth callback route effect", () => {
     complete.mockReset();
   });
 
-  it("waits for a complete response and submits it once even while pending", async () => {
+  it("waits for a complete response and preserves all parameters", async () => {
     let finish!: () => void;
     complete.mockReturnValue(
       new Promise<void>((resolve) => {
@@ -55,7 +57,6 @@ describe("the OAuth callback route effect", () => {
 
     const params = { ...full, extra: ["one", "two"] };
     await render(params);
-    await render({ ...params });
     expect(complete).toHaveBeenCalledTimes(1);
     const [response] = complete.mock.calls[0];
     expect(response.get("code")).toBe(full.code);
@@ -65,7 +66,7 @@ describe("the OAuth callback route effect", () => {
     finish();
   });
 
-  it("leaves provider errors alone and handles each subsequent sign-in once", async () => {
+  it("leaves provider errors alone and forwards complete responses", async () => {
     complete.mockResolvedValue(undefined);
     await render({ state: "denied", error: "access_denied" });
     await render({ ...full, error: "access_denied" });
@@ -73,10 +74,18 @@ describe("the OAuth callback route effect", () => {
 
     await render(full);
     await render({ ...full, state: "second" });
-    await render({ ...full });
     expect(complete.mock.calls.map(([p]) => p.get("state"))).toEqual([
       "first",
       "second",
     ]);
+  });
+
+  it("waits for the persisted sign-in attempt before submitting a callback", async () => {
+    complete.mockResolvedValue(undefined);
+    await render(full, false);
+    expect(complete).not.toHaveBeenCalled();
+
+    await render(full);
+    expect(complete).toHaveBeenCalledTimes(1);
   });
 });

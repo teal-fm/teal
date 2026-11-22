@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useSyncExternalStore } from "react";
 import { View } from "react-native";
 import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { useOAuthCallback } from "@/lib/atp/useOAuthCallback";
@@ -12,7 +12,12 @@ export default function AuthCallback() {
   const complete = useStore((state) => state.oauthCallback);
   const loginError = useStore((state) => state.login.error);
   const params = useLocalSearchParams();
-  useOAuthCallback(params, complete);
+  const hydrated = useSyncExternalStore(
+    useStore.persist.onFinishHydration,
+    useStore.persist.hasHydrated,
+    () => false,
+  );
+  useOAuthCallback(params, complete, hydrated);
   const providerError = params.error !== undefined;
 
   useEffect(() => {
