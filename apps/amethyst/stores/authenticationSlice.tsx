@@ -127,15 +127,13 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       if (get().status !== "loggedIn") await callback.complete(params);
     },
     restorePdsAgent: async () => {
-      let did = get().oauthSession?.sub;
-      if (!did) {
-        //
-        // throw new Error("No session");
-        return;
-      }
+      const sessionToRestore = get().oauthSession;
+      const did = sessionToRestore?.sub;
+      if (!did) return;
       try {
         // restore session
-        let sess = await initialAuth.restore(did);
+        const sess = await initialAuth.restore(did);
+        if (get().oauthSession !== sessionToRestore) return;
 
         if (!sess) {
           throw new Error("Failed to restore session");
@@ -151,6 +149,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         get().populateLoggedInProfile();
         console.log("Restored agent");
       } catch (error) {
+        if (get().oauthSession !== sessionToRestore || get().isAgentReady) return;
         console.error("Failed to restore agent:", error);
         get().logOut();
       }
@@ -168,6 +167,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         login: { loading: false, error: null },
         profiles,
         pdsAgent: null,
+        isAgentReady: false,
         client: null,
         pds: null,
       });
