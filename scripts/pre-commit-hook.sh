@@ -56,7 +56,7 @@ if [ -n "$TS_JS_FILES" ]; then
     # Check if biome is available and run it
     if command -v pnpm >/dev/null 2>&1; then
         print_status "Running Biome formatting and linting..."
-        if ! pnpm biome check . --apply --no-errors-on-unmatched 2>/dev/null; then
+        if ! pnpm exec biome check --write --staged --no-errors-on-unmatched; then
             print_error "Biome check failed. Please fix the issues and try again."
             exit 1
         fi
