@@ -1,9 +1,28 @@
-import type { ImagePickerAsset } from "expo-image-picker";
+import type { ImagePickerAsset, launchImageLibraryAsync } from "expo-image-picker";
 
 export type SelectedProfileImage = Pick<
   ImagePickerAsset,
   "uri" | "mimeType" | "file" | "fileSize"
 >;
+
+export type ProfileImageSlot = "avatar" | "banner";
+
+export async function pickProfileImage(
+  launchPicker: typeof launchImageLibraryAsync,
+  slot: ProfileImageSlot,
+): Promise<SelectedProfileImage | undefined> {
+  const result = await launchPicker({
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: slot === "avatar" ? [1, 1] : [3, 1],
+    quality: 1,
+  });
+  if (result.canceled) return undefined;
+  const asset = result.assets[0];
+  const size = asset.file?.size ?? asset.fileSize;
+  if (size !== undefined) validateProfileImageSize(size);
+  return asset;
+}
 
 export function validateProfileImageSize(size: number) {
   if (!size) throw new Error("The selected image is empty.");

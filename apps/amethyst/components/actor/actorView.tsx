@@ -5,23 +5,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
-import {
-  getBlobHash,
-  LEGACY_PROFILE_COLLECTION,
-  readRepoRecordWithLegacyFallback,
-  STABLE_PROFILE_COLLECTION,
-} from "@/lib/atp/onboardingRecords";
+import { getBlobHash } from "@/lib/atp/onboardingRecords";
+import { saveProfileRecord } from "@/lib/atp/profileRecord";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import {
-  type SelectedProfileImage,
-  uploadProfileImage,
-} from "@/lib/profileImage";
+import type { SelectedProfileImage } from "@/lib/profileImage";
 import { useStore } from "@/stores/mainStore";
 import { Agent } from "@atproto/api";
 import { MoreHorizontal, Pen, Plus } from "lucide-react-native";
 
 import { OutputSchema as GetProfileOutputSchema } from "@teal/lexicons/src/types/fm/teal/actor/getProfile";
-import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
 
 import { CardTitle } from "../../components/ui/card";
 import EditProfileModal from "./editProfileView";
@@ -81,66 +73,12 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
     if (!pdsAgent) {
       return;
     }
-    const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
-      pdsAgent,
-      STABLE_PROFILE_COLLECTION,
-      LEGACY_PROFILE_COLLECTION,
-    );
-    const currentUser = result?.record;
-    const cid =
-      result?.collection === STABLE_PROFILE_COLLECTION ? result.cid : undefined;
-
-    // upload blobs if necessary
-    let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
-    let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
-    if (selectedAvatar) {
-      newAvatarBlob = (await uploadProfileImage(
-        pdsAgent,
-        selectedAvatar,
-      )) as unknown as ProfileRecord["avatar"];
-    }
-    if (selectedBanner) {
-      newBannerBlob = (await uploadProfileImage(
-        pdsAgent,
-        selectedBanner,
-      )) as unknown as ProfileRecord["banner"];
-    }
-
-    const record: ProfileRecord = {
-      ...currentUser,
-      $type: STABLE_PROFILE_COLLECTION,
+    const record = await saveProfileRecord(pdsAgent, {
       displayName: updatedProfile.displayName,
       description: updatedProfile.description,
-      avatar: newAvatarBlob,
-      banner: newBannerBlob,
-    };
-
-    let post;
-
-    if (cid) {
-      post = await pdsAgent.call(
-        "com.atproto.repo.putRecord",
-        {},
-        {
-          repo: pdsAgent.did,
-          collection: STABLE_PROFILE_COLLECTION,
-          rkey: "self",
-          record,
-          swapRecord: cid,
-        },
-      );
-    } else {
-      post = await pdsAgent.call(
-        "com.atproto.repo.createRecord",
-        {},
-        {
-          repo: pdsAgent.did,
-          collection: STABLE_PROFILE_COLLECTION,
-          rkey: "self",
-          record,
-        },
-      );
-    }
+      avatar: selectedAvatar,
+      banner: selectedBanner,
+    });
 
     setProfile(
       (previous) =>
@@ -148,8 +86,8 @@ export default function ActorView({ actorDid, pdsAgent }: ActorViewProps) {
           ...previous,
           displayName: updatedProfile.displayName,
           description: updatedProfile.description,
-          avatar: getBlobHash(newAvatarBlob),
-          banner: getBlobHash(newBannerBlob),
+          avatar: getBlobHash(record.avatar),
+          banner: getBlobHash(record.banner),
         },
     );
     setIsEditing(false);

@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { type SelectedProfileImage, validateProfileImageSize } from "@/lib/profileImage";
+import { pickProfileImage, type ProfileImageSlot, type SelectedProfileImage } from "@/lib/profileImage";
 import { Pen } from "lucide-react-native";
 
 interface ImageSelectionPageProps {
@@ -30,20 +30,12 @@ const ImageSelectionPage: React.FC<ImageSelectionPageProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const pickImage = async (target: "avatar" | "banner") => {
+  const pickImage = async (target: ProfileImageSlot) => {
     setError("");
     setLoading(true);
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: target === "avatar" ? [1, 1] : [3, 1],
-        quality: 1,
-      });
-      if (!result.canceled) {
-        const asset = result.assets[0];
-        const size = asset.file?.size ?? asset.fileSize;
-        if (size !== undefined) validateProfileImageSize(size);
+      const asset = await pickProfileImage(ImagePicker.launchImageLibraryAsync, target);
+      if (asset) {
         const onPick = target === "avatar" ? onPickAvatar : onPickBanner;
         onPick(asset);
       }

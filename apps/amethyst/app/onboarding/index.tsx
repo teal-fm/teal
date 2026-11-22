@@ -13,10 +13,8 @@ import {
   STABLE_PROFILE_COLLECTION,
   STABLE_PROFILE_STATUS_COLLECTION,
 } from "@/lib/atp/onboardingRecords";
-import {
-  type SelectedProfileImage,
-  uploadProfileImage,
-} from "@/lib/profileImage";
+import { saveProfileRecord } from "@/lib/atp/profileRecord";
+import type { SelectedProfileImage } from "@/lib/profileImage";
 import { useStore } from "@/stores/mainStore";
 
 import { Record as ProfileRecord } from "@teal/lexicons/src/types/fm/teal/actor/profile";
@@ -136,69 +134,12 @@ export default function OnboardingPage() {
     setSubmissionError("");
     setSubmissionStep(1);
 
-    // get the current user's profile (getRecord)
-    const result = await readRepoRecordWithLegacyFallback<ProfileRecord>(
-      agent,
-      STABLE_PROFILE_COLLECTION,
-      LEGACY_PROFILE_COLLECTION,
-    );
-    const currentUser = result?.record;
-    const cid =
-      result?.collection === STABLE_PROFILE_COLLECTION ? result.cid : undefined;
-
-    // upload blobs if necessary
-    let newAvatarBlob: ProfileRecord["avatar"] = currentUser?.avatar;
-    let newBannerBlob: ProfileRecord["banner"] = currentUser?.banner;
-    if (selectedAvatar) {
-      setSubmissionStep(2);
-      newAvatarBlob = (await uploadProfileImage(
-        agent,
-        selectedAvatar,
-      )) as unknown as ProfileRecord["avatar"];
-    }
-    if (selectedBanner) {
-      setSubmissionStep(3);
-      newBannerBlob = (await uploadProfileImage(
-        agent,
-        selectedBanner,
-      )) as unknown as ProfileRecord["banner"];
-    }
-
-    setSubmissionStep(4);
-
-    const record: ProfileRecord = {
-      ...currentUser,
-      $type: STABLE_PROFILE_COLLECTION,
+    await saveProfileRecord(agent, {
       displayName,
       description,
-      avatar: newAvatarBlob,
-      banner: newBannerBlob,
-    };
-
-    if (cid) {
-      await agent.call(
-        "com.atproto.repo.putRecord",
-        {},
-        {
-          repo: agent.did,
-          collection: STABLE_PROFILE_COLLECTION,
-          rkey: "self",
-          record,
-          swapRecord: cid,
-        },
-      );
-    } else {
-      await agent.call(
-        "com.atproto.repo.createRecord",
-        {},
-        {
-          repo: agent.did,
-          collection: STABLE_PROFILE_COLLECTION,
-          rkey: "self",
-          record,
-        },
-      );
-    }
+      avatar: selectedAvatar,
+      banner: selectedBanner,
+    }, (stage) => setSubmissionStep({ avatar: 2, banner: 3, record: 4 }[stage]));
 
     // Update profile status to mark onboarding as completed
     const profileStatusRecord: ProfileStatusRecord = {

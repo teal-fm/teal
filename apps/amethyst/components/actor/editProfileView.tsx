@@ -16,7 +16,7 @@ import { Text } from "@/components/ui/text";
 import { useOnEscape } from "@/hooks/useOnEscape";
 import getImageCdnLink from "@/lib/atp/getImageCdnLink";
 import { Icon } from "@/lib/icons/iconWithClassName";
-import { type SelectedProfileImage, validateProfileImageSize } from "@/lib/profileImage";
+import { pickProfileImage, type ProfileImageSlot, type SelectedProfileImage } from "@/lib/profileImage";
 import { cn } from "@/lib/utils";
 import { Pen } from "lucide-react-native";
 
@@ -55,21 +55,14 @@ export default function EditProfileModal({
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const pickImage = async (setType: typeof setAvatar) => {
+  const pickImage = async (target: ProfileImageSlot) => {
     setError("");
     setLoading(true);
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: setType === setAvatar ? [1, 1] : [3, 1],
-        quality: 1,
-      });
-      if (!result.canceled) {
-        const asset = result.assets[0];
-        const size = asset.file?.size ?? asset.fileSize;
-        if (size !== undefined) validateProfileImageSize(size);
-        setType(asset);
+      const asset = await pickProfileImage(ImagePicker.launchImageLibraryAsync, target);
+      if (asset) {
+        if (target === "avatar") setAvatar(asset);
+        else setBanner(asset);
       }
     } catch (error) {
       setError(
@@ -113,7 +106,7 @@ export default function EditProfileModal({
           <TouchableWithoutFeedback>
             <Card className="w-11/12 max-w-md rounded-lg bg-card p-4">
               <Text className="mb-4 text-xl font-bold">Edit Profile</Text>
-              <Pressable onPress={() => pickImage(setBanner)}>
+              <Pressable onPress={() => pickImage("banner")} disabled={loading || saving}>
                 {loading && !bannerUri && <ActivityIndicator />}
                 {bannerUri ? (
                   <View className="group relative">
@@ -131,7 +124,8 @@ export default function EditProfileModal({
               </Pressable>
 
               <Pressable
-                onPress={() => pickImage(setAvatar)}
+                onPress={() => pickImage("avatar")}
+                disabled={loading || saving}
                 className={cn("group relative mb-4", bannerUri && "-mt-8 pl-4")}
               >
                 {loading && !avatarUri && <ActivityIndicator />}
