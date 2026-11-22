@@ -1,3 +1,4 @@
+import { latestOAuthCallback } from "../lib/atp/latestOAuthCallback";
 import { resolveFromIdentity } from "@/lib/atp/pid";
 import { Agent, type AppBskyActorDefs } from "@atproto/api";
 import { OAuthSession } from "@atproto/oauth-client";
@@ -47,6 +48,40 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
   const baseUrl = process.env.EXPO_PUBLIC_BASE_URL || "http://localhost:8081";
   console.log("Using base URL:", baseUrl);
   const initialAuth = createOAuthClient(baseUrl, "bsky.social");
+  const callback = latestOAuthCallback(
+    async (params) => {
+      if (!(params.has("code") && params.has("state") && params.has("iss"))) {
+        throw new Error("Missing callback parameters");
+      }
+      set({ login: { loading: true, error: null } });
+      return initialAuth.callback(params);
+    },
+    ({ session, state }) => {
+      if (get().status === "loggedIn") return;
+      const agent = new Agent(session);
+      set({
+        // TODO: fork or update auth lib
+        oauthSession: session as any,
+        oauthState: state,
+        status: "loggedIn",
+        login: { loading: false, error: null },
+        pdsAgent: addDocs(agent),
+        isAgentReady: true,
+      });
+      get().populateLoggedInProfile();
+    },
+    (error) => {
+      if (get().status === "loggedIn") return;
+      console.error("OAuth callback failed:", error);
+      set({
+        status: "loggedOut",
+        login: {
+          loading: false,
+          error: error instanceof Error ? error.message : "Unknown error during OAuth callback",
+        },
+      });
+    },
+  );
 
   console.log("Auth client created!");
 
@@ -87,41 +122,8 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       }
     },
 
-    oauthCallback: async (state: URLSearchParams) => {
-      try {
-        if (!(state.has("code") && state.has("state") && state.has("iss"))) {
-          throw new Error("Missing params, got: " + state);
-        }
-        // are we already logged in?
-        if (get().status === "loggedIn") {
-          return;
-        }
-        set({ login: { loading: true, error: null } });
-        const { session, state: oauthState } =
-          await initialAuth.callback(state);
-        const agent = new Agent(session);
-        set({
-          // TODO: fork or update auth lib
-          oauthSession: session as any,
-          oauthState,
-          status: "loggedIn",
-          login: { loading: false, error: null },
-          pdsAgent: addDocs(agent),
-          isAgentReady: true,
-        });
-        get().populateLoggedInProfile();
-      } catch (error: any) {
-        console.error("OAuth callback failed:", error);
-        set({
-          status: "loggedOut",
-          login: {
-            loading: false,
-            error:
-              (error?.message as string) ||
-              "Unknown error during OAuth callback",
-          },
-        });
-      }
+    oauthCallback: async (params) => {
+      if (get().status !== "loggedIn") await callback.complete(params);
     },
     restorePdsAgent: async () => {
       let did = get().oauthSession?.sub;
@@ -153,6 +155,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
       }
     },
     logOut: () => {
+      callback.cancel();
       console.log("Logging out");
       let profiles = { ...get().profiles };
       // TODO: something better than 'delete'
@@ -161,6 +164,7 @@ export const createAuthenticationSlice: StateCreator<AuthenticationSlice> = (
         status: "loggedOut",
         oauthSession: null,
         oauthState: null,
+        login: { loading: false, error: null },
         profiles,
         pdsAgent: null,
         client: null,
