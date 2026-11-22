@@ -21,18 +21,18 @@ repos:
   # TypeScript/JavaScript formatting and linting
   - repo: local
     hooks:
+      - id: biome-check
+        name: Biome Lint
+        entry: pnpm exec biome lint --write --no-errors-on-unmatched --
+        language: system
+        files: \.(ts|tsx|js|jsx)$
+
       - id: prettier
         name: Prettier
         entry: pnpm exec prettier --write --
         language: system
         files: \.(ts|tsx|js|jsx|json|md|yaml|yml)$
         pass_filenames: true
-
-      - id: biome-check
-        name: Biome Check
-        entry: pnpm exec biome lint --write --no-errors-on-unmatched --
-        language: system
-        files: \.(ts|tsx|js|jsx)$
 
       # TypeScript check temporarily disabled due to vendor compilation issues
       # - id: typescript-check

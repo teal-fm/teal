@@ -6,8 +6,5 @@
   },
   "files": {
     "includes": ["**", "!!vendor", "!!lexicons/{app,chat,com,tools}"]
-  },
-  "formatter": {
-    "indentStyle": "space"
   }
 }
