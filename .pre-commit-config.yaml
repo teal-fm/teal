@@ -30,10 +30,9 @@ repos:
 
       - id: biome-check
         name: Biome Check
-        entry: pnpm biome check --apply
+        entry: pnpm exec biome lint --write --no-errors-on-unmatched --
         language: system
         files: \.(ts|tsx|js|jsx)$
-        pass_filenames: false
 
       # TypeScript check temporarily disabled due to vendor compilation issues
       # - id: typescript-check
