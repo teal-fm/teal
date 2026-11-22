@@ -34,6 +34,23 @@ describe.each([
     ]);
   });
 
+  it("keeps looking when all three exact candidates are weak", async () => {
+    const weakCandidates = [10, 12, 15].map((score) => ({
+      ...weak,
+      id: String(score),
+      score,
+    }));
+    const lookup = jest.spyOn(musicbrainz, "searchStage").mockImplementation(
+      async (_track, artist, _release, strategy) => {
+        if (strategy === "fuzzy") return [correct];
+        return artist ? weakCandidates : [];
+      },
+    );
+
+    expect((await search())[0]).toEqual(correct);
+    expect(lookup.mock.calls[1][3]).toBe("fuzzy");
+  });
+
   it("returns a strong exact hit without spending another lookup", async () => {
     const lookup = jest.spyOn(musicbrainz, "searchStage").mockResolvedValue([correct]);
 

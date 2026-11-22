@@ -43,7 +43,6 @@ const appConfig: SearchConfig = {
  *
  * Uses MB's own relevance score as a confidence signal:
  * - High MB score (>=70) with artist: sufficient
- * - >= 3 results with artist: sufficient (multiple candidates to rank)
  * - Track-only: need >= 2 results OR first result must match well
  */
 function exactResultsSufficient(
@@ -53,14 +52,12 @@ function exactResultsSufficient(
 ): boolean {
   if (results.length === 0) return false;
 
-  // Release-specific and unrestricted queries can return the same recording.
-  const distinctCount = new Set(results.map((r) => r.id)).size;
   if (hasArtist) {
-    return distinctCount >= 3 || results.some((r) => (r.score ?? 0) >= 70);
+    return results.some((r) => (r.score ?? 0) >= 70);
   }
 
-  // Track-only: need >= 2 results OR first result must match well
-  if (distinctCount >= 2) return true;
+  // Release-specific and unrestricted queries can return the same recording.
+  if (new Set(results.map((r) => r.id)).size >= 2) return true;
   const first = results[0];
   if (first?.title && cleanedTrack) {
     const norm = normalizeForComparison(first.title);
