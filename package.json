@@ -15,7 +15,7 @@
     "rust:clippy:services": "cd services && cargo clippy -- -D warnings",
     "rust:fmt:apps": "for dir in apps/*/; do if [ -f \"$dir/Cargo.toml\" ]; then echo \"Formatting $dir\" && cd \"$dir\" && cargo fmt && cd ../..; fi; done",
     "rust:clippy:apps": "for dir in apps/*/; do if [ -f \"$dir/Cargo.toml\" ]; then echo \"Linting $dir\" && cd \"$dir\" && cargo clippy -- -D warnings && cd ../..; fi; done",
-    "fix": "biome lint --apply . && biome format --write . && biome check . --apply",
+    "fix": "biome lint --write",
     "hooks:install": "./scripts/install-git-hooks.sh",
     "hooks:install-precommit": "pre-commit install",
     "postinstall": "pnpm lex:gen-server",
@@ -46,10 +46,10 @@
     "prettier-plugin-tailwindcss": "^0.6.11"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.8",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.17.10",
     "better-sqlite3": "^12.5.0",
-    "biome": "^0.3.3",
     "dotenv": "^16.4.7",
     "rimraf": "^6.0.1",
     "tsx": "^4.19.2",

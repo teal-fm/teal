@@ -21,19 +21,18 @@ repos:
   # TypeScript/JavaScript formatting and linting
   - repo: local
     hooks:
+      - id: biome-check
+        name: Biome Lint
+        entry: pnpm exec biome lint --write --no-errors-on-unmatched --
+        language: system
+        files: \.(ts|tsx|js|jsx)$
+
       - id: prettier
         name: Prettier
-        entry: pnpm prettier --write
+        entry: pnpm exec prettier --write --
         language: system
         files: \.(ts|tsx|js|jsx|json|md|yaml|yml)$
         pass_filenames: true
-
-      - id: biome-check
-        name: Biome Check
-        entry: pnpm biome check --apply
-        language: system
-        files: \.(ts|tsx|js|jsx)$
-        pass_filenames: false
 
       # TypeScript check temporarily disabled due to vendor compilation issues
       # - id: typescript-check
@@ -48,7 +47,7 @@ repos:
     hooks:
       - id: cargo-fmt-services
         name: Cargo Format (Services Workspace)
-        entry: bash -c 'cd services && cargo fmt'
+        entry: bash -c 'cd services && cargo fmt --check'
         language: system
         files: services/.*\.rs$
         pass_filenames: false
@@ -62,7 +61,7 @@ repos:
 
       - id: cargo-fmt-apps
         name: Cargo Format (Apps)
-        entry: bash -c 'for dir in apps/*/; do if [ -f "$dir/Cargo.toml" ]; then cd "$dir" && cargo fmt && cd ../..; fi; done'
+        entry: bash -c 'for dir in apps/*/; do if [ -f "$dir/Cargo.toml" ]; then (cd "$dir" && cargo fmt --check) || exit 1; fi; done'
         language: system
         files: apps/.*\.rs$
         pass_filenames: false

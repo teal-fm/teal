@@ -31,38 +31,69 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Get list of staged files
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+# The hook runs formatters on the working tree and stages their edits below.
+STAGED_FILES=()
+TS_JS_FILES=()
+RUST_FILES=()
+CHECK_SERVICES=false
+LEXICON_FILES=()
+while IFS= read -r -d '' file; do
+    STAGED_FILES+=("$file")
+    case "$file" in
+        *.ts|*.tsx|*.js|*.jsx)
+            if ! git --literal-pathspecs diff --quiet -- "$file"; then
+                print_error "$file has unstaged changes. Stash the unstaged edits before running this hook."
+                exit 1
+            fi
+            TS_JS_FILES+=("$file")
+            ;;
+        services/*.rs) CHECK_SERVICES=true; RUST_FILES+=("$file") ;;
+        *.rs) RUST_FILES+=("$file") ;;
+        *lexicons/*.json) LEXICON_FILES+=("$file") ;;
+    esac
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 
-if [ -z "$STAGED_FILES" ]; then
+if [ "${#STAGED_FILES[@]}" -eq 0 ]; then
     print_warning "No staged files found"
     exit 0
 fi
 
-# Check if we have TypeScript/JavaScript files
-TS_JS_FILES=$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx|js|jsx)$' || true)
-# Check if we have Rust files
-RUST_FILES=$(echo "$STAGED_FILES" | grep -E '\.rs$' || true)
-# Check if we have lexicon files
-LEXICON_FILES=$(echo "$STAGED_FILES" | grep -E 'lexicons/.*\.json$' || true)
+report_unstaged_fixes() {
+    local status=$? file
+    if [ "$status" -ne 0 ]; then
+        local changed=()
+        for file in "${TS_JS_FILES[@]}"; do
+            if ! git --literal-pathspecs diff --quiet -- "$file"; then
+                changed+=("$file")
+            fi
+        done
+        if [ "${#changed[@]}" -gt 0 ]; then
+            print_warning "The hook changed these files before a check failed:"
+            printf '  - %s\n' "${changed[@]}"
+            print_status "Review the changes with git diff and stage the fixes you want before retrying."
+        fi
+    fi
+    return "$status"
+}
+trap report_unstaged_fixes EXIT
 
 print_status "Staged files to check:"
-echo "$STAGED_FILES" | sed 's/^/  - /'
+printf '  - %s\n' "${STAGED_FILES[@]}"
 
 # 1. TypeScript/JavaScript checks
-if [ -n "$TS_JS_FILES" ]; then
+if [ "${#TS_JS_FILES[@]}" -gt 0 ]; then
     print_status "Running TypeScript/JavaScript checks..."
 
     # Check if biome is available and run it
     if command -v pnpm >/dev/null 2>&1; then
-        print_status "Running Biome formatting and linting..."
-        if ! pnpm biome check . --apply --no-errors-on-unmatched 2>/dev/null; then
+        print_status "Running Biome lint checks..."
+        if ! pnpm exec biome lint --write --no-errors-on-unmatched -- "${TS_JS_FILES[@]}"; then
             print_error "Biome check failed. Please fix the issues and try again."
             exit 1
         fi
 
         print_status "Running Prettier formatting..."
-        if ! pnpm prettier --write $TS_JS_FILES 2>/dev/null; then
+        if ! pnpm exec prettier --write -- "${TS_JS_FILES[@]}"; then
             print_error "Prettier formatting failed. Please fix the issues and try again."
             exit 1
         fi
@@ -75,18 +106,18 @@ if [ -n "$TS_JS_FILES" ]; then
 fi
 
 # 2. Rust checks
-if [ -n "$RUST_FILES" ]; then
+if [ "${#RUST_FILES[@]}" -gt 0 ]; then
     print_status "Running Rust checks..."
 
     if command -v cargo >/dev/null 2>&1; then
         RUST_ERRORS=0
 
-        # Check services workspace
-        if [ -f "services/Cargo.toml" ]; then
+        # Check services only when a staged Rust file is in that workspace.
+        if [ "$CHECK_SERVICES" = true ] && [ -f "services/Cargo.toml" ]; then
             print_status "Running cargo fmt on services workspace..."
-            if ! (cd services && cargo fmt --check) 2>/dev/null; then
-                print_status "Auto-formatting Rust code in services..."
-                (cd services && cargo fmt) 2>/dev/null || true
+            if ! (cd services && cargo fmt --check); then
+                print_error "Run 'pnpm rust:fmt:services' and stage the changes you want."
+                RUST_ERRORS=1
             fi
 
             print_status "Running cargo clippy on services workspace..."
@@ -104,7 +135,8 @@ if [ -n "$RUST_FILES" ]; then
 
         # Check individual Rust projects outside services
         CHECKED_DIRS=""
-        for rust_file in $RUST_FILES; do
+        for rust_file in "${RUST_FILES[@]}"; do
+            [[ "$rust_file" == services/* ]] && continue
             rust_dir=$(dirname "$rust_file")
             # Find the nearest Cargo.toml going up the directory tree
             check_dir="$rust_dir"
@@ -118,9 +150,9 @@ if [ -n "$RUST_FILES" ]; then
 
                     # Found a Cargo.toml outside services workspace
                     print_status "Running cargo fmt on $check_dir..."
-                    if ! (cd "$check_dir" && cargo fmt --check) 2>/dev/null; then
-                        print_status "Auto-formatting Rust code in $check_dir..."
-                        (cd "$check_dir" && cargo fmt) 2>/dev/null || true
+                    if ! (cd "$check_dir" && cargo fmt --check); then
+                        print_error "Run 'cargo fmt' in $check_dir and stage the changes you want."
+                        RUST_ERRORS=1
                     fi
 
                     print_status "Running cargo clippy on $check_dir..."
@@ -148,7 +180,7 @@ if [ -n "$RUST_FILES" ]; then
 fi
 
 # 3. Lexicon checks
-if [ -n "$LEXICON_FILES" ]; then
+if [ "${#LEXICON_FILES[@]}" -gt 0 ]; then
     print_status "Lexicon files changed, validating and regenerating..."
 
     if command -v pnpm >/dev/null 2>&1; then
@@ -172,38 +204,31 @@ if [ -n "$LEXICON_FILES" ]; then
 fi
 
 # 4. Re-add files that might have been formatted
-FORMATTED_FILES=""
-for file in $STAGED_FILES; do
+FORMATTED_FILES=()
+for file in "${TS_JS_FILES[@]}"; do
     if [ -f "$file" ]; then
         # Check if file was modified by formatters
-        if [ -n "$(git diff "$file")" ]; then
-            FORMATTED_FILES="$FORMATTED_FILES $file"
-            git add "$file"
+        if ! git --literal-pathspecs diff --quiet -- "$file"; then
+            FORMATTED_FILES+=("$file")
+            git --literal-pathspecs add -- "$file"
         fi
     fi
 done
 
-if [ -n "$FORMATTED_FILES" ]; then
+if [ "${#FORMATTED_FILES[@]}" -gt 0 ]; then
     print_success "Auto-formatted files have been re-staged:"
-    echo "$FORMATTED_FILES" | tr ' ' '\n' | sed 's/^/  - /'
+    printf '  - %s\n' "${FORMATTED_FILES[@]}"
 fi
 
-# 5. Final validation - ensure no syntax errors in staged files
-print_status "Running final validation..."
-
-# Check for common issues
-for file in $TS_JS_FILES; do
+# 5. Report optional warnings in the staged JS/TS files.
+for file in "${TS_JS_FILES[@]}"; do
     if [ -f "$file" ]; then
-        # Check for console.log statements (optional - remove if you want to allow them)
-        if grep -n "console\.log" "$file" >/dev/null 2>&1; then
-            print_warning "Found console.log statements in $file! yooo!!!"
-            # Uncomment the next two lines if you want to block commits with console.log
-            # print_error "Please remove console.log statements before committing"
-            # exit 1
+        if grep -n -- "console\.log" "$file" >/dev/null 2>&1; then
+            print_warning "Found console.log statements in $file"
         fi
 
         # Check for TODO/FIXME comments in committed code (optional)
-        if grep -n -i "TODO\|FIXME" "$file" >/dev/null 2>&1; then
+        if grep -n -i -- "TODO\|FIXME" "$file" >/dev/null 2>&1; then
             print_warning "Found TODO/FIXME comments in $file"
         fi
     fi
