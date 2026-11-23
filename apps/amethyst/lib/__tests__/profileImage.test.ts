@@ -1,4 +1,4 @@
-import { uploadProfileImage } from "../profileImage";
+import { pickProfileImage, uploadProfileImage } from "../profileImage";
 
 const png = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const jpeg = Uint8Array.from([255, 216, 255, 224]);
@@ -75,7 +75,40 @@ describe("profile image uploads", () => {
     expect(uploadBlob).not.toHaveBeenCalled();
   });
 
+  it.each([
+    [0, "empty"],
+    [1_000_001, "1 MB"],
+  ] as const)("checks an asset with no size metadata (%i bytes)", async (size, error) => {
+    jest.spyOn(globalThis, "fetch").mockResolvedValue(new Response(new Uint8Array(size)));
+    const launch = jest.fn().mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: "content://photos/picked" }],
+    });
+    await expect(pickProfileImage(launch, "avatar")).rejects.toThrow(error);
+  });
+
+  it("accepts a valid selection without size metadata", async () => {
+    const asset = { uri: "file:///picked" };
+    const launch = jest.fn().mockResolvedValue({ canceled: false, assets: [asset] });
+    jest.spyOn(globalThis, "fetch").mockResolvedValue(new Response(png));
+    await expect(pickProfileImage(launch, "banner")).resolves.toEqual(asset);
+  });
+
+  it("uses JPEG bytes even when a browser labels them as PNG", async () => {
+    const file = new File([jpeg], "photo.png", { type: "image/png" });
+    await uploadProfileImage(agent, { uri: "blob:photo", file });
+    expect(uploadBlob).toHaveBeenCalledWith(file, { encoding: "image/jpeg" });
+  });
+
+  it("rejects GIF bytes labeled as PNG", async () => {
+    const file = new File(["GIF89a"], "photo.png", { type: "image/png" });
+    await expect(uploadProfileImage(agent, { uri: "blob:photo", file })).rejects.toThrow("PNG or JPEG");
+    expect(uploadBlob).not.toHaveBeenCalled();
+  });
+
   it("rejects a failed fetch, an empty image and one exceeding the record size limit", async () => {
+    const atLimit = new Uint8Array(1_000_000);
+    atLimit.set(png);
     const selection = {
       uri: "blob:https://teal.fm/photo",
       mimeType: "image/png",
@@ -85,7 +118,7 @@ describe("profile image uploads", () => {
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(new Response(new Uint8Array()))
       .mockResolvedValueOnce(new Response(new Uint8Array(1_000_001)))
-      .mockResolvedValueOnce(new Response(new Uint8Array(1_000_000)));
+      .mockResolvedValueOnce(new Response(atLimit));
     await expect(uploadProfileImage(agent, selection)).rejects.toThrow("read");
     await expect(uploadProfileImage(agent, selection)).rejects.toThrow("empty");
     await expect(uploadProfileImage(agent, selection)).rejects.toThrow("1 MB");

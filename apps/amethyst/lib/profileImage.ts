@@ -19,8 +19,8 @@ export async function pickProfileImage(
   });
   if (result.canceled) return undefined;
   const asset = result.assets[0];
-  const size = asset.file?.size ?? asset.fileSize;
-  if (size !== undefined) validateProfileImageSize(size);
+  const size = asset.file?.size ?? asset.fileSize ?? (await readImage(asset.uri)).size;
+  validateProfileImageSize(size);
   return asset;
 }
 
@@ -48,24 +48,14 @@ export async function uploadProfileImage<T>(
   const blob = image.file ?? (await readImage(image.uri));
   validateProfileImageSize(blob.size);
 
-  let encoding = blob.type.toLowerCase().split(";")[0].trim();
-  if (!encoding || encoding === "application/octet-stream") {
-    encoding = image.mimeType?.toLowerCase() ?? "";
-  }
-  if (!encoding || encoding === "application/octet-stream") {
-    // Native file URIs sometimes carry no MIME type. Read just the signature.
-    const bytes = new Uint8Array(
-      await new Response(blob.slice(0, 8)).arrayBuffer(),
-    );
-    if (
-      [137, 80, 78, 71, 13, 10, 26, 10].every((byte, i) => bytes[i] === byte)
-    ) {
-      encoding = "image/png";
-    } else if (bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) {
-      encoding = "image/jpeg";
-    }
-  }
-  if (encoding !== "image/png" && encoding !== "image/jpeg") {
+  // A browser or picker can mislabel the selected bytes.
+  const bytes = new Uint8Array(await new Response(blob.slice(0, 8)).arrayBuffer());
+  let encoding: string;
+  if ([137, 80, 78, 71, 13, 10, 26, 10].every((byte, i) => bytes[i] === byte)) {
+    encoding = "image/png";
+  } else if (bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) {
+    encoding = "image/jpeg";
+  } else {
     throw new Error("Choose a PNG or JPEG profile image.");
   }
 
