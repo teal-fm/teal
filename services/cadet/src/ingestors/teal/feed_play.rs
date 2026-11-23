@@ -1402,6 +1402,10 @@ impl PlayIngestor {
         let time_datetime =
             time::OffsetDateTime::from_unix_timestamp(played_time.as_ref().timestamp())
                 .unwrap_or_else(|_| time::OffsetDateTime::now_utc());
+        // played_time is client-supplied. Cap it at the indexer clock (plus skew)
+        // so a future-dated play cannot sit inside every "last N days" window.
+        let max_played_time = time::OffsetDateTime::now_utc() + time::Duration::minutes(5);
+        let time_datetime = time_datetime.min(max_played_time);
 
         // Extract discriminants from lexicon fields or infer from names
         // First try lexicon fields, then extract from names with preference for edition-specific patterns
