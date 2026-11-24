@@ -86,8 +86,14 @@ export default function Login() {
       const result = await openAuthSessionAsync(url.toString(), oauthRedirectUri(APP_BASE_URL));
 
       if (result.type === "success") {
-        await oauthCallback(new URLSearchParams(result.url.split("?")[1]));
-        router.replace("/");
+        await oauthCallback(new URL(result.url).searchParams);
+
+        if (useStore.getState().status === "loggedIn") {
+          router.replace("/");
+        } else {
+          setError("Sign-in didn't finish. Try again.");
+          setBusy(null);
+        }
       } else {
         setError(result.type === "cancel" || result.type === "dismiss" ? "Sign-in was cancelled." : "Sign-in didn't finish. Try again.");
         setBusy(null);
