@@ -86,7 +86,7 @@ export default function Onboarding() {
     setError(null);
 
     try {
-      await saveProfileRecord(agent, { displayName: name, description: bio, avatarUri: avatar, bannerUri: banner }, {});
+      await saveProfileRecord(agent, { displayName: name, description: bio, avatarUri: avatar, bannerUri: banner });
       const now = new Date().toISOString();
       await agent.call(
         "com.atproto.repo.putRecord",

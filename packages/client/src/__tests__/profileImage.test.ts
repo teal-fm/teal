@@ -1,4 +1,4 @@
-import { prepareProfileImage } from "../profileImage";
+import { prepareProfileImage, uploadProfileImage } from "../profileImage";
 
 describe("profile image uploads", () => {
   it("uses the fetched blob MIME for a web blob URL instead of splitting its URI", async () => {
@@ -46,5 +46,30 @@ describe("profile image uploads", () => {
       ),
     ).rejects.toThrow("smaller than 1 MB");
     await expect(prepareProfileImage(new Blob([]))).rejects.toThrow("empty");
+  });
+});
+
+describe("profile image replacements", () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it("keeps the saved blob when no replacement was picked", async () => {
+    const fetch = jest.spyOn(globalThis, "fetch");
+    const upload = jest.fn();
+    const saved = { mimeType: "image/png", size: 100 };
+    await expect(uploadProfileImage(undefined, saved, upload)).resolves.toBe(saved);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it("fetches and uploads a newly picked image once", async () => {
+    const blob = new Blob(["fixture"], { type: "image/png" });
+    const fetch = jest.spyOn(globalThis, "fetch").mockResolvedValue(new Response(blob));
+    const saved = { mimeType: "image/jpeg", size: 100 };
+    const uploaded = { mimeType: "image/png", size: blob.size };
+    const upload = jest.fn(async () => uploaded);
+    await expect(uploadProfileImage("blob:new-banner", saved, upload)).resolves.toBe(uploaded);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(upload).toHaveBeenCalledWith(expect.any(Blob), "image/png");
   });
 });

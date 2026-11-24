@@ -95,8 +95,10 @@ export function EditProfileSheet({
   const [description, setDescription] = useState("");
   const [period, setPeriod] = useState<StatsPeriod>("90days");
   const [favourites, setFavourites] = useState<FavouriteItem[]>([]);
-  const [avatarUri, setAvatarUri] = useState("");
-  const [bannerUri, setBannerUri] = useState("");
+  const [avatarUri, setAvatarUri] = useState<string>();
+  const avatarPreview = avatarUri ?? avatarUrl;
+  const [bannerUri, setBannerUri] = useState<string>();
+  const bannerPreview = bannerUri ?? bannerUrl;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,10 +108,10 @@ export function EditProfileSheet({
     setDescription(profile?.description || "");
     setPeriod(normalizePeriod(profile?.statsDefaultPeriod));
     setFavourites(profile?.favorites ?? []);
-    setAvatarUri(avatarUrl || "");
-    setBannerUri(bannerUrl || "");
+    setAvatarUri(undefined);
+    setBannerUri(undefined);
     setError(null);
-  }, [visible, profile, avatarUrl, bannerUrl]);
+  }, [visible, profile]);
 
   const pick = async (kind: "avatar" | "banner") => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -134,7 +136,6 @@ export function EditProfileSheet({
       await saveProfileRecord(
         agent,
         { displayName, description, statsDefaultPeriod: period, favourites, avatarUri, bannerUri },
-        { avatarUrl, bannerUrl },
       );
       await client.invalidateQueries({ queryKey: profileKeys.profile(did) });
       onClose();
@@ -158,8 +159,8 @@ export function EditProfileSheet({
           <ScrollView contentContainerClassName="gap-5 p-5" keyboardShouldPersistTaps="handled">
             <Pressable accessibilityRole="button" accessibilityLabel="Change banner image" onPress={() => pick("banner")}>
               <View className="aspect-[3/1] w-full items-center justify-center overflow-hidden rounded-[16px] bg-fill">
-                {bannerUri ? (
-                  <Image source={{ uri: bannerUri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                {bannerPreview ? (
+                  <Image source={{ uri: bannerPreview }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
                 ) : (
                   <View className="items-center gap-1">
                     <Icon icon={ImagePlus} size={24} className="text-ink-2" />
@@ -175,8 +176,8 @@ export function EditProfileSheet({
               className="-mt-14 ml-4 self-start"
             >
               <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-ground bg-tint">
-                {avatarUri ? (
-                  <Image source={{ uri: avatarUri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                {avatarPreview ? (
+                  <Image source={{ uri: avatarPreview }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
                 ) : (
                   <Icon icon={UserRoundPen} size={28} className="text-on-tint" />
                 )}

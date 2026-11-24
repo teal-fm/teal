@@ -4,7 +4,7 @@ import {
   type Main as ProfileRecord,
 } from "@teal/lexicons/src/fm/teal/actor/profile";
 
-import { prepareProfileImage } from "../profileImage";
+import { uploadProfileImage } from "../profileImage";
 import { isRecordNotFound } from "./firstLogin";
 import type { StatsPeriod } from "../teal/api";
 
@@ -21,36 +21,7 @@ export type FavouriteItem = { mbid: string; type: string };
 
 export const MAX_FAVOURITES = 4;
 
-/**
- * Upload a newly picked image, or keep the current blob when it didn't change.
- * Images are checked against the lexicon (PNG or JPEG, under 1 MB); its messages
- * are written for people, so callers can show them.
- */
-async function uploadIfChanged(
-  agent: Agent,
-  uri: string,
-  currentBlob?: ProfileImage,
-  currentUrl?: string,
-): Promise<ProfileImage> {
-  if (!uri) return undefined;
-
-  if (currentBlob && uri === currentUrl) return currentBlob;
-  const response = await fetch(uri);
-
-  if (!response.ok) throw new ProfileImageError("Couldn't read the image. Choose it again.");
-  let image;
-
-  try {
-    image = await prepareProfileImage(await response.blob());
-  } catch (error) {
-    throw new ProfileImageError(error instanceof Error ? error.message : "Choose a PNG or JPEG image.");
-  }
-
-  return (await agent.uploadBlob(image.blob, { encoding: image.encoding })).data.blob;
-}
-
-/** A picked image can't be used; the message says why. */
-export class ProfileImageError extends Error {}
+export { ProfileImageError } from "../profileImage";
 
 export type ProfileEdits = {
   displayName: string;
@@ -58,9 +29,9 @@ export type ProfileEdits = {
   statsDefaultPeriod?: StatsPeriod;
   /** Leave out to keep the record's current favourites. */
   favourites?: FavouriteItem[];
-  /** The image to show: an existing URL, or a picked local URI. Empty removes it. */
-  avatarUri: string;
-  bannerUri: string;
+  /** Pass a URI only when replacing the saved image. */
+  avatarUri?: string;
+  bannerUri?: string;
 };
 
 /**
@@ -70,7 +41,6 @@ export type ProfileEdits = {
 export async function saveProfileRecord(
   agent: Agent,
   edits: ProfileEdits,
-  current: { avatarUrl?: string; bannerUrl?: string },
 ) {
   const repo = agent.assertDid;
   let existing: ProfileRecord | undefined;
@@ -89,8 +59,12 @@ export async function saveProfileRecord(
 
   const description = new RichText({ text: edits.description.trim() });
   await description.detectFacets(agent);
-  const avatar = await uploadIfChanged(agent, edits.avatarUri, existing?.avatar, current.avatarUrl);
-  const banner = await uploadIfChanged(agent, edits.bannerUri, existing?.banner, current.bannerUrl);
+
+  const upload = async (blob: Blob, encoding: string) =>
+    (await agent.uploadBlob(blob, { encoding })).data.blob;
+
+  const avatar = await uploadProfileImage<ProfileImage>(edits.avatarUri, existing?.avatar, upload);
+  const banner = await uploadProfileImage<ProfileImage>(edits.bannerUri, existing?.banner, upload);
 
   // Only validate what this save changes. Older records can hold images and bios over
   // today's limits, and those shouldn't block editing something else. The API client also

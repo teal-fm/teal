@@ -97,8 +97,10 @@ export function EditProfileSheet({
   const [description, setDescription] = useState("");
   const [period, setPeriod] = useState<StatsPeriod>("90days");
   const [favourites, setFavourites] = useState<FavouriteItem[]>([]);
-  const [avatarUri, setAvatarUri] = useState("");
-  const [bannerUri, setBannerUri] = useState("");
+  const [avatarUri, setAvatarUri] = useState<string>();
+  const avatarPreview = avatarUri ?? avatarUrl;
+  const [bannerUri, setBannerUri] = useState<string>();
+  const bannerPreview = bannerUri ?? bannerUrl;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -116,10 +118,10 @@ export function EditProfileSheet({
     setDescription(profile?.description || "");
     setPeriod(normalizePeriod(profile?.statsDefaultPeriod));
     setFavourites(profile?.favorites ?? []);
-    setAvatarUri(avatarUrl || "");
-    setBannerUri(bannerUrl || "");
+    setAvatarUri(undefined);
+    setBannerUri(undefined);
     setError(null);
-  }, [visible, profile, avatarUrl, bannerUrl]);
+  }, [visible, profile]);
 
   const save = async () => {
     if (!agent || saving) return;
@@ -130,7 +132,6 @@ export function EditProfileSheet({
       await saveProfileRecord(
         agent,
         { displayName, description, statsDefaultPeriod: period, favourites, avatarUri, bannerUri },
-        { avatarUrl, bannerUrl },
       );
       await client.invalidateQueries({ queryKey: profileKeys.profile(did) });
       refreshViewerProfile();
@@ -161,8 +162,8 @@ export function EditProfileSheet({
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5">
         <ImagePick label="Change banner image" onPick={setBannerUri} className="block w-full">
           <span className="flex aspect-[3/1] w-full items-center justify-center overflow-hidden rounded-[16px] bg-fill hover:brightness-95">
-            {bannerUri ? (
-              <img src={bannerUri} alt="" className="size-full object-cover" />
+            {bannerPreview ? (
+              <img src={bannerPreview} alt="" className="size-full object-cover" />
             ) : (
               <span className="flex flex-col items-center gap-1 text-[14px] text-ink-2">
                 <Icon icon={ImagePlus} size={24} className="text-ink-2" />
@@ -173,7 +174,7 @@ export function EditProfileSheet({
         </ImagePick>
         <ImagePick label="Change profile picture" onPick={setAvatarUri} className="-mt-14 ml-4 self-start rounded-full">
           <span className="flex size-24 items-center justify-center overflow-hidden rounded-full border-4 border-ground bg-tint">
-            {avatarUri ? <img src={avatarUri} alt="" className="size-full object-cover" /> : <Icon icon={UserRoundPen} size={28} className="text-on-tint" />}
+            {avatarUri ? <img src={avatarPreview} alt="" className="size-full object-cover" /> : <Icon icon={UserRoundPen} size={28} className="text-on-tint" />}
           </span>
         </ImagePick>
         <Field label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={64} />
