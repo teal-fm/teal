@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Link, router, useLocalSearchParams, usePathname } from "expo-router";
 import { firstLoginHref } from "@teal/client/atp/firstLogin";
+import { isCompleteOAuthResponse } from "@teal/client/atp/latestOAuthCallback";
 import { Button, Glass, Heading, Loading, PageTitle, Text } from "@/components/ds";
-import { useStore } from "@/stores/mainStore";
+import { useAuthHydration, useStore } from "@/stores/mainStore";
 import { appHref } from "@/lib/href";
 
 function toSearchParams(params: Record<string, string | string[] | undefined>) {
@@ -24,17 +25,24 @@ export default function AuthCallback() {
   const pathname = usePathname();
   const activePath = useRef(pathname);
   activePath.current = pathname;
-  // The provider's state is deleted on first read, so the callback must run once.
-  const called = useRef(false);
-  const [failed, setFailed] = useState(false);
+
+  const hydration = useAuthHydration((state) => state.status);
+  const hydrated = hydration === "ready";
+
+  const response = toSearchParams(params);
+  const query = response.toString();
+  const [failedQuery, setFailedQuery] = useState<string | null>(null);
+  const failed = hydration === "failed" || response.has("error") || failedQuery === query;
 
   useEffect(() => {
-    if (called.current) return;
-    called.current = true;
-    const stillHere = () => activePath.current === "/auth/callback";
+    const callback = new URLSearchParams(query);
+
+    if (!hydrated || !isCompleteOAuthResponse(callback)) return;
+    let active = true;
+    const stillHere = () => active && activePath.current === "/auth/callback";
     useStore
       .getState()
-      .oauthCallback(toSearchParams(params))
+      .oauthCallback(callback)
       .then(async () => {
         // The store reports failures in state rather than rejecting.
         const { status, pdsAgent } = useStore.getState();
@@ -42,7 +50,7 @@ export default function AuthCallback() {
         if (!stillHere()) return;
 
         if (status !== "loggedIn" || !pdsAgent?.did) {
-          setFailed(true);
+          setFailedQuery(query);
 
           return;
         }
@@ -64,9 +72,11 @@ export default function AuthCallback() {
         }
       })
       .catch(() => {
-        if (stillHere()) setFailed(true);
+        if (stillHere()) setFailedQuery(query);
       });
-  }, [params]);
+
+    return () => { active = false; };
+  }, [hydrated, query]);
 
   return (
     <View className="flex-1 items-center justify-center bg-ground px-4">
@@ -77,11 +87,13 @@ export default function AuthCallback() {
           {failed ? "Couldn't finish signing in" : "Finishing sign-in"}
         </Heading>
         <Text className="text-center text-[15px] text-ink-2">
-          {failed
+          {hydration === "failed"
+            ? "Teal couldn't load your saved sign-in. Start again to connect your account."
+            : failed
             ? "Your sign-in session may have expired. Start again to connect your account."
             : "Connecting your account to Teal. This takes a few seconds."}
         </Text>
-        {failed ? (
+        {failed || (hydrated && !isCompleteOAuthResponse(response)) ? (
           <Link href="/auth/login" asChild>
             <Button label="Sign in again" className="mt-2 self-center" />
           </Link>

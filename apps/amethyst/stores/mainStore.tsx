@@ -19,6 +19,10 @@ export type PlusSharedSlices = Slices;
 /// Type parameter T is the type of the state object.
 export type StateCreator<T> = ZustandStateCreator<Slices, [], [], T>;
 
+type AuthHydrationStatus = "loading" | "ready" | "failed";
+
+export const useAuthHydration = create<{ status: AuthHydrationStatus }>(() => ({ status: "loading" }));
+
 export const useStore = create<PlusSharedSlices>()(
   persist(
     (...a) => ({
@@ -29,8 +33,13 @@ export const useStore = create<PlusSharedSlices>()(
       partialize: persistAuthentication,
       merge: mergeAuthentication,
 
-      onRehydrateStorage: () => (state) => {
-        state?.restorePdsAgent();
+      onRehydrateStorage: () => {
+        useAuthHydration.setState({ status: "loading" });
+
+        return (state) => {
+          useAuthHydration.setState({ status: state ? "ready" : "failed" });
+          state?.restorePdsAgent();
+        };
       },
       name: "mainStore",
       storage: createJSONStorage(() => AsyncStorage),
