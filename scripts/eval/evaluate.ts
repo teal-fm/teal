@@ -902,6 +902,7 @@ async function main() {
     const logInterval = total > 200 ? 50 : total > 50 ? 25 : 10;
 
     const fieldCombo = s.fieldCombination || (s.artist ? "track+artist" : "track_only");
+    const targetMbid = cache.getCanonicalMBID(s.mbid!);
 
     const cachedResult = cache.getEvaluationResult(
       s.track,
@@ -937,6 +938,7 @@ async function main() {
         artist: s.artist,
         album: s.album,
         mbid: s.mbid!,
+        canonicalMbid: targetMbid,
         baselinePos: cachedResult.baselinePos,
         improvedPos: cachedResult.improvedPos,
         baselineFound: cachedResult.baselineFound,
@@ -981,9 +983,6 @@ async function main() {
     const baselineIds = baselineRes.slice(0, 25).map((r) => r.id).filter((id): id is string => !!id);
     const improvedIds = improvedRes.slice(0, 25).map((r) => r.id).filter((id): id is string => !!id);
 
-    // Use canonical MBID (follows 301 merges) for comparison
-    const targetMbid = cache.getCanonicalMBID(s.mbid!);
-
     const baselinePos = baselineIds.indexOf(targetMbid);
     const improvedPos = improvedIds.indexOf(targetMbid);
     const baselineFoundAnywhere = baselinePos >= 0;
@@ -1002,6 +1001,7 @@ async function main() {
       artist: s.artist || "",
       album: s.album,
       mbid: s.mbid!,
+      canonicalMbid: targetMbid,
       baselinePos,
       improvedPos,
       baselineFound: baselineFoundAnywhere,

@@ -136,3 +136,18 @@ MB_RATE_LIMIT_MS=200 pnpm eval:run -- --all --concurrency 5
 - Results: `scripts/eval/results/archive/YYYY-MM-DD/` (gitignored).
 - Default MB rate limit: 1 req/s. Set `MB_RATE_LIMIT_MS=N` to override.
 - Proxy support: set `PROXY_URL` in `.env` for a residential/rotating proxy.
+
+## Interpreting the uncertainty intervals
+
+The evaluator deduplicates labeled scrobbles by track, artist and submitted
+recording MBID, then also tries eligible tracks without the artist field.
+Rates count each evaluated query once. The bootstrap draws whole recordings
+by canonical MusicBrainz ID, so merged IDs and query variants stay grouped.
+Changes are in percentage points. The intervals describe the sampled library
+and need at least two distinct recordings.
+
+Run the interval regression tests without API access with Node 24.
+
+```sh
+node --test scripts/eval/statistics.test.ts
+```
