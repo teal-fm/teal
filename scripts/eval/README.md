@@ -46,10 +46,17 @@ MB_RATE_LIMIT_MS=200 pnpm eval:run -- --all --concurrency 5
 ## What It Measures
 
 Each scrobble with a valid MBID becomes a test case. The eval searches
-MusicBrainz using both a **baseline** (single Lucene query, 1 API call)
+MusicBrainz using both a **baseline** (single Lucene query)
 and the **improved** pipeline (multi-stage search with cleaning and
-ranking, ~4.5 API calls/case on average). It checks whether the correct
+ranking). It checks whether the correct
 recording MBID appears in the results and at what position.
+
+The search comparison counts actual HTTP attempts, including retries and
+artist alias lookups. Cache hits make no requests. When either arm is
+unavailable, the run excludes that pair and reports how many pairs were
+excluded. A successful response with zero results stays in the comparison
+and can be cached. The search and evaluation cache versions exclude earlier
+entries that could contain outages recorded as misses.
 
 Metrics reported: P@1, P@5, P@10, MRR, NDCG, win/loss ratio, and
 per-category breakdowns (remixes, featuring artists, CJK, etc.).

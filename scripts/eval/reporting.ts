@@ -126,6 +126,7 @@ export interface EvaluationOutput {
   improvedCacheHits: number;
   evaluationResultCacheHits: number;
   totalSearches: number;
+  unavailableSearchPairs?: number;
 }
 
 // ── Main reporting function ────────────────────────────────────────────
@@ -144,6 +145,7 @@ export function reportResults(output: EvaluationOutput): void {
     improvedCacheHits,
     evaluationResultCacheHits,
     totalSearches,
+    unavailableSearchPairs = 0,
   } = output;
 
   // Calculate all metrics from cases
@@ -510,6 +512,7 @@ export function reportResults(output: EvaluationOutput): void {
         timestamp: new Date().toISOString(),
         scrobbles_total: scrobblesTotal,
         scrobbles_with_mbid: validScrobblesCount,
+        unavailable_search_pairs: unavailableSearchPairs,
         deduplication: { ...duplicateStats, distribution: duplicateDistribution },
         metrics: {
           baseline_p1: bP1Pt, baseline_p5: bP5Pt, baseline_p10: bP10Pt, baseline_p25: bP25Pt,

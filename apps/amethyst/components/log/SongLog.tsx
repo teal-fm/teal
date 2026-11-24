@@ -4,7 +4,8 @@ import { Link } from "expo-router";
 import { Check, ExternalLink, Search } from "lucide-react-native";
 import { $validate as validatePlay } from "@teal/lexicons/src/fm/teal/feed/play";
 import { createPlayRecordFromRecording } from "@teal/client/manualListens";
-import { searchMusicbrainz, type MusicBrainzRecording, type MusicBrainzRelease } from "@teal/client/oldStamp";
+import type { MusicBrainzRecording, MusicBrainzRelease } from "@teal/client/oldStamp";
+import { useSongSearch } from "@teal/client/hooks/useSongSearch";
 import { crossPostListen, crossPostText } from "@teal/client/teal/crosspost";
 import { listenHrefFromUri } from "@teal/client/teal/routes";
 import { cn } from "@teal/client/utils";
@@ -101,9 +102,7 @@ type Saved = { listenUri: string; blueskyUrl?: string; crossPostFailed?: boolean
 export function SongLog() {
   const agent = useStore((state) => state.pdsAgent);
   const [fields, setFields] = useState({ track: "", artist: "", release: "" });
-  const [results, setResults] = useState<MusicBrainzRecording[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [searchFailed, setSearchFailed] = useState(false);
+  const { results, searching, searchFailed, searchSong, resetSearch } = useSongSearch();
   const [chosen, setChosen] = useState<MusicBrainzRecording | null>(null);
   const [crossPost, setCrossPost] = useState(false);
   const [postText, setPostText] = useState("");
@@ -111,22 +110,16 @@ export function SongLog() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
 
-  const set = (key: keyof typeof fields) => (value: string) => setFields((f) => ({ ...f, [key]: value }));
+  const set = (key: keyof typeof fields) => (value: string) => {
+    resetSearch();
+    setChosen(null);
+    setFields((f) => ({ ...f, [key]: value }));
+  };
 
   const search = async () => {
     if (!fields.track.trim() && !fields.artist.trim() && !fields.release.trim()) return;
-    setSearching(true);
-    setSearchFailed(false);
     setChosen(null);
-
-    try {
-      setResults(await searchMusicbrainz(fields, { throwOnError: true }));
-    } catch {
-      setResults(null);
-      setSearchFailed(true);
-    } finally {
-      setSearching(false);
-    }
+    await searchSong(fields);
   };
 
   const choose = (recording: MusicBrainzRecording, release?: MusicBrainzRelease) => {
@@ -169,7 +162,7 @@ export function SongLog() {
   const reset = () => {
     setSaved(null);
     setChosen(null);
-    setResults(null);
+    resetSearch();
     setFields({ track: "", artist: "", release: "" });
     setCrossPost(false);
   };
