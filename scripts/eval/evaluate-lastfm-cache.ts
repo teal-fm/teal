@@ -13,10 +13,10 @@ const CACHE_DIR = join(homedir(), ".teal_eval_cache");
 const DB_PATH = join(CACHE_DIR, "lastfm_eval.db");
 
 // Bump this when evaluation logic changes in a way that should invalidate cached evaluation results.
-const EVALUATION_LOGIC_VERSION = "2026-03-09-v27";
+const EVALUATION_LOGIC_VERSION = "v29-successful-search-pairs";
 
-// Ensure cache directory exists
-mkdirSync(CACHE_DIR, { recursive: true });
+// Earlier caches could not distinguish an outage from a successful empty response.
+const SEARCH_CACHE_VERSION = "successful-search-v1";
 
 export type CacheStats = {
   totalScrobbles: number;
@@ -33,8 +33,9 @@ export class LastFMCache {
   private stmtGetEvaluationResult: Database.Statement;
   private stmtSetEvaluationResult: Database.Statement;
 
-  constructor() {
-    this.db = new Database(DB_PATH);
+  constructor(path = DB_PATH) {
+    if (path === DB_PATH) mkdirSync(CACHE_DIR, { recursive: true });
+    this.db = new Database(path);
     this.initSchema();
     // Prepare statements once for reuse
     this.stmtGetEvaluationResult = this.db.prepare(`
@@ -556,23 +557,11 @@ export class LastFMCache {
     stmt.run(artist, album, info?.mbid ?? null);
   }
 
-  /**
-   * Get cached MusicBrainz search results
-   * Cache key includes search configuration to ensure idempotency across config changes
-   */
-  /**
-   * Get cached MusicBrainz search results.
-   * Cache key is (track, artist, album, strategy) -- the actual API query params.
-   * Config flags are NOT part of the key; the caller passes already-cleaned values.
-   * Legacy overload accepts extra boolean flags (ignored in hash).
-   */
+  /** Get a response cached by the query fields and search strategy. */
   getSearchResults(
     track: string,
     artist: string,
     album?: string,
-    _enableCleaning?: boolean,
-    _enableFuzzy?: boolean,
-    _enableMultiStage?: boolean,
     strategy?: string
   ): any[] | null {
     const queryHash = this.hashSearchQuery(track, artist, album, strategy);
@@ -600,9 +589,6 @@ export class LastFMCache {
     artist: string,
     album: string | undefined,
     results: any[],
-    _enableCleaning?: boolean,
-    _enableFuzzy?: boolean,
-    _enableMultiStage?: boolean,
     strategy?: string
   ) {
     const queryHash = this.hashSearchQuery(track, artist, album, strategy);
@@ -628,11 +614,7 @@ export class LastFMCache {
     strategy?: string
   ): string {
 
-    const normalizedTrack = (track || "").toLowerCase().trim();
-    const normalizedArtist = (artist || "").toLowerCase().trim();
-    const normalizedAlbum = (album || "").toLowerCase().trim();
-    const stratStr = strategy || "default";
-    const str = `${normalizedTrack}|${normalizedArtist}|${normalizedAlbum}|${stratStr}`;
+    const str = JSON.stringify([SEARCH_CACHE_VERSION, track || "", artist || "", album || "", strategy || "default"]);
 
     return createHash("md5").update(str).digest("hex");
   }

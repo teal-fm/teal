@@ -75,11 +75,7 @@ export interface SearchResult {
   }>;
 }
 
-export interface SearchConfig {
-  enableCleaning: boolean;
-  enableFuzzy: boolean;
-  enableMultiStage: boolean;
-}
+export type { SearchConfig } from "../../packages/client/src/searchOrchestrator.js";
 
 export interface APIMetrics {
   musicbrainzCalls: number;
